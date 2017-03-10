@@ -8,23 +8,78 @@ import glob, os, csv, re
 from collections import Counter
 from keras.preprocessing import sequence
 
-def find_doc_size(filename=""):
-    lines = [line.rstrip('\n') for line in open(filename)]
-    doc_size = find_len(sent=lines[1])
-    return doc_size
+#loading grid with features
+def load_data(filelist="list_of_grid.txt", perm_num = 20, maxlen=15000, window_size=3, E=None, vocab_list=None, emb_size=300, fn=None):
+    # loading entiry-grid data from list of pos document and list of neg document
+    if vocab_list is None:
+        print("Please input vocab list")
+        return None
 
-def find_len(sent=""):
-    x = sent.split()
-    #print(x)
-    return len(x) -1
+    list_of_files = [line.rstrip('\n') for line in open(filelist)]
+    # process postive gird, convert each file to be a sentence
+    sentences_1 = []
+    sentences_0 = []
+    
+    for file in list_of_files:
+        #print(file) 
+        lines = [line.rstrip('\n') for line in open(file )]
+        #f_lines = [line.rstrip('\n') for line in open(file + ".Feats")]
+        grid_1 = "0 "* window_size
+        for idx, line in enumerate(lines):
+            e_trans = get_eTrans(sent=line) # merge the grid of positive document 
+            if len(e_trans) !=0:
+                grid_1 = grid_1 + e_trans + " " + "0 "* window_size
+        print(grid_1)
+                
+        #need to find a new way to to the permutation       
+        p_count = 0
+        doc_size = find_len(sent=lines[1])
+        #print(doc_size)
+        idx = range(0,doc_size)
 
-def remove_entity(sent=""):
-    x = sent.split()
-    count = x.count('X') + x.count('S') + x.count('O') #counting the number of entities
-    if count <3: #remove lesss ferequent entities
-        return ""
-    x = x[1:]
-    return ' '.join(x)
+        for i in range(1,perm_num+1): # reading the permuted docs
+            #generate a permuation. 
+            np.random.shuffle(idx)
+            print(idx)
+
+            grid_0 = "0 "* window_size
+            # each permutation apply to all lines
+            for line in lines:
+                e_trans_0 = get_eTrans_with_Perm(sent=line, perm=idx)
+                if len(e_trans_0) !=0:
+                    grid_0 = grid_0 + e_trans_0  + " " + "0 "* window_size
+
+            if grid_0 != grid_1: #check the duplication
+                p_count = p_count + 1
+                sentences_0.append(grid_0)
+            #else:
+            #    print(file+ ".EGrid" +"-"+str(i)) // print duplicates permuted docs with original
+        
+        for i in range (0, p_count): #stupid code
+            sentences_1.append(grid_1)
+
+
+    assert len(sentences_0) == len(sentences_1)
+
+    vocab_idmap = {}
+    for i in range(len(vocab_list)):
+        vocab_idmap[vocab_list[i]] = i
+
+    # Numberize the sentences
+    X_1 = numberize_sentences(sentences_1, vocab_idmap)
+    X_0  = numberize_sentences(sentences_0,  vocab_idmap)
+    
+    X_1 = adjust_index(X_1, maxlen=maxlen, window_size=window_size)
+    X_0  = adjust_index(X_0,  maxlen=maxlen, window_size=window_size)
+
+    X_1 = sequence.pad_sequences(X_1, maxlen)
+    X_0 = sequence.pad_sequences(X_0, maxlen)
+
+    if E is None:
+        E      = 0.01 * np.random.uniform( -1.0, 1.0, (len(vocab_list), emb_size))
+        E[len(vocab_list)-1] = 0
+
+    return X_1, X_0, E 
 
 #get entity transition from a row of Entity Grid
 def get_eTrans(sent=""):
@@ -39,6 +94,48 @@ def get_eTrans(sent=""):
         if e_occur < 2:
             return ""
     return ' '.join(x)
+
+#get entity transition with permutation
+def get_eTrans_with_Perm(sent="", perm=[]):
+    x = sent.split()
+    x = x[1:]
+    length = len(x)
+    new_x = []
+    for i in perm: # get the permutation
+        new_x.append(x[i])
+
+    e_occur = x.count('X') + x.count('S') + x.count('O') #counting the number of entities
+    if length > 80:
+        if e_occur < 3:
+            return ""
+    elif length > 20:
+        if e_occur < 2:
+            return ""
+    return ' '.join(new_x)
+
+def find_len(sent=""):
+    x = sent.split()
+    #print(x)
+    return len(x) -1
+
+
+#==========================================================
+
+def find_doc_size(filename=""):
+    lines = [line.rstrip('\n') for line in open(filename)]
+    doc_size = find_len(sent=lines[1])
+    return doc_size
+
+
+def remove_entity(sent=""):
+    x = sent.split()
+    count = x.count('X') + x.count('S') + x.count('O') #counting the number of entities
+    if count <3: #remove lesss ferequent entities
+        return ""
+    x = x[1:]
+    return ' '.join(x)
+
+
 
 #get entity transition from a row of Entity Grid
 def get_eTrans_with_Feats(sent="",feats="",fn=None):
