@@ -7,6 +7,7 @@ import numpy as np
 import glob, os, csv, re
 from collections import Counter
 from keras.preprocessing import sequence
+import pickle
 
 #loading grid with features
 def load_data(filelist="list_of_grid.txt", perm_num = 20, maxlen=15000, window_size=3, E=None, vocab_list=None, emb_size=300, fn=None):
@@ -19,7 +20,7 @@ def load_data(filelist="list_of_grid.txt", perm_num = 20, maxlen=15000, window_s
     # process postive gird, convert each file to be a sentence
     sentences_1 = []
     sentences_0 = []
-    
+   
     for file in list_of_files:
         #print(file) 
         lines = [line.rstrip('\n') for line in open(file )]
@@ -29,23 +30,23 @@ def load_data(filelist="list_of_grid.txt", perm_num = 20, maxlen=15000, window_s
             e_trans = get_eTrans(sent=line) # merge the grid of positive document 
             if len(e_trans) !=0:
                 grid_1 = grid_1 + e_trans + " " + "0 "* window_size
-        print(grid_1)
+        #print(grid_1)
                 
-        #need to find a new way to to the permutation       
+        #load perm file by pickle 
+        with open (file + ".perm", 'rb') as fp:
+            perms = pickle.load(fp)       
         p_count = 0
-        doc_size = find_len(sent=lines[1])
-        #print(doc_size)
-        idx = range(0,doc_size)
 
-        for i in range(1,perm_num+1): # reading the permuted docs
-            #generate a permuation. 
-            np.random.shuffle(idx)
-            print(idx)
+        for i in range(0,perm_num): # reading the permuted docs
+            #generate a permuation. / we should save the permuation. 
+            perm = perms[i]
+            print(perm)
 
             grid_0 = "0 "* window_size
             # each permutation apply to all lines
             for line in lines:
-                e_trans_0 = get_eTrans_with_Perm(sent=line, perm=idx)
+                e_trans_0 = get_eTrans_with_Perm(sent=line, perm=perm)
+                #print(e_trans_0)
                 if len(e_trans_0) !=0:
                     grid_0 = grid_0 + e_trans_0  + " " + "0 "* window_size
 

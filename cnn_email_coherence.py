@@ -90,11 +90,11 @@ if __name__ == '__main__':
     X_train_1, X_train_0, E = data_helper.load_data(filelist="list.sample", 
             perm_num = opts.p_num, maxlen=opts.maxlen, window_size=opts.w_size, vocab_list=vocab, emb_size=opts.emb_size, fn=fn)
 
-    X_dev_1, X_dev_0, E    = data_helper.load_data(filelist="list.sample.dev", 
-            perm_num = opts.p_num, maxlen=opts.maxlen, window_size=opts.w_size, vocab_list=vocab, emb_size=opts.emb_size, fn=fn)
+    #X_dev_1, X_dev_0, E    = data_helper.load_data(filelist="list.sample.dev", 
+    #        perm_num = opts.p_num, maxlen=opts.maxlen, window_size=opts.w_size, vocab_list=vocab, emb_size=opts.emb_size, fn=fn)
 
-    X_test_1, X_test_0, E    = data_helper.load_data(filelist="list.sample.test", 
-            perm_num = 20, maxlen=opts.maxlen, window_size=opts.w_size, vocab_list=vocab, emb_size=opts.emb_size, fn=fn)
+    #X_test_1, X_test_0, E    = data_helper.load_data(filelist="list.sample.test", 
+    #        perm_num = 20, maxlen=opts.maxlen, window_size=opts.w_size, vocab_list=vocab, emb_size=opts.emb_size, fn=fn)
 
     num_train = len(X_train_1)
     num_dev   = len(X_dev_1)
@@ -122,7 +122,6 @@ if __name__ == '__main__':
     np.random.shuffle(X_train_1)
     np.random.seed(113)
     np.random.shuffle(X_train_0)
-
 
     # first, define a CNN model for sequence of entities 
     sent_input = Input(shape=(opts.maxlen,), dtype='int32', name='sent_input')
