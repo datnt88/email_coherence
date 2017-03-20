@@ -38,7 +38,7 @@ def load_data(filelist="list_of_grid.txt", perm_num = 20, maxlen=15000, window_s
         p_count = 0
 
         for i in range(0,perm_num): # reading the permuted docs
-            #generate a permuation. / we saved the permuation for other run 
+            # ger the permuation. We saved the permuation for other run 
             perm = perms[i]
             #print(perm)
 
@@ -120,6 +120,41 @@ def find_len(sent=""):
     return len(x) -1
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #==========================================================
 
 def find_doc_size(filename=""):
@@ -135,7 +170,6 @@ def remove_entity(sent=""):
         return ""
     x = x[1:]
     return ' '.join(x)
-
 
 
 #get entity transition from a row of Entity Grid

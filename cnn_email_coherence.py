@@ -60,7 +60,7 @@ if __name__ == '__main__':
         ,minibatch_size = 8
         ,dropout_ratio  = 0.5
 
-        ,maxlen         = 200
+        ,maxlen         = 00
         ,epochs         = 30
         ,emb_size       = 100
         ,hidden_size    = 100
