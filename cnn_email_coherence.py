@@ -57,15 +57,15 @@ if __name__ == '__main__':
 
         ,learn_alg      = "rmsprop" # sgd, adagrad, rmsprop, adadelta, adam (default)
         ,loss           = "ranking_loss" # hinge, squared_hinge, binary_crossentropy (default)
-        ,minibatch_size = 32
+        ,minibatch_size = 8
         ,dropout_ratio  = 0.5
 
-        ,maxlen         = 14000
+        ,maxlen         = 200
         ,epochs         = 30
         ,emb_size       = 100
-        ,hidden_size    = 250
-        ,nb_filter      = 150
-        ,w_size         = 2 
+        ,hidden_size    = 100
+        ,nb_filter      = 50
+        ,w_size         = 3 
         ,pool_length    = 6 
         ,p_num          = 20
         ,f_list         = ""
@@ -90,11 +90,11 @@ if __name__ == '__main__':
     X_train_1, X_train_0, E = data_helper.load_data(filelist="list.sample", 
             perm_num = opts.p_num, maxlen=opts.maxlen, window_size=opts.w_size, vocab_list=vocab, emb_size=opts.emb_size, fn=fn)
 
-    #X_dev_1, X_dev_0, E    = data_helper.load_data(filelist="list.sample.dev", 
-    #        perm_num = opts.p_num, maxlen=opts.maxlen, window_size=opts.w_size, vocab_list=vocab, emb_size=opts.emb_size, fn=fn)
+    X_dev_1, X_dev_0, E    = data_helper.load_data(filelist="list.sample.dev", 
+            perm_num = opts.p_num, maxlen=opts.maxlen, window_size=opts.w_size, vocab_list=vocab, emb_size=opts.emb_size, fn=fn)
 
-    #X_test_1, X_test_0, E    = data_helper.load_data(filelist="list.sample.test", 
-    #        perm_num = 20, maxlen=opts.maxlen, window_size=opts.w_size, vocab_list=vocab, emb_size=opts.emb_size, fn=fn)
+    X_test_1, X_test_0, E    = data_helper.load_data(filelist="list.sample.test", 
+            perm_num = 20, maxlen=opts.maxlen, window_size=opts.w_size, vocab_list=vocab, emb_size=opts.emb_size, fn=fn)
 
     num_train = len(X_train_1)
     num_dev   = len(X_dev_1)

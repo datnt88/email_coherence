@@ -13,7 +13,7 @@ import pickle
 def load_data(filelist="list_of_grid.txt", perm_num = 20, maxlen=15000, window_size=3, E=None, vocab_list=None, emb_size=300, fn=None):
     # loading entiry-grid data from list of pos document and list of neg document
     if vocab_list is None:
-        print("Please input vocab list")
+        print("No input vocab list")
         return None
 
     list_of_files = [line.rstrip('\n') for line in open(filelist)]
@@ -38,9 +38,9 @@ def load_data(filelist="list_of_grid.txt", perm_num = 20, maxlen=15000, window_s
         p_count = 0
 
         for i in range(0,perm_num): # reading the permuted docs
-            #generate a permuation. / we should save the permuation. 
+            #generate a permuation. / we saved the permuation for other run 
             perm = perms[i]
-            print(perm)
+            #print(perm)
 
             grid_0 = "0 "* window_size
             # each permutation apply to all lines
