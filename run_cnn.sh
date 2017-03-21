@@ -4,7 +4,7 @@
 
 data="./final_data/"
 
-CNN_SCR="cnn_ext_coherence.py"
+CNN_SCR="email__coherence.py"
 #EXP_DIR="saved_exp/"
 MODEL_DIR="saved_4_summary/"
 
@@ -13,13 +13,13 @@ mkdir -p $MODEL_DIR
 
 ###<- Set general DNN settings ->
 dr_ratios=(0.0 0.2 0.5) #dropout_ratio
-mb_sizes=(32 64) #minibatch-size
+mb_sizes=(32 64 128) #minibatch-size
 
 ### <- set CNN settings ->
-nb_filters=(100 150) #no of feature map
+nb_filters=(100 150 200) #no of feature map
 w_sizes=(3 4 5)
-pool_lengths=(4 5 6)
-max_lengths=(2000 5000 10000)
+pool_lengths=(5 6)
+max_lengths=(8000 12000 14000)
 emb_sizes=(100)
 
 
