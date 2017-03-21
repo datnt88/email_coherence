@@ -12,14 +12,14 @@ mkdir -p $MODEL_DIR
 #mkdir -p $EXP_DIR
 
 ###<- Set general DNN settings ->
-dr_ratios=(0.5) #dropout_ratio
-mb_sizes=(32) #minibatch-size
+dr_ratios=(0.0 0.2 0.5) #dropout_ratio
+mb_sizes=(32 64) #minibatch-size
 
 ### <- set CNN settings ->
-nb_filters=(150) #no of feature map
-w_sizes=(3)
-pool_lengths=(3)
-max_lengths=(2000)
+nb_filters=(100 150) #no of feature map
+w_sizes=(3 4 5)
+pool_lengths=(4 5 6)
+max_lengths=(2000 5000 10000)
 emb_sizes=(100)
 
 
