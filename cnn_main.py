@@ -87,13 +87,13 @@ if __name__ == '__main__':
     vocab = ['X','O','S','-','0']
 
     print("loading entity-gird for pos and neg documents...")
-    X_train_1, X_train_0, E = data_helper.load_data(filelist="train.files", 
+    X_train_1, X_train_0, E = data_helper.load_data(filelist="./dataset/wsj/train.wsj", 
             perm_num = opts.p_num, maxlen=opts.maxlen, window_size=opts.w_size, vocab_list=vocab, emb_size=opts.emb_size, fn=fn)
 
-    X_dev_1, X_dev_0, E    = data_helper.load_data(filelist="dev.files", 
+    X_dev_1, X_dev_0, E    = data_helper.load_data(filelist="./dataset/wsj/dev.wsj", 
             perm_num = opts.p_num, maxlen=opts.maxlen, window_size=opts.w_size, vocab_list=vocab, emb_size=opts.emb_size, fn=fn)
 
-    X_test_1, X_test_0, E    = data_helper.load_data(filelist="test.files", 
+    X_test_1, X_test_0, E    = data_helper.load_data(filelist="./dataset/wsj/dev.wsj", 
             perm_num = 20, maxlen=opts.maxlen, window_size=opts.w_size, vocab_list=vocab, emb_size=opts.emb_size, fn=fn)
     print("end of loading...")
     num_train = len(X_train_1)
@@ -212,7 +212,7 @@ if __name__ == '__main__':
         print("Perform on test set after Epoch: " + str(ep) + "...!")    
         print(" -Wins: " + str(wins) + " Ties: "  + str(ties))
         loss = n - (wins+ties)
-        #recall = wins/n;
+        recall = wins/n;
         prec = wins/(wins + loss)
         f1 = 2*prec*recall/(prec+recall)
 
