@@ -52,20 +52,20 @@ if __name__ == '__main__':
     parser.set_defaults(
 
         data_dir        = "./dataset/final_data/"
-        ,log_file       = "log"
+        ,log_file       = "log.run"
         ,model_dir      = "./saved_models/"
 
         ,learn_alg      = "rmsprop" # sgd, adagrad, rmsprop, adadelta, adam (default)
         ,loss           = "ranking_loss" # hinge, squared_hinge, binary_crossentropy (default)
-        ,minibatch_size = 8
+        ,minibatch_size = 128
         ,dropout_ratio  = 0.5
 
-        ,maxlen         = 00
+        ,maxlen         = 14000
         ,epochs         = 30
         ,emb_size       = 100
         ,hidden_size    = 100
-        ,nb_filter      = 50
-        ,w_size         = 3 
+        ,nb_filter      = 150
+        ,w_size         = 6 
         ,pool_length    = 6 
         ,p_num          = 20
         ,f_list         = ""
