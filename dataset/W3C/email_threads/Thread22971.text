@@ -1,0 +1,70 @@
+The DOM Level 2 spec has this to say about Node.ownerDocument:
+The Document object associated with this node. This is also the Document
+object used to create new nodes. When this node is a Document or a
+DocumentType which is not used with any Document yet, this is null.
+This specifies a couple of cases when ownerDocument is null, but it is
+not clear if these are the only times that it is null. For example,
+when I create a new Element or other node with one of the
+Document.createXXX() methods is the resulting node required to have its
+ownerDocument property set?
+David Flanagan
+Dave,
+I find the spec to be very clear. Whatever document that the node was created from, no matter how it was created, will have it's ownerDocument property set to that document.
+The reason why Document nodes do not apply is that it is created by the parser engine, not a document. A document is not owned by a document.
+The reason why a DocumentType node does not have an owner document (I am assuming here) is because it is also a stand-alone document. This document is used to describe the tag structure rules for a HTML or XML document. Thus a DocumentType node is not owned by a document.
+Jeff Yates.
+The DOM Level 2 spec has this to say about Node.ownerDocument:
+The Document object associated with this node. This is also the Document
+object used to create new nodes. When this node is a Document or a
+DocumentType which is not used with any Document yet, this is null.
+This specifies a couple of cases when ownerDocument is null, but it is
+not clear if these are the only times that it is null. For example,
+when I create a new Element or other node with one of the
+Document.createXXX() methods is the resulting node required to have its
+ownerDocument property set?
+David Flanagan
+Jeff Yates
+e-mail: PBWiz@PBWizard.com
+Homepage: http://www.PBWizard.com
+There isn't a really good reason that a Document isn't its own
+ownerDocument; that's just the way it happened to get defined.
+DocumentType is normally created before the document, without knowing
+which document it might be going into, and hence starts out with
+ownerDocument being null. When you get around to using it as a parameter in
+the createDocument method, its ownerDocument will be set and locked in.
+All other nodes have their ownerDocument set before Document.create...()
+returns.
+See also http://www.w3.org/DOM/faq.html#ownerdoc
+Joe Kesselman / IBM Research
+That's what I assumed, but I don't think the spec ever actually says
+this, and I'd suggest that it ought to be clarified. All I can find
+about it is:
+The Document object associated with this node. This is also the Document
+object used to create new nodes. When this node is a Document or a
+DocumentType which is not used with any Document yet, this is null.
+Perhaps that second sentence is trying to say this:
+When one of the create methods of a Document object is used to create
+a new node, the ownerDocument property of the newly created node is
+set to the creating Document object.
+However, I read it as saying:
+If you've got a node A, and want to create a new node B as part of
+the same document, then use the ownerDocument property of node A to
+find the Document object to use.
+I suggest a clarification (although I do not suggest using my language
+above!)
+David Flanagan
+Yes, much better. Thanks.
+The Document object associated with this node. This is also the Document
+object used to create new nodes. When this node is a Document or a
+DocumentType which is not used with any Document yet, this is null.
+I agree that the "this" is badly overloaded here, and that the antecedents
+are not obvious.
+Possible rewording:
+The Document object associated with this node. For most nodes, this refers
+to the Document whose factory methods created them (and which can be used
+to create other nodes compatable with them). When a node is either a
+Document, or a DocumentType which is has not yet been associated with a
+specific document by the DOMImplementation.createDocument method, its
+ownerDocument is null.
+Better?
+Joe Kesselman / IBM Research

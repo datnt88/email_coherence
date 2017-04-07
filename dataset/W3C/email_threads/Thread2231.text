@@ -1,0 +1,406 @@
+In the HTTP-WG session at the IETF meeting last week, we briefly
+discussed the problem proxy-revalidate. Paul Leach and I volunteered
+to take this as an action item.
+Here are two excerpts from the current HTTP/1.1 spec:
+When the must-revalidate directive is present in a response
+received by a cache, that cache MUST NOT use the entry after it
+becomes stale to respond to a subsequent request without first
+revalidating it with the origin server. (I.e., the cache must do an
+end- to-end revalidation every time, if, based solely on the origin
+server's Expires or max-age value, the cached response is stale.)
+The proxy-revalidate directive has the same meaning as the must-
+revalidate directive, except that it does not apply to non-shared
+user agent caches. It can be used on a response to an authenticated
+request to permit the user's cache to store and later return the
+response without needing to revalidate it (since it has already
+been authenticated once by that user), while still requiring
+proxies that service many users to revalidate each time (in order
+to make sure that each user has been authenticated).
+Note that the only reasonable reading of this definition of
+proxy-revalidate is that
+if (acting as as shared cache) then
+if (proxy-revalidate) and (entry age  max-age) then
+revalidate before using this entry
+else
+use this entry without revalidating
+end
+end
+However, the rest of the second paragraph doesn't make sense
+with this reading, if one assumes that most end-client caches will
+obey the max-age directive. That's because if the origin server
+wants such a client to be able to use an authenticated response
+from its cache without revalidating it, but wants a shared proxy
+cache to revalidate the response (to make sure that the new client
+has been authenticated), then there is no way to express this.
+I.e., the origin server would like to set max-age  0 to allow
+the end-client to cache without revalidating, but would have to set
+max-age=0 to force the proxy to revalidate.
+This is my fault, I suspect, because I wrote this part of the
+spec. I was trying to solve two problems with one feature, and
+I don't think that was possible. The first problem was the
+one described above, which was described to me by the authentication
+people (primarily Paul Leach), and which Paul has now made me
+understand again. The second problem was that we introduced
+"must-revalidate" to deal with caches that might be loose about
+observing max-age, and several people observed that this is somewhat
+too strict for many applications, where it's OK for the end-client
+cache to be "loose", but it might not be OK for a proxy cache to be
+"loose". So the current specification of proxy-revalidate actually
+does solve that problem.
+Note that "Cache-control: private" is very inefficient, because
+it forces a proxy to fully reload the entity body each time; it
+cannot do a conditional GET in this case. So that's not really
+a solution.
+The problem with proxy-revalidate also makes it much harder to
+do efficient hit-counting, *with or without* our proposed hit-metering
+extensions.
+After thinking about it for a while, and making up a table of all
+the possible combinations, I've come to the conclusion that there
+is no way to express all of the possibly desirable policies with
+the current set of cache-control directives, even if we tried to
+redefine the meaning of proxy-revalidate. In order to make
+authentication work without defeating caching entirely, we either
+need to add at least one cache-control directive, or we would have
+to redefine proxy-revalidate in a way that would make it much
+less efficient.
+Paul and I believe that adding one more directive is the right
+solution. There are several possibilities that would work.
+One would be something like
+Cache-control: proxy-mustcheck
+which would be ignored by non-shared caches, but would mean that
+a shared cache would have to revalidate entry regardless of its
+age (i.e., even if apparently "fresh"). In typical use, one might
+see
+Cache-control: max-age=30, proxy-mustcheck
+which allows all caches to store the response, and an end-client
+to use its cache entry for ages up to 30 seconds, but requires
+a proxy to always revalidate.
+The other approach, which Paul favors (and I think I do, too) is
+define something like
+Cache-control: proxy-maxage=NNN
+which supplies a separate age limit that applies only to shared
+caches. For example, a server doing authentication or hit-metering
+might send:
+Cache-control: max-age=30, proxy-maxage=0
+which means the same thing as the previous example (but actually
+takes one less byte to encode!).
+It probably makes sense to define proxy-maxage as implying
+"proxy-revalidate", since otherwise one would have to send both
+directives, and it's likely that this would be the normal case.
+The nice thing about proxy-maxage is that it allows other things,
+too, such as
+Cache-control: max-age=30, proxy-maxage=10
+or even
+Cache-control: max-age=10, proxy-maxage=30
+to provide finer control over the action of caches. It's not
+immediately clear to me that this is useful, but it seems to
+be no more expensive to implement than "proxy-mustcheck", and
+it might turn out to be useful later on.
+I believe that Larry wants us to issue an Internet-Draft on
+this topic, and not to discuss it to death on the mailing list.
+But because there are several possible choices, I wanted to
+see what people think before getting started on the Internet-Draft.
+-Jeff
+P.S.: Regarding IETF process: we discussed this at the meeting
+in San Jose, with the Area Director present. If the consensus
+of the working group is that (1) this is truly a bug, and (2)
+that the proposed fix is both small and not controversial, then
+the IESG will probably allow us to make this kind of change
+without restarting at Proposed Standard. So please don't get
+started now on a discussion about process; we can have that
+later on, if there is still disagreement on the technical issues
+once specific proposal(s) have been documented.
+I think it would help a lot to have this table, before actually going
+into deeper discussions. I know my imlementation of 1.1 proxy is wrong
+in several places, and before touching the code, I would like to make
+sure I understand the semantics of all the possible combinations. BTW
+it would be nice if this table also contained the warnings to be
+emitted for each cases along with the conditions under which these
+warnings should be emitted.
+I now realize that writing down this table is not a small task, I will
+be glad to provide, if this helps, the table that Jigsaw currently
+implements as a starting point (even though, as I said, I know it's
+wrong).
+Anselm.
+I think it would help a lot to have this table, before actually going
+into deeper discussions.
+Actually, I did create the table before sending that message, but I
+thought the message was already pretty long without it. Also, the
+table needs some explanatory notes, which I have now added. See
+below.
+BTW it would be nice if this table also contained the warnings to be
+emitted for each cases along with the conditions under which these
+warnings should be emitted.
+I'll take you up on your offer to help ... if you can figure out
+how to add these to the table, please do so. It would be nice if
+it still fits in a 72-column fixed-width format, because then I
+can stick it into an Internet-Draft without any glitches.
+-Jeff
+Explanatory notes:
+The leftmost column shows the Cache-control headers emitted by the
+origin server. In all cases, I assume that the response is marked
+as "revalidatable" in some way, such as the presence of an entity-tag
+or last-modified date.
+The rest of the table is divided into two major columns, depending
+on whether the cache involved is at an end-client system, or a
+shared proxy cache. (We can probably treat a non-shared proxy
+cache as being a sort of "distributed" implementation of an end-client
+cache.)
+Each of the major columns is divided into three minor columns, showing
+the action to take
+(1) if the response is fresh
+(2) if the response is stale, and the cache is being strict
+about revalidating stale responses
+(3) if the response is stale, and the cache is not being strict
+about revalidating stale responses
+The table assumes that there is only one kind of "max age" for a response,
+set by a max-age directive (or, equivalently, by an Expires header).
+If we were to introduce a proxy-maxage directive, the table would
+need some more rows, and in the Proxy Cache columns, the test for
+"freshness" would have to account for this new kind of "max age".
+In the table entries,
+NA means "not applicable" (i.e., can't happen)
+use means "use entry without revalidating"
+check means "use entry after revalidating"
+ignore means "use entry without revalidating, even if stale"
+Site: Client cache Proxy Cache
+entry state:freshstalestalefreshstalestale
+policy:strictloosestrictloose
+In current HTTP/1.1 spec:
+Age limit
+from server
+No max-ageuseNANAuseNANA
+max-age  0usecheckignoreusecheckignore
+max-age = 0NAcheckignoreNAcheckignore
+must-revalusecheckcheckusecheckcheck
++max-age  0
+must-revalNAcheckcheckNAcheckcheck
++max-age = 0
+proxy-revalusecheckignoreusecheckcheck
++max-age  0
+proxy-revalNAcheckignoreNAcheckcheck
++max-age = 0
+Missing from HTTP/1.1 spec:
+Age limit
+from server
+No max-ageuseNANAcheckNANA
+max-age  0usecheckignorecheckcheckcheck
+max-age = 0NAcheckignoreNAcheckcheck
+If we added a proxy-mustcheck directive, those three rows would become:
+Age limit
+from server
+No max-ageuseNANAcheckNANA
++proxy-
+mustcheck
+max-age  0usecheckignorecheckcheckcheck
++proxy-
+mustcheck
+max-age = 0NAcheckignoreNAcheckcheck
++proxy-
+mustcheck
+Missing from HTTP/1.1 spec, but probably not useful:
+Age limit
+from server
+No max-agecheckNANAuseNANA
+max-age  0checkcheckcheckusecheckignore
+max-age = 0NAcheckcheckNAcheckignore
+Good point ... actually the right wording, I think, would describe
+not the implementation (end-client vs shared proxy) but more like
+"on behalf of a single identified user". It should be considered legal
+for a proxy to be shared but be 'end-client' under the current wording
+as long as the proxy has identified the user and interprets the caching
+rules on a per individual user basis just as if the proxy were not
+shared. There are some interesting application and economies of scale
+possibilities which I wouldn't want precluded by the letter of the 'law'.
+I think the intent is that an individual 'human' receive reliable
+delivery of information. I believe automated clients are a subset
+of what a human might do in a global information space and such
+clients can be modeled as humans. It would be OK for a single
+human to use two different UAs against the same cache for example but
+the automated client is probably not going to do that.
+Dave Morris
+No wonder my implementation of HTTP/1.1 caching proxy is wrong. I had
+a real hard time trying figuring out the semantics and interactions
+of all the caching rules express in draft 07 (I should have checked
+this before).
+For my own sanity, I have tried to build up a richer table (it may be a
+mistake). The most difficult part in the exercise was to find an
+appropriate layout for the tables (I really don't want to miss some
+cases). I would rather have taken a top down approach (define the
+cases, and see how they are expressed through HTTP/1.1), but for the
+time being, I tried the bottom up approach (given cache-control
+directives, define the semantics).
+If you find any cases missing, or if they are any mistakes, please let
+me know so that I can fix my implementation before it's too late.
+Thanks for your attention,
+Anselm.
+My first table defines a "fresh" function, which returns a boolean,
+and which takes as parameters:
+Ar: The max-age value specified in the request
+Sr: The max-stale value specified in the request
+Fr: The min-fresh value specified in the request
+Ap: The max age value of the reply (expressed either through the
+max-age directive, or the expires header)
+Ae: The current entity age, computed as defined in section 13.2.3
+This table defines the "fresh" function, along with any warnings to be
+emitted when needed. Warnings accumulate: if, further on, this
+document define some cases where warnings are required, then the
+warnings should be aggregated, and all of them should be emitted.
+Request | Reply | fresh | warnings |
+max | max | min | max-age | | |
+age | stale | fresh |(or)expires | | |
++ * | * | * | Ap | Ae Ap | 13? |
++ Ar | * | * | Ap | Ae Ar &amp;&amp; Ae Ap | 13? |
++ * | Sr | NA | Ap | Ae Ap+Sr |Ae Ap= 10,13? |
++ * | * | Fr | Ap | Ae+Fr Ap | 13? |
++ * | * | * | (undefined) | Ae  Ap | 13? |
++ Ar | Sr | NA | Ap |Ae Ap+Sr &amp;&amp; Ae Ar|Ae Ap= 10,13? |
++ Ar | NA | Fr | Ap |Ae+Fr Ap &amp;&amp; Ae Ap| 13? |
++ 0 | NA | NA | Ap | false | 13? |
+* : undefined (has no value)
+NA: Not applicable
+The "loose" function is true when "fresh" is true and a warning is
+defined.
+Given that definition of the fresh and loose functions, I then tried
+to rebuild Jeff's table, inverting the layout, though (to make sure
+all cases where available at a glance). This now defines the "valid"
+function:
+The valid row returns a boolean, indicating wether the cached reply
+can be used to answer the given request. It also adds one or more of
+the following comments in parenthesis:
+NC: not cached (in that situation, the reply should not even be cached)
+ii: The class of the warning to be emitted.
+The "Cache site" is overloaded: it can be either the type of cache, or
+the number of a section in the HTTP/1.1 spec (draft v07), that defines
+that configuration.
+F: is the result of the "fresh" function as defined above
+L: is the result of the "loose" function as defined above
+C: means that a check (revalidation or more) must be performed to the
+origin server
+U: means that the cached reply can be used as is.
+Some comments on the spec:
+- 14.8/1 changes the general semantics of proxy-revalidate, when an
+authorization field is present. It also probably assumes that a proxy
+is a shared cache, while a "cache" is a single client cache.
+- [a question] 14.9.4 says under "End to end reload" that "... No
+field names may be included with the no-cache directive in a
+request". I assume an "In that case, " is implicitly assumed at the
+beginning of the sentence ? [I can see good reasons for using
+no-cache with field names in a request, as does]
+- In general, understanding HTTP/1.1 caching rules requires tricky
+navigation between sections 13 and 14.8 and 14.9; I often feel
+uncomfortable because when I read one, I am afraid that the other
+changes the semantics (not to mention interactions with
+negotiation).
+- BTW State management also got "proxy-revalide" wrong (I guess):
+--- state management, draft, v05; section 4.2.3 -----
+The origin server should send the following additional HTTP/1.1 response
+headers, depending on circumstances:
+* To allow caching of a document and require that it be validated
+before returning it to the client: Cache-control: must-revalidate.
+* To allow caching of a document, but to require that proxy caches
+(not user agent caches) validate it before returning it to the
+client: Cache-control: proxy-revalidate.
+The first point here, seems to rely on the fact that
+must-revalidate/proxy-revalidate is interpreted as "*always*
+revalidate the document before returning it"; which was my
+interpretation when I implemented Jigsaw proxy.
+Thanks for going through the effort to put together those two
+tables. I have to admit that I have not yet had the time to
+go through them carefully to see if our understandings mesh,
+partly because you've had to compromise between readability
+and fitting onto a standard page width.
+I think it might be possible to make the individual tables
+more readable by factoring them into a larger number of simpler
+tables.
+For example, your first table, which you call the "fresh" function,
+really combines two factors. The first is what I would prefer
+to call the "fresh function", which determines whether a response
+is "fresh" independent of the request parameters. This would
+take only these parameters as input:
+Ap: The max age value of the reply (expressed either through the
+max-age directive, or the expires header)
+[or infinity if unspecified]
+Ae: The current entity age, computed as defined in section 13.2.3
+and yield a boolean as output. This corresponds precisely to the
+definition of "fresh" in section 1.3 of the HTTP/1.1 spec, which
+is
+Ae = Ap
+One could then define a "sufficiently fresh" function, which
+does depend on request parameters, by a transformation of the
+input parameters to this table. I think this is right:
+Ar: The max-age value specified in the request
+[or infinity if unspecified]
+Sr: The max-stale value specified in the request
+[or zero if unspecified]
+Fr: The min-fresh value specified in the request
+[or zero if unspecified]
+Ap' = min(Ap, Ar)
+Ae' = Ae + Fr - Sr
+So the "sufficiently fresh" function would then simply be
+Ae' = Ap'
+Putting it all together, the "sufficiently fresh" function
+would be
+SuffFresh(Ae, Ap, Ar, Sr, Fr) := min(Ap, Ar)  (Ae + Fr - Sr)
+If I have done the algebra correctly.
+Regarding your second table, which indicates whether a cache
+entry is usable with or without revalidation, I think we first
+need to nail down the semantics of "proxy-revalidate".
+As you point out, this language in 14.8:
+1. If the response includes the "proxy-revalidate" Cache-Control
+directive, the cache MAY use that response in replying to a
+subsequent request, but a proxy cache MUST first revalidate it with
+the origin server, using the request-headers from the new request
+to allow the origin server to authenticate the new request.
+either contradicts or modifies this language in 14.9.4:
+When the must-revalidate directive is present in a response
+received by a cache, that cache MUST NOT use the entry after it
+becomes stale to respond to a subsequent request without first
+revalidating it with the origin server. [...] The proxy-revalidate
+directive has the same meaning as the must- revalidate directive,
+except that it does not apply to non-shared user agent caches.
+I think we've agreed that this is a bug in the specification. That
+is, we did not intend that the meaning of this cache-control directive
+should change when another response header is present. As you say,
+the other interpretation would require "tricky navigation between
+sections 13 and 14.8 and 14.9", and that seems like a bad idea.
+Both you and Koen have also recently pointed out that the
+state-management draft runs into the same confusion over
+proxy-revalidate. Clear evidence that we need to fix this!
+-Jeff
+Anselm asks
+- [a question] 14.9.4 says under "End to end reload" that "... No
+field names may be included with the no-cache directive in a
+request". I assume an "In that case, " is implicitly assumed at the
+beginning of the sentence ? [I can see good reasons for using
+no-cache with field names in a request, as does]
+The complete text of this paragraph is:
+End-to-end reload
+The request includes a "no-cache" Cache-Control directive or, for
+compatibility with HTTP/1.0 clients, "Pragma: no-cache". No field
+names may be included with the no-cache directive in a request. The
+server MUST NOT use a cached copy when responding to such a request.
+Actually, our intention (as far as I understand it) for this
+request directive was that it totally prevents the use of a cached
+response in reply to the request. I.e., we did not intend that
+there be an "In that case" at the beginning of the second sentence.
+I'm not sure I understand what it would mean to specify a field name
+in the request. E.g., what does this mean:
+GET /foo.html HTTP/1.1
+Cache-control: no-cache="Expires"
+If you have an example that does make sense, that would be helpful.
+In a *response* message, we allowe the no-cache directive to carry one
+or more field names, e.g.,
+HTTP/1.1 200 OK
+Server: CERN/3.0 libwww/2.17
+Cache-control: no-cache="Server"
+would mean (according to the somewhat sketchy language in
+section 14.9.1) that an HTTP/1.1 client or proxy could cache
+most of the response, but could not cache the "Server" response header.
+I believe that this was intended as a way for certain applications
+to allow caching while preventing the storage of certain response
+fields that might have privacy implications, although I'm not
+sure I can come up with a good example. (However, I would
+expect that the "private" response directive would serve that
+purpose well enough.)
+-Jeff

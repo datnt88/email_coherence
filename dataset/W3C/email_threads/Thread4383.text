@@ -1,0 +1,109 @@
+I have twice before ([1] and [2]) argued against this lexical
+push-down automaton (PDA), and particularly against it being
+made normative. I'm
+still waiting to see a counter-argument. I believe the only thing
+that's been posted in its defense was this:
+"The reason the PDA is valuable is because it works with
+tools like JavaCC and Lex."
+No, that was never the defense (or at least my defense). It was that it
+carried information beyond that the BNF specified. But, read on...
+This may well be true, but doesn't justify making it normative.
+I'm beginning to see the light on this.
+(1) The PDA has appeared 4 times, each time with mistakes, sometimes
+blatant, sometimes subtle. How confident are you that the final
+version will be bug-free?
+It's a long story, but a lot of the errors occurred as a result of our
+document production process. I'm currently working to make the production
+of the lex tables much more straight-forward, so I'm reasonably confident
+we can make this bug-free.
+(2) Do you think that the PDA imposes requirements (on
+implementations) that aren't imposed elsewhere in
+the spec? If so, what are they?
+And if not, why make it normative?
+Right, that's the real question, or, I would term this as I stated above,
+do the lex tables add information that is in addition to the BNF, and is
+needed to parse the grammar? If you want to disambiguate the operator
+keyword 'div' from the QName 'div' at lex-only evaluation time (to take an
+ultra simple example), they may be necessary, but it should be possible to
+infer this from the BNF. In other words, you could theoretically write a
+program that builds a JavaCC parser spec, or any other parser, strictly
+from the BNF... it would just be hard to programmatically generate the lex
+states and actions. So, I think I'm agreeing with you that these tables
+should be made non-normative [currently I'm only speaking for myself, not
+the WG]. I think, however, that they're probably still useful to
+implementers as a non-normative appendix, to make sure it's clear why
+reserved unprefixed QNames are not necessary, etc. On the other hand, less
+work if we loose them altogether from the spec... :-)
+[BTW, we haven't forgotten about the rest of your comments. We'll be
+working on these and will let you know. Also, if it's not clear, I'm
+grateful for your valuable critique and insight.]
+-scott
+I don't mean to be overly negative, but has the W3C ever published a totally
+correct grammar for anything?
+In XPath 1.0, the grammar accidentally prohibited predicates on the
+abbreviated paths . and .. (so .[pred] is syntactically invalid, even though
+self::node()[pred] works fine). I brought this error (and others) up with
+most W3C members of that committee, and most of them refused even to admit
+they had a mistake (even though it's been "fixed" in XPath 2.0). Good
+grief.
+I've followed every XQuery internal and public draft since the first "XML
+Query Algebra" paper (and implemented many of them), and the grammar of
+*every* one of them has contained numerous errors and design flaws (many of
+which I've provided feedback on through the Microsoft reps or this list).
+I think the less the W3C attempts in the area of grammar specification, the
+better. For example, my personal implementation of the XQuery grammar uses
+only five lexical states, and the complete source code for my lexer occupies
+less space on paper than the current lexical description in the W3C draft.
+You might as well publish an actual program instead of pages of useless
+tables.
+At least things have improved somewhat from the earlier drafts, at least one
+of which contained an EBNF and two non-normative grammar files (for use with
+compiler-generator tools like JavaCC), all three of which differed from one
+another.
+[And don't even get me started on stylistic issues, like the design and
+purpose of character escapes in most languages vs. the W3C ones, or how the
+grammars are unnecessarily way more permissive than the semantics.]
+Cheers,
+Michael Brundage
+xquery@attbi.com
+[mailto:public-qt-comments-request@w3.org] On Behalf Of
+scott_boag@us.ibm.com
+(1) The PDA has appeared 4 times, each time with mistakes, sometimes
+blatant, sometimes subtle. How confident are you that the final
+version will be bug-free?
+It's a long story, but a lot of the errors occurred as a result of our
+document production process. I'm currently working to make the production
+of the lex tables much more straight-forward, so I'm reasonably confident we
+can make this bug-free.
+"XQuery" xquery@attbi.com wrote on 01/11/2003 12:14:39 PM:
+totally
+We're trying hard to make sure all grammar assertions are validated, that
+it is a functional grammar without ambiguities, and that it can be
+processed by traditional parser compilers. We're building up a reasonable
+test suite of expressions, and also add all expressions appearing in the
+drafts, and regression test with every pub.
+of
+the
+It's an evolving process... we're not done. The reason we that we provide
+intermediate drafts is so we can get feedback, but we don't claim that any
+intermediate draft is perfect. Hopefully they are improving.
+occupies
+draft.
+I don't know how correct your implementation is, or what techniques you
+used. Our goal is to prove you can implement a LL(1) grammar. Without
+parse time lookahead, the states as shown are the best we could do in
+JavaCC (though, like I said, there were production problems in the last
+draft... so the tables are worse than the source). If you have ideas for
+simplification, please do be specific, though it might be better to wait
+until the actual grammar has fully stabilized.
+We don't mean to imply an implementation strategy... we just want to make
+sure we're not missing necessary information.
+No, we need the information to be abstract. If the tables don't contain
+information above the grammar and basic lexical description, then, yes,
+they should probably be removed.
+-scott
+Fair enough. I'm often too critical of these intermediate drafts.
+However, my last comment on publishing a program (in pseudo-code, say) still
+holds. When you can illustrate an algorithm clearly, precisely, and
+completely using pseudo-code in less space than a prose description, I think
+it merits consideration. But then, I'm a big fan of Dijkstra. :-)

@@ -1,0 +1,147 @@
+One of the issues Lisa brought up below was not covered in subsequent
+discussions. That issue was what to do about the source property.
+In fhe following recent post
+It was indicated that at the IETF meeting there was a proposal to drop the
+source property. Julian added that we can pick it up in the next version
+of WebDAV.
+I'd like to mark it resolved that we will remove the source property. I
+would leave it up to our memories to bring the topic up again in the next
+version of WebDAV if we value it.
+The thinking is...
+The source property is good.
+But it's under specified and needs work, no interoperability has been
+determined, and no one has been yelling for it. If we remove it from the
+spec now, the few implementations that support it can remove that support
+and thus provide us a clean slate to work from when we take another stab at
+the source property.
+Please speak up if you disagree with this or would like to add to what I've
+said.
+Thanks :-)
+J.
+"Lisa Dusseault"
+s.com cc:
+Sent by: Subject: 54th IETF Meeting Information, and RFC2518 open issues
+w3c-dist-auth-req
+uest@w3.org
+04/22/2002 12:36
+PM
+If you're not on the IETF-Announce list, you might not have seen this
+announcement about the upcoming meeting in Yokohama.
+To bring our "agenda" up-to-date, here's what I think the largest and
+hardest issues are for RFC2518 bis:
+- Whether/how to change the If header rules and syntax
+- Whether/how to change the source property definition
+Although the If header has been shown to be interoperable in its simplest
+form with locktokens, it hasn't been shown to be interoperable in its more
+advanced forms or with ETags. The source property has not had any
+demonstrated interoperability to my knowledge.
+I'd like to encourage anybody with ideas on what to do with either of these
+two features to make concrete proposals to the list. If your proposal is
+"leave things the way they are", I'd like to see some discussion on how to
+meet the requirements for going to proposed standard (how to demonstrate
+interoperability, and how much interoperability is enough).
+Another ACL draft is expected before the Yokohama cut-off, therefore ACLs
+will probably also be discussed in Yokohama. I'll be asking for a meeting
+slot.
+Lisa
+Behalf Of ietf-secretariat@ietf.org
+Registration for the 54th IETF is now open.
+Information can be found on the IETF web site at:
+MEETING SITE:
+Pacifico Yokohama Convention Center
+1-1-1 Minato Mirai, Nishi-ku, Yokohama 220-0012 Japan
+HOTEL ACCOMMODATIONS:
+Information is available on
+Please be advised that ONLINE RESERVATIONS will be available after April
+22nd.
+If the source property is removed, then how will the server respond to a
+client that attempts to use DAV on a resource that is not DAV authorable
+but is derived from other sources? What is the interoperability mechanism?
+I would prefer a source Link solution, myself, since that can be supplied
+in a normal HTTP error response.
+In my opinion, WebDAV needs to solve this issue before progressing on
+the standards track. It cannot simply remove it without abandoning the
+pretense that it handles Web authoring.
+Cheers,
+Roy T. Fielding, Chairman, The Apache Software Foundation
+(fielding@apache.org) http://www.apache.org/
+Chief Scientist, Day Software
+2 Corporate Plaza, Suite 150
+(roy.fielding@day.com) http://www.day.com/
+I agree. Authoring access to an unprocessed source representation of a
+resource has been a WebDAV goal from the very beginning (see Section 5.5 of
+RFC 2291). Removing RFC 2518's mechanism for accomplishing this doesn't help
+reach the goal -- it's just a punt.
+In what way(s) is this mechanism underspecified? From my perspective, it
+provides sufficient information for an authoring client to discover a URL
+where authoring can take place.
+I assert that, given a few weeks of coding, we could easily demonstrate at
+least two clients and two servers interoperating on this feature as
+currently specified. There are no obvious technical impediments to doing so.
+- Jim
+From: w3c-dist-auth-request@w3.org
+[mailto:w3c-dist-auth-request@w3.org]On Behalf Of Jim Whitehead
+Sent: Monday, May 13, 2002 6:32 PM
+Subject: RE: Issue: SOURCE_PROPERTY_UNDERSPECIFIED
+The main issues are that
+- the text and examples in the RFC just do not make sense to me (see [1])
+- the source property doesn't offer enough information to display
+information about the *types* of link relations
+[1] http://lists.w3.org/Archives/Public/w3c-dist-auth/2001OctDec/0119.html
+Do you have specific servers and clients in mind?
+If you drop the XLink stuff I support the "source-set" property
+described in that message as a replacement for the source property; I
+implemented it a while ago for mod_dav and cadaver and it very works
+nicely. (I started off implementing {DAV:}source but it suffers greatly
+because of the two issues given above)
+An alternative would be to retain the "source" property but drop the
+redundant "src" element and replace it with a "description" element
+giving a human-readable description of the link as the cdata content.
+joe
+From: w3c-dist-auth-request@w3.org
+[mailto:w3c-dist-auth-request@w3.org]On Behalf Of Joe Orton
+Sent: Monday, May 13, 2002 9:51 PM
+Subject: Re: Issue: SOURCE_PROPERTY_UNDERSPECIFIED
+Joe,
+I'm happy to have a different format (I've got enough flak promoting
+XLink-compatible syntax :-). My requirements are
+- must support multiple links
+- there must be a machine-readable description for the link type
+- the should be a human-readable description for the link type
+Please post what you're using right now -- we'll probably able to extend if
+necessary.
+Julian
+I just dropped the xlink: from the href attribute, and got rid of the
+xlink:role attribute entirely, giving e.g.:
+which should satisfy your first and third requirements; I'm not sure
+about "machine-readable" link descriptions being mandatory. My client
+doesn't need to understand anything about the link, I just want it to be
+able to display a menu of "URI: description" choices when there is  1
+source available, so that the user can decide.
+(Similarly, the minimum amount of server configuration I'd like to
+require is saying e.g. "/dav/render.xsl is a source of /dav/*.xml")
+Regards,
+joe
+Joe,
+- the point of a machine-readable link type is that a client may be able to
+offer a better user interface if it knows what kind of link this is. For
+instance, there might be a special "role" for the XSLT file used for
+creating an HTML presentation of an XML file, and certainly it would be good
+for client to be able to detect whether one of the sources plays this role.
+No, we don't have to define roles, but it certainly makes sense to have an
+optional place where they *may* be reported. XLink reports them using URIs,
+and I think so should we.
+- you have removed the XLink compatible syntax without, but have stayed with
+the href attribute. This makes your format both incompatible with XLink and
+the standard DAV:href format (which can be used by RFC3253's expand-property
+REPORT). Why did you do this? It doesn't make your format simple to
+process -- it just saves a few characters in the XML representation. I think
+HREFs should either be reported consistent with other WebDAV standards
+(DAV:href, supported by the expand-property REPORT), or compatible with
+XLink (which I would personally prefer). Unfortunately, we can't have both
+at the same time...
+Julian
+From: w3c-dist-auth-request@w3.org
+[mailto:w3c-dist-auth-request@w3.org]On Behalf Of Joe Orton
+Sent: Tuesday, May 14, 2002 12:47 AM
+Subject: Re: Issue: SOURCE_PROPERTY_UNDERSPECIFIED

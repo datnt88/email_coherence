@@ -1,0 +1,131 @@
+I promised Adv. Coll. design team I'd start a thread on this topic,
+The expected semantics of MOVE is that I end up with the same stuff
+at some new location, and even a hope that appropriate references to
+the old stuff ends up pointing at the new stuff (i.e. that business
+about updating things between the COPY and the DELETE).
+The expected semantics of COPY is that I end up with a different
+object, so that I can modify one copy and have it not affect the other.
+Now let's look at what a MOVE on a reference should be. It's pretty
+clear that you just want to have a copy of the source reference created
+at the destination. If you look at how both hard-links and sym-links
+are implemented in file systems, this is exactly what happens.
+But now let's look at what a COPY on a reference should be.
+If you just make a copy of the reference, then any PUT to the
+source object will cause a modification visible in a GET to the
+destination object, and vica versa. This is the opposite behavior
+from what one would expect from a "copy", and seems to violate
+the whole point of differentiating a "MOVE" from a "COPY".
+One alternative is to revisit the definition of MOVE as a kind
+of COPY. Part of me says that is the right choice, since many
+(or even most) systems treat MOVE as a "rename", not as a copy
+followed by a delete, i.e. it is a change to the namespace, not
+to the object being moved. This means that the current definition
+will keep getting us into trouble (as I believe it will in the
+case of locking a collection), since it forces the server to treat
+a cheap operation (rename) as an expensive operation (a recursive
+create, followed by a recursive delete). It's like forcing every
+"mv" to be a "tar" followed by an "rm -r".
+On the other hand, for simple resources and simple collections, the
+current definition works reasonably well, so it would be worth trying
+hard to find an alternative that does not re-open the existing spec.
+One such alternative would be to say that the COPY automatically
+invoked by a MOVE is "no-passthrough" by default (i.e. like DELETE),
+while an explicit COPY is passed through references (i.e. like a GET
+or a PUT, whose behavior we want to affect). This does "override" the
+original spec, but only when applied to references, which is probably
+more acceptable, since references are after all being defined in the
+Adv. Coll. spec.
+Either alternative is fine with me.
+Cheers,
+Geoff
+Thank you Geoff. I'm in the middle of a similar note but keep on getting
+distracted by work. :-)
+I agree.
+Yup. I agree.
+I tend to agree.
+I don't necessarily agree here. What I expect (or at least want)
+depends on what I'm doing at the time. I think I'd tend to expect
+the reference to be copied. I don't think my disagreement
+here really detracts from what you're saying though.
+I agree.
+We should look through the old discussions to see what reasons they had for
+this. (I started this in my unfinished note.) I recall one was MOVE
+between servers. That's not really a compelling argument for me and I
+believe that it was suggested at one point that if the move is between
+servers, then a COPY/DELETE would get done... otherwise, what you suggest.
+Anyway, I'm suggesting going through those discussions again to see what we
+can learn.
+I prefer the right solution over the expedient. We should not be
+encouraging the view that MOVE is a COPY/DELETE... except where necessary.
+Let's review old postings to see what situations we need to cover.
+Thanks again for bringing this up.
+J.
+I hate to snip out all the sections where we agreed (:-), but for the
+sake of brevity, I'll just skip to the one section which raised a question:
+From: ccjason@us.ibm.com
+GMC The expected semantics of COPY is that I end up with a different
+GMC object, so that I can modify one copy and have it not affect the other.
+Yup. I agree.
+OK, I left in one "I agree", but I need this one for context (:-).
+GMC But now let's look at what a COPY on a reference should be.
+GMC If you just make a copy of the reference, then any PUT to tthe
+GMC source object will cause a modification visible in a GET to the
+GMC destination object, and vica versa. This is the opposite behavior
+GMC from what one would expect from a "copy", and seems to violate
+GMC the whole point of differentiating a "MOVE" from a "COPY".
+I don't necessarily agree here. What I expect (or at least want)
+depends on what I'm doing at the time.
+My turn to agree (:-).
+I think I'd tend to expect the reference to be copied.
+The problem with copying just the reference shows up especially
+vividly in a downlevel client (that doesn't even know about
+references). If I say "COPY", the key expectation that I can
+now modify the copy-target without affecting the copy-source is violated.
+The general rule I try to apply in these situations is:
+If there are two reasonable things to do, so you need an extra parameter
+(e.g. a header) do indicate which one you want, then have the
+default be the one that does what a downlevel client would expect,
+and have the presence of the header mean to "do the other thing".
+In the case of "COPY" applied to a reference, this would seem to
+say that the reasonable thing that the downlevel client would
+expect (i.e. a copy of the reftarget of the reference) should be the
+default, and the other reasonable thing (i.e. a copy of the
+reference itself) should be indicated by a header. The "no-pass-through"
+header immediately springs to mind.
+Cheers,
+Geoff
+In many file systems, the implementation of move is different depending on
+the source and targets. Windows for example does something different if the
+move is within the same device or on a different device. UNIX is similar.
+So maybe we need to just state the semantics of MOVE in WebDAV and not tie
+it to a particular implementation, for example, the implementation implied
+by COPY followed by DELETE. Then the semantics can be expressed in a
+resource-dependent way if necessary including distinguishing references
+from concrete resources as necessary to produce meaningful results.
+Geoff (&amp; JimA)
+Sounds good.
+Now to check the history of the decision to say MOVE == COPY+DELETE....
+I've just done that. I've found nothing in the earlier discussions besides
+the mentioning of cross-server/device copy/move that might require
+COPY/DELETE approach. I think we've already dealt with that in this
+thread.
+In reading the spec, rather than just the mailing list, I see the WebDAV
+spec isn't that far off. It just needs to be clearer about intent. It's
+description COPY/DELETE isn't too bad depending on how you interpret it.
+We probably should leave a bit less for interpretation though. I think
+that's what JimA just suggested when he spoke of semantics vs.
+implementation.
+J.
+The question of what does COPYing a link mean is an interesting one. It has
+been a while since I used UNIX, so I don't recall how copy behaves.
+However, on Windows, if you copy a link then you have copied the link.
+Saves to the link go to the original file. This seems really intuitive to
+me because the link has a glyphette that differentiates the link from the
+original.
+On the other side of the coin, it is not unreasonable to expect the "share
+and branch" semantics that VSS provides. That is, you copy and when you
+update you sever the link.
+I guess my initial feeling is that COPYing a link does just that and if we
+want to have a "copy on write" semantics, then we use a separate method or
+special form of COPY.
+Chris

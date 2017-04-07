@@ -1,0 +1,125 @@
+Two of my students offer the following comments on TRACE:
+From: Louis Discepola disc7701@sparky.cs.nyu.edu
+The protocol states that "a TRACE request MUST NOT include
+an entity". For someone writing a server program, this
+requirement implies that the server program must check that
+this condition is upheld. But after reading a line of data
+from a client, there is no way for the server program to
+distinguish whether it received the first line of an entity
+body or the fist line of a badly formatted request line. It
+cannot therefore reply with an accurate response code. I
+suggest that the HTTP/1.1 specification clearly force the client
+side to enforce this requirement.
+From: Catalin Floristean floriste@slinky.cs.nyu.edu
+The specification states that if the request is "successful"
+it should return a 200 message containing the whole
+original request as message-body but does not define
+what successful means. Understandably, it should be checked
+for correct syntax and semantics, but how far should the
+semantic check go? Specifically, in the case where the
+Request-URI is the URL of a resource and not "*", should
+the origin server also make sure that the resource exists
+and is readable? Since the intention is just to provide a
+loop-back trace method (otherwise a HEAD request would do),
+probably a syntax check and a basic semantic check (the
+protocol version, presence of the Host header containing
+the correct host/port in case of HTTP/1.1) should suffice
+and this fact should be clearly stated.
+Also, it would help if it were stated clearly that the
+request headers apply to the trace response (e.g. a TRACE
+request with a "TE: chunked" will have it response's
+message body -- the trace -- chunked) and that a "*" URI is
+allowed here (although this could be implied from other
+sections).
+Arthur P. Goldberg
+Clinical Associate Professor of Computer Science
+artg@cs.nyu.edu http://www.cs.nyu.edu/cs/faculty/artg
+715 Broadway, Room 711, Computer Science Department
+Courant Institute of Mathematical Science
+New York University
+New York, NY 10003-6806
+1) The presence of an entity is signaled by the presence of an entity
+header, such as Content-Length or Content-Type. Without some indication
+that there's an entity there, the server must assume there is none.
+2) I don't necessarily agree with the assertion that the "server program
+must check". The statement that "a TRACE request MUST NOT include an
+entity" is more a requirement on the client. It equally well means that
+if a client does send an entity, then there's no guarantee about how the
+server might/must respond.
+In particular, consider three scenarios:
+a) If the server is written with the assumption that there's never an
+entity, then, on a persistent connection, it would assume that the next
+line that follows the end of the previous request would be a new request
+line, not part of an entity.
+b) OTOH, for that same example, if there happen to be entity headers in
+the TRACE request (but there's no entity) and the server is written to
+read an entity, even though one is not defined by the specification,
+then the second request would be interpreted as an entity, not as a
+request.
+c) The server in the second example could instead return a 400 Bad
+Request because there's an entity implied by the headers, but TRACE does
+not permit one.
+The specification is quite imprecise about what to do in many error
+cases. It is mostly concerned with what's supposed to happen if you do
+things the right way.
+3) The specification can't *force* the client (or server) to do
+anything. The "MUST NOT" you cite is about as good as you can do. How
+can you make the client "enforce this requirement"? Either it does the
+right thing or it doesn't.
+1) I think the wording "If successful, the response..." is poor
+English. (It isn't the response that's successful!) Perhaps it should
+say "If the request is valid, the response...." What constitutes a
+valid request is sprinkled through the specification.
+2) I think the student is trying to read too much into the
+specification. The description of the response says only that the
+request message should be returned as an entity. It says nothing about
+checking the Request-URI or the resource so-identified The topic of
+what to do when something is unstated often comes up in discussions here
+(and I often raise them :-). If the specification doesn't say to do
+something anywhere, then don't do it. In this case, a server might or
+might not check the syntax of the Request-URI, but it need not check the
+resource so-identified.
+I think we've been here before. "TE: chunked" doesn't say the server
+*must* chunk the response. It says the client would accept "chunked".
+But for an HTTP/1.1 request, that fact is implied and, therefore, the
+header is redundant.
+Dave Kristol
+It can distinguish this with a CRLF pair. Because a TRACE request
+cannot contain an entity as per the specification, then anything after
+the CRLF pair (not including additional CRLFs) would have to be
+considered the beginning of a new request. However, another
+question to ask would be how a server should handle a TRACE
+request when a Content-Length header, for example, is included.
+Should the server simply read in the entity in any event even though
+it's forbidden by the spec (I'd think so, in keeping with being
+lenient), and then just not return it with the response? Or should
+the server respond with the entire trace? Or should the trace, in
+this case, be answered with a 400 status code?
+I think we all missed the point of TE. "TE: chunked" is never
+required since chunked encoding is *always* acceptable, correct,
+working group?
+Adam
+I would just make a general comment here: it is true that in most cases
+it is easy to infer
+common sense answers to these questions, e.g. it is common sense not to
+check the resource
+identified by the Request-URI of a TRACE request. The point is though,
+for some reason I still believe
+that a good, solid specification should rely less on common sense
+answers and more on clearly stated
+definitions, descriptions, terms etc. (even if this implies a reasonable
+amount of redundancy). I believe
+this leads to a rapid and reliable implementation (and that's how you
+get a big, ugly, hard-to-read yet
+complete ANSI standerd :).
+--Catalin
+If you're referring to the ANSI C standard, I had a small hand in that.
+The danger with adding redundancy, as I found out from the ANSI C
+effort, is that it's very easy to introduce inconsistencies. If you
+say, "Do a, b, and c" in one place and "Do a and b" in another, you
+invite incompatibilities. The safest way to write a standard that's
+consistent is to say each thing only once, if possible.
+As with the ANSI C specification, you cannot understand the HTTP
+specification by looking at just one part. Unfortunately you have to
+understand all or most of it as a unit.
+Dave Kristol

@@ -1,0 +1,237 @@
+The CONTENT-ENCODING issue:
+has been assigned to myself and Henrik for resolution. We're pretty
+close to solving most of it, except for a seemingly minor concern:
+How does a client say "don't send me the 'identity' encoding"?
+I.e., "please send me a compressed form or send me nothing."
+(Why would a client want to say "don't send 'identity'"? Well,
+perhaps the bandwidth costs or latency costs are too high.)
+A month or two ago, I proposed adding an "identity" content-coding
+so that we could define a way for the client to say that
+it does NOT want the identity encoding. I had originally
+thought "if the client sends a list of explicitly acceptable
+encodings, but 'identity' isn't on this list, then this
+means that it doesn't want 'identity'". But that is obviously
+not going to work. For example, existing clients (apparently
+including Lynx) send
+Accept-encodings: gzip, compress
+even though they are presumably willing to take "identity." If
+we were to adopt the rule that I had originally proposed, Lynx
+clients would suddenly get error returns for most resources!
+Since we certainly do not want break existing clients, the
+other alternative that I thought of seems simpler, if somewhat
+odd at first glance: define an explicit way for the client to say
+"I would rather have 406 than the identity-encoding". Here are
+some ways to do this:
+(a)Accept-Encoding: gzip, compress, no-identity
+/* an explicit "no identity-encoding wanted" token */
+(b)Accept-Encoding: gzip, compress, strict
+/* "strict" means "this set, or nothing" */
+(c)Accept-Encoding: gzip, compress, identity;q=0.0
+/* allow qvalues here */
+(d)Accept-Encoding-Strict: gzip, compress
+/* define new header to avoid compatibility questions */
+Which one to choose? (d) is least likely to cause trouble, but
+it also means that the client has to guess the origin-server version.
+We have no reliable way to do this, so in practice (d) would not
+really encourage the use of compression.
+(c) seems closest to existing practice, although it's possible
+that some existing servers might choke on the qvalue.
+(a) and (b) mean roughly the same thing, and are certainly not
+going to cause compatibility problems, but they are a little kludgey.
+We're already likely to propose that Accept-Encoding allow
+the use of "*" to mean "whatever you want to send." So a slight
+variation on (c) would be
+(e)Accept-Encoding: gzip, compress, *;q=0
+I.e., the "coding"
+*;q=0
+is semantically equivalent to the "strict" token in (b) above,
+but somewhat closer to the form of the other Accept-* headers.
+My own preference is for one of these two approaches:
+(c)Accept-Encoding: gzip, compress, identity;q=0.0
+(e)Accept-Encoding: gzip, compress, *;q=0
+However, neither of these will work if any existing servers
+or proxies would choke on a qvalue in an Accept-Encoding header.
+Also, while (e) is cleaner in some ways, it also is infeasible
+if any existing servers or proxies would choke on a "*" here.
+Comments? As soon as possible, please!
+-Jeff
+P.S.: We may have to include a Note to client implementors that
+sending a qvalue for a content-coding from the set {"compress",
+"gzip", "x-compress", "x-gzip"} might be misinterpreted by older
+servers, and so is not recommended. At least, the one older server
+source that I looked at (Apache_1.1b3) looks like it will treat
+Accept-encoding: gzip;q=1.0
+as a request for a content-coding that it doesn't know about.
+I dislike the * proposal intensely. Best leave punctuation for use
+in regular expressions and separators. It is always a mistake to
+use a punctuation mark to stand for a symbol IMHO. identity is OK
+by my reconning although NULL is shorter and may be more
+descriptive in this context.
+There are already numerous places in RFC2068 where the "*" syntax
+is used as a "wildcard", including
+OPTIONS method
+Accept:
+Accept-Language:
+If-Match:
+If-None-Match:
+Vary:
+And its use has also been last-called in the Content-Range header.
+To me, it seems odd that Accept-Charset and Accept-Encoding don't
+already allow a "*" value, given that Accept and Accept-Language do.
+-Jeff
+I think this is the best. it allows the case to be handled where the
+source form is accepted but not ideal. Consider the case where the rank
+of preferences is gzip / source / compress where gzip is prefered, and
+the source form prefered over unix compress.
+I think this is a more realistic case than "don't want the source at
+all".
+Ugh! Please, no more headers unless there is a serious problem with one
+already defined!
+I dislike the * proposal intensely. Best leave punctuation for use in
+regular expressions and separators. It is always a mistake to use a
+punctuation mark to stand for a symbol IMHO. identity is OK by my
+reconning although NULL is shorter and may be more descriptive in this
+context.
+Phill
+Date: Mon, 21 Jul 97 15:59:25 MDT
+From: Jeffrey Mogul mogul@pa.dec.com
+(a)Accept-Encoding: gzip, compress, no-identity
+/* an explicit "no identity-encoding wanted" token */
+(b)Accept-Encoding: gzip, compress, strict
+/* "strict" means "this set, or nothing" */
+Note that any older server will ignore the `strict' or the `no-identity',
+so you still might get uncompressed content.
+(c)Accept-Encoding: gzip, compress, identity;q=0.0
+/* allow qvalues here */
+(d)Accept-Encoding-Strict: gzip, compress
+/* define new header to avoid compatibility questions */
+This breaks existing servers to some extent, and I really think it's
+ugly and really don't like it.
+(e)Accept-Encoding: gzip, compress, *;q=0
+I.e., the "coding"
+*;q=0
+is semantically equivalent to the "strict" token in (b) above,
+but somewhat closer to the form of the other Accept-* headers.
+My own preference is for one of these two approaches:
+(c)Accept-Encoding: gzip, compress, identity;q=0.0
+(e)Accept-Encoding: gzip, compress, *;q=0
+I like (c) and (e), though I wouldn't be able to agree that they are
+good if any server will choke on them.
+Of course, I don't quite see why I would need to reject the identity
+encoding.
+P.S.: We may have to include a Note to client implementors that
+sending a qvalue for a content-coding from the set {"compress",
+"gzip", "x-compress", "x-gzip"} might be misinterpreted by older
+servers, and so is not recommended. At least, the one older server
+source that I looked at (Apache_1.1b3) looks like it will treat
+Accept-encoding: gzip;q=1.0
+as a request for a content-coding that it doesn't know about.
+Sad. I'd like E-scape to advertise that it can handle compress, but
+prefers gzip (because patents mean that a compress implementation
+can't be free from fear of lawsuits unless royalties are paid;
+whereas gzip doesn't seem to have this problem).
+(a)Accept-Encoding: gzip, compress, no-identity
+/* an explicit "no identity-encoding wanted" token */
+(b)Accept-Encoding: gzip, compress, strict
+/* "strict" means "this set, or nothing" */
+Note that any older server will ignore the `strict' or the
+`no-identity', so you still might get uncompressed content.
+Of course. I probably should have stated that the ability to
+say "don't send me 'identity'" is an optimization, and not always
+available (because of the situation you suggest).
+-Jeff
+Jeffrey Mogul:
+I like (a) best. The trouble with adding q values to this header is
+that it makes selecting the `best' encoding much more complicated
+(decoding short floats and finding the highest one is too complicated
+to do in a simple shell script, for example), and this would
+discourage the deployment of servers which know about encodings.
+I think that the knowledge that `gzip is better than compress is
+better than identity' can just as well be implemented at the server
+side, and implementing it there will be much cheaper.
+Another reason I like (a) is that there won't be any compatibility
+problems with existing servers.
+Koen.
+JM The CONTENT-ENCODING issue:
+JM http://www.w3.org/pub/WWW/Protocols/HTTP/Issues/#CONTENT-ENCODING
+JM has been assigned to myself and Henrik for resolution. We're pretty
+JM close to solving most of it, except for a seemingly minor concern:
+JM How does a client say "don't send me the 'identity' encoding"?
+I don't think this is a serious enough concern to merit doing
+anything at all. If this is not possible that's just fine.
+That having been said, the q-value solution would seem the best to
+me. I prefer not to use '*' for this, so my choice from your
+alternatives would be:
+JM (c)Accept-Encoding: gzip, compress, identity;q=0.0
+Our server doesn't currently do anything with Accept-Encoding (our
+customers generally don't have the storage to devote to storing
+multiple encodings, and don't want the CPU spending time creating
+them) so we have no backward compatibility issue.
+Scott Lawrence EmWeb Embedded Server lawrence@agranat.com
+Agranat Systems, Inc. Engineering http://www.agranat.com/
+In a previous episode Koen Holtman said...
+:: Jeffrey Mogul:
+::
+::  (a)Accept-Encoding: gzip, compress, no-identity
+::  /* an explicit "no identity-encoding wanted" token */
+:: I like (a) best. The trouble with adding q values to this header is
+:: that it makes selecting the `best' encoding much more complicated
+:: (decoding short floats and finding the highest one is too complicated
+:: to do in a simple shell script, for example), and this would
+:: discourage the deployment of servers which know about encodings.
+I find this a very persuasive argument.. Content Encodings are
+something we are intending to deal with aggressively in current and
+upcoming server extension projects.. (CGI, fast CGI, nsapi,
+whatever..) If this is the type of functionality that's going to be
+handled by a lot of different applications (as opposed to a handful of
+base web servers) simplicity is paramount... that unfortunately means
+no q values.
+-P
+I also vote for no q-values. Perhaps identity/no-identity could be
+shortened to id/no-id.
+John Franks Dept of Math. Northwestern University
+john@math.nwu.edu
+JM The CONTENT-ENCODING issue:
+JM http://www.w3.org/pub/WWW/Protocols/HTTP/Issues/#CONTENT-ENCODING
+JM has been assigned to myself and Henrik for resolution. We're pretty
+JM close to solving most of it, except for a seemingly minor concern:
+JM How does a client say "don't send me the 'identity' encoding"?
+On further reflection, I really think that we should just not
+provide this capability at all. The server should always be free to
+just send the resource as is in response to the request. If the
+server has or can create a version of the resource in one of the
+acceptable encodings, it should send that, but I think that the
+implicit 'identity' coding (sent with no Content-Encoding header)
+should always be an acceptable response.
+If there is an Accept-Encoding header in the request, it should be
+interpreted as meaning that the listed encodings are acceptable in
+addition to the implicit 'identity'.
+I can't quite puzzle out from the reference on the issues list what
+the problem with this approach is.
+Scott Lawrence EmWeb Embedded Server lawrence@agranat.com
+Agranat Systems, Inc. Engineering http://www.agranat.com/
+I'm in favor of keeping it simple and just having no way
+of saying "don't send me the identity encoding".
+From: koen@win.tue.nl (Koen Holtman)
+Date: Tue, 22 Jul 1997 09:39:19 +0200 (MET DST)
+Jeffrey Mogul:
+I like (a) best. The trouble with adding q values to this header is
+that it makes selecting the `best' encoding much more complicated
+(decoding short floats and finding the highest one is too complicated
+to do in a simple shell script, for example), and this would
+discourage the deployment of servers which know about encodings.
+I think it can be done in a shell script. Noah Friedman is a sysadmin
+I know who is very good at writing shell scripts. I'm sure he could
+write an adaquate script within a few hours.
+Furthurmore, I think there are a lot of deployed servers which know
+about q values for content-types. If the code can't be recycled,
+then the people who wrote it don't know what they're doing.
+I think that the knowledge that `gzip is better than compress is
+better than identity' can just as well be implemented at the server
+side, and implementing it there will be much cheaper.
+Probably true.
+However, there will be cases where identity is better than any
+compressed setting, if you are on a very fast link, and the server
+or client has a relatively slow processor. These are very few;
+for a modem connection, even with a 386 I'd want compression.
+So I think that encoding that knowlege in the server is reasonable.

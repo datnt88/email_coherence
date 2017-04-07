@@ -1,0 +1,220 @@
+It would seem that without canonicalization, the interpretation of IDREF and
+of URI="" can change from application to application.
+When an application reads an XML document, it will store different material
+based on whether or not the XML processor is validating, whether it
+understands namespaces, and how it decides to store attributes (whose order
+is application-dependent).
+When one uses an IDREF, I suppose this immediately implies a validating
+processor since ID's aren't supposed to work for non-validating processors.
+However, the other problems still exist. Within the identified element, how
+should the text be rendered for the digest algorithm? One change of
+attribute order destroys a signature.
+Also, IDREF is usually used in conjunction with URI="". URI="" is supposed
+to indicate the root of *this* document, but there is still not enough
+information to tell us how to generate the byte stream that will be
+digested. Fortunately, URI="" cannot be used alone since such a signature
+would break as soon as the signature value is added to the document. URI=""
+must be used in conjunction with either IDREF or an XPath transform.
+The XPath transform has already been fixed by requiring c14n as part of its
+processing. IDREF must either be similarly fixed, or simply throw out IDREF
+as being a redundant way of doing a fairly simple XPath transform.
+Finally, note that URI="" could be used in conjunction with a transform
+other than XPath, such as XSLT. The XSLT transform has not been modified
+yet to require canonicalization. Thus, URI="" may feed slightly different
+data to an XSLT depending on the application. We need to fix this.
+John Boyer
+Software Development Manager
+UWI.Com -- The Internet Forms Company
+supposed
+signature
+URI=""
+Either that or it is core behavior to omit the contents of
+SignatureValue in
+that case.
+The spec should define that, but I can't find anything about it in [1],
+neither
+in sec. 2.3/3.3.3 nor 6., or have I missed it?
+Btw two minor editing points:
+1. sec. 2.3 defines URI/IDREF as exclusive alternatives
+in contrast to sec. 3.3.3
+2. DTD in sec. 3.3.3. still uses 'ObjectReference'.
+Andreas
+[1] http://www.w3.org/Signature/Drafts/WD-xmldsig-core-20000104/
+I think it should be clear that in this case an additional XPath transform
+has to be applied to exclude the Signature. I don't think it is necessary to
+state this as core behaviour.
+I don't see a contradiction here. In [1], sec. 3.3.3. you can find:
+"The URI/IDREF attribute identifies a data object using a URI [URI] or IDREF [XML]."
+[1] http://www.w3.org/Signature/Drafts/WD-xmldsig-core-20000104/
+Gregor Karlinger
+Institute for Applied Information Processing and Communications
+Austria
+I don't think that is intended by the specification to use IDREF in conjunction
+wiht URI. Both [1], section 2.3 and [1], section 3.3.3 state to use either URI
+(and an additional XPath transform) or IDREF.
+Gregor Karlinger
+Institute for Applied Information Processing and Communications
+Austria
+The only thing which is clear is that self-referential sigantures will never validate. I
+think this problem and any solution the standard provides should be explained somewhere
+- may it be core behavior definition, a recommendation to application designers, or at
+least application examples.
+Nevertheless, since signing 'this' document seems to me to be a quite common case, so
+why not provide standard means to cope with it? To define exclusion of SignatureValue as
+core behavior is the simplest way to achieve this.
+Right. This was only in conflict with John's idea of using URI and IDREF jointly to
+solve the problem above.
+Ah, when I read "The URI/IDREF attribute identifies a data object using a
+URI [URI] or IDREF [XML]", I assumed that the author intended an
+inclusive-logic 'or' whereas under Gregor's interpretation it is an
+'either-or' or exclusive-or. The reason for my assumption that IDREF and URI
+would coexist is so that one could IDREF into documents other than the
+self-document.
+Note to editors: If exclusive-or was intended, then perhaps the word
+'either' can be inserted to clear that up, and if inclusive-or was intended,
+then perhaps 'or both' can be appended.
+Still, assume that use of IDREF implies URI="". The point I'm making about
+IDREF stands, and the problem with URI="" can still occur. URI="" is
+problematic unless we assume that a c14n occurs between the processing of
+URI="" and digesting the final byte stream. When we have URI="nonempty",
+the understanding is that we will execute some scheme like http or ftp to
+obtain a set of bytes. However, URI="" has no scheme, so presumably the
+application is being asked to provide the document's bytes, and presumably
+it will do so in an application-specific way.
+So, like IDREF, the bytes corresponding to URI="" would seem to be
+application-specific, which is bad for interoperable signatures.
+Currently, URI="" cannot be used without some kind of transform to exclude
+SignatureValue. Since the XPath transform is currently written in such a
+way that W3C c14n is required, there will be no problems. However, it would
+seem that any transform (such as XSLT or Java) that takes URI="" as input
+will have a problem. This is why we must still consider the URI="" problem.
+One simple solution would be to eliminate all transforms other than c14n,
+base64 decode, xpath and xpointer.
+Furthermore, Andreas recommended that dropping SignatureValue should be done
+automatically. I would agree insofar as this is precisely what we did when
+defining XFDL's signature methodology. However, doing this automatic
+omission increases the number of signatures that will be created using
+URI="" but notransforms, which means no c14n, which means troubles of the
+type described above. Thus, it is probably a good idea to have the
+SignatureValue omission spelled out (esp. since the work of omitting
+SignatureValue must be done even if the document doesn't spell it out).
+John Boyer
+Software Development Manager
+UWI.Com -- The Internet Forms Company
+[mailto:w3c-ietf-xmldsig-request@w3.org]On Behalf Of Andreas Schmidt
+transform.
+to
+The only thing which is clear is that self-referential sigantures will never
+validate. I
+think this problem and any solution the standard provides should be
+explained somewhere
+- may it be core behavior definition, a recommendation to application
+designers, or at
+least application examples.
+Nevertheless, since signing 'this' document seems to me to be a quite common
+case, so
+why not provide standard means to cope with it? To define exclusion of
+SignatureValue as
+core behavior is the simplest way to achieve this.
+IDREF [XML]."
+Right. This was only in conflict with John's idea of using URI and IDREF
+jointly to
+solve the problem above.
+intended,
+It is supposed to be 'or', I will note we need to make this clearer for the
+next version.
+I agree.
+4.2. Same-document References
+A URI reference that does not contain a URI is a reference to the
+current document. In other words, an empty URI reference within a
+document is interpreted as a reference to the start of that document,
+and a reference containing only a fragment identifier is a reference
+to the identified fragment of that document. Traversal of such a
+reference should not result in an additional retrieval action.
+However, if the URI reference occurs in a context that is always
+intended to result in a new request, as in the case of HTML's FORM
+element, then an empty URI reference represents the base URI of the
+current document and should be replaced by that URI when transformed
+into a request.
+RFC2396 does leads me to think that this will be dependent on the receiving
+application. I'll give this some more thought and ask some colleagues if
+they think this is the same class of problem as XPath/IDREF.
+done
+So far we've been able to have the core processing rules avoid doing XML
+things: XML things do XML things, and the processing rules do
+byte/cryptographic things. I'd like to keep it this way as I fear the
+interactions between XML processing within the documents and transforms
+getting mixed with our own 'custom' XML processing rules.
+Joseph Reagle Jr.
+Policy Analyst mailto:reagle@w3.org
+XML-Signature Co-Chair http://www.w3.org/People/Reagle/
+Also, not all URIs include a scheme that designates ways of providing a
+document's bytes (for instance, URN or UUID).
+would
+problem.
+However, these might be useful transforms for a 'URI-reference' [1].
+Furthermore, they still might be useful if you do an XPath and XML c14n
+(canonicalization) _first_. Or maybe in the java example, the java code
+c14n'izes and removes the signature elements itself. Consequently,
+disallowing them in this particular case doesn't seem ecessary.
+[1] URI-reference = [ absoluteURI | relativeURI ] [ "#" fragment ]
+However, the status of the URI and IDREF was 'lets put it in there, and see
+what sort of response we get.' No one seems to be a huge fan from an
+elegance point of view. The two options we had of proceeding were as follows:
+a. (absoluteURI | relativeURI) and IDREF
+b. (URI-reference) and no IDREFs
+(We constrained ourselves so we'd have a single consistent way of doing
+something). I'm beginning to think the right interpration would've been B.
+(Partly because I don't think we can define a 'clean URI' (without a
+fragment) that anyone will pay attention to. The uri schema datatype isn't
+defined that way.) No attribute should be definied as an IDREF, instead it
+should be defined as a URI. However, this still means that someone can
+specify an XPath or an XPtr as part of the URI and also have one as part of
+a transform. The consequence of this would be to return to a target
+attribute of type attribute, but I'm curious to hear other thoughts.
+Joseph Reagle Jr.
+Policy Analyst mailto:reagle@w3.org
+XML-Signature Co-Chair http://www.w3.org/People/Reagle/
+Actually, there are three options.
+a. (absoluteURI | relativeURI) and IDREF
+b. (URI-reference) and no IDREFs
+c. (absoluteURI | relativeURI) and use a transform for partial document
+access.
+The best choice is C. We currently have A, which has the aforementioned
+IDREF problem. Choosing B does not get rid of the IDREF problem from A. C
+eliminates the problem by having element identification occur only through a
+*canonicalizing* transform.
+Furthermore, I'm sure there will be objections from those who "don't want to
+implement c14n" or "don't want to implement XPath support" for the sake of
+keeping processing simple on small signatures or just reducing development
+time. Well, once again, these are not valid arguments. The spec is only
+defining what the resultant bytestream has to look like. If a particular
+party's XML is small, it is also quite likely to be simple such that making
+the byte stream conform to c14n will be very easy. As for XPath, full
+support is also not needed by a particular app that just wants to verify its
+own signatures; it can just look for the particular XPath phrase(s) it
+supports. Only apps that want to do interoperable signatures from among
+apps (whose characteristics may not be known in advance) need to support the
+full blown versions of the recommended and optional features in the spec.
+John Boyer
+Software Development Manager
+UWI.Com -- The Internet Forms Company
+[1] URI-reference = [ absoluteURI | relativeURI ] [ "#" fragment ]
+However, the status of the URI and IDREF was 'lets put it in there, and see
+what sort of response we get.' No one seems to be a huge fan from an
+elegance point of view. The two options we had of proceeding were as
+follows:
+a. (absoluteURI | relativeURI) and IDREF
+b. (URI-reference) and no IDREFs
+(We constrained ourselves so we'd have a single consistent way of doing
+something). I'm beginning to think the right interpration would've been B.
+(Partly because I don't think we can define a 'clean URI' (without a
+fragment) that anyone will pay attention to. The uri schema datatype isn't
+defined that way.) No attribute should be definied as an IDREF, instead it
+should be defined as a URI. However, this still means that someone can
+specify an XPath or an XPtr as part of the URI and also have one as part of
+a transform. The consequence of this would be to return to a target
+attribute of type attribute, but I'm curious to hear other thoughts.
+Joseph Reagle Jr.
+Policy Analyst mailto:reagle@w3.org
+XML-Signature Co-Chair http://www.w3.org/People/Reagle/

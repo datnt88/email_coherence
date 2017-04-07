@@ -1,0 +1,46 @@
+Hi,all
+I'am new to HTML-Tidy.
+Following a friend Tony Thompson's advice, I got the JTidy.Because JTidy
+don't
+support the Chinese-simple character encodings,so I use command line like
+this:
+java -jar Tidy.jar -raw -asxml -m mine.html
+Although it seems to work for everybody, but still something trouble. The
+&amp;nbsp entity is parsed with '?' (the HEX code is #A030 ).
+I spend lots of time testing and thinking, at last, I decide substituting "
+for &amp;nbsp with jakarta-oro, then converting html to wellformed xml with
+JTidy.
+That's great! It's working sucessful.
+But, as a side note, could the JTidy or tidy can convering directly the
+chinese character encoding html to wellformed xml?? :)
+Thanks a lot.
+Surfbird
+Get your FREE download of MSN Explorer at http://explorer.msn.com/intl.asp
+[-raw for unknown character encodings]
+Could you please give some example? To me, &amp;nbsp; is converted to a
+single byte value, i.e. 0xA0. Ok, this may cause some trouble, but
+-raw is in general said to cause trouble, especially for entities.
+Bj?rn H?hrmann { mailto:bjoern@hoehrmann.de } http://www.bjoernsworld.de
+am Badedeich 7 } Telefon: +49(0)4667/981028 { http://bjoern.hoehrmann.de
+25899 Dageb?ll { PGP Pub. KeyID: 0xA4357E78 } http://www.learn.to/quote/
+[-raw for unknown character encodings]
+This is not really responsive, but ...
+Walking through the code in the debugger, it appears that &amp;nbsp; _is_
+converted to 0xA0, but because the internal representation of text is in
+UTF8, this is stored internally as a _double_ byte value, 0xC2A0. This
+can cause confusion as the second byte of the pair is identical in value
+to the single byte value! Thus if you do something like:
+// convert non-breaking space to space
+if ((unsigned char) lexer- lexbuf[i] == 0xA0)
+lexer- lexbuf[i] = ' ';
+you will leave a 0xC2 dangling in the buffer, becoming a UTF8 0xC220
+character (I don't know what this will become, but I don't think it's
+valid).
+Someone attempted to work around this in the function NormalizeSpaces()
+in clean.c by getting a UTF8 character, comparing it to 160 (0xA0), and
+then replacing it with ' '. Unfortunately, the node- end value is not
+adjusted when one of these is found, replacing a two-byte sequence with
+a single byte, potentially leading to garbage characters appearing in a
+text node.
+Of course, on output, a raw 0xA0, or "&amp;#160;" or "&amp;nbsp;" is exactly
+what we would expect to see.

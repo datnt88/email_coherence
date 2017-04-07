@@ -1,0 +1,134 @@
+[Note: this thread is moving to public-sws-ig. After this message,
+replies should only be sent to public-sws-ig.]
+Monika, Drew,
+I completely agree with the proposed solution. This should definitely be
+implemented in the next release.
+I also agree, except note that there are 2 proposals "on the table":
+I think Monika suggested this:
+Process - hasPrecondition - Precondition
+where Precondition is a subclass of Condition
+whereas Drew seems to be suggesting this:
+Process - hasPrecondition - Condition
+(with no Precondition class anywhere).
+That reminds me - we still have an open issue about the class of an
+effect (that is, the range of ceEffect). Currently it's just "Thing",
+which isn't very satisfying. Do people feel that it's OK to have
+Condition for this range, or do we need something distinct?
+- David
+Cheers,
+Marta
+[Monika Solanki, in re DAML-S spec]
+Currently in the 1.0 version of the process model, we have the following
+owl:Class rdf:ID="Precondition" /
+- owl:ObjectProperty rdf:ID="preCondition"
+rdfs:domain rdf:resource="#Precondition" /
+rdfs:range rdf:resource="#Condition" /
+/owl:ObjectProperty
+Where, Condition is defined as,
+- owl:Class rdf:ID="Condition"
+rdfs:comment This is a "place-holder" for now, which awaits further
+work from the DAML/OWL community. An instance of Condition is a logical
+formula that evaluates to true or false. Eventually we expect this to be
+defined elsewhere, as part of a OWL extension allowing for logical
+expressions. /rdfs:comment
+/owl:Class
+Somehow I am not able to grasp the utility of the property
+"preCondition". Since in this model, we have IOPEs as Classes,
+therefore I believe all we need to do is make Precondition a subclass of
+Condition.
+owl:Class rdf:ID="PreCondition"
+rdfs:subClassOf rdf:resource="#Condition" /
+/owl:Class
+The property preCondition, introduces redundancy as it is ranging over
+the class "Condition" anyways.
+Feedback appreciated in case I missed something.
+You're right, as far as I can see. The important property is
+hasPrecondition, which connects a Condition to a
+Process or Process step. There is no reason for the class
+Precondition to exist, let alone a property preCondition linking a
+Precondition to a Condition (itself?).
+-- Drew McDermott
+Yale University CS Dept.
+Monika, Drew,
+I completely agree with the proposed solution. This should
+definitely be
+implemented in the next release.
+I think we should retain the Precondition class and the hasPrecondition
+property. This is because, although Precondition is effectively a
+Condition, however it is a "special" kind of Condition. In the process
+model, Condition is a general thing, which is also used for
+Conditional Effects and Conditional Outputs.
+Cheers,
+Marta
+**   **   **   **   **   **   **   **
+Monika Solanki
+Software Technology Research Laboratory(STRL)
+De Montfort University
+Hawthorn building, H00.18
+The Gateway
+Leicester LE1 9BH, UK
+web: http://www.cse.dmu.ac.uk/~monika
+**   **   **   **   **   **   **   **
+I agree. We may want to syntactically restrict the types of preconditions
+we have. This affords us that flexibility.
+Sheila
+[David Martin]
+I think Monika suggested this:
+Process - hasPrecondition - Precondition
+where Precondition is a subclass of Condition
+whereas Drew seems to be suggesting this:
+Process - hasPrecondition - Condition
+(with no Precondition class anywhere).
+That reminds me - we still have an open issue about the class of an
+effect (that is, the range of ceEffect). Currently it's just "Thing",
+which isn't very satisfying. Do people feel that it's OK to have
+Condition for this range, or do we need something distinct?
+Effects are fundamentally different from conditions. They just don't
+have the same vocabulary. Effects are not true or false; they are
+"imposed" or "not imposed."
+Here are some examples:
+(increase q x): means "Quantity q increases by x."
+(when p e) in an effect means, "If p was true before the action, e
+is imposed after
+(new x p): "A new x comes into existence, such that p." (This is
+not standard, but several people with practical planning
+applications say it's absolutely necessary, and it certainly
+seems to be in the web-services world.)
+On the Precondition-class issue: I am willing to lose on this issue,
+but I think the winners will eventually repent. As Mike Huhns pointed
+out, all there is to know about a formula is captured in the way it is
+expressed in some syntactic framework. Putting a formula into a
+precondition slot doesn't change anything about it. It's not like
+moving an animal into the Pet class by housebreaking it. If to be in
+the Precondition class is to be the precondition of some step, then
+there is no way to decree that a Condition is _not_ in the
+precondition class. How could you ever know? You could put every
+Condition into the Precondition class and it wouldn't do any harm.
+It's as if we had a class Password, such that a string was in this
+class if and only if it was a password used by someone, somewhere.
+What would be the point? What we care about is that a string is the
+value of the hasPassword property for some particular application.
+(Of course, a particular application could have a class
+Acceptable-password, which allowed strings with digits and punctuation
+marks, but disallowed English words, but then it would be something
+about the string itself that made it acceptable or not.)
+-- Drew McDermott
+Yale University CS Dept.
+[Monika Solanki]
+[Sheila McIlraith]
+I agree. We may want to syntactically restrict the types of preconditions
+we have. This affords us that flexibility.
+That would make sense.
+But what Monika actually said is a bit different. In the quoted
+paragraph, she suggested that Condition encompassed preconditions, plus
+conditional-effect and conditional-output conditions ("secondary
+preconditions"). I've been assuming that a Condition was an arbitrary
+formula. After all, it's not a subclass of anything (according to
+Process.owl).
+It might be reasonable to have a class Formula, and a subclass
+Condition that was restricted syntactically somehow. I'd be very
+surprised if there were a syntactic difference between primary and
+secondary preconditions.
+-- Drew
+-- Drew McDermott
+Yale Computer Science Department

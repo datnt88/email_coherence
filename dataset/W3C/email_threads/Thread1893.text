@@ -1,0 +1,228 @@
+(Ted)
+The mandatory draft presumes that the mandatory header will be
+processed before any of the two digit headers it names; that
+should be made *really* clear in the draft, as it is a big
+change.
+(Henrik)
+Why is this? The recipient can still parse the headers without knowing
+their semantics. This is exactly the same as for any other unknown header
+fields. Whether the mandatory (or optional) header fields are passed before
+or afterwards doesn't change this. If you feel that this should be an issue
+on the issues list then please let me know.
+(Ted,again)
+I feel this should be an issue on the issues list. Imagine
+that a current end-user system gets a header like:
+98-BetaStatus: Release Azure
+With the current theory of unordered headers, the end-user
+system knows right away whether it needs to process the
+message differently in the presence of this header. Under
+mandatory, header prefixes are generated on the fly,
+so it wont know if 98- corresponds to some extension which
+it supports until it processes the Mandatory header. This
+means that Mandatory headers must be processed before any
+of the two digit headers. This implies that processing of
+Mandatory headers isn't unordered, which seems like a big
+enough change to me that it should be made very explicit
+in the draft.
+End-to-End's current use needs to be re-thought. I think it
+would be much cleaner to have communications meant for
+non-next hop proxies to have a different header, as hop-by-hop
+does. Consumed in the middle does not mean end-to-end and
+planning for either with the same header doesn't make sense
+to me.
+(Henrik)
+I have two points here: First, I disagree that HTTP defines end-to-end to
+mean from the user agent to the origin server. For example, the text in
+13.5.1 says
+* End-to-end headers, which must be transmitted to the
+ultimate recipient of a request or response. End-to-end
+headers in responses must be stored as part of a cache
+entry and transmitted in any response formed from a
+cache entry.
+Think of caching, for example. The client sends a set of header fields in
+the request that it considers to be end-to-end, however, they may never
+reach the origin server because a cache happens to be the "ultimate
+recipient".
+A difference in Mandatory is that the "ultimate recipient" of a declaration
+doesn't have to be the same as for the rest of the message. But this is
+already the case with PICS labels and authentication that also can be
+handled by other parties than the origin server and the user agent. The
+whole point is that it should be transparent - it is for the feature to
+define who the appropriate recipient is for non-hop-by-hop extensions.
+However, that being said - I don't want to upheld the draft on essentially
+a question of terminology and if we can come up with another term than
+end-to-end then let's do that. Other names are welcome - or if you can
+provide wording that makes the distinction clear. I have added this as an
+item on the issues list.
+(Ted, again)
+I still believe there is a different behavior being defined in
+Mandatory than the caching example provides. The proxy cache
+behavior is defined by the proxy's need to act for the end host;
+in the presence of an end to end header in a request for which
+it has a valid entry, the proxy can still reply, on behalf of
+the ultimate recipient. It can't itself be the recipient of
+an end-to-end header (as an example, on a request for a resource
+which it has never before seen, the proxy *must* transmit all
+end to end headers to the ultimate recipient).
+I believe it is not a good idea to mix the terminology for headers
+intended to be consumed by some extension-defined participant
+with that for headers which are meant for the ultimate
+recipient, (defined either as the origin server or a proxy which
+can act for that server by virtue of having seen the request
+and response before). I think there should be a distinct name
+for those headers which get passed past the first hop but may
+be "consumed" prior to the end, as there are some issues specific
+to those headers (what happens if no one in the chain removes it,
+for example).
+(Ted)
+The layered approach in 5.0 seems to imply that the last
+step is to apply the semantics of the method without M-;
+since that is not what is meant, the language needs to
+be tightened to indicate that the semantics may be derived
+from the base method, but they should not be assumed.
+(Henrik)
+Good point. I would be inclined to remove the point entirely as it is
+really only the extension that can determine whether this is the right
+behavior. Do you agree - or do you have a proposed wording? I have added
+this as an issue.
+(Ted, again)
+I think getting rid of it will work, and I agree only the
+extension can determine the right behavior. Some language
+to warn people not to use M-PUT for DELETE is probably
+appropriate, but this probably isn't the right placement
+for it.
+(Henrik)
+It is important that people can use registered names without being forced
+to use full URIs. The current scheme allows us to transition from a
+unregistered name to a registered one. It doesn't matter whether IANA has
+multiple roots. Relative URIs are really just names within the IANA URI
+space. A clarifying paragraph could be useful in section 8. I have added
+this as an issue.
+(Ted, again)
+Maybe instead of saying "relative URIs", you can use the
+term "IANA-registered tokens". You may want to think about
+what set of IANA registries you want though. I assume you would
+want MIME, registered media features (when they exist), and
+possibly registered schemas. I believe that set would give
+you unique names without having to mention which registry
+something came from, but I'm not sure that would be true across
+all IANA registries.
+(Ted)
+In Section 6.0, the spec says that a host can send a resource
+with a manadatory extension without knowing if the requesting
+user can deal with the extension. That strikes me as pretty
+bad design, as it wastes a *lot* of bits on the wire. Given
+the number of "You must have X to read this site" sites, I'm
+afraid that it might be a fairly common case that people would
+pre-emptively require extensions. An "extension required"
+response followed by a new request strikes me as a better bet.
+(Henrik)
+They already do - servers ask you to download plug-ins, scripts etc. It
+really depends on the ubiquity of the extension in question. If it is a
+well-known extension saving a round trip is significant. If not then the
+extra bytes on the wire may be wasted. An extension framework has to
+support both.
+(Ted, again)
+Yes, servers already do ask users to download plug-ins etc, and
+some implementations start sending large resources before
+checking the user knows if it really can handle the MIME type. I
+think this is an artifact of the Accept: */* debacle, and I believe
+it is broken. Mandatory gives a chance to fix it (especially
+in combination with Options), and I think we should take it.
+Thanks for your patience with this long message,
+regards,
+Ted Hardie
+NASA NIC
+Perhaps this reading might hold legally, but the understanding I've had
+from following the HTTP mail list is that end-end means client to origin
+server. I too had/have a problem with use of end-end in the mandatory
+draft. It was confusing at best.
+'Multi-hop' or 'multi-point' would convey the fact that what is meant is
+anything which isn't hop-hop and since it isn't a term with prior use
+in the HTTP context, the reader would read the text before believing
+s/he understood the meaning.
+Dave Morris
+(Henrik)
+I have two points here: First, I disagree that HTTP defines end-to-end to
+mean from the user agent to the origin server. For example, the text in
+13.5.1 says
+* End-to-end headers, which must be transmitted to the
+ultimate recipient of a request or response. End-to-end
+headers in responses must be stored as part of a cache
+entry and transmitted in any response formed from a
+cache entry.
+Think of caching, for example. The client sends a set of header
+fields in the request that it considers to be end-to-end, however,
+they may never reach the origin server because a cache happens to
+be the "ultimate recipient".
+(Ted, again)
+I still believe there is a different behavior being defined in
+Mandatory than the caching example provides. The proxy cache
+behavior is defined by the proxy's need to act for the end host;
+in the presence of an end to end header in a request for which
+it has a valid entry, the proxy can still reply, on behalf of
+the ultimate recipient. It can't itself be the recipient of
+an end-to-end header (as an example, on a request for a resource
+which it has never before seen, the proxy *must* transmit all
+end to end headers to the ultimate recipient).
+Ted is right. I wrote the paragraph that Henrik cited, and
+Henrik's interpretation is exactly opposite to actual meaning.
+If there is any confusion, try reading that paragraph in its
+complete context:
+For the purpose of defining the behavior of caches and non-caching
+proxies, we divide HTTP headers into two categories:
+o End-to-end headers, which must be transmitted to the
+ultimate recipient of a request or response. End-to-end
+headers in responses must be stored as part of a cache entry
+and transmitted in any response formed from a cache entry.
+o Hop-by-hop headers, which are meaningful only for a single
+transport-level connection, and are not stored by caches or
+forwarded by proxies.
+In context, it should be clear that an "end-to-end" header is one
+that MUST be delivered to the server that is the target of
+a request (unless the request isn't forwarded to that server at all).
+You cannot separate an end-to-end header from the request of the
+request (or response).
+-Jeff
+I am not sure whether you mean this only goes for end-to-end header fields
+in requests or also for header-fields in responses.
+In any case, we can't say that - it simply doesn't work with existing HTTP
+applications as well as what we write elsewhere in the HTTP/1.1 specification.
+1) A proxy can change the encoding as well as transform the contents in
+several other ways. These characteristics are all described using
+end-to-end header fields inserted, changed, or deleted by the proxy. Note
+that his may happen on a PUT as well as on a GET - it goes both ways. The
+no-transform cache control directive which can be used to avoid this is
+both a request and a response directive (there is a problem with the
+warning header that I have described in a separate mail).
+2) Applications like a PICS (or some other content filtering mechanism)
+enabled proxy can filter contents on behalf of the people it serves.
+Typical examples of this is schools using proxies for accessing the Web.
+The proxy looks for PICS headers and filters the content according to a set
+of rules agreed upon by the school authority.
+3) An annonymizing proxy that takes out user agent generated header fields
+and inserts its own instead is also a commonly used application.
+Ted is right, btw. that caching is different - it was a bad example I used
+in my previous mail, sorry!
+The above examples are all cases of "smart" proxies performing an operation
+on behalf on somebody else, either because it has an out-of-band agreement
+or because it is explicitly allowed to do this within HTTP. The operation
+can involve one or more header fields but does not have to included the
+whole message.
+Looking at deployed applications and how people are using HTTP, we can't
+change the policy now and not allow this behavior - it has been there all
+along. The current wording in the Mandatory draft reflects this use of the
+term end-to-end.
+I fail to see why you want to impose this restriction (in HTTP as well as
+in Mandatory)? I very much agree with Paul that this form for flexibility
+is crucial to HTTP.
+The only thing that it truly end-to-end in the sense that it must be
+performed by the origin server is generating the initial response to a
+request. This response may then under certain circumstances be cached and
+reused but the first must come from the origin server.
+And even then, this is only true for responses with status codes which are
+not explicitly defined otherwise. This is for example the case with 504
+(Gateway Timeout).
+Henrik
+Henrik Frystyk Nielsen,
+World Wide Web Consortium

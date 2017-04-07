@@ -1,0 +1,141 @@
+In the current Advanced Collections specification, the 409 (Conflict) status
+code is used for cases where the server cannot perform the client's request
+to place a resource at a specific position in a collection because the
+collection is unordered. In my opinion, this is a good case for introducing
+a new status code, say 425 (Unordered Collection).
+409 is a sub-optimal choice because this status code is used by many
+existing WebDAV methods, as well as new methods in the advanced collections
+specification, for non-ordering related problems. Since a client can, if it
+knows the error is the result of the collection not being ordered, simply
+re-submit the request without the Position header, having this case clearly
+separated from other 409 cases would give the client this option.
+I'm not sure whether this code should also be used for other positioning
+errors (such as trying to place a resource after one that doesn't exist).
+I'm tending to think it should not.
+- Jim
+sounds OK to me.
+Jim Whitehead ejw@ics.uci.edu on 05/12/99 02:08:43 PM
+Please respond to ejw@ics.uci.edu
+Subject: New status code: unordered collection
+In the current Advanced Collections specification, the 409 (Conflict) status
+code is used for cases where the server cannot perform the client's request
+to place a resource at a specific position in a collection because the
+collection is unordered. In my opinion, this is a good case for introducing
+a new status code, say 425 (Unordered Collection).
+409 is a sub-optimal choice because this status code is used by many
+existing WebDAV methods, as well as new methods in the advanced collections
+specification, for non-ordering related problems. Since a client can, if it
+knows the error is the result of the collection not being ordered, simply
+re-submit the request without the Position header, having this case clearly
+separated from other 409 cases would give the client this option.
+I'm not sure whether this code should also be used for other positioning
+errors (such as trying to place a resource after one that doesn't exist).
+I'm tending to think it should not.
+- Jim
+There are relatively few error codes and we should be very hesitant before
+handing out new ones. I think 409 is a good error code for this situation
+but obviously more data is needed. We should provide that additional data
+either as a header in the 409 response or in the body.
+If we are going to use the body then we do the world a great favor if we can
+come up with a single format so that multiple, independent, error conditions
+can be described. The most likely choice is XML but XML has a problem. It is
+illegal for an XML document to have more than one root. This means that if I
+want to return two error conditions in a single response which were created
+by two unrelated groups I can't return them in a single XML document because
+they have different roots. Therefore we seem to have three choices:
+1 - Don't use XML.
+Nice thought but probably impractical for reasons that market
+marketoids heart's glow bright red.
+2 - Use MIME Multipart to include multiple independent XML documents
+This will work but doesn't it just seem such a waste to have to
+throw in MIME multipart processing just because the XML guys made a silly
+mistake?
+3 - Invent a global root element
+I'm a big fan of this solution. Let's just invent some universal
+root element (how about root ?) and declare that ALL XML returned in WebDAV
+error codes MUST go inside this element. Now we can throw in as many
+independent XML documents as we want and not have to worry about the single
+root problem. If we feel like being really neighborly we can even present
+this solution to other groups and maybe get all IETF XML to be put inside
+this element.
+Just a thought,
+Yaron
+I will be very boring here, and just agree vigorously with everything Yaron
+said. In particular, I believe Yaron's preference (choice three) is far
+superior to the alternatives. As for the default root name, I'd probably
+tend towards body myself (after all, it is the body of the response).
+Cheers,
+Geoff
+From: Yaron Goland yarong@microsoft.com
+There are relatively few error codes and we should be very hesitant before
+handing out new ones. I think 409 is a good error code for this situation
+but obviously more data is needed. We should provide that additional data
+either as a header in the 409 response or in the body.
+If we are going to use the body then we do the world a great favor if we can
+come up with a single format so that multiple, independent, error conditions
+can be described. The most likely choice is XML but XML has a problem. It is
+illegal for an XML document to have more than one root. This means that if I
+want to return two error conditions in a single response which were created
+by two unrelated groups I can't return them in a single XML document because
+they have different roots. Therefore we seem to have three choices:
+1 - Don't use XML.
+Nice thought but probably impractical for reasons that market
+marketoids heart's glow bright red.
+2 - Use MIME Multipart to include multiple independent XML documents
+This will work but doesn't it just seem such a waste to have to
+throw in MIME multipart processing just because the XML guys made a silly
+mistake?
+3 - Invent a global root element
+I'm a big fan of this solution. Let's just invent some universal
+root element (how about root ?) and declare that ALL XML returned in WebDAV
+error codes MUST go inside this element. Now we can throw in as many
+independent XML documents as we want and not have to worry about the single
+root problem. If we feel like being really neighborly we can even present
+this solution to other groups and maybe get all IETF XML to be put inside
+this element.
+Just a thought,
+Yaron
+That sounds incredibly ambitious, but I like the general idea of a
+root-element for errors. It would be sufficient to limit ourselves to
+defining a root just for errors, so that we could do:
+450 Misc. Error HTTP/1.1
+blah: blah
+Of course, defining what error codes this would work on, sufficiently
+carefully in order to preserve true interoperability, sounds
+difficult... ah, if we could just do everything.
+Lisa
+Well, the reason 409 doesn't work well here is that it's used for several
+conditions, some of which the client can recover from by resumbitting the
+request, and some it should not.
+Um, I just want to ship the Adv. Col. specification. Since you yourself
+immortalized the phrase, "the spec's not ready till there's nothing left to
+cut", I hope you'll understand the desire to reduce the scope.
+neighborly
+we can even present this solution to other groups and maybe get all IETF
+XML
+to be put inside this element.
+Since, as you point out, this work might have applicability beyond just
+WebDAV, this suggests to me that it should be addressed in a separate
+Internet-Draft, perhaps even leading to a new WG.
+- Jim
+The problem is that the argument you make for allowing this new code is
+recursive. The next group will come and say they want to just ship and can't
+we wait to solve this number problem until the next group and so on and so
+on. We have to draw the line somewhere and I think the advanced collection
+spec is a fine place to draw that line.
+Yaron
+From: Jim Whitehead [mailto:ejw@ics.uci.edu]
+Sent: Tue, May 18, 1999 2:24 PM
+Subject: RE: New status code: unordered collection
+throw in as many independent XML documents as we want and
+worry about the single root problem. If we feel like being really
+we can even present this solution to other groups and maybe
+to be put inside this element.
+I agree. Besides, this shouldn't hold up the AdvCol spec too long, should it?
+It's fairly simple to specify (admittedly, it adds a little extra work to the
+client implementation; but not much--you've got to have an XML parser anyway).
+If we wind up doing a common root element, I like Lisa's DAV:errors element.
+|John Stracke | My opinions are my own | S/MIME &amp; HTML OK |
+|francis@ecal.com|============================================|
+|Chief Scientist | NT's lack of reliability is only surpassed |
+|eCal Corp. | by its lack of scalability. -- John Kirch |

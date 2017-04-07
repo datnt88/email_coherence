@@ -1,0 +1,86 @@
+There is no clear definition of the connection tokens supported by the
+Connection general-header field. Section 14.10 remains vague:
+connection-token = token
+and gives "close" as an example of token, a few lines further.
+RFC 2068 refers to the following connection tokens:
+close: pp. 44, 45, 109 and 161
+Keep-Alive: p. 161
+Persist: p. 161
+"Keep-Alive" and "Persist" are described in RFC 2068 section 19.7.1 as the "HTTP/1.0 form of persistent connections". But they are specified in neither RFC 1945 nor RFC 2068. In Rev-03, references to" Keep-Alive" and "Persist" have been deleted from section 19.6.2.
+I interpret this as meaning that the sole connection-token supported in HTTP/1.1 is "close", and that the experimental tokens "Keep-Alive" and "Persist" have been deprecated. This should be stated clearly in the spec. I suggest 2 ways of doing this:
+1) Rephrase section 14.10 as follows:
+14.10 Connection
+The Connection general-header field allows the sender to specify options
+that are desired for that particular connection and MUST NOT be
+communicated by proxies over further connections.
+The Connection header has the following grammar:
+Connection = "Connection" ":" 1#(connection-token)
+connection-token = token
+HTTP/1.1 proxies MUST parse the Connection header field before a message
+is forwarded and, for each connection-token in this field, remove any
+header field(s) from the message with the same name as the connection-
+token. Connection options are signaled by the presence of a connection-
+token in the Connection header field, not by any corresponding
+additional header field(s), since the additional header field may not be
+sent if there are no parameters associated with that connection option.
+Message headers listed in the Connection header MUST NOT include end-to-
+end headers, such as Cache-Control.
+The only connection-token defined by HTTP/1.1 is "close". Tokens
+"Keep-Alive" and "Persist", which were used in some HTTP/1.0
+experimental implementations of persistent connections, have been
+deprecated. The "close" token allows the sender to signal that the
+connection will be closed after completion of the response. For example,
+Connection: close
+in either the request or the response header fields indicates that the
+connection should not be considered `persistent' (section 8.1) after the
+current request/response is complete.
+HTTP/1.1 applications that do not support persistent connections MUST
+include the "close" connection option in every message.
+A system receiving an HTTP/1.0 (or lower-version) message that includes
+a Connection header MUST, for each connection-token in this field,
+remove and ignore any header field(s) from the message with the same
+name as the connection-token. This protects against mistaken forwarding
+of such header fields by pre-HTTP/1.1 proxies.
+2) Add a new section between sections 3.8 and 3.9:
+Connection Tokens
+Connection tokens are used to control the persistence of connections.
+The only connection-token defined by HTTP/1.1 is "close" (sections
+8.1 and 14.10).
+connection-token = "close"
+Tokens "Keep-Alive" and "Persist", which were used in some HTTP/1.0
+experimental implementations of persistent connections, have been
+deprecated.
+Jean-Philippe Martin-Flatin
+A couple things wrong with this suggested rewrite:
+1) saying it is vague is unfair; the spec says that 1.1 defines the
+token "close" very clearly.
+I agree that the token "close" is defined clearly.
+2) Keep-Alive is a header.
+You missed my point: in RFC 2068, section 19.7.1 states that Keep-Alive
+and Persist are connection-token's. Here's the original text:
+When it connects to an origin server, an HTTP client MAY send the
+Keep-Alive connection-token in addition to the Persist connection-
+token:
+Connection: Keep-Alive
+3) as HTTP/1.1 may be extended in ways that are just as valid as
+the base spec, saying that close is the only connection token is
+I believe misleading, as others may want/need to define other tokens;
+I don't want the base spec to imply that some other spec isn't as valid
+that is extending HTTP/1.1.
+I disagree: I don't think different implementations should be allowed to
+use their own proprietary tokens. Allowing this would result in
+interoperability issues.
+I did add cross references in the section to section 19.6.2, and
+vice versa, where persistent connection compatibility with HTTP/1.1
+is discussed, which should reduce confusion.
+Thanks
+Jean-Philippe
+Jean-Philippe Martin-Flatin, EPFL-DI-ICA, 1015 Lausanne, Switzerland
+Web: http://icawww.epfl.ch/~jpmf/
+Well, I completely disagree with that opinion. The reason we added
+Connection is because there was no way to indicate connection-only
+extensions in HTTP. We didn't need it for standard additions, except
+for the obvious problem that all new standards look like extensions
+to an already deployed implementation.
+Allowing this is what solves the interoperability issue.
+....Roy

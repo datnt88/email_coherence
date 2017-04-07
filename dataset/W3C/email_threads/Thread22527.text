@@ -1,0 +1,193 @@
+Am I too late with this?
+The NodeList interface is absolutely hopeless: the 'get element by
+index' model is in direct conflict with the natural implementation of
+the DOM in terms of tree of linked nodes. The upshot is that the
+following loop,
+NodeList l = someNode.getChildNodes();
+for(int i = 0, limit = l.getLength(); i  limit; ++i)
+process(l.item(i));
+will have at best O(n*n) complexity (where n is the number of children).
+This is a bit unfortunate, given that this is likely to be fairly
+typical NodeList usage.
+The alternative would be to provide an iterator style interface, ie.
+NodeList l = someNode.getChildNodes();
+NodeListIterator i = l.elements();
+while(i.hasNext())
+process(i.next());
+which could have O(n) complexity for either an array or linked list
+implementation.
+With the current interface, the only way I can see of getting acceptable
+performance would be for a NodeList to maintain a copy of a part of the
+DOM tree in an internal array ... but that has overheads of it's own.
+One other issue. You should specify whether modifications to the tree
+(ie. insertBefore(), removeChild() etc.) are intended to be mirrored in
+pre-existing NodeLists ... mutatis mutandis for NamedNodeMap.
+Yours,
+Miles Sabin
+Internet Systems Architect
+msabin@cromwellmedia.co.uk
+Cromwell Media, 5/6 Glenthorne Mews, London, W6 0LJ, UK
+Yup.
+We know; don't get the "limit" up front, but loop until l.item(i) returns
+an error. The number of items in a NodeList can change while the loop is
+executing, not to mention the fact that many implementations have no way of
+knowing the number of items without counting all them. That at least makes
+it an O(n) algorithm.
+Something like this will be in Level 2. This is a classic religious issue
+-- This is obviously the right solution to many people, and obviously wrong
+to many others (especially those VB and JavaScript programmers who never
+heard iterators, and are perfectly happy with the "collection" model that
+we tried to capture in NodeList).
+Let me assure you that this part of the spec was *intensively* discussed
+(for months!!!) and the points you're making were taken into consideration.
+The current wording is a very carefully considered compromise.
+Mike Champion
+Actually, things aren't as bad as that. My in-progress DOM
+delivers O(n) efficiency while using a pointer implementation that
+identifies Node and NodeList (every node implements
+both interfaces): getChildNodes() returns self.
+The trick is to memoize the last argument passed to item() as well
+as the result. In cases like the above, the call "item(i)" will
+effectively compute "someNode.cachedChild.nextSibling()" on every
+call except the first.
+John Cowanhttp://www.ccil.org/~cowancowan@ccil.org
+You tollerday donsk? N. You tolkatiff scowegian? Nn.
+You spigotty anglease? Nnn. You phonio saxo? Nnnn.
+Clear all so! 'Tis a Jute.... (Finnegans Wake 16.5)
+The standard kluge-around for almost tolerable efficiency seems to be to
+have NodeList cache everything it finds,
+Is this really necessary, as opposed to just caching the current
+(i.e. last fetched) position?
+refresh that cache if the tree
+structure has changed below the point getElementsByTagName was started
+from,
+This is the really expensive item, I think. Does anyone have a quick'n'dirty
+way of doing this?
+John Cowanhttp://www.ccil.org/~cowancowan@ccil.org
+You tollerday donsk? N. You tolkatiff scowegian? Nn.
+You spigotty anglease? Nnn. You phonio saxo? Nnnn.
+Clear all so! 'Tis a Jute.... (Finnegans Wake 16.5)
+The standard kluge-around for almost tolerable efficiency seems to be to
+have NodeList cache everything it finds,
+Depends on how you expect people to use this monstrosity, and how
+inefficient you're willing to be if they insist on accessing nodes out of
+order.
+refresh that cache if the tree structure has changed
+... check its recorded count
+against the actual count ... etc
+When the DOM becomes thread-safe in Level 2 (which I assume is a goal) most of
+these NodeList cursor cacheing techniques will probably fail. (At least in the
+case of two threads traversing the same NodeList).
+It would be a good idea for the WG to release a interim iterator spec before
+Level 2 so that implementors/users who need them will all be on the same page
+and not have to wait another year for the complete level 2 draft.
+- Claude Zervas
+The standard kluge-around for almost tolerable efficiency seems to be to
+have NodeList cache everything it finds, refresh that cache if the tree
+structure has changed below the point getElementsByTagName was started
+from, and have the length() operation immediately fill the whole cache
+(since it has to walk the subtree anyway to answer this question). Then it
+becomes a question of how much work you're willing to do in the cache --
+whether you throw it all away and start over, or try to refresh only the
+changed subtrees.
+Very to extremely ugly internally, in exchange for a simplified API. Some
+would say excessively simplified. Definitely a religious issue.
+I know how you feel; I too learned about the DOM only after this war had
+ended and I don't like the outcome... but we're stuck with it in Level 1.
+Level 2, hopefully, will have better-architected alternatives and we can
+try to discourage people from using getElementsByTagName at that time.
+Joe Kesselman / IBM Research
+Unless stated otherwise, all opinions are solely those of the author.
+Depends on how you expect people to use this monstrosity, and how
+inefficient you're willing to be if they insist on accessing nodes out of
+order.
+refresh that cache if the tree structure has changed
+Have each note be aware of how often the tree structure below it has
+changed (ripple this up the tree when insertions/deletions occur). Have the
+NodeList be aware of what that count was at the starting node last time the
+NodeList was accessed. Have NodeList methods check its recorded count
+against the actual count before they operate, and if different discard
+previous work and recalculate at least as much as is required to answer the
+current question.
+Not elegant, but easy to implement, yields the right behavior, and is
+better than redoing the search from the start every time. Obviously there
+are approaches that attempt to determine which subtrees have changed and
+limit recalculation to those... but you have to think about how much code
+space and memory you're willing to spend on optimizing something that you
+hope people won't be using very long.
+The lack of a NodeList.destroy() method kept me from trying some approaches
+I would otherwise have preferred; they would have led to memory leaks.
+Joe Kesselman / IBM Research
+Unless stated otherwise, all opinions are solely those of the author.
+I believe there is wording in the document (though last I checked, it
+wasn't in all the right places -- known problem) that says that both
+NodeList and NamedNodeMap are "live views" of the DOM's contents; changes
+to the DOM tree alter these views and vice versa.
+Joe Kesselman / IBM Research
+Unless stated otherwise, all opinions are solely those of the author.
+It _is_ possible to design caches that will withstand multiprocessing...
+but I grant that this may be more expensive than it's worth.
+Of course, once the iterators and related accessors come in, we can always
+tell folks that if they care about performance they should use that
+approach rather than getElementsByTagName()... grin
+Joe Kesselman / IBM Research
+Unless stated otherwise, all opinions are solely those of the author.
+Hi all,
+From: Miles Sabin
+Sent: 26 August 1998 1:07 pm
+Subject: NodeList interface
+I'm not quite sure why this has only just appeared: my
+comments were the result of a rushed reading of the spec
+and some first thoughts on implementation strategies.
+I've since re-read the spec rather more thoroughly
+(which has cleared up a few confusions) and discovered
+this list ... thanks for the helpful replies anyway.
+I've been looking at variations on the caching schemes
+that various people have mentioned, and whilst they
+look quite workable for the for the NodeLists returned
+by getChildNodes(), they're much more problematic for
+getElementsByTagName() if you want to hang on to O(1)
+insert and delete ... which is my main motive for opting
+for a tree representation of the DOM heirarchy.
+After much head scratching I've come to the conclusion
+that there's no sensible way of implementing the DOM spec
+that supports *both* efficient editing *and* indexed
+access. This suggest (to me anyway) that a better
+approach might be to accomodate the duplication of a
+DOM (sub)tree from one implementation (eg. tuned for
+editing) to another (eg. tuned for indexed access). Even
+though this might seem to involve an unacceptable amount
+of copying, it might be preferable for many applications.
+There's a precedent for this from the graph algorthms
+world: it's not uncommon to see conversions back and
+forth between linked and adjacency matrix representations
+as context demands.
+That said, if anyone knows of a method of obtaining the
+preorder sequence number of a Node in amortized constant
+or logarithmic time that would cheer me up no end ;-)
+Cheers,
+Miles
+Miles Sabin
+Internet Systems Architect
+msabin@cromwellmedia.co.uk
+Cromwell Media, 5/6 Glenthorne Mews, London, W6 0LJ, UK
+As I understand it, some old comments from folks who weren't registered
+participants of the Interest Group got hung up in transit and only got
+processed a few days ago.
+If you make that "efficient indexed access while editing is in progress", I
+agree with you. Editing blows live indexing out of the water. But indexing
+is what the Level 1 spec calls for; all we can do as implementers is try to
+hide as much of the pain as possible.
+You can fairly easily achieve code which indexes reasonably efficiently
+during periods when no editing is in progress, via the approaches
+discussed. Handling editing efficiently, as far as I can tell, would
+require that each node have a count of all its descendents of any type as
+well as a last-change timestamp, so that offsets could be recalculated
+without having to walk unchanged subtrees.
+I've chosen to declare the latter more coding work, and more computational
+overhead, and more storage, than it's worth for my anticipated applications
+-- I expect relatively few calls to getElementsByTagName() in XML
+originating programs, and relatively few edits in tools which are likely to
+use get-by-name. Call it an engineering compromise.
+Joe Kesselman / IBM Research
+Unless stated otherwise, all opinions are solely those of the author.

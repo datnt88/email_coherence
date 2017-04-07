@@ -1,0 +1,201 @@
+How do you make an assertion sans location semantics, such that:
+B: some object when found and transformed yields the
+following DigestValue ?
+I think this is a valid question. We have a requirement to identify
+objects via URIs. The URI need not be a URL. (In fact, I think the
+DigestValue is a good URI). We could relax that requirement and remove
+"Location" from the signature and only provide it as a resolution hint; or
+we permit a level of indirection pre/post signature creation. Pre:
+ObjectReference uses some mechanism such as a directory, URN, manifest
+etc. that provides resolution.
+Post: you allow a "redirect" or "cache" statement to be associated with
+the signature that states "the URI found in ObjectReference resolves to X"
+I'd like to see samples of these approaches.
+If the fact that those statements were found at www.gigacorp.com was not
+part of the semantics you wanted to be bound by (and I agree with Phillip
+that some people do want to assert this) I'd recommend using an IDREF as
+the URI of the resource that is digested, and the IDREF points to an
+object in the signature which includes "hints" for finding and resolving
+content.
+I think I agree, but again, I need to see an example.
+I should back up a little and address the specific point that John Boyer raised,
+because there might be a better solution than moving the transform out of
+SignedInfo. I do believe we need to find a way to allow the location to reside
+outside SignedInfo.
+Federal and state courts are now working together on an electronic filing
+standard which involves filing documents over the Internet. During
+transmission, the document would be embedded in an "electronic envelope". For
+now (until it is possible to get common word processors to produce WYSIWYG XML
+documents), we are transmitting PDF documents with basic identifying and
+processing information carried in XML tags. We need to allow signature on the
+unencoded PDF (by attorneys, litigants, etc.), even though it is carried base64
+during transmission. The final URI will be assigned on arrival at the court,
+and the PDF will be written in its native format to the document management
+system (DMS).
+We need the signature to remain valid during a process where the document
+undergoes location changes. In stage 1, the signature is applied to the PDF
+(temporary URI?). In stage 2, the document is inserted in the envelope
+base64-encoded (internal IDREF?). In stage 3, the document is written to the
+DMS in its unencoded (native) format and a "permanent" URI is assigned. In
+future stages, the document may be transferred to the Court of Appeals or
+elsewhere and again undergo a URI change. Note that the signer and consumer are
+different entities, and we need persistent signatures during this process. It
+is unlikely that we would get the bureaucratic inter-agency cooperation needed
+to assign a permanent URI to these documents. A similar situation will probably
+occur in other problem domains.
+Perhaps we could keep Transform* inside SignedInfo, but give one of the
+transforms a clue that "If the content is base64, then decode it" (I'd like this
+to specified as a required-to-implement transform). I believe location should
+be outside SignedInfo, but we need to be able to find it. My preference is that
+it be outside SignedInfo, but inside Signature. Maybe we could point to it by
+IDREF or positionally (Location* maps to ObjectReference*)
+Thanks,
+Rich
+Richard, thanks for your emails on this topic, I think it is driving us to
+clarify a number of issues here. Thoughts follow ...
+How do you make an assertion sans location semantics, such that:
+B: some object when found and transformed yields the
+following DigestValue ?
+I think this is a valid question. We have a requirement to identify
+objects via URIs. The URI need not be a URL. (In fact, I think the
+DigestValue is a good URI). We could relax that requirement and remove
+"Location" from the signature and only provide it as a resolution hint;
+or
+we permit a level of indirection pre/post signature creation. Pre:
+ObjectReference uses some mechanism such as a directory, URN, manifest
+etc. that provides resolution.
+Post: you allow a "redirect" or "cache" statement to be associated with
+the signature that states "the URI found in ObjectReference resolves to X"
+I discuss how to do it in [1] though I don't provide a syntactical proposal
+(also see [2]). When I wrote [1] back in July, I even considered dropping
+locations from the manifest (I'm glad this conversation finally took off!)
+However, with respect to our present design I like the requirement that you
+have a URI NOT a URL. If you must, just include a random number! Now I'm not
+"going charter" on you smile but I will say that the fact the requirements
+document says that manifests includes URIs and that there is no requirement
+that we provide for location invariant signatures (though Solo introduced
+this as a design principle in his draft) informs my present views on what we
+do. I'm of a mixed mind about dropping it, but since you can sort of achieve
+that with some random number as a URN, I believe you can do what you want to
+do using URIs and/or other XML (cache) applications but I presently do not
+feel delivering a solution to that problem is on our critical path. (I
+suspect that a lot of thought needs to be given to the protocol semantics
+involved, for instance, when validating SignedInfo, if the signature
+application enounters a 301 [3], is that considered non-valid?!)
+[1] http://www.w3.org/Signature/Drafts/xml-dsig-design-resources-990723.html
+[2] http://www.w3.org/Architecture/state.html
+[3] http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.3
+Here is a "pre" indirection:
+Hint
+URL="http://info.broker.isi.edu/in-notes/rfc/files/rfc959.txt"/
+Here is a post indirection:
+Don't use a URL if you don't want to. At the FTF we've agreed to change
+"Location" to "Target" at least, and maybe even distinguish and use "URI" or
+"IDREF" as appropriate so as to stop confusing people as to whether it is a
+URL or URI.
+Joseph Reagle Jr.
+Policy Analyst mailto:reagle@w3.org
+XML-Signature Co-Chair http://www.w3.org/People/Reagle/
+I've accumulated a few things to say regarding identifiers, resources,
+and signatures. I hope this is useful to you.
+How do you make an assertion sans location semantics, such that:
+B: some object when found and transformed yields the
+following DigestValue ?
+I think this is a valid question. We have a requirement to
+identify objects via URIs. The URI need not be a URL. (In fact, I
+think the DigestValue is a good URI).
+Technicality: A digest value by itself may not be a URI, strictly
+speaking, unless it includes a prefix of the URI scheme name followed by
+a ':'. But a digest value could certainly be used in a URI.
+In order to talk about some object to be used in creating a digest value
+(or for any other purpose), there must be a reference to that object
+using one of three kinds of methods of referring to the object.
+(1) A URI (either URL or URN - no real difference in this regard, as
+argued below).
+(2) Some expression for how to obtain it by some other means, probably
+grounded in URIs.
+(3) The object may be available as immediate data, such as embedded in
+the same XML document as where it is being used.
+URIs are the preferred means for referring to things on the internet but
+other kinds of things might be translated into URIs (such as XML element
+names, or ID attribute values). Referring to immediate data is also
+relevant, especially when signing data if you can't trust the validity
+of references or resolution mechanisms.
+But now to the question of whether a digest value could be used in a URI
+as a reference an object from which you want to compute the same digest
+value. That *could* be done, but it seems at least suspicious if not
+spurious. Seems you want an independent way of referencing the object
+so that you can verify that the digest value is valid. However, an
+independent reference to the object is not necessary if it is
+computationally infeasible to get the same digest value from any other
+content.
+On the other hand, a digest value that is used in a URI is not
+particularly useful, to say the least, as a hint for resolving the URI
+to get the content. The namespace of all digest values is globally
+flat, so resolution would have to be very centralized, which is
+unscalable. Hence the idea of a Location hint. But, it might be
+that a new URI scheme could combine persistent location hints and
+a digest value to get the best of both.
+So we should not presume any particular characteristics of a URI
+only knowing it is a URI. It may or may not be a persistent or unique
+identifier for a static or dynamic resource. Moreover, the terms
+"URL" and "URN" don't offer much clarification, even though the *intent*
+of a URN is that it is persistent.
+[...] We could relax that
+requirement and remove "Location" from the signature and only
+provide it as a resolution hint;
+I think it is better to just say "URI", avoiding the confusion
+of whether or not it can be used as a location.
+we permit a level of indirection pre/post signature creation. Pre:
+ObjectReference uses some mechanism such as a directory, URN,
+manifest etc. that provides resolution.
+Post: you allow a "redirect" or "cache" statement to be associated
+with the signature that states "the URI found in ObjectReference
+resolves to X"
+Some applications may need to sign and later validate the invariance of
+the relationship between a URI and the content it references. P3P as
+currently specified (http://www.w3.org/TR/1999/WD-P3P-19991102) is an
+example; it requires that the URI for a privacy policy be invariant with
+the content of the policy.
+Allowing this invariance to be signed is different from requiring that
+all URIs used in signatures be invariant, however. I don't believe such
+a requirement is useful and it would overconstrain the possible uses for
+XML digital signatures. We could assume that some particular URI scheme
+would maintain that invariance for you, but the very same signing and
+validation would have to be done somewhere else instead.
+So one way to allow the invariance to be signed is to package up the URI
+with the digest of the content obtained by resolving the very same URI
+(no matter how it is resolved) and sign that package. If the URI
+resolves to something else, or if the thing it resolves to is different
+in any way (as determined by comparing with the digest value) then the
+validation would fail. That is what we would want for P3P.
+Verifying the invariance of the relationship between a random number URN
+and the content of the resource would involve the same process I
+outlined above. The randomness of the random number URN only makes
+collisions unlikely but does not guarantee no one has abused the
+relationship. A random number URN doesn't help much with resolution
+either.
+What to do with redirections and other intermediate status
+(e.g. metadata of various sorts) is a good question, even when you are
+merely validating a signature involving resolution of any URIs.
+Or equivalently, use a URL in a way that ignores the location hints
+contained in it, which is perfectly valid. Just because a URI says
+"http:" doesn't mean you (a client) have to use HTTP to resolve it.
+Somehow you need to use a reference associated with a document to get
+the document, no matter what you call that reference or how it is
+resolved.
+Whatever it takes to stop being confused about URL vs URN vs URI...
+Validating that you've got the right content when the content can change
+is a more difficult problem. Has it been considered? In that case, you
+have to validate that you have the right service that is giving you the
+content. It is probably not enough to let the service do the validation
+of the signature for you unless you trust you are talking to the right
+service, in which case you might as well trust that you will be given
+the right content. Or maybe you trust that it is the right service but
+sometimes it screws up. Same thing: you can't really trust it. You
+also may not trust something between you and the service.
+If people have issues regarding URIs that are not so closely related
+to digital signatures, I suggest such discussion continue on the
+uri@w3.org list, or just email me.
+Daniel LaLiberte
+liberte@w3.org

@@ -1,0 +1,66 @@
+I've been looking into the problem of locating WebDAV servers on an
+intranet. Companies that have WebDAV servers on their net may not wish to
+have users manually configure various clients with the names of all those
+servers. In researching this problem, I've found only one standards-based
+approach, and that's SLP.
+Who would be interested in defining a WebDAV extension so that Service
+Location Protocol (SLP) clients can distinguish WebDAV servers from plain
+Web servers? Any feedback on how this should work? Or are there other
+options I'm ignorant of?
+The SLP specification: http://www.ietf.org/rfc/rfc2608.txt
+SLP home page, links to open source project: http://www.srvloc.org/
+SLP and the Macintosh: http://www.opendoor.com/shareway/SLP.html
+Some background...
+SLP models
+SLP works in one of two models. In the direct client-to-server model, the
+client multicasts requests for a particular kind of service to the local
+network. Services of that type respond directly (unicast) to the client. I
+see problems with this model because it would require a WebDAV server to
+receive multicast.
+The second SLP model involves a directory agent to register services:
++-------+ -Unicast SrvRqst- +-----------+ -Unicast SrvReg- +--------+
+User | | Directory | |Service |
+Agent | | Agent | | Agent |
++-------+ -Unicast SrvRply- +-----------+ -Unicast SrvAck- +--------+
+This model seems easier for WebDAV servers to implement (they just have to
+send their registration and accept the response).
+Service URLs
+Services advertise themselves using service names or schemes. As HTTP
+servers, WebDAV servers would probably therefore advertise themselves with
+the 'http' service type. E.g.
+service:http://myserver.com
+A client request for "service:http" would match against all HTTP and WebDAV
+servers advertising themselves in this way. For all matches, a list of
+attributes for the service can be returned to the client. I suspect the
+attribute list is the right place to advertise WebDAV support. This
+optimizes in a few directions:
+- to find all HTTP servers, whether WebDAV or not, the client only needs to
+send one service match request.
+- to find all WebDAV servers, the client only needs to send one request,
+and has to filter out the non-WebDAV responses.
+- It is not necessary for the client to send OPTIONS to all HTTP servers to
+discover WebDAV support. However, to discover additional WebDAV
+functionality that may be required unless we add additional detail.
+- HTTP/WebDAV servers only need to advertise themselves once, as a http
+service with WebDAV support attributes.
+This approach follows the approach for printers, which you can follow
+through examples in the RFC.
+Lisa
+Great find, Lisa. This is an issue we've been starting to focus on at
+Adobe, as well. I would be willing to collaborate on defining a WebDAV
+extension for SLP Service Agents (and interested clients).
+dan
+Hi all,
+I have been off doing other things for a while, just trying to catch
+up with a big backlog of WebDAV mail.
+In ignorance of SLP, is UDDI an option? I am not a UDDI expert, but
+my understanding is that it allows businesses to publicise services
+(including the protocol). For example, GILS is trying to use it to
+publicize the location of GILS (which uses the Z39.50 protocol) servers.
+It seems to have a bit of momentum in the commercial world with its
+relationship to SOAP.
+Alan (Kent!)
+Alan Kent (mailto:ajk@mds.rmit.edu.au, http://www.mds.rmit.edu.au/~ajk/)
+Project: TeraText Technical Director, InQuirion Pty Ltd (www.inquirion.com)
+Postal: Multimedia Database Systems, RMIT, GPO Box 2476V, Melbourne 3001.
+Where: RMIT MDS, Bld 91, Level 3, 110 Victoria St, Carlton 3053, VIC Australia.

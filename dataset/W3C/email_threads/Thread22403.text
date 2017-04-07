@@ -1,0 +1,42 @@
+NodeIterator ni = some_node.getChildNodes();
+Node node = ni.toNext();
+In this code, is a variable `node' the first child? Or second
+child?
+TAMURA Kent @ Tokyo Research Laboratory, IBM Japan
+I think it is the first child. This raises the question of
+what getCurrent() should return, of course...
+Hi Tamura,
+I would say that this is unknown. Since the NodeIterator is "live", it
+makes sense for the same iterator to be used every time getChildNodes is
+called. It is definately not specified what should happen. Thus, the
+NodeIterator could be anywhere along the list of Nodes. The only way to be
+sure that you are where you think you are is to call one of the other "to"
+methods - 'toFirst', 'toLast', 'toNth', or 'toNode'. If the list is already
+there, it shouldn't be an expensive call. If it isn't, you are now in the
+correct place. It's the only way to guarantee.
+David
+I plead for an explicitly "undefined" position where getCurrent() returns null.
+The iterator could move to this undefined position whenever it discovers that
+its current node has been removed from the sequence. The only ways to leave
+this position are the ones suggested by David below, toNext and toPrevious just
+leave the iterator in the undefined position. This solution should be fairly
+easy to implement and has a defined behaviour under all circumstances.
+I just wondered if toNth gives a relative or an absolute position? The
+definition says "relative to the current position", but the exception is thrown
+"if the value specified is greater than the number that would be returned from
+getLength()", which seems to imply an absolute position (which is also my
+interpretation of the name "toNth"). Any suggestions on this?
+Here I disagree. The iterator pattern was specifically designed so there can be
+many iterators on the same sequence at the same time (e.g. if you need all
+combinations of subnodes). In a multithreaded setting, this is even more true:
+Independent programs could operate on the same node, and should each get their
+own iterator. Since there is no "close" method for iterators, the
+implementation can never be sure that one part of the program is done with the
+iterator, so it can't reuse the iterator for another part.
+Greetings,
+Axel
++ Axel Rasmus "..." Wienberg +
+Ok, I have understood and agree it. Programmers must not call
+toNext()/toPrevious()/getCurrent() before calling
+toFirst()/toLast()/toNth()/toNode().
+TAMURA Kent @ Tokyo Research Laboratory, IBM Japan

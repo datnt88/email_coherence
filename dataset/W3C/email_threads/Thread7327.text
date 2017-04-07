@@ -1,0 +1,499 @@
+I was considering keeping a list of requirements that have been considered,
+but rejected, along with the reasons for rejecting them, at the end of the
+requirements document. In the end, I decided not to do that, but I do want
+to make sure that such a list stays in our archive, so here it is:
+1. Optional Server Support for Locking. Some systems use other
+mechanisms besides locking to ensure consistency in environments where
+several users may wish to edit a resource at once. These other
+strategies must be permitted.
+Reason for rejection: A general decision was made that the requirements
+draft should not specify which functionality is optional and which is
+mandatory for servers to support. The WebDAV specification will discuss
+levels of compliance.
+2. A client must be able to request that the server generate a
+version identifier for a new member of a version graph. Such an
+identifier will not be used by any other client in the meantime. The
+server may refuse the request.
+Reason for rejection: Other requirements capture the intent of this one:
+That there should be a way to refer to any member of a version graph, that a
+client should be able to propose the identifier to be used for a new member
+of a version graph, that the server should be free to ignore the client's
+proposal and use a different identifier for the new version, and that the
+server should inform the client of the identifier assigned to a newly
+created version.
+3. It must be possible for a client to request from the server a
+list of the differences between two or more resources of the same media
+type.
+Reason for rejection: The consensus was that this facility is not needed.
+4. A client must be able to request that the server merge two or
+more resources, and return the result of the merge to the client or
+store the result as a resource. Server support for this functionality
+is optional.
+Reason for rejection: The consensus was that this facility is not needed.
+5. Partial-Resource Locking. It must be possible to take out a
+lock on a subsection of a resource.
+Reason for rejection: HTTP methods should operate only on resources. If the
+subsection is to be locked, it must be addressable, and so is itself a resource.
+6. Attributes are resources that may have attributes of their own, may be
+subject to content negotiation, etc.
+Reason for rejection: Whether attributes will be resources is a design decision.
+7. Only the owner of a lock or a principal with appropriate access rights
+may remove the lock.
+8. Only the owner of a reservation or a principal with appropriate access
+rights may release the reservation.
+Reason for rejection: Cannot reconstruct the reasons for removing 7 and 8
+from the requirements.
+9. It must be possible for a client to specify whether a resource's user
+attributes and relationships are to be copied with it, although the
+server may decline to copy them. It may decline to copy user attributes
+if the destination namespace supports different attributes from the
+source namespace, for example. The server may follow whatever policy it
+likes for copying server attributes.
+Copying a collection causes all of the resources that belong to it
+directly to be copied as well. For resources that belong to it by
+reference, the reference is copied. It must be possible for a client
+to specify whether subcollections should be copied with the collection.
+If a version graph is copied, all relationships between nodes in the
+graph must be changed in the new copy to reflect its new location.
+10. It must be possible for a client to specify whether a resource's user
+attributes and relationships are to be moved with it, although the
+server may decline to move them. It may decline to move user attributes
+if the destination namespace supports different attributes from the
+source namespace, for example. The server may follow whatever policy it
+likes for server attributes.
+Moving a collection causes all of the resources that belong to it
+directly to be moved as well. For resources that belong to it by
+reference, the reference is moved. It must be possible for a client
+to specify whether subcollections should be moved with the collection.
+If not, subcollections that belong to the collection directly should be
+deleted from the source location.
+If a version graph is moved, all relationships between nodes in the
+graph must be changed in the destination resource to reflect its new
+location.
+Reason for rejection: 9 and 10 specify too much detail about the semantics
+of copy and move for a requirements document. Decisions at this level
+should be made in the protocol specification.
+11. The copy operation should leave an audit trail.
+12. The move operation should leave an audit trail. The audit trail makes
+it possible for the server to redirect client requests for the resource at
+its old location, perhaps with a "301 Moved Permanently" status code.
+Reason for rejection: Requiring audit trails has no effect on the interface
+for performing WebDAV operations. Audit trails are a side effect of other
+operations.
+13. Delete
+HTTP already provides a DELETE method, but the semantics of DELETE must
+be reconsidered once attributes, relations, collections, and versions
+are introduced.
+When a resource is deleted, it must be possible for a client to specify
+whether a its attributes are to be deleted with it. In an environment
+where resources may share the same attributes, the server may decline
+to delete the attributes.
+When a resource is deleted, the relationships in which it participates
+should also be deleted.
+If the resource being deleted is a collection, all resources that belong
+to it directly will be deleted as well. Resources that belong to it by
+reference are unaffected.
+If the resource being deleted is a member of a version graph, the
+predecessor and successor relationships in the graph must be updated,
+and any metadata required by the versioning server must be supplied.
+The versioning server may, for example, require a comment explaining
+the reason for the deletion.
+Reason for rejection: Again, 13 is at too low a level for a requirements
+document. The requirements should not state in detail what changes in
+existing HTTP methods are needed. They should say only that WebDAV should
+consider the impact of all WebDAV extensions on current HTTP methods, and
+specify how the existing methods need to change.
+14. Structured Documents
+Some level of document structuring can be achieved using collections.
+Providing more extensive document structuring capabilities is too large
+a task for this group.
+15. Link Integrity
+Servers should not be asked to guarantee link integrity. It would be
+impossible to achieve this without collaboration between servers. Enforcing
+link integrity would also make move and delete have scope beyond just the
+resource on which the method is being invoked.
+Name:Judith A. Slein
+E-Mail:slein@wrc.xerox.com
+MailStop:128-29E
+What is the point of having a lock if it can be revoked by anybody? You might as well not bother!
+Cheers
+Dylan
+The intent is that "a principal with appropriate access rights" would be a
+superuser-like administrator who can remove locks if it is obvious that
+they are stale, or if they possess sufficient extra-system knowledge to
+know that removing the lock would be safe (e.g., the owner of the lock is
+suddenly out sick with a long-term illness). My expectation is the number
+of people who can remove locks will be very small compared to the number of
+users of the system.
+Within the lock draft submitted to the list last week, the shared write
+lock is intended for small groups of people who are collaborating on a
+resource and who have sufficient extra-system knowledge to know when it is
+safe to write to the resource, even though overwrite errors may occur.
+If this possibility of overwrite errors is unacceptable, the exclusive
+write lock should be used, which assures only the principal owning the lock
+may write to the resource.
+However, given that write locks may be removed by administrators, or may
+time-out, a safe client should create a precondition using the
+"If-State-Match" header (discussed in a separate draft submitted to the
+list last week) on any write operation to ensure that the lock is still
+active.
+- Jim
+Ooops, I just realized that in my last post I was giving rationale for why
+the requirements should still be there, yet I was one of the ones that
+originally recommended their removal! Hopefully Judith won't kill me...
+As I recall, the rationale for removing these requirements was to not
+constrain the implementation, especially since they discussed access
+rights, an area we haven't totally fleshed out yet. An overly strict
+interpretation of this requirement might have implied that there should be
+a precise definition of "appropriate access rights" which implies an access
+control system.
+The original requirement for locks was:
+5.3.2.3. Unlock. It must be possible to remove a lock. Only the owner of
+a lock or a principal with appropriate access right may remove the lock.
+The recommendation was to remove the last sentence, leaving it as:
+5.3.2.3. Unlock. It must be possible to remove a lock.
+This constrains the draft to have unlock capability, but doesn't overly
+constrain the design. An argument could be made, I'm sure, that it now
+underconstrains the design, which is a matter of taste.
+However, the points made in my last post still hold -- despite the lack of
+a requirement, I fully expect a WebDAV server will allow a
+superuser-administrator to remove locks, and the current draft does allow
+the owner of a lock to remove the lock.
+- Jim
+From: Dylan Barrell dbarrell@opentext.ch
+Date: Fri, 30 May 1997 10:55:12 +-200
+What is the point of having a lock if it can be revoked by anybody? You might as well not bother!
+In some settings, that's entirely acceptable.
+Realistically, if I'm in a group of a half dozen people who are trusted
+to edit a file, then I'm obviously trusted a lot (since I could totally
+mess up the file if I wanted to). Locking can be an advisory thing
+that says ``I'm editing the file now, so everyone else should wait.''
+But if I'm allowed to edit the file, and I know that the lock has
+been there a while, I might as well remove it.
+There are also those who think that passwords and file permissions shouldn't
+be used to control who can write to files.
+You implicitly trust me to write to your email inbox, right? In fact,
+you trust every single person who has internet access. And in
+most cases (except for spam), the mail you get is mail you want.
+Unless you get a *lot* of spam, only a small percentage of your mail is
+indeed spam.
+So trusting the people who have accounts at your site isn't really
+that big a leap of faith.
+Not exactly. we trust the developer of /bin/mail (or procmail, or whatever
+MDA I use) to properly lock my mailbox and respect existing locks so that
+my mailbox does not become corrupted by multiple incoming messages. It is
+true that the locks are advisory, but we only trust the underlying
+software to respect those locks. This is something quite outside the
+control of "mailbox authors" (i.e., the pople sending the mail.)
+But that's not what we're doing.
+Gregory Woodhouse
+gjw@wnetc.com / http://www.wnetc.com/home.html
+If you're going to reinvent the wheel, at least try to come
+up with a better one.
+When considering shared locks, there are really two trust sets in
+operation. The first trust set is created by access permissions.
+Principals who are trusted have permission to write the resource, those who
+are not, don't. Among those who have access permission to write the
+resource, the set of principals who have taken out an shared lock also must
+trust each other, creating a (probably) smaller trust set within the access
+permission write set.
+Starting with every possible principal on the Internet, in most situations
+the vast majority of these principals will not have write access to a given
+resource. Of the small number who do have write access, some principals
+may decide to guarantee their edits are free from overwrite conflicts by
+using exclusive write locks in conjunction with a precondition header
+(If-State-Match, perhaps?) that checks for existence of the lock prior to
+writing the resource. Others may decide they trust their collaborators (the
+potential set of collaborators being the set of principals who have write
+permission) and use a shared lock, which informs their collaborators that a
+principal is potentially working on the resource.
+It is important to remember that the WebDAV extensions to HTTP do not need
+to provide all of the communications paths necessary for principals to
+coordinate their activities. When using shared locks, principals may use
+any of the following forms of communication to coordinate their work:
+face-to-face interaction, written notes (post-it notes on the screen),
+telephone conversation, email, ... The intent of a shared lock is to let
+collaborators know who else is potentially working on a resource, so that
+one of these communications paths can be used to negotiate writing to the
+resource.
+So, why not just use exclusive write locks all the time? Experience from
+initial Web distributed authoring systems has indicated that exclusive
+write locks are often too rigid. Researchers working on the BSCW system
+initially started with exclusive locks, but relaxed them in later versions.
+An exclusive write lock is used to enforce a particular editing process:
+take out exclusive write lock, read resource, perform edits, write
+resource, release lock. What happens if the lock isn't released? While
+the time-out mechanism provides one solution, if you need to force the
+release of a lock immediately, it doesn't help much. Granted, an
+administrator can release the lock for you, but this could become a
+significant burden for large sites. Plus, what if the administrator can't
+be reached immediately?
+Despite their potential problems, exclusive write locks are extremely
+useful, since often a guarantee of freedom from overwrite conflicts is
+exactly what is needed. The solution: provide exclusive write locks, but
+also provide a less strict mechanism in the form of shared locks which can
+be used by a set of people who trust each other, and have access to a
+communications channel external to WebDAV which can be used to negotiate
+writing to the resource.
+- Jim
+I have a feeling we're talking past eachother here. In fact, I'm not at
+all sure who I agree with and who I disagree with because I'm not clear on
+who is using what terminology. It seems to me that locks can vary along
+at least four orthogonal axes:
+mandatory/advisory
+exclusive/shared
+read/write/both
+privilege
+To go back to the mail example, I sort my mail into multiple inboxes using
+procmail and then access them with an IMAP client. Quite frequently, I see
+mail arrive in a mailbox while I have it open. From my point of view, I
+hear a beep and the display is updated. Internally, procmail locks my
+mailbox just long enough to deliver the message and then releases the
+lock. This is an example of a mandatory exclusive lock. Once the message
+is delivered, I can continue with my work undisturbed. Now, let's suppose
+I start up a second instance of Pine. What will happen is that the second
+process is already in use and warn me. In addition, both instances of
+Pine will be accessing the mailbox in read-only mode. In other wors the
+first process had an exclusive advisory read/write lock that was
+effectively revoked by the second process, replacing it with a shared
+readonly lock. Now, mail can still continue to arrive, and will be allowed
+to secure temporary exclusive locks while delivering mail without
+disturbing th existing advisory lock. Another possible scenario is where I
+telnet in, start up Pine, disconnect, and then telnet back in again. What
+happens here is that I am warned that Pine is attempting to secdure a lock
+on a mailbox which is already locked by process whatever . In this case,
+that process is no longer active, so my process can succesfully revoke the
+orphaned lock. This raises an interesting point: though these locks are
+"advisory" (and technically they all are unless the MDA is configured to
+use flock() to lock the mailbox), it is not up to the user (or user
+process) to decide when to modify or revoke a lock. In essence, these
+locks are only in that they can be revoked or modified by a process with
+sufficient privilege (by mail subsystem itself). (Note that I'm not
+talking about privilege in the UNIX sense of the term.)
+Gregory Woodhouse
+gjw@wnetc.com / http://www.wnetc.com/home.html
+If you're going to reinvent the wheel, at least try to come
+up with a better one.
+I would like to see the shared-lock be an optional portion of the WebDAV standard. I think the minimum requirement for locking is exclusive locking and this should be the minimum that WebDAV requires.
+Our experience with Livelink has been that exclusive locks are good enough. All other access can be regulated by the permissions. I.e. a shared lock can be seen as the permission of a group of people to write to the resource. Add to this the ability to change the permissions and the ability for someone to lock the resource (another individually specifiable permission) and you have all the flexibility you need.
+In conclusion I don't even see the need for shared locks.
+Cheers
+Dylan
+From: Jim Whitehead[SMTP:ejw@ics.uci.edu]
+Subject: Re: locks and trust (Re: Rejected Requirements)
+When considering shared locks, there are really two trust sets in
+operation. The first trust set is created by access permissions.
+Principals who are trusted have permission to write the resource, those who
+are not, don't. Among those who have access permission to write the
+resource, the set of principals who have taken out an shared lock also must
+trust each other, creating a (probably) smaller trust set within the access
+permission write set.
+Starting with every possible principal on the Internet, in most situations
+the vast majority of these principals will not have write access to a given
+resource. Of the small number who do have write access, some principals
+may decide to guarantee their edits are free from overwrite conflicts by
+using exclusive write locks in conjunction with a precondition header
+(If-State-Match, perhaps?) that checks for existence of the lock prior to
+writing the resource. Others may decide they trust their collaborators (the
+potential set of collaborators being the set of principals who have write
+permission) and use a shared lock, which informs their collaborators that a
+principal is potentially working on the resource.
+It is important to remember that the WebDAV extensions to HTTP do not need
+to provide all of the communications paths necessary for principals to
+coordinate their activities. When using shared locks, principals may use
+any of the following forms of communication to coordinate their work:
+face-to-face interaction, written notes (post-it notes on the screen),
+telephone conversation, email, ... The intent of a shared lock is to let
+collaborators know who else is potentially working on a resource, so that
+one of these communications paths can be used to negotiate writing to the
+resource.
+So, why not just use exclusive write locks all the time? Experience from
+initial Web distributed authoring systems has indicated that exclusive
+write locks are often too rigid. Researchers working on the BSCW system
+initially started with exclusive locks, but relaxed them in later versions.
+An exclusive write lock is used to enforce a particular editing process:
+take out exclusive write lock, read resource, perform edits, write
+resource, release lock. What happens if the lock isn't released? While
+the time-out mechanism provides one solution, if you need to force the
+release of a lock immediately, it doesn't help much. Granted, an
+administrator can release the lock for you, but this could become a
+significant burden for large sites. Plus, what if the administrator can't
+be reached immediately?
+Despite their potential problems, exclusive write locks are extremely
+useful, since often a guarantee of freedom from overwrite conflicts is
+exactly what is needed. The solution: provide exclusive write locks, but
+also provide a less strict mechanism in the form of shared locks which can
+be used by a set of people who trust each other, and have access to a
+communications channel external to WebDAV which can be used to negotiate
+writing to the resource.
+- Jim
+What is expressed in the latest locking draft is that *all* locking
+capability should be optional. Since some replicated storage systems
+cannot enforce the semantics of a lock, and since people are interested in
+building WebDAV servers on top of these replicated stores, we can't have
+mandatory lock capability without excluding this very important type of
+back-end. As I recall, Mark Day was a major proponent of not having lock
+functionality mandatory, so perhaps he could expand on this.
+- Jim
+There are permissions which regulate access to resources.
+Some users have read only permissions and some may add resources or
+overwrite them.
+Those who may add or overwrite resources essentially (as a group) hold a
+shared write lock on the resource.
+Well, the view described in the current lock draft is that those who may
+add or overwrite (i.e., write) resources all have equivalent access
+permission for adding or overwriting a resource.
+Of those principals who have equivalent write access permission on a
+resource, a shared lock indicates those principals who are, at present,
+actively working on the resource. However, a shared write lock still
+prevents non-holders of the lock from overwriting the resource.
+This is different from the set of principals who have write access
+permission, because it is typically a smaller set. So, if there are six
+authors on a document, they all have write access. However, if only two of
+the authors are currently working on the document, only those two will have
+shared write locks (if the authors decided to use shared write locks
+instead of exclusive write locks, knowing by their choice that this entails
+slightly more communication overhead).
+By adding or removing people from this group (in the broadest sense of the
+word) one can change the membership of the shared lock.
+In the example above, it does not make sense to change the access rights
+every time an author starts to edit the document. It makes more sense to
+change the access rights only when the set of authors changes.
+Some users have the permission to place an exclusive lock on the resource.
+Only they may then overwrite this resource
+Only they may remove the exclusive lock (admin users excepted)
+This is certainly one allowable case. The drawback to this case occurs
+when the principal who has taken out the lock goes home for the day without
+releasing the lock, then calls-in sick the next day, preventing their
+collaborators from gaining write access to the resource. The other case is:
+Some principals have the permission to place a shared lock on the resource.
+Only they may then overwrite this resource
+Only they may remove their particular shared lock
+In this case, if a collaborator forgets to release the lock, other
+collaborators can still work on the resource.
+Is there some deficiency in the current lock draft? I believe the
+semantics of exclusive write locks and shared write locks are detailed
+fairly clearly in this draft. If this draft is unclear in some way, then
+changes need to be made to this draft.
+The locking draft can be found at:
+In particular, Section 1.1 describes the difference between exclusive and
+shared write locks, and Section 1.2 describes that no locking functionality
+is mandatory. Section 2.2 gives a precise definition of a write lock.
+Section 2.7 gives a lock compatibility table which describes interactions
+between shared and exclusive locks.
+- Jim
+I've been representing the language in the current lock draft. In this
+draft, the terms "mandatory and advisory" are not used as modifier of lock
+semantics. From past discussions on this list, and past personal use of
+the term, and advisory lock is extremely similar in meaning to the current
+shared lock. I'm not sure what is meant by mandatory. I'm also not sure
+what is meant by privilege.
+The axes of variation for locking in the current lock draft are:
+exclusive/shared
+write/(potential expansion to other access control verbs)
+Thus there is an exclusive write lock, and a shared write lock.
+Since a lock mediates access to a resource among principals with equal
+access permissions, a lock is constrained by access control. A super user
+administrator could have sufficient *access* permissions to be able to
+remove any given lock. But this is a special access permission, not a
+special lock type.
+- Jim
+A mandatory lock prevents the locked operation by others. That is, a mandatory
+write lock prevents writes, whereas an advisory write lock prevents write
+locks.
+Cheers,
+Ben.
+Technical Director URL: http://www.algroup.co.uk/Apache-SSL
+A.L. Digital Ltd, Apache Group member (http://www.apache.org)
+London, England. Apache-SSL author
+What you have just described is equivalent to a bunch of authors appending to the same document ONLY or only ever adding resources to a collection. Adding a mail message to a mailbox is different from updating an existing mail message.
+Here is a slightly different description of the same principle.
+There are permissions which regulate access to resources.
+Some users have read only permissions and some may add resources or overwrite them.
+Those who may add or overwrite resources essentially (as a group) hold a shared write lock on the resource.
+By adding or removing people from this group (in the broadest sense of the word) one can change the membership of the shared lock.
+Some users have the permission to place an exclusive lock on the resource.
+Only they may then overwrite this resource
+Only they may remove the exclusive lock (admin users excepted)
+Same conclusion as before.
+Cheers
+Dylan
+From: Gregory J. Woodhouse[SMTP:gjw@wnetc.com]
+Subject: RE: locks and trust (Re: Rejected Requirements)
+I have a feeling we're talking past eachother here. In fact, I'm not at
+all sure who I agree with and who I disagree with because I'm not clear on
+who is using what terminology. It seems to me that locks can vary along
+at least four orthogonal axes:
+mandatory/advisory
+exclusive/shared
+read/write/both
+privilege
+To go back to the mail example, I sort my mail into multiple inboxes using
+procmail and then access them with an IMAP client. Quite frequently, I see
+mail arrive in a mailbox while I have it open. From my point of view, I
+hear a beep and the display is updated. Internally, procmail locks my
+mailbox just long enough to deliver the message and then releases the
+lock. This is an example of a mandatory exclusive lock. Once the message
+is delivered, I can continue with my work undisturbed. Now, let's suppose
+I start up a second instance of Pine. What will happen is that the second
+process is already in use and warn me. In addition, both instances of
+Pine will be accessing the mailbox in read-only mode. In other wors the
+first process had an exclusive advisory read/write lock that was
+effectively revoked by the second process, replacing it with a shared
+readonly lock. Now, mail can still continue to arrive, and will be allowed
+to secure temporary exclusive locks while delivering mail without
+disturbing th existing advisory lock. Another possible scenario is where I
+telnet in, start up Pine, disconnect, and then telnet back in again. What
+happens here is that I am warned that Pine is attempting to secdure a lock
+on a mailbox which is already locked by process whatever . In this case,
+that process is no longer active, so my process can succesfully revoke the
+orphaned lock. This raises an interesting point: though these locks are
+"advisory" (and technically they all are unless the MDA is configured to
+use flock() to lock the mailbox), it is not up to the user (or user
+process) to decide when to modify or revoke a lock. In essence, these
+locks are only in that they can be revoked or modified by a process with
+sufficient privilege (by mail subsystem itself). (Note that I'm not
+talking about privilege in the UNIX sense of the term.)
+Gregory Woodhouse
+gjw@wnetc.com / http://www.wnetc.com/home.html
+If you're going to reinvent the wheel, at least try to come
+up with a better one.
+The only point I am trying to make is that shared locks are not really necessary. As far as I'm concerned the difference between what you are describing and what I described is academic.
+Cheers
+Dylan
+From: Jim Whitehead[SMTP:ejw@ics.uci.edu]
+Subject: RE: locks and trust (Re: Rejected Requirements)
+Well, the view described in the current lock draft is that those who may
+add or overwrite (i.e., write) resources all have equivalent access
+permission for adding or overwriting a resource.
+Of those principals who have equivalent write access permission on a
+resource, a shared lock indicates those principals who are, at present,
+actively working on the resource. However, a shared write lock still
+prevents non-holders of the lock from overwriting the resource.
+This is different from the set of principals who have write access
+permission, because it is typically a smaller set. So, if there are six
+authors on a document, they all have write access. However, if only two of
+the authors are currently working on the document, only those two will have
+shared write locks (if the authors decided to use shared write locks
+instead of exclusive write locks, knowing by their choice that this entails
+slightly more communication overhead).
+In the example above, it does not make sense to change the access rights
+every time an author starts to edit the document. It makes more sense to
+change the access rights only when the set of authors changes.
+This is certainly one allowable case. The drawback to this case occurs
+when the principal who has taken out the lock goes home for the day without
+releasing the lock, then calls-in sick the next day, preventing their
+collaborators from gaining write access to the resource. The other case is:
+In this case, if a collaborator forgets to release the lock, other
+collaborators can still work on the resource.
+Is there some deficiency in the current lock draft? I believe the
+semantics of exclusive write locks and shared write locks are detailed
+fairly clearly in this draft. If this draft is unclear in some way, then
+changes need to be made to this draft.
+The locking draft can be found at:
+In particular, Section 1.1 describes the difference between exclusive and
+shared write locks, and Section 1.2 describes that no locking functionality
+is mandatory. Section 2.2 gives a precise definition of a write lock.
+Section 2.7 gives a lock compatibility table which describes interactions
+between shared and exclusive locks.
+- Jim

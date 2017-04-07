@@ -1,0 +1,36 @@
+When I'm about to refresh a lock, can I then send exactly the same request as I sent when I locked the resource? I've tried this
+with IIS-5 and Sharemation, but the response I get is '423 Locked'. The only things that differs are, the If header and any cookies
+that may have been set. According to the spec. I doesn't have to send exactly the same request, but it doesn't say that I can't.
+To get it to work I excluded the body of the lock request, as the spec. say's I can.
+Chap 7.8 Refreshing Write Locks
+'However, a client may submit a LOCK method with an If header but without a body. This form of LOCK MUST only be used to "refresh" a
+lock.'
+Can I rely on that if I send the Lock request without the body, that all servers will see this as a Lock refresh?
+/Rickard Falk
+Nope. You must supply the If: header which contains the locktokens of the
+locks that you wish to refresh. You must also submit an empty body to
+perform a refresh. If you supply a body, then the server will think you are
+attempting to create a new lock; if either of the locks are exclusive, then
+it will punt.
+Similar to IIS5 and Sharemation, mod_dav (and Apache 2.0 :-) will return a
+423 if you attempt to LOCK a resource without supplying the necessary If:
+header and empty body on a refresh.
+Cheers,
+-g
+Greg Stein, http://www.lyra.org/
+I know that I have to send the If header, but where does the spec. say that a refresh request must be sent without the body? In
+chapter 7.8 it only say that the client 'may' send it without the body, not that a lock refresh must be without a body. It states
+that a Lock request without a body must only be used as a refresh lock request.
+Is my interpretation wrong?
+What I would like to se is something like:
+'A client MUST NOT submit a body on a LOCK request, that is intended to "refresh" a lock.'
+/Rickard Falk
+From: Greg Stein [mailto:gstein@lyra.org]
+Sent: den 11 juli 2000 11:22
+Subject: Re: Refreshing locks
+By my interpretation of RFC 2518, it is OK for a client to submit a body
+with the lock refresh. But, since existing servers are disallowing this, it
+might make sense to codify this practice. I've added this to the issues
+list.
+That seems to describe the current behavior of servers.
+- Jim

@@ -1,0 +1,448 @@
+Forgive the newcomer, but everything I read seems to either start in the middle
+or bottom. Can somebody help me out with the beginning?
+Suppose I am in my favorite Integrated Development Environment (IDE) and want
+to checkout the latest version of x.c. Nothing fancy, no branches.
+Everything I have read so far seems to start at "once you have found the
+Vportal, here are the set of operations you can perform"
+For example, In the June 9th version of draft-whitehead-webdav-versioning-00,
+there is a datasheet.html which has a portal at /products/chips/6502 which is
+associated with vgraph:4A7F-52DE-5DFA29FE-12A0 and is set up to return
+/vcache/68432.html. I believe I can follow the chain from portal to vgraph to
+cache, but can't quite make the leap from the conceptual resource to the portal.
+The simple answer is you can discover the Vportals by performing a PROPFIND
+on its containing collection to retrieve the members of the collection. The
+PROPFIND will list the Vportals, along with all other resources (e.g.,
+collections, regular resources, etc.) that are contained in the collection.
+This is the typical WebDAV mechanism for retrieving the members of a
+collection.
+Examples are always helpful to fully understand versioning, so here is an
+example which will hopefully shed some light on this issue. The example
+will start off assuming that no versioning is taking place (i.e., show how
+things would be organized and accomplished using existing DAV and HTTP
+features), then add versioning into the picture.
+So, let's imagine that your "x.c" is part of project "my-utility", and
+belongs to an HTTP URL hierarchy that looks like this:
+my-utility
+x.c makefile my-util.h y.c
+If this URL hierarchy were located on the server "devel.swcorp.com", then
+there would be the following URLs:
+resources
+project
+Using DAV PROPFIND with Depth "infinity" on
+collection would be returned, along with the properties requested in the
+PROPFIND.
+OK, now versioning is going to be added into the picture. Assume that
+"x.c", "makefile", "my-util.h", and "y.c" are versioned (ignoring
+configuration management issues for the moment, and hence leaving the
+my-utility collection unversioned), and has a history of several previous
+revisions.
+From previous discussions on this list, and working group meeting
+discussions, there is broad agreement that each revision of a resource is
+itself a separate resource, with its own URL. This approach has many nice
+qualities -- links can be constructed to previous revisions of a resource,
+and they integrate well with the existing cache infrastructure.
+But, this creates a naming problem. Ideally, when working on a project, you
+want to have a structural view of it -- in this example, the project has
+been hierarchically structured by placing the program files (x.c, y.c,
+makefile, my-util.h) into a collection (my-utility). With the addition of
+versioning, each source code resource in the project now has multiple
+resources associated with it -- each conceptual source code resource is now
+really a set of resources. For example, "x.c" is now really a conceptual
+handle for the resources "x.c version 1", "x.c version 2", "x.c version 3",
+"x.c version 4", etc. When working on the program, the programmer thinks of
+all these resources simply as "x.c", but for the Web server, there needs to
+be a separate URL for each of these resources.
+Since the HTTP URL space only has a single form of organization,
+hierarchical, all of the versions of a resource, each with its own URL, need
+to be placed somewhere in an HTTP URL hierarchy. There are several choices
+here.
+One choice is to "URL munge", essentially hiding all but the tip (or default
+published) version of a resource. In this scheme, you could add a
+",v{version id}" to the end of a URL to retrieve a specific version.
+Performing a retrieval without adding ",v{version id}" would return the tip
+or default member. This approach is bad because it makes URLs non-opaque,
+and raises the risk of namespace collisions with other mappings of ",v" in a
+URL. As a result, this approach has time and again been rejected by this
+working group.
+Another choice is to place all of the versions of a resource into the same
+collection as the original resource. In this example, a PROPFIND of
+"my-utility" would list "x.c version 1", "x.c version 2", "x.c version 3",
+"y.c version 1", "y.c version 2", etc. This approach is bad because it
+mixes together the structure of a project and the versions of project
+members into the same collection. It would also cause the collection
+listing to become quite large over time.
+It seemed to me, looking at this problem, that what was needed was an
+abstraction which would allow a programmer to work on their projects as if
+they were unversioned, i.e., if the programmer worked on an unversioned
+source code resource called "x.c", then they should still be able to work on
+"x.c" even when it was versioned. To avoid the URL munge approach, and to
+avoid mixing together the structure view with the versions of resources, it
+would be necessary to stash the version resources in a location in the URL
+hierarchy which was different from the "structure" location. The Vportal is
+that abstraction.
+A Vportal provides the bridge between the structural organization of a
+project, and the location in the URL namespace where every individual
+version of a resource is located (i.e. the version space, making the Vportal
+a link between the structure space and the version space).
+So, how would the my-utility project look if it were versioned using
+Vportals? The structural view would still be the same -- a PROPFIND on the
+collection http://devel.swcorp.com/my-utility/ would still return the
+following resources:
+resource "x.c"
+the project
+resource for the project
+resource "y.c"
+So, when versioning a project, each resource is replaced with a Vportal,
+which is a pointer into the version graph for that resource. Returning to
+the original question, "how would you discover a Vportal", the answer is
+"use PROPFIND".
+The Vportals also imply that there is a stash of versioned resources
+someplace in the URL hierarchy. For this example, these versions are
+located in collections under "/version-cache/", as follows.
+The revisions of "x.c" are located in the collection
+"/version-cache/my-utility/x.c/". So, version 1 would have the full URL:
+There is nothing magic about this naming convention -- I do not expect it to
+be standardized, and I do expect it to vary from server to server. This is
+OK, and does not lead to loss of interoperability since the version graph
+contains a complete list of the members of the graph, their is-derived-from
+relationships, and their complete URLs.
+When editing a versioned resource, the Vportal resource receives CHECKOUT
+and CHECKIN commands. So, to begin editing "x.c", a CHECKOUT would be sent
+to "http://devel.swcorp.com/my-utility/x.c". When editing was finished, a
+CHECKIN would be sent to the same URL. From the perspective of the person
+editing versioned "x.c", the Vportal "x.c" acts just like unversioned "x.c".
+Well, this probably answered your question in more detail than you were
+expecting :-)
+- Jim
+Caught by the spam filter -- the email address
+BCragun.ORM2-1.OREM2@gw.novell.com has been added to the accept2 list for
+the list, so future messages from this address shouldn't be bounced.
+- Jim
+This explanation of VPortals helped me a lot in understanding their purpose.
+But it returns me to a question I asked in Redmond: What is the method for
+getting an earlier (i.e. not the tip) version of a document? And does
+WebDAV truly support not only getting a non-tip version but also the ability
+to return that version, with changes, to the same location? Stated another
+way, can I edit a non-tip version and return it to the collection as that
+same version, or does WebDAV force a new version for any change?
+This issue is critical to us at Novell, so I just want to make sure nobody
+believes we have placed such limitations into this spec.
+Jim Whitehead ejw@ics.uci.edu 08/05 1:56 PM
+The simple answer is you can discover the Vportals by performing a PROPFIND
+on its containing collection to retrieve the members of the collection. The
+PROPFIND will list the Vportals, along with all other resources (e.g.,
+collections, regular resources, etc.) that are contained in the collection.
+This is the typical WebDAV mechanism for retrieving the members of a
+collection.
+Examples are always helpful to fully understand versioning, so here is an
+example which will hopefully shed some light on this issue. The example
+will start off assuming that no versioning is taking place (i.e., show how
+things would be organized and accomplished using existing DAV and HTTP
+features), then add versioning into the picture.
+So, let's imagine that your "x.c" is part of project "my-utility", and
+belongs to an HTTP URL hierarchy that looks like this:
+my-utility
+x.c makefile my-util.h y.c
+If this URL hierarchy were located on the server "devel.swcorp.com", then
+there would be the following URLs:
+resources
+project
+Using DAV PROPFIND with Depth "infinity" on
+collection would be returned, along with the properties requested in the
+PROPFIND.
+OK, now versioning is going to be added into the picture. Assume that
+"x.c", "makefile", "my-util.h", and "y.c" are versioned (ignoring
+configuration management issues for the moment, and hence leaving the
+my-utility collection unversioned), and has a history of several previous
+revisions.
+discussions, there is broad agreement that each revision of a resource is
+itself a separate resource, with its own URL. This approach has many nice
+qualities -- links can be constructed to previous revisions of a resource,
+and they integrate well with the existing cache infrastructure.
+But, this creates a naming problem. Ideally, when working on a project, you
+want to have a structural view of it -- in this example, the project has
+been hierarchically structured by placing the program files (x.c, y.c,
+makefile, my-util.h) into a collection (my-utility). With the addition of
+versioning, each source code resource in the project now has multiple
+resources associated with it -- each conceptual source code resource is now
+really a set of resources. For example, "x.c" is now really a conceptual
+handle for the resources "x.c version 1", "x.c version 2", "x.c version 3",
+"x.c version 4", etc. When working on the program, the programmer thinks of
+all these resources simply as "x.c", but for the Web server, there needs to
+be a separate URL for each of these resources.
+Since the HTTP URL space only has a single form of organization,
+hierarchical, all of the versions of a resource, each with its own URL, need
+to be placed somewhere in an HTTP URL hierarchy. There are several choices
+here.
+One choice is to "URL munge", essentially hiding all but the tip (or default
+published) version of a resource. In this scheme, you could add a
+",v{version id}" to the end of a URL to retrieve a specific version.
+Performing a retrieval without adding ",v{version id}" would return the tip
+or default member. This approach is bad because it makes URLs non-opaque,
+and raises the risk of namespace collisions with other mappings of ",v" in a
+URL. As a result, this approach has time and again been rejected by this
+working group.
+Another choice is to place all of the versions of a resource into the same
+collection as the original resource. In this example, a PROPFIND of
+"my-utility" would list "x.c version 1", "x.c version 2", "x.c version 3",
+"y.c version 1", "y.c version 2", etc. This approach is bad because it
+mixes together the structure of a project and the versions of project
+members into the same collection. It would also cause the collection
+listing to become quite large over time.
+It seemed to me, looking at this problem, that what was needed was an
+abstraction which would allow a programmer to work on their projects as if
+they were unversioned, i.e., if the programmer worked on an unversioned
+source code resource called "x.c", then they should still be able to work on
+"x.c" even when it was versioned. To avoid the URL munge approach, and to
+avoid mixing together the structure view with the versions of resources, it
+would be necessary to stash the version resources in a location in the URL
+hierarchy which was different from the "structure" location. The Vportal is
+that abstraction.
+A Vportal provides the bridge between the structural organization of a
+project, and the location in the URL namespace where every individual
+version of a resource is located (i.e. the version space, making the Vportal
+a link between the structure space and the version space).
+So, how would the my-utility project look if it were versioned using
+Vportals? The structural view would still be the same -- a PROPFIND on the
+collection http://devel.swcorp.com/my-utility/ would still return the
+following resources:
+resource "x.c"
+the project
+resource for the project
+resource "y.c"
+So, when versioning a project, each resource is replaced with a Vportal,
+which is a pointer into the version graph for that resource. Returning to
+the original question, "how would you discover a Vportal", the answer is
+"use PROPFIND".
+The Vportals also imply that there is a stash of versioned resources
+someplace in the URL hierarchy. For this example, these versions are
+located in collections under "/version-cache/", as follows.
+The revisions of "x.c" are located in the collection
+"/version-cache/my-utility/x.c/". So, version 1 would have the full URL:
+There is nothing magic about this naming convention -- I do not expect it to
+be standardized, and I do expect it to vary from server to server. This is
+OK, and does not lead to loss of interoperability since the version graph
+contains a complete list of the members of the graph, their is-derived-from
+relationships, and their complete URLs.
+When editing a versioned resource, the Vportal resource receives CHECKOUT
+and CHECKIN commands. So, to begin editing "x.c", a CHECKOUT would be sent
+to "http://devel.swcorp.com/my-utility/x.c". When editing was finished, a
+CHECKIN would be sent to the same URL. From the perspective of the person
+editing versioned "x.c", the Vportal "x.c" acts just like unversioned "x.c".
+Well, this probably answered your question in more detail than you were
+expecting :-)
+- Jim
+Comments below.
+There are a couple of retrieval cases here:
+1) Retrieving a version of a resource where the version identifier and
+Vportal URL are known (but the exact URL of the version of the resource is
+unknown)
+2) Retrieving a version of a resource where the Vportal URL is known, but
+the version identifier and exact URL of the version of the resource are not
+known (i.e., perhaps you want the most recent version before a given date)
+3) (for completeness) Retrieving a version of a resource where the exact URL
+of the resource is known.
+For case 1, ideally it should be possible to use GET, with the version
+identifier specified in a header, on the Vportal URL. The response will an
+entity representing the requested resource.
+Returning to the example from my previous post, if "x.c" is the Vportal, and
+version 4 of x.c is requested, then a GET request could be made to x.c, with
+the version identifier "4" specified in a header. The response from the GET
+will be an entity representing the resource which is version 4 of x.c.
+For case 2, the version can be retrieved by first requesting a listing of
+the version graph. The version graph is then examined to determine the
+version identifier of the desired version. A GET request is then made to
+the exact URL of the desired version.
+So, in the "x.c" example, the client would first request the version graph
+(using GRAPHGET), receiving a list of all the resources in the version
+graph, their is-derived-from relationships, and their version identifiers.
+The client examines the version graph for the URL of the desired version,
+performing a GET operation to retrieve the desired version.
+Case 3 is trivial -- just perform a GET on the URL of the desired version.
+For cases 1 and 3, the version is retrievable with a single network round
+trip.
+All retrieval cases work for non-tip resources (as well as for tip
+resources).
+At present, the consensus of the group, reflected in section 5.9.1 of RFC
+2291, "Requirements for a Distributed Authoring and Versioning Protocol for
+the World Wide Web", is that versions, once they are frozen, are immutable.
+Most working group members I have talked to have been associating "freeze"
+semantics with the "checkin" method.
+Based on this, the current versioning proposal would not let you modify an
+existing member of a version graph (that is, modify the contents available
+at a given URL), since the members of the version graph are frozen. The
+current versioning proposal does force a new version on each change.
+In previous discussions on this topic, it seemed to me we had determined
+that the WebDAV LOCK functionality exactly matches the functionality that
+Novell terms checkout.
+Also, I know many people on the list view immutability of previous versions
+as an essential guarantee provided by a versioning system, and lack of such
+guarantee as a serious diminishment of the value of a versioning system. It
+would be helpful to me (and to the list as well), if you could give some
+scenarios of use where previous versions need to be modified (i.e., where
+immutability isn't desired), so we can understand why you feel this is a
+critical feature.
+- Jim
+I'm a little leary of this--it sounds like you're using the Vportal as if it
+were a referential resource (with parameters), and I'd prefer to see it behave
+like one; i.e., it should give a redirect rather than returning the entity.
+|John (Francis) Stracke |My opinions are my own.|S/MIME supported |
+|Software Retrophrenologist|=========================================|
+|Netscape Comm. Corp. | "Who died and made you king?" |
+|francis@netscape.com | "My father." |
+New area code for work number: 650
+I now understand and appreciate how we got to the current proposal.
+This being said, I would like to propose this as our first scenario - even
+thought it isn't recognized as such yet ;-).
+I would also like to extend the scenario to involve deletes and renames.
+I also would like to explore the following aspects for each scenario:
+1. Is the spec complete? Is there enough precision in the specification so
+that users of a WebDAV implementation provided by vendor A could switch to
+vendor B? I'm a bit concerned about the assumptions that the caller must make
+about the collection.
+2. Is the solution practical? I'm concerned not about about the total number
+of network round trips, but the quantity of data required for each. If a
+PROPFIND is required which returns back information about every element, then
+the solution won't scale. The inevitable solution will be that each vendor
+will invent their own value-added interface which performs the necessary
+filtering on the server. This dillutes the value of a standard.
+3. Is the spec consistent? In this case, I don't see one, but those that
+attended the last conference will remember my "garden path" dealing with the
+implication of frozen safe references.
+I noticed a typo in the preceeding item. The second item should read (the word
+ONLY was inserted)
+2. Is the solution practical? I'm concerned not ONLY about about the total
+number
+of network round trips, but the quantity of data required for each.
+There are two scenarios. First, which I believe is VERY common, is to allow me to edit a leaf node and have the changes go back into that same version. In our experience with versioning (8+ years), most of our users have responded that they do NOT want a new version being forced every time they save their document back into the library. Think of it in terms of the WebDAV proposal document. You may work on the document every day for four weeks before you have it to a point where you feel it should be posted again. That would be a single version, even though you worked on it every day (and presumably didn't keep it checked out since others also needed to do some work in it). Once you've posted it, you create a new version and all work goes into that version until the next posting. Of course you might choose to create new versions between postings, generally to preserve the document in a certain mid-point stage.
+The second scenario is to allow me to edit a non-leaf node and save those changes back into that node. While the need/request for this is considerably less, not everyone uses versioning the way we think of it. For instance, some users use versions in the way that WebDAV would implement variants: they store each language version as its own version. (This makes perfect sense, they say ;-) This scenario might also be when a company produces their employee handbook and have a version for each year's updated handbook. Right now I would have versions for all previous years, 1998, and the new one for the upcoming year 1999. If a mistake is found in our 1998 handbook, I would like to fix it in-place.
+Novell's model (and I'm sure we aren't the only ones who don't force a new version with every edit) would be broken by WebDAV *requiring* this. I believe WebDAV needs to be kept flexible. Let the server, not the spec, determine if automatic versioning is enforced or not.
+Jim Whitehead ejw@ics.uci.edu 08/06 11:00 AM
+Comments below.
+There are a couple of retrieval cases here:
+1) Retrieving a version of a resource where the version identifier and
+Vportal URL are known (but the exact URL of the version of the resource is
+unknown)
+2) Retrieving a version of a resource where the Vportal URL is known, but
+the version identifier and exact URL of the version of the resource are not
+known (i.e., perhaps you want the most recent version before a given date)
+3) (for completeness) Retrieving a version of a resource where the exact URL
+of the resource is known.
+For case 1, ideally it should be possible to use GET, with the version
+identifier specified in a header, on the Vportal URL. The response will an
+entity representing the requested resource.
+Returning to the example from my previous post, if "x.c" is the Vportal, and
+version 4 of x.c is requested, then a GET request could be made to x.c, with
+the version identifier "4" specified in a header. The response from the GET
+will be an entity representing the resource which is version 4 of x.c.
+For case 2, the version can be retrieved by first requesting a listing of
+the version graph. The version graph is then examined to determine the
+version identifier of the desired version. A GET request is then made to
+the exact URL of the desired version.
+So, in the "x.c" example, the client would first request the version graph
+(using GRAPHGET), receiving a list of all the resources in the version
+graph, their is-derived-from relationships, and their version identifiers.
+The client examines the version graph for the URL of the desired version,
+performing a GET operation to retrieve the desired version.
+Case 3 is trivial -- just perform a GET on the URL of the desired version.
+For cases 1 and 3, the version is retrievable with a single network round
+trip.
+All retrieval cases work for non-tip resources (as well as for tip
+resources).
+At present, the consensus of the group, reflected in section 5.9.1 of RFC
+2291, "Requirements for a Distributed Authoring and Versioning Protocol for
+the World Wide Web", is that versions, once they are frozen, are immutable.
+Most working group members I have talked to have been associating "freeze"
+semantics with the "checkin" method.
+Based on this, the current versioning proposal would not let you modify an
+existing member of a version graph (that is, modify the contents available
+at a given URL), since the members of the version graph are frozen. The
+current versioning proposal does force a new version on each change.
+In previous discussions on this topic, it seemed to me we had determined
+that the WebDAV LOCK functionality exactly matches the functionality that
+Novell terms checkout.
+Also, I know many people on the list view immutability of previous versions
+as an essential guarantee provided by a versioning system, and lack of such
+guarantee as a serious diminishment of the value of a versioning system. It
+would be helpful to me (and to the list as well), if you could give some
+scenarios of use where previous versions need to be modified (i.e., where
+immutability isn't desired), so we can understand why you feel this is a
+critical feature.
+- Jim
+Mmm, yeah. Personally, though, I'd say that this approach is suboptimal in many cases--for example, if multiple users have access to that leaf node, then you run the risk of lost updates, and you can't tell who made every change. I'd prefer to see stuff like this done via a scratch area.
+EvilNastyIcky!
+One major advantage of versioning is that it lets you do audits. If you're versioning your source code, and somebody complains that it breaks only when they've got their username set to "John Smith", you can go back in the code and find out that Joe Blow put in a poison easter egg because he hated somebody named John Smith. If you're versioning your Web site, and somebody accuses you of having put child porn on it, you can check back at every version that's ever existed and prove that you didn't. These capabilities break down if you can edit non-leaf nodes. I take your point about not restricting the servers too much; but this sort of functionality is so vital that I would prefer to make sure the protocol can't be asked to break it.
+That's what branching is for.
+|John (Francis) Stracke |My opinions are my own.|S/MIME supported |
+|Software Retrophrenologist|=========================================|
+|Netscape Comm. Corp. | Veni, Vidi, Ridi: |
+|francis@netscape.com | I came, I saw, I mocked. |
+New area code for work number: 650
+I'm not saying there aren't valid reasons for forcing new versions, just that this should be up to the server and not the spec. I know we aren't the only document management system that doesn't force it, and having the spec require this would break the model of any DMS out there that currently leaves it to the user.
+As we've asked many, many customers about this, only about 20% want forced automatic versioning. Another 50% or so would like the *option*. In many cases, administrators are very much against the automatic versioning because of the disk space required to maintain such a system (unless you only save diffs, which isn't the case with us).
+So let me propose this, and anyone can tell me why this won't work: The spec should leave it up to the server to force or not force. There would be a method of discovery for clients to determine what the server's rule is.
+John Stracke francis@netscape.com 08/07 11:27 AM
+Mmm, yeah. Personally, though, I'd say that this approach is suboptimal in many cases--for example, if multiple users have access to that leaf node, then you run the risk of lost updates, and you can't tell who made every change. I'd prefer to see stuff like this done via a scratch area.
+EvilNastyIcky!
+One major advantage of versioning is that it lets you do audits. If you're versioning your source code, and somebody complains that it breaks only when they've got their username set to "John Smith", you can go back in the code and find out that Joe Blow put in a poison easter egg because he hated somebody named John Smith. If you're versioning your Web site, and somebody accuses you of having put child porn on it, you can check back at every version that's ever existed and prove that you didn't. These capabilities break down if you can edit non-leaf nodes. I take your point about not restricting the servers too much; but this sort of functionality is so vital that I would prefer to make sure the protocol can't be asked to break it.
+That's what branching is for.
+|John (Francis) Stracke |My opinions are my own.|S/MIME supported |
+|Software Retrophrenologist|=========================================|
+|Netscape Comm. Corp. | Veni, Vidi, Ridi: |
+|francis@netscape.com | I came, I saw, I mocked. |
+New area code for work number: 650
+I think it would help the discussion to distinguish between two
+different concepts: revisions and versions. I won't pretend formal
+definitions, just brief characteristics and examples distinguishing
+the two. While my comments may indicate a specific implementation,
+please take these as examples...
+* Revisions are automatically generated and assigned names such as
+1.3, 1.2.1.4, etc. when a versioned item is modified, say by a CHECKIN
+operation.
+* Revisions are immutable, both their name and their data, but they
+may have mutable metadata, such as labels or comment fields.
+* A sequence of revisions represent changes over time of a single
+versioned item.
+* A version on the other hand is determined by a human and named by a
+human. A CHECKIN operation only changes the version if the human
+specifies it so via a parameter, etc..
+* Versions can be mutable, or immutable. Normally, versions are
+mutable for a time, and then frozen. But frozen versions can be
+thawed to make modifications if needed.
+* Version labels are used to access items with an application-specific
+semantic intention, e.g.. "Latest version of Release 5", or "Currently
+Shipping Version", etc.
+* A revision name provides no application-specific semantic value.
+There is no conflict here, revisions and versions are both needed to
+support configuration management (for example). Versions can be (and
+have been) implemented using floating and fixed labels on top of
+revisions. Other models can also be used.
+So the question I hear Bruce asking is "Can WebDAV allow implementors
+to support Versions, but make Revisions optional"?
+I think the answer is yes. However, I also believe that WebDAV needs
+to model both Versions and Revisions explicitly in order to pull this
+off. A client needs to be able to find out if the server supports
+revisioning and how that revisioning will behave during a CHECKIN, for
+example.
+I agree with many previous comments that Revision support (of some
+sort) is an absolute requirement for doing configuration management.
+Versioning alone is often not sufficient, even for legal reasons.
+However, a pure versioning system does have collaborative value,
+especially when combined with locking.
+--Sarge
+John Stracke francis@netscape.com 08/07 11:27 AM
+Our PCDOCS products leave the choice up to the administrator. As Bruce
+says, there are customers who want to be able to change non-leaf nodes. If
+WebDAV forces this it will reduce its usefulness for our products and customers.
+that this should be up to the server and not the spec. I know we aren't the
+only document management system that doesn't force it, and having the spec
+require this would break the model of any DMS out there that currently
+leaves it to the user.
+automatic versioning. Another 50% or so would like the *option*. In many
+cases, administrators are very much against the automatic versioning because
+of the disk space required to maintain such a system (unless you only save
+diffs, which isn't the case with us).
+spec should leave it up to the server to force or not force. There would be
+a method of discovery for clients to determine what the server's rule is.
+John Turner
+johnt@cgocable.net

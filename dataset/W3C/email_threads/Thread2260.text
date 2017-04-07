@@ -1,0 +1,86 @@
+Well, sports fans, there's a new cookie draft. Regrettably, the name
+is draft-ietf-http-state-man-mec-00. (I had wanted it to be
+draft-ietf-http-state-mgmt-06.) I have withdrawn
+draft-ietf-http-state-mgmt-errata-00, which the new draft subsumes.
+For the record, I know of two planned changes to the draft already:
+1) I'll drop the "same port" requirement. (Cookies can return to any
+port on any host to which they could otherwise legitimately be sent.)
+2) [10.1.1] When a user agent receives both Set-Cookie and Set-Cookie2,
+if the Set-Cookie2 has no Max-Age attribute, the user agent *must not*
+[change from "may"] honor any Expires in Set-Cookie.
+Dave Kristol
+Dave Kristol:
+Dropping this requirement opens a significant security hole, because not all
+servers on the same host need to be run by the same people. Others have
+called this a `marginal case', but I do not want to ignore it: really tiny
+sites need security too.
+The `same port' requirement that is in the spec now is a little too
+restrictive though. I'd be happy if the current
+Domain Selection
+The origin server's fully-qualified host name must domain-match the
+Domain attribute of the cookie. The origin server's port number
+must equal the port number of the server that sent the cookie.
+gets rewritten to
+Domain Selection
+The origin server's fully-qualified host name must domain-match the
+Domain attribute of the cookie. If the cookie does not explicitely
+specify a Domain attribute, the origin server's port number must
+equal the port number of the server that sent the cookie.
+, but just dropping the port requirement won't do for me.
+Koen.
+In defense of my assertion that this is a marginal case:
+The only case in which we would need a port restriction would be when two
+Web servers are running on the same host with the same server name but
+different port numbers:
++ If domain is not specified in the set-cookie, it defaults to
+request host and can meet the conditions listed above; and in this
+case, we should consider a port restriction.
++ If domain is specified, though, the cookie can be sent to any
+server in the domain given, so a port restriction makes no sense:
+one could start a server in the specified domain on the same port
+but a different host, and get around a port restriction.
++ Finally, if two servers are on the same physical host but run
+under different server names (using vitrual hosting) -- which is,
+I would guess, a more common case than the first -- this problem
+does not arise, so again a port restriction makes no sense.
+It is unlikely (though not impossible) that a privacy- or security-
+sensitive application would be run under the first case: on a host where
+others could set up a server with the same name but a different port
+number. I still think it is a marginal case.
+I certainly agree, however, that "really tiny sites need security too," and
+would be more than happy to try to improve the port restriction if it is
+important to you or others.
+This seems reasonable to me, although we're getting into the realm of weird
+implicit behavior again. My impulse is to suggest that the 'secure'
+keyword trigger a same-port restriction (which would have a side effect of
+making 'secure'-labelled SSL-transmitted cookies, which will likely come
+from port 443, returnable to port 443 only ......hmm) but I suspect that's
+not going to mesh well with a variety of 'secure' techniques. The reason I
+suggest it is that then a keyword indicates a higher level of resturction,
+rather than a default setting on an option attribute (domain).
+M. Hedlund hedlund@best.com
+I believe this is no different than the case of using the same server name
+which Koen raised ... with virtual hosting, each virtual host is an alias
+for the same physical host. Hence the rogue server running on a high port
+can virtual host for the same names as the server whose cookies it is
+trying to intercept.
+My sense of the world of webfarm server services providing virtual hosting
+is that actually using this technique to harvest cookies intended for
+another server would be quite difficult at best. The rogue server
+operator must:
+a. Manage to keep the rogue server started and running and receiving
+requests for a port that athe web farm owner doesn't support
+b. Introduce URLs in places likely to be seen and followed by people
+who also use the approved server
+Hence I would propose that this issue be be addressed with a security
+consideration note which describes the possiblity and strongly discourages
+the use of cookies to carry sensitive information if the application is
+hosted on a shared system where an unauthorized person could run a web
+server. A similar warning should exist (it may, I'm being lazy and not
+double checking) for the case where the spec allows multiple hosts to
+share cookies.
+Personally, I think its bad design to include anything more than a basic
+session ID in the cookie but I know there are many sites that find storing
+user information in the user's browser attractive so I think they bear the
+responsiblity for paying attention to the security issues.
+Dave Morris

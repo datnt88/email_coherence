@@ -1,0 +1,33 @@
+I am trying to copy a node from one document and insert it into a separate
+document tree. I tried to cloneNode(true) it and insertBefore() into the
+new document, but a DOMException with a code of "WRONG_DOCUMENT_ERROR" is
+raised. Why is this a limitation, and is there an easy perform this
+operation with standard DOM methods?
+I am using IBM's xml4j java parser (XERCES).
+Thanks,
+Robert Rangel
+Use import-node from DOM2.
+-- Terje terje@in-progress.com | Media Design in*Progress
+Software for Mac Web Professionals at http://www.in-progress.com
+Take advantage of XML with Emile, the first XML editor for Mac!
+FAQ PROPOSAL, since it comes up on a regular basis in every XML-related
+discussion I monitor...
+Nodes may not be moved directly from one Document to
+another. To accomplish this task, you must create new
+nodes in the target document, using the data from the
+source document.
+It's not hard to write a simple tree-walker to do this, but
+it's a nuisance. DOM Level 2 will add the importNode()
+method to do that work for you. Some DOMs (eg IBM's)
+already include a prototype of that function. But if you want
+a portable solution that will work with DOM Level 1, you
+have to provide your own routine for the purpose.
+A better alternative, in many cases, is not to create a second
+Document at all. If you can pass your main Document into
+whatever routine is generating the second tree, and use its
+factories, you'll be able to insert those nodes directly.
+For future reference: DOM Level 3 is looking at the general
+issue of loading/storing DOMs, and I would expect that the
+question of loading additional data into an existing document
+is one of the use cases they've considered.
+Joe Kesselman / IBM Research

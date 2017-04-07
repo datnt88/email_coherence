@@ -1,0 +1,100 @@
+This brief answer is in reference to the question asked by Larry. In our
+system we factor the following services:
+a) Delta based version storage
+b) Version management
+c) Meta object
+d) Configuration management, and
+e) Workspace management
+The key in (a) is an ability to identify deltas by name and to associate
+some meta date to the delta (in order to properly support merge). (b)
+essentially becomes name management. Meta objects in our case is more than
+the attribute/value pair or links pointing to large documents. We use a
+multiple-inheritance based object model (particularly useful in Product
+Data Management). Configurations are snapshots that contain many versioned
+objects and configuration management has to deal with serving up
+configurations as versionable objects. Finally, workspace management has to
+deal with creating a "place" in which users prepare and committ many long
+term transactions (i.e., in this case configurations). Workspaces have a
+notion of views and there is a view service provided. Again, in our
+implementation, each of these services can be separated across different
+servers.
+We believe that the above approach can lead to very large scaling of a DAV
+system. I can't tell if these considerations have gone into the design of
+the current protocol.
+Sankar Virdhagriswaranp. no: 508 371 0404
+I think most people are aware of the considerations, but might have a
+different model for what the scaling issues are.
+The general principle for scaling in DAV is that every object that
+can be manipulated independently is a resource, and has its own URL.
+The relationship between resources is always determined by operations
+on (one of) the related resources, rather than, say, by string
+manipulation of the URLs. (The only exception to this is the possible
+relationship of a 'realm' to a partial URL string, in the same way
+that HTTP authentication and cookies are tied to realms.)
+Because resources are linked by URLs, resources need not reside on
+the same physical machine.
+At least, that was the general idea. It's up to you to evaluate whether
+the design and its elaboration meets your needs.
+By stoping at the "resource" boundry and also by not separating the
+services offered by a DAV system we are not scaling the DAV system itself.
+Here are some examples.
+In existing version control systems the management of delta is done in
+atleast four ways that I know of - full copies, forward deltas, reverse
+deltas, and change sets. Each of these are appropriate for different types
+of media and different applications. If we pull this service out as a
+separate piece, then we can plug and play different "storage management"
+services for different applications and we can allow users to mix and match
+them too.
+Similarly configurations and versions are intimately related and another
+server can be used to manage these two together. This is already done by
+commercial companies today. In fact, placing the name management
+functionality in different places in the client-server pipe (i.e., client,
+group proxy, server) limits/makes-possible different types of configuration
+serving.
+etc., etc.
+This is why I wondered if a service model had been developed.
+Sankar Virdhagriswaranp. no: 508 371 0404
+Since we're talking at the abstract layer, it's easy to generate
+misunderstanding.
+A "resource" is in fact a service; an object, if you will.
+(I'd disagree with the post that we're not adopting an "object-oriented"
+framework; I think the 'web' is object-oriented in that resources are
+the objects, URLs are object pointers, although web resources normally
+only offer methods of GET, PUT and POST, although we're considering
+additional resource-based methods; insofar as we add additional methods,
+it ties the delivery of services to those transports that offer
+additional methods.)
+We've noted, for example, that the resource of "the source" is a
+different resource from "the generated content", with a link
+relationship of derived-from. So you can 'get the source' by applying
+the GET method to the source instead of applying it to the derived
+content, e.g., for web pages with server-side includes. However, with
+this choice, we're also allowing the source and the generated content to
+be on separate machines.
+Scalability and distribution are good properties in the abstract, but in
+practice, it's possible to carry the abstract goal farther than
+necessary, while at the same time, burdening the implementations with
+too many levels of indirection. So we need to carefully balance the
+separation of objects against actual practical needs.
+The main "scalable" case I'd like to argue for, for DAV (and perhaps
+this is a request to add something to the requirements document) is that
+it should be possible to do authoring against a completely separate
+machine than the machine(s) that are actually serving the content being
+authored.
+I'm imagining for security &amp; firewall considerations, as well as for
+load distribution, that one might want to have a separate server which
+handles all authenticated operations of update, but that, as far as the
+user and client are concerned, they *start* with the web server. That
+is, if you have "davserver.host.dom" and "www.host.dom", you might find
+that the URLs for the version tree, the source of documents, etc., are
+all "http://davserver.host.dom", even though the documents that you're
+actually authoring are "www.host.dom". It should be possible to not have
+to authenticate against the machine that is actually serving the
+documents.
+Your scenarios are interesting; the question is whether a standard
+should dictate a service model, or just allow a wide variety of service
+models. Although any product architecture needs a service model, we're
+clearly trying to support "all of them". Perhaps we should instead try
+to focus on just documenting the service models of the products that
+we're trying to support.
+Larry

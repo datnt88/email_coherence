@@ -1,0 +1,75 @@
+Dear all
+I find a problem with Tidy. Each time when I use Tidy to clean up the
+codes of my document, save the document and open it again, I find there
+are lots of "?" characters. I have had a hard time in locating the
+problem, only to find that this is because Tidy converts all '&amp;nbsp;'
+into '?'. If a '&amp;nbsp' is adjacent to a tag, Tidy will also trim the
+tag. So I find lots of ?br or ?p .
+I have a lots of web-pages needing to be cleaned, and these pages were
+previously created by an old version of netscape composer, which added
+many '&amp;nbsp;' in these documents. However, since the above problem
+exists, I must clear up all the "?" after tidy cleans the codes. This is
+rather inconvienence.
+The following is my configuaration file for Tidy
+tidy-mark: yes
+markup: yes
+wrap: 72
+tab-size: 8
+indent: auto
+indent-spaces: 2
+output-xhtml: no
+doctype: loose
+char-encoding: raw
+clean: no
+logical-emphasis: yes
+keep-time: yes
+quote-nbsp: yes
+I use the raw option because my documents contain Asian characters. I
+have tried to change the option for quote-nbsp to 'no' but in vain. I
+use the win32 version of Tidy which is supposed to support Asian
+characters (although this command line program is itself unsupported
+now, its version date was Sept, 2001). Can anyone suggest how I should
+go on? Thank you very much for any reply.
+best
+Franklen CKS
+Hong Kong
+p.s. it is very hard to find a good html editor that is integrated with
+Tidy and support Asian characters well :-( . I can hardly find one
+running either on GNU/Linux or Windoze. I really hope that I can enjoy
+the full power of Tidy, Amaya and even the validation service of W3C
+(which keeps on telling me that 'your page contains bytes which I cannot
+interpret as big5', when this page can be rendered unproblematically in
+all browsers I test again, including lynx.)
+F Dear all
+F I find a problem with Tidy. Each time when I use Tidy to clean up the
+F codes of my document, save the document and open it again, I find there
+F are lots of "?" characters. I have had a hard time in locating the
+F problem, only to find that this is because Tidy converts all '&amp;nbsp;'
+F into '?'. If a '&amp;nbsp' is adjacent to a tag, Tidy will also trim the
+F tag. So I find lots of ?br or ?p .
+yes, it puts a octal 240 = 0xA0 into the file which then combines
+with neighboring characters to be seen as an invalid chinese
+character...
+i want to make sure tidy won't put any 0xA0...0xFF into my files on
+its own. see my message regarding "240" in the archives.
+char-encoding: raw = this is your problem.
+Raw encoding is the tidy equivalent of "garbage in, garbage out". When parsing, tidy converts everything (including named entities such as &amp;nbsp;) into utf-8; once the DOM is constructed and cleaned, it outputs everything in the requested encoding. Raw output doesn't create any entities (phrases beginning with &amp; and ending with ;); since you have requested raw, it coverts the non-breaking space (stored internally in utf8) to it's numeric value, 160.
+I don't know why you need to use raw encoding for asian character sets, but I really don't need to know because tidy has the option of specifying different input and output encodings. Thus, if you specify:
+input-encoding: raw
+output-encoding: utf8
+your input will be read just as it is now, but the output will be valid utf-8. If you wanted unicode output you could use:
+output-encoding: iso2022
+If your version of tidy was built with support for asian encodings you should also be able to use:
+output-encoding: shiftjis
+or for the chinese big 5 character set:
+output-encoding: big5
+Other relevant output encodings include ASCII (to limit the output to 7-bit values), mac (to convert to the McIntosh Roman character set), win1252 (which uses otherwise invalid values in the 128-159 range), and latin-1 (probably the most common). With any of these encodings, characters which cannot be represented in the requested output character set are converted to entities.
+I hope this helps.
+Lee output-encoding: big5
+does this work in the dec01 asian version? not for me.
+anyway, we use -raw because we must make big5 web pages... it is not
+unicode time yet here. Also, I have some web pages that are pure
+ascii. With -raw I don't have to change the tidy switches for each
+file depending on its coding system.
+Anyway, I still use aug00 tidy because you haven't put back the
+#FFFFFF color stuff.

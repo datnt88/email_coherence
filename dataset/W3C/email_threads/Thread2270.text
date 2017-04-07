@@ -1,0 +1,122 @@
+I fail to understand the rationale behind what to me is the most complex
+section in the whole document. Why are we requiring UAs to combine
+the two headers?
+I think there is no siginificant loss of functionality if this whole
+section is dropped along with the forward reference in the previous
+section. Simply require the server to send both with appropriate
+attributes. If the UA understands both forms, it MUST send the new form
+and it must replace an existing matching form 1 with the new form.
+Otherwise the UA doesn't understand both and sends the old form.
+Dave Morris
+This issue has been discussed (but perhaps privately?)
+The complaint from some parties was that the NAME=VALUE part of cookies, in
+particular, can be (and already is) quite large. So sending it twice, once
+in Set-Cookie and once in Set-Cookie2 would incur a lot of network traffic.
+I agree that sending a completely separate Set-Cookie2 header with its own
+set of values would be much simpler. But the network traffic that results
+was deemed excessive.
+Dave Kristol
+I think there are two alternative solutions to mitigate network traffic
+for that subset of cookie using application which need to update large
+pieces of data:
+a. Use out of band informantion such as the User Agent value to decide
+which cookie to send
+b. Minimize the number of times a cookie is set. Perhaps multiple
+cookies with only one needing upate.
+c. Restructure the application to maintain more state information
+in the server.
+d. Once the first cookie is received by the server, it is only
+necessary to send one of the two formats. I would speculate that
+some percentage of large cookie values are related to shopping
+basket usage and only get large in the course of multiple
+interactions.
+The combinatorial rules are difficult and must be implemented to some
+degree by both the server and the client. In addition, they are in
+support of a transition interval. I think they should be dropped in the
+interest of simplicity.
+Dave Morris
+All of these ideas have been considered and rejected because of the load
+they place on the server. Turning a V1 cookie into a V0/V1 cookie, on
+the server side, requires nothing more than inserting "CRLF
+Set-Cookie2:" in the right place in the set-cookie header. The beauty of
+the solution is that the server doesn't have to sniff UA headers, which
+is expensive, or worry at all about who they are talking to. By just
+inserting the string they guarantee that everyone will work properly
+without the need for any conditional code.
+Yaron
+From:David W. Morris [SMTP:dwm@xpasc.com]
+Sent:Tuesday, March 25, 1997 12:19 PM
+Subject:Re: Section 10.1.1 Combining Set-Cookie and Set-Cookie2
+Note also that though the section on combinatorial rules is
+the most complex in the draft, it does not apppear sufficient to ensure
+equivalent implementations across UAs and reliable exchanges between
+UAs and servers:
+The examples have alternating Set-Cookie and Set-Cookie2 headers
+when the Set-Cookie2 header is adding Version 1 attributes to an otherwise
+Version 0 cookie name=value and attributes, which would help simplify
+their combination, but no such ordering is stated as a requirement in
+the draft, and such alternation would not be necessary if no Version 1
+attributes other than Version are being use, i.e., if a Set-Cookie2 header
+is simply indicating that the server is Version 1 capable such that
+the UA should include the $Version, $Path and $Domain attributes in
+its Cookie headers.
+If multiple cookies are included in Set-Cookie headers, and
+additional Version 1 attributes are provided via Set-Cookie2 headers
+but for some reason the numbers of cookies associated with the "old"
+and "new" headers do not appear equal, how much should be discarded
+(everything?)? If the Set-Cookie2 header is simply indicating
+Verson 1 capability, should it then use a comma-separated list of
+Version="1" attributes to ensure matching for number of cookies, or
+use them as comma-serarated "fillers" if not all of the cookies in
+such a Set-Cookie header have other Version 1 attributes? Note also
+that in the Examples, the Set-Cookie headers have commas as separators
+for name/attribute sets, which is invalid for the "old" headers, and
+could be confusing to readers of the draft.
+Particularly since large headers are likely to be the result
+of cookie accumulations, and the UA is likely to have sent a Cookie
+header so that the server need not send both "old" and "new" headers
+in such cases, the concern for saving bandwidth during the transition
+period via a combinational strategy may indeed be penny wise but pound
+foolish with respect to reliability and consistency of implementations.
+Another possibility if for Version 1 capable UAs to indicate
+this in a request header, perhaps only when not sending a Cookie header
+with Version 1 attributes, which itself indicates this capability.
+Fote
+Foteos Macrides Worcester Foundation for Biomedical Research
+MACRIDES@SCI.WFBR.EDU 222 Maple Avenue, Shrewsbury, MA 01545
+I didn't think the combination rules ("combinatorial" conjures a much worse
+situation) were that bad, but that's a judgement call. Either way, I think
+the burden for interpreting them is wholly in the client. Yaron Goland (in
+a separate message) stated that the burden on the server, to emit
+Set-Cookie2, is minor. And there's no new burden on the server to
+interpret Cookie, which remains unchanged.
+Dave Kristol
+Alternation is not "necessary". I wrote the examples that way to emphasize
+two points:
+1) An existing application could easily upgrade to V1 cookies by outputting a
+second header after the first.
+2) Like headers might not appear consecutively.
+Assuming a client aggregates like headers first, I think the hardest part of the
+combining rules might be walking the combined Set-Cookie and Set-Cookie2 headers
+in parallel and creating new Set-Cookie2 headers.
+That's a fair question. I think the only *safe* thing to do is to discard all,
+since there's no way to discern where an omission occurred.
+It could, or it could use separate Set-Cookie2 headers, each with a Version=1.
+I guess the answer is yes (which makes the Set-Cookie2 effectively null). But
+why would an application want to send some V0 cookies and some V1?
+Please cite specific section/page/text. My eyes may deceive me, but I only see
+';' as attribute/value separators.
+The down-sides of that approach are:
+1) A UA would always send extra header information to indicate cookie
+capabilities, even to servers that don't use cookies.
+2) An application would have to look for such a header *or* for V1 cookies to
+decide what kind of cookies to send.
+Dave Kristol
+I don't see why it couldn't be:
+Cookie: $version=1
+So there would only be 1 header to examine. But I don't think this is
+necessary. As I said before, I think this is needless complexity for a
+transition plan to save an arguably large/small amount of network traffic.
+The server (read application author) burden in terms of the potential for
+some client not correctly merging the two headers is quite high.
+Dave Morris

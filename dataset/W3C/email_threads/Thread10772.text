@@ -1,0 +1,167 @@
+On 23 October 1996, the ERB will vote to decide the following
+question. A straw poll indicates the ERB is leaning to yes.
+C.9 Should XML forbid use of the '&amp;' connector in content models
+(11.2.4.1)?
+Well, this is a peculiar reversal for me, but since we are going to keep
+the weird semantics of SGML content models, &amp; does not seem too burdensome.
+And it is useful in some contexts. I don't feel strongly about it, but
+we've already given up the hope that anyone can apply well known theory, or
+common knowledge in implementing the feature, and &amp; is easy when you just
+parse against the parse tree (which is what people will do).
+Maybe that's an instance of another straw for the implementor's back,
+but since we're throwing in a brick, I don't see that baking the brick with
+straw in it is going to make that much difference.
+-- David
+RE delenda est.
+David Durand dgd@cs.bu.edu \ david@dynamicDiagrams.com
+Boston University Computer Science \ Sr. Analyst
+--------------------------------------------\ http://dynamicDiagrams.com/
+MAPA: mapping for the WWW \__________________________
+I don't recall seeing this resolution passed by the ERB,
+did I miss something :-)? What "brick" are you talking about?
+Since we've dropped OMITTAG, and will probably drop inclusion
+and exclusion exceptions, '&amp;' groups are the only feature remaining
+that are beyond the scope of what anyone with a copy of the Dragon Book
+can handle in a day's work.
+(The ambiguity restriction does not matter here: unambiguous content models
+are a strict subset of regular expressions; any algorithm for matching
+against general REs will also work for unambigous ones. In fact,
+the ambiguity rule can make things *easier* for implementors.)
+I don't see that '&amp;' is _easy_, but as long as we keep the
+ambiguity restriction it's at least tractable.
+--Joe English
+jenglish@crl.com
+Way back when, Tim Bray posted the following, in the
+"Report from the SGML ERB meeting of Oct. 9th":
+A.27 XML will behave like SGML as regards behavior and precedence
+of occurrence indicators and connectors in content models (11.2.4.1,
+11.2.4.2). (Whether to abolish the AND connector will be decided
+separately.)
+Passed, Unanimous.
+That means the whole ball of wax, to me. If I had to implement SGML's
+ambiguity I'd implement and ambiguity check and match against the parse
+tree for the model. If I'm parsing that way, what's a single bit of
+additional state per moel token? As I say, I'm not emotional about kereping
+&amp;, just don't see why not.
+Yeah, once the check is over. It's doing the check that is unpleasant and
+non-standard. Still, your point about hust using RE is a good one.
+You just keep a flag as to whether the &amp; group is used up yet or not.
+Gross, but servicable and easy....
+-- David
+RE delenda est.
+David Durand dgd@cs.bu.edu \ david@dynamicDiagrams.com
+Boston University Computer Science \ Sr. Analyst
+--------------------------------------------\ http://dynamicDiagrams.com/
+MAPA: mapping for the WWW \__________________________
+theory, or
+A.27 XML will behave like SGML as regards behavior and precedence
+of occurrence indicators and connectors in content models
+No. It means that to the extent that we have () and | and ,
+and * and PCDATA and so on in XML content models, they mean the
+same thing as they mean when they appear in SGML content models.
+Between the things that we've turfed and the things that we're
+going to turf, there is going to be A LOT LESS allowed in XML
+content models. With the explicit aim, as reflected in our design
+goals, of making parsers easy and in particular susceptible to
+standard formal methods.
+And specifically, let's lose the &amp;. Not that it isn't useful... but
+the ROI is negative.
+Cheers, Tim Bray
+tbray@textuality.com http://www.textuality.com/ +1-604-488-1167
+You don't have to perform the check though, even in
+a validating parser:
+"4.329 validating SGML parser: A conforming SGML parser
+that can find and report a reportable markup error if
+(and only if) one exists.
+4.267 reportable markup error: A failure of a document
+to conform to this International Standard [...] other
+than a semantic error [...] or:
+a) an ambiguous content model
+b) [...]"
+[ 9.3, "Conforming Systems", p. 215]
+In other words, 8879 (for better or worse) places the
+burden of ensuring non-ambiguity on the DTD designer,
+not the parser.
+Also note that checking for ambiguity is straightforward --
+as long as there are no '&amp;' groups.
+That only works if the content model is unambiguous:
+consider '( (a,(b|c)) &amp; (a,(b|d)) )' after seeing 'ab...'
+Since '&amp;' groups are the only feature that makes the ambiguity
+restriction difficult to test for, and it's also the only feature
+(other than OMITTAG [1]) that makes the restriction desirable from
+the implementor's point of view, the logical conclusion would
+be to drop '&amp;' groups. (Not that I am advocating that position --
+I think XML should keep both '&amp;' groups and the ambiguity restriction,
+but should not require validating parsers to check the latter.)
+[1] Final note: OMITTAG, in particular start-tag omission,
+*cannot work* unless content models are unambiguous and deterministic.
+This is because of the way "contextually require element" is defined in
+the standard.
+--Joe English
+jenglish@crl.com
+I don't think we should emulate the policy of having errors that may break
+some parsers and documents, but are not reportable.
+I agree. But it's not something you can look up in a book.
+This seems to me to support removing the unambiguity distinction.
+More reason to drop unambiguity, as that feature died an unlamented death
+practically at the inception of the project.
+You have convinced me though, that both features should be dropped, &amp; and
+unambiguity. We should take advantage of the slack allowed in the standard,
+and hope that SGML parser writers who care about XML will adapt.
+-- David
+David Durand dgd@cs.bu.edu \ david@dynamicDiagrams.com
+Boston University Computer Science \ Sr. Analyst
+--------------------------------------------\ http://dynamicDiagrams.com/
+MAPA: mapping for the WWW \__________________________
+Not exactly. The standard just doesn't require ambiguity checking as a
+requirement of every validating parser. We expected that products would
+differentiate themselves in this (and other) respects, as indeed they have.
+But it is true that, with or without parser assistance, a document type can't
+have any ambiguous content models. (Even without start-tag omission, unambiguous
+content models are typically easier for a user to understand, and therefore to
+determine which element types are allowed at a given juncture.)
+Charles F. Goldfarb * Information Management Consulting * +1(408)867-5553
+13075 Paramount Drive * Saratoga CA 95070 * USA
+International Standards Editor * ISO 8879 SGML * ISO/IEC 10744 HyTime
+Prentice-Hall Series Editor * CFG Series on Open Information Management
+Agreed. There is another option though: XML could enforce a
+stricter -- and easier to implement -- ambiguity restriction
+than 8879. (Removing the restriction altogether would make
+XML incompatible with SGML, so that is not an option as I see it.)
+The main difficulty in testing content models with AND
+groups for ambiguity comes from (pathological?) cases
+like: ((foo &amp; bar), foo), i.e., AND groups whose first-
+and follow- sets are not disjoint. If XML extends the notion
+of "ambiguity" to include these cases as well, then AND groups
+can be treated just like repeatable OR groups for purposes of
+detecting violations of the rule.
+(This might be a good idea in any case, based on the primary
+rationale behind the ambiguity restriction in the first place:
+"human beings must also perform context checking when creating
+the document, and they are more likely to do this successfully
+if the regular expressions are kept simple." [Annex H]
+I realize that many people disagree with this rationale,
+but keep in mind that those of us who understand the issue
+well enough to disagree with it are not the sort of human
+beings that Annex H is talking about in the first place.)
+So we put it in the XML spec. A formal definition of
+what isn't allowed should suffice, as long as the language
+is mathematical in nature (a la 10179) and not legalese
+(a la 8879).
+I think you misunderstood. The algorithm you suggested
+for parsing AND groups -- set a flag after matching each
+subgroup -- only works for non-ambiguous content models.
+Otherwise you can't tell "which" subgroup was matched
+("which" in quotes since the question is meaningless for
+general regular expressions). To me that suggests that
+the ambiguity restriction should be _retained_: it makes
+AND groups easier to handle.
+I really must work on my exposition then, since that's
+the exact opposite of what I had hoped to convince you :-)
+I think XML should keep '&amp;' (since it's useful, despite being
+hard to implement); and it must keep the ambiguity restriction
+(for compatibility with 8879). OMITTAG means that 8879:199X
+will most likely not be able to allow ambiguity either, so XML can't
+even remove the restriction in anticipation of a revised standard.
+--Joe English
+jenglish@crl.com

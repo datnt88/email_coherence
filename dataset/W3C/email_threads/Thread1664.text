@@ -1,0 +1,429 @@
+I'm interested in feedback on the following BOF/WG idea. Do you think
+this is a good/bad idea? Any suggestions to improve the proposed charter?
+Anyone interested in being a document editor of either of the two
+proposed documents or interested in WG chair/co-chair position?
+- Chris
+The APPLCORE BOF will discuss the following proposed charter:
+Application core protocol WG (APPLCORE)
+The IETF has traditionally developed application protocols directly on top
+of a raw TCP stream. However, there is a growing set of problems which
+many application protocols have to solve regardless of what the protocols
+do. This WG will identify these problems, identify the successes and
+failures that deployed IETF protocols made when addressing these problems
+and design a simple core protocol to address these problems. This core
+protocol may then be used by future application protocols to simplify both
+the process of protocol design and the complexity of implementing
+multi-protocol servers.
+In order to keep the WG in focus, the following items are explicitly
+out-of-scope:
+* Backwards compatibility with existing application protocols
+Backwards compatibility often compromises correct design. If this
+WG is successful it will impact a great number of future protocols,
+and thus the design errors which backwards compatibility might
+dictate must be avoided.
+* Transport layers other than TCP/IP
+This has been a rathole in too many other WGs.
+* New features
+If a problem hasn't been solved in at least two deployed IETF
+application protocols, then it doesn't need to be addressed in the
+core protocol spec. This does not preclude individuals or other
+groups from doing extensions to the core protocol which might be
+used by multiple future application protocols; it just limits the
+scope of the core spec.
+* Normative references to other application protocols
+The core protocol has to stand by itself. It may reference protocol
+building blocks that have been used by several other application
+protocols such as ABNF, language tags, UTF-8, domain names, URLs,
+MIME, SASL, GSSAPI and TLS. It must avoid normative references to
+full application protocols such as ACAP, HTTP, IMAP, LDAP, and SMTP.
+The WG will produce the following output:
+* An Informational RFC documenting the problems identified to solve,
+and giving examples of existing deployed IETF protocols which
+succeeded or made mistakes when solving those problems. A starting
+list of problems for the WG to discuss (the WG may choose not to
+address some of these) follows:
+* connection user authentication and privacy (e.g., SASL and STARTTLS)
+* server capability/extension announcement (e.g., SMTP EHLO)
+* extensible command/response syntax and structure
+* error status tokens and human readable error text issues
+* syntax for transfer of large (multi-line) objects (e.g., dot-stuffing,
+length counting, chunking)
+* multiple commands in progress at the same time (command ids or tags)
+* unsolicited server messages
+* command pipelining (sending multiple commands without waiting for
+responses)
+* Structured data representation (e.g., RFC 822-style AV pairs, IMAP
+s-expressions, LDAP ASN.1, XDR, etc) in command/response syntax.
+* low bandwidth support (e.g., compression layer or packed binary
+protocol encoding)
+* connection shutdown (QUIT/LOGOUT command)
+* A simplicity litmus test to determine if a proposal is acceptably
+simple. The initial litmus test will be: core protocol spec is less
+than 25 pages.
+* A standards track core application protocol specification which uses
+the lessons learned from the informational document and fits the
+litmus test above. An open source implementation of the complete
+core protocol must exist prior to IETF last call.
+The WG may solicit strawmen for the core application protocol from
+multiple document editors and select the one which is technically
+best and fits this charter.
+The WG may choose to do additional standards track documents which
+extend the core protocol as long as they are not new features by the
+above definition.
+The WG may choose to do one or more APIs for using the core protocol
+and adding commands/extensions to it. These might be informational
+or standards track as deemed appropriate.
+Chris,
+I think a BOF on the topic is a good idea. My first take is
+that simply identifying all of the common problems that application
+protocols need to solve would be a big win and a big enough task that
+a short-lived working group on just that would be great. I don't have
+enough of a sense of what problems future protocols will be solving to
+know whether the best approach is to create a "generic" protocol or to
+provide framework elements for solving the usual problems (like the
+mandatory-to-implement authentication issue). I know that the W3C
+group which is doing the "HTTP-NG" work has the view that a new common
+protocol would have advantages. Like you, they have also explictly
+ruled out backwards compatibility as a design requirement (which means
+their work actually doesn't have a lot to do with the current HTTP
+1.1). You might want to talk to them about participating in this
+effort. Jim Gettys would probably be the best contact there.
+regards,
+Ted Hardie
+Ted Hardie said this:
+I have to agree with this one. If there were a document I could point to
+and say that the recommended way of doing error codes can be found here
+it would save me huge amounts of time with in house one shot protocols
+in terms of educating people about what works and what doesn't work.
+A good example is the constant re-use of RFC821's response codes. If
+that itself were brought up to date and re-released on its own it would
+do alot to help new protocol writers....
+-MM
+Michael Mealling| Vote Libertarian! | www.rwhois.net/michael
+Sr. Research Engineer | www.ga.lp.org/gwinnett | ICQ#: 14198821
+Network Solutions| www.lp.org | michaelm@netsol.com
+Even with Chris's excellent charter which I think does a great job of
+restricting rat holes a core protocol WG would still be more appropriate for
+the IRTF than the IETF. In my opinion the IETF's job is to clean up the mess
+left behind by the innovators. That means we follow, we do not lead. As such
+I strongly encourage outside efforts like HTTP-NG who will blaze a trail
+that the IETF can later follow and standardize.
+However, a WG to identify common issues and equally common solutions would
+provide crucial guidance for application protocol standards writers and be
+very much in line with the IETF's work. For example, such a "common issues"
+WG might produce a document which made it mandatory for all new application
+protocols to explicitly address issues such as: Extensibility (Provide clear
+rules on what to do with unrecognized protocol elements - ignore or fail?),
+NAT/Proxy/Firewall support, caching, connection oriented vs. non-connection
+oriented, TCP vs. UDP, reliable vs. unreliable multicast, etc. These
+requirements would be in line with current requirements regarding support
+for Y2k friendly dates, internationalization and general security. Just
+producing a list of the most common issues would be a great accomplishment.
+It would be a valuable guide for reviewers and ADs to use when evaluating
+new protocols.
+Yaron
+www.rwhois.net/michael
+Sr. Research Engineer | www.ga.lp.org/gwinnett | ICQ#:
+14198821
+Network Solutions| www.lp.org |
+michaelm@netsol.com
+I think it would be a good idea. A quick read of the straw charter
+shows it contains those things that I can think of off the top of my
+head. I also think that, while this could be very useful effort, it
+could also degenerate and thus needs a tight reign on scope. The
+work should definitely be done in steps:
+1. Identify common problems
+2. Identify solutions used in various protocols
+3. Analyze solutions: what elements worked, what didn't
+4. Publish informational document
+5. Identify core set of problems for new skeleton protocol
+I'd be willing to be a document editor or chair/co-chair.
+Rough concensus appears to be heading in the direction of liking part or
+all of this proposal (including three voluteers for WG chair or document
+editor positions) and I have yet to hear a compelling negative response.
+But rough concensus is not yet sufficiently clear, so please continue to
+express your opinions. Here are responses to the general concerns
+expressed so far:
+The task is too big and should be constrained to the
+problem-identification and history document.
+If it's useful identifying the problem, then it's also useful to propose a
+solution. Futhermore, if you constrain the working group to the point
+that it doesn't have a product which is sufficiently compelling to
+motivate participants to work, then the effort will die. While the
+history/problem-statement document would be interesting and useful, I
+doubt it is sufficient by itself to motivate active participation.
+My motivation stems from my realization that the IETF usually can't say
+"no"; it can only say "use this instead", "take your proposal elsewhere"
+or "fix this problem in your proposal". There are people who wish to
+layer unrelated new protocol services on top of a 167 page HTTP protocol
+because they think it gives security and MIME labelling "for free." I
+can't argue with an honest desire to simplify the task of specifying new
+protocols, so I want to see a significantly simpler "use this instead"
+candidate. The engineer in me is willing to expend a lot of energy so
+that future IETF protocols are simpler and cleaner. Remove the "core
+protocol" task and you remove my motivation and probably that of several
+others.
+Isn't this what HTTP-NG is doing?
+No. HTTP-NG has a much larger scope than this proposal. On the high-end,
+the HTTP-NG name implies it's a replacement for a high-level hypertext
+transfer application, and is thus out-of-scope for this proposal. On the
+low-end, HTTP-NG met as an IETF "transport area" WG, which indicates a
+focus at a much lower level than this proposal permits. This proposal is
+very narrow so it only addresses those problems we (in the applications
+area) have solved before and have operational experience with.
+Isn't this a research project?
+No. The proposed charter explicitly rules out-of-scope anything that
+hasn't already been done in a deployed IETF protocol. The fact that
+people think this might be a research project or as broad as the HTTP-NG
+work suggests the proposed charter needs to be tightened up further, so I
+have clarified the initial paragraph to reflect.
+Let's do this in a strict sequence of steps
+I have revised the proposed charter so the "core protocol" proposal can't
+go to IETF last call until the "history/problem statement" document has
+been completed. However, I think it's a bad idea to attempt to do a
+problem statement and requirements without doing a prototype solution in
+parallel -- otherwise the problem statement and requirements may not be
+grounded in reality.
+I have also added a couple other constraints to the proposed charter to
+address other concerns which were expressed.
+- Chris
+------APPLCORE proposed charter V2
+The APPLCORE BOF will discuss the following proposed charter:
+Application core protocol WG (APPLCORE)
+The IETF has traditionally developed application protocols directly on
+top of a raw TCP stream. However, there is a growing set of problems
+which many application protocols have to solve regardless of what the
+protocols do. This WG will identify the common problems that deployed
+IETF protocols have solved, identify the successes and failures that
+deployed IETF protocols made when addressing these problems and design
+a simple core protocol to address these problems. This core protocol
+may then be used by future application protocols to simplify both the
+process of protocol design and the complexity of implementing
+multi-protocol servers.
+In order to keep the WG in focus, the following items are explicitly
+out-of-scope:
+* Backwards compatibility with existing application protocols
+Backwards compatibility often compromises correct design. If this
+WG is successful it will impact a great number of future protocols,
+and thus the design errors which backwards compatibility might
+dictate must be avoided.
+* Transport layers other than TCP/IP
+This has been a rathole in too many other WGs.
+* Protocol models outside the traditional IETF client-server TCP
+application protocol model.
+The IETF doesn't have sufficient past experience in these areas.
+* New features
+If a problem hasn't been solved in at least two deployed IETF
+application protocols, then it is out-of-scope for the base core
+protocol spec. This does not preclude individuals or other groups
+from doing extensions to the core protocol which might be used by
+multiple future application protocols; it just limits the scope of
+the core spec.
+* Normative references to other application protocols or non-public specs
+The core protocol has to stand by itself. It may reference protocol
+building blocks that have been used by several other application
+protocols such as ABNF, language tags, UTF-8, domain names, URLs,
+MIME, SASL, GSSAPI and TLS. It must avoid normative references to
+full application protocols such as ACAP, HTTP, IMAP, LDAP, and SMTP.
+It must avoid normative references to any document which is not
+freely and publicly available on the Internet.
+The WG will produce the following output:
+* An Informational RFC documenting the problems identified to solve,
+and giving examples of existing deployed IETF protocols which
+succeeded or made mistakes when solving those problems. A starting
+list of problems for the WG to discuss (the WG may choose not to
+address some of these) follows:
+* connection user authentication and privacy (e.g., SASL and STARTTLS)
+* server capability/extension announcement (e.g., SMTP EHLO)
+* extensible command/response syntax and structure
+* error status tokens and human readable error text issues
+* syntax for transfer of large (multi-line) objects (e.g., dot-stuffing,
+length counting, chunking)
+* multiple commands in progress at the same time (command ids or tags)
+* unsolicited server messages
+* command pipelining (sending multiple commands without waiting for
+responses)
+* Structured data representation (e.g., RFC 822-style AV pairs, IMAP
+s-expressions, LDAP ASN.1, XDR, etc) in command/response syntax.
+* low bandwidth support (e.g., compression layer or packed binary
+protocol encoding)
+* connection shutdown (QUIT/LOGOUT command)
+* A simplicity litmus test to determine if a proposal is acceptably
+simple. The initial litmus test will be: core protocol spec is less
+than 25 pages.
+* A standards track core application protocol specification which uses
+the lessons learned from the informational document and fits the
+litmus test above. An open source implementation of the complete
+core protocol must exist prior to IETF last call. The problem
+identification draft (above) must be completed prior to IETF last
+call.
+The WG may solicit strawmen for the core application protocol from
+multiple document editors and select the one which is technically
+best and fits this charter.
+The WG may choose to do additional standards track documents which
+extend the core protocol as long as they are not new features by the
+above definition.
+The WG may choose to do one or more APIs for using the core protocol
+and adding commands/extensions to it. These might be informational
+or standards track as deemed appropriate.
+All,
+I think we should also look into why earlier attempts have failed.
+RFC 1831 defines a working RPC mechanism, which could potentially have
+been used by multiple application protocols but wasn't.
+The IPP WG looked at this as an alternative to using HTTP, but came to
+the conclusion that there were few if any implementations of RFC 1831,
+and it was certainly not "on everybody's desktop" like HTTP.
+Do we know why RFC 1831 was never picked up by the market place, and
+how we can avoid making yet another generic application protocol,
+that does not get implemented?
+(I expect to hear complaints from all of you who actually have
+implemented RFC 1831 :-)
+Carl-Uno
+The task is too big and should be constrained to the
+problem-identification and history document.
+Isn't this what HTTP-NG is doing?
+Isn't this a research project?
+Let's do this in a strict sequence of steps
+Chris,
+I think that this is a great idea and has been sorely needed for a
+while now. I also empathize with Michael's comments. I'm a bit
+overloaded at the moment, but I would like to lend whatever support I
+can.
+regards,
+John
+think
+charter?
+While I applaud the general intent, I echo other concerns that the goal is
+too ambitious.
+Specifically, I find the idea that we can "design a simple core protocol to
+address these problems" is something of a tall order. What I do think may
+be achievable is to identify a range of problems, and then make
+recommendations about solutions to these.
+Your reference a number of areas that may be considered:
+I would add object security (e.g. S/MIME, openPGP),
+For each of these there may be one or more preferred solutions. I think
+the detailed specification of technical solutions should be separated from
+a document that makes recommendations about how these may be effectively
+used together to create new application protocol.
+To the maximum extent possible, existing protocols should be used. With
+few exceptions, what remains is, I think, a statement of how these are
+combined to create a new application protocol.
+So, instead of "core protocol", how about "core protocols"?
+#g
+Graham Klyne
+(GK@ACM.ORG)
+I think your proposal is a great idea and we should move forward with
+it.
+Jim
+James M. Galvin Director, EC Technologies
+CommerceNet Consortium +1 410.549.5545
+All the world's a stage and most of us are desperately unrehearsed.
+-- Sean O'Casey
+While I am supportive of the need for an object security proposal, I do
+want to observe that the IETF has not officially endorsed an object
+framework. MIME is certainly a contender but it has never been formally
+sanctioned in that way.
+Insofar as MIME is the object framework of choice, Security Multiparts
+is the object security framework of choice. That leaves choosing the
+security protocol itself, be it S/MIME or OpenPGP. Frankly, that's a
+debate we don't need and I hope we don't have.
+My worst fear is that the recently proposed "mailcap" will go there.
+I'd prefer we just have a way of knowing which protocol is supported by
+a recipient and let it go at that. We've already seen how well the
+market and our process handles choosing secure email protocols.
+So, I don't think this working group should include this action item.
+Jim
+James M. Galvin Director, EC Technologies
+CommerceNet Consortium +1 410.549.5545
+All the world's a stage and most of us are desperately unrehearsed.
+-- Sean O'Casey
+While I applaud the general intent, I echo other concerns that the goal is
+too ambitious.
+Specifically, I find the idea that we can "design a simple core protocol to
+address these problems" is something of a tall order. What I do think may
+be achievable is to identify a range of problems, and then make
+recommendations about solutions to these.
+Your reference a number of areas that may be considered:
+I would add object security (e.g. S/MIME, openPGP),
+For each of these there may be one or more preferred solutions. I think
+the detailed specification of technical solutions should be separated from
+a document that makes recommendations about how these may be effectively
+used together to create new application protocol.
+To the maximum extent possible, existing protocols should be used. With
+few exceptions, what remains is, I think, a statement of how these are
+combined to create a new application protocol.
+So, instead of "core protocol", how about "core protocols"?
+#g
+Graham Klyne
+(GK@ACM.ORG)
+It's often hard and sometimes impossible to identify why a protocol didn't
+get deployed or used. It may have nothing to do with technical merit.
+I'd rather focus on operational problems or successes with deployed
+protocols, which can be documented in a mostly objective fashion.
+My speculation, which I can't back up with research, is that RPC
+mechanisms are a poor choice in general for standards-based protocols.
+It's much harder to design an extensible and simple API than it is to
+design an extensible and simple wire protocol. In addition, APIs by their
+nature tend to have significant biases in the direction of programming
+language or operating system. Finally, RPCs are designed to "hide" the
+network -- I think the network and network latency in particular needs to
+be explicitly factored into the design at several levels. Non-RPC
+protocols tend to force that to happen in practice.
+It seems really strange to think of a general purpose RPC mechanism and a
+hypertext/MIME transfer application protocol as similar beasts... Which
+brings me to a question I've been wondering about: TCP is on more desktops
+than HTTP and has a significantly smaller code footprint, so why didn't
+you just build IPP on TCP?
+The marketplace is fickle so there's no way to be assured of success. The
+best chance is to design for technical excellence, as illuminated by our
+past successes and operational problems. I'll note that IMAP was around
+for 10 years before the marketplace really picked it up. Was IMAP ahead
+of it's time, too complex, not properly publicised or was the marketplace
+just being stupid? I couldn't guess the relative influence of those
+factors, and I don't think it's feasible to study.
+- Chris
+Chris:
+There are two reasons to do what you suggest, only one of which will
+fly.
+[1]To provide guidance on not having to repeat the same mistakes made
+by
+others. This is a good thing.
+[2]To provide mechanisms that keep us from existing using
+protocols inappropriately.
+I think [1] can be accomplished with a BCP, stating those BCPs (make a
+stronger statement than Informational). I do not think [2] can
+realistically be accomplished, given the motivations of application
+developers in using protocols such as HTTP. HTTP offers no real
+intrinsic benefit over TCP, other than that it gets through many
+firewalls in a nearly unrestricted fashion.
+Further, it's not clear that developing an APPLCORE protocol is
+reasonable to attempt, since it will force you into too many LCD
+situations with lots of options. This is something that we in the IETF
+have struggled with in the past. "We have seen ISO and they are us."
+Eliot Lear
+elear@cisco.com
+I agree this is a good thing, but I also suspect that by itself it lacks
+sufficient benefit to motivate people to do the hard work. Anyone could
+have documented the mistakes of the past at any time. The closest anyone
+came to doing so that I'm aware of was my internet draft:
+draft-newman-protocol-design-01.txt
+But I found myself lacking sufficient motivation to continue that hard
+work. It cost a lot of time and had no visible benefit.
+Given the way you've worded this I'd have to agree. I don't think the
+IETF can or should forbid people from abusing existing protocols. That's
+not something a concensus organization should do. But we can develop a
+simple alternative to abusing existing protocols which addresses most of
+motivations for such abuse. I consider that the vital motivation for this
+effort.
+While I wouldn't oppose it being a BCP, I really don't think that's
+necessary. If we document past mistakes anywhere, we can always point to
+it and say "you're repeating this mistake."
+I believe it's possible to make reasonable decisions to avoid too many LCD
+options. But this is an interesting point which I will keep in mind.
+Funny, I see APPLCORE as an attempt to counter-act one ISOism that's
+creeping into the IETF. ISO tends to require the use of lots of
+overcomplex and often unnecessary protocol and encoding layers. I see
+APPLCORE as creating a simpler alternative to some really large and
+complex protocol layers (with lots of unnecessary complexity) people are
+insisting on using.
+- Chris

@@ -1,0 +1,50 @@
+When trying to build Amaya 2.1 on my linux system running kernel
+2.3.8, glibc 2.1.1, I get the following errors and the code does not
+build.
+../../thotlib/unicode/ustring.c: In function `ustrcpy':
+../../thotlib/unicode/ustring.c:380: void value not ignored as it ought to be
+../../thotlib/unicode/ustring.c: In function `ustrdup':
+../../thotlib/unicode/ustring.c:397: void value not ignored as it ought to be
+../../thotlib/unicode/ustring.c: In function `ustrncpy':
+../../thotlib/unicode/ustring.c:481: void value not ignored as it ought to be
+make[1]: *** [unicode/ustring.o] Error 1
+../../thotlib/unicode/ustring.c: In function `ustrcpy':
+../../thotlib/unicode/ustring.c:380: void value not ignored as it ought to be
+../../thotlib/unicode/ustring.c: In function `ustrdup':
+../../thotlib/unicode/ustring.c:397: void value not ignored as it ought to be
+../../thotlib/unicode/ustring.c: In function `ustrncpy':
+../../thotlib/unicode/ustring.c:481: void value not ignored as it ought to be
+make[2]: *** [unicode/ustring.o] Error 1
+make[1]: *** [../thotlib/libThotKernel.a] Error 2
+../../thotlib/unicode/ustring.c: In function `ustrcpy':
+../../thotlib/unicode/ustring.c:380: void value not ignored as it ought to be
+../../thotlib/unicode/ustring.c: In function `ustrdup':
+../../thotlib/unicode/ustring.c:397: void value not ignored as it ought to be
+../../thotlib/unicode/ustring.c: In function `ustrncpy':
+../../thotlib/unicode/ustring.c:481: void value not ignored as it ought to be
+make[3]: *** [unicode/ustring.o] Error 1
+make[2]: *** [../thotlib/libThotKernel.a] Error 2
+make[1]: *** [../bin/str] Error 2
+--GAA29069.930292774/barnowl.demon.co.uk--
+I had the same problem, I solved it by removing the -O2 compilation flag
+I don't know what's wrong with strcpy and gcc optimisation... :(
+file : Amaya/LINUX-ELF/Options
+CFLAGS = -Wall
+Stephane.
+/ Unit? de Recherche INRIA Rh?ne-Alpes |
+St?phane Bonhomme / ZIRST |
+/ 655 avenue de l'Europe |
+/ 38330 Montbonnot Saint-Martin |
+\ / www: http://www.inrialpes.fr/opera/people/Stephane.Bonhomme |
+The problem was caused by the inlining optimizing macros of glibc-2.1
+and the fact that Thot includes were remapping memcpy() and memmove()
+to bcopy. Both defines clashed and resulted in an invalid C code after
+preprocessing. It's seems related too to the removal of the HAVE_MEMCPY
+test in the configure stuff.
+Apply the included patch to your code base, I will commit it to the
+CVS base as soon as possible,
+Now that this is fixed i will produce RedHat-6.0 RPMs,
+Daniel
+[Yes, I have moved back to France !]
+Daniel.Veillard@w3.org | W3C, INRIA Rhone-Alpes | Today's Bookmarks :
+Tel : +33 476 615 257 | 655, avenue de l'Europe | Linux, WWW, rpmfind,

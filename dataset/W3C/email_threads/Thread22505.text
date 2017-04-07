@@ -1,0 +1,111 @@
+Hello!
+NamedNodeMap.index:
+I was wondering why the method index in NamedNodeMap doesn't raise
+an exception when the index is out of bounds... I believe that
+this is an exceptional condition, which should not occur,
+unless there's a bug in the DOM-client's code.
+NamedNodeMap.setNamedItem:
+What happens if there's no more memory for the
+array to hold the new item? I believe that an
+out-of memory exception would be required here.
+Document.createXXX:
+Same as above... out of memory exception?
+I belive that there are more of such cases, but I have just
+mentioned these examples. I have the opinion, that if
+exceptions are used, they should be used everywhere
+where an exceptional condition can arise. Otherwise
+it is an indication that exceptions are not used
+properly and consistently.
+The only problem with out-of-memory exceptions is
+if it needs memory to be thrown...
+Fear the worst!
+I just want to note, that when using CORBA, every
+exception that is to be thrown in an out-of-process
+call must be specified in IDL. If not, a good ORB
+will throw an UNKNOWN exception, and a bad ORB will
+not throw anything, and might even crash!
+And in the case of an UNKNOWN exception, imagine
+this dialog-box displayed to the user:
+"error ocurred for reasons unknown"...
+Not excactly an error-message suitable for
+software which is to be taken seriously...
+Comments?
+Cheers
+ANOQ of the Sun / Johnny Andersen
+E-Mail: anoq@vip.cybercity.dk or anoq@berlin-consortium.org
+Homepage: http://users.cybercity.dk/~ccc25861/
+Re exception on NamedNodeMap out of range: I think that's the same issue as
+"why do the stream operations return the character -1 at end of file rather
+than throwing an exception?" It boils down to a combination of aesthetics
+and convenience of coding and traditional programming practice... I can
+argue this one either way, but it's not obviously wrong as it stands.
+Running out of memory: This is an implementation issue, not a DOM issue, I
+think. I'd trust the language to figure out how to throw an appropriate
+exception in this case, since it should already know how and (as you point
+out) we can't be trusted to do so.
+Joe Kesselman / IBM Research
+Unless stated otherwise, all opinions are solely those of the author.
+Right. Another twist is that we need to support implementations that
+understand indexes natively and efficiently, and those that have indexed
+interfaces grafted on to a tree or linked list internal data structure.
+When looping over all child nodes, or all nodes returned by
+getElementsByTag name, we DO NOT want to force the user to call the size()
+[or whatever we ended up calling it; sorry I'm in a hurry ...] method to
+figure out how far to loop, because that might force the implementation to
+travel all the relevant Nodes and count them. Instead, we let DOM
+programmers loop until an indexed lookup returns an error, which can be
+efficient with either implementation.
+So, we DO NOT consider index out of bounds conditions as a programming
+error, but something that we expect under normal circumstances.
+Mike Champion
+It's getLength() now... I didn't bring this up because the question was
+specifically about NamedNodeMap, where length will probably be easier to
+calculate than the NodeList. But given that NodeList wants to be able to
+avoid calling getLength(), it makes sense for NamedNodeMap to be consistant
+with that design and permit the same coding style.
+Further, deponent saith not.
+Joe Kesselman / IBM Research
+Unless stated otherwise, all opinions are solely those of the author.
+Not only that, but there is no assurance that the user's cached value
+of NodeList.length is still correct, since new Nodes may have been
+added to the tree. So looping from 0 to length-1 is downright
+incorrect.
+John Cowanhttp://www.ccil.org/~cowancowan@ccil.org
+You tollerday donsk? N. You tolkatiff scowegian? Nn.
+You spigotty anglease? Nnn. You phonio saxo? Nnnn.
+Clear all so! 'Tis a Jute.... (Finnegans Wake 16.5)
+For me, Mike's argument about the implementation not having to compute the
+length is a more compelling reason for item to return null instead of throwing
+an exception.
+Looping from 0 to length - 1 is correct with synchronization.
+Without synchronization, the whole thing is somewhat meaningless because the
+nodes visited do not represent a consistent set. There is more than just
+wondering if the length is correct. At least the loop from 0 to length - 1
+terminates, and it is arguable whether it is any worse to miss nodes at the end
+of the list than elsewhere in the list.
+Various synchronization techniques provide the real answer to problems of
+modifying and reading the data in the hierarchy at the same time.
+NodeList is just another way to access the hierarchy. Even without a NodeList,
+an unsynchronized traversal loop fails to consistently traverse the set. If
+the loop is written using getFirstChild, getNextChild, etc., the current child
+you are visiting could leave or move in the hierarchy. You might never
+complete if the last sibling continually becomes the first sibling.
+Static or live, NodeList does not solve synchronization. In some cases,
+copying to a static list or snapshoting the hierarchy may be an answer. But
+that forces you to put up with the overhead to compute and copy the whole list
+is advance (again, during synchronization) and have stale, misordered, and
+missing entries in your result set, as compared with the current document.
+Ray Whitmer
+ray@imall.com
+same issue as
+Wrong or not, do it better than the implementors of streams in
+terms of aesthetics and fault tolerance.
+Out of memory is very often first detected by Operating System,
+should be handled by Implementation Language, is (not?) handled
+by tools/libraries/packages and the implementation? DOM should
+tell the implementation what to do so the application developer can
+rely on a well known mechanism.
+My vote for "Raise a out of memory Exception".
+-----  iO  --------------------------------------------------------------
+Interactive Objects Software GmbH
+Basler Strasse. 63, D-79100 Freiburg, Germany

@@ -1,0 +1,159 @@
+Sandra,
+Here are some of the updates for the IBM 1.1 test contributions. Can you
+update
+these in CVS and I'll work on the remaining issues.
+Appologies for the problems. The tests were written a while back, things
+changed,
+comments were not updated properly, etc. Anyways here are some comments.
+(1) ibm-valid-P02-ibm02v01.xml
+The UTF-8 code for LSEP (2028) in this file seems to be wrong.
+I believe it should be e2 80 a8, the file has e0 9f ac which is
+a non-shortest UTF-8 sequence for something else.
+[GM] Agree, a typo, the byte sequence corresponds to the character #x7EC
+and
+should be changed to e2 80 a8, but its still a valid document.
+(2)ibm-valid-P02-ibm02v04.xml &amp;
+(3)ibm-valid-P03-ibm03v08.xml
+[GM] Tests that were originally added for clarifications (are NEL &amp; LESP
+in S)
+and are no longer valid. Updated tests are attached above.
+(4) ibm-valid-P04-ibm04v01.xml, ibm-valid-P05-ibm05v01.xml,
+ibm-valid-P05-ibm05v02.xml, ibm-valid-P05-ibm05v03.xml,
+ibm-valid-P05-ibm05v05.xml
+These contain names that use colons in ways not allowed by namespaces,
+so they need NAMESPACE="no" in the config file.
+(5) ibm-valid-P05-ibm05v05.xml
+[GM] Agree, the config file will have to be modified as suggested.
+We treat these as namespaces="no" in our suite though.
+(6) ibm-valid-P03-ibm03v*.xml
+[GM] Agree.
+(7) ibm-valid-P46-ibm46i01.xml, ibm-valid-P46-ibm46i02.xml
+[GM] Similar to (2) (3), agree the comment now needs to be changed.
+(8) ibm-not-wf-P02-ibm02n09.xml
+[GM]Agree, updated test attached.
+(9) ibm-not-wf-P02-ibm02n0??.xml
+[GM] Agree, the file names mentioned above need to be fixed in the
+configuration file.
+(10) ibm-not-wf-P02-ibm02n10.xml
+This file is supposed to contain "control character 0x100". But 100 is
+not a control character, and in fact the file contains a non-shortest
+UTF-8
+sequence.
+[GM] Attached a modified test case, the comment in the config file will
+have to be updated.
+(11) ibm-not-wf-P02-ibm02n13.xml
+This file is supposed to contain "control character 0x0D" which would
+be legal, but in fact contains control-A. (Mabe all the tests
+corresponding to legal control characters have been messed up?)
+[GM] Attached a modified test case, the comment in the config file will
+have to be updated.
+(12) ibm-not-wf-P02-ibm02n38.xml
+This file is supposed to contain "control character 0x86" but in fact
+contains 82. Probably this is because it's between 84 and a real 86,
+and 85 is NEL.
+[GM] This test contains a embeded control characters x82, x83 and x84.
+The comment in the configuration file needs to be updated.
+(13) ibm-not-wf-P02-ibm02n58.xml
+This file is supposed to contain "control character 0x99" but in fact
+contains a non-shortest UTF-8 sequence.
+[GM] Attached updated test
+(15) ibm-not-wf-P04-ibm04n2[1-4].xml ibm-not-wf-P04a-ibm04an2[1-4].xml
+These are supposed to have bogus surrogates, but instead have question
+marks.
+[GM] Agree, the characters somehow got messed up. I have attached fixed
+tests.
+(16) ibm-not-wf-P04a-ibm04an0[1-3].xml, ibm-not-wf-P04a-ibm04an1[1-2].xml
+These don't have the characters they are claimed to, probably a UTF-8
+screwup.
+[GM] Agree, Incorrect comments, they should have been
+ibm-not-wf-P04a-ibm04an0[1-3].xml - #xB8, #0xA1 and #0xAF
+ibm-not-wf-P04a-ibm04an1[1-2].xml - #0x203D and #0x2041
+(17) ibm-not-wf-P04a-ibm04an17.xml, ibm-not-wf-P04a-ibm04an18.xml
+Test for 2edc and 2fed which are in fact legal.
+[GM] Agree, Incorrect comments, they should have been #x2BDC and #x2A30
+(18) ibm-not-wf-P05-ibm05n02.xml
+Purports to test for illegal name char 300, but actually has 3000
+which is also illegal.
+[GM] Agree, test case with illegal name char x300 attached.
+(19) ibm-not-wf-P77-ibm77n13.xml
+This doesn't test what it claims to; it is not-wf because the document
+entity is 1.0 and an external entity is 1.1.
+[GM] Agree, the comment needs to be corrected.
+That's all for now.
+Thanks,
+Glenn
+It's not the shortest sequence for 7EC, so it's a UTF-8 error and
+therefore not well-formed.
+-- Richard
+Ok!! I will work on these ones. I Will let you know if I have questions.
+Sandra
+Sandra I. Martinez
+National Institute of Standards and Technology
+100 Bureau Drive, Stop 8970,
+Gaithersburg, Md. 20899
+(301) 975-3579
+sandra.martinez@nist.gov
+What is the final agreement on this one?
+Sandra
+Sandra I. Martinez
+National Institute of Standards and Technology
+100 Bureau Drive, Stop 8970,
+Gaithersburg, Md. 20899
+(301) 975-3579
+sandra.martinez@nist.gov
+I am no expert on Unicode, but have sometimes the need to understand it.
+According to table 3.1B of Unicode 3.2, the sequence e0 9f ac is not
+a valid UTF-8 sequence. That much I understand. At this point I was assuming
+that this table allows one to check valid/shortest sequences.
+Now, this confuses me. The UTF-8 table allows this sequence, but it cannot
+map to 7EC, but must map to somewhere in the range 1000 to CFFF.
+So, is it now a sequence for 7EC, and if yes, where am I wrong?
+Karl
+I think we're agreed to change it to e2 80 a8, the only question is
+whether the old, mistaken value is legal or not, and we don't have to
+decide that.
+-- Richard
+Right. But if you don't check that it's legal, and follow the natural
+algorithm for decoding it, you will get 7EC. Some implementations
+just apply the algorithm blindly without checking.
+There were two mistakes: the code point used was 2028 decimal (= 7EC hex)
+instead of 2028 hex. And 2028 decimal was encoded as a 3-byte sequence
+instead of a 2-byte sequence.
+-- Richard
+Thanks, that clears it up for me.
+Karl
+Sandra,
+The updated configuration files are attached. Looks like they were being
+updated in CVS after we started pulling all this together, but attaching
+them
+anyways for completeness.
+(14) Tests invalid NameStartChars x2b00 and 2bff
+(16) Updated comment in the test case.
+(17) Tests invalid NameChars xFDD0 and xFDEF
+Regards,
+Glenn
+I have completed all the updates. CVS is ready to be checked. Glenn I still
+need an update for
+ibm-valid-P02-ibm02v01.xml
+Sandra
+Sandra I. Martinez
+National Institute of Standards and Technology
+100 Bureau Drive, Stop 8970,
+Gaithersburg, Md. 20899
+(301) 975-3579
+sandra.martinez@nist.gov
+Glenn I still need an update for ibm-valid-P02-ibm02v01.xml
+Sorry, I had it in an earlier note that I missed sending along to you.
+Attached is test ibm-valid-P02-ibm02v01.xml
+-Glenn
+Thank you!! but notice the name of the test, ibm02v01 --- the one you
+sent me is the correct test but incorrect name (ibm02v011) I will save it
+under the right test name.
+Sandra
+Glenn I still need an update for ibm-valid-P02-ibm02v01.xml
+Sandra I. Martinez
+National Institute of Standards and Technology
+100 Bureau Drive, Stop 8970,
+Gaithersburg, Md. 20899
+(301) 975-3579
+sandra.martinez@nist.gov

@@ -1,0 +1,349 @@
+I was chatting with a colleague to day and the subject of anon resources
+and provenance came up.
+Assume I recieve the following rdf from some source SOURCE, possibly with a
+digital signature:
+If were to represent this in my machine as:
+gensym:1234 foo:bar "foobar" .
+http://goo foo:bar "foobar" .
+this is not the information that SOURCE signed - SOURCE made no assertion
+about gensym:1234 . We'd have to be able to distinguish between the
+gensym'd URI and the 'real' one.
+Brian
+Some observations:
+(1) A signature is applied to some particular document or data, not to the
+information it contains or represents.
+(2) Depending on the context in which the signature is applied, it conveys
+some kind of assurance about the content of the document. It may assert
+that the information represented by the document is true. It may convey
+some different assurance about the document. (Joseph Reagle has some
+thoughts about this: see http://www.w3.org/TR/xmldsig-p3p-profile/ .)
+(3) Ultimately, the assurance conveyed by a signature will apply, I think,
+to the model theoretic interpretation of the information (in which, I
+assert, genid's and other identifying forms will not generally be present).
+#g
+Graham Klyne Baltimore Technologies
+Strategic Research Content Security Group
+Not sure I follow that one, but it is suggesting to me that anon resources
+must be distinguishable from non-anonymous ones in the model. Otherwise
+the model does not represent what the sender signed.
+Brian
+In this case, I come to the opposite conclusion.
+I think that in a model, or interpretation, there are just things that are
+denoted. The form of the denotation used in the formal language being
+interpreted (identifiers, variables, position on a piece of paper, etc.)
+does not generally exist in the domain of interpretation. Thus any
+distinction in the form of denotation is not material in the domain being
+described.
+#g
+Graham Klyne Baltimore Technologies
+Strategic Research Content Security Group
+Ah - I think thats the first time I've got stung by the ambiguity of the
+term 'model'.
+I meant to suggest that the datastructure which represents RDF/XML, i.e.
+the data model, must represent the anonimity, otherwise it is not
+representing what was in the RDF/XML that was read.
+Brian
+As I said a while ago, it matters who generates the gensym. If SOURCE
+uses an anonymous node (existential quantifier) then indeed you are
+not entitled to replace it with a gensym and say that it represents
+what SOURCE said. That is what the logic says also: the step from the
+existential to the skolem form is *not* a valid inference, so you
+would not be correct in saying that conclusion followed from what
+SOURCE said. However, SOURCE could have replaced his existential with
+a skolem constant ( a newly generated URI, guaranteed different from
+any other URI anywhere else) and, my claim is, that you would have
+been told virtually the same content by SOURCE under those
+circumstances as you would have been by SOURCE telling you his
+existential. (Not quite *exactly* the same, since you would know, in
+addition to the fact that the thing exists, that SOURCE was using
+this URI to refer to it. But that information wouldnt help you make
+any inferences about the thing that you couldnt have made from the
+existential.) But indeed, if someone signs a document then it isnt,
+in general, correct to transfer that signature to another document
+that differs even in the slightest respect, so the issue of whether
+the inferences are valid or not may be irrelevant here.
+Pat
+(650)859 6569 w
+(650)494 3973 h (until September)
+phayes@ai.uwf.edu
+Yes. If we have genuinely anonymous nodes then they must be
+recognisable as such. I gather however that this is still an open
+issue, ie do we have genuinely anonymous nodes in an RDF
+graph/document, or does 'anonymous' simply mean 'unspecified', so
+that anonymous nodes have an URI (unique to the document which
+originated it) but we just don't say what it is ?
+To me, the interesting thing is that the model theory works just as
+well either way. Details coming, hopefully tomorrow.
+Pat
+(650)859 6569 w
+(650)494 3973 h (until September)
+phayes@ai.uwf.edu
+I'm struggling slowly to understand. My appologies if I miss the
+significance of some remarks first time around.
+The syntax clearly allows anonymous resources. I think you have just
+said that a parser, which on receiving RDF/XML containing anon
+resources, assigned URI's to the anon resources when spitting out the
+triples would not be representing exactly the information it had
+as input. Are we agreeing on this?
+To represent exactly the information recieved, anon resources must
+be a part of the model/abstract syntax. Yes? No?
+Could have, but didn't. I suggest the requirement here is that
+the abstract syntax/model be able to represent *exactly* the information
+conveyed in the syntax.
+My point here is that the abstract model should be able to represent
+*exactly* the information that SOURCE intended to sign. Any subsequent
+inferences are the responsibility of the recipient.
+Brian
+That's the point I'm arguing: I don't think it's the anonymity that must
+be represented, but the lack of possibility of other knowledge associated
+with the name.
+(Where I'm interpreting "representing" to mean something like "conveying
+the same information about the domain of discourse")
+#g
+Graham Klyne Baltimore Technologies
+Strategic Research Content Security Group
+Brian,
+You said:
+I think that to "represent exactly the information received" the entire
+RDF/XML document received must be represented verbatim. I don't think
+we're going there.
+In defining RDF, and in particular its semantics, we are in the process of
+identifying the significant information in a received RDF/XML document. We
+are making choices about what constitutes "information received" (guided by
+the existing XML and RDF M&amp;S specs).
+Signatures present an interesting case, because the most trivial change
+(e.g. adding or removing a space in an XML comment) changes/invalidates the
+signature. So if we mean to convey the exact meaning of a signature (i.e.
+that a certain key signed a certain sequence of bits) we must keep a copy
+of the bits (or at least a copy of the digest of the bits that was signed).
+When one takes a signed XML document and interprets it as RDF, I think one
+needs to make some choices about what it means, which will be some function of:
+(a) the information conveyed by the bare RDF, and
+(b) the information conveyed by the signature
+So suppose I receive a statement:
+(1) _:exists-X hasProperty Y .
+which is signed Alice. Also suppose that I apply Skolemization represent
+this information:
+(2) skolem:12345 hasProperty Y .
+where I am certain that nobody will independently use skolem:12345 to
+represent any resource. Now I am not entitled to say that the statement
+(2) was signed by A, but I might legitimately say that I received some
+document signed by A whose content was interpreted to mean (2).
+When I sign a cheque, it is a piece of paper that I sign. When the cheque
+is presented for payment, the bank interpret the signature to mean that I
+have authorized the payment of some amount to some person. If someone
+writes a telephone number in the margin of the check, the exact content of
+the document is changed, but the authorization conveyed by the signature is
+not. Thus, any signature as well as the signed document need to be
+interpreted.
+A better cheque-based example might be that some banking transactions no
+longer require that the original signed document be presented to the
+payer's bank. The signed check can be interpreted into some system, and
+then transferred electronically to the paying bank. Thus, the paying bank
+receives a different document, but in conveys the same authorization
+(modulo adequate trust and security mechanisms).
+So when you say:
+I would say that "information ... intended to sign" requires some degree of
+interpretation. How much is a choice to be made.
+#g
+Graham Klyne Baltimore Technologies
+Strategic Research Content Security Group
+I agree. I should have made clear that my hypothesis here is that it is
+the 'model' that was signed, not the document.
+That was not what I meant.
+Good example. You can't say that (2) was signed by A because that is
+not the statement A sent.
+And the question for me is do we prefer an abstract syntax
+that allows us to express what A sent to us, or are we happy to loose
+information in the process of transforming RDF/XML to the abstract syntax.
+I didn't intend that we get hung up on the nature of a signature. The
+intent was to try to draw attention to the issue of whether the received
+model is the same information as the sent one. I think we've agreed
+that if the receiver skolemizes, then the information is not the same.
+Consider running the scenario twice and the second time the anon resource
+gets skolemized to skolem:54321. Given
+(3) skolem:54321 hasProperty Y .
+do (2) and (3) represent the same information. If the answer is yes,
+then you must be treating skolem URI's differently from say URL's. If
+the answer is no, they can't both represent the same information as in (1).
+Brian
+This must have been one of the messages my mailer lost, so here is my
+belated response.
+Sorry, I meant only to provide the back reference, not to rap your knuckles.
+Yes. It would not be representing EXACTLY the same information,
+since there is some information just in the use of the new name. You
+can imagine a conversation going like this:
+A: There is a frog in my sandwich.
+B. OK. Let's call it 'joe', OK?
+A: OK.
+Now, there is a small sense in which B has contributed 'information'
+to the discourse simply by giving the frog a name. But its a very
+small sense. Compare with
+A: A frog I will call 'joe'is in my sandwich.
+B: OK.
+To represent *exactly*, yes. But see the section on skolemisation in
+the revised model theory I send out this morning.
+OK, I agree. If the source sends you an existential, then you can
+skolemise it, but you should not claim that the skolemised form is a
+valid conclusion from what the source sent you. It isn't.
+To illustrate why not, imagine sending it back to the source. If you
+sent back the original, the source could agree that is what it said
+to you; but if you send it back the skolemised form with the new
+name, then it has no way to know if the use of that name might not
+imply all kinds of content that it had not sent you. (If you
+skolemised 'honestly', of course, then it wouldn't, but the source
+has no way to check that.)
+However, this really begs the question. If we have genuine
+existentials in the langauge, then indeed we need to be able to
+distincguish them from uses of names. But the issue, seems to me, is
+whether or not to even have existentials in the language at all. We
+could interpret anaonymous nodes as having 'unknown' URIs, or URI's
+which are assigned arbitrarily in some non-conflicting way, ie
+'dont-care' URIs. Then there would be no real existentials in the
+language at all, so no need for the recipients to be able to make the
+distinction. And, the skolemisation point is, nobody who was making
+assertions would be any the worse off: they could still all say what
+they want to say just as well, but they would be using names to say
+it with.
+I agree entirely. The issue is whether we allow people to sign
+documents that express existentials, or whether we insist that
+anything that is said, must be said using 'names' of some kind, so
+that if you want to talk about a frog (even just to say it exists)
+you have to give it a name. It doesn't cramp your style in any
+serious way, is the point.
+Pat Hayes
+(650)859 6569 w
+(650)494 3973 h (until September)
+phayes@ai.uwf.edu
+Right. But we could interpret anonNodes so that the sender would have
+, in effect, skolemised, just by treating anonNodes as being in the
+same category as urirefs. The language wouldnt be affected
+significantly as far as making assertions was concerned, and there
+would be a few communication advantages. Eg if anonNodes really are
+exisententially quantified, then there is no way to refer to them
+outside the document in which they occur. You can send me the
+document, but neither you nor I can refer to that thing that exists:
+eg I can't ask you anything about it. If it has a name, I can. Eg
+A: there's a frog in my sandwich.
+B: what color is it?
+We can't do this since we don't have any way to say "it". Contrast:
+A: there's a frog which I will call 'joe' in my sandwich.
+B: what color is joe?
+Right, good example; though I think we have to treat URI's
+differently from URL's in any case.
+Pat
+(650)859 6569 w
+(650)494 3973 h (until September)
+phayes@ai.uwf.edu
+aside
+Is this in any sense related to Pierce's concepts of "Firsness",
+"Secondness" and "Thirdness" (using terms from John Sowa's book on
+Knowledge Representation, section 2.2, p60)?
+Aaargh. I really don't know. This is one (of the very few) aspects of
+Sowa's thinking that seems to be completely off the wall. I have had
+many debates with him about it, some lasting for years. Other
+Peircian scholars seem to have the same obsession with this stuff,
+sometimes amounting almost to a religious conviction in a kind of
+Peircian revealed truth. Nobody else seems to think it anything more
+than an embarrassment or a joke, a kind of numerology. I have come to
+the conclusion that there isn't anything in this
+'firstness/secondness/thirdness' that is worth talking about at any
+length, so I won't.
+Taken in isolation, the statements of RDF seem to express ideas at
+the level of "Secondness" -- relationship between things (and
+"Firstness" -- types; characteristics inherent in things).
+It seems that a bare statement of a relationship (Secondness) may
+not be affected by use of an existential or a Skolem, but that you
+are suggesting here that a statement of mediation (Thirdness) may be
+sensitive to the difference.
+Well, if I was saying that, I wasn't aware of it :-)
+(I am beginning to wonder if the concept of provenance, or assurance
+is a "Thirdness" beyond the ability of basic RDF to capture. In my
+attempts to capture such things in RDF, I've invoked ideas like
+contexts which, in turn, seem to require that statements are
+mappable to quadruple elements, or triadic predicates. I'm still
+absorbing some of this stuff, so can't fully separate fundamentals
+from coincidental artefacts.)
+/aside
+I guess so, though you would only know that if you knew that you had
+received the whole document since that is where the existentials are
+quantified (see discussion in the strawdog model theory).
+(unless that already provided constitutes a definite description),
+Right, but it can't in RDF since the definite description uses a
+universal quantifer.
+(b) when given a constant identifier (which may or may not be a
+skolem, and the receiver cannot know), then there is a possibility
+that more information about the resource may be received in the
+future.
+Right.
+Then my question would be: is this a difference we need to capture?
+Good question.
+Pat
+(650)859 6569 w
+(650)494 3973 h (until September)
+phayes@ai.uwf.edu
+Oooh! A bit of Web heresy there, I think. Depending on one's point of
+view, the typical Web view is something like this:
+(a) there is no difference between URLs and URIs -- they're just
+identifiers, or
+(b) a URL is just a kind of URI that contains some built-in hints about how
+to use the Web to access the resource it names (e.g., protocol, addressing
+information), which isn't otherwise semantically significant (for RDF).
+Any way, I think that treating things differently based on a URL/URI
+distinction is to go on very shaky ground.
+#g
+Graham Klyne Baltimore Technologies
+Strategic Research Content Security Group
+I spoke carelessly. What I should have said (since URLs are URI's, if
+for no other reason) is that URL's can be treated in particular ways
+that may not be applicable to all URI's, and that in RDF we can't
+assume that any URI is going to be URL-like. URLs are a special case;
+as you say, they contain built-in hints about access, but we can't
+assume that all URIs have such hints.
+Pat
+(650)859 6569 w
+(650)494 3973 h (until September)
+phayes@ai.uwf.edu
+Hi all,
+I'm back from vacation, starting to catch up on the
+backlog. Apologies if this issue has already been settled,
+I did not see such in the minutes. (Speaking of which,
+I don't see the minutes for July 27 in the archive).
+Brian said:
+There are not very many use cases for signing an internal
+representation instead of the serialized form which is
+actually transmitted. The main concerns people use signatures
+to address are:
+1) Did this come from whom it purports to come from?
+2) Is this an unaltered version of what they sent?
+Both of these are perfectly well-served by signing the
+serialized form of a graph. Signing internal representations
+ends up with a lot of problems around canonicalization
+such as byte order issues, as well as a tendency to
+restrict optimizations.
+There are some other reasons not to take on the task
+of signing the 'model', including:
+1) insufficient number of WG members who are security experts
+2) interference with the chartered XML signatures work (which
+is the group that does have the security experts)
+3) lack of demonstrated needs which can't be met by
+signing the serialized form of a model.
+4) lack of charter to take this on
+5) time and effort
+Lazy slob that I am, I don't want to take on more work
+than is needed.
+Ron Daniel Jr.
+Standards Architect
+Visit www.interwoven.com
+Moving Business to the Web
+Hi Ron,
+From one lazy slob to another, I wasn't, nor I think was anyone else,
+suggesting the working group take on the task of defining an
+algorithm for signing a model.
+Brian
+Just to let you know where friday's minutes have gone...
+By convention these should've been shipped on monday; however as I was
+scribing, and have since then been entirely occupied with travelling to
+and attending SWWS workshop here in stanford. I've the raw materials on my
+laptop and will try to get them done during the drive up to sebastapol.
+Dan

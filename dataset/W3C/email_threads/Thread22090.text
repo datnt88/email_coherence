@@ -1,0 +1,155 @@
+Hello,
+Many tests fail in Konqueror (and almost certainly Safari, maybe other
+browsers too) due to a capitalization issue.
+For instance hc_attrname.html expects "class" but since the document
+is HTML, we return "CLASS", as per the HTML specification.
+According to Curt Arnold this would be (from memory) because the
+spec says uppercase, but since Mozilla and IE return lowercase,
+the tests were changed to expect lowercase.
+But this completely screws up any browser that attempts to actually comply
+to the DOM spec, which is what this is all about, isn't it?
+If the tests accept that Mozilla and IE return lowercase, why not simply
+accept both (the "Mozilla and IE" way, and the "compliant" way, i.e. uppercase)?
+PS: congratulations for the improvements to the test suite. It looks much
+more complete now, it catches many little unimplemented things - which
+I'm fixing one by one :)
+David FAURE, faure@kde.org, sponsored by Trolltech to work on KDE,
+Konqueror (http://www.konqueror.org), and KOffice (http://www.koffice.org).
+Qtella users - stability patches at http://blackie.dk/~dfaure/qtella.html
+I'm digging into this right now, my recollection is fuzzy and I've not
+been able to find the "spec doesn't say what it appears to say" message
+that I recalled.
+David's observation is about test failures with Level 1 Core hc_* tests.
+hc_attrname is an example of one of the tests that is failing on
+Konqueror where it checks the nodeName of a "class" attribute. The
+original version of hc_attrname.xml
+(http://dev.w3.org/cvsweb/2001/DOM-Test-Suite/tests/level1/core/hc_attrname.xml)
+which was checked in by dom_ts_2 (Rick Rivello?) on 8 March 2002
+specified ignoreCase="auto" which would have required an HTML
+implementation to return "CLASS" (as Konqueror is now doing). On 10
+June 2002 (as part of a massive update to the HTML compatible Core
+tests), I checked in a modified version that specified
+ignoreCase="false" that would require an HTML implementation to return
+"class" (which is the case of the attribute in the source document).
+By my reading of
+ignoreCase="auto" (upper case for HTML implementations, lower case for
+XHTML) would be correct.
+I have recollections of ignoreCase being misused
+(http://lists.w3.org/Archives/Public/www-dom-ts/2002Mar/0020.html point
+5) in the initial L1 Core HTML compatible tests. So the change from
+ignoreCase="auto" to ignoreCase="false" might be a side-effect of a
+global change to reset everything to the most restrictive setting with
+the intention of later restoring those that should have had other settings.
+Here is a listing of previous messages that touched on the subject of
+case in HTML DOM's:
+I'm continuing to explore this issue.
+I have to say I haven't really been following this discussion much and
+Rick is on vacation, but I did poke around a bit and found the following
+message, which gives some ideas on the original intent of these tests.
+I'm not sure how they have been modified since the initial release, but
+hopefully this will help...I'll try to look a little closer as well.
+--Mary
+Behalf Of Curt Arnold
+comply
+simply
+uppercase)?
+much
+I'm digging into this right now, my recollection is fuzzy and I've not
+been able to find the "spec doesn't say what it appears to say" message
+that I recalled.
+David's observation is about test failures with Level 1 Core hc_* tests.
+hc_attrname is an example of one of the tests that is failing on
+Konqueror where it checks the nodeName of a "class" attribute. The
+original version of hc_attrname.xml
+(http://dev.w3.org/cvsweb/2001/DOM-Test-Suite/tests/level1/core/hc_attrn
+ame.xml)
+which was checked in by dom_ts_2 (Rick Rivello?) on 8 March 2002
+specified ignoreCase="auto" which would have required an HTML
+implementation to return "CLASS" (as Konqueror is now doing). On 10
+June 2002 (as part of a massive update to the HTML compatible Core
+tests), I checked in a modified version that specified
+ignoreCase="false" that would require an HTML implementation to return
+"class" (which is the case of the attribute in the source document).
+By my reading of
+ignoreCase="auto" (upper case for HTML implementations, lower case for
+XHTML) would be correct.
+I have recollections of ignoreCase being misused
+(http://lists.w3.org/Archives/Public/www-dom-ts/2002Mar/0020.html point
+5) in the initial L1 Core HTML compatible tests. So the change from
+ignoreCase="auto" to ignoreCase="false" might be a side-effect of a
+global change to reset everything to the most restrictive setting with
+the intention of later restoring those that should have had other
+settings.
+Here is a listing of previous messages that touched on the subject of
+case in HTML DOM's:
+I'm continuing to explore this issue.
+IE 6 and Mozilla return lower-case tag and attribute names for HTML
+documents. It appears that they intentionally convert to lower-case
+since changing the source document had no effect. Konqueror returns
+upper-case tag and attribute names. Opera fails hc_attrname which
+suggests that it returns upper-case, but since it is not yet possible to
+see the failure message it is hard to be sure. Safari passes
+hc_attrname, so it appears to have deviated from the Konqueror code base.
+It appears in this case, the L2 HTML specification appears to be in
+conflict with the dominant browsers and an implementor has to make a
+decision to adhere to the spec or to maximize compatibility with
+existing scripts.
+I think the most satisifactory solution would be to issue an errata for
+L2 HTML specifying that tag and attribute names should be returned as
+lower-case for HTML documents and change hc_staff.html to use upper-case
+tag and attribute names (to make sure that the implementation forces
+them to lower-case and not just preserve the source case).
+I'm told that IE and Mozilla return uppercase when being in compat mode,
+and lowercase only if the doctype is xhtml or better (as is the case in
+hc_staff.html if I understand this correctly).
+This means that the above change to the spec wouldn't be precise enough,
+it's not "always lowercase".
+This looks like a Konqueror bug anyway: we shouldn't return
+uppercase when the doctype is html4 strict.
+hc_staff.html isn't an XHTML document. The document type declaration
+it references is an HTML DTD not an XHTML DTD, however it does XML
+compatible things like quoting attributes, closing tags and using
+lower-case tag names.
+I tested adding a little link to hc_staff.html that displayed the
+document element tag name and the result was consistently HTML for IE
+even though hc_attrname and similar tests passed which suggests that it
+is something after document loading that triggers the switch to "compat"
+mode.
+Why shouldn't you return uppercase when the doctype is HTML 4 strict?
+As far as I can tell, the statement in the DOM Level 2 specification
+that attribute names must be in uppercase:
+For instance, element and attribute names are exposed as all uppercase
+(for consistency) when used on an HTML document, regardless of the
+character case used in the markup.
+[ http://www.w3.org/TR/DOM-Level-2-HTML/html.html#ID-5353782642 ]
+has no analog in the DOM Level 1 specification (and is not listed in the
+relevant changes document [1]), which, as far as I know,
+only required that element names were uppercase (and said nothing
+regarding the case of attribute names):
+The element type names exposed through a property are in uppercase.
+For example, the body element type name is exposed through the
+"tagName" property as "BODY".
+[ http://www.w3.org/TR/REC-DOM-Level-1/level-one-html.html#ID-822762427 ]
+This might explain why WinIE and Mozilla use lowercase for attribute
+names. (Given the ambiguity, it might have been thought better to be
+compatible with XHTML. The only piece of history relevant to that
+question that I can find is [2], which doesn't say that explicitly,
+although I did file the bug regarding element names only.)
+(Should this discussion move to www-dom?)
+-David
+[1] http://www.w3.org/TR/DOM-Level-2-HTML/changes.html
+[2] http://bugzilla.mozilla.org/show_bug.cgi?id=6152
+L. David Baron URL: http://dbaron.org/
+Thanks for the background. I hadn't picked up on the differing
+behavior of attributes and tag names.
+If attribute casing in HTML documents was not specified in Level 1 or
+added by an errata, then the L1 tests checking attribute names should
+use ignoreCase="true". The same tests should then be reiterated in the
+L2 Core suite with ignoreCase="auto".
+I'll try to review the case expectations in the L1 Core hc_ tests and
+report back on the www-dom-ts list. The thread has (or at least some of
+my postings have) been speculative. Once we think we have a good
+understanding of the tests and implementations, we can post an invite to
+the www-dom mailing list to review the thread on www-dom-ts. We've
+cross-posted issues in the past and it makes it difficult to reconstruct
+things later.

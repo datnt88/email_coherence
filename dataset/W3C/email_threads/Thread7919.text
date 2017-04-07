@@ -1,0 +1,58 @@
+I'm interested in the list's thoughts on two ideas for DAV improvements:
+The first is to introduce a GETSRC method to support access to the
+unprocessed source of a resource. This would decouple the dynamic response
+of a resource (GET) from its static source (GETSRC).
+The second is to introduce the MULTIPUT method to support "PUT with
+PROPPATCH" scenarios. MULTIPUT would accept some subset of multipart MIME
+packages and atomically write them to the server. This would support the
+update of a resource and its metadata in one transaction.
+- Jim
+From: Jim Whitehead [mailto:ejw@cse.ucsc.edu]
+These are very good questions.
+One possible set of answers:
+In general, I believe having distinct URL's for different resources
+is far superior to defining new methods. How would you set access
+control on the "source" resource?
+The dav:readsrc privilege.
+Since it is likely that the privileges for the "source" resource
+will be very different from those on the "non-source" resource,
+I'll also need a dav:writesrc, etc, effectively doubling the
+privilege space, just so that the server can avoid allocating a
+new URL to the source resource? In many cases, there actually
+will already be a separate URL (e.g. a /xxx.jsp resource which
+generates the /xxx.html file).
+Also, what about PUT? Is an authoring client going to do a PUT to
+/xxx.html in .jsp format, and then a GET will return something in
+.html format? Then what happens when a naive client tries to PUT
+something in .html format to /xxx.html, and then get some unexpected
+error message (or even worse, the html file will just overwrite the
+.jsp resource and generate strange errors at the next GET). Looks
+like we probably should have a PUTSRC, to match the GETSRC.
+How would you get the properties of the "source" resource?
+In this model it's not a different resource, so you'd use
+PROPFIND. If you want information about the src, then
+dav:srccontentlength, dav:srcetag, dav:srccreationdate,
+dav:srclastmodified... properties would need to be defined.
+It probably would make more sense to just have a PROPFINDSRC. And
+probably a COPYSRC. And an xxxSRC for any new WebDAV method that
+could reasonably be applied to either the original resource or to the
+"source".
+I continue to believe that GETSRC (and its other xxxSRC friends)
+would be a very unfortunate direction to pursue. In particular,
+I think having the separate URL is a clear win for clients. I'd
+be interested in even a partially compelling story from the server
+vendors as to why they cannot generate additional URL's for the
+source resources (or in many cases, expose the source resource URL,
+when it already has its own URL).
+I'd much rather do nothing here, than do something wrong.
+Cheers,
+Geoff
+Agreed.
+No reason here other than "haven't spent time on it (yet)." I pretty much
+know how I'd do it -- there isn't any technical problem with it. One new
+directive and a little code to auto-generate the DAV:link property.
+If client were pushing for it, then I probably would have coded it already.
+Kind of a chicken and egg thing.
+Cheers,
+-g
+Greg Stein, http://www.lyra.org/

@@ -1,0 +1,59 @@
+I've noticed that the test suite tests the following scenario:
+When entity references are expanded, the test suite tests that Entity
+nodes and their replacement value are available in the DOM tree
+(attrsetvaluenomodificationallowederrEE,
+characterdataappenddatanomodificationallowederrEE,
+textsplittextnomodificationallowederrEE, etc.)
+Given that the DOM Level 1 fails to define when Entity nodes are present
+in the DOM tree, I believe that the test suite should NOT be testing the
+above case.
+If you look at the description for the Entity interface
+(http://www.w3.org/TR/1998/REC-DOM-Level-1-19981001/level-one-core.html#ID-527DCFF2)
+you will find that the specification only defines the what happens to
+the entity replacement value ("if the replacement value is available,
+the corresponding Entity node's child list represents the structure of
+that replacement text"), but says nothing about when Entity nodes are
+present in the tree.
+On the other hand, the DOM Level 3 does define the feature "entities"
+that controls both Entity and EntityReference nodes:
+false
+[optional]
+Remove all EntityReference and Entity nodes from the document, putting
+the entity expansions directly in their place
+Thus, I would expect DOM Level 3 implementations to fail DOM Level 1
+test suite for the described above case.
+Any comments?
+Elena Litani / IBM Toronto
+The description of the entities attribute of DocumentType interface
+(http://www.w3.org/TR/1998/REC-DOM-Level-1-19981001/level-one-core.html#ID-4
+12266927) has no conditionals.
+The implementation option to expand or preserve entity references on the
+other hand is very explicitly stated.
+Which by my reading says that if there is an entity declaration in the DTD,
+there should be a corresponding Entity node regardless of whether the
+implementation chose to preserve or expand entity references.
+The "entities" normalization features is bothersome. It does not correspond
+to a configurable behavior of any common DOM implementation and there is not
+a feature that corresponds to the widely deployed behavior of expanding
+entity references, but preserving entity nodes.
+I think the intent was:
+If you loaded the Doctype, its Entity nodes would be created. Period. I
+can't see any reason NOT to load that info if you're able to do so...?
+In the main document content tree, you would have EntityReference nodes if
+the reference was not (or could not be?) fully expanded. The decision of
+whether or not to do that expansion was originally left up to the processor
+(or equivalent DOM builder). Presumably if you use DOM Load/Save you'd
+control it from there.
+Joe Kesselman / IBM Research
+Two reasons:
+1) I fail to imagine a use case where one cares about the entities when
+she/he doesn't care about the entity references.
+2) Having the entities can be very expensive. Think about a document
+where ever chapter is hold in its own entity. You end up with twice as
+much memory used. That's ok if you care about the entities and their
+refs but a real shame if you don't.
+I don't think there is much value in trying to interpret/second guess
+what is expected to be found in a DOM tree after parsing based on the
+DOM Level 1 spec. The DOM Level 1 doesn't include any parsing capability
+and therefore anything related to parsing is undefined.
+Arnaud Le Hors - IBM, XML Standards Strategy Group / W3C AC Rep.

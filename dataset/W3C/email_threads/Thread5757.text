@@ -1,0 +1,144 @@
+There has been some discussion around the idea of an abstract bindable
+choreography so I thought I would provide an example in the form of a
+diagram (PDF) which shows the flow associated with the placement of an order
+and an XML representation of the same in a declarative style. I strongly
+suggest you look at the diagram first.
+Comments welcome ;-)
+David
+Director, Product Management, Web Services
+Commerce One
+4440 Rosewood Drive, Pleasanton, CA 94588, USA
+Tel/VMail: +1 (925) 520 4422; Cell: +1 (925) 216 7704
+Martin
+I agree that you can represent these flows using UML, but I think that if
+you were to do that you would miss some of the potential benefits that are
+easier to get using XML.
+I also understand and accept that we should not include diagrammtic
+representations within the scope of what we do, on the other hand if you
+want to communicate a choreography to someone then literally, one diagram is
+worth a thousand words!
+So why do we need a formal representation of choreographies in XML?
+Here's my reasoning ...
+1. The only reason for standardizing anything is to make interoperability
+easier to achieve as the information being described needs to be shared.
+2. Choreography definitions (e.g. the sequence of exchanging business
+documents between partners) is an example of information that MUST be shared
+if interoperability is to occur therefore there is benefit in having a
+standard representation for it.
+3. Now we *could* agree that UML be that standard representation as an
+interchange format so that the information can be exchanged for example
+between the parties involved in eCommerce on the other hand we could use
+XML, so which is better?
+4. To answer the question of which is better, let's think what the
+representations could be used for. I can think of two main reasons:
+a) So they can be used at design-time to make sure that you build a
+solution that meets the constraints implied by the choreography
+b) So they can be used at run-time to make sure that a choreography is
+being correctly followed.
+5. At design time you need to know:
+a) The role you are going to play in the choreography (e.g. are you a
+buyer or a seller)
+b) The sequence in which you MUST exchange messages in order to comply
+with the rules of your role
+If a formal representation of the choreography exists, then a business
+process design tool could use it in some automated to check that a design is
+correct.
+6. Ensuring a choreography is being correctly followed at run time is also
+important especially when you consider how complex a choreography can get
+(e.g. consider the international procurement use case I discussed on the
+last call). Here's the reason why:
+a) You can't control what the other roles in a choreography do. Therefore
+if they send a message out of the expected sequence, then your solution
+won't work. Therefore at run-time you have to check that a choreography is
+being followed correctly and raise errors if it is not.
+b) If you want to check that a choreography is being followed correctly
+then you need to be able to identify in a message, the choreography that is
+being followed as well as the specific message within the choreography that
+is being sent - a SOAP header would be ideal for this
+So really what you are doing is running a state machine that validates that
+the sequence of messages run in a choreography is correct. The alternative
+is to design all the exception handling into your business process. This
+makes the busines process design more complex.
+6. So which should you use, UML or XML? Now UML does have an XML
+represenation, but it is proprietary (I think) to Rational and focuses on
+describing the structure of any UML document rather than the structure of a
+choreography. On the other hand using XML to define a choreography would
+provide a development environment neutral definition which is specifically
+designed for the purpose. It would be easier to feed into a state machine
+that was validating that a choreography was being correctly followed at
+run-time.
+Thoughts?
+David
+David,
+I have a strong feeling that you can get what you want by exstiing
+technologies such as UML. In the past I have used use cases and activity
+diagrams to express reusable interactions between parties. Diagramtic
+notations are explicitly out of scope of our charter, and I'm not sure
+if there is any benefit in a specific xml language to express the same
+thing.
+Martin.
+UML can be represented using XMI. XMI is standardized by the OMG, it's
+not proprietary, and I am aware of a few tool vendors that support it.
+There are also several APIs (OMG and Java) for handling XMI-based
+documents. So an XML representation of UML does exist and can be used by
+vendors.
+XMI is indeed very generic, but when you use XMI to represent UML
+activity/statechart diagrams it becomes specific to expressing these
+kind of flows. At this level it is "typed" enough to define the flow of
+activities for both design time and run time.
+It becomes complicated if the interaction is typed in terms of Web
+service types as expressed by WSDL/XSD and related technologies. In this
+case it becomes more efficient to both propose a framework that is based
+on WSDL/XSD and specific to WS choreography, and also to propose a
+language that is constrained by that framework.
+In my opinion the utility comes from a framework for addressing
+choreography of Web services. It's new and it's interesting. Addressing
+abstract flows is also interesting, but it can be done using existing
+technologies, so it's not new. I simply don't see the utility in
+re-inventing UML/XMI.
+arkin
+"Those who can, do; those who can't, make screenshots"
+Assaf Arkin arkin@intalio.com
+Intalio Inc. www.intalio.com
+The Business Process Management Company (650) 577 4700
+This message is intended only for the use of the Addressee and
+may contain information that is PRIVILEGED and CONFIDENTIAL.
+If you are not the intended recipient, dissemination of this
+communication is prohibited. If you have received this communication
+in error, please erase all copies of the message and its attachments
+and notify us immediately.
+UML diagrams may be useful for the examples, especially activity
+diagrams. Stephen's BPMN diagrams also looked pretty readable to me -
+this notation is better suited to business processes than UML, IMO.
+The XML representation of UML is horribly complex, and isn't directly
+readable unless you have a tool that imports it. So I wouldn't really
+advocate producing those files. If the purpose is to convey a diagram,
+there is a standard called JPEG that works pretty well for that :-). Re
+the choreography standard itself, I think the cost of trying to fit it
+into something like XMI is greater than the benefit.
+--Jon
+I wouldn't rule out PNG or SVG ;-)
+I definitely agree with your assesment. If I wanted to specify a WS
+choreography language that allows tools to know what the hell is going
+on but use XMI, the resulting specification would be incredibly complex
+and practically unusable.
+At one end of the spectrum there's the abstract definition of some
+possible flow that is not grounded to any technology. Just saying that
+activity A is followed by activity B. When the definition is that
+abstract, then XMI becomes quite usable. You really only import/export a
+subset of XMI and only handle very generic elements (activity,
+transition, etc), so it's not an unsourmountable problem.
+In my experience there is need for a language for expressing WS
+choreographies. But I don't think there's a need for yet another
+language for just expressing abstract flows of activities.
+arkin
+"Those who can, do; those who can't, make screenshots"
+Assaf Arkin arkin@intalio.com
+Intalio Inc. www.intalio.com
+The Business Process Management Company (650) 577 4700
+This message is intended only for the use of the Addressee and
+may contain information that is PRIVILEGED and CONFIDENTIAL.
+If you are not the intended recipient, dissemination of this
+communication is prohibited. If you have received this communication
+in error, please erase all copies of the message and its attachments
+and notify us immediately.

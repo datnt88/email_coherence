@@ -1,0 +1,29 @@
+Hi,
+I just got reports of "sluggishness" for checklink. I checked, and it
+seems indeed like checklink takes  5 seconds to HEAD each resource.
+sample below
+HEAD http://www2003.org/ fetched in 5.3s
+Checking link http://www.w3.org/Icons/WWW/w3c_home
+HEAD http://www.w3.org/Icons/WWW/w3c_home fetched in 5.0s
+Checking link http://www.w3.org/QA/Activity
+HEAD http://www.w3.org/QA/Activity fetched in 5.0s
+The server is, however, not awfully overloaded, and although it has
+suffered a DOS attack recently, I doubt this is related.
+Ville, do you have any idea what could cause this, or any experience of
+similar trouble?
+olivier
+At least there are some DNS problems on v.w.o. The primary nameserver
+(ie the first one in /etc/resolv.conf) doesn't answer at all, others
+seem to be fine. The effect can be witnessed eg. by running the
+following several times and comparing the results:
+time HEAD -d http://www.w3.org/
+time HEAD -d http://18.29.1.34/
+A 5 second DNS timeout somewhere? I was about to suggest running nscd
+on v.w.o but it seems to be running named anyway...
+There are some problems with checklink that prevent HTTP Keep-Alive
+working too well, the LWP::UserAgent instances aren't always reused.
+That may cause the delay even between requests to the same hostname
+during a single checklink run.
+Good catch Ville, thanks for investigating. I'll try to have that fixed
+ASAP.
+olivier

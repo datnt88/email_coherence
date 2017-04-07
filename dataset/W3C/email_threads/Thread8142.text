@@ -1,0 +1,207 @@
+I agree with Geoff and Julian that the 2518bis wording is not right because
+it specifies a specific location for that attribute.
+I also acknowledge that it's not easy to come up with a wording for this
+behavior. Sorry Lisa :-)
+J.
+A specific location for the lang attribute is good. It is more tightly
+constrained, which makes it easier for both clients and servers to
+handle XML with property values.
+Please explain why it is important to be flexible in this case. Also, if
+the lang attribute must be legal in more than one location, explain if
+there is any semantic difference between the multiple locations. Also,
+explain what happens if the lang attribute is present in multiple
+locations scoped to the same property, particularly if it has different
+values in different locations!
+If some servers will be slightly incompatible with RFC2518bis because of
+making the location specific, I understand that's undesirable. However,
+I think in the long run it will make interoperability more likely for
+this feature, and the benefits will outweigh the costs.
+Lisa
+I agree with Geoff and Julian that the 2518bis wording is not right
+because it specifies a specific location for that attribute.
+I also acknowledge that it's not easy to come up with a wording for this
+behavior. Sorry Lisa :-)
+J.
+I don't buy that argument.
+The XML spec clearly states what the scope of xml:lang is (the containing
+element and all descendants). If WebDAV wants to override this rule, there
+should be a better rational than "it's too much work implementing what the
+XML spec says".
+Regarding your questions:
+I think it is important that XML-based specifications do not override XML's
+rules without good reason. In this case, I haven't seen one yet.
+explain if there is any semantic difference between the multiple locations.
+For each DAV:prop element, there's only one xml:lang declaration in scope.
+It is completely irrelevant to which attribute it is attached.
+locations scoped to the same property, particularly if it has different
+values in different locations!
+Can't happen with the given scoping rules.
+making the location specific, I understand that's undesirable. However, I
+think in the long run it will make interoperability more likely for this
+feature, and the benefits will outweigh the costs.
+I think this argument works both directions. The only problem with the
+current spec is that it's silent on the issue, *possibly* causing interop
+problems for people not reading the XML spec properly. The non-intrusive fix
+to this is to clarify how the scoping rules defined in the XML spec apply to
+property values, NOT to change those.
+Julian
+Behalf Of Lisa Dusseault
+A specific location for the lang attribute is good. It is more tightly
+constrained, which makes it easier for both clients and servers to handle
+XML with property values.
+Please explain why it is important to be flexible in this case. Also, if the
+lang attribute must be legal in more than one location, explain if there is
+any semantic difference between the multiple locations. Also, explain what
+happens if the lang attribute is present in multiple locations scoped to the
+same property, particularly if it has different values in different
+locations!
+If some servers will be slightly incompatible with RFC2518bis because of
+making the location specific, I understand that's undesirable. However, I
+think in the long run it will make interoperability more likely for this
+feature, and the benefits will outweigh the costs.
+Lisa
+-----Original Message-----
+I agree with Geoff and Julian that the 2518bis wording is not right because
+it specifies a specific location for that attribute.
+I also acknowledge that it's not easy to come up with a wording for this
+behavior. Sorry Lisa :-)
+J.
+Sorry: It is completely irrelevant to which *element* it is attached.
+OK, so it looks like we may need some language explaining that due to
+the definition of xml:lang, it can't appear more than once in the same
+scope. That's a good simplification.
+I still think it's wise to say where the xml:lang attribute must appear
+in order for the server to know that it must be stored along with the
+property. I don't think it's enough to say that any xml:lang whose
+scope includes the property value counts. Some XML parsers could put
+"xml:lang" on the root element of the document by default, even when
+that language value is actually inappropriate to the language value of
+certain properties. I do not believe the server should store that value
+in that case.
+Lisa
+I don't buy that argument.
+The XML spec clearly states what the scope of xml:lang is (the
+containing
+element and all descendants). If WebDAV wants to override this rule,
+there
+should be a better rational than "it's too much work implementing what
+the
+XML spec says".
+Regarding your questions:
+I think it is important that XML-based specifications do not override
+XML's
+rules without good reason. In this case, I haven't seen one yet.
+explain if there is any semantic difference between the multiple
+locations.
+For each DAV:prop element, there's only one xml:lang declaration in
+scope.
+It is completely irrelevant to which attribute it is attached.
+multiple
+locations scoped to the same property, particularly if it has different
+values in different locations!
+Can't happen with the given scoping rules.
+of
+making the location specific, I understand that's undesirable. However,
+I
+think in the long run it will make interoperability more likely for this
+feature, and the benefits will outweigh the costs.
+I think this argument works both directions. The only problem with the
+current spec is that it's silent on the issue, *possibly* causing
+interop
+problems for people not reading the XML spec properly. The non-intrusive
+fix
+to this is to clarify how the scoping rules defined in the XML spec
+apply to
+property values, NOT to change those.
+Julian
+-----Original Message-----
+[mailto:w3c-dist-auth-request@w3.org]On
+Behalf Of Lisa Dusseault
+A specific location for the lang attribute is good. It is more tightly
+constrained, which makes it easier for both clients and servers to
+handle
+XML with property values.
+Please explain why it is important to be flexible in this case. Also, if
+the
+lang attribute must be legal in more than one location, explain if there
+is
+any semantic difference between the multiple locations. Also, explain
+what
+happens if the lang attribute is present in multiple locations scoped to
+the
+same property, particularly if it has different values in different
+locations!
+If some servers will be slightly incompatible with RFC2518bis because of
+making the location specific, I understand that's undesirable. However,
+I
+think in the long run it will make interoperability more likely for this
+feature, and the benefits will outweigh the costs.
+Lisa
+-----Original Message-----
+I agree with Geoff and Julian that the 2518bis wording is not right
+because
+it specifies a specific location for that attribute.
+I also acknowledge that it's not easy to come up with a wording for this
+behavior. Sorry Lisa :-)
+J.
+Well, the *attribute* xml:lang can appear more than once, but each and every
+*element* is always only in the scope of one specific xml:lang attribute.
+XML: "The intent declared with xml:lang is considered to apply to all
+attributes and content of the element where it is specified, unless
+overridden with an instance of xml:lang on another element within that
+content." In XPath-spec: the closest xml:lang attribute on
+"ancestor-or-self".
+It must be stored when it's present. So if xml:lang is in scope (no matter
+where), it needs to be stored with the property. I agree that RFC2518 should
+be clearer about this.
+No compliant XML parser will place an xml:lang anywhere unless explicitly
+asked to do that. Reporting xml:lang on the root element when it wasn't
+present in the parsed document clearly would be a parser bug.
+If it's inappropriate where it was sent, then it shouldn't have been sent.
+If it hasn't been sent and is reported by the XML parser nevertheless,
+that's a bug in the parser.
+Julian
+1) Replace
+"...encoded, at minimum, using the UTF-8 [UTF-8] encoding of the ISO 10646
+multilingual plane."
+by
+"...encoded, at minimum, using any mandatory encoding for which the XML
+specification requires support."
+Note: this inclused UTF-16.
+2) Replace
+"...as well as the XML "encoding" attribute..:"
+by
+"...as well as XML declarations..."
+3) Replace
+XML uses either IANA registered language tags (see [RFC1766]) or ISO 639
+language tags [ISO-639] in the "xml:lang" attribute of an XML element to
+identify the language of its content and attributes."
+by a reference to the appropriate section of the XML spec (no need to repeat
+the information here, especially not if it's not precise :-).
+4) Replace
+"Similarly, though the names of XML elements used in this specification are
+English names encoded in UTF-8, these names are not visible to the user, and
+hence do not need to support multiple character set encodings. "
+by
+"XML names used in this specification are always marshalled inside XML
+request/responses, and thus benefit from XML's encoding support.
+5) Replace
+"The name of a property defined on a resource is a URI. Although some
+applications (e.g., a generic property viewer) will display property URIs
+directly to their users, it is expected that the typical application will
+use a fixed set of properties, and will provide a mapping from the property
+name URI to a human-readable field when displaying the property name to a
+user. It is only in the case where the set of properties is not known ahead
+of time that an application need display a property name URI to a user. We
+recommend that applications provide human-readable property names wherever
+feasible."
+by
+"WebDAV properties are identified by qualified XML names (pairs of
+namespace name and local name). Although some applications (e.g., a generic
+property viewer) will display the property's qualified names directly to
+their users, it is expected that the typical application will use a fixed
+set of properties, and will provide a mapping from the qualified name to a
+human-readable field when displaying the property name to a user. It is only
+in the case where the set of properties is not known ahead of time that an
+application need display a property name to a user. We recommend that
+applications provide human-readable property names wherever feasible."

@@ -1,0 +1,69 @@
+I am currently writing an application using HTTP/1.1 protocol to send a file to a HTTP server via the HTTP PUT request.
+I know that there is a general-header item "connection" that could be used with the value "close" to notify that the client wants to close the connection after the request.
+My problem is that if the server returns a 401 response ( or the proxy a 407 response) I don't want the connection to be closed before I anthenticate to it.
+So I have decided not to include the connection header item before my job is finished and I would like to know what kind of request I could send to the server with the "connection: close" item.
+Bertrand VION
+[vion@iie.cnam.fr: Jun 30 07:39]
+you can just close the connection when you're done with it. Persistent
+connections don't obligate you to send more transactions, they simply
+allow you to do so.
+side note: the server could always issue a connection close in its
+response, or decide to close the connection in between transactions
+just like your client can select to do the same thing. Beware of the
+race conditions inherent in this latter condition if you are reusing
+the connection.
+I have some problems with implementing Digest Authentication for a
+small web-server. I do not know how many browsers support Digest
+Authentication. It seems like Mozilla and IE is supporting some of
+the features, although they do not seem to implement preemptive
+authorization.
+The way I do it is to store the local 'nonce counter' in a session
+object and increment the value every time I get a request. I keep 3
+{nonce, nc} pairs. This is to prevent 'nonce' mismatch if the client
+implements preemptive authorization and the client pipelines the
+requests. I simply search for the correct {nonce, nc} pair by
+comparing the local nonce with the client nonce. I then increment the
+'nc' value for the {nonce, nc} pair that matches the client nonce.
+The problem is that the client sometimes skips a 'nc' value. For
+example, the server and client nonce count matches say to the value
+00000016, but then the next value from the client is 00000018?
+I see this problem with both Mozilla and IE.
+Thanks,
+Wilfred
+Squid implements digest authentication, although I don't know
+how many sites really use it. You might find it helpful to
+read through the relevant code.
+Squid has an option (nonce_strictness) to allow or reject gaps in
+nonce counts.
+Duane W.
+They both implement it, though the IE implementation still does not
+include the query string in the hash as a part of the URL, so it will
+fail for any request with a query string unless you make allowances
+for that.
+That's valid behaviour in the client; there is no requirement that
+they be used in strict order - only that each value be used only
+once. This is because if you have multiple connections to the server
+open and/or if you are going through proxies, you can't ensure what
+the order of delivery to the origin server will be.
+I suggest recording which nc values you have seen for any given nonce,
+and not allow reuse (I used a bit mask), but do not try to enforce
+ordering.
+Scott Lawrence
+[ lawrence@world.std.com is deprecated ]
+Thanks for the information about using a bit mask Scott.
+I just wonder what kind of size you set on the bit mask. As far as I
+understand, the bigger the bit mask, the greater risk you run of
+having a reply attack slip through your protection mechanism.
+I run a few tests using various browsers and the only browser
+implementing preemptive authorization seems to be Opera. Worst of all
+seems to be Mozilla, which can have huge gaps in the nonce counter. I
+had one request with nc=00000017 and the next with nc=0000003c.
+/Wilfred
+of
+will
+3
+client
+the
+value
+server
+nonce,

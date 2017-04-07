@@ -1,0 +1,122 @@
+I'm interested in the list's thoughts on two ideas for DAV improvements:
+The first is to introduce a GETSRC method to support access to the
+unprocessed source of a resource. This would decouple the dynamic response
+of a resource (GET) from its static source (GETSRC).
+The second is to introduce the MULTIPUT method to support "PUT with
+PROPPATCH" scenarios. MULTIPUT would accept some subset of multipart MIME
+packages and atomically write them to the server. This would support the
+update of a resource and its metadata in one transaction.
+- Jim
+That would, of course, be completely contrary to the HTTP design and
+further propagate the mistake of not accessing properties as resources.
+Just use the source link.
+Please choose a better name -- MPUT and MULTIPUT means multiple PUT requests,
+which was already tried and abandoned. Maybe you can call it PKG. Or just
+define a mapping to transactions and leave them as separate requests.
+....Roy
+Roy,
+The source link didn't work. Telling people to use the source link is not,
+IMO, productive.
+GETSRC could be defined as something like, "returns to the client a
+representation of the resource suitable for editing in an authoring client",
+so we avoid issues of getting at the "true" state of the resource. GETSRC
+wouldn't have the same caching properties as GET; I don't see that as being
+a big problem for authoring.
+So, which specific HTTP design principle(s) does this proposal violate?
+it
+I don't want to do arbitrary transactions, since that dramatically increases
+the implementation burden. But I'd be happy to call it something different.
+- Jim
+Under what conditions did it not work? Do you mean just never implemented?
+The one that calls for different resources to be accessed using different URI.
+The set of source URI for some other URI are different resources. Since
+there can be many more than one source per representation, the notion of
+creating a new method to avoid one indirection is just wrong.
+....Roy
+The source link was never implemented.
+The two reasons I have heard for this (there may be more) are:
+(a) Server implementors did not want to handle the namespace complexity of
+automatically creating new areas of the namespace for source resources. That
+is, on most servers, the source resources would be "synthetic" -- the server
+would be making up the URL for the source resource, and would be managing
+interactions with this synthetic resource.
+(b) There was insufficient direction given to client implementors on how to
+use and handle the source link, especially in the case of multiple sources
+for a given resource. The user interfaces of almost all existing DAV clients
+implicitly assume there is just a single "source" representation for a
+resource. Perhaps DAV's closeness to a traditional network file system
+protocol is coming back to haunt us. Certainly, it would involve significant
+UI and operational shifts to accommodate more.
+I think existing client UIs could handle a standard mechanism to get at 1
+source representation for a resource. I do not think they can handle a
+mechanism that provides access to multiple source representations. Efforts
+to do so will, like the source link, be ignored. I think it is instructive
+that the only mechanism that has gained any traction so far is the Translate
+header, which provides access to one source representation.
+- Jim
+GETSRC is evil:
+1) It's strictly less powerful than the source link. What are you going to
+do about synthetic _collections_, and multiple synthetic resources with the
+same source, or a synthetic document with a source collection (i.e., a
+compiled source tree)?
+2) It's incompatible with existing DAV clients. Everyone who writes a DAV
+client has to know that they must set Translate: F if they want to work
+properly with IIS. You'd force everyone to retrofit to call GETSRC in place
+of GET.
+3) It doesn't even satisfy Microsoft's requirements. Translate: F works for
+all methods, not just GET.
+4) It breaks the symmetry that HTTP requires between GET and PUT.
+I think the big one is that, in most cases, it isn't necessary. If the web
+site has a source tree, it's not unreasonable to expect the web site authors
+to know where that source tree is. They are the authors, after all.
+There isn't a requirement to automatically synthesize parts of the
+namespace. In fact, what I can easily do Today does everything but fill in
+the source links. I just have to map two virtual directories to the same
+location -- one view tree at http://me.com/* and one source tree at
+execution, grant source editing and browsing permissions, and require
+stronger authentication.
+What Today's web servers don't do is fill in the source link, because in
+most cases they can't know how to do it properly. Oh sure, a Web server
+might be able to supply a sourcelink for /cgi/mycgi.exe, but it can't
+provide a source link for /cgi/mycgi.exe/doc1, because it doesn't know where
+my CGI gets its information from. Similarly, of course, the Web server
+can't implement GETSRC on /cgi/mycgi.exe/doc1. It's the CGI's job to fill
+in those source links if it wants to.
+handle a
+You're right, but a "source representation" is not necessarily an entity
+body. All we really need is some language that tells a client how to
+extract a URI for the source from the source link property, i.e., a single
+source link, or a "main" source link, or some such thing.
+What the source link gets you is a File/Edit item on the menu when you view
+the page in a Web browser. The appropriate thing to do when that item is
+selected is clear if you have a single source link -- you PROPFIND it to
+determine DAV:resourcetype and DAV:getcontenttype, and then open the link in
+whatever client application is appropriate for editing that type of
+resource. If the source resource is a jsp or asp page, then the source file
+will open in the appropriate editor. If the source resource is a
+collection, then it will open in your default WebDAV explorer.
+GETSRC has a much reduced scope.
+That's not all that Translate: does. Translate: F disables script
+processing. If you PUT to a CGI with Translate: F, you overwrite the CGI.
+If you leave out the header, then the CGI processes the request. If you
+PROPFIND mycgi.exe with Translate:F, you get properties of the executable
+file. Without the header, you might get DAV:resroucetype=DAV:collection and
+some children. If you PROPFIND mycgi.exe/somedir with Translate: F, you get
+404 or 409. If you leave out the header, the CGI might give you the
+properties of a synthetic DAV-compliant resource.
+In short, Translate: F and GETSRC are not equivalent in functionality, and
+MS's decision to use Translate: F does not support adding GETSRC to the RFC.
+Moving on...
+There is, however, a real problem with the source link in 2518 -- it's a
+property, and only works for resources that are DAV-compliant. A CGI, for
+example, is a simple way to synthesize a Web page. There is no reason for
+that synthetic resource to be DAV-compliant at all. CGI authors don't want
+to go through all the trouble of implementing PROPFIND just so they don't
+have to remember where the source tree is. How many other methods will CGI
+authors have to implement to convince the browser that it should do a
+PROPFIND in the first place?
+If we want to provide a really useful link to source representations, it
+needs to be a simple header that CGIs can just stick in their responses. We
+could define the DAV-source: URL header to point the the "primary source"
+for that resource. We can keep the existing source link for DAV-compliant
+synthetic resources if we describe the mapping between the two.

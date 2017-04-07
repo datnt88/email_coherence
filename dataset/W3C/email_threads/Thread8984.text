@@ -1,0 +1,273 @@
+Hello,
+I want to explain my problems by means
+of an example, which I have found in this mailing list:
+I want to canonicalize the same element from the same doc as the guy in that
+posting.
+I'm using a sample-prog of the IBM XML-Security Suit
+(http://www.trl.ibm.com/projects/xml/xss4j/docs/c14n.html) to canonicalize a
+subset of a xml-doc. The command is:
+"... xpath-expression  example.xml  canonicalized.xml"
+Unfortunately, I can't figure out the proper xpath-expression to obtain the
+desired result (which means in this case " Object
+xmlns="http://www.w3.org/2000/09/xmldsig#" Id="object" some
+text /Object "). Could someone reveal the expression for this example to me?
+...but even if I had that result, the trouble would go on:
+If I didn't misunderstand it, on the above mentioned desired result the hash
+and base64 should be performed. I try to do that with an openssl-command:
+echo -e ' Object xmlns= ... ' | openssl sha1 -binary | openssl base64
+...but the result differs from the right one given in the posting. So what's
+still wrong here?
+What I want to do in the end, is to timestamp particular elements in view of
+XAdES-complience... So another question is, how to
+cope with multiple inputs for a hash calculation, like you find them in
+XAdES-X and A. W3C says this:
+Could someone explain this a little more detailed... e.g. how do I get the
+octet-concatenation?
+And last but not least: A HashDataInfo element does not mandatorily have a
+corresponding Transforms-element as a child. If there is such an element, it
+also can specify a canonicalization-algorithm as transform-method. Does this
+mean, that an element referenced in HashDataInfo without transform or with
+another transform-method than canonicalization must not be canonicalized?
+Any help is very appreciated.
+Thomas
+Reading that message and the followup, it wasn't clear that the original
+poster was doing proper (or any) canonicalization. For example, his
+Reference element didn't have a Transforms indicating c14n transformation.
+The difficult is that you cannot specify namespace prefixes on the
+commandline. This might work
+//*[Id='object']
+You have to c14n the XML before hashing it.
+Sorry, but I can't help you with your XAdES questions.
+/r$
+Rich Salz, Chief Security Architect
+DataPower Technology http://www.datapower.com
+XS40 XML Security Gateway http://www.datapower.com/products/xs40.html
+XML Security Overview http://www.datapower.com/xmldev/xmlsecurity.html
+So when there is no Transforms specified, there is actually no
+canonicalization needed?
+Unfortunately this doesn't work - it results in an empty document.
+You can specify the namespace - here the two ways of using the command:
+Usage: SerializeSubset XPath expression  XML instance
+Usage: SerializeSubset -xml ' foo xmlns:hoge="..." ...XPath
+expression... /foo '  XML instance
+Isn't
+Object xmlns="http://www.w3.org/2000/09/xmldsig#" Id="object" some
+text /Object
+the proper canonicalized form? But as you say above, it's not shure that it
+has to be canonicalized...?
+It doesn't matter if I try
+echo -e ' Object xmlns="http://www.w3.org/2000/09/xmldsig#" Id="object" some
+text /Object ' | openssl sha1 -binary | openssl base64
+or
+echo -e ' Object Id="object" some text /Object ' | openssl sha1 -binary |
+openssl base64
+the result is never 7/XTsHaBSOnJ/jXD5v0zL6VKYsk=
+Thanks
+Hi Thomas,
+My comment is inline.
+"So when there is no Transforms specified, there is actually no
+canonicalization needed?"
+This is not necessarily true. Even if no transforms are specified, there
+is implicit canonicalization that may occur if the input to the digest
+algorithm is not already in octet form. To be clear, the XML Signature
+Recommendation specifies the following (from section 4.3.3.2):
+"If the data object is a node-set and the next transform requires
+octets, the signature application MUST attempt to convert the node-set
+to an octet stream using Canonical XML [XML-C14N]."
+What this means is that if your reference is of the form: Reference
+URI="#foo" with no specified explicit transforms, C14N MUST still be
+applied, because the final digest operation doesn't understand the
+concept of a 'node-set'. Digest algorithms only operate on octets. This
+means that the conversion MUST occur. Said another way, dereferencing
+"#foo" results in a node-set, and a digest algorithm can't handle this,
+so it is converted to octets using C14N.
+Hope this Helps,
+Blake Dournaee
+Senior Security Architect
+Sarvega, Inc.
+[mailto:w3c-ietf-xmldsig-request@w3.org] On Behalf Of Thomas Braun
+original
+transformation.
+So when there is no Transforms specified, there is actually no
+canonicalization needed?
+Unfortunately this doesn't work - it results in an empty document.
+You can specify the namespace - here the two ways of using the command:
+Usage: SerializeSubset XPath expression  XML instance
+Usage: SerializeSubset -xml ' foo xmlns:hoge="..." ...XPath
+expression... /foo '  XML instance
+Isn't
+Object xmlns="http://www.w3.org/2000/09/xmldsig#" Id="object" some
+text /Object
+the proper canonicalized form? But as you say above, it's not shure that
+it
+has to be canonicalized...?
+It doesn't matter if I try
+echo -e ' Object xmlns="http://www.w3.org/2000/09/xmldsig#"
+Id="object" some
+text /Object ' | openssl sha1 -binary | openssl base64
+or
+echo -e ' Object Id="object" some text /Object ' | openssl sha1 -binary
+openssl base64
+the result is never 7/XTsHaBSOnJ/jXD5v0zL6VKYsk=
+Thanks
+l
+in
+that posting.
+original
+transformation.
+obtain
+example to
+the
+-binary |
+openssl base64 ...but the result differs from the right one given in
+the
+posting. So what's still wrong here?
+No; Blake explained the rules in another message. They are subtle.
+It depends; does your newline between "some" and "object" a \n or a \r or
+a \r\n?
+Because C14N imports the namespaces that are in-scope, so your echo
+statement is wrong. You'll have to add -- properly sorted -- xmlns
+declarations for every namespace active when Object appears.
+/r$
+Rich Salz Chief Security Architect
+DataPower Technology http://www.datapower.com
+XS40 XML Security Gateway http://www.datapower.com/products/xs40.html
+XML Security Overview http://www.datapower.com/xmldev/xmlsecurity.html
+Dear all
+Just a couple of comments:
+I agree with Blake's answer to the question.
+Second, as we announced some months ago, a
+interoperability plugtest on XAdES was organized
+and hosted last November by ETSI, where several
+companies and Universities attended...
+In addition to the interoperability tests on the different
+applications very fruitful discussion took place on the
+specification itself, and one of the issues that deserved
+more discussion was precisely the issue of the HashDataInfo
+in XAdES...
+At the end of the event, a report was written and issued to ETSI....
+I will contact people of ETSI to make it available (I do not know for
+sure the URL where it is posted...); and one of their suggestions was
+to substitute the mechanisms for the inclusion of time-stamps by another
+one that implementers considered more suitable in terms of validating
+that what has been time-stamped was the correct sequence of octets
+mandated by the spec.....
+In parallel, a review process of XAdES is taking currently place
+within ETSI, and in short tems the document will be publicly available
+for getting comments.... If you do not mind, I can forward it to this list....
+In the meantime, I will try to make available the plugtests report.
+Regards
+Juan Carlos Cruellas.
+Dear All
+I don't know whether this was discussed before, but it does impose some
+obstacles in our implementation attempts. We are evaluating the use of
+XAdES as a tool for record archiving system, since XAdES already
+includes some fields for time stamping inclusion. However, the problem
+with time stamping is that is it does not fit into XML structure (so
+far). So XAdES should perfectly perform when using "detach" signature
+type (e.g. file separated from a signature, which can be timestamped
+without problem). But what happens when one uses other signature types?
+How is a time stamping procedure performed when signature is part of a
+(signed) file? Current TimeStamp standard does not recognize an XML
+structure and therefore if time stamped, the part of the message must be
+taken out, time stamped and put back and then timestamp itself included
+in an XAdES structure. It could be performed, but under what
+circumstances? Transformations seems to be the first and the main
+problem not to mention that the whole procedure without clear process
+definition seems pretty awkward, so any suggestions are welcome.
+Best regards
+Aleksej
+SETCCE
+Jamova 39
+1000 Ljubljana
+www.setcce.org
+Dear Jerman,
+You are right when you say that the current ASN.1 TImeStamp standard
+does not recognize an XML structure.
+But XAdES specifies mechanisms, not only for including time-stamps
+(encapsulated within XML structures), but also for IDENTIFYING WHICH
+parts of the signature and of the signed documents where included within
+the computation of the hash to be sent to the TSA. This should allow, when
+dealing with one of the different time-stamps that appear within XAdES,
+identify
+what each one is actually time-stamping. It is a matter of the supporting
+structure,
+not of the generated time-stamp token itself. As I said in a former
+message, this mechanisms
+were largely discussed in the XAdES plugtest event organized by ETSI, and you
+have the URL where you cand find the final report where this issue is
+commented, and the proposal for review is made available.
+Concerning to the parts of the documents that were time-stamped, the
+mechanisms
+rely on the referencing mechanisms defined within the SignedInfo element.
+Concerning the different parts of the signature, XAdES specifies what parts of
+the signature should be included in such a computattion for each different
+time-stamp element defined within XAdES.
+Just for your knowledge, currently the Digital Signature Services Technical
+Committee
+is working on a design of a XML based protocol for requesting time-stamps
+issuance
+to one server. Such document will also contain a time-stamp token
+specification in
+XML.
+See details at:
+www.oasis-open.org
+Regards
+Juan Carlos.
+Dear Juan,
+Thank you for useful links.
+As you are saying XAdES includes mechanisms which part of the message is
+time stamped, but it is still hard to understand how this can be
+performed in case we are talking about signatures as a part of the
+document structure. Current timestamp protocols are not capable of
+handling parts of XML structures and from the implementation point of
+view that is impossible to realize without some basic information on how
+a part of the document is extracted for the time stamping purposes. I
+imagine the most obvious way to define XML TimeStamp, but how far are we
+form the actual standardization? Some proposals are quite impressive,
+but so far I see operability of XAdES concerning timestamps problematic.
+If anyone can give more information on how to get closer to designing
+stages (if there are formal one??) it would be more than welcome.
+Best regards
+Aleksej
+www.oasis-open.org
+Regards
+Juan Carlos.
+Dear Aleksej,
+See below
+Hmmm, this is a good point....In the published version of XAdES, the
+presence of transformations could allow to take out of the computations
+the signature.
+On the other side, after the interop event, the supporting structure
+of time-stamps was proposed to be changed, in order to make things
+easier, and in this case, I think that for this case a solution similar for
+the enveloped signature computation itself must be selected: indication
+that the
+signature must be taken out.
+Current timestamp protocols are not capable of
+I guess that when you talk about "protocols" you are also including the
+formats of the time-stamps tokens, not only the response-request, because
+I am not sure if this is an issue of the response-request, but of the
+information that accompanies the time-stamp inserted within the document.
+The companion information to the time-stamp should solve the problem...
+how easily this is done, is another issue
+but how far are we
+Some proposals are quite impressive,
+I propose you the following: if you want I can send you the interop XAdES
+event
+final report pointing you directly to the time-stamp issues so that we can
+comment
+with more details... perhaps we even could be more specific disscussing
+examples...
+Juan Carlos
+Sending it to the entire list might be helpful to onlookers as well....
+John,
+I have realized that I had already sent to this list the URL from where
+people could
+get the report.
+I think that in order not to disturb not interested people, it is better to
+circulate
+the URL. Anyway, should you have me to send you a copy directly to you, do not
+hesitate in requesting it.
+Regards.
+Juan Carlos.

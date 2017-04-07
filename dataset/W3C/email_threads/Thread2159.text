@@ -1,0 +1,203 @@
+I mentioned this before, obliquely in a response on another topic, but
+if I'm right, what follows can significantly reduce the potential
+performance problems with DMK's State-Info proposal.
+In the current version of the proposal (Dave, maybe you should
+increment your file number when you change the contents) DMK states
+that caching proxies "must pass along a State-Info request header from
+the requesting client to the next server, even if it has cached the
+requested resource locally."
+At first this seemed right, and in fact I made some arguments about
+the potential performance impact. But somebody please tell me what is
+wrong with the following reasoning: if a resource is in a cache, it
+should only be there because it is possible to "legally" fetch the
+resource from the cache without contacting the origin server. If this
+were not the case, the document should not be cached. Any IDEMPOTENT
+method by definition has no side effects at the origin server. Only
+idempotent requests can be served from caches. Any non-idempotent
+method is not allowed to retrieve a cached copy of a resource -- it
+must make a request to the origin server. Key conclusion: An
+idempotent request such as GET, which produces no side effects, cannot
+affect the state of a stateful dialog. Therefore, it seems
+unnecessary for requests that can be satisfied out of a cache to pass
+through any information to the next server.
+This, of course, makes it even more imperative that caches not serve
+cached documents they shouldn't.
+With the recent addition to the proposal that clients stay in the
+"have state-info" state when there is no state-info in the server's
+(or cache's) response, this means that caches need not "reflect"
+state-info either.
+--Shel Kaphan
+This idea sounds promising. Let me expand a bit from an operational
+standpoint. Remember the recent change whereby a user agent retains
+its State-Info if it receives no State-Info from a server. If caching
+proxies followed the rule that they cached only those documents for
+which they received no State-Info from the origin server, and if origin
+servers were careful to send State-Info only when it changed, I believe
+caching proxies would be able to cache anything cachable (in the
+State-Info context).
+Upon getting a one, a caching proxy could satisfy a request for a
+resource from the cache if there were a fresh one available, whether or
+not the request contained a State-Info request header. (That's a
+change, and it would indeed enhance caching.)
+The idea of an idempotent method could be expanded to imply that, not
+only does the resource not change, but its State-Info does not change
+either. (I guess that's obvious if you bundle State-Info into a
+larger concept of "the resource".)
+Nice idea! If the dust settles without major objections, I'll add this
+to a state-info-01 I-D. That will be a couple of weeks, after some
+vacation.
+Dave Kristol
+Dave Kristol:
+[dropping the requirement that proxy caches must always forward
+state-info headers from clients]
+Dropping the state-info forwarding requirement would make your
+state-info-01 almost identical to the planned second version of my
+non-persistent cookie proposal. I guess this means that I don't have
+to write my second version anymore.
+Let me try to summarize the state-info/caching requirements we seem to
+have converged at, in the form of modifications to
+draft-kristol-http-state-info-00.txt. Dave, feel free to cut and
+paste from the text below if you can use it.
+[Note to Daniel W. Connolly, added later: I just realized that a lot
+of the material in Section 4.3 below could go straight into a "HTTP
+Caching: rules and Heuristics" document. Feel free to cut and paste.]
+----------snip----------
+1. ABSTRACT
+[Delete the discussion of library browsing, this is no longer directly
+supported if state-info is not always passed though. (However, there
+are still ways to implement library browsing, see 5.3 below)]
+4. PROPOSAL OUTLINE
+4.1 Origin Server Role
+An origin server may only include State-Info headers in responses to
+non-idempotent requests. (Non-idempotent requests are all request
+that do not use the GET and HEAD methods)
+4.2 User Agent Role
+For reasons of privacy protection (see Section 6), a user agent should
+ignore State-Info headers contained in responses to idempotent (GET
+and HEAD) requests.
+A user agent in the state ``have state-info'' should include a
+State-info request header in all requests to the origin server, whether
+these are idempotent or not.
+Caches in user agents should be careful to implement the caching
+semantics defined in the HTTP protocol, especially when handling
+requests or responses containing State-Info headers.
+If the user agent allows the user to configure the its cache to
+`check the for validity of document (i.e. issue conditional get if
+expired) only once per session',
+this configuration option (which makes the user agent violate the HTTP
+specification anyway) should not override HTTP cache semantics for
+transactions where requests or responses containing State-Info headers
+are involved, as this will make stateful dialogs impossible or, worse,
+dangerously unreliable.
+4.3 Caching Proxy Role
+Caches that conform completely to the (draft) HTTP 1.0 or 1.1
+specification need not be changed to support State-Info.
+As per the requirements in the HTTP 1.0 and 1.1 drafts, caching
+proxies
++ must never cache responses to non-idempotent requests
+(note that the drafts probably need to make this requirement
+more explicit)
++ must not cache a response to an idempotent request if the response
+contains a Pragma or Expires header with a value that disallows
+caching
+Thus, origin servers can expect that proxies forward to them:
+- all non-idempotent requests (which may be carrying State-Info
+headers) issued by user agents
+- all idempotent requests (which may be carrying State-Info headers)
+for every `dynamic' URI D issued by user agents. An URI D is
+`dynamic' if the server has consistently put Pragma or Expires
+headers disallowing caching in every response message to
+non-idempotent requests for URI D. Proxies may `downgrade' normal
+GET requests to conditional GET request when doing the forwarding.
+An example of a `dynamic', idempotent URI is a `shopping basket
+contents URI' will typically be accessed with the GET method: the link
+to the shopping basket page will be a normal HTML A HREF=... link,
+it need not be a form submit button.
+Origin servers can only change the session state (State-Info value
+stored by a user agent) in response to non-idempotent request done by
+user agents. However, session-state is not identical to server state
+(the mapping URI- entity is part of the server state). Proxy and user
+agent (cache) authors should be aware that server may *at any time*
+change the entity bound to any `dynamic' URI. (An example would be a
+`chat page' under a dynamic URI that changes because another user
+writes on it, or a `stock quotes' page that is dynamically updated.)
+Proxy caches that, for whatever reason, are unwilling or unable *not*
+to cache a `dynamic' entity belonging to an URI D should, if
+State-Info headers were present in the request or response for D,
+return a HTTP error code 501 (Not Implemented) to the requesting
+client.
+[Note: Below, I distinguish between not conforming to the HTTP spec,
+which is bad, and breaching internet etiquette, which is much worse.
+For example, a user agent that sends out a badly constructed
+User-Agent: header may not conform to the HTTP spec, but does not
+commit a grave breach of internet etiquette.]
+Serving an outdated (incorrectly cached) dynamic response instead of
+giving an error code is completely unacceptable behavior, because it
+may break the synchronization between the session state maintained by
+the server and the user's view of that state. Willingly breaking this
+synchronization should be considered as grave a breach of internet
+etiquette, as bad as willingly changing the contents of relayed IP
+packets belonging to a telnet session.
+5. IMPLEMENTATION CONSIDERATIONS
+5.3 Browsing History Tracking
+The state-info facilities only allow origin servers to track user
+access to non-idempotent and `dynamic' idempotent URI's. A `library'
+or `magazine browsing' server may want to track all URI's accessed by
+the user, allowing it to show a list of articles looked at already.
+This tracking could be accomplished by making all pages `dynamic', or
+by including a small `dynamic' inline picture on every page. However,
+if neither the user agent nor any proxy close to the user agent has
+conditional GET capability, this technique may cause an unacceptably
+large amount of web traffic to be generated.
+6. PRIVACY
+The requirement on user agents to ignore all State-Info headers
+contained in responses to idempotent requests (GET, HEAD) helps to
+protect the privacy of the user.
+A service provider wanting to abuse the State-Info facilities to track
+the path of each user through the server first has to get the user to
+click a form submit button or issue another browsing command resulting
+in the sending of a non-idempotent request.
+Thus, a user that does only `regular' browsing by clicking HTML A
+HREF links (or having the user agent resolve inline pictures or
+idempotent request redirections) never has to worry about getting
+`tagged' by a malicious service providers, even if the user has set
+the user agent to always engage in a stateful session without prior
+notice.
+[Note: the following addition addresses the privacy problems I
+discussed in my previous message in this thread. The non-idempotent
+requests rule discussed above makes solving these problems relatively
+straightforward.]
++ It is recommended that a user agent should, as a configuration
+option, be able to pop up a dialog box when receiving a
+State-Info response header, like this:
+Start a session with server foo.bar?
+[ Yes ]
+[ Yes, always ]
+[ No ]
+(Help information: Starting a session will allow foo.bar
+to gather accurate statistics of your actions)
+If one of the `yes' buttons is pressed, the user agent should
+change to the ``have state-info'' state. The `Yes, always'
+button will have the additional effect of having the user agent
+start a session with foo.bar without popping up a dialog box on
+future invocations.
+[`no' alternative 1:] If the `No' button is pressed, the user
+agent should stay in the ``no state-info'' state. When getting
+a new State-Info response header from foo.bar, the user agent
+should pop up the dialog box again. This allows users to
+reconsider the earlier `No' decision.
+[`no' alternative 2:] If the `No' button is pressed, the user
+agent should also go to the ``have state-info'' state, but start
+sending State-info request headers containing empty strings
+instead of sending headers with the opaque information received
+in the response header. When getting a new State-Info response
+header from foo.bar, the user agent should pop up the dialog box
+again. This `No' behavior allows servers to suppress the
+sending of more State-Info response headers and start a
+non-stateful dialog with users that do not want to engage in
+stateful dialogs for privacy reasons. On the other hand, if a
+server receives an empty-string state-info header, it can also
+choose to just send a new state-info response header again,
+thereby asking the user to reconsider the earlier `No' decision.
+----------snip----------
+Koen.

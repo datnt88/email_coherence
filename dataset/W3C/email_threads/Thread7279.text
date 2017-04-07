@@ -1,0 +1,145 @@
+Here is my initial attempt at writing down the requirements that
+distributed authoring and versioning have for authentication and security.
+My intent here is to come to an understanding of what features we need so
+we can see what other technologies best provide these features. My current
+opinion is that this group should not concern itself with developing a new
+authentication or secure transmission scheme, but use the best existing
+technology that meets our requirements.
+Authentication. It should be possible to guarantee that a given HTTP
+message comes from a particular person.
+When writing a document, it is necessary to check that the person writing
+the document has write permission. In most access control schemes, this
+involves taking the name of the person and performing a lookup in an access
+control table or determining membership in an access control list.
+Checking access control permissions requires knowledge that the person
+requesting the action is, in fact, who they say they are. Similar problems
+result when performing a checkout, a checkin, or taking out a lock, which
+require checking for permission to perform the operation, and storing the
+name of the person who requested the operation.
+The HTTP/1.1 protocol, in section 11, "Access Authentication," provides a
+framework which can be used by many different authentication schemes.
+Secure transmission. It should be possible to write either a full or
+partial resource so there is a reasonable guarantee the contents will be
+private during transit.
+Transmitting a resource over the network in its native format opens up the
+possibility that a third party could snoop network packets and recreate the
+contents of the resource. This is clearly undesirable in a wide variety of
+contexts. There is a need to ensure that people using remote authoring can
+do so with reasonable confidence they are not compromising their
+information.
+** Is this capability provided by SSL?
+I welcome your feedback, especially if you feel I have missed any key
+requirements.
+- Jim
+Almost all distributed authoring systems have some notion of the
+identities of the authors, whether those were organizational,
+individual, or based on some kind of role.
+Those notions differ among distributed authoring systems, each
+user may want to participate in several, and there's a serious problem
+of proliferation of identities.
+The use of realms and domains in HTTP authentication might not match
+well into a distributed authoring environment where a single user
+might take on multiple roles, for example. Or does it?
+Every system needs some kind of system administrative functions, many
+of which involve changing access control priviledges. These might not
+need to be standardized across distributed authoring
+applications. However, when creating new areas, establishing links, or
+otherwise establishing new content that has no prior history, it is
+often essential to be able to provide access policy information about
+the new object. Unfortunately, there are no good guidelines for
+standard access control policy languages, although PICS might have a
+model for some.
+Is the kind of individual identification that HTTP authentication
+provides sufficient to allow full entre into each distributed
+authoring environment's access control system?
+I think these are some of the security issues that are unique to
+distributed authoring.
+The requirements for authentication and secure transmission are well
+known and have already been addressed in other documents and need not
+be repeated.
+Larry
+"person" is probably too, ah, personal. Some term that embodies the
+notion of an automated process (eg., "drone", aka "manager". No, no!
+Don't use that one! :-) would probably be more accurate. Servers need to
+be authenticated too, and having them masquerade as a "person" is a bit
+contrived.
+There are (at least) three areas of concern (as enumerated above):
+Authentication, authorization and privacy.
+SSL's current strengths are authentication and privacy during
+transmission.
+The authentication phase is done (as *everone* knows) with certificates.
+Certificates do have fields that uniquely identify the holder of the
+certificate, but that identity does not readily map to an identity that
+is acceptable by popular operating environments. Using HTTP's Access
+Authentication to establish authorization is doable, but one must be
+careful about the association between the identity established using a
+certificate and the identity being presented in the HTTP protocol.
+There is an effort in progress within in SSL/TSL world to add "attribute
+certificates" to address the fine grain access control issues. The
+schedule for availability of that feature may make it inappropriate for
+this forum, though we (Netscape and I) believe that it is the right
+strategic solution.
+AO
+Alan O. FreierCorporate Cynic
+freier@netscape.com (415) 937-3638 (work)
+Along with authentication, authorization and privacy, one might want to
+include non-repudiation as a requirement for authoring.
+Non-repudiation would be a handy capability for any type of collabortive
+efforts or submission/modification of sensitive data. It needs to be
+tied closely with strong authentication.
+To the best of my knowledge (which is always suspect) there is no one
+dealing with this issue in a commercial product today. If there is some
+work going on out there, perhaps we could look at it for input.
+And then ....
+On the subject of idempotency.
+I'm concerned that people are compromising the definition of idempotency
+to fit what they think can be easily implemented. My understanding of
+the term is that an idempotent operation can be repeated any number of
+times and the result is the same.
+A common example of an idempotent operation is a directory lookup. Even
+with this apparently safe example, it's clear that the operation is not
+idempotent over all space and TIME. However, the example is normally
+accepted.
+Another example of an idempotent operation is a file (or object or
+container or whatever) DELETE. This example gives me some concern. It
+seems as though the proof of idemptency is based on the following
+scenerio:
+handle = Enumerate(object);
+(void)Delete(handle);
+handle = Enumerate(object);
+If the final assigned value of 'handle' is null (implying no such
+object). This is the desired state after a 'delete' operation, so all is
+well.
+Observation would also note that the final value of 'handle' in the
+following sequence is also null. Some would argue that this proves the
+'delete' operation is therefore idempotent.
+handle = Enumerate(object);
+(void)Delete(handle);
+(void)Delete(handle);
+(void)Delete(handle);
+(void)Delete(handle);
+handle = Enumerate(object);
+This is observing the result, but ignoring the cause. What's missing is
+the status of completion of the 'delete' operation.
+There is and should be an important distinction between a delete that
+completes with 'success' verses a delete the completes with a status of
+'invalid handle'.
+There are two possible reasons for the latter case:
+Another process deleted the object after the 'Enumerate'
+was called. This could be a access violation, and non-
+repudiation (should it be enabled for deletes) would provide
+information regarding who actually deleted the object.
+Or
+The protocol does not have "at most once exection" semantics.
+Without such sematics, one will have great difficulty creating
+anything but idempotent protocols. Of course, that's how the
+definition of idempotent got compromised in the first place,
+isn't it?
+I believe useful idempotent networking protocols do not exist.
+Continuing to believe they do and trying to design processes to take
+advantage of idempotency is fruitless. The real goal is to control cache
+coherency; can the sending of the object across the network be
+suppressed and a more local copy offered instead.
+AO
+Alan O. FreierCorporate Cynic
+freier@netscape.com (415) 937-3638 (work)

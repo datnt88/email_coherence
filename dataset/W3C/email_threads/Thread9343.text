@@ -1,0 +1,76 @@
+I have fixed a few bugs, added more tests and bad test cases for
+non RDF documents.
+These are testing the three parts of this issue:
+1. Tests 01-08 and bad tests 01-08
+The following RDF attributes are required to have an rdf: prefix:
+about aboutEach aboutEachPrefix
+ID bagID type resource parseType
+2. Test 09 and bad test 09
+Namespace qualification MUST be used for all property attributes.
+3. Tests 10-14
+Non-prefixed RDF elements (NOT attributes) are allowed when a
+default XML element namespace is defined with an
+xmlns="http://www.w3.org/1999/02/22-rdf-syntax-ns#" attribute.
+All the tests have an input RDF/XML file test n .rdf with the
+required output triples in RDF/n3 test n .n3 and the bad tests are in
+test n -bad.rdf
+They have all been tested with SiRPAC and cwm/n3 as far as is
+possible (cwm doesn't seem to like aboutEach*).
+I am attaching them cloaked to this message but they should move
+somewhere well known on w3.org where we can tweak them, add
+explanatory html, pointers to code etc. when we get those.
+Dave
+Very nice work.
+A quibble, just to show I read it carefully:
+This isn't an anonymous node; it's just a relative identifier:
+@prefix : # .
+:genid http:... ... .
+I'm proposing that we use
+_:genid http:... ... .
+i.e. no @prefix, just _:name. TimBL hacked support for it yesterday;
+let's see if it works...
+yup...
+$ python2 cwm.py --quiet --rdf
+--n3=spart --bySubject
+"bar" .
+hm... test2 doesn't work as well; cwm.py doesn't believe in bagID.
+in test4.n3, you've got a relative reference in your expected results,
+resulting from rdf:ID="foo". We're going to have to specify the
+base URI as part of test inputs so that we can absolutize everything
+consistently.
+Aha... test5 allows me to show what I'm after:
+$ python2 cwm.py --quiet --rdf
+--n3=spart --bySubject
+_:0 .
+_:0 http://example.org/property2 "bar" .
+I'm using
+$Id: cwm.py,v 1.52 2001/05/30 23:08:24 timbl Exp $
+re test6: whoa! I didn't realize rdf:type as an attribute
+was special syntax; i.e. that it takes a URIref rather
+than a literal. None of the code I've written groks that.
+Learn something new every day, I guess.
+Dan Connolly, W3C http://www.w3.org/People/Connolly/
+Very very nice work Dave!
+Neither did I ...
+using cwm.py 1.52 to render into n3 normal we get a "no proof found"
+this is what happened (and sorry for the clumsy style)
+C:\rdf\2001\05\rdf-ns-prefix-confusion python /n3/cwm.py -rdf test06.rdf -n3  t
+est06.cwm.n3
+C:\rdf\2001\05\rdf-ns-prefix-confusion java Euler -trace test06.cwm.n3 test06.n3
+# http://example.org/resource/ a "http://example.org/class/".
+[1]CALL: http://example.org/resource/ http://www.w3.org/1999/02/22-rdf-syntax
+-ns#type http://example.org/class/ .
+[1]FAIL: http://example.org/resource/ http://www.w3.org/1999/02/22-rdf-syntax
+-ns#type http://example.org/class/ .
+# Generated with Euler 26.061 on Thu May 31 17:59:14 CEST 2001
+# @prefix log: http://www.w3.org/2000/10/swap/log# .
+# @prefix : http://www.w3.org/1999/02/22-rdf-syntax-ns# .
+# http://example.org/resource/ http://www.w3.org/1999/02/22-rdf-syntax-ns#typ
+e http://example.org/class/ .
+# No proof found for file:/rdf/2001/05/rdf-ns-prefix-confusion/test06.n3 in 1 st
+eps (80 steps/sec)
+and changing the "http://example.org/class/" into http://example.org/class/
+is the remedy
+this is of course similar to what Pat would say
+"using a steam-hammer to crack a nut"...
+Jos De Roo, AGFA http://www.agfa.com/w3c/jdroo/

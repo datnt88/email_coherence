@@ -1,0 +1,225 @@
+JG DNS
+Issue:
+spec is silent about
+clients/servers caching of DNS information. /A
+Status: resolution is to add verbiage that implemeters who cache
+DNS information inside an implementation, rather than using DNS
+lookups each time MUST obey DNS TTL rules. Add words as well
+to security considerations.
+I've written a section outlining this requirement; it is currently
+a sub-section to be added to the security considerations section,
+as there seems to be no general discussion of how servers are contacted
+elsewhere in the document. If people think it necessary, I can
+add such a section to the document, but this seems the easiest way to
+close the issue.
+- Jim Gettys
+Proposed resolution:
+Section 14 (new subsection to Security Considerations):
+DNS Spoofing
+HTTP use relies heavily on the Internet's name service (DNS), and is prone to
+the attacks generally possible via name server attack.
+DNSSEC deployment should improve this situation.
+The current implementation of many HTTP 1.0 client libraries are prone
+to a particular attack, however.
+HTTP clients should generally rely on their system's name resolver for
+lookup when contacting a server, rather than caching the result of host
+name lookups. Many platforms already cache the results of name
+lookups locally, or can (and should) be configured to do so.
+If clients cache the results of name lookups for performance
+reasons, HTTP clients MUST observe the TTL (Time To Live) information
+reported by the name server.
+A server could be spoofed when that server's IP address
+changes if this rule is not observed. As renumbering is
+expected to become increasingly common [RFC 1900],
+this problem will grow. This requirement reduces this
+potential security vulnerability.
+This requirement also reduces failures observed by users,
+and improves load-balancing behavior of clients for replicated servers
+hiding behind the same DNS name, as often occurs with large loaded
+HTTP servers.
+Section 16: (References)
+[RFC 1900]
+B. Carpenter, Y. Rekhter,
+Renumbering Needs Work /a . RFC 1900, IAB, February 1996.
+Section 16: (References)
+[RFC 1900]
+B. Carpenter, Y. Rekhter,
+Renumbering Needs Work /a . RFC 1900, IAB, February 1996.
+It is as simple as it might seem.
+A couple points:
+- dns is a real performance pain
+- gethostbyname call doesn't give you ttl information back
+So, if a ttl info is needed, you have to basicially integrate all
+resolver code, talking udp to DNS server. Also server selection, timing out,
+exponential back off and all that. Basically, it is a integration of the whole
+BIND into client/server.
+Anawat
+I meant "It is not as simple as it might seem.".
+I answered myself here. yes you can use res_mkquery to do raw dns.
+It's still a pain though.
+Anawat
+Seems like a terrible idea given how quickly and continuously BIND has
+been evolving to make it more robust in the face of various security
+attacks.
+Donald
+Donald E. Eastlake 3rd +1 508-287-4877(tel) dee@cybercash.com
+Carlisle, MA 01741 USA +1 703-620-4200(main office, Reston, VA)
+whole
+Gethostbyname is not rocket science. Its a few UDP calls and a bit of unpacking.
+It should not be very hard. I wrote an interface in a couple of days.
+Not using the Berkley interface is an obvious thing to do to improve performance
+if you do not have threads. It is a bit sad that Netscape hangs while waiting to
+do a dns lookup.
+I don't think we should restrict the spec on the basis of an inadequate API to
+what is only a few lines of code. The complexity of BIND lies in the server not
+in the client. Anwat's post pretty much describes what one has to do.
+Note that there are some platforms where it is difficult to interface directly
+to the bind daemon because someone has tried some half baked optimisations. I
+remember when we used to ship libwww with two versions of code, one for the
+people using the O/S version and the other (and by far the more widely used)
+which used a direct interface to dns. I don't know whether that is still an
+issue.
+If people like I will post the code [just don't clutter the list with requests
+or JG will be upset]. It may requires some tweaks since I use a garbage
+collector and a few layers of macros, I think its only about 100 lines of code
+though].
+Phill
+Note that for DNS security, the prefered interface to the gethostbyname
+functionality needs to change anyway to return an indicator as to whether
+the information has been authenticated, is from an insecure zone so it
+can't be authenticated, etc. Perhaps while that additional return info
+in being added, adding return of the TTL so an applicaiton could cache
+the data and discard it properly would be reasonable...
+Donald
+Date: Wed, 27 Mar 96 14:08:11 -0500
+From: hallam@w3.org
+Subject: Re: (DNS) draft wording for W.G. review.
+Donald E. Eastlake 3rd +1 508-287-4877(tel) dee@cybercash.com
+Carlisle, MA 01741 USA +1 703-620-4200(main office, Reston, VA)
+If the API change will require new implementations of gethostbyname(),
+why not get it (and friends) to do the caching, or reasonably efficient
+access to the local resolver's cache, instead of pushing this into the
+app layer?
+Date: Wed, 27 Mar 96 14:08:11 -0500
+From: hallam@w3.org
+Subject: Re: (DNS) draft wording for W.G. review.
+gethostbyname() is part of the BSD System Interface and we can't change it
+lightly. Note that it is very general, pertaining equally well to NIS and
+/etc/hosts as to DNS -- therefore widening it to include authentication or
+TTL information would be irrelevant and possibly incorrect.
+I am anxious to make progress on a DNS-specific host name lookup function
+that can be optimized for the kinds of data that DNS has available. But
+gethostbyname() is not even the beginning of that answer. Neither, for
+that matter, is getconninfo() or whatever else Posix.12 specifies.
+The right place for this battle to take place is actually Posix.12, since
+applications will in the long term just call getconninfo() (or whatever),
+and if we want those applications to care about authentication and TTL, we
+need to make that argument _now_ while the interface is still malleable.
+So how do you find out what the current state of the Posix standard is
+and how do you provide input to them?
+Donald
+Donald E. Eastlake 3rd +1 508-287-4877(tel) dee@cybercash.com
+Carlisle, MA 01741 USA +1 703-620-4200(main office, Reston, VA)
+Now I'm back into remembering when and why I wrote the code I remember that I
+gave up on it precisely because of the security stuff.
+I'm pretty indifferent to the interface except that:-
+1) It should allow access to whatever data is avaliable
+2) It should be possible to use it in a non blocking fashion.
+(2) is a problem since it would mean that the interface could not be abstracted
+off the network layer to the extent I would like. On the other hand it might be
+possible to work out something that would be based on sockets as opposed to UDP.
+E.g.
+DNS_initialize (&amp;context, DNS_default)
+//returns a dns query context with the system default
+//DNS lookup daemons instantiated. Note that context is an
+//opaque structure, the calling program is not allowed to
+//meddle with it.
+DNS_add_resolver (context, &amp;address}
+//address = {18.24.1.191, weight} i.e. we give it an extra
+//resolver to look at, this structure could have a weight
+//associated with it allowing information.
+//This is particularly usefull when doing higher level
+//hacking, e.g. looking to find an authoratative server.
+DNS_query (context, &amp;name, &amp;address, &amp;query_id, flag)
+//flag can be
+// DNS_SYNC- wait for DNS query to return
+// DNS_ASYNC- asynchronous, if query cannot be resolved
+//immediately will return a socket which can be
+//waited on as part of query_id.
+DNS_test (context, query_id, flag)
+//Checks to see if a query has completed. Flag allows caller to
+//chose to wait. Note that this function would generally
+//be called after a select on the query_id socket. The idea
+//being to allow multiple DNS queries to be grouped on the
+//same socket.
+//Alternatively context could have a pointer to a linked list
+//of resolved query_id structures. An application could then
+//avoid having to check each outstanding DNS query in turn.
+//Internaly the code is likely to want to use a hash table or
+//balanced tree to match queries with responses.
+DNS_close (context, query_id)
+//Dispose of query, return
+DNS_terminate (context)
+//Free any structures held open (e.g. application level cache)
+Note that this is a considerably more complex interface than people are used to.
+I think that this is unavoidable if we are to have something that will work in
+multiprocessor environments (I believe that we will be using boxes with large
+arrays of MIMD processors in the realatively near future. By large I mean 64+,
+not the 4 to 16 that shared memory models give you).
+Note that the idea of the context is not a very Berkley or UNIX style of API but
+it does mean that progams can avoid using global variables. This is essential if
+code is to run in multithreaded, multiprocessor environments.
+The sort of place where this code would be of most use would be in code to do
+bulk DNS queries to build up databases - e.g. to asist in analysis of log files
+or as a prefilter inside a mailing list distributor.
+I think that the right place for this battle is a cabal in the back of an IETF
+meeting rather than POSIX or such like.
+Phill
+This is a real problem that puts software developers between a rock and hard
+place. On the one hand, you have to replace gethostbyname because of its
+limitations (doesn't return all the info you need, not thread safe on some
+systems, etc.). But in turn gethostbyname may provide the only useful means of
+accessing some sorts of host data your application needs to see. Some sites
+depend on host data kept in non-DNS databases (NIS isn't the only one by any
+means).
+In a perfect world there would be a single interface provided by the various
+OSes that provides thread-safe access to all of the information incorporating
+access to local information sources as well as DNS. But quite frankly I have no
+idea how to achieve this state of perfection -- I'm skeptical that it's even
+possible to get there. The one thing I do know, however, is that neither
+coding a replacement for gethostbyname nor sticking with the existing
+routine and all its warts are acceptable answers.
+Ned
+Given the current DNS performance. You don't have a choice if you want
+a decent performance. You just have to cache dns info.
+I think the best you can do without integrating the whole BIND is to integrate
+just result interpreter, gethostnamadr.c into your code. So you can get ttl.
+and then use res_send call to resolver library. Not to mention to blocking
+behavior of res_send, which can block up to 5-10 seconds... It's just really
+painful.
+Anawat
+If we can have this kind of interface as a standard, that'll be great.
+Even better if a resolver lib does a client side caching. So app programmer
+don't have to mess with it. However, api to control caching should be provided,
+like, set cache size and cache flush, stuff like that.
+another example, high volume www proxy/cache server. say  50,000 requests per
+hour.
+Anawat
+Agree. We need client side (resolver's client) caching. I think we can't afford
+to make a network conversation, even on udp on every single dns lookups.
+Also, if resolver library does a caching/nb-lookup, we can feel more
+comfortable about DNS security. As least we will be using the same algorithm,
+not 100 different caching scheme by 100 different implementations/programmers.
+Anawat
+i'd talk to keith sklower.
+gethostbyname() needs to be updated, and someone on the BIND team is working
+on that. it cannot become any more DNS-centric than it is now, however.
+getconninfo() or whatever POSIX calls it needs to be implemented and shipped
+with BIND, and that will be done once it stops changing. keith sklower and
+eric allman have an implementation of the current draft specification.
+a DNS-specific accessor function needs to be provided, that will allow
+unmarshalling of DNS responses so that applications who don't want to call
+GETSHORT() and its ilk, won't have to. a thread safe API for this will
+appear in version current+2 of BIND.
+It is IEEE that handles POSIX standardization. They have a web page:
+Keld

@@ -1,0 +1,122 @@
+Hello TidyFolks,
+The following HTML code:
+...validates as strict HTML 4.01, according to the W3C validator. However,
+Tidy 4-Aug-00 complains:
+line 17 column 1 - Warning: html doctype doesn't match content
+t.html: Doctype given is "-//W3C//DTD HTML 4.01//EN"
+t.html: Document content looks like HTML 3.2
+...and will tidy the resulting output by replacing the doctype with one for
+HTML 3.2. In order to convince Tidy that this is valid HTML 4.01 Strict,
+one must place "Some text" in a paragraph element:
+This apparently is required by code in the "ParseBlock" routine of
+"parser.c", specifically lines 661-666:
+HTML4 strict doesn't allow mixed content for
+elements with %block; as their content model
+lexer- versions &amp;= ~VERS_HTML40_STRICT;
+continue;
+Is Tidy wrong here, or is the W3C validator? It appears to me that Tidy is
+in error, as the TD element is not %block but rather %flow:
+where %flow is:
+So the inline content should be acceptable in HTML 4.01 strict.
+-- Dave
+Hi Dave,
+I think that what Tidy is reporting is not that it is invalid, but just
+that you only need an HTML 3.2 interpreter to be able to correctly decode this
+file. I think that each new version of HTML is basically a super-set of
+previous versions, and your simple table doesn't require the latest "hot off
+the press" version of HTML for it to be to be decodable. As such, a 3.2
+Doctype would be correct. I think all old browsers will still attempt to
+display a file, whatever its Doctype, but it wouldn't be unreasonable for them
+to give up on the grounds that it is a type of document it doesn't understand.
+Therefore, the correct Doctype declaration to use is the minimum that is
+actually required.
+Regards,
+Peter
+Work: Peter_Vince@yahoo.co.uk
+Home: Barney.Wol@noctua.demon.co.uk
+Web: http://www.noctua.demon.co.uk/
+PGP id = 0x332B72C0
+PGP fp: 3535 9AD9 C0EA 3606 0DE4 3811 422E 10B4 332B 72C0
+Do You Yahoo!?
+Get your free @yahoo.co.uk address at http://mail.yahoo.co.uk
+or your free @yahoo.ie address at http://mail.yahoo.ie
+First, I'm afraid that I've muddied the waters a bit here. The warning I
+cited ("html doctype doesn't match content") and the replacement by the
+HTML 3.2 doctype doesn't occur in the distributed Tidy 4-Aug-00 version.
+It occurs in a version that I patched to fix a bug with doctype reporting
+(see an associated message of mine for details). I apologize for not
+testing my assertion with the released version.
+Here's a better example that does work improperly with the released
+version:
+This is valid HTML 4.01 Strict, as confirmed by the W3C validator.
+However, Tidy 4-Aug-00 reports:
+t.html: Doctype given is "-//W3C//DTD HTML 4.01//EN"
+t.html: Document content looks like HTML 4.01 Transitional
+If, however, I replace the table data cell line with:
+...then I get:
+t.html: Doctype given is "-//W3C//DTD HTML 4.01//EN"
+t.html: Document content looks like HTML 4.01
+This illustrates that Tidy thinks that TD elements cannot contain inline
+content in HTML 4.01 Strict, but as far as I can tell, the standard says it
+can. So I believe that Tidy has a bug here, unless I've misinterpreted the
+DTD.
+I believe that is contraindicated by this statement in the "Status of this
+Document" section of the HTML 4.01 Specification:
+"W3C recommends that authors produce HTML 4 documents instead of HTML
+3.2 documents."
+(Producing an "HTML 4 document" requires using an HTML 4 doctype.)
+-- Dave
+Hmmm, the way I would read that recommendation is that the W3C is
+trying to encourage HTML 4 standards. For example, the use of Style
+Sheets rather than the use of embedded FONT xxxx commands. I am
+open to persuasion, but none-the-less feel sure that a filetype
+should always be specified as the minimum version necessary for a
+reader to be able to decode it - else why bother with the declaration
+at all?
+Regards,
+Peter
+Barn Owls and more at http://www.owlsanctuary.co.uk/
+See my web links page at: http://www.noctua.demon.co.uk/links/links.html
+PGP encryption software available free from http://www.pgpi.org
+My PGP id = 0x332B72C0, &amp; fingerprint: 3535 9AD9 C0EA 3606 0DE4 3811
+422E 10B4 332B 72C0
+Indeed, I agree. But note that it states that HTML 4 documents should be
+created _instead_ of HTML 3.2 documents. A document containing, e.g., just
+simple paragraph elements will validate as either an HTML 2.0, HTML 3.2, or
+HTML 4.01 document. The difference is only in the doctype chosen.
+However, to comply with the recommendation, one must use an HTML 4.01
+doctype, because only then is the document an "HTML 4 document."
+The sentence after the one I quoted from the HTML 4.01 Specification is:
+"For reasons of backward compatibility, W3C also recommends that tools
+interpreting HTML 4 continue to support HTML 3.2 and HTML 2.0 as well."
+By stating that support of earlier HTML standards should be maintained for
+"backward compatibility," I would think that implies that these earlier
+standards are not recommended for new authoring work, i.e., that all new
+documents should carry one of the HTML 4.01 doctypes.
+That would appear to argue that one should never use the HTML 4.01 Strict
+doctype, because any strict document will also validate at the "lesser"
+HTML 4.01 Transitional level. Wouldn't the HTML 4 Strict doctype be
+pointless then?
+Also, that would require that if I create a simple Web page with some
+paragraph elements, I should use an HTML 2.0 doctype. If I then edit a
+paragraph in that page to include an abbreviation marked by ABBR tags,
+then I would change the doctype to HTML 4.01. And if I delete the
+paragraph containing the ABBR element and replace it with a table, I must
+then reset the doctype to HTML 3.2. That doesn't seem practicable for a
+Web site of any size or even for a single page that's updated frequently.
+The "Techniques for Web Content Accessibility Guidelines" at:
+has, as "Checkpoint 11.1:"
+"Use W3C technologies when they are available and appropriate for a task
+and use the latest versions when supported. [Priority 2]"
+Regardless of whether I have a page of simple markup or one that uses the
+latest 4.01 features, I would argue that "use the latest versions" implies
+that I should be using HTML 4.01 doctypes exclusively for all new
+authoring.
+Of course, as one of the editors of the HTML 4.01 Specification, Dave
+Raggett would be in a perfect position to tell us the intent of the
+standard. Dave, is it a replacement for previous HTML versions, or is it
+co-standard to be used only when HTML 4-only features are needed?
+(Actually, I am sympathetic to Barney's position that the doctype should
+reflect the level of the content. I just don't believe that the W3C
+recommendation intends this. :-)
+-- Dave

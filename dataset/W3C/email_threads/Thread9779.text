@@ -1,0 +1,173 @@
+Pat indicated at the F2F that entailments "accidentally" drawn would be
+"harmless". Can someone clear up this example for me?
+A:
+eg:foo1 rdf:subPropertyOf dark:eg:foo2 .
+dark:eg:foo2 rdf:subProperotyOf eg:foo3 .
+eg:a eg:foo1 eg:b .
+B:
+eg:foo1 rdf:subPropertyOf dark:eg:foo2 .
+dark:eg:foo2 rdf:subProperotyOf eg:foo3 .
+eg:a dark:eg:foo2 eg:b .
+C:
+eg:foo1 rdf:subPropertyOf dark:eg:foo2 .
+dark:eg:foo2 rdf:subProperotyOf eg:foo3 .
+eg:a eg:foo3 eg:b .
+Does A |= C? Does A |= B? B |= C?
+Awaitening en(light|dark)enment,
+jan
+jan grant, ILRT, University of Bristol. http://www.ilrt.bris.ac.uk/
+stty intr ^m
+RDF entailments, yes.
+Yes:
+A|= C (by subproperty chaining and then the subproperty closure rule)
+No:
+A |= B (dark conclusion)
+B |= C (dark, ie missing, antecedent)
+However, notice that should be rdfs:subPropertyOf. To anticipate your
+next question: yes, one does have to be careful using darkened
+triples in RDFS hierarchical inferences (basically, any kind of
+transitivity implication, ie subPropertyOf and subClassOf.) What I
+claimed was that it was safe with RDF-valid reasoning (ie
+effectively, existential generalization).
+Pat
+IHMC(850)322 0319 cell
+40 South Alcaniz St.(850)202 4416 office
+Actually, for the same reason, isn't this a "yes"? Because the non-dark
+statements are a strict subset of the antecedent?
+To be honest, I think examples like this are why we should have an
+explicit, not implicit name-based, darkening mechanism. At the F2F I was
+in favour of it, but the more I think about it the more it seems like a
+mistake to key this off property names. Some explicit syntax mechanism
+(either Patrick's, or an "rdf:asserted='True'" or such) seems much less
+error-prone... particularly if we can provide a little more sugar by
+having shorthand constructs (daml:collection) that normally produce some
+darkened triples do that "by default".
+jan
+jan grant, ILRT, University of Bristol. http://www.ilrt.bris.ac.uk/
+and Nostradamus never dreamed of the Church of the Accellerated Worm
+OK, thinking more about this: this is a technicality. However, closure
+rules for URL-prefix-based darkening would all have to be rewritten to
+not add triples if the predicate would cause darkening. With a simple
+bit flag then the closure rules don't need rewriting because one can
+simply state, "the closure rules are applied only o non-dark triples and
+only produce non-dark triples".
+s/non-dark/asserted/g if appropriate.
+jan grant, ILRT, University of Bristol. http://www.ilrt.bris.ac.uk/
+Q: What's yellow and equivalent to the axiom of choice? A: Zorn's lemon.
+And likewise, if reification were used to express those unasserted
+triples, then closure rules would not need any rewriting at all,
+since they already (presumably) ignore unasserted statements.
+Patrick
+Whoops. Yes. sorry, you are right. So A|=B and A|= C but B|=/=C. OK.
+I fail to follow why this kind of example would lead you to that
+conclusion. BUt in any case there are other strong reasons for not
+coming to that conclusion, which we have gone over now several times.
+If there is any way to assert darkness, then there is no way, in
+practice, to avoid nonmonotonicity. Moreover, it places an additional
+burden on users and implementers, who ideally shouldnt even have to
+know about this stuff almost all the time.
+Pat
+IHMC(850)434 8903 home
+40 South Alcaniz St.(850)202 4416 office
+phayes@ai.uwf.edu
+You misunderstand; I'm not talking about an in-RDF (Guha's "same
+syntax") mechanism- I'm talking about explicitly flagging triples as
+dark using something like
+rather than implicitly by examining the property URI.
+The burden on users and implementers, I think, is going to be there
+regardless. For the most part it can probably be made "invisible" to
+users by, for instance, having the daml:colleciton spit out
+appropriately-darkened triples (ie, a little bit of sugar in the right
+place).
+jan
+PS. Why I came to this conclusion is that I posed a simple example and
+got two sets of answers, neither of which was 100% accurate. I think
+things like the subproperty malarky are almost certainly going to crop
+up. I'd be happier if the presence of a darkening URI _anywhere_ in a
+triple caused the triple to be dark; although I've heard that that has
+problems too.
+jan grant, ILRT, University of Bristol. http://www.ilrt.bris.ac.uk/
+You see what happens when you have fun with a stranger in the Alps?
+You say _no_ way, but I thought that a syntax extension (in the graph
+syntax) was a possibility. I agree it has the other disadvantages you
+mention, but I want to be clear what our *possible* choices are.
+#g
+Graham Klyne
+I'd like to reiterate Pat's point.
+If darkness is specified by the addition of something to the graph, then
+there is no way to avoid non-mon. We have been over this many times now.
+Could we please stop reopening this issue?
+Jan, same problem occurs with your proposal too. Let us suppose a file
+contains:
+Nothing is dark here. I then merge this with another file containing
+I have essentially retracted statements from the first file without touching it.
+Darkness specification has to be *in the language*, not in a particular
+file using the language.
+Jan
+I'm sorry; I was under the impression that the light and dark universes
+pretty much never collided (ie, that the result of that merge would be a
+graph* with one light triple, and one dark triple, the components of
+each being the same): that is, when drawing RDF, I'd need two different
+coloured pens.
+If a triple is _either_ light or dark, but not both, then sure, ok, I'll
+shut up.
+jan
+* for appropriate structures corresponding to the word "graph"
+jan grant, ILRT, University of Bristol. http://www.ilrt.bris.ac.uk/
+Scrabble gematria: "BIBLE" = "DOGMA"
+The point about a dark triple is that it does not have a corresponding
+assertion. i.e., does not appear the lbase translation of the graph and
+is transparent to satisfaction in the model theory. The reason for doing
+this is *to guarentee* that certain problematic assertions never really
+show up in the semantics, thereby ensuring that we avoid the Peter problem.
+So, any mechanism that relies on users remembering to darken the right
+triples or not make statements they really shouldn't have made is a
+non-starter. Similarly, a triple has to be light or dark *everywhere*,
+otherwise we land up in trouble again.
+Hope this helps.
+guha
+I disagree: I say there are two instances of eg:blah in the merged graph
+-- one is dark, the other is not. The one that is not dark is not darkened
+by the one that is. I thought you had accepted (or acknowledged) this
+interpretation during thew F2F discussion.
+Yes, this presumes an extension to the graph syntax as currently defined.
+I agree with that bit.
+#g
+Graham Klyne
+Well, what I meant by _no_ was that if there is any way at all of
+asserting it, then someone somewhere is going to hack a way of not
+asserting it, and then someone else is going to find a way to add it,
+and then....
+I guess I have great respect for the creativity of users to find a
+way to break almost any spec that is breakable. For evidence, read
+the recent thread on RDF logic about how to provide urirefs for graph
+arcs. For more evidence, consider the fact that the Stanford DAML
+reasoning engine has an (illegal, but..) 'unassert' command built
+into it.
+Well, I guess it depends on how cynical you are :-)
+Pat
+IHMC(850)434 8903 home
+40 South Alcaniz St.(850)202 4416 office
+phayes@ai.uwf.edu
+Would you say that the approach of using reification to express
+unasserted triples is "in the language" and thus avoids
+non-monotonicity?
+Patrick
+No.
+Dan
+Why is it not in the language?
+Why is it non-monotonic?
+Patrick
+Pat,
+I get very nervous if we feel that we have to be responsible for every way
+that users might mis-use our specifications. Without doubt, if it gains
+any kind of widespread currency the Semantic Web will contain faulty
+reasoners, and we'll have to learn to cope with them (e.g. having some
+framework --possibly localized-- for deciding what to trust). The points
+you make seem to me to be no more or less than faulty reasoners.
+#g
+Graham Klyne
+I thought we made this choice at the face to face. The deciding factor as
+I recall was the argument that we did not want to burden users with having
+to remember which triples to darken.
+Brian

@@ -1,0 +1,146 @@
+[Gregg questioned my suggestion that null ALT strings be used.]
+I myself believe that authors should be encouraged to consider
+null ALT strings as within their range of choice if they will
+take the trouble to think about ALT strings at all. I have no
+big problem with "IBM logo" suggestion. I would prefer that the
+WAI not go out to beat people up telling them they must have a
+non-null ALT string for every image.
+ALT="" is really telling something about the image: that it is
+pure decoration, but that the user-agent is still free to try to guess
+what it is (using some HTTP metadata, the filename, etc).
+Another convention I remember coming across regarding null ALT was an
+optimization of the above where the convention could be stated at the
+beginning of the HTML, in some kind of (I'm making that syntax up)
+and the rest of the file would not have an ALT attribute where ALT=""
+would be used otherwise.
+to follow up on what Daniel Dardailler said:
+Yes, the user agent has latitude. I hope it also has latitude to
+elide all evidence of the image (in the initial page
+presentation) when this is the ALT, so long as there is a
+follow-up method available (just two examples: in Netscape, the
+Document Information page; in Lynx the IMAGE_LINKS mode) that
+would list all used and suppressed references.
+One of the points that may bear repeating is the idea that text-to-speech
+is a narrowband medium and hence the speech-using visitor may have
+a bias toward an executive summary of the story on the first go, as
+opposed to the quantity of information that can be packed on one
+GUI Web Page. So I am hoping that we can couch the message to browser
+developers in the following way:
+- REQUIREMENT: (on information accessibility):
+applies_to_information: LongDesc[Accept=text/*](image_object).
+methods_required: GET
+The point about the "information definition" is that the browser
+must support some method for satisfying a query in which the user
+only has the image [or its name or handle] and wants to get [any,
+the designated] textual description of that image. Text here
+refers to the Internet Media primary type text/* so as to include
+HTML, which is the preferred medium for LongDesc.
+The method can be multi-step and interactive. It is not required to
+be an atomic action.
+Example, suggested, or recommended methods may be defined by the
+guidelines but in this case I think less is more and moral suasion
+should be focused on the more functional requirement.
+This leaves up to browser experimentation guided by user feedback the
+layering of whether certain classes of information (discriminated by
+ALT="" in this case) are represented on the first pass at what level
+of detail.
+My current thinking revolves around the idea that this is a special
+case of an About method, and that the Web should be driving toward
+providing a very short list of pervasive methods. About is on my
+current list of candidate pervasive methods. Do, About, ...(I
+am prepared to hide Help under About but I might lose that one...).
+The point is that the About method would be implemented in different
+ways in different implementation contexts but that it would be
+enough of a workalike at all levels so that at least what shows
+through at the UI level could be consistent.
+An example low-level implementation is to
+introduce an IREF attribute
+of HTML tags, a variant on HREF.
+HREF is used on Do and IREF is used on About.
+Example of a high-level implementation is that this About
+method could be implemented in HTTP via a more vigorously
+populated HEAD response or new META method.
+Al Gilman
+to follow up on what Daniel Dardailler said:
+One might think that you could do this using CSS1 fragments in
+the document HEAD . This violates the notion that CSS just
+adjusts frills and doesn't change content. The scenario you have
+raised here is a good example in which to test the idea that some
+pervasive generation-by-rule [or other abstraction] capability is
+required throughout, independent of what one considers to be
+"content" vs. "style."
+Al Gilman
+Perhaps it would be beneficial to this discussion if the issues under
+consideration were distinguished. First, there is the semantic issue,
+specifically, the question of what advice should be given to authors with
+respect to substituting textual content for an image that can not be
+displayed in a text-only environment. This problem should be addressed in
+style guidelines, although the borderline between what rightly belongs in
+the HTML specification and what should be left to usage guidelines is
+becoming increasingly obscure, given that the HTML 4.0 draft is attempting
+to satisfy the needs of both users and implementors.
+Secondly, there is the question of an appropriate mechanism through which
+to provide textual alternatives to graphic images. Since an inline image
+is notionally part of the document, there are no structural reasons why at
+least some of the alternative textual content should not be included
+within the document itself, as is presently the case with the ALT
+attribute. Since many users may not wish to download or read a lengthy
+description, there is an argument that they should either reside in
+separate files, or become components of image files to the extent that the
+relevant data formats permit. However, given that inline images (whether
+they be inserted by means of the IMG or the OBJECT element) are integral
+to the document, there is a good case for maintaining that at least a
+descriptive title or label should be given in the HTML markup itself, and
+ought not need to be retrieved separately via an HTTP mechanism.
+Irrespective of whether or not one accepts the conceptual argument, this
+is the design which is imposed upon as by HTML as it presently stands,
+both in the ALT attribute and the OBJECT element.
+A third issue is the extent to which the user should be able to exercise
+control over that which is presented in place of an image. Certainly, the
+retrieval of a long description should be optional, and perhaps there
+should be a means by which users can ignore the presence of decorative
+graphics, the problem being that some people may nonetheless wish to have
+access to brief labels for such images. Whether this problem can be
+handled by the client or not is a question that I would like to raise for
+further consideration.
+I think the OBJECT element should be able to satisfy the requirement for
+long descriptions: I am very inexperienced at reading DTD's, but it
+appears from the HTML 4.0 draft that the content of the OBJECT element
+includes the %inline entity, which in turn should contain the anchor
+element. Thus, to modify one of the examples in the HTML 4.0 draft:
+object data="figure1.png" type="image/png" Figure 1 a
+href="figure1-description.html" [description available] /a /object
+Unfortunately, the IMG element provides no corresponding solution. Would
+it be better to include an attribute whereby the URL of the document
+containing the long description can be specified within the IMG start tag,
+or rely on HTTP mechanisms, or offer both as alternatives that should be
+available to software developers?
+This is a content rule, so it is normal that it is expressed in HTML,
+and not in CSS. Why would we want to do otherwise ?
+Right on target, the OBJECT element allows for long description.
+(mainly because it is a container, whereas IMG is not and ALT doesn't
+allow for markup inside its CDATA).
+If it wasn't for pragmatic considerations such as: "nobody uses OBJECT
+yet, so let's not declare the problem solved with just that in hand",
+we could indeed say we've got what we want.
+But most, if not all, images are described using IMG, so we need to find
+a way to express long description using it.
+Dave proposed something like:
+Another option, along the D-TAG model could be:
+which has the disadvance of modifying the visible text (I seriously
+doubt Web designers will agree to have the letter D appearing all over
+their pages), unless a CSS rule is used such as:
+A.D-LINK {display: none}
+but it happens that this display:none functionality which is so useful
+in this case, is not implemented by the major CSS compliant browser
+(IE 3 and NS 4), not being part of the core CSS1 properties...
+I personally like the ALTSRC IMG extention. I can be simply
+implemented in browser that wants to support LongDesc functionality
+and will be ignored by others.
+We could also advocate the use of CLASS=D-LINK, as another mechanism,
+but I'm worry that pointing at 2 or 3 solutions (we already have
+OBJECT in place) will not serve us well.
+I would also tend to support the ALTSRC approach, which is a more elegant
+solution than relying on CSS to eliminate the unwanted side effect (the
+letter D appearing next to images) that would inevitably result from the
+alternative method.

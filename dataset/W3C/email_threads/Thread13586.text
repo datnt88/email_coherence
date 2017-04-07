@@ -1,0 +1,114 @@
+Hello folks,
+I've been playing around the last few days with EARL schema possibilities. I've gotten rid of blank nodes, which seemed like a good idea. Is it an improvement?
+Sean and Danbri, Libby said this was "implicit reification." What are the implications on queries? I haven't played or thought much about that yet.
+I've worked 2 examples. One is a single simple statement, the second combines 2 to make sure that we don't lose important info.
+Example 1: Simple statement
+success3.svg is the graph produced by the RDF Validator.
+rdf:RDF
+xmlns:sp="http://valet.webthing.com/xmlns/sp"
+xmlns:valet="http://valet.webthing.com/xmlns/valet"
+xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+Example 2: simple merge
+Here is a simple merge of a couple of assertions to make sure we don't lose info. success4.svg is the graph produced by the RDF Validator.
+rdf:RDF
+xmlns:sp="http://valet.webthing.com/xmlns/sp"
+xmlns:valet="http://valet.webthing.com/xmlns/valet"
+xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+wendy a chisholm
+world wide web consortium
+web accessibility initiative
+seattle, wa usa
+hi Wendy
+I'll look at this in more detail soon, but I was trying to say that
+this is like 'fake reification' where the semantics are not explicit to
+the RDF processor. I'm not sure whether to recommend an approach like
+this, although I can see the attraction. This should be distinguished
+from the approach which danbri suggested where you reify by pointing to
+another document.
+Libby
+This doesn't seem to be "fake" or "implicit" refification going by
+Libby's description of it in her "RDF Annotations" paper [1]. In that
+model, things are grouped under bNodes and given properties. With this
+model, things are just asserted in the model with no grouping or way
+of preserving the context information.
+The implication is that you either can't have two different
+evaluations in one document, or you can't query it at all. I'm not
+sure how this would fit into the reification by hypertext idea [some
+notes on that a bit further down].
+Consider the following problem (which I've already outlined twice at
+[2] and [3], but here it is again). You may have one document which
+contains:-
+:Sean earl:asserts http://example.org/ .
+http://example.org/ earl:passes :WCAGA .
+and then in another document you have:-
+:Wendy earl:asserts http://example.org/ .
+http://example.org/ earl:fails :WCAGA .
+notwithstanding the fact that asserting a bit of WebContent doesn't
+make much sense (and could be misconstrued as asserting the semantics
+of the WebContent, which is certainly *not* what we want!), when you
+merge the RDF documents you get a contradiction:-
+:Sean earl:asserts http://example.org/ .
+:Wendy earl:asserts http://example.org/ .
+http://example.org/ a earl:WebContent;
+earl:passes :WCAGA; earl:fails :WCAGA .
+It's impossible to query it usefully. Who said that it passes, and who
+said that it fails?
+And then there's reification by hypertext, treating the two documents
+as things that we don't necessarily believe. The problem with that is
+that XML RDF has no way to quote a set of statements other than using
+log:quote as a parse type. It also has no way to identify the root
+context of the document, unless you make a link from the document to
+it's semantics using log:semantics or something.
+Of course, the other big problem with that is that you can't have lots
+of different evaluations (i.e. with different assertors) in one
+document. We discussed that months ago, and the people on the call
+(Jim and Nick, IIRC) didn't think it was a good idea.
+[1] http://ilrt.org/discovery/2001/04/annotations/#fake
+[2] http://lists.w3.org/Archives/Public/w3c-wai-er-ig/2002Feb/0053
+[3] http://lists.w3.org/Archives/Public/w3c-wai-er-ig/2002Feb/0056
+Kindest Regards,
+Sean B. Palmer
+@prefix : http://purl.org/net/swn# .
+:Sean :homepage http://purl.org/net/sbp/ .
+In fact, I didn't need to create a new example, since the "example2"
+that you sent already contains a contradiction:-
+http://mypage.org :Result :passes .
+http://mypage.org :Result :fails .
+I think that the problem may be the fact that both the XML tree and
+the SVG vizualization are misleading because they seem to relate these
+triples to the assertor, whereas in fact they are not related at all.
+RDF is a graph not a tree - the tree structure in the SVG just kinda
+helps you to vizualize where the relationships are.
+N.B. It's kinda standard practice to use lower case intercap for
+properties, and upper case for classes and everything else - people
+are used to using them that way, and it'll make the examples easier to
+read. cf.
+To distinguish between classes and properties with similar names,
+there is a convention to capitalize the first letter of a class (Car,
+Human, etc.) and keep the first letter of a property lowercase
+(hasOwner, homepage, etc.). Other than the capitalization rules above,
+it is recommend that the rest of a URI is kept lowercase.
+]]] - http://purl.org/swag/rdfnsPractises
+Cheers,
+Kindest Regards,
+Sean B. Palmer
+@prefix : http://purl.org/net/swn# .
+:Sean :homepage http://purl.org/net/sbp/ .
+sorry if I misled anyone, I just glanced at it, been rather busy and
+tired today. I hope to spend some time looking at earl with wendy
+tomorrow.
+sorry for any confusion...
+Libby
+Oops... I didn't mean to imply that anyone had misled anyone else or
+anything like that :-) You said that you hadn't had a chance to go
+through it in your previous message, so I thought I'd go through it
+and give my own interpretation and spew the results to the list... In
+fact, my own interpretation could be wrong, so I'd certainly like to
+hear your own thoughts on the model if/when you get around to it
+tomorrow.
+Apologies once again if the previous letter sounded harsh; it
+certainly wasn't intended that way!
+Kindest Regards,
+Sean B. Palmer
+@prefix : http://purl.org/net/swn# .
+:Sean :homepage http://purl.org/net/sbp/ .

@@ -1,0 +1,185 @@
+Something interesting has come up that's one of: a bug or infelicity in
+my server, or a bug or infelicity in Netscape 4.5
+Netscape 4.5 sends an HTTP/1.0 request with Accept-Encoding: gzip
+header. A web site has a paper.ps.Z file, i.e., Content-type:
+application/postscript, Content-Encoding: compress. When NS 4.5 tries
+to GET the paper, my server returns 406 Not Acceptable, because
+"compress" is not one of the accepted encodings.
+There seem to be two (not mutually exclusive) conclusions to draw:
+1) Netscape 4.5 should send Accept-Encoding: gzip, compress, because
+gzip (well, the gzip program, anyway) understands the Unix compress
+format.
+2) My server should not send 406, since it's only a SHOULD requirement
+anyway. Or perhaps it should send 406 only for HTTP/1.1 requests.
+Opinions/comments?
+Dave Kristol
+Dave,
+Content negotiation is hard, ain't it? I think you
+have run into an "infelicity" rather than a true bug, and
+that the infelicty is shared between server and client. It seems
+quite likely that the Netscape 4.5 client is using a gzip plugin
+or program capable of handling compress, so it would be better
+were it configured to send an Accept-Encoding header which
+indicated that capability. The server can't presume that, though,
+as someone might have implemented a library which did gzip
+encoding but not compress encoding (for licensing or religious reasons).
+The infelicity on the server side is that it is sending
+out pre-compressed files in a single format. In the best of all
+possible worlds it would always have the non-compressed format
+available, or would be applying the compression on the fly based
+on the accepted encodings, or even removing the compression on
+the fly. Since the Accept-Encoding header has a default inclusion
+of "No Encoding", that would guarantee that *something* was always
+available.
+Not really a bug in either case, just an infelicity.
+regards,
+Ted Hardie
+PS. Today is my last day at NASA; mail will be forwarded, but communication
+after November 11th should go to me as hardie@equinix.com
+I think gzip and compress are different encodings. The fact that
+a program called "gzip" understands both is not relevant.
+me too ...
+What does your server do if a client sends a request with *no*
+Accept-Encoding? I think that's what it should do in this case.
+(E.g. send it as application/octet-stream).
+It is quite likely that there will be clients which support some
+content encodings but not all the ones you support. I don't think you
+want your server to be in the situation where it completely refuses to
+serve a file to such clients.
+Better I think is that the server maintain two versions or in this case,
+uncompress on the fly ... or send a choice page that lets the user
+click the link for the explicit file... my assumption being that the
+request was for the resource w/o the _Z ... if the _Z is requested,
+then John's approach is reasonable ... one of the things missed in
+this whole mess is that the user *MAY* simply want the file delivered
+unmolested and saved on the hard drive. It is quite inconvenient for
+me when something is unziped or uncompressed by browsers, servers, etc.
+Dave Morris
+I think gzip and compress are different encodings. The fact that
+a program called "gzip" understands both is not relevant.
+What does your server do if a client sends a request with *no*
+Accept-Encoding? I think that's what it should do in this case.
+(E.g. send it as application/octet-stream).
+It is quite likely that there will be clients which support some
+content encodings but not all the ones you support. I don't think you
+want your server to be in the situation where it completely refuses to
+serve a file to such clients.
+John Franks
+john@math.nwu.edu
+Dave Kristol:
+Netscape would be allowed to include 'compress' in its Accept-Encoding
+line, but there is nothing in the spec which says that it should.
+If the above paper is available in ps.Z version only (so we don't have
+content negotiation in the sense of multiple variants) I would never
+send a 406. The 1.1 spec says:
+Note: HTTP/1.1 servers are allowed to return responses which are
+not acceptable according to the accept headers sent in the request.
+In some cases, this may even be preferable to sending a 406
+response.
+and your situation is one of the 'some cases'. In your case I would
+return the document with
+Content-type: application/x-compress
+(MIME type from memory, I may be wrong)
+which will probably result in the end user having to handle the
+top-level .ps format by hand, but at least it will prevent
+compressed data from being fed into a postscript helper application.
+In fact I would say that, given the current installed base and if you
+are aiming for maximum interoperability, if a server is in the
+situation of only being able to send .ps.Z, it should always serve it
+with the above content-type, and never with the
+content-type/content-encoding values you mention above. If it is
+going to switch headers on a case by case basis, it should add the
+appropriate headers to disable proxy caching.
+Your scenario is really a case where a server has to choose between
+evils: really fixing the problem involves having the content author
+change the .ps.Z into .ps, or a choice between .ps and .ps.gz.
+Koen.
+See section 3.5; I believe it is clear on the topic.
+The tokens refer to algorithms; not programs.
+gzipAn encoding format produced by the file compression program ``gzip''
+(GNU zip) as described in RFC 1952 [25]. This format is a Lempel-Ziv coding
+(LZ77) with a 32 bit CRC.
+compress The encoding format produced by the common UNIX file compression
+program ``compress''. This format is an adaptive Lempel-Ziv-Welch coding
+(LZW).
+Use of program names for the identification of encoding formats is not
+desirable and is discouraged for future encodings. Their use here is
+representative of historical practice, not good design. For compatibility
+with previous implementations of HTTP, applications SHOULD consider ``x-gzip''
+and ``x-compress'' to be equivalent to ``gzip'' and ``compress'' respectively.
+That a particular implementation chooses to use a gzip program that happens
+to also handle compress is an implementation issue; it should declare
+what algorithms it actually implements.
+Note the historical note. We been here before, and done this folks.
+- Jim
+[N.B. I never received John Franks's message, either directly, or via
+the mailing list.]
+Yup, folks, I really did know they are different encodings. My point
+was that perhaps NS 4.5 was able to decode both "gzip" and "compress"
+encodings because the gzip *program* can decode both. Just a hunch,
+although I was told privately that NS 4.5 probably cannot decode
+"compress".
+I think Koen's remarks were most appropriate about not sending 406 in
+the absence of negotiation. However, I don't agree with the idea of
+sending Content-type: application/x-compress, except in a nice
+theoretical world. Browsers that don't send Accept-Encoding work quite
+nicely with my server (assuming they understand x-compress). So I'm
+more inclined just to ignore Accept-Encoding.
+To John Franks's (apparent) question, what do I send in the absence of
+Accept-Encoding: I send Content-Type: application/postscript and
+Content-Encoding: x-compress. I would not send
+application/octet-stream.
+I disagree mildly with Dave Morris's unhappiness that browsers, etc.,
+might uncompress something for him. What *I* want varies with the
+situation. If I have a viewer for PostScript or PDF, for example, I
+want the incoming compressed object to be uncompressed and passed to the
+viewer. OTOH, if I'm saving a file, I *don't* want the object to be
+uncompressed. (Maybe that's what he meant.)
+Thanks for the many comments.
+Dave Kristol
+Yikes!
+If you reference LZW in the HTTP spec, then RFC 2026 section 10.3.2 comes
+into effect. That means you have to document the Unisys patent in the spec
+and the IETF executive director will have to contact Unisys with a request
+for openly specified, reasonable, non-discriminatory licensing terms.
+- Chris
+I just tested and Netscape 4.5 for Unix seems to handle gzip and
+compress just fine. Here a file xxx.ps.Z was requested (presumably
+with Accept-Encoding only containing gzip) and a compressed
+ps document was returned with Content-Encoding x-compress and
+Content-type application/postscript. NS properly uncompressed it
+and handed it off to the postscript viewer.
+I think I agree with this. It is current practice in HTTP/1.0 so it
+should continue there, at least. But I think Dave may be right and
+this is good behavior in 1.1. Any disagreement?
+Given that this behavior does not fail ungracefully in current 1.0
+browsers, I would assume that 1.1 browsers would also do something
+reasonable (save to disk) when they can't handle a given content encoding.
+Well, on reflection, I think you are right. And that's what my server
+does too. :)
+Again I agree with this behavior, but I am not sure the protocol has
+something to say about it.
+John Franks
+john@math.nwu.edu
+If you want to bring this to the attention of the IESG, the IESG may decide
+to attach a note to the HTTP draft specification that the use of the
+"compress"
+encoding might be covered by patent claims, and I may need to ask the
+implementations surveyed for implementation of content-encoding whether
+they have "taken adequate steps to comply with any such rights, or claimed
+rights".
+However, the "significant implementation and successful operational
+experience"
+with the use of the "compress" encoding leads me to assert that there
+is no barrier to the use of "compress" in advancing to Draft Standard
+status.
+I'll review this with the area directors, though.
+Larry
+From: Chris Newman Chris.Newman@innosoft.com
+Date: Tue, 03 Nov 1998 14:44:39 -0800 (PST)
+Subject: Re: Netscape 4.5 and HTTP/1.1 Accept-Encoding
+I don't think we have a problem here: compress is not required for
+interoperability, is essentially deprecated (by deflate and gzip), and
+it is not a normative reference (beyond saying it is what a program does).
+And it is documenting existing practice (i.e. was in even RFC 1945, I think).
+- Jim

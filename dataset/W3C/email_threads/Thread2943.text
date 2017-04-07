@@ -1,0 +1,184 @@
+Hi there,
+RFC 2616, Section 13.2.4 "Expiration Calculations" contains
+the following MUST:
+The cache MUST attach Warning
+113 to any response whose age is more than 24 hours if such warning
+has not already been added.
+The context of that MUST is expiration calculation and, hence, cache
+hits. On the other hand, attaching a Warning to misses may help in
+case there is a non-1.1-compliant cache upstream.
+Did the author(s) intend for the above MUST to apply to HIT responses
+only?
+Thanks,
+Alex.
+HTTP performance - Web Polygraph benchmark
+www.measurement-factory.com | HTTP compliance+ - Co-Advisor test suite
+all of the above - PolyBox appliance
+I could understand the use of "&amp;" in URL for HTTP requests
+"&amp;" separates the name = value pair
+However, what is the use of ";" in URLS for HTTP ?
+Thanks
+Diwakar
+Semicolon is just another valid character in the path component
+of a URL - it has no special significance. When the Web was
+being invented, VMS was an important platform, and the semicolon
+was used in VMS file names, so making it a legal path name
+component was important.
+Scott Lawrence
+If it is in a path component, it means a parameter for that component:
+From http://www.ietf.org/rfc/rfc2396.txt
+
+3.3. Path Component
+The path component contains data, specific to the authority (or the
+scheme if there is no authority component), identifying the resource
+within the scope of that scheme and authority.
+path = [ abs_path | opaque_part ]
+path_segments = segment *( "/" segment )
+segment = *pchar *( ";" param )
+param = *pchar
+pchar = unreserved | escaped |
+":" | "@" | "&amp;" | "=" | "+" | "$" | ","
+The path may consist of a sequence of path segments separated by a
+single slash "/" character. Within a path segment, the characters
+"/", ";", "=", and "?" are reserved. Each path segment may include a
+sequence of parameters, indicated by the semicolon ";" character.
+The parameters are not significant to the parsing of relative
+references.
+Yves Lafon - W3C
+"Baroula que barouleras, au ti?u toujou t'entourneras."
+It is part of a path name under VMS
+ISC6A1 $ DIR ZZMDE*.DAT
+Directory USR$:[USER.WOODHOUSE]
+ZZMDE1.DAT;1 ZZMDE2.DAT;2 ZZMDE2_539041388.DAT;1
+Total of 3 files.
+ISC6A1 $
+The number after the semicolon is the version number of the file.
+Gregory Woodhouse gregory.woodhouse@med.va.gov
+System Design &amp; Development
+Semicolon is just another valid character in the path component
+of a URL - it has no special significance. When the Web was
+being invented, VMS was an important platform, and the semicolon
+was used in VMS file names, so making it a legal path name
+component was important.
+Scott Lawrence
+Well, it seems like semicolon is equivalent to "&amp;" in URL for HTTP Get
+Method
+i.e. ";" separates the name = value pair
+Diwakar
+RFC 2616, Section 13.2.4 "Expiration Calculations" contains
+the following MUST:
+The cache MUST attach Warning
+113 to any response whose age is more than 24 hours if such warning
+has not already been added.
+The context of that MUST is expiration calculation and, hence, cache
+hits. On the other hand, attaching a Warning to misses may help in
+case there is a non-1.1-compliant cache upstream.
+Did the author(s) intend for the above MUST to apply to HIT responses
+only?
+Again, I believe I wrote this part.
+Take a look at section 14.46 (Warning) which defines the specific
+warning-value mentioned above:
+113 Heuristic expiration
+MUST be included if the cache heuristically chose a freshness
+lifetime greater than 24 hours and the response's age is greater
+than 24 hours.
+True, it's not explicit here that this applies only to cache
+hits. But it would only be interesting on a miss if the cache's
+heuristic choice for a freshness lifetime were to be inserted
+into the forwarded response header. In other words, the origin
+server sent no Expires header (or something equivalent, such
+as a max-age directive) and the proxy guessed at one and then
+added an Expires header to the response.
+But look at section 13.5.2 (Non-modifiable Headers), which says
+that
+A transparent proxy MUST NOT modify [the Expires field in
+a response, but MAY add one] if not already present. If an
+Expires header is added, it MUST be given a field-value identical to
+that of the Date header in that response.
+so (by that MUST) the cache isn't allowed to propagate its
+heuristically-chosen freshness lifetime to anyone else.
+Since section 13.5.2 doesn't discuss Cache-Control, this looks
+like a loophole in the spec (e.g., the cache could perhaps
+add "Cache-control: max-age=1000000000") but I would hope that
+proxy cache implementors aren't actively looking for loopholes
+of this sort.
+Probably, therefore, you should read the relevant part of 14.46
+as if it said:
+113 Heuristic expiration
+MUST be included if the cache heuristically chose a freshness
+lifetime greater than 24 hours for a cache entry, the response
+is taken from that cache entry, and the age of the response is
+greater than 24 hours.
+I can't see any reason to Warn anyone on a miss that creates
+a new cache entry with a heuristic expiration lifetime, given
+that the cache shouldn't be propagating these heuristic values
+towards the client.
+-Jeff
+Jeff,
+Thanks for a clarification! It looks like the answer depends on
+whether "it is interesting" to add this Warning to a miss. That is, whether
+there is any "use" in attaching such a Warning. You think it is not useful
+because cache heuristics do not apply to misses. I think one could consider it
+being useful because the Warning could be about upstream cache's heuristic,
+not about the cache adding a Warning. See below.
+The only reason I can think of is the "garbage in, compliance out" principle:
+the proxy should improve the "quality" of responses it forwards. Imagine that
+there is a non-HTTP/1.1 cache upstream that cached the response for more than
+24 hours. Imagine that the requesting client agent supports Warnings but does
+not analyze response age. If a compliant proxy adds a Warning (that the
+upstream cache should have added, but did not!), the user will get a useful
+Warning.
+The above scenario is quite artificial, of course. I am not sure whether it is
+good enough to say that the MUST in question should apply to misses.
+Thank you,
+Alex.
+HTTP performance - Web Polygraph benchmark
+www.measurement-factory.com | HTTP compliance+ - Co-Advisor test suite
+Thanks for a clarification! It looks like the answer depends on
+whether "it is interesting" to add this Warning to a miss. That is,
+whether there is any "use" in attaching such a Warning. You think
+it is not useful because cache heuristics do not apply to misses. I
+think one could consider it being useful because the Warning could
+be about upstream cache's heuristic, not about the cache adding a
+Warning. See below.
+You asked "Did the author(s) intend for the [specified] MUST to apply
+to HIT responses only?". My answer was intended to convey what
+the *current* specification requires and why, not whether it might be
+a good idea to expand the specification.
+Also, note that the terms "upstream" and "downstream", as defined
+in RFC2616, probably mean something different than how you are
+using them. I think by "upstream" you mean "inbound" (i.e.,
+closer to the origin server).
+The only reason I can think of is the "garbage in, compliance out"
+principle: the proxy should improve the "quality" of responses it
+forwards. Imagine that there is a non-HTTP/1.1 cache upstream that
+cached the response for more than 24 hours. Imagine that the
+requesting client agent supports Warnings but does not analyze
+response age. If a compliant proxy adds a Warning (that the
+upstream cache should have added, but did not!), the user will get
+a useful Warning.
+The above scenario is quite artificial, of course. I am not sure
+whether it is good enough to say that the MUST in question should
+apply to misses.
+Remember that RFC2119, "Key words for use in RFCs to Indicate
+Requirement Levels", says
+Imperatives of the type defined in this memo must be used with care
+and sparingly. In particular, they MUST only be used where it is
+actually required for interoperation or to limit behavior which has
+potential for causing harm (e.g., limiting retransmisssions) For
+example, they must not be used to try to impose a particular method
+on implementors where the method is not required for
+interoperability.
+You're right that the scenario seems like a weak reason to add
+another MUST or SHOULD to the spec.
+I'd be inclined to fix this problem by asking why a client that
+is capable of dealing with Warnings is not "analyzing the response
+age" (which seems like a basic requirement of the spec.)
+-Jeff
+In case the method in a URL is a POST method,
+then is that the query parameters are ignored.
+e.g:
+POST /www.google.com/search?hl=en&amp;ie=UTF
+Will this result in the the query parameters "hl=en&amp;ie=UTF" to be ignored as per HTTP standards ??
+Thanks
+Diwakar

@@ -1,0 +1,76 @@
+Thanks. Now I see how to do a GET with range request.
+Now, another question:
+Is there a way to specify the offset or range with the http: URL
+syntax ?
+i.e. something like http://host/dir/file@range=0,500
+The real question is how such an addition (to some future http 1.2)
+would be used. I can think of two general cases:
+1)Aas a means of obtaining a portion of a resource; such as a
+single chapter of a long document.
+But one could always just have separate files containing chapter 1,
+chapter 2,.. ( as complements to the "entire document"). Alternatively, a
+script (cgi-bin or whatever) that would parse the request line, looking
+for a "@range", and (if found) use the "=0,500" to selectively return a
+portion of the document, should be fairly easy to create.
+2) As a means of selectively updating a portion of an otherwise large
+resource. For example, acrobat can use a range: header to request
+selected pages of a long pdf file.
+But this then means having client software (i.e.; browsers) that
+understand the request syntax being used. But there already is a
+syntax that will support such actions (that is, the aforementioned use of
+range: request header).
+In other words, although new http methods, etc (such as adoption of a
+RANGE method) might be useful, I suspect it's not worth the trouble.
+I think the trend in general is to move away from user entered URLs.
+Another trend is away from complex GET URLs and toward use of POST as
+well as either the Safe: approach or a new idempotent GETX method.
+Also, adding new syntax to the URL has the possiblity of breaking
+existing implementations because the parsing implementaton if often
+flakey at best.
+There is no reason that the future should be defined by the limitations
+of current UIs and HTML attributes.
+I believe the range: approach was orginally conceived to allow a PDF
+viewer plugin to efficiently transfer portions of the file. Two other
+uses were quickly identified ... recovery of a user interrupted
+transfer ... quickly getting image meta data for layout purposes w/o
+waiting for the full transfer.
+The whole range of ways and kinds of pieces users might want to
+request doesn't lend itself to user entry of byte level encoding.
+There is no reason the current URL scheme can't retrieve whole documents
+as well as pieces with simple URLs ... outside of the scope of HTTP
+and URLs, the server implementation defines the interpretation of the
+URL. With a SINGLE data file and/or DB, the URLs
+could all produce variant levels of zoom into the document. This can
+be achieved today on some servers by creative use of mapping to cgi
+programs. Or an imperceptable alteration of the URL to:
+could be mapped to an ISAPI DLL on IIS, etc.
+Also, thre are some pretty straight forward improvments to HTML and
+UIs which would allow better access to the POST and possible GETX
+methods. Links which implement the POST method for example.
+Dave Morris
+Byte ranges (and indeed line ranges) in URLs have been implemented
+in the WN server since long before the Range: header. They are
+extremely useful, but are never entered by the user.
+As I said this has nothing to do with user entered URLs. The
+functionality which is missing is the ability to make a link to
+a subset of a document. It can, of course, be done with CGIs,
+but at great cost in complexity and efficiency.
+Examples:
+It is useful to be able to create links on server A to parts of
+documents on server B without server B having CGIs or a database.
+It is useful to create a page of customized links to parts of
+a single document (e.g. a mail archive) based on a query.
+There are more.
+On the other hand I agree that adding extra complexity to the
+URL syntax has serious drawbacks also. At present much of the
+URL is opaque and a server can do with it what it wants. This
+is a good thing and allows, for example, WN to implement byte
+and line ranges in the URL with its own syntax (which users
+never enter because they don't know).
+The way to have our cake and eat it too is an extension to the HTML
+syntax which allows one to create a link to a URL *and* specify that a
+Range header be sent with the request.
+Just for your information the WN syntax is
+You can see more at http://hopf.math.nwu.edu/docs/range.html
+John Franks
+john@math.nwu.edu

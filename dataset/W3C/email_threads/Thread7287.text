@@ -1,0 +1,201 @@
+I wanted comment on these ideas before I did anything with them. Note that
+the following contains very rough drafts.
+Thanks,
+Yaron
+New Content-Range types. Currently, Content-Range only allows one to
+specify byte ranges. However there are often situations where one would
+like to be able to specify a page, a paragraph, or other arbitrary entity.
+It would be nice to be able to request the fourth page of an entity. Of
+course the request may not always be meaningful or the token type used in
+the request may not be understood by the server, but I do not believe that
+is a big deal. The spec for the header would be something like:
+Content-Range = "Content-Range" ":" content-range-spec
+content-range-spec = byte-content-range-spec | token-jump
+byte-content-range-spec = bytes-unit SP first-byte-pos "-"
+last-byte-pos "/" entity-length
+entity-length = 1*DIGIT
+token-jump = jump-type number-jumps
+jump-type = token
+number-jumps = 1*DIGIT
+A jump-type could be "Paragraph", "Page", or whatever. The number-jumps
+specifies which jump-type to set, retrieve, whatever. There are some truly
+ugly semantics here, for example, what if one PUTs a "Page 3" but the
+content is so long it leaks into "Page 4"? Is this a legal put? The problem
+would have to be dealt with on a jump-type by jump-type basis.
+The document Judith sent out contained the following section:
+RETENTION SCHEDULE / ARCHIVING / BACKUP / RESTORE
+Create schedule for deletion based on any of the following:
+last accessed date
+author
+any catalog value or set of catalog values
+manual selection
+Monitor deletions
+Audit deletions
+Notify based on schedule for deletion
+Move infrequently used materials to alternative storage locations or
+devices
+Automatically
+Transparent to online users
+Configurable
+Configurable archiving
+Evaluate for archiving based on: authors, creation date, document type,
+keywords, last edit date, retention date, any catalog value
+Incremental and full backups
+Scheduled backups or manually initiated backups
+Restore specific data or files from backup
+Do we want to put support for these features into the standard? By
+supporting these items I mean moving the responsibility for ordering the
+events from the client to the server. We could add a delay header:
+Delay-Header = "DelayHeader" ":" HTTP-date
+I can hear the thoughts in the heads of several of you saying "But wait, we
+need a repeat header so we can say things like copy files to these URLs
+every Thursday of the month for the next year." This is known as scheduling
+and is a rat whole so deep that entire conferences have been lost inside of
+it. Trust me, you would rather send 12 DelayHeaders.
+I realize that DMA is about as popular as an Electro Magnetic Pulse but
+someone (read: NOT ME) should really go through the DMA spec,
+Currently there is no way to delete the contents of a directory. A
+directory is really just a sitemap file which allows one to group various
+unrelated URIs together. However if one were to want to delete all the URIs
+in the directory one would have to send delete requests for each URI. The
+logic extends if one wants to delete a directory and all its sub
+directories. One of the reasons for this behavior is that many of the
+common container commands, such as copy and move, have no meaning in this
+context. If I have a container with URLs foo/bar and bar/foo then the only
+way to copy them is to specify for each one where they are to go. If I
+order "copy foo/bar and bar/foo to foobar" what does this mean? However
+delete and undelete are different, they have a very obvious meaning in the
+context of our containers. Should we add headers in the mime-type for
+delete, undelete, and destroy to allow the command to be applied to the
+contents of a directory in a possibly recursive manner?
+Hey, Yaron. I wonder if it's some sort of cosmic connection that I once
+did a
+report on EMP, and I'm also the chair of the DMA Technical Committee ?
+In any case..
+I note Judy's offer to look at the DMA versioning model (and perhaps
+our containment and content models as well) and provide some comparisons
+between
+the two groups' efforts.
+There are lots of us on the DMA TC that subscribe to both DLs (you might
+think about the implications of that one a bit before posting subsequent
+mail about DMA :), so we'll be happy to contribute to the work that Judy
+is doing.
+Regards,
+g
+George FlorentineInterleaf, Inc.
+georgef@interleaf.com4999 Pearl East Circle, Suite 100
+303.449.5032 x149Boulder, Co. 80301
+Yaron --
+I'll take the action to look at the DMA spec in comparison with our work
+here. However successful or unsuccessful DMA turns out to be, it provides a
+useful map of the problem space we are trying to cover. I think that Dennis
+Hamilton, who has contributed largely to the DMA spec, is planning to attend
+our November meeting, so he'll be able to help with any discussion of DMA in
+relation to webdav.
+On the subject of containment, section 7 of the spec proposes to use
+SiteMaps as the new content type to represent containers. I'd like to
+change the name of the mime type to application/container to emphasize the
+fact that it can represent something other than a URL hierarchy. For the
+case where it's a document management system that stands behind the Web
+server, it may be desirable for the location parameter of a node in the
+SiteMap to be expressible as something other than a URL.
+I think it would be very useful to be able to do recursive deletes,
+undeletes, and destroys on resources referenced by a container.
+Name:Judith A. Slein
+E-Mail:slein@wrc.xerox.com
+MailStop:128-29E
+In message 2.2.32.19961031185900.00370890@pop-server.wrc.xerox.com , Judith Sl
+Could you elaborate on that claim? URLs are not just filenames. They're
+names for whatever you want to name.
+Could you give an example of "the location parameter of a node" that's
+not expressible as a URL.
+Keep in mind that if you have any string S representation of "the
+location parameter of a node", we can encode that string using %xx
+syntax into S', make up a new URL scheme sch (if necessary), and write
+the URL:
+sch:S'
+If using URLs is (1) sufficient to express location parameters and (2)
+necessary to exploit the infrastructure that understands them, then
+I suggest that allowing anything besides URLs unnecessarily complicates
+the design.
+Dan
+I'm glad that you will be able to do a comparison of the work space.
+Your first work space summary was very useful, as you will see in the
+new draft, I have made several changes based on it.
+Section 7 now reads:
+7. URI Groups
+Any URI, which has a representation of content type
+application/container, is defined to be a URI container. Content type
+application/container will use the SiteMap format. Members are listed,
+added, or removed from the container by performing actions on
+application/container.
+The advantage of SiteMaps in this context is that they are designed to
+point to other SiteMaps. In this way a hierarchy can be built and when
+an operation is performed it will act recursively down the tree.
+I should note that my use of SiteMap is preliminary. The specification
+is in flux and may or may not eventually meet our needs. For now I am
+using it as a placeholder so we can solve the truly hairy problems. In
+the worst case we will just come out with our own definition.
+Yaron
+Thanks for the offer of help, George. I thought the parts of the DMA spec
+that will be most relevant to webdav are versioning, containment, and
+perhaps content. (Luckily, they've ruled query out of their scope.) So
+I'll try to write up something on each of those and run it by you before
+distributing it more widely.
+--Judy
+Name:Judith A. Slein
+E-Mail:slein@wrc.xerox.com
+MailStop:128-29E
+Um.. uh.. actually query isn't out of our scope. We will eventually be
+specifying query but we will
+N N OOOOO TTTTT
+NN N O O T
+N N N O O T
+N NN OOOOO T
+be defining a general query mechanism. We will not be trying to
+re-invent Z39.50. We will only be specifying a brain dead Boolean query
+system that will allow one to query attributes or resources. We need to
+do that much. We will not do any more.
+Yaron
+From:Judith Slein [SMTP:slein@wrc.xerox.com]
+Sent:Friday, November 01, 1996 1:13 PM
+Subject:Re: Request for Comment
+Sorry, I've gotten WAY behind on processing my mail.
+I don't want to say that the location parameter for something in a
+repository can't be expressed as a URL, only that a DMS might prefer to have
+it expressed in some way it natively understands.
+Just to give a sense of what it's like to reference an object in a DMS,
+here's what DMA has proposed as a URL syntax for identifying objects in
+DMA-compliant repositories:
+dma://[ dma pop ]/ system id / docspace id / object id [;guid= object guid ]
+The dma pop (read DMA Point of Presence) is a host name (e.g.
+library.xyz.com) that can be optionally present in the DMA OIID. Its
+purpose is to provide a DMA client with a name of an Internet host that most
+likely can connect to an OIID's DMA System and DMA DocSpace.
+The system id is the DMA GUID used to register the DMA System that
+generated the OIID. It is considered a hint in that a DMA DocSpace may be
+accessible from multiple DMA Systems. Any DMA System that supports the DMA
+DocSpace docspace id may suffice for accessing the persistent object
+referenced by the OIID, however the system id is considered the best
+choice since it was known to work at some time in the past.
+The object id is any sequence of data encoded into a subset of ASCII
+according to the rules governing Internet URLs. Beyond the encoding rules,
+the structure of the object id is determined entirely by the underlying
+Document Space implementation.
+If a Document Space maintains a DMA GUID for a particular object, it is
+encouraged to expose that object GUID in its DMA URL using the optional
+";guid= object guid " syntax.
+--Judy
+Name:Judith A. Slein
+E-Mail:slein@wrc.xerox.com
+MailStop:128-29E
+In message 2.2.32.19961108161544.00353c5c@pop-server.wrc.xerox.com , Judith Sl
+I'll trust you on the details, but this is exactly the sort of thing I
+had hoped the DMA community would do with URLs. It seems like a very
+natural use of the extensibility in URLs.
+Dan
+p.s. I keep a list of URL schemes at:
+That document also points to some notes on URLs from the IETF
+applications area (where the URI WG lived). He and I like to be
+notified of new URL schemes.
+Dan

@@ -1,0 +1,214 @@
+I have just been looking at Section 2.8 (Sharing) of the Versioning spec,
+which proposes to add a new type of reference beyond those defined in the
+Advanced Collections spec.
+Since the 2 specs are being developed in parallel, and the Advanced
+Collections spec is far from being cast in concrete, it seems as if we
+should be able to adjust the referencing provisions of the Advanced
+Collections spec to satisfy the needs of Versioning.
+If PIN is the only method that needs to apply to the reference rather than
+its target, one solution might be to add PIN to the list of methods that do
+*not* get passed through for direct references.
+If the situation is more complex than this, we could add the semi-direct
+reference proposed in the Versioning spec to the Advanced Collections spec.
+However, it doesn't seem to me very useful to have both semi-direct and
+direct references. Since semi-direct references behave exactly like direct
+references by default, it may make more sense to keep just redirect and
+direct references, but to add a Ref-Behavior header for use with any request
+on a direct reference. If the header has a value of DAV:redirect, it makes
+the reference behave like a redirect reference -- the request affects the
+reference itself rather than its target.
+--Judy
+Judith A. Slein
+Xerox Corporation
+jslein@crt.xerox.com
+(716)422-5169
+800 Phillips Road 105/50C
+Webster, NY 14580
+The PIN method can be used against the semi/direct resource or against
+the target. From my read of the advanced collections you specify the
+pass-through methods on creation not on usage. Or did I mis-read?
+Also I think we need to have something that can have namespace-level
+properties. It wasn't clear from the advanced collections paper if
+this was possible with direct references.
+Thanks,
+Chris
+I have just been looking at Section 2.8 (Sharing) of the Versioning spec,
+which proposes to add a new type of reference beyond those defined in the
+Advanced Collections spec.
+Since the 2 specs are being developed in parallel, and the Advanced
+Collections spec is far from being cast in concrete, it seems as if we
+should be able to adjust the referencing provisions of the Advanced
+Collections spec to satisfy the needs of Versioning.
+If PIN is the only method that needs to apply to the reference rather than
+its target, one solution might be to add PIN to the list of methods that do
+*not* get passed through for direct references.
+If the situation is more complex than this, we could add the semi-direct
+reference proposed in the Versioning spec to the Advanced Collections spec.
+However, it doesn't seem to me very useful to have both semi-direct and
+direct references. Since semi-direct references behave exactly like direct
+references by default, it may make more sense to keep just redirect and
+direct references, but to add a Ref-Behavior header for use with any request
+on a direct reference. If the header has a value of DAV:redirect, it makes
+the reference behave like a redirect reference -- the request affects the
+reference itself rather than its target.
+--Judy
+Judith A. Slein
+Xerox Corporation
+jslein@crt.xerox.com
+(716)422-5169
+800 Phillips Road 105/50C
+Webster, NY 14580
+The collections spec is changing significantly -- a new draft will be out at
+the end of this week. Let me summarize what will be in it.
+Direct references were not in the spec until now, but will be in this week's
+version. For direct references, all methods affect the target resource
+*except* DELETE, MOVE, and COPY -- these affect the reference itself. This
+means that it is not possible to access properties of direct references with
+PROPFIND or PROPPATCH. For a few crucial DAV properties, response headers
+are defined so that they can be accessed with GET or HEAD. The list of
+methods that affect the reference is fixed, so the Pass-Through header is
+going away.
+So that's the current state, but it's certainly negotiable and could be
+changed to satisfy requirements from versioning.
+It sounds like just adding PIN to the list of methods that affect the
+reference is not helpful to you. We could think about either adding
+semi-direct references or making direct references behave the way you
+describe semi-direct. My preference would be for the latter: by default,
+any method on a direct reference would be passed through, but some header on
+the request would make the method affect the reference itself. I think we
+would still say that DELETE, MOVE, and COPY always affect the reference,
+never its target.
+--Judy
+Judith A. Slein
+Xerox Corporation
+jslein@crt.xerox.com
+(716)422-5169
+800 Phillips Road 105/50C
+Webster, NY 14580
+My preference would be for the latter: by default,
+any method on a direct reference would be passed through,
+but some header on the request would make the method affect
+the reference itself. I think we would still say that DELETE,
+MOVE, and COPY always affect the reference, never its target.
+This seems like a reasonable approach. What expectations exist
+for direct references with respect to referential integrity?
+Chris
+The collections spec is changing significantly -- a new draft will be out at
+the end of this week. Let me summarize what will be in it.
+Direct references were not in the spec until now, but will be in this week's
+version. For direct references, all methods affect the target resource
+*except* DELETE, MOVE, and COPY -- these affect the reference itself. This
+means that it is not possible to access properties of direct references with
+PROPFIND or PROPPATCH. For a few crucial DAV properties, response headers
+are defined so that they can be accessed with GET or HEAD. The list of
+methods that affect the reference is fixed, so the Pass-Through header is
+going away.
+So that's the current state, but it's certainly negotiable and could be
+changed to satisfy requirements from versioning.
+It sounds like just adding PIN to the list of methods that affect the
+reference is not helpful to you. We could think about either adding
+semi-direct references or making direct references behave the way you
+describe semi-direct. My preference would be for the latter: by default,
+any method on a direct reference would be passed through, but some header on
+the request would make the method affect the reference itself. I think we
+would still say that DELETE, MOVE, and COPY always affect the reference,
+never its target.
+--Judy
+Judith A. Slein
+Xerox Corporation
+jslein@crt.xerox.com
+(716)422-5169
+800 Phillips Road 105/50C
+Webster, NY 14580
+The current view is that the direct / redirect distinction is orthogonal to
+the strong / weak distinction. So we can tackle direct / redirect in the
+current draft, but leave strong references for later. The intent is not to
+say anything about strong references (referential integrity) in the current
+draft. It just looked like too hard a problem, and not an area where we
+could hoope to arrive at any consensus. The requirements do discuss it,
+however.
+Judy
+Judith A. Slein
+Xerox Corporation
+jslein@crt.xerox.com
+(716)422-5169
+800 Phillips Road 105/50C
+Webster, NY 14580
+Excellent -- I think that is the best approach. That also makes
+me feel better about saying direct references can be used instead
+of the semi-direct ones (I was worried about the integrity
+statement in the current draft).
+Chris
+The current view is that the direct / redirect distinction is orthogonal to
+the strong / weak distinction. So we can tackle direct / redirect in the
+current draft, but leave strong references for later. The intent is not to
+say anything about strong references (referential integrity) in the current
+draft. It just looked like too hard a problem, and not an area where we
+could hoope to arrive at any consensus. The requirements do discuss it,
+however.
+Judy
+Judith A. Slein
+Xerox Corporation
+jslein@crt.xerox.com
+(716)422-5169
+800 Phillips Road 105/50C
+Webster, NY 14580
+I agree with the choice of a special request header.
+I believe it is likely that the "PIN" method will be replaced with a
+property update, so the request header that would make GETPROP and
+PUTPROP refer to the reference itself rather than the reference target
+is a preferable (in addition to being more general) solution than any
+special handling of a "PIN" method.
+Cheers,
+Geoff
+From: "Slein, Judith A" JSlein@crt.xerox.com
+Date: Tue, 3 Nov 1998 09:28:11 -0500
+My preference would be for the latter: by default,
+any method on a direct reference would be passed through,
+but some header on the request would make the method affect
+the reference itself. I think we would still say that DELETE,
+MOVE, and COPY always affect the reference, never its target.
+OK, I'll add it to the draft I'm preparing this week and we can have some
+discussions of interactions between versioning and referencing / collections
+at Orlando.
+--Judy
+Judith A. Slein
+CR&amp;T/ADSTC
+jslein@crt.xerox.com
+8*222-5169
+Personally I prefer the use of a method here. Setting a property to change
+the behavior of the system is a bit strange. We did start this way, but it
+means that you must have namespace properties as well as resource
+properties. What do I mean by that. Well, I argue that the mechanism must
+be consistent even if you have a direct/indirect reference to another
+resource. Otherwise the client needs to do special processing. That means
+the PROPPATCH must be able to change the namespace URI's properties
+independent of the target URI's properties. It looks like Judith's team is
+willing to do this for direct references. However, what about indirect? We
+could say you can't do it. OK, but you are still setting a property that
+will effect other GET requests. It feels a little odd. Of course, this is
+what we are doing with the "default" workspace configuration. So we either
+need to change that to PIN or switch both to properties. It just seems
+cleaner to have a method and let the server do what is necessary to make the
+right thing happen.
+Chris
+I agree with the choice of a special request header.
+I believe it is likely that the "PIN" method will be
+replaced with a
+property update, so the request header that would make
+GETPROP and
+PUTPROP refer to the reference itself rather than the
+reference target
+is a preferable (in addition to being more general) solution
+than any
+special handling of a "PIN" method.
+Cheers,
+Geoff
+My preference would be for the latter: by default,
+any method on a direct reference would be passed through,
+but some header on the request would make the method
+affect
+the reference itself. I think we would still say that
+DELETE,
+MOVE, and COPY always affect the reference, never its
+target.

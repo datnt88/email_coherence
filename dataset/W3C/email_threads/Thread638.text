@@ -1,0 +1,58 @@
+Hi all,
+I want JTidy to recognize zone tags I placed in code and not deleting it.
+How can I do ?
+I've got another question, how forcing JTidy to put title /title in code
+when there's no title in the document instead of title/ ?
+Thanks for your response
+Philippe Querrec
+I think you could use a configuration file for tidy that contains properties
+like :
+new-empty-tags: zone
+new-inline-tags: zone
+or
+new-block-level-tags: zone
+or
+new-pre-tags: zone
+Take a look at http://www.w3.org/People/Raggett/tidy/
+Denis Queffeulou
+On the same note (sorry to bore anybody who may have read the previous mail from me on the same subject).
+Can anyone tell me why jtidy changes the following html ('heading' being a custom in-line tag) in the way it does (when converting to valid xml)- I guess it may well be that the html doesn't conform ?
+( is it illegal for an in-line tag to appear within a font tag ? ).
+INPUT HTML:
+OUTPUT XML:
+Thanks,
+Dominic Jackson
+Hi all,
+I want JTidy to recognize zone tags I placed in code and not deleting it. How can I do ?
+I've got another question, how forcing JTidy to put title /title in code when there's no title in the document instead of title/ ?
+Thanks for your response
+Philippe Querrec
+See my next message, "Bug+Fix for user-defined inline tags and inline
+propagation".
+For JTidy users, here is the Java version of the two changes from my
+message. The diffs are relative to the 04aug2000r6 release.
+--- jtidy-04aug2000r6\src\org\w3c\tidy\ParserImpl.javaMon Oct 30 06:21:36 2000
++++ ParserImpl.javaThu Dec 21 15:31:56 2000
+@@ -2015,8 +2015,11 @@
+checkstack = false;
+- if (lexer.inlineDup( node)  0)
+- continue;
++ if (!((element.tag.model &amp; Dict.CM_MIXED) != 0))
++ if (lexer.inlineDup( node)  0)
++ continue;
+mode = Lexer.MixedContent;
+--- jtidy-04aug2000r6\src\org\w3c\tidy\TagTable.javaMon Oct 30 06:21:38 2000
++++ TagTable.javaThu Dec 21 15:31:56 2000
+@@ -301,7 +301,7 @@
+public void defineInlineTag( String name )
+install( new Dict( name, Dict.VERS_PROPRIETARY,
+- (Dict.CM_INLINE|Dict.CM_NO_INDENT|Dict.CM_NEW),
++ (Dict.CM_INLINE|Dict.CM_NO_INDENT|Dict.CM_NEW|Dict.CM_MIXED),
+ParserImpl.getParseBlock(), null ) );
+I have defined my own custom tags using the config.txt file (see attached). However, this has caused me problems as detailed in one of my previous mails to the list (as yet not entirely resolved). - though I haven't tested with r6 yet ...
+----- Original Message -----
+Hi all,
+I want JTidy to recognize zone tags I placed in code and not deleting it. How can I do ?
+I've got another question, how forcing JTidy to put title /title in code when there's no title in the document instead of title/ ?
+Thanks for your response
+Philippe Querrec

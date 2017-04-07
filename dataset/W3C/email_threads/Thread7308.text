@@ -1,0 +1,213 @@
+At our working group meeting on Monday I presented a list of open issues
+related to requirements. There was a brief but useful discussion. In
+addition, Yaron and Jim gave me some written comments on the requirements.
+Before I actually make any changes, let me solicit everyone's opinions on
+the issues I listed:
+1. Attribute Search: In or out of scope?
+2. Partial-Resource Locking: Do we need changes / extensions to the HTTP
+protocol or not?
+3. Lock Types: What types of locks are needed?
+4. Semantics of Copy / Move: New types of objects like collections, version
+graphs, and metadata make the semantics of copy / move more complex. What
+should the requirements say about them?
+5. Clarifications of HTTP DELETE / PUT methods: New types of objects like
+collections, version graphs, and metadata make the semantics of PUT and
+DELETE more complex. What should the requirements say about them?
+6. Link Integrity: Much of WEBDAV is architected around links. This makes
+issues of link maintenance and integrity pressing. Should the requirements
+say anything about it?
+7. Structured Documents: Not currently mentioned in the requirements, but a
+proposal for structured documents is under discussion. Should structured
+documents be added to the requirements?
+8. Reservations and Versioning: Should reservations be discussed separately
+from versioning? Do we want to support reservations on resources that are
+not version tree handles?
+9. Diff / Merge: Do we want these or not?
+10. EMail / Disconnected Operation: At the moment we just say that the
+WEBDAV spec will not do anything to prevent disconnected operation or EMail.
+Is this enough?
+11. Mandatory / Optional Functionality: Should the requirements say anything
+about which functionality is optional / mandatory for WEBDAV compliance?
+12. Simplicity vs. Flexibility: As a design principle, how should these be
+balanced?
+In addition the group in the room pressed us to add requirements for
+authentication, access control, and interoperability with existing security
+protocols.
+Yaron and Jim asked for the following changes:
+1. Remove all requirements about the semantics of copy and move. Give a
+simple, one-sentence definition of the operation and leave it at that.
+2. Remove all discussion of implications for existing HTTP methods. Simply
+say that we are extending HTTP, and let the reader conclude that it is our
+responsibility to specify any required changes / extensions to existing HTTP
+methods.
+3. Do not say which functionality is mandatory or optional.
+4. Attribute search should be IN scope.
+5. Change "relationship" to "link" throughout.
+6. Remove the statement that attributes are resources.
+7. Say nothing about multi-resource locking or partial-resource locking.
+8. Provide better rationale for making server support for locking optional,
+or else remove the requirement that this support be optional.
+9. Remove the statement about who can do an UNLOCK.
+10. Combine the discussion of reservations with the discussion of locking.
+Treat reservations as advisory locks. Also talk about shared vs. exclusive
+write locks.
+11. Get rid of the paragraph in 5.5.2 that talks about multi-step source
+processing.
+12. Get rid of the requirements that copy and move leave audit trails.
+13. Get rid of 5.7.3 Delete.
+14. Remove the clause in 5.9.1.3 that allows servers to restrict the WEBDAV
+versioning model.
+15. Remove requirement 5.9.2.8 that the client be able to request that the
+server generate a version id for a new member of a version graph.
+16. Change 5.9.2.13 to say that it must be possible for a client to
+*request* (not *get*) a server-side diff.
+17. Remove requirement 5.9.2.14 for server-side merge.
+Please comment on any of these issues and recommendations. I'll try to take
+Jim's suggestion that we revise the requirements monthly between now and
+August, when they will be submitted as an informational rfc.
+--Judy
+Name:Judith A. Slein
+E-Mail:slein@wrc.xerox.com
+MailStop:128-29E
+Judy,
+Thanks for the list of requirements issues, it's much appreciated.
+I'd like to ask for some clarification on a couple of the issues.
+Not coming from a document management viewpoint, could you clarify what
+is meant by a structured document? The baseline position is we have
+structure as defined by reference links. Other structuring has been
+implied through meta-data adjuncts. Could you elaborate on what
+structure (and/or other semantics) is being implied by structured
+documents?
+I view reservation as a locking mechanism and versioning as a mechanism
+for distinction. Not having the benefit of group discussion to give me
+clues otherwise, does the group in general consider additional semantics
+to versioning (perhaps akin to those associated with a versioning system)?
+While I have the editor running, I have the following comments concerning
+the changes asked for by Jim and Yaron:
+If this is to expedite discussion and keep the work moving
+along where it has otherwise led to unresolved discussion,
+I support this. Otherwise, I can't see the point of continuing
+the working group if the decision is just to publish a document
+of good suggestions of things that can be done concerning
+web distributed authoring and versioning. I can see ironing out
+the "must" and "should" near the end of the effort, but I can't
+see dropping it completely.
+Change "relationship" to "reference" throughout.
+I fully support merging discussions on reservations with those on locking
+(or vice-a-versa). Call them all locking mechanisms if it will help. This
+should help with the technical approaches. User semantics can be decided
+upon later.
+Are audit trails being dropped altogehter? If one wants to worry about
+authenticating users then one should be worrying about audit trails in
+a versioning system (at least, in the presence of versioning semantics
+such as "give me the newest version" or any time there are multiple
+participants potentially involved in the same activity). Lest I sound
+too harsh, are audits being kept for version establishment, but not for
+intermediate actions such as move or delete? That would be reasonable.
+A comment on one of the issues:
+To me a versioning system deals in distinctions. As such a basic function
+would be to assign a distinction. If the attributes of distinction are
+not arbitrary, and in particular if they are derived, it would seem most
+appropriate to allow comparison operations. For example: find all
+versions with such and such attribute (ah, attribute of distinction, just
+in case the attributes alluded to by attribute search involve other types
+of attributes). Another comparison operation would be to ask what is
+the attribute-based difference between two (or more) versions.
+This leads into a discussion as to what defines a version (i.e. what is
+considered in distinguishing one version from another)? If it is defined
+soley to be some handle such as a version number/string, then either
+such comparisons would be pretty lame or we admit the handle is just a
+short hand representation of the attributes that really are considered in
+distinguishing one version from another. In contrast, the version/number
+string could be the only attribute considered, and the basis for its
+derivation indeterminate (i.e. arbitrary). In this case, if we still are
+interested in a Difference operation, we need to come to agreement on what
+can be compared - *independent* of the concept of versioning. The only
+thing versioning would be helpful for here would be to state "what" is
+being compared, i.e. version this will be compared against version that.
+I can see arguing against this latter instance as being outside the scope
+of the working group and an area for producet distinction. I support
+difference (and other) operations on attributes of distinction and feel
+this is part of the scope of the working group.
+-Mike
+There hasn't been enough discussion in the group yet for us to home in on a
+shared definition of "structured document". The proposal that Yaron floated
+looked like it would treat structured documents very much like hierarchical
+collections of resources (as in the January version of the WEBDAV spec), but
+with ordering and a method for retrieving the structure. Others interpret
+it quite differently, perhaps being able to access and manipulate the tagged
+components of an HTML document through WEBDAV. (The mailing list archive has
+been offline for several days, so I feel a little shakey trying to summarize
+the discussion without being able to look at the mail.) I'd like to see
+more discussion on the mailing list before I decide what to say about
+structured documents in the requirements.
+I believe the group has always viewed locking as separate from versioning.
+I was less sure about how people were understanding reservations. It looks
+as if Yaron and Jim agree with you that reservations are a kind of lock. I
+just want to confirm that we want to be able to lock / reserve resources
+whether they are versioned resources or not. I take it you would say yes.
+They were just talking about the requirements document, not the protocol
+spec. They certainly do intend to be clear about what is required for
+compliance in the spec.
+Good questions. We haven't been paying enough attention to security issues
+up till now. I'm not sure whether this request from Jim and Yaron was just
+part of their general campaign to get me to be less detailed in the
+requirements, or whether they really are opposed to requiring WEBDAV servers
+to keep audit trails for copy and move operations.
+A requirement for diff would be that the server be able to compare the
+content of two resources and report on the differences between them.
+A requirement for merge would be that the server be able to merge the
+contents of two (or more) resources to create a single new resource.
+Name:Judith A. Slein
+E-Mail:slein@wrc.xerox.com
+MailStop:128-29E
+I've only recently joined this list, and I missed the WEBDAV meeting at IETF
+due to a conflict, so I apologize if this comes out of left field. Anyway, I
+saw the comments about a "difference" operation and thought I'd mention that
+there's a collaborative editing environment someone built in AT&amp;T (pre-split),
+derived from "WikiWikiWeb", which presents the differences between versions of
+a page by marking up the HTML using a program "HtmlDiff". HtmlDiff is also
+AT&amp;T-internal but has been released for noncommercial use and might be
+released more widely given interest.
+I'm also interested in using the kinds of versioning you're talking about in
+order to send updates to pages over to browsers (to save bandwidth and
+transfer times). Can anyone tell me if this has been discussed in this forum
+before?
+For more info on HtmlDiff or the update-based transfers, see my home page:
+Fred Douglis MIME accepted douglis@research.att.com
+AT&amp;T Labs - Research 908 582-3633 (office)
+Murray Hill, NJ 07974 http://www.research.att.com/~douglis/
+As of 6/1/97:
+AT&amp;T Labs - Research
+180 Park Ave, Room A181
+Florham Park, NJ 07932-0971
+973-360-8775 (office)
+A few clarifications.
+Our intent was to push statements about which functionality is optional or
+mandatory into the protocol specification. The Design Team found that the
+dependencies between features in the protocol specification changed as we
+considered different designs, and these changing dependencies have some
+affect on whether a feature should be mandatory or optional. Rather than
+hardwire statements about mandatory or optional functionality into the
+requirements, which would then need to be changed based on changes in the
+design, it seemed more prudent to treat the requirements document as a
+series of MUST statements about what functionality should be in the
+interface described in the protocol specification document, but let the
+protocol document be the final word on whether a particular functionality
+was mandatory or optional.
+The view of the Design Team is that while audit trails are a good thing,
+and should be supported in a WebDAV server, we found that requiring audit
+trails had no effect on the interface for performing WebDAV operations
+(it's a side effect of other operations). Since we view the requirements
+document as describing what should be supported by the interfaces given in
+the protocol document, a requirement which doesn't impact any interface is
+viewed as useless. Hence our recommendation to remove the requirement.
+Also, by audit trail we were intending an operation similar to the current
+logging employed by servers. So, for example, if you perform a move, the
+server would record the move, along with the source and destination URLs.
+We had been viewing the history recording operations of a versioning system
+as being something different from this kind of audit trail, however, I can
+definitely understand viewing them similarly. Versioning operations will
+definitely have to record predecessor and successor relationships, as well
+as the principal who performed edits on a particular revision.
+- Jim

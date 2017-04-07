@@ -1,0 +1,215 @@
+I sent the stuff below to the wrong address. I expect some of you saw
+it anyway. Just to be sure, I send again.
+This document: http://www.w3.org/TR/1999/WD-WAI-USERAGENT-19991105/
+Contains these bits:
+...which are less than usefully explicit for "priority 1" items, and
+unfortunate implementation precedent proves that elaboration is
+needed.
+Currently, the only techniques cited to assure user control of font size are
+"...[A]llow the user to control font size through style sheets or the
+user interface. Or allow the user to magnify text." and "Implement
+the CSS 'font-size' property."
+I can think of at least one implementation [WinIE5] which arguably
+passes muster under such lax language, which nevertheless presents
+serious usability problems in this area. The result is that many
+authors are less ready to embrace accessibility-conscious visual
+design techniques.
+The problem lies in the details of the CSS font-size property
+implementation, for which no explicit normative references exist. The
+CSS Recommendations, for their part, have tended to avoid UI
+specifics that might offend some members' sense of "turf", as it can
+affect competitive issues such as look-and-feel, OS integration,
+etc., or so it seems to me. This W3C product, however, seems like the
+right vehicle.
+For the sake of "getting to the point", I'll suggest
+additions/revisions first, with discussion of rationale to follow:
+* Implement the CSS 'font-size' property as follows:
+* When a single font-size value is solicited in UI, the font-
+size choice must define the value of the 'medium' font-size
+keyword. Larger and smaller absolute size keyword values must be
+computed relative to the user-chosen 'medium' value.
+* To avoid confusion, circularity, and indeterminacy, user-chosen
+font-size values should not themselves be given in keyword
+terms (e.g. 'medium', 'smaller', etc.), but in length units
+appropriate to the media type (e.g., 16px for the screen media
+type, 12pt for print, etc.).
+* UAs should take available resolution into account when
+calculating the CSS absolute font-size keyword intervals, such
+that, e.g., the three size values below 'medium' remain legible
+and distinct from one another as long as the user-chosen 'medium'
+value is itself at least three steps above the legibility floor,
+as determined by device and font design constraints.[1]
+* the font-size choice exposed to the user in UI must provide a
+font-size value for the root elements of documents to be rendered.
+* Implement the CSS2 Processing Model
+(http://www.w3.org/TR/1998/REC-CSS2-19980512/intro.html#processing-model)
+such that a font-size specified on the document root (e.g., HTML)
+will inherit predictably per the CSS cascading and inheritance rules
+(http://www.w3.org/TR/1998/REC-CSS2-19980512/cascade.html) to all
+children, including HTML TABLE elements.
+The reason for most of these elaborations should be clear upon
+considering their *lack* in practice. If an author wishes to respect
+the font size needs of the user, s/he must be able to assume certain
+sympathetic correlations between hir stylesheet rules and those of
+the user, as well as predictable cascading and inheritance rules.
+This is common sense, yet implementations are in chaos for lack of
+norms here, and a lot depends on cleaning things up.
+Need I say more than that "medium" used by an author as a font-size
+value maps to a size ONE STEP LARGER than the "medium" selected by
+users as a default font size in WinIE5? Of course, this throws off
+the meaning of SMALL and all the rest rather absurdly. This renders
+the keyword system unusable in commercial Web design practice. And
+the weirdly tenacious table-related inheritance bugs in WinIE and
+Netscape 4.x render the other font-size schemes equally useless.
+You don't want to see more slow, inaccessible GIF/pixel text? Then
+help fix the CSS alternatives by explicitly stating the font-size UI
+requirements in CSS terms!
+Rationale
+The WAI Authoring guidelines wisely discourage the use of absolute
+length units (e.g., "points") for font-size values in the screen
+media type, instead favoring relative units (e.g., ems) for their
+supposed reference to a UA default font size, presumably under
+control of the user.
+The trouble with relative length units, however, is that they are
+*not* relative to the font size set by the user. They are instead
+relative to the font size of the parent element in the document tree,
+which itself may or may not refer to a user-set font size.
+Accessibility-conscious use of relative length units thus requires a
+more confident knowledge of how user style rules (e.g., preference
+settings) are resolved against author style rules and the document
+tree than is warranted either by normative references or deployed UAs.
+It is nowhere specified, for instance, that the font size exposed in
+the UI is understood to be to 1em on any document node, and in fact
+UAs vary significantly both in how they parse documents into trees
+and in how style rules inherit through said trees.
+Most Netscape and Microsoft products, for instance, fail even to
+consider the root element of HTML documents (i.e., HTML) to be part
+of the parse tree, susceptible to formatting rules. More
+significantly, they fail to inherit many style properties - including
+font-size - into TABLE elements, instead setting these back to the
+user-set size by default. Other, less idiosyncratic UAs such as
+MacIE4.5 and Opera *DO* inherit font-size into TABLE elements,
+presenting accessibility conscious authors with an awful dilemma:
+either specify font size in relative length units redundantly for
+TABLE elements as the most popular UAs require, thus screwing things
+up badly for Opera and MacIE4.5, or abandon CSS and stick with
+good-old BIG/SMALL or deprecated FONT tags in every last cell.
+The reason that FONT tags and the like succeed where CSS relative
+length units do not is that FONT tags, per HTML 3.2, take scalar
+values 1-7, and relative values along this scale. These scalar values
+are anchored (at size "3") to the font size chosen by the user, and
+are *exempt from document tree inheritance issues* ("absolute"),
+making them far-and-away the most useful and accessible scheme
+currently implemented. Commercial sites that must work use them, and
+will continue to do so ad infinitum unless CSS implementations (and
+their UIs) are brought to a similar standard of usefulness.
+CSS superceded the FONT size system with 7 keyword sizes of its own,
+but the scheme is underspecified and has been badly botched in
+implementation. There are no really good alternatives - you can't get
+by with ems/percentages, especially not before the sacred table bugs
+are crushed. This must be fixed. Hence my proposed amendments to the
+WAI UA guidelines.
+ps: I am no expert in aural stylesheet concepts, but it seems to me
+that what goes for font size might just as readily go for, say,
+"volume". The user must be able to define the value of "normal" in
+absolute terms in order for authors to make meaningful use of, e.g.,
+"loud" and "quiet"....
+[1] http://style.metrius.com/font_size_intervals/altintervals.html#st
+Todd Fahrner
+Do you mean that the URIs are not explicit enough or the techniques?
+Assuming you mean the techniques...
+Are these recommendations appropriate for the UAGL? They seem to
+be more appropriate closer to CSS (e.g., in a W3C Note). The UAGL
+could then refer to them. I hate to hide important CSS ideas in
+the UAGL Techniques Document.
+The CSS2 Processing Model is not normative. The CSS cascade is and
+should be implemented.
+[snip]
+This also suggests that the spec needs fixing and that the CSS WG
+is the proper place to push.
+Thanks for your comments, Todd. Let me know if you think
+the CSS WG is the proper forum for promoting a proper implementation.
+- Ian
+Ian Jacobs (jacobs@w3.org) http://www.w3.org/People/Jacobs
+Cell: +1 917 450-8783
+are
+It seems to me that because low-vision users have a particularly strong
+interest in this aspect of style usability, this clarification is
+appropriate for the UAGL and UAT.
+For the purposes of making the situation clear to the CSS community, I
+would [without a lot of reflection] tend to prefer that I be able to refer
+into the UAT for this discussion, as opposed to some freestanding Note for
+which there is no obvious charter or accessibility tie-in. The UAT
+document is not hidden as compared with a freestanding note. Publishing
+this here gives the CSS folks the context and rationale for the correction.
+The CSS specification does not presently meet accessibility needs because
+it is vague to a debilitating degree as regards the kind of user
+abstraction that Todd is explaining. However, this is style-control
+behavior that the user with partial functional impairment in vision
+requires, and hence it is properly in scope for the UA group to articulate
+in their own planned work products, so far as I can tell.
+Furthermore, we should consider adding a checkpoint abstracted from Todd's
+techniques to the effect that there should be one control in the UI which
+accomplishes a general increase or decrease of the font sizes throughout
+the document, while preserving size ordering of different text fragments to
+the maximum extent with user directives.
+Al
+(http://www.w3.org/TR/1998/REC-CSS2-19980512/intro.html#processing-model)
+Excellently phrased.
+If WAI authoring guidelines (and the techniques I've suggested) are
+observed, users should be able to accomplish this simply by
+re-specifying their preferred font size - no special
+checkpoint/technique required.
+When authors use pixel- or absolute-length units (e.g., points) for
+text, however, it is charitable (and sometimes correct) to assume
+that the text must maintain a consistent size relationship to
+non-textual elements. In this case, I think a "zoom/magnify"
+functionality (such as implemented in the Opera UA) should be
+required to override specified measures. Otherwise you'd have to
+treat pixels or points specified for text as less privileged than
+pixels or points specified for (or inherent to) other objects, and
+that strikes me as unclean.
+Todd Fahrner
+That is correct.
+[snip]
+I have been an invited expert to the CSS&amp;FP WG since 1996, and have
+been harping on such "implementation issues" for 18 months or so, in
+W3C and other fora. I do not believe that any such Note is
+forthcoming. If you believe, as I do, that resolution of these
+matters is critical to the coherence of the WAI's recommendations
+regarding font size, I suggest that the WAI must not defer the
+responsibility.
+* Implement the CSS2 Processing Model [snip]
+Fair enough. But the "non-normative" language couching the CSS-2
+processing model description belies the fact that other models or ad
+hoc contortions are highly unlikely to support the cascade in as
+reliably determinate a fashion, and is illustrative of the CSS&amp;FP
+WG's reticence or inability to address many UA implementation issues
+head-on. This isn't censure, either; I recognize that it is sometimes
+necessary to choose one's battles carefully, and to run away from the
+rest.
+In view of the apparently determined disregard for the cascade in
+mainstream UAs (failure to inherit from HTML or even BODY into
+TH/TD), and the importance of same for WAI guidelines to be viable in
+practice, I suggest that the WAI establish an explicit checkpoint for
+correct behavior.
+I believe that Microsoft will effectively defeat any such pushing in
+the CSS&amp;FP WG, since it is contrary to their increasingly stable
+(stagnant?) implementation of HTML, CSS, and attendant UI, at least
+in Win32/Office2K. I think it is incumbent upon this group either to
+challenge this state of affairs, or to accept that MS's
+implementation is the de facto standard in this regard, and
+reformulate its recommendations regarding font size control
+accordingly. I advocate the former, as I can't see a way through the
+latter.
+I do. If I fail to convince you, however, would you regard it as
+proper for the WAI to flag these implementation issues formally for
+the CSS&amp;FP WG, as WAI concerns?
+Todd Fahrner
+As Al Gilman has indicated, the WAI PF WG is probably the
+appropriate WG to apply such pressure. PF has already
+been made aware of the issue.
+Thank you again Todd for the precise analysis.
+- Ian
+Ian Jacobs (jacobs@w3.org) http://www.w3.org/People/Jacobs
+Cell: +1 917 450-8783

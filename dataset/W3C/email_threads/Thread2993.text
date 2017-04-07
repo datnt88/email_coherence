@@ -1,0 +1,111 @@
+Hi,
+In the descriptions of each of the 301, 302, and 307 response codes of
+RFC 2616, the following text can be found;
+"If the [code] status code is received in response to a request other
+than GET or HEAD, the user agent MUST NOT automatically redirect the
+request unless it can be confirmed by the user, since this might
+change the conditions under which the request was issued."
+I believe that the conformance level should be "SHOULD NOT" rather than
+"MUST NOT".
+Though I'm not familiar with the history of this requirement, it seems
+self-explanatory regarding its intent; it's there as a warning, not as
+a conformance statement. And while it's certainly the best approach
+in the generic case (as "SHOULD NOT" would indicate), the opportunity
+for a private agreement to exist between client and server should be
+recognized IMO.
+In my case, the nature of the type of resource - as indicated in the
+messages via link metadata - to which a POST is submitted is such that
+there is no change of condition under which the request was issued. The
+agent has committed to submitting the data across a trust boundary with
+the expectation that a redirect is being performed in lieu of the server
+acting as an intermediary for the request.
+Thanks.
+Mark.
+Mark Baker. Ottawa, Ontario, CANADA. http://www.markbaker.ca
+What you propose requires a change to client behavior in a way that
+potentially reduces the integrity of the user interaction for all sites
+because you have a specific site you believe has a valid reason for
+allowing handling the redirect w/o user interaction.
+I don't believe endorsing this change in client behavior would be a good
+idea. Adding a new header or header parameter which declared a server's
+good intentions might be a reasonable approach. The client designers could
+then choose to honor the declaration or perhaps prompt the user once and
+remember that a specific server was approved, etc.
+Dave Morris
+Not at all. My proposal doesn't require that any client change
+behaviour (as they'd still conform to a "SHOULD NOT" requirement).
+It just asks that new clients be permitted to auto-redirect if
+they have a very good reason to do so.
+Mark.
+Mark Baker. Ottawa, Ontario, CANADA. http://www.markbaker.ca
+Well, that good reason should be user authorization. Obviously you could
+remember this authorization for that specific redirect.
+What you basically don't want to happen is your POST or PUT going to a
+different site. I couldn't imagine someone wanting to do this anyway.
+This is also the reason why browsers warn (and they should be doing this)
+when switching secured/unsecured.
+This is where the potential hazard is, commonly with authentication, using a
+secure site and the rest on a unsecured site. These redirect from secure to
+unsecure and I don't want this to happen with my POST containing my
+authentication information.
+Perhaps the definition:
+On retreiving .... the user agent MUST NOT automatically redirect when
+sending data, such as POST, PUT or web authoring functions and SHOULD NOT
+automatically redirect otherwise, unless the request is GET or HEAD, in
+which case a browser MAY redirect.
+Still, I'm interested in a (practical) sitiation where one needs to redirect
+a non-GET/HEAD request?
+- Joris
+From: ietf-http-wg-request@w3.org
+[mailto:ietf-http-wg-request@w3.org] On Behalf Of Mark Baker
+Sent: Tuesday, 4 November 2003 22:04
+Subject: Re: Redirection MUST NOTs
+for allowing handling the redirect w/o user interaction.
+[Hopefully not going anywhere or duplicated. Still had the old WG mail
+address @ hp.com listed.]
+Without a protocol based reason for the client to alter its behavior,
+there is no reason to even use "SHOULD NOT" in the HTTP specification. To
+achieve the intended user protection, the base protocol needs to preclude
+auto-redirect.
+Dave Morris
+When the user agent trusts the server as it would a proxy, e.g.
+POST http://auth1.example.org/proxy?uri=http://auth2.example.org/some-path/ HTTP/1.1
+Host: auth1.example.org
+There, the server is providing proxy-like capabilities, but in gateway
+form.
+Mark.
+Mark Baker. Ottawa, Ontario, CANADA. http://www.markbaker.ca
+If one requests this URL:
+The user agent should already be aware that it better uses auth2. It is
+already given in the URI. Redirection would actually be a waste of time.
+Auth1 could (transpart for the user) handle authentication by internally
+forwarding it to auth2.
+Load balancing could be done after authentication or using clustering.
+This is the exact example I'm worries about, because (authentication)
+information could be send all over the Internet, when redirection is
+allowed.
+- Joris
+From: Mark Baker [mailto:distobj@acm.org]
+Sent: Wednesday, 5 November 2003 3:04
+Subject: Re: Redirection MUST NOTs
+Even so: a) The user did not choose this proxy trust relationship
+b) The user-agent has no way to discern this request from any
+other POST request in the proposed change you have
+described.
+There is no valid way that the user agent would be aware and allowed to
+act on a URL parameter value which happens to be a URL/URI for some
+other resource.
+From: Mark Baker [mailto:distobj@acm.org]
+Sent: Wednesday, 5 November 2003 3:04
+Subject: Re: Redirection MUST NOTs
+Doesn't matter what your Agent knows, what matters is what any user-agent
+is entitled to do. Better that your agent has a documented non-conformance
+than to relax a protocol requirement.
+Furthermore, since your agent has this trust relationship hard coded, I
+would assert that the 'user' decision to accept a redirect has been made
+and there is no protocol issue.
+Dave Morris
+My agent is an automata, not a browser, and it's hardcoded to trust
+"auth1".
+Mark.
+Mark Baker. Ottawa, Ontario, CANADA. http://www.markbaker.ca

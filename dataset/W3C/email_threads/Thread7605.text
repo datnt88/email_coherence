@@ -1,0 +1,108 @@
+Jim,
+I don't know how to reproduce your findings, and I can't. Can you make your
+test script be even more verbose and print out the Headers and XML you are
+sending in the Request, and then what the headers and body that my server
+gives you in the Response. This will make it easier for me (and you) to
+track down issues, as I can see the series of Request/Response pairs for
+your tests.
+dead property http://example.com/author was preserved across deletion of
+/~jrd/foo.html
+This was a bug in my test code. Xythos returns two propstat elements in
+this case.
+The first one had an empy prop element, and a status of 200. The second
+one had
+the prop I was looking for, and the appropriate status code 404.
+As far as I can tell it's perfectly legal for Xythos to return that first
+propstat, even though there were no props in it. but it confused my code.
+Now fixed. Xythos is not guilty.
+PropPatch failed with tagged-list production
+here is more detail. The request is
+PROPPATCH /~jrd/foo.html
+If:
+http://www.sharemation.com:80/~jrd/foo.html ( locktoken:www.sharemation.com
+LockServeridu:977 )
+Content-Length: 185
+Content-Type: text/xml
+The reply is
+server: IBM_HTTP_Server/1.3.6 Apache/1.3.7-dev (Win32) ApacheJServ/1.0
+content-length: 320
+date: Mon, 15 Nov 1999 12:55:00 GMT
+Does the If header I am passing look wrong to you?
+Header was fine, we were choking on the port (.com/ != .com:80/)
+Fixed, please continue your testing,
+Kevin
+Jim,
+I don't know how to reproduce your findings, and I can't. Can you make
+your
+This was a bug in my test code. Xythos returns two propstat elements in
+this case.
+The first one had an empy prop element, and a status of 200. The second
+one had
+the prop I was looking for, and the appropriate status code 404.
+As far as I can tell it's perfectly legal for Xythos to return that first
+propstat, even though there were no props in it. but it confused my code.
+Now fixed. Xythos is not guilty.
+PropPatch failed with tagged-list production
+here is more detail. The request is
+PROPPATCH /~jrd/foo.html
+If:
+http://www.sharemation.com:80/~jrd/foo.html ( locktoken:www.sharemation.com
+LockServeridu:977 )
+Content-Length: 185
+Content-Type: text/xml
+The reply is
+server: IBM_HTTP_Server/1.3.6 Apache/1.3.7-dev (Win32) ApacheJServ/1.0
+content-length: 320
+Does the If header I am passing look wrong to you?
+I am glad you fixed it (and can verify that you have) but it occurs to me
+that just maybe it was not a bug in Xythos but rather a bug in tdav. I
+would like a second opinion.
+I was passing a coded URL that had an explicit port (80) Is there a rule
+about how to compare two coded URLs for identity, when one has an an
+explicit port and the other has no port (it was using the default port, in
+this case). Perhaps in RFC 2068?
+RFC2616 section 3.2.3 has it...? "A port that is empty or not given is
+equivalent to the default port for that URI-reference;"
+joe
+Ahh I think this is one for the list..
+The problem is not that you sent in two different tokens in the If Header
+(In fact Xythos does handle multiple ones), the problem is that you mixed
+No-tag-list w/ Tagged-list, which I believe is not legal. Any other
+thoughts???
+The definition for If Header is
+If = "If" ":" (1*No-tag-list | 1*Tagged-list)
+In my mind (and I can be wrong here) this means 1 to many No-tag-lists OR 1
+to many tagged lists. Thus what you sent is incorrect. Maybe I should give
+a better error.
+You seem to have
+If = "If" ":" (1*(No-tag-list | Tagged-list))
+which I can do, but is not how Xythos read the spec.
+Thoughts???
+Kevin
+Wowie. Great. One last bug
+If a resource is locked and the parent is also locked (with a different
+lock) then must pass both to delete it: PASS
+Can delete using both tokens: FAIL
+DELETE /~jrd/foox.html
+If: /~jrd/ ( locktoken:www.sharemation.comLockServeridu:1045 )
+( locktoken:www.sharemation.comLockServeridu:1044 )
+None
+In other words, even if I pass both tokens, I still can't delete. (looks
+like in this case I am passing the token for the collection using
+tagged-list production and the token for the resource itself using
+no-tagged list)
+ps I have not tested authentication in any way with Xythos.
+pps I hope to test your DASL compliance real soon now.
+ppps great work. the xythos server is very impressive.
+I agree that mixing the request types is incorrect. mod_dav catches the
+(improper) mixing of the two list types and will return a 400 (Bad
+Request). [I'm not sure how verbose the response body is, though]
+In this case, though, the request *is* well-formed. A tagged-list can have
+multiple lists. In other words, the second list is *also* tagged with the
+"/~jrd/" URI. Since the second lock token is on /~jrd/foox.html rather
+than /~jrd/, the request *should* fail.
+On a separate note: the "locktoken:" URI scheme isn't registered with the
+IANA, is it? Shouldn't the Xythos server use a registered scheme?
+Cheers,
+-g
+Greg Stein, http://www.lyra.org/

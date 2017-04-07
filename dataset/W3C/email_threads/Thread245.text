@@ -1,0 +1,41 @@
+There appears to be a problem with tidy in that it discards any text after
+an OPTION tag. Also, it doesn't allow you to include an /OPTION tag.
+Here is an example HTML file: (See attached file: testoption.htm)which gave
+the errors: (See attached file: File.txt)Thanks for considering this:
+Larry Cousin
+3M Health Information Systems
+Larry,
+I reported this bug on October 7th, and Steve Deszpo on the 12th.
+Unfortunately, no one has posted a solution thus far.
+Chuck
+Chuck Durfee (chuck.durfee@adic.com) desk: +1 303 705 3888
+Software Support Engineer ATAC: 800 827 3822
+Thanks for the report - I will ensure that this problem is
+fixed for the next release.
+Regards,
+-- Dave Raggett dsr@w3.org http://www.w3.org/People/Raggett
+World Wide Web Consortium (on assignment from HP Labs)
+p.s. the problem was introduced recently when I added the
+InsertMisc call into ParseText(). The fix is to insert
+the following code snippet after the call to InsertMisc:
+/* deal with comments etc. */
+if (InsertMisc(field, node))
+continue;
+/* insert text value into option element */
+if (node- type == TextNode)
+/* only called for 1st child */
+if (field- content == null &amp;&amp; !(mode &amp; Preformatted))
+TrimTrailingSpace(lexer, field- last);
+if (node- start  = node- end)
+FreeNode(node);
+continue;
+InsertNode(field, node);
+continue;
+if (node- tag == tag_font)
+ReportWarning(lexer, field, node,
+DISCARDING_UNEXPECTED);
+FreeNode(node);
+continue;
+Regards,
+-- Dave Raggett dsr@w3.org http://www.w3.org/People/Raggett
+World Wide Web Consortium (on assignment from HP Labs)

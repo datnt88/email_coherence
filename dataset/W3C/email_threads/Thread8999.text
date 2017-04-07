@@ -1,0 +1,557 @@
+I had the idea also, that it would be good if we were able to provide an
+'executable specification' of the translation from the RDF XML syntax
+into triples and I suspect this will be easier and clearer if this
+translation is to a very simple syntax. I've done an informal
+experiment using an attribute grammar with an XSLT implementation and
+that seemed to work ok.
+Sounds good, certainly the idea of 'executable specification'.
+It reminds me about ISO Standard Prolog (see e.g. the INRIA
+ISO Prolog web at http://pauillac.inria.fr/~hodgson/prolog/ )
+where the executable specification (the ftp package is at
+ftp://ftp-lifo.univ-orleans.fr/pub/Users/eddbali/SdProlog/ )
+is a specific implementation of Standard Prolog.
+So, all concepts which are implementation defined, implementation
+dependent or undefined have received some interpretation.
+It's mainly that last point that I wanted to stress, although it
+must be possible to write such an executable specification in N3.
+Brian, is that informal experiment using an attribute grammar
+with an XSLT implementation the one at
+Jos De Roo, AGFA http://www.agfa.com/w3c/jdroo/
+Hi Jos,
+Yes, and thanks for picking up on that. It would be good discipline for
+us always to provide references where possible.
+The above URL is not likely to be very persistent so to make sure its in
+the archive I've included the document at the end of this message.
+Brian
+!-- Author: Brian McBride $Revision: 1.8 $ $Date: 2001/02/22 12:31:14
+$ --
+xsl:stylesheet xmlns:xsl='http://www.w3.org/1999/XSL/Transform'
+xmlns:rdf='http://www.w3.org/1999/02/22-rdf-syntax-ns#'
+xmlns:rdfg='http://purl.org/NET/BMCB/2001/RDFG'
+exclude-result-prefixes='xsl rdf rdfg'
+!-- An experiment in doing a formal specification of the RDF Syntax.
+The goal is to more formally define the triples that any given
+RDF XML represents.
+The idea is to annotate the grammar with attributes. Each
+production
+in the grammar takes attributes as arguments and can return
+attributes
+as a result. A production emitTriple, which always succeeds but
+has
+the side effect of emitting a triple is introduced.
+There is a trivial transformation from the annotated grammar to an
+equivalent XSLT transform, thus in effect enabling an executable
+specification.
+@@ISSUE aboutEach not handled
+@@Issue aboutEachPrefix
+@@TODO Oops - forgot xml:lang
+@@TODO consider if XML Schema should be used to express the
+grammar.
+@@TODO consider Schematron
+@@TODO search for 'proper' attribute grammar tools
+The annotated grammar is as follows:
+// Constants
+RDFNS =
+'http://www.w3.org/1999/02/22-rdf-syntax-ns#'
+RDFGNS = 'http://purl.org/NET/BMCB/2001/RDFG/'
+HASMEMBER = 'hasMember' // container membership
+property
+TYPE = 'type'
+BAG = 'Bag'
+URI = 'URI'
+ANON = 'ANON'
+ABOUTEACH = 'aboutEach'
+ABOUTEACHPREFIX =
+LITERAL = 'LITERAL'
+NONE = 'NONE'
+AUTO = 'NONE' // change to 'anon' to
+turn on
+// creation of bags for
+all
+// description elements
+[6.1] RDF() ::= [' rdf:RDF ']
+obj*((NONE, ''), ('', ''),
+( NONE, ''), (NONE, '')
+[' /rdf:RDF ']
+// dropped the container productions - used mcbride/beckett
+approach
+// The obj production can either be a top level resource
+immediately
+// within an enclosing rdf:RDF or it can be the object of a
+statement.
+// Input Attributes:
+// subject(Type, Valu) type is none for top level
+// predicate(ns, localname)
+// bag(Type, Valu, next) to hold reifications
+// rsid id of reified statement
+[6.2] obj(subject, predicate, bag, rsid)
+::= description(subject, predicate, bag, rsid)
+[6.2.1] obj*(subject, predicate, bag, rsid)
+::= obj(subject, predicate, bag, rsid)
+obj*(subject, predicate,
+(bag.type, bag.value), rsid)
+[6.3] description(subject, predicate, bag, rsid)
+::= ' rdf:Description'
+idAboutAttr?
+emitTriple(rsid, subject, predicate,
+(idAboutAttr.Type,
+idAboutAttr.Valu))
+emitTriple((NONE, ''),bag,
+(RDFGNS, HASMEMBER), rsid)
+bagIdAttr?
+emitTriple((NONE, ''),
+(bagIdAttr.Type,
+bagIdAttr.valu),
+(RDFNS, TYPE),
+(URI, RDFNS+BAG))
+propAttr*((idAboutAttr.Type,
+idAboutAttr.Valu),
+(bagIdAttr.Type,
+bagIdAttr.Valu), 0)
+'/ '
+' rdf:Description'
+idAboutAttr?
+emitTriple(rsid, subject, predicate,
+(IidAboutAttr.Type,
+idAboutAttr.Valu))
+emitTriple((NONE, ''), bag,
+(RDFGNS, HASMEMBER), rsid)
+bagIdAttr?
+emitTriple((NONE, ''),
+(bagIdAttr.Type, bagIdAttr.valu),
+(RDFNS, TYPE),
+(URI, RDFNS+BAG))
+propAttr*((idAboutAttr.Type,
+idAboutAttr.Valu),
+(bagIdAttr.Type, bagIdAttr.Valu),
+0)
+' '
+propertyElt*(subject,
+(bagIdAttr.Type,
+bagIdAttr.Valu))
+' /rdf:Description '
+typedNode(subject, predicate, bag, rsid)
+[6.4] // container production deleted
+[6.5] idAboutAttr? ::= idAttr
+this.Type = idAttr.Type
+this.Valu = idAttr.Valu
+aboutAttr
+this.Type = aboutAttr.Type
+this.Valu = aboutAttr.Valu
+aboutEachAttr
+this.Type = aboutEachAttr.Type
+this.Valu = aboutEachAttr.Value
+this.Type = ANON
+this.Valu = genid()
+[6.6] idAttr ::= ' ID="' IDsymbol '"'
+this.Type=URI
+this.Valu=BASEURI() + '#' + IDsymbol
+[6.6.1]idAttr? ::= idAttr
+this.Type=idAttr.Type
+this.Valu=idAttr.Valu
+this.Type = NONE
+this.Valu=''
+[6.7] aboutAttr ::= ' about="' URI-reference '"'
+this.Type=URI
+this.Valu = ABSOLUTE(URI-reference)
+[6.8] aboutEachAttr ::= ' aboutEach="' URI-reference '"'
+this.Type = ABOUTEACH
+this.Valu = ABSOLUTE(URI-reference)
+' aboutEachPrefix="' string '"'
+this.Type = ABOUTEACHPREFIX
+this.Valu = string
+[6.9] bagIdAttr? ::= ' bagID="' IDsymbol '"'
+this.Type = URI
+this.Valu = BASEURI + '#' + IDsymbol
+this.Type = AUTO
+this.Value = genid()
+[6.10] propAttr(subject, bag, maxOrd)
+::= 'xml:lang="' string '"' // ignore
+this.maxOrd = 0
+'xmlns:' name '="' string '"' // ignore
+this.maxOrd = 0
+'ID="' string '"' // ignore
+this.maxOrd = 0
+'about="' string '"' // ignore
+this.maxOrd = 0
+'aboutEach="' string '"' // ignore
+this.maxOrd = 0
+'aboutEachPrefix="' string '"' // ignore
+this.maxOrd = 0
+'bagID' // ignore
+this.maxOrd = 0
+typeAttr(subject, bag)
+this.maxOrd = 0
+'rdf:li="' string '"'
+this.stmtType =
+if bag.Type==NONE then NONE else
+ANON
+this.stmtValu = genid()
+emitTriple((this.stmtType, this.stmtValu),
+subject,
+(RDFNS, '_1')
+(LITERAL, string))
+emitTriple((NONE, ''), bag,
+(RDFGNS, HASMEMBER),
+(this.stmtType, this.stmtValu))
+this.maxOrd = 1
+propName '="' string '"' // with
+embedded
+// quotes
+escaped
+this.stmtType =
+if bag.Type==NONE then NONE else
+ANON
+this.stmtValu = genid()
+emitTriple((this.stmtType, this.stmtValu),
+subject,
+(propName.ns, propName.namespace)
+(LITERAL, string))
+emitTriple((NONE, ''), bag,
+(RDFGNS, HASMEMBER),
+(this.stmtType, this.stmtValu))
+this.maxOrd = maxOrd(maxOrd, propName.ns,
+propName.localname)
+[6.10.1] propAttr*(subject, bag, maxOrd)
+::= propAttr(subject, bag)
+propAttr*(subject, bag)
+this.maxOrd=max(maxOrd, propAttr.maxOrd,
+propAttr*.maxOrd)
+[6.11] typeAttr(subject, bag)
+::= ' type="' URI-reference '"'
+this.stmtType =
+if bag.Type==NONE then NONE else
+ANON
+this.stmtValu = genid()
+emitTriple((this.stmtType, this.stmtValu),
+subject, (RDFNS, TYPE),
+(URI, URI-reference))
+emitTriple((NONE, '') bag,
+(RDFGNS, HASMEMBER),
+(this.stmtType, this.stmtValu))
+[6.12] propertyElt(subject, bag)
+::= ' ' propName
+rsidAttr?(bag) // modifed from
+idAttr?
+' ' value(subject,
+(propName.ns, propName.localname),
+bag,
+(rsidAttr?.Type, rsidAttr?.Valu))
+' /' propName ' '
+' ' propName
+rsidAttr?(bag) // modified from
+idAttr?
+parseLiteral ' '
+literal
+' /' propName ' '
+emitTriple((rsidAttr?.Type,rsidAttr?.Valu),
+subject,
+(propName.ns, propName.localname),
+(LITERAL, literal)
+emitTriple((NONE, ''), bag,
+(RDFG, HASMEMBER),
+(rsidAttr?.Type, rsidAttr?.Valu))
+' ' propName
+rsidAttr?(bag) // modified from
+idAttr?
+parseResource ' '
+this.objectType = ANON
+this.objectValu = genid()
+emitTriple((rsidAttr?.Type, rsidAttr?.Valu)
+subject,
+(propName.ns, propName.localname),
+(this.objectType,
+this.objectValu))
+emitTriple((NONE, ''), bag,
+(RDFG, HASMEMBER)
+(rsidAttr.Type, rsidAttr.Valu))
+this.bagType = AUTO
+this.bagValu = genid()
+emitTriple((NONE, '')
+(this.bagType, this.bagValu),
+(RDFNS, TYPE),
+(URI, RDFNS+BAG)
+propertyElt*((this.objectType,
+this.objectValu),
+(this.bagType, this.bagValu))
+' /' propName ' '
+' ' propName
+idRefAttr?
+this.stmtType =
+if bag.Type==NONE then NONE else
+ANON
+this.stmtValu = genid()
+emitTriple( this.stmtType, this.stmtValu),
+subject,
+(propName.ns, propName.localname),
+(idRefAttr.Type, idRefAttr.Valu))
+emitTriple((NONE, ''), bag,
+(RDFG, HASMEMBER),
+(this.stmtType, this.stmtValu))
+bagIdAttr?
+emitTriple((NONE, ''),
+(bagIdAttr.Type, bagIdAttr.valu),
+(RDFNS, TYPE),
+(URI, RDFNS+BAG))
+propAttr*((idRefAttr.Type, idRefAttr.Valu),
+(bagIdAttr.type, bagIdAttr.value),
+0)
+'/ '
+// new alternative added to handle unknown parseType's
+' ' propName
+rsidAttr?(bag)
+parseType ' ' // other parse
+types
+// treated as
+literal
+literal
+' /' propName ' '
+emitTriple((rsidAttr?.Type, rsidAttr?.Valu),
+subject,
+(propName.ns, propName.localname),
+(LITERAL, literal)
+emitTriple((NONE, ''), bag,
+(RDFG, HASMEMBER) ,
+(rsidAttr?.Type, rsidAttr.Valu))
+[6.13] typedNode(subject, predicate, bag, rsid)
+::= ' ' typeName
+idAboutAttr?
+emitTriple(rsid, subject, predicate,
+(idAboutAttr?.Type,
+idAboutAttr?.Valu))
+emitTriple((NONE, ''), bag, (RDFG,
+HASMEMBER), rsid)
+bagIdAttr?
+emitTriple((NONE, ''),
+(bagIdAttr.Type, bagIdAttr.valu),
+(RDFNS, TYPE),
+(URI, RDFNS+BAG))
+this.stmtType =
+if bagIdAttr.Type==NONE then NONE else
+ANON
+this.stmtValu = genid()
+emitTriple((this.stmtType, this.stmtValu),
+(idAboutAttr.Type,
+idAboutAttr.valu),
+(RDFNS, TYPE),
+(URI, typeName.ns +
+typename.Qname))
+emitTriple((NONE, ''),
+(bagIdAttr?.Type, bagIdAttr?.Valu,
+(RDFG, HASMEMBER),
+(this.stmtType, this.stmtValu)
+propAttr*((idAboutAttr.type,
+idAboutAttr.valu),
+(bagIdAttr.type, bagIdAttr.value),
+0)
+'/ '
+' ' typeName
+idAboutAttr?
+emitTriple(rsid, subject, predicate,
+(idAboutAttr?.Type,
+idAboutAttr?.Valu))
+emitTriple((NONE, ''), bag, (RDFG,
+HASMEMBER), rsid)
+bagIdAttr?
+emitTriple((NONE, ''),
+(bagIdAttr.Type, bagIdAttr.valu),
+(RDFNS, TYPE),
+(URI, RDFNS+BAG))
+this.stmtType =
+if bagIdAttr.Type==NONE else ANON
+this.stmtValu = genid()
+emitTriple((this.stmtType, this.stmtValu),
+(idAboutAttr.Type,
+idAboutAttr.valu),
+(RDFNS, TYPE),
+(URI, typeName.ns +
+typename.Qname))
+emitTriple((NONE, ''),
+(bagIdAttr?.Type, bagIdAttr?.Valu,
+(RDFG, HASMEMBER),
+(this.stmtType, this.stmtValu)
+propAttr*((idAboutAttr.type,
+idAboutAttr.valu),
+(bagIdAttr.type, bagIdAttr.value),
+0)
+propertyElt*((idAboutAttr.Type,
+idAboutAttr.Valu),
+(bagIdAttr.Type,
+bagIdAttr.Valu))
+' /' typeName ' '
+[6.14] propName ::= Qname
+this.ns = Qname.ns
+this.localname = Qname.localname
+[6.15] typeName ::= Qname
+this.ns = Qname.ns
+this.localname = Qname.localname
+[6.16] idRefAttr? ::= idAttr
+this.Type = idAttr.Type
+this.Valu = idAttr.Valu
+resourceAttr
+this.Type = resourceAttr.Type
+this.Valu = resourceAttr.Valu
+this.Type = ANON
+this.Valu = genid()
+[6.17] value(subject, predicate, bag, rsid)
+::= obj(subject, predicate, bag, rsid)
+string
+emitTriple(rsid, subject, predicate,
+(LITERAL, string))
+emitTriple((NONE, ''), bag,
+(RDFNS, '_'+ bagNext), rsid)
+[6.18] resourceAttr ::= ' resource="' URI-reference '"'
+this.Type = URI
+this.Valu = URI-reference
+[6.19] Qname ::= [ NSprefix ':' ] name
+this.ns = namespaceURI(NSprefix)
+this.localname = name
+[6.20] URI-reference ::= string, interpreted per [URI]
+[6.21] IDsymbol ::= (any legal XML name symbol)
+[6.22] name ::= (any legal XML name symbol)
+[6.23] NSprefix ::= (any legal XML namespace prefix)
+[6.24] string ::= (any XML text, with " ", " ", and "&amp;"
+escaped)
+[6.25] // container production deleted
+[6.26] // container produciton deleted
+[6.27] // container production deleted
+[6.28] // container production deleted @@ rdf:li processing todo
+[6.29] // container production deleted
+[6.30] // container production deleted
+[6.31] // container production deleted
+[6.32] parseLiteral ::= ' parseType="Literal"'
+[6.33] parseResource ::= ' parseType="Resource"'
+[6.34] literal ::= (any well-formed XML)
+// new productions here
+[6.35] parseType ::= ' parseType="' string '"'
+[6.36] rsidAttr?(bag)
+::= ' ID="' string '"'
+this.Type=URI
+this.Valu=BASEURI() + '#' + string
+if bag.Type==NONE
+this.Type=NONE
+else
+this.Type=ANON
+this.Valu=genid()
+Now for the XSLT transform. The output language it produces is as
+follows. Each statement is output as a statement element.
+The subject is represented by an attribute, either subjURI if the
+subject has a known URI, or subjANON if the subject is anonymous.
+The value of a subjRes attribute is the URI of the resource. The
+value of the subjAnon attribute is a generated id.
+[@@TODO It doesn't currently handle aboutEach and aboutEachPrefix
+distributed referents properly. For now, it just outputs a
+single statement for each with either a subjaboutEach or
+subjaboutEachPrefix subject.]
+The predicate of the statement is represented by two attributes,
+ns and localname. The value of the ns attribute is the URI of
+the namespace of the predicate. The value of the localname
+attribute is the localname part of the Qname representing the
+predicate.
+If the object of the statement is a literal, the value of the
+literal is represented as the content of the element. If the
+object
+has an associated language, the statement element has an xml:lang
+attribute whose value is the encoding of that langauge.
+[@@TODO xml:lang processing not done]
+If the object of the statement is a resource, then the statement
+element will have either an objURI attribute or an objAnon
+attribute. If the object of the statement is an anonymous
+resource, then the statement has an objURI attribute whose value
+is the URI of the resource. If the object of the statement is
+anonymous, then the statement element will have an objANONn
+attribute whose value is an internal identifier of the resource.
+Examples:
+Statement subjURI="http://aldabaran.hpl.hp.com/bwm"
+ns="http://aldabaran.hpl.hp.com/ns/"
+objURI="http://aldabaran.hpl.hp.com/" /
+Statement subjANON="1"
+ns="http://aldabaran.hpl.hp.com/ns/"
+xml:lang="en" The value of a literal object, possibly
+including markup /Statement
+Statement subjANON="2"
+ns="http://aldabaran.hpl.hp.com/ns/"
+objANON="2"/
+The tranform which follows is not a parser. It assumes that the input
+is
+syntactically valid and does no syntax error checking.
+--
+xsl:variable name='RDFNS'
+select='"http://www.w3.org/1999/02/22-rdf-syntax-ns#"'/
+xsl:variable name='RDFGNS'
+select='"http://purl.org/NET/BMCB/2001/RDFG"'/
+xsl:when test='namespace-uri()=$RDFNS
+and local-name()="Description"
+and not(./*)'
+xsl:when test='namespace-uri()=$RDFNS
+and local-name()="Description"
+and ./*'
+xsl:with-param name='ns'
+select='namespace-uri($nodeSet[position()="1"])'/
+xsl:with-param name='localname'
+select='local-name($nodeSet[position()="1"])'/
+xsl:with-param name='nodeSet'
+select='$nodeSet[position()!="1"]'/
+xsl:when test='name()="xml:lang"
+or (name()="ID" and $elementNS=$RDFNS)
+or (namespace-uri()=$RDFNS and local-name()="ID")
+or (name()="about" and $elementNS=$RDFNS)
+or (namespace-uri()=$RDFNS and local-name()="about")
+or (name()="aboutEach" and $elementNS=$RDFNS)
+or (namespace-uri()=$RDFNS and
+local-name()="aboutEach")
+or (name()="aboutEachPrefix" and $elementNS=$RDFNS)
+or (namespace-uri()=$RDFNS and
+local-name()="aboutEachPrefix")
+or (name()="resource" and $elementNS=$RDFNS)
+or (namespace-uri()=$RDFNS and
+local-name()="resource")
+or (name()="bagID" and $elementNS=$RDFNS)
+or (namespace-uri()=$RDFNS and
+local-name()="bagID")'
+xsl:when test='(name()="li" and $elementNS=$RDFNS)
+or (namespace-uri()=$RDFNS and local-name()="li")'
+xsl:when test='(name()="type" and $elementNS=$RDFNS)
+or (namespace-uri()=$RDFNS and local-name()="type")'
+xsl:with-param name='ns'
+select='namespace-uri($nodeSet[position()="1"])'/
+xsl:with-param name='localname'
+select='local-name($nodeSet[position()="1"])'/
+xsl:with-param name='nodeSet'
+select='$nodeSet[position()!="1"]'/
+xsl:when test='$parseLiteral!="Literal"
+and $parseResource!="Resource"
+and (./* or text())'
+xsl:value-of select='concat(generate-id(), "-BID")'/ !-- dodgy
+2nd call
+to
+generate-id
+--
+xsl:with-param name='objectValu'
+select='concat(namespace-uri(), local-name())'/
+xsl:with-param name='objectValu'
+select='concat(namespace-uri(), local-name())'/
+xsl:with-param name='bagType' select='$newBagType'/ !-- @@????
+--
+xsl:when test='(@parseType="Literal" and namespace-uri()=$RDFNS)
+or @rdf:parseType="Literal"' Literal /xsl:when
+xsl:when test='(@parseType="Resource" and namespace-uri()=$RDFNS)
+or @rdf:parseType="Resource"' Resource /xsl:when
+xsl:template name='rdfg:incOrd' !-- @@TODO what if namespace
+missing --
+I'm Frank Manola. I've been on the technical staff at MITRE Corporation
+for just under a year, with prior stints at Object Services and
+Consulting (a small virtual corporation), GTE Laboratories, Computer
+Corporation of America, and the US Naval Research Laboratory.
+My background is in database research, distributed object and agent
+systems, and most recently trying to merge these technologies into the
+Web environment. This has involved looking at RDF, and how to both use
+it, and relate it to other approaches for representing various kinds of
+metadata. I'm currently working on a project developing Semantic Web
+technologies, and have been closely following the discussions on the
+rdf-interest and rdf-logic email lists. I'm looking forward to making
+the RDF specification a suitable base for the more sophisticated
+applications that these lists have been talking about.
+--Frank
+Frank Manola The MITRE Corporation
+202 Burlington Road, MS A345 Bedford, MA 01730-1420

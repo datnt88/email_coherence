@@ -1,0 +1,153 @@
+Let us know if you are satisfy or not
+I'm not satisfied. I believe it is a mistake to create such a tie
+between Keyboard events and Text events. Whether a particular device
+generates a specific character code in response to one, two, or a
+thousand keydown/keyup events should have no bearing on what text event
+is generated. By tying the cancelling of a keyboard event to the
+(non-)generation of a text event encourages assumptions regarding event
+ordering. One should not assume ordering of keyboard events in
+relationship to the textEvent. Since it would be possible for a
+developer to cancel the text event itself, there is no need to specify
+that cancelling the keyboard event should affect whether a text event is
+generated.
+--Brad
+In previous mailing list discussion, it's been clarified that
+"canceling" a keyDown event has NO EFFECT on whether a textEvent event
+is generated from that keyDown. This should be in the spec. In what
+case would visibleOutputGenerated be TRUE for any TextEvent other than
+textInput?
+Brad,
+we revisited recently this issue. You may have noticed that the Last
+Call version of DOM Events contains the following issue (Issue
+keyboard-1):
+Should the cancellation of a keydown prevent the textInput/keyup event
+types from being dispatched? ]]
+IE, Mozilla, and Opera implementations don't generate a keypress if the
+keydown is cancelled. keyup is still generated. Cancelling keyup has the
+same effect as cancelling keydown.
+The following section was added in the appendix on keyboard events: [[
+A.1.4 Default actions and cancelable keyboard events
+Canceling the default action of a keydown/keyup event does not affect
+its respective keyup/keydown event; it will however prevent the
+respective textInput event from being generated. The following example
+describes a possible sequence of keys to generate the Unicode character
+Q (Latin Capital Letter Q) on a PC/AT US keyboard using a US mapping:
+1. {"http://www.w3.org/2001/xml-events", "keydown"}: "U+0051" (Latin
+Capital Letter Q key), shiftKey
+the default action of the keydown event is prevented.
+2. No {"http://www.w3.org/2001/xml-events", "textInput"} is
+generated.
+3. {"http://www.w3.org/2001/xml-events", "keyup"}: "U+0051", shiftKey
+If the key is a modifier key, the keystroke is taken into account for
+the modifiers states. The following example describes a possible
+sequence of keys to generate the Unicode character Q (Latin Capital
+Letter Q) on a PC/AT US keyboard using a US mapping:
+1. {"http://www.w3.org/2001/xml-events", "keydown"}: "Shift",
+shiftKey
+the default action of the keydown event is prevented.
+2. {"http://www.w3.org/2001/xml-events", "keydown"}: "U+0051" (Latin
+Capital Letter Q key), shiftKey
+3. {"http://www.w3.org/2001/xml-events", "textInput"}: "Q"
+4. {"http://www.w3.org/2001/xml-events", "keyup"}: "U+0051", shiftKey
+5. {"http://www.w3.org/2001/xml-events", "keyup"}: "Shift"
+If the key is part of a sequence of several keystrokes, whether it is a
+dead key or it is contributing to an Input Method Editor sequence, the
+keystroke is not taken into account only if the default action is
+canceled on the keydown event. Canceling a dead key on a keyup event as
+not effect on textInput events. The following example uses the
+keystrokes "U+0302" (Combining Circumflex Accent key) and "U+0045"
+(Latin Capital Letter E key) (on a PC/AT french keyboard using a french
+mapping and without any modifier activated):
+1. {"http://www.w3.org/2001/xml-events", "keydown"}: "U+0302"
+(Combining Circumflex Accent key)
+the default action of the keydown event is prevented.
+2. {"http://www.w3.org/2001/xml-events", "keyup"}: "U+0302"
+3. {"http://www.w3.org/2001/xml-events", "keydown"}: "U+0045" (Latin
+Capital Letter E key)
+4. {"http://www.w3.org/2001/xml-events", "textInput"}: "a"
+5. {"http://www.w3.org/2001/xml-events", "keyup"}: "U+0045"
+If the key is part of a sequence of several keystrokes contributing to
+an Input Method Editor sequence, the keystroke is not taken into
+account.
+Following this addition, we closed issue keyboard-1.
+Let us know if you are satisfy or not,
+Philippe
+Keyboards are generating text, so tying the keyboard events to the text
+events do make sense. The reverse would certainly not be appropriate. We
+removed the previous added section and added the following description
+to the definitions of keydown and keyup:
+If cancelled (Default actions and cancelable events), a keydown cannot
+contribute to the generation of text events. Whether a keydown
+contributes or not to the generation of a text event is implementation
+dependent.
+Applications should not assume that the keydown or keyup will contribute
+to the text event generation.
+Does this change resolve your issue?
+Philippe
+This seems like a contradiction:
+You say the following was added to the spec:
+If cancelled (Default actions and cancelable events),
+a keydown cannot contribute to the generation of text events.
+And then you state:
+Applications should not assume that the keydown or keyup will
+contribute to the text event generation.
+By stating that a cancelled keyDown CANNOT contribute to the generation
+of a text event, you are suggesting that it DOES contribute to a text
+event because changing the key down controls whether the text event will
+fire.
+Additionally, one situation where this could be a problem is a modifier
+key. If one cancels the keydown of a modifer key, but then does not
+cancel the keyDown for an alpha-numeric key following it, the cancelled
+modifier key would still probably contribute to the character generated
+by the system, and there may be no reasonable way to change that.
+That's why I was suggesting key events should be as detached from
+textEvents as possible. Cancelling a key event should have no relation
+to the generation of the text event, just as cancelling a keyDown event
+may have no relation to the generation of a keyUp event. The generation
+of text should not be assumed as the default action of the keyDown.
+--Brad
+Keyboards are generating text, so tying the keyboard events to the text
+events do make sense. The reverse would certainly not be appropriate. We
+removed the previous added section and added the following description
+to the definitions of keydown and keyup: [[ If cancelled (Default
+actions and cancelable events), a keydown cannot contribute to the
+generation of text events. Whether a keydown contributes or not to the
+generation of a text event is implementation dependent. ]]
+is
+Applications should not assume that the keydown or keyup will contribute
+to the text event generation.
+Does this change resolve your issue?
+Philippe
+After discussions, there was still reluctance to ignore the fact that
+keys do generate text. However, the control of the text generation
+following the cancellation of a key could be a problem, as you
+demonstrated with your modifier example. The consensus was to remove the
+first sentence ("If cancelled, a keydown cannot contribute to the
+generation of text events. ") and keep the second one:
+Whether a keydown/keyup
+contributes or not to the generation of a text event is implementation
+dependent.
+This statement should be enough to discourage applications to cancel
+keys in order to affect the text generation imho.
+Philippe
+Your resolution to the cancelling issue is satisfactory.
+Should there be additional specification related to the ordering (or lack thereof) of text events in relation to key events? Something like:
+"Applications should not make assumptions based on the ordering of keyUp events to an associated text event. A text event may fire either before or after an associated keyUp event, and there need not be key events associated with a particular textEvent."
+--Brad
+After discussions, there was still reluctance to ignore the fact that
+keys do generate text. However, the control of the text generation
+following the cancellation of a key could be a problem, as you
+demonstrated with your modifier example. The consensus was to remove the
+first sentence ("If cancelled, a keydown cannot contribute to the
+generation of text events. ") and keep the second one:
+Whether a keydown/keyup
+contributes or not to the generation of a text event is implementation
+dependent.
+This statement should be enough to discourage applications to cancel
+keys in order to affect the text generation imho.
+Philippe
+Well, this sentence implies that there is an association between text
+and keyboard events. Given that the association is implementation
+dependent, I believe that the order will also be implementation
+dependent.
+Philippe

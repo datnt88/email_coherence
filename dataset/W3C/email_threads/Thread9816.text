@@ -1,0 +1,384 @@
+After what I have heard in the telecon, I think it is worth stepping through
+some very simple examples, being aware of what xslt makes of them.
+This is a fairly long message, sorry.
+We will arrive at a single 'complete' proposal for xml literal.
+The only thing we are considering here is namespaces within the xml literal
+foo/ ".
+There is a zip file attached, but it is only if you wish to run the examples
+with your own version of xslt.
+I have used saxon 6.4
+Outline
+0: Assumptions
+1: Namepaces That Aren't Used Should Be Ignored
+2: Use of Exclusive Canonicalization
+3: Difficulties with QNames as Attribute Values
+4: InclusiveNameSpaces &amp; Attribute Value "Literal"
+5: Comments
+6: A Proposal
+7: What's the other path?
+0: Assumptions
+I assume:
+- we do not want "namespace pollution"
+- we want RDF/XML to be processable through XSLT without getting corrupted.
+- following Eric's comments about comments, that we do not want to lose
+potentially relevant information.
+The second condition is tested using the copy transform taken verbatim from
+the XSLT recommendation (copy.xsl in zip):
+!-- This program is taken from the XSLT recommendation:
+--
+!-- For example, the identity transformation can be
+written using xsl:copy as follows: --
+1: Namepaces That Aren't Used Should Be Ignored
+So applying this to file a_1.xml
+i.e.
+rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+xmlns:eg="http://example.org/"
+We get c_1.xml:
+rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+xmlns:eg="http://example.org/"
+The very similar a_2.xml:
+rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+xmlns:eg="http://example.org/"
+is 'copied' to c_2.xml which is identical to c_1.xml
+This is an example of how differences that are not in infoset are ignored by
+XSLT.
+Now, slightly more to the point, in a_3.xml we have a difference that is in
+infoset:
+rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+xmlns:EG="http://example.org/"
+The namespace prefix eg has been replaced by the namespace prefix EG.
+c_3.xml, the result of copying a_3, is not surprising:
+rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+xmlns:EG="http://example.org/"
+At this stage, it appears as though changing the namespace prefix has not
+changed the xml literal (which doesn't use any namespaces!).
+However, a different transform extracts the xml literal from its element and
+makes it a complete xml document.
+The first two examples (i.e. x_1.xml and x_2.xml) in the zip are
+foo
+xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+xmlns:eg="http://example.org/"/
+Whereas the third example (x_3.xml) is:
+foo
+xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+xmlns:EG="http://example.org/"/
+NOTE Both namespaces are part of the foo/ element as far as XSLT is
+concerned, and the namespace prefixes matter. Thus as far as xslt is
+concerned, the xml literals in a_1.xml and a_3.xml are different, even
+though both are " foo/ " surrounded by identical whitespace.
+OPINION (uncontroversial?)
+I regard these extracts as illustrating "namespace pollution".
+I think that the two documents a_1.xml and a_3.xml describe the same RDF
+graph despite the difference between them (prefix "eg" replaced by prefix
+"EG").
+Moving on to a_4.xml this is:
+rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+xmlns:eg="http://example.org/"
+If this is our RDF input file, the author may expect that the namespace "eg"
+is present on the xml literal. If you look at the xml (as text) it is indeed
+there!
+But ...
+If we xslt copy this we get c_4.xml
+rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+xmlns:eg="http://example.org/"
+which is the same as c_1.xml and c_2.xml.
+What has happened is that the data model used by XSLT uses namespace
+attribtues to compute the namespaces on the elements and then discards them.
+The new namespace declaration does not change the namespaces on that element
+("eg" was already in scope) and hence is ignored completely.
+Indeed running the extract transform to get x_4.xml we also get (almost) the
+same as before:
+foo xmlns:eg="http://example.org/"
+xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"/
+(note that Saxon has reversed the order of the namespace attributes, this is
+not in infoset, and should be ignored)
+However putting the same text string into the context of a_3 we get a_5.xml:
+rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+xmlns:EG="http://example.org/"
+This one is distinguishable under XSLT from all the others.
+If we look at the "copied" file c_5.xml we see that the extra namespace
+declaration does not vanish:
+rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+xmlns:EG="http://example.org/"
+Moreover looking at the extract file x_5.xml, we see that the literal has
+more namespaces than previously:
+foo xmlns:eg="http://example.org/"
+xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+xmlns:EG="http://example.org/"/
+My take on these examples is that:
+- the first three examples are all the same.
+(the first two have identical infoset, the third is identical text).
+- so is the fourth, because XSLT cannot distinguish it from the first.
+- also the fifth is the same as the fourth because the text version is self
+contained and identical.
+i.e. all the examples (1 to 6) are basically " foo/ " which only refers to
+the default namespace and so any other namespace declaration is irrelevant!!
+This differs from Infoset which sees the namespace attributes and the
+namespaces as part of the element content, and from XSLT which doesn't see
+the namespace attributes but does see *all* the namespaces as part of the
+element content.
+2: Use of Exclusive Canonicalization
+There is only one XML spec that I am aware of which worries in this sort of
+way about referring to namespaces; ignoring ones that are not used. That
+spec is the exclusive canonicalization spec. The key concept is:
+An element E in a document subset visibly utilizes a namespace declaration,
+i.e. a namespace prefix P and bound value V, if E or an attribute node in
+the document subset with parent E has a qualified name in which P is the
+namespace prefix. A similar definition applies for an element E in a
+document subset that visibly utilizes the default namespace declaration,
+which occurs if E has no namespace prefix
+(that is the only new concept in exc-c14n).
+Using this concept we could imagine a statement like:
+"An xml literal includes the namespaces which are visibly utilized by that
+literal, and no others."
+or (more strongly)
+"An xml literal is formed by taking the exclusive canonicalization of the
+element content."
+Either of these statements would be consistent with all the examples 1 to 6
+being of the same literal. Note that the examples 4, 5 and 6 in which the
+original XML has explicit namespace declarations within the xml literal *do
+not* visibly use those namespaces, and so the namespace declarations are
+simply ignored.
+I use the transform smaller.xsl in the zip to make the files s_1.xml etc.
+These are like the x_1.xml etc but without the invisible namespaces.
+Two other possibilities other than using at least the concept of visible
+utilization from exc-c14n are:
+- follow M&amp;S in *not* addressing the namespace in xml literal issue.
+- do our own thing independent of XML groups.
+I do not see either of these as attractive.
+3: Difficulties with QNames as Attribute Values
+Moving on to example 7 a_7.xml:
+rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+xmlns:eg="http://example.org/"
+xmlns:q="http://example.org/q"
+As far as XSLT is concerned the qname in the attribute value is well-formed.
+If we take the extract x_7.xml we see:
+foo
+xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+xmlns:eg="http://example.org/"
+xmlns:q="http://example.org/q"
+bar="q:name"/
+and the "q" namespace is still around.
+But the rule of ignoring invisible namespaces applies also to the q
+namespace and so s_7.xml is:
+Note that even if we use a_8.xml where the namespace is only declared on the
+xml literal it still is "invisible" by the definition used.
+a_8.xml
+rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+xmlns:eg="http://example.org/"
+still shows the following visible part s_8.xml
+(same as s_7.xml)
+This situation is envisaged by exclusive canonicalization and they have
+three solutions, all clunky:
++ the XML must be modified so that use of the namespace prefix involved is
+visible or
++ the namespace declarations must appear and be bound to the same values in
+every context in which the XML will be interpreted or
++ the prefixes for such namespaces must appear in the InclusiveNamespaces
+PrefixList a special parameter to list the unusual namespace prefixes which
+are needed despite being invisible.
+The first one means getting the document author to add q:ignoreMe="please"
+as an attribute to the element and hoping that it doesn't cause problems.
+The second one would work for a small set of well-known namespace prefixes.
+The third one is the only general purpose solution.
+4: InclusiveNameSpaces &amp; Attribute Value "Literal"
+Within RDF/XML unfortunately, the natural way to list these unusual
+namespace prefixes would be to use additional xmlns declaration. This
+doesn't work if we wish to be XSLT-safe. XSLT systematically ignores such
+declarations which repeat something that is already in scope. A good example
+of a likely case is xmlns:xsd. xsd is a prefix that is likely to be defined
+at the top level, and may occur in a qname in an attribute value in an xml
+literal in RDF!
+We could list these unusual namespaces using an additional attribute e.g.
+rdfns:xsd ....
+This suffers from being fairly not backwardly compatible.
+Oh dear, what we could do is decide to add these unusual namespaces after
+the word Literal within the parseType. e.g.
+a_9.xml
+rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+xmlns:eg="http://example.org/"
+xmlns:q="http://example.org/q"
+This would identify q as a namespace prefix to be treated unusually, i.e. as
+always visisble on any element in which it is in scope.
+Thus the xml literal is (the hand-written x_9.xml)
+foo xmlns:q="http://example.org/q"
+bar="q:name"/
+So there we have it.
+We can prevent namespace pollution using the concept of visible utilization.
+We can allow the unusual namespace use (e.g. qnames as attribute values) by
+listing the unusual namespaces on the parseType value.
+This is XSLT safe.
+For greater precision, particularly for defining equality, we can specifiy
+the use of XML canonicalization.
+5: Comments
+This message is based around one extreme of the solution space. We try and
+fully specifiy what an xml literal is, and we try and get it right. This
+will give maximum interoperability, at the cost of difficulty for
+implementors.
+As such I support Eric's remarks:
+"I strongly vote in favor of
+preserving comments. I have a knee-jerk reaction to deleting any
+information, and I believe this is what would be expected by content
+produces that take time to include comments."
+Thus example a_10 is different from a_1
+a_10.xml
+rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+xmlns:eg="http://example.org/"
+eg:a rdf:parseType="Literal" !--
+this comment is part of the literal --
+the literal is extracted as s_10.xml
+a !--
+this comment is part of the literal --
+6: A Proposal
+This proposal is based on maximally specifying the behaviour to minimize
+interoperability problems, at the expense of requiring work from
+implementors.
+There is the assumption that the WG wishes to address xml literals that:
+- use namespaces
+- use namespaces within attribute values
+Propose that:
+- rdf:parseType="Literal" is replaced by rdf:parseType=literal
+where literal is a list of names starting with the name "Literal"
+- the value of such literal is the xml literal with string component given
+by the exclusive canonicalization of the element content.
+- that the c14n used includes comments
+- that the c14n used uses the second and subsequent names from the value of
+the rdf:parseType attribute as the InclusiveNameSpace Prefix list parameter
+to the exclusive c14n algorithm.
+- equality between the string components of xml literals is given by binary
+equality
+- close the xml literal issues.
+Moreover, I could be actioned to draft an appendix to the syntax doc showing
+how minimal RDF implementations that:
+- do not need equality
+- (and/or) can assume a complete set of namespaces for xml literals#
+can be implemented satisfactorily without use of a c14n module.
+7: What's the other path?
+If the above proposal looks too heavy, I would suggest dropping qnames in
+attribute values from the level of ambition, and merely trying to not
+prevent implementations from treating unusual namespaces unusually. We would
+then stick with "Literal" and "Resource" as the only two values of
+parseType. Vagueness is possible about precisely what string is produced. A
+more limited interoperablity could be achieved by concentrating the spec on
+the equaity of literals.
+I am happy to produce a second proposal based around that path.
+Jeremy
+My natural inclination is to think that namespaces explicitly defined in
+the literal should be preserved...
+What about a_4.xml?:
+rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+xmlns:eg="http://example.org/"
+or this:
+rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+xmlns:eg="http://example.org/"
+foo xmlns:eg="http://example.org/"
+xmlns:eg1="http://example1.org/" /
+or even this:
+rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+xmlns:eg="http://example.org/"
+foo xmlns:eg="http://example.org/"
+xmlns:eg1="http://example1.org/" attr='eg1:qname' /
+Does the declaration of a namespace within the XML fragment constitute a
+"visible utilization" of the namespace?
+I see you've addressed this in the following sections, and conclude that
+the answer is "No": an explicit namespace declaration does not constitute
+a visible utilization. Which, as you point out, creates a problem.
+I'm bothered with all the solutions you propose -- XML schema uses qnames
+in attributes, so I think we'd ignore this at some risk. The solution of
+using rdf:parseType="literal ns1 ns2 ..." doesn't seem to be XSLT-safe.
+I find myself foundering on exactly what it means to be XSLT-safe: it
+seems that any XSLT solution that naively extracts literal content is
+likely to fall foul if this goal.
+#g
+Graham Klyne MIMEsweeper Group
+Strategic Research http://www.mimesweeper.com
+Graham:
+Me too, the alternative is to specify less, and still leave room in which
+implementations can differ.
+Why not?
+I think XSLT preserves namespace prefixes (except when using the aliasing
+mechanism).
+Not replying to all this message; but I'm summarising something that
+I read underlying this:
+Applying XSLT over RDF/XML (or XML) with embedded XML that uses
+qnames in attribute values can mess things up. This is due to
+RDF's XML syntax not knowing about such things and XSLT and other
+XML specs using them.
+I don't see how this is an RDF Model question, and I haven't been
+hearing any large requirement for users for XSLTing lots of RDF/XML.
+If XSLT's design makes it hard to do this particular case, that isn't
+an issue the RDF Core WG can or should address.
+So I'd reduce your assumptions from:
+- we want RDF/XML to be processable through XSLT without getting corrupted.
+but it doesn't seem easy to do in certain cases where qnames as
+attribute values are meaningful in embedded XML inside parseType
+litearl. Sorry, we have no solution at this time.
+I feel we shouldn't over-engineer and require new
+implementation code in order to address this.
+I definitely support:
+"dropping qnames in attribute values from the level of ambition,
+and merely trying to not prevent implementations from treating
+unusual namespaces unusually" -- Jeremy
+Note there is a use case for PIs in embedded XML, recently posted to
+www-rdf-interest
+Dave
+The other extreme that I see in the possibility space is a proposal like:
+Propose that:
+- the exact form of the string value corresponding to any given XML Literal
+within RDF/XML is implementation dependent.
+- the string value is well-balanced XML that can be inserted as the elment
+content between two tags:
+to form an XML document, satisfying both XML and XML Namespaces.
+- taking the exclusive canonicalization of both the original XML Literal in
+its containing document, and the string value within the dummy " foo /foo "
+document produce the same character string. Equality between xml literals is
+defined on this basis, but only for the purpose of exercising the test
+cases.
+- that the canonicalization above is without comments
+- we create some test cases (e.g. with qnames in attribute values) for which
+interoperability difficulties may be observed
+What this means is that implementations
+must:
+- preserve all visibly used namespaces
+- not leave dangling qnames in element tags or attribute names
+- not leave dangling entity references
+- preserve whitespace (except in tags)
+- preserve processing instructions
+are free to:
+- ignore or keep comments
+- use any form of the XML that is Infoset equivalent
+- include any namespaces (whatsoever) that are not visibly used, e.g. to
+treat a declaration as a visible use.
+- be written in XSLT, and/or have XSLT preprocessors (not compatible with
+treating declarations as visible use)
+- not implement C14N
+This does not suffer from namespace pollution.
+Jeremy
+I'm sympathetic to this view. However, at least in my mind, my
+prepared defense for objections to the removal of aboutEach has
+been that it was a syntactic transform, and there is now a
+blessed method for doing syntactic transforms on xml - xslt.
+If we are going to say that this is an xslt problem, we should
+do so being aware that we may be recommending the use of xslt
+to meet certain needs.
+Brian
+Brian McBride said:
+XSLT over RDF/XML will work for most cases.
+This particular issue is supporting XSLTing RDF/XML with
+parseType="Literal" where the embedded XML content contains
+attribute values that are qnames, not URIs and the qname prefixes
+need to be preserved. I consider this not a big problem given
+the number of clauses in the previous sentence.
+The XSLT expansion of aboutEach should remain dooable based
+on Jeremys' XSLT work, as far as I know.
+RDF/XML was designed well before qnames in attribute values started
+to be used in XML formats and we have never promised that it would be
+preserved. We can give best practice, if we decide to go the C14N
+route, but not much more at this stage, without making too-large
+changes to the RDF/XML syntax.
+Dave
+Dave:
+Personally I agree with this.
+I think Tom Passin's posting to rdf-interest
+could be the basis of a disclaimer text.
+Jeremy

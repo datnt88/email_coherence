@@ -1,0 +1,55 @@
+All,
+Here is my simple input file:
+When I run this through Jtidy, I don't get the results I expect. Looking at
+the Document returned by Jtidy, it appears that Jtidy is resolving the
+&amp;#212; entity reference. I thought it was supposed to be the trademark
+symbol (superscript TM). However, the following code:
+Document doc = tidy.parseDOM( inStreamTidy, outStreamTidy
+Node span =
+doc.getDocumentElement().getLastChild().getFirstChild().getFirstChild();
+System.out.println( "Name: " + span.getNodeName() );
+System.out.println( "Value: *" + span.getNodeValue() + "*"
+Prints the following output:
+Name: #textValue: *?*
+Note that the value is not the trademark symbol. Instead, it is some
+strange character. I thought I could get around the problem by slightly
+changing the input. Rather than "&amp;#212;", I thought I would outsmart the
+parser by changing the input to "&amp;amp;#212;". When I run this input through
+Jtidy, I get the following output:
+Name: #textValue: *&amp;#212;*
+I thought I was getting closer. However, when I "serialize" the Jtidied
+document to a file with the following code:
+OutputFormat format = new OutputFormat( doc );
+format.setIndenting( true );
+FileOutputStream outStream = new FileOutputStream(
+"C:\\WINNT\\Profiles\\mgoldberg\\Personal\\Technology Listing
+Form\\John\\212\\serialout.html" );
+XMLSerializer serial = new XMLSerializer( outStream, format
+serial.asDOMSerializer();
+serial.serialize( doc.getDocumentElement() );
+The output looks like the following:
+/
+Serializing this document seems to have replaced the entity reference for
+the ampersand back! My desired result is to have the output of the
+serializer match the input going in to JTidy. I don't want JTidy to resolve
+the entity reference, nor do I want the serializer to put entity references
+back in. I can't seem to figure out how to accomplish this. I've tried
+setting various Jtidy encodings via setCharEncoding(), but that has not
+worked.
+Does anyone know how I can prevent the entity references from resolving?
+Thanks,
+Michael
+It isn't. &amp;#212; is an ?. The entity reference you're looking for is &amp;#8482;.
+Karl Ove Hufthammer
+No -- see
+and look at decimal 212..
+As it should. Try &amp;#8482; instead for the trademark symbol.
+How do you find this out? You look at an [x]HTML DTD:
+For HTML 4.01:
+For XHTML 1.0:
+In each of these DTDs, there are references to 3 entity files -- for
+Symbols, Latin1, and "Special". These are the places where things like
+&amp;nbsp;, etc. are defined. So for example, taking a glance at the XHTML 1.0
+Strict DTD, you'll see in "xhtml-symbol.ent" (referenced in the two XHTML
+DTDs above) this:
+/Jelks

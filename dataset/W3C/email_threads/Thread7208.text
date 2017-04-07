@@ -1,0 +1,228 @@
+"I'm suprised that some people think that the reason that I've supported
+range locking is because GroupWise uses the feature, GroupWise does not. In
+the early days SoftSolutions did, but that is behind us. "
+You sound like a person who has learned from experience that byte-range
+locking has some problems, and you seem happy to report that GroupWise
+doesn't use it.
+I can agree that a lot of people and products have used byte-range locking.
+Would you agree that it's often been merely expedient, rather than being a
+good idea architecturally?
+--Mark
+No, I don't feel that expediency is the issue. Clustering (granularization) is a common
+method of handing shared things. In many operating systems the easiest way
+to do this is to use byte range locking. It is a quick way of creating a shared
+semaphore.
+As far as having "problems" with range locking, this can be said of most all mechanisms
+that are used. Each mechanism has it's up- and down-side. Sharing a file and allowing
+multiple writers (not simultaneous) requires some shared attribute with an owner.
+Again, byte range locking has it's place.
+-src
+Mark_Day/CAM/Lotus@lotus.com 02/24/97 08:13AM
+"I'm suprised that some people think that the reason that I've supported
+range locking is because GroupWise uses the feature, GroupWise does not. In
+the early days SoftSolutions did, but that is behind us. "
+You sound like a person who has learned from experience that byte-range
+locking has some problems, and you seem happy to report that GroupWise
+doesn't use it.
+I can agree that a lot of people and products have used byte-range locking.
+Would you agree that it's often been merely expedient, rather than being a
+good idea architecturally?
+--Mark
+Would someone like to provide a summary of the discussion so far on range
+locking? We have heard several arguments for and against range locking --
+it would be valuable to collect them in one message.
+- Jim
+The web is an unusual operating system, though. (The Internet is an
+unusual computer.)
+In Webdav, we've been pursuing using links and site maps to do
+clustering, and
+it seems that so far we can handle these issues by having separate
+resources
+with a relationship between them, and having the lock operation work on
+the
+separate URLs.
+It might be that in one implementation
+"http://server.dom/resource/bytes=1-12"
+is a byte range of "http://server.dom/resource", but we don't need to
+standardize
+on that, only the relationship between them.
+Clearly we have to address the container/contained relationships, that
+locking a chapter has some effect on the lock state of the entire book.
+If we can handle the relationship at the larger granularity, we probably
+should use the same mechanism for dealing with locks even with a finer
+grain.
+Larry
+"My focus is on back-end issues especially where it deals with legacy
+systems exposing their functionality via WebDAV. I agree with what you
+pointed out
+when it pertains to Internet documents, however, the argument does not
+hold water when exposing a non-web based document repository where
+data structures other than file systems are used to organize documents
+and provide access."
+I guess that I don't understand why byte range locks are singled out for
+special treatment among all the flavors of legacy system behaviors that one
+might choose to support in WebDAV. Why not hardware pages? Unix inodes?
+nodes in a B-tree index? All of these seem to me to have the same character
+as byte ranges: they have no necessary connection to the semantic structure
+of a document or document collection, and they are used by various legacy
+repositories and databases to implement forms of locking.
+--Mark Day
+Mark_Day@lotus.com
+I realize that many in this group are focused exclusively on Internet issues.
+My focus is on back-end issues especially where it deals with legacy systems
+exposing their functionality via WebDAV. I agree with what you pointed out
+when it pertains to Internet documents, however, the argument does not
+hold water when exposing a non-web based document repository where
+data structures other than file systems are used to organize documents
+and provide access. If we are only concerned with Internet resource documents
+then we can dump a whole truck load of concerns, we can also expect that WebDAV
+will not be the mechanism to expose the multitudes of documents held in
+back-end document repositories.
+-src
+Larry Masinter masinter@parc.xerox.com 02/25/97 06:23AM
+The web is an unusual operating system, though. (The Internet is an
+unusual computer.)
+In Webdav, we've been pursuing using links and site maps to do
+clustering, and
+it seems that so far we can handle these issues by having separate
+resources
+with a relationship between them, and having the lock operation work on
+the
+separate URLs.
+It might be that in one implementation
+"http://server.dom/resource/bytes=1-12"
+is a byte range of "http://server.dom/resource", but we don't need to
+standardize
+on that, only the relationship between them.
+Clearly we have to address the container/contained relationships, that
+locking a chapter has some effect on the lock state of the entire book.
+If we can handle the relationship at the larger granularity, we probably
+should use the same mechanism for dealing with locks even with a finer
+grain.
+Larry
+You are right, the protocol does not need to deal with the range lock.
+If needed it can be performed at the resource level. If a DMS manages
+documents via a database then the resource name becomes the
+access name for the document.
+I believe we are no longer at cross purposes.
+-src
+Larry Masinter masinter@parc.xerox.com 02/25/97 07:51AM
+Steve,
+You keep on talking about function, and I'm talking about protocol.
+The issue isn't whether the function needs to get exposed, the
+issue is whether the protocol needs to be aware of it. I don't
+see any good reason why the protocol needs to get more complicated
+to deal with "byte range locking" when "resource locking" covers
+it, because a "byte range" can be a "resource".
+Is there really a disagreement, or are we just talking at cross
+purposes?
+Larry
+This is interesting. Byte ranges are indpendently cacheable, as are
+multiple representations of the same resource, but unless I'm
+misunderstanding something fundamental, they don't have URIs. It seems here
+that the difficulty comes from the assumption that a lockable resource must
+be uniquely identified through a URI.
+gjw@wnetc.com / http://www.wnetc.com/home.html
+If you're going to reinvent the wheel, at least try to come
+up with a better one.
+Byte ranges (in HTTP range retrieval) don't apply to resources.
+They apply to entities. An entity is the data stream that
+you get when you perform a GET operation. Servers are free
+to ignore byte range requests and deliver the entire
+entity rather than the indicated range.
+Resources don't have "byte ranges". Entities are immutable.
+They don't change. Since they don't change, it doesn't make
+sense to lock one or even lock part of one.
+That's why locking byte ranges doesn't make sense, even
+though you might think of having one resource which is
+a particular byte range of another resource and locking
+_that_.
+(Yaron, your example is broken because "#" is not a valid
+character in URLs.)
+Goal: To provide locking for defined subsections of a document
+Problem: DAV only supports locking on URLs, as URLs are given to a
+resource as a whole, DAV can not currently handle a partial lock
+Solution: Give subsections URLs.
+Example: Byte Ranges - A client searches for the attribute
+"xssdfsyhw30rwfwofjslfihleihfsfe" which is a token meaning "I give you
+permission to mangle the URL for this resource to point to a byte range
+in a defined way, specifically, you may add a "#" followed by a number,
+followed by a dash, followed by another number". The client then sends
+23 are locked. Obviously the example doesn't provide all the semantic
+requirements but it is just a taste of the underlying mechanism.
+Problem: Mangling Overload. It is very nice and good to mangle a URL
+w/permission from the server, but at some point the various mangling
+mechanisms are going to run into each other.
+Potential Solution: A byte range method called ByteHead =). A range
+header is included to specify the byte range, although it can be used to
+specify any arbitrary range such as chapter or page. The request-URI is
+the request-URI of the resource. The response contains a
+content-location header which is the URL pointing to the relevant range.
+The rest of the response contains the same thing as a HEAD request done
+on the URL contained in content-location.
+Problem: Two round trips for every single lock request.
+Solution: A convenience method which combines ByteHead with Lock, we can
+call it LocksByte.
+Yaron
+Larry Masinter masinter@parc.xerox.com 02/25/97 07:51AM
+This is interesting. Caching in HTTP works precisely because it implememnts
+the immutable file model of a distributed file system...or at least that's
+the way I tend to think about it. Your point that entities are immutable
+and reources are not is, of course, correct. The difference is that I think
+of the combination of a resource and a validator for that resource (think
+of it as a version, something like a version number of an OpenVMS file) as
+the immutable object.
+I'm not sure about this one. Certainly, if a resource is modified, a byte
+range may become an inaccurate representation of that resource (or, perhaps
+I should say valid entity), and in this sense I agree with you. But byte
+range requests are made against resources and not entities. It seems that
+the real point is that the link between a byte range and a reource is a
+transient thing, whereas the link between a byte range and an entity is
+permanent.
+I'm not quite sold. As I indicated in an earlier message, it may be that a
+byte range lock is not a useful concept, but it is still meaningful. For
+the purposes of this post I will define a version of a reource to be a
+resource together with a unique validator for that resource. With this
+definition, it makes sense to require that new versions of a resource can
+only be created subject to the constraint that the byte range 0-500 is the
+same for both versions. (I know this use of version is not consistent with
+WEBDAV terminology, but it saves a lot of words.) Surely, this is a
+meaningful requirement.
+Is it a useful concept? I don't know. The problem is that byte ranges need
+to be independently cacheable or there is no advantage in locking a byte
+range instead of locking the whole resource. The problem is that if
+resource R is represented by a 1000 byte entity, and person A has already
+obtained byte ranges B1 and B2 representing bytes 0-500 and 501-1000
+respectively, and both are available in cache, then if that person wants to
+GET the resource (not a byte range), then the corresponding entity E is the
+union of B1 and B2, and so it should not be necessary to transer the whole
+entity, a revalidation should be sufficient. But how can this be done? Even
+if the byte ranges have their own validators e1 and and e2, there is no
+relationship between the pair (e1,e2) and a validator e for R.
+(Sorry for all the "symbol speak". I guess my background in mathematics is
+catching up with me.)
+gjw@wnetc.com / http://www.wnetc.com/home.html
+If you're going to reinvent the wheel, at least try to come
+up with a better one.
+What you were calling a "validator" is called an "ETag" in HTTP/1.1
+(because we got into a knot over the meaning of 'validation'), and
+the ETag for a "version" of a resource is for the whole resource
+and not for any particular byte range.
+The ETag returned is that for the entire entity and not for the
+subranges. It was important that caches be able to stitch together
+whole entities from partial ranges in order to satisfy subsequent
+requests. So byte ranges *don't* have their own "validators".
+Right, and I intentionally chose validator instead of entity tage because I
+was referring to a non-existant validation mechanism.
+This is another way of saying the same thing. If entity tags refer to
+entire entities, then it is possible to build an entity out of individually
+cached subranges. My point was simply that if modifying a resource doesn't
+invalidate all cached subranges (even those not affected), then there is no
+way to know if a union of subranges will be equal a valid (up to date)
+entity. I then concluded that there is nothing to be gained by locking a
+subrange (whtever that might mean) because the entity tag will change with
+an update, and so even byte ranges which are disjoint from the affected
+range will become invalid.
+gjw@wnetc.com / http://www.wnetc.com/home.html
+If you're going to reinvent the wheel, at least try to come
+up with a better one.

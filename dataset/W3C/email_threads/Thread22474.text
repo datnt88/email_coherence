@@ -1,0 +1,387 @@
+I have a question about interface EntityReference.
+EntityReference definition has following sentence. (on WD-DOM
+-19980720)
+The replacement value, if it is available, will appear
+in the child list of the EntityReference.
+If two or more entity references which reference same entity
+appered in one document, many copies of replacement value are
+created in the DOM object tree?
+KAZUMI Saito FUJITSU Laboratories Ltd.
+Since replacement value doesn't change after the entity has been created, I
+think you'd wind up with many _references_ to the replacement value but
+only need one copy. True?
+Two are created in the logical DOM object tree. You may, of
+course, come up with some efficient implementation-specific
+sharing mechanism but when the user walks the tree past the
+EntityReference, they will see an Entity for each EntityReference.
+Lauren
+as long as the user sees an Entity each time they walk through the
+EntityReference, you can implement the actual object any way you
+want. So yes, your interpretation matches mine.
+There is often a difference between the logical structure of the DOM
+(what the script writer sees) and the implementation of that
+structure.
+Lauren
+It is very difficult to implement this any way but by making actual copies,
+because each occurrance of the Entity has to have, or appear to have, the
+correct parentNode and sibling links.
+On the other hand, it's very _easy_ to implement if you have a TreeIterator
+or some such, because then the iterator can hide the actual structure and
+descend into the Entity rather than its reference.
+That's what we're doing in our implementation. We are essentially filtering
+documents, so we have to be able to reconstruct them on the output in a form
+identical to the input. We leave the EntityReference nodes in the tree, and
+our iterators do the replacement on the fly.
+This brings up a weak point in both the XML and the DOM specs -- no
+consideration at all is given to the possibility that one might want to
+_output_ a document, in which case replacing each EntityReference with its
+corresponding Entity is WRONG. The whole assumption is that the parser is a
+front-end for an application that doesn't want to know about the _real_
+structure of the document.
+Stephen R. Savitzky Chief Software Scientist, Ricoh Silicon Valley, Inc.,
+steve@rsv.ricoh.com California Research Center
+home: steve@starport.com URL: http://www.starport.com/people/steve/
+XML provides a mechanism for text componentization that is explicitly
+designed to be invisible to the application. XLink provides a mechanism
+that the application can "see" and manipulate and choose to use or not
+use. If you want these "first class transclusions" then you should use
+XLink and not text entities.
+Paul Prescod
+My point is that there is more than one kind of application. Applications
+that _consume_ XML files do not need to "see" entity references. However,
+applications that _produce_ or _edit_ XML files _must_ be able to manipulate
+entity references directly. The failure to make this distinction in the
+specification is a serious problem, because it means that an XML editor, for
+example, cannot possibly conform to the specification!
+What's even worse, an XML editor cannot make use of an XML parser or DOM
+class library that conforms to the specification (unless I have seriously
+misread something). I think that this fact should be sufficient to prove
+that the specification is inadequate.
+Stephen R. Savitzky Chief Software Scientist, Ricoh Silicon Valley, Inc.,
+steve@rsv.ricoh.com California Research Center
+home: steve@starport.com URL: http://www.starport.com/people/steve/
+Not necessarily, though it should *appear* as though there are
+many copies.
+Changes to the Entity in the DocumentType object should be
+reflected throughout the tree.
+An XML editor can add to the specification. You're not limited to the Level
+1 DOM interfaces.
+I don't think that this is true - my company is working on an XML editor,
+for example, and there are other companies working on the DOM specification
+that are also working on XML or SGML editors. It is more likely that we
+haven't documented it all properly. (But of course, it's not impossible
+that we completely missed something vital).
+We know that an XML editor would need to add functionality to the DOM
+interfaces to be able to be an editor. And it is planned to add this
+functionality to the DOM as soon as we can. Since we can only do a few
+things at a time, we figured it was best to finalize what we can do now,
+and then start work on the rest of the requirements with at least something
+to show for our efforts of the last 18 months.
+We are also planning on adding back iterators in a future level, and
+potentially other things to make life easier for server-style applications
+that have large documents.
+But for now, we need to get the current spec out, limited though it may be
+in functionality. We can always add functionality later. It's harder to
+undo the mistakes that would likely happen if we tried to do too much too
+fast.
+No DOM implementation is *limited* to the DOM interfaces - you are free to
+add what you think you need. When we start work on the rest of the DOM, it
+would be good if you could then share with us any information as to what
+worked, and what didn't, in your implementations. And what you think we
+should add, or not add.
+Lauren
+Right. The DOM requirements are geared more toward editor vendors who wish
+to expose the DOM APIs via their extension/scripting languages than toward
+those who wish to write an editor on top of the DOM. We hope to make the
+latter more feasible in Level 2, but for the moment editor vendors would
+have to "embrace and extend" the DOM with proprietary APIs in order to
+implement a working product. You couldn't write a browser on top of the
+Level 1 DOM either, but that's not its purpose. It *should* be possible to
+write scripts, JavaBeans, etc. that do useful things and work equally well
+across a number of browsers and editors, and that *is* the DOM's purpose.
+Mike Champion
+The specification clearly states:
+EntityReference objects are inserted into the DOM by the XML processor
+whenever the processor sees a reference to an entity other than the
+pre-defined character entities in the XML specification. The replacement
+value, if it is available, will appear in the child list of the
+EntityReference.
+One might hedge this by saying that the replacement value of an entity is
+``not available'' to an editor even if it's in the DTD, but that's a pretty
+severe distortion of the spec. The requirement to replace and re-insert
+character entities is also a pain in the neck. We're ignoring it, of
+course, in the interests of efficiency, but it's another distortion, and
+another reason our application simply doesn't conform.
+So your editor lets you define entities in the DTD and put corresponding
+references in your document. What does it do when it encounters a reference
+in the course of saving or displaying the document? The only correct thing
+according to the spec would appear to be to replace it. (I can see
+replacing the entity when you do a search; this just demonstrates that both
+behaviors have to be permitted.)
+It would be sufficient to mention in the spec that not every application is
+_required_ to put the replacement value of every EntityReference in its
+children, nor to invisibly replace references to character entities.
+The problem is not _adding_ functionality to the DOM, but _removing_ it. In
+the interests of efficiency and of correct behavior in a document-processing
+application, we're simply _not doing_ many of the things the specification
+says we have to do. If they were optional instead of mandatory, we would be
+conforming to the spec.
+We will be able to implement every interface (they're a subset of what we
+need), but not all of the methods will have the specified behavior. That's
+probably what you are doing, too.
+This is correct, and what I'm saying is that there is specified behavior that
+is both difficult to implement and incorrect for some applications. Remove
+it, and add it back _correctly_ later.
+I'll be glad to. There's an excellent chance ( 90% probability) that our
+application will be released as open source later this year. At that point
+we'll have 50-100K lines of Java code to share, and some interesting war
+stories.
+Stephen R. Savitzky Chief Software Scientist, Ricoh Silicon Valley, Inc.,
+steve@rsv.ricoh.com California Research Center
+home: steve@starport.com URL: http://www.starport.com/people/steve/
+DOM1 not doing everything: Makes sense to me.
+But the more I look at it, the more I'd argue that live index-based
+NodeLists belong in that second category, if they're needed at all. Live
+isn't bad. Array-like isn't bad. The combination of both with a "gather"
+call is murderous.
+Is there any chance we could talk you into changing the NodeList.item()
+call back into a tree-walking first()/next()/previous()/last() API? Among
+other justifications, that's going to be cheaper to process if it turns out
+that we only needed the first few responses from ...ByTagName().
+Does integer indexing really have an advantage that justifies its
+additional cost in both implementation and computation costs? I can't think
+of one.
+(I know I'm coming into this discussion late, and I'm not on the committee,
+so if in fact this has already been hashed out please feel free to just
+tell me so. But to this novice's eyes, it looks like you're making life
+much harder for yourselves -- and us -- than is really necessary.)
+The are some on the committee who agree with you 100% on this one; and
+others who equally can't see why we want next/previous at all, because they
+think that index-based lookups and navigation are much more natural to the
+user... so we ended up with both methods in effect. (all those
+next/previous-walking methods on Node).
+Yes, the getElementsByTagName is an exception, but when we do the full
+filter/query system (planned for Level 2) we'll also probably have
+iterators to hold the results of those, so getElementsByTagName might
+become completely superfluous.
+Lauren
+You raise some good points here that I'll bring up in the committee.
+Lauren
+manipulate
+As you say: Next/prevous on Node is functionally _different_ than
+next-previous on a ByTagName NodeList. The latter does not currently exist
+in the spec; only integer access (with all the associated pain) is
+supported.
+I have confidence that Level 2 will address this. I just wish Level 1
+wasn't asking us to implement a substantial chunk of code which we expect
+and hope to throw away.
+Of course there's always the other approach to resolving the conflict: Is
+it Really Necessary that NodeList be "live"? How often is this going to
+matter, and is it in fact the behavior you want (as opposed to requesting a
+new NodeList when you know that changes have been made that you need to
+respond to)?
+On a slightly different note, here's a suggestion from a friend: Have you
+considered picking up some of the Model/View/Controller ideas and applying
+them to the DOM? Specifically, it might make sense to add the ability to
+register some flavor(s) of TreeChangeListener, which would be called when
+the relevant portion of the document was altered. That will become
+especially necessary when you start dealing with multiple access, and
+particularly if the integer indices are preserved -- you'll have to know
+what happened in order to adjust those appropriately.
+To be more correct, all the direct descendants of an EntityReference
+have to have the "correct" parent and siblings. Entity only lives
+in DocumentType.
+the _real_
+This is less true of the DOM. The ability to naively write out a document
+and
+get pretty much the right structure has been an important goal.
+The main reason for making NodeList live is so that scripts can start
+accessing the document while it's still being loaded, and not have to poll
+the NodeList every so often to see if there are now five H3's in the
+document where only three had turned up before.
+It's not meant to be the solution to multi-threading problems; in fact
+Level 1 assumes that only one thread at a time can access the document so
+that you are in charge of everything that changes (apart from the process
+loading in the document which can't delete anything or move it around).
+We've talked a bit about MVC and I'm sure we'll talk more about it when we
+get to multi-threading. Feel free to remind us when we get closer - we'll
+be doing our best to keep this mailing list up to date with what we're
+working on so that we get to pick all of your brains about the best ways to
+do things.
+Lauren
+This is a syntactic vs. semantic distinction (with entities being
+syntactic).
+The DOM *does* try to mirror certain parts of the syntactic structure of
+a document, so the above is not strictly correct.
+If NodeList is live only for purposes of processing-during-read, it can be
+simplified _tremendously_ since read only involves appends -- not
+insertions, not deletions, and hence no shifts in the index-to-node
+mapping.
+There seems to be some differences of opinion about whether all NodeLists
+are live. I think this is a matter which can usefully be left unresolved.
+If this is really the intent, it should say so. This merely specifies that
+the NodeList returned by getElementsByTagName should be computed lazily in a
+context where the document may not be entirely present in memory, and
+does _not_ require that it be "live" across all possible modifications to
+the document. The latter is a much stronger requirement, and much harder to
+implement. The former can be ignored completely by an application that
+parses the entire document before processing it.
+Stephen R. Savitzky Chief Software Scientist, Ricoh Silicon Valley, Inc.,
+steve@rsv.ricoh.com California Research Center
+home: steve@starport.com URL: http://www.starport.com/people/steve/
+In message "RE: EntityReference",
+Gavin Thomas Nicol wrote...
+Thank you, I recognized some problems about EntityRefernce
+implementation.
+Why "The replacement value, if it is available, will appear
+in the child list of the EntityReference" ?
+I have believed the DOM Object tree is another representation of
+XML (text) file. Then EntityReference needs only entity's identifier
+not replacement value, I think.
+x x x
+I think I'll second the confusion. Given that the application processing
+the EntityRef knows what kind of node it's processing, why does the value
+need to be attached as an actual Child rather than being available via a
+method invocation on the EntityRef itself (which would leave the
+implementation relatively unconstrained)?
+Again, apologies if this has all been hashed over in the past; feel free to
+say "Oh, not that again" and ignore me...
+(BTW, in your copious spare time grin! it'd be Real Nice to have an
+annotated DOM spec -- like the annotated XML spec now available -- where
+you could put standard explanations of why particular design decision were
+made and other commentary which doesn't really belong in the spec per se.
+The answers posted here would probably be a good start on those footnotes.)
+OH NO! NOT THIS AGAIN ... yup, we've been around this track a few times.
+There are numerous reasonable ways to do this, and we decided that this is
+the cleanest. Remember that we try to balance the needs of the users and
+the implementers, the old-time SGML weenies and the HTML users born again
+as XML users, etc.
+I'm planning to write a bestselling self help book "DOM for the Confused"
+to do just that. In the great tradition of our industry, I've helped make
+it impossible for ordinary mortals to understand the DOM unless they buy my
+book ;~)
+Seriously, that's a reasonable idea.
+Mike
+This neatly illustrates a point I have been trying to make for some time,
+namely that the behavior required by the specification is appropriate for
+some DOM applications, BUT NOT ALL.
+In a scripting application, which the DOM is clearly aimed at, replacing
+entity references with their values, keeping nodelists up-to-date with a
+file being read in, and constructing nonce parents for nodes under
+construction, are all appropriate.
+What I want to see is SOME consideration in the specification for different
+kinds of applications, such as server-side processing, document
+transformation, syntactic verification, indexing, and editing, for which
+these behaviors are NOT appropriate. I want the specification to make it
+clear that these behaviors are OPTIONAL, and required only in applications
+where they make sense.
+Please note: I'm not asking for any extensions, and I'm not asking for any
+changes whatever in the attributes and methods defined in the interfaces.
+All I'm asking for is changes in the _descriptions of the semantics_ of those
+interfaces, and mainly by changing "is" or "must" to "may". Is that too
+much to ask?
+What I really want is the right to claim that my code "implements the DOM"
+instead of having to say: "implements the interfaces defined by the DOM
+specification, but with the major changes in the semantics necessary for an
+efficient implementation of my application".
+I think that the DOM continues in its present course, it is in danger of
+becoming the ``Scripting Object Model'' and being essentially useless for
+any other purpose.
+Stephen R. Savitzky Chief Software Scientist, Ricoh Silicon Valley, Inc.,
+steve@rsv.ricoh.com California Research Center
+home: steve@starport.com URL: http://www.starport.com/people/steve/
+NO -- you are not balancing the needs of the users and the implementors of
+the DOM, you are balancing the needs of the users and implementors of
+client-side scripting languages. The DOM has, at least potentially, many
+more applications than just being the semantic model behind Javascript, and
+it would be nice if those of us who are trying to build real, working
+document-processing applications could get at least a _little_ input into
+the process.
+Stephen R. Savitzky Chief Software Scientist, Ricoh Silicon Valley, Inc.,
+steve@rsv.ricoh.com California Research Center
+home: steve@starport.com URL: http://www.starport.com/people/steve/
+For better or worse, the Level 1 DOM is being driven by the need for a
+standard that allows Dynamic HTML scripts that interoperate between the NS
+and MS browsers. We are, to a certain extent, rushing the spec out the
+door to avoid missing the window of opportunity provided by the 5.0
+releases of the browsers, because if we miss it, the opportunity is gone
+forever.
+Clearly full-blown XML support and serious consideration of server-side
+processing has suffered from this. Level 2 *can* address these issues much
+more effectively, and one possibility for Level 2 is a minimal DOM (perhaps
+synchronized with some subset of XML that others may be defining). It's
+important for people who care about them to make their needs known, via
+their W3C reps, by joining the W3C, by regularly looking for Level 2
+information on our Web site and participating on this mailing list, etc.
+Just how much time do we have?
+In the interests of moving things along, let me make some very specific
+suggestions:
+1. in Document under "getElementsByTagName"
+add:
+In an application in which a Document is being read in or
+constructed in parallel with other processing, the NodeList returned
+by getElementsByTagName must be ``live'' in the sense of being
+continually appended to whenever a new Element with the given tag
+name is added to the Document.
+2. in Node:
+add: boolean inDocument();
+This will allow ``orphan'' nodes to be identified without
+requiring each Document to have an identifiable DocumentFragment
+that contains newly-created nodes. It does not preclude such a
+fragment, however.
+clarify: whether the "name" attribute of an Element is the same as the
+the result of getTagName on that Element.
+replace: attribute wstring nodeValue;
+with: attribute wstring data;
+attribute NodeList nodeValue;
+There needs to be some verbiage to the effect that if a node has
+children, then nodeValue must contain the result of substituting all
+entity references with their values in those children, and data must
+contain the result of converting nodeValue to a string. If the Node
+is an EntityReference, then its nodeValue must be the nodeValue of
+the corresponding Entity. (Alternatively, nodeValue could be added
+to Entity, EntityReference, and Attribute, but I think it's better
+in Node.)
+The effect of this is to permit both string-valued nodes like Text
+and node-valued nodes like Entity and EntityReference. This will
+also make it possible to remove the "data" attribute from Data.
+Another effect will be to make the substitution of entity references
+with their values take place lazily at the point where those values
+are actually used.
+It might be better if there were a method, getValue(), instead of
+the attribute nodeValue().
+3. in EntityReference:
+replace: ``The replacement value, if it is available, will appear in the
+child list of the EntityReference.''
+with: ``The replacement value, if it is available, will appear in the
+nodeValue of the EntityReference.''
+4. It would be useful if there were an extension of NodeList corresponding
+to what used to be EditableNodeList, i.e. a NodeList you could modify.
+I'm doing the latter now. Unfortunately our small research group is a
+subsidiary of a large company, so it will take a while before I can move the
+necessary two requests (for full and affiliate memberships) through a
+set of management on either side of the Pacific.
+Stephen R. Savitzky Chief Software Scientist, Ricoh Silicon Valley, Inc.,
+steve@rsv.ricoh.com California Research Center
+home: steve@starport.com URL: http://www.starport.com/people/steve/
+Essentially none. The spec must go to the W3C ASAP, by the middle of next
+week at the latest.
+We're discussing this, although there seems to be some confusion as to why
+this is necesary to you and others who have suggested it.
+As for your other suggestions, I'll take a close look at them the next pass
+thru the spec.
+Not to worry. There are no such things as "character entities" in XML.
+There are "character references", the "&amp;#nnnn" and "&amp;#xnnnn" things,
+but there are no "character entities" that they refer to.
+What the above quotation from the DOM WD presumably means is that
+references to "lt", "gt", "quot", "apos", and "amp" need not be
+treated as Entity objects, but can be incorporated in Text nodes.
+Likewise with character references, since they are not references
+to entities.
+So it's only references to declared parsed entities (and only
+internal entities at that, if the reference is still to Attribute
+nodes).
+John Cowanhttp://www.ccil.org/~cowancowan@ccil.org
+You tollerday donsk? N. You tolkatiff scowegian? Nn.
+You spigotty anglease? Nnn. You phonio saxo? Nnnn.
+Clear all so! 'Tis a Jute.... (Finnegans Wake 16.5)

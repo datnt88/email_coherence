@@ -1,0 +1,89 @@
+~~ BUGS REPORT - HTMLTIDY WIN32 VERSION (AND MAYBE OTHER PORTS) ~~
+* EXPECTED RESULT: I want to take a Server-Side Include HTML file and tidy
+it up. The file only contains the information which would normally appear
+*inside* of but not including the BODY tag. As server-side includes work
+by embedding commands in HTML comments ( for instance !--#include
+virtual="/ssi/file.shtml" -- ) all comments should be preserved and in
+addition preserved as-is.
+* POSSIBLE BUG: The first SSI HTML comment either gets placed in the wrong
+location in the output or stripped altogether.
+The source HTML file follows:
+-- Start ----------------------------------------------
+-- End ------------------------------------------------
+*** BUG ONE ***
+Command: `tidydbg.exe file.shtml`
+Result: Notice how the SSI is placed in the wrong place at the TOP of the
+output (first line). It should be INSIDE the body tag!!
+Possibility: My guess is that htmltidy is viewing the first comment line in
+the file as if it is the doctype; however, this is incorrect behaviour in
+this case.
+-- Start ----------------------------------------------
+2002), see www.w3.org"
+-- End ------------------------------------------------
+*** BUG TWO ***
+Command: `tidydbg.exe --show-body-only yes file.shtml`
+Result: Notice how the *first* SSI comment DISAPPEARS without a trace!
+Possibility: My guess is that htmltidy is viewing the first comment as a
+part of the HEAD and stripping it; however this is incorrect behaviour in
+this case.
+-- Start ----------------------------------------------
+-- End ------------------------------------------------
+Unfortunately there is no way for tidy to tell which components of the page get
+included with
+You seem to include body elements and therefore expect the SSI in the body,
+however header.html could just as well include an XML declaration which needs
+to be included before the DOCTYPE.
+Simply put, tidy is reading a comment, which can appear anywhere, therefore
+adding it to the output tree, then it reads an h2 which requires a preceeding
+body tag so it generates the missing parts of the HTML tree, then adds the
+h2 tag in body context.
+See above, the comment is valid outside of the body and is placed outside of
+the body in the generated content tree, so it is not output when requesting
+body only.
+Not sure how to best resolve this, maybe results would more closely match
+expectations my attaching comments to the following elements (apart from
+implementation issues, can anyone think of a good reason why a comment
+should be attached to the following element?)
+Klaus Johannes Rusch
+KlausRusch@atmedia.net
+So, we have someone who has HTML fragments that are to be treated
+as parts of a body , including all comments.
+Surely the simple thing is
+(echo " body "; cat TheFile; echo " /body ") | tidy
+to _tell_ Tidy that the contents of TheFile are supposed to be treated
+as part of a body? No changes to Tidy are required.
+So, we have someone who has HTML fragments that are to be treated as parts
+of a body , including all comments.
+I have a website with dozens of small files lying around - each containing
+fragments of valid HTML which get pulled together in real time by
+server-side include technology. As each file often gets messy over time
+through much editing, I wish to tidy them. I want Tidy to check the
+structure of and format them but without removing any content whatsoever.
+The command I am using is below however the first three comments get
+stripped. If I should be using another command, please advise. Any help
+would be appreciated.
+`tidy --show-body-only yes document.txt`
+Here is an example of the typical document.txt file:
+In reality the file would have a lot more h? , p
+elements.
+I only want to tidy exactly what is below!
+!--#include
+virtual="/utilities/processes/ssi/header-utilities-process.html" --
+p Schools are funded for the current financial year for an amount equal to
+the average of the previous two financial years expenditure as reported on
+the audited school financial return submitted each June. /p
+!--#include
+virtual="/utilities/processes/ssi/footer-utilities-process.html" --
+So, we have someone who has HTML fragments that are to be treated as parts
+Create a shell script like the one below (or a BAT/CMD file for Windows) that
+adds surrounds the HTML fragments with body /body tags, then run that
+script instead of tidy directly, i.e.
+mytidy.sh:
+#!/bin/sh
+(echo " body "; cat "$1"; echo " /body ") | tidy --show-body-only yes
+Command:
+mytidy.sh document.txt
+Alternatively change your include structure to place the main structural
+elements in each source file, i.e.
+Klaus Johannes Rusch
+KlausRusch@atmedia.net

@@ -1,0 +1,166 @@
+Hi,
+I just noticed a potential problem with versions being used for a merge
+operation
+being deleted during the merge.
+Section 11 says a checked-out resource has a DAV:merge-set identifying
+versions
+to be merged. DELETE (section 11.5) says it will remove entries from
+the
+merge-set. Shouldn't the server disallow the DELETE, someone somewhere
+is in the
+middle of a merge using this version, also there would be a race
+condition if someone
+deletes the version while the client is processing the DAV:merge-set of
+a checked-out
+resource.
+Regards,
+Peter Raymond - MERANT
+A server is of course free to refuse the DELETE request,
+and indicate as its reason that it didn't want to satisfy
+the postcondition that would remove that version URL from
+the DAV:merge-set.
+Note thought that even if the server allows the deletion,
+there is no race condition here, though,
+just some dangling version URL's that will return 404's
+when accessed.
+Cheers,
+Geoff
+Hi,
+I just noticed a potential problem with versions being used for a merge
+operation
+being deleted during the merge.
+Section 11 says a checked-out resource has a DAV:merge-set identifying
+versions
+to be merged. DELETE (section 11.5) says it will remove entries from
+the
+merge-set. Shouldn't the server disallow the DELETE, someone somewhere
+is in the
+middle of a merge using this version, also there would be a race
+condition if someone
+deletes the version while the client is processing the DAV:merge-set of
+a checked-out
+resource.
+Regards,
+Peter Raymond - MERANT
+I think the spec is correct that the server should allow the DELETE. We
+can debate the 'work-flow' aspect of merging and may come to different
+conclusions, however, from a protocol point of view, I think a client
+should be allowed to delete a version during someone else's (and especially
+their own) merge. DELETE will not be the only potential point of conflict
+during a merge since the merge request and the resolution of conflicts is
+not atomic. There can be no "safe" merge without locking down all the
+affected resources and their version histories.
+Regards,
+Tim
+Peter,
+The delete from the merge-set is deleting the version URL from the
+merge-set, not deleting the version itself. This just indicates the user
+is done doing the merge from that entry.
+Peter Raymond Peter.Raymond@merant.com
+Sent by: ietf-dav-versioning-request@w3.org
+08/19/2001 08:21 AM
+Subject: Versions being deleted during a MERGE...
+Hi,
+I just noticed a potential problem with versions being used for a merge
+operation
+being deleted during the merge.
+Section 11 says a checked-out resource has a DAV:merge-set identifying
+versions
+to be merged. DELETE (section 11.5) says it will remove entries from
+the
+merge-set. Shouldn't the server disallow the DELETE, someone somewhere
+is in the
+middle of a merge using this version, also there would be a race
+condition if someone
+deletes the version while the client is processing the DAV:merge-set of
+a checked-out
+resource.
+Regards,
+Peter Raymond - MERANT
+Hi,
+The specification says (in section 11.5) that if a version is deleted it
+will
+be removed from the merge-set. This is what I was talking about.
+A user may have begun an interactive merge (resolving conflicts in
+individual
+files) and the specification says another user may come along and delete one
+of those files involved in the merge.
+See Tims recent e-mail where he suggests I lock everything involved in the
+merge before starting....this seems OK.
+Regards,
+Peter Raymond - MERANT.
+Hi,
+I thought the servers (to be compliant) MUST enforce the postconditions.
+Are you saying a deltav compliant server needs not honour all the
+postconditions? If servers do not honour the postconditions would it not
+lead to possible non-interoperability?
+The condition I was thinking of was when client A issues the MERGE request
+(which checks-out the VCR) but after getting the HTTP response for the
+query for
+the checked-out resources DAV:merge-set client B deletes one of the
+versions
+referenced in that set. Client A then goes on to do a GET (for example) to
+retrieve
+the content to be merged but it would fail (with a 404).....client B's
+DELETE got there
+first!
+I guess I would implement Tims idea and lock down all the resources before
+beginning the interactive merge.
+Also I just noticed that in section 11.2 we define merged-set, updated-set,
+and ignored-set but the example in section 11.2.1 has D:update-set etc
+not D:updated-set etc.
+Regards,
+Peter Raymond - MERANT.
+Apologies...ignore that bit above....I just realized that since I want the
+DELETE to
+fail it is fine to fail one of the postconditions (and as Geoff says return the
+reason
+in the response). It's only when the operation is successful that all the
+postconditions
+must be honoured.
+I'll fix that. Thanks!
+Cheers,
+Geoff
+Also I just noticed that in section 11.2 we define merged-set, updated-set,
+and ignored-set but the example in section 11.2.1 has D:update-set etc
+not D:updated-set etc.
+MERGE has the potential to check out a great number of version-controlled
+resources on the server and leave them around for the client to combine
+multiple source versions into each. This requires multiple round trips to
+the server before the version-controlled resources are checked in again.
+It is likely that one would only want to target MERGE on a personal
+workspace, so that other users are not interferring with the (potentially
+long running) manual merge process.
+The sources of the merge are versions, so, assuming the target _is_ a
+personal workspace, conflicts will only arise when the source versions are
+deleted (as you pointed out). On the sub-set of servers that support
+version deletion it will be necessary for the client to lock those versions
+to prevent them being deleted, or to 'skip' those resources that have
+sources missing (which would simply require an UNCHECKOUT of the
+version-controlled resource), and then re-apply the MERGE to get the new
+set of sources.
+If you choose to lock the versions you are ensuring that the results of the
+merge reflect the state of the source and destination at the time the MERGE
+method completed (clearly, while you are manually merging clients may be
+creating new versions that would have influenced the results of the merge).
+However, if you choose to 'skip' the resources that have missing versions
+in the merge set, and then re-apply the MERGE you may never complete the
+merge (if someone is constantly deleting versions that caused conflicts in
+the results of the merge).
+Given that you cannot simultaneously lock all the versions (identified by
+the DAV:merge-set property on all the checked-out version-controlled
+resources), and to reduce the requirements for a locking server, I'm more
+inclined to make a guess that deleting conflicting versions is infrequent,
+and simply retry the entire merge to get the latest server state.
+Regards,
+Tim
+From: Tim Ellison [mailto:Tim_Ellison@uk.ibm.com]
+Given that you cannot simultaneously lock all the versions (identified by
+the DAV:merge-set property on all the checked-out version-controlled
+resources), and to reduce the requirements for a locking server, I'm more
+inclined to make a guess that deleting conflicting versions is
+infrequent,
+and simply retry the entire merge to get the latest server state.
+I agree with Tim's suggestion here.
+Cheers,
+Geoff

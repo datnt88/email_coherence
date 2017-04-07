@@ -1,0 +1,120 @@
+I found out that following HTML causes tidy to crash:
+blaah blaah...
+I found that when I tried to clean my browser cache. BTW It is a good
+method to stress test tidy and find new bugs. The file that originally
+crashed tidy is at
+I am not sure, if this is a known bug. Does there exist any list of tidy's
+known bugs?
+Mr. Jussi Vestman
+An IT student at Lappeenranta University of Technology, Finland
+jussi.vestman@lut.fi
+As an FYI, I ran the above code through the Mac OS version of Tidy (22 Oct
+99), and it produced the following without crashing (that's not to say
+there isn't a bug there).
+MacTidy (vers 19th October 1999) Parsing "Work:FilterTop:Filter
+Code:MacTidy:bug reports:table problem.html"
+line 7 column 1 - Warning: missing /font before dl
+line 7 column 1 - Warning: trimming empty font
+line 8 column 1 - Warning: table lacks "summary" attribute
+line 8 column 1 - Warning: missing dd
+line 9 column 1 - Warning: missing tr
+line 9 column 1 - Warning: discarding unexpected table
+line 9 column 1 - Warning: hr isn't allowed in  elements
+line 10 column 1 - Warning: missing td
+line 14 column 1 - Warning: /table isn't allowed in hr elements
+line 14 column 1 - Warning: discarding unexpected /table
+"Work:FilterTop:Filter Code:MacTidy:bug reports:table problem.html" appears
+to be HTML 3.2
+10 warnings/errors were found!
+The table summary attribute should be used to describe
+the table structure. It is very helpful for people using
+non-visual browsers. The scope and headers attributes for
+table cells are useful for specifying which headers apply
+to each table cell, enabling non-visual browsers to provide
+a meaningful context for each cell.
+For further advice on how to make your pages accessible
+see "http://www.w3.org/WAI/GL". You may also want to try
+"http://www.cast.org/bobby/" which is a free Web-based
+service for checking URLs for accessibility.
+You are recommended to use CSS to specify the font and
+properties such as its size and color. This will reduce
+the size of HTML files and make them easier maintain
+compared with using FONT elements.
+HTML &amp; CSS specifications are available from http://www.w3.org/
+To learn more about Tidy see http://www.w3.org/People/Raggett/tidy/
+Please send bug reports to Dave Raggett care of html-tidy@w3.org
+Lobby your company to join W3C, see http://www.w3.org/Consortium
+Regards, Terry
+That is interesting. I run same version of tidy on Linux platform
+and it crashes. I shoud have included error messages as you did:
+Tidy (vers 19th October 1999) Parsing "koe4.html"
+line 7 column 1 - Warning: missing /font before dl
+line 7 column 1 - Warning: trimming empty font
+line 8 column 1 - Warning: table lacks "summary" attribute
+line 8 column 1 - Warning: missing dd
+line 9 column 1 - Warning: missing tr
+line 9 column 1 - Warning: discarding unexpected table
+line 9 column 1 - Warning: hr isn't allowed in (null) elements
+line 10 column 1 - Warning: missing td
+line 14 column 1 - Warning: /table isn't allowed in hr elements
+line 14 column 1 - Warning: discarding unexpected /table
+"koe4.html" appears to be HTML 3.2
+10 warnings/errors were found!
+HR -element seems to have null value at its parent pointer. The MacOs
+version doesn't seem to know its parent either, but it doesn't
+crash.
+What differences there are between Mac and Unix-source? Does MacOs version
+have some patches that are not present in Unix version?
+Mr. Jussi Vestman
+An IT student at Lappeenranta University of Technology, Finland
+I don't know what you mean by "crash", but it looks like both programs
+ran to completion. They didn't do the useful thing you wanted, but
+that's another issue.
+As for the difference between "  " and " (null) ", that's just a
+difference in the implementation of the C I/O library. When printf() and
+friends are passed a NULL pointer to what's supposed to be a string, the
+Linux version prints out the text "(null)", while the Mac version prints
+nothing. I don't know what the ANSI C standard says is the Right Thing
+to do here, but I suspect it's either "undefined" or "implementation
+specific".
+Otherwise, it looks like both Mac and UNIX versions do exactly the same
+thing.
+/ Todd_Lewis@unc.edu http://www.unc.edu/~utoddl /
+/(919) 962-5273 "Year 00 compliant for -98 years!" /
+OK, when Jussi said "crash", I assumed he didn't get output, and the
+program was abnormally terminated. I offered the output from the Mac OS
+version as an indication of what the output might be had the program not
+"crashed".
+Right. K&amp;R doesn't say anything.
+There are a couple of minor differences from the "base" code that I don't
+think pertain to the discussion at hand, but here is one change in
+"attrs.c" :
+void CheckUrl(Lexer *lexer, Node *node, AttVal *attval)
+char c, *p = attval- value;
+if (FixBackslash &amp;&amp; p)/* Fix crash on null URL attribute value -
+Andy Quick - 17 Jul 99 */
+while (c = *p)
+if (c =='\\')
+*p = '/';
+++p;
+As for how Mac OS handles de-referencing a "null" pointer, as compared to
+some other OS's - since the current Mac OS does not use protected memory,
+de-referencing a "null" pointer may or may not cause a crash (it is likely
+to cause an unexpected result) - so far in examples of bugs in tidy that
+others have provided, where their OS gets a segment violation or other, the
+Mac OS version has usually survived, or got stuck in a (infinite recursion)
+loop in the parser/lexer, and when it is apparent this is happening, the
+execution can be aborted before there is a stack overflow etc.
+Regards, Terry
+In fact it does produce some output after error messages:
+Segmentation fault
+I used gdb (gnu debugger) to see what is happening when Tidy crashes. The
+Segmentation fault happens at line 797 in pprint.c, when PPrintTag is
+trying to access parent of HR element, which is null pointer.
+I am bit confused, becouse no one else have been able to reproduce this
+bug. My configuration is Red Hat Linux release 6.0, egcs-2.91.66 and glibc
+2.1.1.
+I noticed that Tidy survives when font tag is not present. I try to figure
+out what makes that difference.
+Mr. Jussi Vestman
+An IT student at Lappeenranta University of Technology, Finland

@@ -1,0 +1,44 @@
+Dear sirs,
+I have been working with XSLT files quite a lot and I think that a function
+that could give the absolute path of the current node would be very useful
+in cases where you have no idea about the structure of the XML file you are
+processing.
+The result returned by the "path()" function would look something like this:
+"/book/chapter[2]/paragraph[5]/title"
+Hope you will also see the interest of integrating such a function in the
+new XSLT 2.0 specifications,
+Best regards,
+Christian Huberson
+christian.huberson@imag.fr
+Perhaps you want
+string-join(for $n in ancestor-or-self::* return ('/', name($n), '[',
+string(count($n/preceding-sibling::*[name()=name($n)])+1), ']'), '')
+(this is an extension of the [fixed] string-joing example in the
+Functions and Operators specification)
+Note also the fn:node-kind function in case you want to know the type
+of the current node.
+Cheers,
+Oliver
+(Not a member of the WG, so actually I shouldn't have responded ... ;-)
+ob|do Dipl.Inf. Oliver Becker |
+--+-- E-Mail: obecker@informatik.hu-berlin.de |
+op|qo WWW: http://www.informatik.hu-berlin.de/~obecker |
+Thank you for the comment.
+This has been requested before, but it's not actually simple to do, because
+of the context-dependency of namespace prefixes. People usually suggest a
+path in a nice human-readable format like the one you have given, but in
+general this would be tied to a particular set of namespace declarations. It
+would of course be possible to produce a context-free path, or indeed an
+XPointer, but it's not clear exactly what people want. Some people of course
+want a path that could then be used to find the node again, but we have
+explicitly decided not to include in XSLT 2.0 the ability to execute an
+XPath expression obtained dynamically from a string.
+It's not difficult to write a function to construct a path like the one
+shown as a user-written function, or to find one that someone else has
+already written.
+Regards,
+Michael Kay
+We didn't put that one in because the preceding-sibling axis wasn't
+available in XQuery. But we're getting there slowly, it is now an optional
+feature.
+Michael Kay

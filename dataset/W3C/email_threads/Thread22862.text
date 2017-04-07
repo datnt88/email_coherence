@@ -1,0 +1,56 @@
+Hi,
+I'm working with Dom level 1, xmltr2 package from sun. The following is
+a simple example
+of what I am doing but using the insertBefore() method.
+I'm creating a class that allows the client to add phones and computers
+to this
+hypothetical person document. I want to add new phones and computers
+as new Nodes after the last one in the group. If I keep a reference to
+the
+last one in the group (phones or computers) then it seems that it would
+be easiest and most context
+free to do the following.
+class Person {
+Document document;
+Element lastPhone;
+Element lastComputer;
+void addPhone(String number) {
+// assume last phone not null
+Node parent = lastPhone.getParentNode();
+Element element = document.createElement("phone");
+element.appendChild(document.createTextNode(number));
+parent.insertAfter(element, lastPhone);
+lastPhone = element;
+What I end up doing is remembering what the firstNode of computer is and
+do
+an insertBefore. This seems kind of wierd that I need to know the next
+unrelated
+element and do an insertBefore.
+Am I missing something?
+Does DOM 2 change this?
+Thanks,
+Eric :-)
+node.insertAfter(newKid,refChild), if it existed, would be precisely
+equivalent to node.insertBefore(newKid,refChild.getNextSibling()).
+Note that inserting before null means inserting at the end of the list, so
+the Right Thing should happen even in that case. Also note that a
+shorthand in that case is node.appendChild(newKid).
+So insertAfter might be convenient, but isn't strictly necessary. Which is
+why we left it out of Level 1.
+Joe Kesselman / IBM Research
+So I guess I should interpret getNextSibling() as the next node at the
+same level as the refChild? I thought sibling was a node with the same
+tagname sort of like my lastname richardson which would be the same
+for my siblings.
+So this means insert at the end based on the node's context.
+These are obviously errant thoughts of a DOM mortal, based
+on the english language, not the spec. I think I got it unless I said
+something really wrong.
+Thanks for the help,
+Eric
+A sibling is a node with the same parent. If you have the document a b/
+c/ /a , b and c both have a as their parent. b is c's previous sibling,
+and c is b's next sibling.
+If you then issue the operation a.insertbefore(d,null), or
+a.appendChild(d), d will become a's last child: a b/ c/ d/ /a .
+Joe Kesselman / IBM Research

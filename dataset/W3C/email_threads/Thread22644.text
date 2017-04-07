@@ -1,0 +1,265 @@
+Hi All,
+Kinda new to all of the xml things and didn't not find any proper examples
+I'm looking for simple code examples that would process the following XML(if
+that is valid?!)
+I though if you had something like
+product
+you would be able to do something like this
+(pseudo-code)
+and that is the kind of thing i was looking for
+for (companies) {
+show name
+show phone
+show emial
+for (products) {
+show productname
+show url
+and preferably based on this kind of code (thats the only thing i found so
+far)
+DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+DocumentBuilder db = dbf.newDocumentBuilder();
+Document doc = db.parse("http://127.0.0.1:81/company.xml");
+NodeList name = doc.getElementsByTagName("name");
+for (int i =0; i  name.getLength(); i++) {
+out.print(name.item(i).getFirstChild().getNodeValue() + " br ");
+so a push in the right direction would be appreciated.
+Regards,
+Tom
+Most XML parsers come with some sample programs. Have you tried looking at
+those?
+The DOM provides a structured view of your document, but you have to walk
+through that view yourself to obtain the data. There are some tools which
+can help simplify this process -- the getElementsByNodeNames() method, the
+NodeIterator/TreeWalker added in DOM Level 3, which can help you jump to
+the points you're interested in.
+To retrieve the contents of an element, even when those contents are just
+text, you must examine the children of that element.
+That should get you started in the right direction...
+Joe Kesselman / IBM Research
+Hi Tom:
+Two things:
+1. Remove the slash from the opening /companies .
+2. If you're working with Java, then take a look at www.jdom.org. You will
+have to write your own code to process the XML, but it's pretty easy.
+Regards,
+Barbara Samson
+Folks: If you're going to recommend JDOM over the standardized, portable
+W3C DOM, please at least have the courtesy to say _why_ you're steering
+folks in that direction so we can discuss whether your advice makes sense.
+There are some things that JDOM does make more convenient, but there are
+also downsides to using it... and if folks asked the question here on the
+www-dom mailing list rather than on XML-DEV, it'd be sorta polite to at
+least initially assume they want a DOM-specific answer.
+(I'm not intimately familiar with JDOM, but as far as I can tell from what
+little I do know, it _doesn't_ have strong advantages over the DOM for this
+case. Either way, you have to loop over the company elements, then
+retrieve and process the desired children thereof. JDOM may have a few
+minor convenience methods like getChildText which could be helpful, but
+that's really not a huge reduction in programming effort.)
+Joe Kesselman / IBM Research
+I apologize for my thoughtlessness, Joseph. You are right that this is not
+the forum for a discussion of JDOM, which has little to do with www-dom.
+It's just that I have implemented an XML-intensive project twice in Java,
+the first time using the Xerces implementation of the org.w3c.dom
+interfaces and the second time using JDOM on top of Xerces. I found JDOM
+much easier to deal with and more intuitive for new team members. Since it
+provides everything I need, I have not run into the downsides of using it,
+but of course there must be important features that this highly simplified
+API lacks.
+Barbara Samson
+Joe: I agree with your assessment, and understand your point of view.
+The problem is that Tom didn't really get an answer, which may by itself
+be reason for him to start looking elsewhere.
+Tom: Your code looks pretty good. The outermost loop though should be
+looking for the "company" nodelist:
+NodeList name = doc.getElementsByTagName("company");
+Then you get each of the elements inside that you want:
+for (i=0; i name.length(); i++)
+Node company = NodeList.item(i);
+Node name = company.getElementsByTagName("name").item(1);
+Node phone = company.getElementsByTagName("phone").item(1);
+//etc...
+out.print(name.getFirstChild().getNodeValue() + " br ");
+out.print(phone.getFirstChild().getNodeValue() + " br ");
+//etc...
+iterate over "company" elements rather than "name" elements. It may not
+work exactly as coded.
+Jim.
+Joe K  JDOM may have a few
+Barbara  but of course there must be important features that this (JDOM) highly
+simplified
+Both ends are now covered.
+What about the middle?
+Best Regards,
+joedw
+Jim,
+thanx for help so far , I see what you mean and thats what I need.
+The example didn't work like coded. But I can't seem to get it to work if i
+fool around with it as well :)
+My XML looks like this
+and code
+DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+DocumentBuilder db = dbf.newDocumentBuilder();
+Document doc = db.parse("http://127.0.0.1:81/company.xml");
+NodeList companylist = doc.getElementsByTagName("company");
+for (int i =0; i  companylist.getLength(); i++) {
+// so here i need to take the company name item(0) (if it exist, had some
+problems catching a nullpointer execpetion as well)
+Node company = NodeList.item(i);
+// also tried Node company = companylist.item(i) ;
+// thought that you need the company node i to be able to get the
+companyname or something
+Node name = company.getElementsByTagName("companyname").item(0);
+// there is always only one company name == item(0) ??!!
+exception : Method getElementsByTagName(java.lang.String) not found in
+interface org.w3c.dom.Node
+So what is going wrong here ?
+I know I need to do it like this
+If I'll use the following code in my loop I know I'll be in trouble
+NodeList companyname = doc.getElementsByTagName("companyname");
+String CompanyName =
+companyname.item(i).getFirstChild().getNodeValue().toString();
+out.print(CompanyName + " br ");
+Regards and thanx for any help you might be able to give,
+Tom
+James Melton
+Joe: I agree with your assessment, and understand your point of view.
+The problem is that Tom didn't really get an answer, which may by itself
+be reason for him to start looking elsewhere.
+Tom: Your code looks pretty good. The outermost loop though should be
+looking for the "company" nodelist:
+NodeList name = doc.getElementsByTagName("company");
+Then you get each of the elements inside that you want:
+for (i=0; i name.length(); i++)
+Node company = NodeList.item(i);
+Node name = company.getElementsByTagName("name").item(1);
+Node phone = company.getElementsByTagName("phone").item(1);
+//etc...
+out.print(name.getFirstChild().getNodeValue() + " br ");
+out.print(phone.getFirstChild().getNodeValue() + " br ");
+//etc...
+iterate over "company" elements rather than "name" elements. It may not
+work exactly as coded.
+Jim.
+A reminder:
+The DOM public mailing list is for technical discussion on the design of the
+Document Object Model (DOM). Comments on the public documents related to the
+DOM are very welcome!
+-- Document Object Model (DOM) Mailing Lists
+Thu, 19 Apr 2001 14:50:31 GMT
+It doesn't mean that we are not going to answer a DOM application question in
+this mailing list but you need to understand that the time spent by the DOM WG
+members to reply to these messages is not used to improve the current
+recommendations or work on the DOM Level 3 drafts. We certainly cannot review
+all DOM applications.
+I hope that in a not-so-far future, we'll be able to have a bug tracking system
+available to the Working Groups and the public. It will not improve our
+responsiveness, but at least, we will track all the issues.
+Regarding JDOM:
+For those of you who are interested in JDOM, feel free to have a look at their
+site and their appropriate mailing list:
+(btw, I was always said that JDOM was too confusing for the users since it was
+too closed to DOM)
+If you find an interesting functionality in JDOM, don't hesitate to ask for it
+in the DOM API. At least, it will let you have the choice of the
+implementation. As long as the proposal is reasonable and well integrated in
+the overall XML and UI architectures, we will be happy to review it. The future
+textContent property is a good example of a request from the users. Keep in
+mind that nothing is simple in the DOM API and always requires long
+discussions.
+For those who are interested in performance comparaisons, I received this link
+recently in my Inbox:
+(Feel free to interpret the results as you like, but try to not do it on this
+mailing list :-) )
+I recently made some few demos of DOM Level 2 and 1 on the DOM pages. Of course,
+if you want to see them, you'll need a DOM Level 1 or 2 user agents. Regarding
+a Java demo, the DOM specifications are already a good example even if we never
+advertised that.
+Bests regards,
+Philippe
+Philippe Le Hegaret - http://www.w3.org/People/LeHegaret/
+World Wide Web Consortium (W3C), DOM Activity Lead
+Mozilla/Netscape 6 has a security model that makes a lot of the DOM not
+work. Although this is ok, there are some lines that get blurred - i.e.
+which parts of the contentDocument of a frame can one domain access of the
+site in the frame? Obviously the title can't hurt anything, and it would be
+good if there was a security recommendation to make problems not occur
+because of differing security models in browsers.
+Thanks for your time.
+Do You Yahoo!?
+Get your free @yahoo.com address at http://mail.yahoo.com
+Not addressed by DOM 1, 2 or 3. Our issue list still has this item but again,
+not sure about its future yet.
+1.9. Security, Validity and Privacy [After Level 1]
+Security, validity, and privacy considerations are interrelated and entwined. DOM
+will initially provide simple
+"sandbox" security; subsequent levels are expected to incorporate more
+sophisticated mechanisms.
+1.Each object must be responsible for maintaining its own internal consistency.
+2.It must be safe to have multiple threads operating on the same object.
+3.Object locking must be incorporated to ensure consistent results.
+4.It must be possible to prevent scripts on one page from accessing another
+page.
+5.Firewall boundaries must be respected.
+6.It must be possible to restrict access and navigation to specific elements.
+7.An external security API will be provided.
+-- Document Object Model Requirements
+Mon, 13 Mar 2000 14:38:57 GMT
+Philippe
+Oh yeah, I almost forgot, in respect to number 4. This is really a killer as
+I have learned with Mozilla. There are certain things on the page you really
+need to access, such as the URL. frame.src doesn't change (which I
+personally think is an errata in the DOM and HTML specs) when you change
+pages in the frame unlike images, which change. So say you wanted to have a
+fake browser by putting a form and an iframe. There would be no way to know
+when someone clicks on a link in the iframe which page they went to. There
+are two ways to solve this: allow certain parts of a document in the frame
+to be accessed (such as the title and the URL). The other way is to fix the
+obvious errata in the specs. I think both should be undertaken.
+Now, the second issue is document.domain - Although it is good start to
+allowing cross-domain access in frames, it is not without problems.
+Problem 1:
+Example is two pages on geocities. If you allow domain-based access to
+frames in security, that gives two sites on geocities access to each other,
+which is probably no problem because they have nothing that needs to be
+secure, but its just an example.
+Problem 2:
+You have your site strewn across many domains. Setting them all to the same
+document.domain would give any site on that domain access to all the
+documents.
+***Solution:
+create document.friends which would be a linked list of domstrings which are
+directories, ips, domains, or files anywhere on the web that have access to
+this document. The strings could also have wildcards in them.
+for instance, say you wanted to do *.netscape.com or
+Addressing this soon would make some of your fellow dom experts which I know
+from Netscape (and make me look clueless about the dom :) probably very
+happy since they are constantly harassed about the security model breaking
+sites that have frames.
+Thanks for your time.
+be
+Not addressed by DOM 1, 2 or 3. Our issue list still has this item but
+again,
+not sure about its future yet.
+1.9. Security, Validity and Privacy [After Level 1]
+Security, validity, and privacy considerations are interrelated and
+entwined. DOM
+will initially provide simple
+"sandbox" security; subsequent levels are expected to incorporate more
+sophisticated mechanisms.
+1.Each object must be responsible for maintaining its own internal
+consistency.
+2.It must be safe to have multiple threads operating on the same object.
+3.Object locking must be incorporated to ensure consistent results.
+4.It must be possible to prevent scripts on one page from accessing
+another
+page.
+5.Firewall boundaries must be respected.
+6.It must be possible to restrict access and navigation to specific
+elements.
+7.An external security API will be provided.
+-- Document Object Model Requirements
+Mon, 13 Mar 2000 14:38:57 GMT
+Philippe
+Do You Yahoo!?
+Get your free @yahoo.com address at http://mail.yahoo.com

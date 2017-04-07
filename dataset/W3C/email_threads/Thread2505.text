@@ -1,0 +1,104 @@
+Unfortunately, the issues list at
+references the wrong email message from Roy as the Proposed Resolution.
+The reference to
+should be replaced by a reference to
+where Roy said "I am changing my proposed change."
+Anyway, I would like to suggest a few minor, non-normative changes
+(to Roy's updated proposal):
+(1) I think this note (in Roy's proposal)
+Note: An origin server wishing to use a relatively new HTTP cache
+control feature, such as the "private" directive, on a network
+that includes older caches which do not understand that feature,
+will need to combine the new feature with an old Expires value
+in order to prevent the older caches from caching the response.
+could be made slightly clearer:
+Note: An origin server wishing to use a relatively new HTTP cache
+control feature, such as the "private" directive, on a network
+including older caches that do not understand that feature, will
+need to combine the new feature with an Expires field whose value
+is less than or equal to the Date value. This will prevent older
+caches from improperly caching the response.
+(2) I think it would be a good idea to include after the last
+paragraph of this section (14.9.3):
+If a cache returns a stale response, either because of a max-stale
+directive on a request, or because the cache is configured to
+override the expiration time of a response, the cache MUST attach a
+Warning header to the stale response, using Warning 10 (Response is
+stale).
+the following note:
+Note: A cache may be configured to return stale responses
+without validation, but only if this does not conflict with any
+MUST-level requirements concerning cache validation (e.g., a
+"must-revalidate" Cache-control directive).
+In a private email discussion during March, Roy pointed out that
+this is said elsewhere in the specification. However, I'm concerned
+that some implementors may misconstrue the discussion in 14.9.3
+without such a reminder.
+-Jeff
+Looks good to me.
+....Roy
+The CLARIFY-NO-CACHE issue:
+boils down to:
+the meaning of no-cache="field-name" in a response probably
+needs to be made more explicit.
+To state the issue in somewhat more detail, RFC2068 says this about
+the "no-cache" Cache-control directive in a response:
+14.9 Cache-Control
+cache-response-directive =
+"no-cache" [ "=" " 1#field-name " ]
+14.9.1 What is Cachable
+no-cache
+Indicates that all or part of the response message MUST NOT be cached
+anywhere. This allows an origin server to prevent caching even by
+caches that have been configured to return stale responses to client
+requests.
+14.9 also says:
+When a directive appears without any 1#field-name parameter, the
+directive applies to the entire request or response. When such a
+directive appears with a 1#field-name parameter, it applies only to
+the named field or fields, and not to the rest of the request or
+response. This mechanism supports extensibility; implementations of
+future versions of the HTTP protocol may apply these directives to
+header fields not defined in HTTP/1.1.
+However, I think it takes a fair amount of inference to combine these
+two paragraphs into a precise definition of what
+Cache-control: no-cache=foo
+really means.
+PROPOSED SOLUTION:
+I replacing (in 14.9.1) the paragraph:
+Indicates that all or part of the response message MUST NOT be cached
+anywhere. This allows an origin server to prevent caching even by
+caches that have been configured to return stale responses to client
+requests.
+with paragraph:
+If the no-cache directive does not specify a field-name, then a
+cache MUST NOT use the response to satisfy a subsequent request
+without successful revalidation with the origin server. This
+allows an origin server to prevent caching even by caches that
+have been configured to return stale responses to client
+requests.
+If the no-cache directive does specify one or more field-names,
+then a cache MAY use the response to satisfy a subsequent
+request, subject to any other restrictions on caching; however,
+the specified field-name(s) MUST NOT be sent in the response to a
+subsequent request without successful revalidation with the
+origin server. This allows an origin server to prevent
+the re-use of certain header fields in a response, while
+still allowing caching of the rest of the response.
+-Jeff
+P.S.: As I wrote in
+I'm not sure that this convoluted definition of no-cache really
+makes life easier for people. I remember arguing that we should
+be using a wider range of names for cache-control directives, and
+being accused of trying to make the specification "too complex."
+But it's probably too late to change the actual specification
+of "no-cache", although I think it's clear that we need to clarify it.
+However, my preference would be to replace the BNF
+cache-response-directive =
+"no-cache" [ "=" " 1#field-name " ]
+with
+cache-response-directive =
+"no-cache"
+"no-cache-field" "=" " 1#field-name "
+and then do the obvious simplification of the description proposed
+above.

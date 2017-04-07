@@ -1,0 +1,431 @@
+I thought I'd send some comments in now that it's last call. Briefly,
+what I saw (I focussed on the core) looks good -- addresses many (but
+not all) of the issues I had with the level 1 work, and I'm glad to
+see that things went along smoothly even in my absence! :-)
+Of particular note:
+* The system and public IDs are really for the "document
+type's external subset", not for the "document type", as
+it's now written. DTDs often consist of many components,
+each with their own identifiers. As written, those IDs
+could refer to one of dozens of identifiers -- not useful.
+I'd like to see DomImplementation and DocumentType describe
+this correctly (a small editorial change).
+* I can't see how I'd write a chunk of code that'll know it
+can use Level 2 features ... e.g. it's portable and needs
+to work with both L1 and L2.
+I'd like to see a "DOM" feature (for DOMImplementation) be
+defined, which would report on which level is supported.
+* It's confusing to have feature definitions scattered all
+over the spec.
+I'd like to see them collected in one table at one place, so
+their overall scope is more readily understood.
+* I still don't see why there's no solution for getting access
+to a system default DOM implementation, at least for Java.
+I'm posting an implementation in a followup post. I'd like
+to see something like this in the org.w3c.dom Java package.
+Thanks for the good work!
+- Dave
+LookI like the report format, but I still feel like I need
+the table of contents to have clickable links to let me
+get to each of the documented classes. This structure
+(sans such TOC support) is relatively hard to navigate.
+1.1.7Namespaces ... it may be useful to note that the DOM has
+adopted an 'early binding' model of namespace URIs to
+elements. With early binding, the URIs are permanently
+bound to elements as they get created. Late binding is
+more like what one would get by moving text around in a
+text editor -- the URI bindings are context-dependant.
+(So there are significant ramifications...)
+Also, I'm glad to see the simplification of having the
+namespace support be in the core interfaces versus
+being separate. Life is much easier that way!
+1.2General re compatibility ... I don't see how I can write
+a chunk of code that'll know to act differently if it's
+using DOM Level 2 or DOM Level 1.
+SUGGESTION: have a DOMImplementation 'feature". "DOM"
+would have values "1.0" (for DOM L1) or "2.0" (L2).
+1.2DOMException ... ambiguous re whether the other numeric
+codes are reserved to W3C or not. They should be.
+Similar comment for "Node" ... nobody except W3C should
+be defining new numeric codes for "nodeType".
+1.2DomImplementation ... createDocumentType() seems to have
+no accomodation for an internal subset. I'd suggest at
+least correcting the text; it's not the "document type
+system identifier" (or public ID), but the "external
+subset system identifier" (or public identifier).
+Also, having the "feature" identifiers scattered throughout
+the document is suboptimal. At least list the features
+from each chapter up at the front of the chapter, in a
+table to visually highlight them.
+1.2Document ... refers to "invalid" characters. "Illegal"
+would be more correct (with reference under DOMException
+to XML, HTML, and related specs for what that means). Of
+course the INVALID_CHARACTER_ERR name is grandfathered...
+1.2Document.importNode ... I'm rather uncomfortable with that
+name "import" since that implies the same object is in use
+(e.g. if I import something from Canada). "copy" is the
+appropriate word, and is even used in the documentation
+more than once. "import" suggests the wrong thing.
+1.3DocumentType ... as above on DomImplementation, the text
+should say the IDs are for the "document type's external
+subset",
+7Traversal ... I'm still not a fan of this stuff, but at
+least it's optional. (Seems like it should integrate with
+the view mechanism in some places, but doesn't -- oops.)
+App CJava Binding ... I ** REALLY ** think it'd be useful to
+define a standard way to get access to a DOM implementation,
+so that only parser connectivity really needs to be left
+to nonstandard APIs.
+There doesn't seem to be a "feature" identifier for the
+range facility ... I sure hope that doesn't mean it's
+part of the DOM L2 core!! (I suggest "Range" to identify
+that optional module.)
+- Dave
+I didn't see any response to my earlier query re events; should I
+expect one?
+Here are some further observations about the event portion of the
+specification -- based in part on the task of trying to understand
+the spec well enough to implement it !!
+- Dave
+6.2It appears that there's no way to guarantee that an ancestor
+will get an event -- both capturing and bubbling permit other
+nodes to interfere with event reporting. This seems ungood
+in general; there ought to be _one_ mechanism whereby event
+reporting isn't subject to interference.
+6.3.1I'm curious in general why EventListener.handleEvent() is
+defined to handle _all_ events rather than having separate
+interfaces that directly handle the different sorts of events
+(a MouseEventListener, MutationEventListener, etc). That's
+how Swing does this stuff, and it's generally handy to have
+such "pre-dispatched" frameworks -- it can be faster, too!
+6.2.2Event capture ... the text is unclear what preventCapture()
+achieves. The third para says that if you call it, no
+further targets lower in the tree will get events, which
+seemingly includes both the "deliver to target" phase (which
+is elsewhere said to be "guaranteed") and event bubbling.
+It makes sense to me to see the preventCapture() method only
+have effect during the capture phase. If so, its description
+in 6.2.2 needs updating (no further targets will capture).
+6.6.4DOMSubtreeModified ... insufficiently specified. What event
+batching is supposed to be performed? In what sense may it
+be used "instead of the more specific events"? And for that
+matter, which "more specific events"?
+I couldn't make any sense of this description at all. And there
+was the hint that it's another one of those really expensive
+events (like DOMNode**Document) noted below ...
+6.6.4DOMNodeRemovedFromDocument ... seems horrendously expensive.
+After delivering an DomNodeRemoved event, that node and all
+of its descendants (!!!) get one of these.
+Must this really be done? It'll increase the cost to support
+the mutation events substantially.
+6.6.4DOMNodeInsertedIntoDocument ... correspondingly expensive.
+GeneralThere's no way for applications to define their own events
+and thus use the event mechanism for any purpose except those
+that are built in.
+I'd like to see such a standard, perhaps part of the basic
+"Events" mechanism. In the same way that DOM events all have
+"DOM" prefixes, perhaps they could have a "USER." prefix.
+And it'd be desirable for such user events to have a way to
+include information ... maybe a UserEvent interface could have
+an Object parameter set in its initUserEvent() method, which
+has application defined semantics.
+I'm more sympathetic to defining new exception
+codes outside the range
+of the types defined by W3C.
+A similar argument applies to node types; one may as
+well use the same
+convention for both. It's always better to have an
+explicit extension
+mechanism in the spec, so that each application
+doesn't go off in its own
+completely incompatible direction.
+I second that motion. The DOM chose a dual mechanism
+for representing types--interfaces and "codes".
+Nothing prevents me from defining a "supernode"
+interface that extends (or is derived from) Node.
+Nothing should prevent me from defining a
+corresponding SUPERNODE node type "code".
+How about a real-world example that has nothing to do
+with a DTD? Lets say I write a parser that processes
+Active Server Pages. The syntax used to mark
+server-side scripts is % //insert your script here
+% . The script marker nodes are custom node types.
+They can be interpreted, executed,
+color-syntax-edited, etc.
+Some may argue that these things are really processing
+instructions. But they aren't. Others may say they are
+really just comments. But they aren't. They are script
+markers.
+Still others might say that since they violate XML
+syntax rules I can't create a new node type. Let me
+worry about that--I'll take the responsibility for
+making sure that my application/parser/processor are
+smart enough to handle them. I know that they probably
+won't be added to the DOM in the near future, so let
+me define a ScriptMarker interface, and a ScriptMarker
+NODETYPE constant. And I'd prefer it if you would
+tell me which range of values to use so that
+I don't get in trouble when the DOM adds that
+newfangled supermetaschemanode in the next release.
+It's a pretty simple request...
+Do You Yahoo!?
+Bid and sell for free at http://auctions.yahoo.com
+Help me out here; I unerstood from a lot of reading that
+XML (as opposed to HTML) had as its primary purpose
+the definition of a syntax which would facilitate the
+machine processing and generation of information.
+What exactly does your proposed extension do that
+you couldn't define an XML namespace to do? I have
+to admit the proposal to allow for extensions which
+allow things I thought the standard already allows for
+rather surprised me.
+I certainly have no objection; you can do anything
+you want (the great advantage of computers). I
+just don't see from what you wrote why you want to
+do what you describe, since as far as I can tell,
+XML already appears to define what you want as
+a basic feature.
+J. G. Spragge ---------- standard disclaimers apply
+Essays on capital punishment and network ethics at
+Backward compatibility with a non-standard, but very common syntax.
+I wrote something similar to the following in a previous message, but I
+haven't seen it show up, so I guess it must not have made to the list
+server....
+This has been a very long conversation about a simple question:
+Are implementors allowed to extend the NodeType and Exception lists?
+If the answer is yes, the spec should be revised with instructions as to how
+the lists are extended while maintaining some degree of forward
+compatibility. If the answer is no, then the spec should explicitly state
+that extension is not allowed, and if conformance tests are developed in the
+future, they should explicitly test for compliance (although this would be
+extremely time consuming to do correctly). Regardless of the answer, the
+spec should be revised to remove ambiguity.
+Personally, I believe that the DOM should concentrate on functionality and
+interoperability, rather than on restricting implementations. A primary
+concern for a standard API should be compliance and interoperability, but
+not at the expense of innovation. By closing the NodeType list, the DOM API
+makes extensions available only to typed languages. (In Java, I can cast my
+Element object to a SuperElement when I need to, but I can't access the
+functionality of SuperElement from ECMAScript because I have no way to
+determine that a node is a SuperElement).
+The XML specs do not address backward compatibility with the billions of
+pages that currently exist (HTML, ASP, DTD, etc.). One way to deal with
+this issue is through extending the NodeType list. There are very likely
+other valid solutions.
+But the real issue here is the ability of implementors to extend the DOM.
+The ASP "tag" is an example where backward compatibility may be enhanced by
+extending DOM. Other examples may include a distributed DOM or a persistent
+DOM, or a biological DOM. So again, the real question is: Are implementors
+allowed to extend the NodeType and Exception lists.
+Jeff Mackay
+Vtopia, Inc.
+URL: http://www.vtopia.com
+Implementors can do whatever they want. However, the whole purpose of
+the DOM is to provide users with an interoperable API. Implementing
+and/or using any extension makes this pretty useless. So I don't see
+what the benefit of allowing extensions would be. Either you care about
+interoperability and all you can do is to stick with the standard, or
+you don't and you can use whatever you want. There is just no room for
+applications or implementations being partially interoperable.
+I added a note stating that all other codes are reserved to W3C for
+possible future use.
+I don't understand. If you're already up for using non standard
+extensions, why can't you simply use a non standard type attribute for
+that? In ECMAScript it is especially easy to add a property to an
+object.
+Arnaud
+I am finally beginning to understand what Arnaud Le Hors lehors@w3.org
+THE DOM IS NOT AN OBJECT MODEL! It is a specification (API) for a class
+library. Specifically it is the API for the class library of Javascript.
+The Infoset is much closer to being a real object model, in that it
+specifies the necessary and sufficient set of interfaces that _any_
+implementation of documents must, somehow, provide.
+An object model is the product of the analysis phase of an OO project; an
+API is the product of the design phase. An API is the specification for a
+library, which is the product of the implementation phase.
+In a library's specification, like the Java class library or the DOM, it is
+vitally important to specify a complete set of functions and to nail down
+the implementation as much as possible, so that application-writers have a
+rich set of operations with semantics they can count on. That's what an API
+(the programmer's view of a library) is all about. Extensions and
+experimentation are out of place in this context. The typical application-
+writer is using a canned library supplied by a language vendor, and expects
+a consistent environment on every platform of interest. That's a good
+thing.
+In a _real_ object model like a GUI toolkit or the Infoset, on the other
+hand, it is important to provide only the _minimum_ interface, and to
+constrain the implementation as _little_ as possible, so as to provide for
+the widest possible range of applications. A real object model is
+essentially the basis for a framework; extensions are allowed for and indeed
+expected. With a framework, application writers are expected to get their
+hands dirty and at least _look_ at the code, if not modify it; usually the
+application and the classes that implement the object model are written by
+the same person or group. The object model's main function is to ensure
+that no important details are left out of the implementation. That's a good
+thing, too, but it's a _different_ thing.
+An object model is a specification, just as an API is, but at a different
+level. It is further removed from the implementation, and is not directly
+useable by an application-writer.
+A good object model simply defines the set of interfaces that are necessary
+and sufficient in order to to _represent_ the data (documents, in this case)
+being modeled -- the objects and attributes that any implementation must
+provide, and that any application can count on having available. The object
+model, in other words, specifies the objects' attributes, very little about
+their behavior and as little as possible their implementation.
+An object model should make no claims about whether nodelists are ``live''
+or static, about whether or not nodes can be freely moved between documents,
+about whether documents may be traversed in any particular order, about
+whether structure can be shared, or whether a node remains accessible after
+an application has abandoned all references to it. It should simply ensure
+that, if you are looking at a node in a document, you can tell what sort of
+node it is and determine _all_ of the relevant information about it.
+The DOM, by contrast, makes no real attempt to be a complete object model
+for documents. Converting a document to a DOM tree loses information; it is
+no longer possible to recover the original document. It is impossible to
+create an arbitrary XML or HTML document, say inside of an editor, and write
+it out as its author intended. There may be some documents that cannot be
+represented at all, perhaps due to their size or to their dynamic nature.
+There are many plausible representations for documents that do not conform
+to the DOM but are nevertheless useful, and which would benefit from a
+unifying standard to guide their implementors. In fact, the DOM itself
+would have benefitted greatly from such a standard, not to mention a
+vigorous application of Occam's Razor.
+All of this suggests that, for my own sanity and for the sake of my
+application, I should probably abandon any hope or pretense of using the
+DOM. I need DTD's, I need SGML, I need late-bound entities and entity
+references without content, I need application-specific, strongly-typed
+metadata, I need the ability to stream large documents through a document
+processor with limited memory, and so on. For the near term I will continue
+to base my application on my partial implementation of the DOM, and because
+of its architecture it will always be able to manipulate DOM trees, but
+eventually my internal representation will cease to look anything like the
+DOM. As the official Javascript class library for browsers, the DOM is
+simply irrelevant for an XML-based extensible server.
+Most of my comments in this list over the last year or so have been based on
+the mistaken belief that the DOM was an object model. I think a great deal
+of confusion could have been avoided if the introduction clearly stated
+that, although the DOM may be moderately language-neutral, it is far from
+implementation neutral and that the primary goal is to provide a stable
+class library optimized for a certain specific class of applications. The
+reference set of applications should be specified -- applications outside
+this set _might_ be able to use the DOM, but if their requirements differ
+from those of the reference set their needs will simply not be considered.
+It should be made _very_ clear that extensions of any sort are not
+encouraged, perhaps not even permitted, and that implementors with a
+different set of requirements should seek elsewhere.
+It is far too late to rename DOM - Browser Scripting Document API, but it
+would have been far more accurate.
+I think that a document object model (note the indefinite article and
+lower-case letters) would be a good idea, and I will gladly support and
+contribute to an effort to construct one.
+Stephen R. Savitzky steve@rsv.ricoh.com http://rsv.ricoh.com/~steve/
+Platform for Information Applications: http://RiSource.org/PIA/
+Chief Software Scientist, Ricoh Silicon Valley, Inc. Calif. Research Center
+home: steve@theStarport.org URL: http://theStarport.org/people/steve/
+In http://www.w3.org/TR/REC-DOM-Level-1/introduction.html
+"The Document Object Model (DOM) is an application programming interface (API)
+for HTML and XML documents."
+In http://www.w3.org/TR/xml-infoset#intro
+"This document specifies an abstract data set called the XML information set
+(Infoset), a description of the information available in a well-formed XML
+document"
+So, it's not _any_ implementation of documents, but _any_ implementation
+of XML documents.
+It is impossible to create an arbitrary XML or HTML document, say inside of
+an editor, and write it out as its author intended.
+Do you have an example ?
+If you mean a document which is not XML or HTML, you're right. It's out
+of the scope of the DOM.
+But, if you really want to add your % script % node in the DOM,
+write an extension, it's very easy to do :
+interface StephenNode : Node {
+readonly attribute unsigned short stephenType;
+const unsigned short SCRIPT_NODE = 0;
+interface ScriptNode : StephenNode {
+// whatever you want
+I don't see a statement in the DOM about "you should not create your own
+extension based on the DOM core".
+It's in our requirements.
+See http://www.w3.org/TR/WD-DOM/requirements#ID-1072425801
+It's out of our scope.
+See http://www.w3.org/TR/REC-DOM-Level-1/introduction.html
+I need late-bound entities and entity references without content, I need
+application-specific, strongly-typed metadata
+Once again, it's in our list. But How can we address stronglgy-typed
+metadata without a recommandation ? The XML Schema datatype is not yet
+a recommandation :
+In http://www.w3.org/TR/REC-DOM-Level-1/introduction.html
+"One important objective for the Document Object Model is to provide a
+standard programming interface that can be used in a wide variety of
+environments and applications."
+Our main goal is interoperability, not memory. But if we can have both,
+it's better.
+Browsers represent 10% in the number of participants in the DOM WG. There
+are several implementations of DOM in Java, C++, Delphi, Perl, Python, C. The
+DOM is definitively not only a Browser Scripting Document API.
+Browser scripting is one of our goals, but not the only one.
+Regards,
+Philippe.
+Philippe Le Hegaret - http://www.w3.org/People/LeHegaret/
+World Wide Web Consortium (W3C), DOM Activity Lead
+QED.
+Point taken. It's still a lot closer to a general object model for
+documents than the DOM is.
+It is impossible to create an arbitrary XML or HTML document, say inside of
+an editor, and write it out as its author intended.
+Sure. As a web author, I might want to attempt to foil spammers by
+representing my e-mail address as steve&amp;#x40;rsv.ricoh.com -- note
+also the symmetric use of  and . A conforming DOM implementation
+will render this as steve@rsv.ricoh.com , defeating my intentions.
+To take another example, I may want HTML lists to be output in the
+``traditional'' format with omitted end tags:
+The DOM has no way to represent the fact that the end tags have been
+omitted. For various reasons I may wish to omit end tags in one place, but
+keep them in in another (perhaps as a flag to some string-based Perl script
+that modifies the file in some way). This is a perfectly legitimate thing
+to do in a text editor, but it's impossible in an editor based on the DOM.
+Similarly, for stylistic reasons I may wish to distinguish between XML
+elements that are declared as empty, and those that are not but are simply
+empty ``by accident''. I would represent the first as foo/ and the second
+as bar /bar . This has no effect on the semantics of the document, of
+course, but as an author using an editor it serves as an invaluable reminder
+of which empty elements it is permissible to fill in later.
+No. In the first case I mean a document which is too large for its tree to
+fit in memory. It may even be effectively infinite; for example, the output
+of a process such as a web crawler.
+In the second case, I mean a document in which external entities may have
+their value changed because of the actions of some other process. Possibly
+the simplest example of this is &amp;time;, which I might want to reflect the
+exact time when the entity is expanded. Another example might involve an
+external file.
+Then I would have to rewrite my application to cast all nodes as StepenNode
+and test stephenType instead of nodeType. It's ugly.
+But if I can't, within the specification, define new node types I can't
+write experimental code that won't have to be rewritten if you finally get
+around to fulfilling those requirements. Also, a frozen set of node types
+will influence you to use a brand-new interface class that doesn't descend
+from Node (which has already been done for CSSRule and CSSRuleList). Why
+aren't these descended from Node?
+Exactly. The scope of the DOM is too limited; I need an object model that
+can be extended to handle other situations and still be compliant with its
+specification.
+I need late-bound entities and entity references without content, I need
+application-specific, strongly-typed metadata
+If you had the ability to define new application-specific node types, you
+could simply add
+attribute NodeList metadata;
+to Node and let the application take care of it.
+This is exactly my point. It's no longer possible to have both -- the DOM
+has taken a memory-intensive path in order to provide a rich interface.
+There needs to be an alternative for those of us who want to make different
+design decisions without giving up compliance with _some_ non-DOM standard.
+It is the _reference_ goal. Whatever the DOM becomes, one of its ironclad
+requirements is that it has to remain the document-processing API for
+Javascript. Everything else may be subject to reconsideration, but not
+that. That's as it should be: Javascript needs an API for documents, the
+DOM is it, and if any other application finds it useful, that's great.
+But don't expect _every_ application to find it a good match.
+Stephen R. Savitzky steve@rsv.ricoh.com http://rsv.ricoh.com/~steve/
+Platform for Information Applications: http://RiSource.org/PIA/
+Chief Software Scientist, Ricoh Silicon Valley, Inc. Calif. Research Center
+home: steve@theStarport.org URL: http://theStarport.org/people/steve/

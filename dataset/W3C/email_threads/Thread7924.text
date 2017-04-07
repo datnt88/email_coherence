@@ -1,0 +1,116 @@
+Mathias sent this directly to me. I believe it was intended to go back to
+the list. I've CC'd the main DAV list since this is turning from a quick
+poll about interop into a discussion of approaches.
+Cheers,
+-g
+----- Forwarded message from Mathias.Picker@virtual-earth.de -----
+From: Mathias.Picker@virtual-earth.de
+Subject: Re: [Interop] quick poll on the Translate field
+Date: Mon, 5 Nov 2001 12:12:15 +0100 (CET)
+SimpleCMS does support it, as well as the source/link way of doing it.
+-- which WebDAV Servers and Clients support (or will very soon) the
+'Translate' field ? (besides IE on PC)
+mod_dav does not implement it, and it never will.
+IMO, it is the wrong approach to solving the problem. The source/link
+stuff and multiple resources is the right way. You didn't ask for a
+No, it isn't. translate and source/link solve different problems. WebDAV
+emulates a file system layer. So my clients expect _one_ source file.
+Everthing else is nice-to-have, and may be very powerfull for some uses,
+but is obviously wrong for a simple: give me _this_ resource,
+untranslated.
+As for SimpleCMS, we could well use the both approaches for different
+reasons (we do not right now).
+Situation: every page is transformed on-the-fly, using a menu-module,
+and possible background, logo etc. resources.
+So, where should the source link(s) point to? The complete solution:
+- a raw version of the url in question
+and probably
+- a menu vonfig page, where the current menu style is choosen (or the
+menu program module??)
+- the background gif
+- the logo, if used
+- any sub-dir logos, if used
+- possible many more resources.
+- if it's a database generated pag: possible pointers to the raw table
+data, too.
+Very powerfull, potentially very usefull, but tell me: how should a
+network redirector like WebIFS show this mess to the user??
+Instead, the translate header would just say: give me _this_ url,
+untranslated. No questions what this means. One resource. No choice (no
+power, too :). Easy to realize, consistent with the file system model,
+and easy to explain to the user.
+So: source link are nice and powerfull and may be used for advanced
+purposes, but are simply not the same as translate.
+Use both.
+Just my two cents
+Cheers, Mathias
+"why?" (which is good: that belongs on w3c-dist-auth), but I figured
+people would want to at least hear a bit more reason why mod_dav is
+taking a stance against it.
+Cheers,
+-g
+virtual earth
+Mathias Picker
+Gesch?ftsf?hrer Gesellschaft f?r Wissens re/pr? sentation mbH
+Mathias.Picker@virtual-earth.de
+Fon +49 89 / 540 7425-1
+----- End forwarded message -----
+Greg Stein, http://www.lyra.org/
+I don't have a firm opinion on source vs translate (ie: we have not
+implemented it yet! :-), but I have been finding the 'source' arguments
+more convincing so I am leaning that way at present. Its also what
+is in the standard.
+Well, I would say logos should not be included as they are not a
+part of the HTML resource (they would have separate URLs referenced
+via a IMG SRC="..." I would assume). Since we are talking about
+Web resources identified by URLs, I think including other resources
+referenced by a resource ( IMG SRC=... or A HREF=... ) are
+out of scope.
+I am not sure what "possibly many more resources" would be, so I
+cannot comment on them.
+If its a database generated page (eg: content retrived from a database)
+then I would say that is out of scope. The database is not part of
+the script - it is referenced by the script.
+So from your above list, we are only left with
+- raw version of the URL in question (which I assume means raw version
+of the resource referenced by the URL in question)
+- a menu config page, where the current menu style is chosen
+So you are saying that it is not necessary to edit the 'menu config
+page'? If this is the case, then the source information would only
+be one URL. If you are saying its important to be able to edit
+all of the resources, then you are saying the translate header is
+not enough.
+As I think you are arguing against the source link, I think the point
+you are trying to make is that you would rather restrict the system to
+have exactly one 'source' resource behind a URL--that way you can use
+a 'translate' header with a single URL instead of allocating different
+URLs to all of the source resources behind a URL. This makes clients
+easier to write.
+But you also seem to be making a case that a single source resource
+behind a URL is actually insufficient, which is why there may be multiple
+source values. The problem with this is it makes tools harder to
+write as they have to deal with multiple sources.
+Proposal:
+How about introducing the concept of a single *primary* source. Simple
+tools can then access that one only, whereas more powerful tools can
+show the full list of sources. (Hopefully the URLs will make it clear
+enough what the sources are when there are multiple of them - eg by
+looking at file extensions on URLs.) To avoid changing the protocol,
+the first source returned could be said to be the primary source.
+If there is no such thing as a primary source, then the translate
+scheme wont work correctly anyway as it is based on the presumption
+that there is a single primary source for all web resources.
+Alan
+Hello,
+I have a question for the webdav community about the link, src and dest
+elements as specified in RFC 2518.
+If I have a webdav server running and I want to make a reference to a jpeg
+image on the server, is this how I would go about it? --
+PROPPATCH /aJpegImage.jpg HTTP/1.1
+Connection: Keep-Alive
+Host: server:80
+Content-Type: text/xml
+Content-Length: ***
+Then, would the url http://server/referenceToAJpegImage.jpg return the image
+data at http://server/aJpegImage.jpg server-side or is this up to the client
+application??

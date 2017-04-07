@@ -1,0 +1,97 @@
+It's magnificent. Just a few small points
+in 7.1.2 (p 19 in the PDF version) the discussion says "has an undefined
+resource type". But I 12.0 says that this property must be defined on all
+resources. So maybe 7.1.2 should instead say that the value is empty.
+in 11.4, does the DTD for link actually allow for other tags to occur, or
+only src and dst?
+My apologies for taking so long to reply to this:
+On Tuesday, March 10, 1998 3:44 PM, Jim Davis [SMTP:jdavis@parc.xerox.com]
+all
+Good catch! The 7th paragraph in the discussion in Section 7.1.2 should
+definitely say "has an empty resource type" instead of "has an undefined
+resource type."
+The DTD states that only tags src and dst can occur. However, it is
+certainly our intent to allow other tags to be present as well (this is
+shown in the example in Section 12.10.1).
+As a result, (hopefully some XML/SGML people on the list will double-check
+this) the link element declaration should be:
+- Jim
+7.1.2_empty- In 7.1.2 we refer to an empty resource as undefined not
+empty
+I have altered the word from undefined to empty as specified below.
+However, I must respectfully disagree with my learned colleague on the
+matter of the DTD for LINK (I ALWAYS wanted to say that!!! =). As specified
+in section 13, paragraph 1, a DAV XML parser MUST ignore any unknown XML
+elements. Thus one can put any elements one wants into a link and know that
+they will at worst just be ignored. Were we to change the DTD as specified
+below we would be forced to put the same change into every DTD production in
+our spec in order to specify what we have already specified in section 13.
+Yaron
+My apologies for taking so long to reply to this:
+On Tuesday, March 10, 1998 3:44 PM, Jim Davis [SMTP:jdavis@parc.xerox.com]
+all
+Good catch! The 7th paragraph in the discussion in Section 7.1.2 should
+definitely say "has an empty resource type" instead of "has an undefined
+resource type."
+The DTD states that only tags src and dst can occur. However, it is
+certainly our intent to allow other tags to be present as well (this is
+shown in the example in Section 12.10.1).
+As a result, (hopefully some XML/SGML people on the list will double-check
+this) the link element declaration should be:
+- Jim
+On Sunday, March 22, 1998 10:22 PM, Yaron Goland
+specified
+that
+specified
+in
+13.
+OK by me -- somebody wrote me privately and said that they don't think it's
+possible to express what we want (any element, interspersed with a src and
+or dst element) using XML DTDs anyway.
+- Jim
+I have an interesting situation and I'm hoping someone can offer a little advice.
+I'm writing a WEBDAV server that serves out of an object database (which is just a hierarchial tree of objects). Objects can't be transmitted directly from the database; they have to be serialized so that they can be transferred over HTTP. When serving a GET request, the object is serialized and then finding its Content-Length is easy.
+However, when serving a HEAD or PROPFIND request, there is no way to find the length without serializing the object (which can be a time-consuming process if the object is large). It seems like a waste of effort to serialize an object only to find its length.
+As I understand the spec, my server should either send a Content-Length header for GET and HEAD methods and the getcontentlength property for PROPFINDs, or not at all. This is more strict than I would like.
+Is there a way around this that I don't see? Should I just pay the penalty, or should the spec be modified to support only sending the content length when it is not wasteful to compute it?
+Wesley Felter - wesley@scripting.com
+Look at it from a client point of view. Client code would reach an
+unacceptable level of complexity if every single value either could be there
+or couldn't be there. We needed some sort of consistency so we choose an all
+or nothing approach. IF you return GET then you have to return these
+properties. That way the client only has two code paths, either the resource
+doesn't support GET or it does have available the specified properties.
+However server people didn't like this because sometimes the values are hard
+to produce and lots of values may simply not be available.
+So we had to strike a deal. Find a middle ground that both the server and
+client folk could live with. The result is the current set of mandatory
+properties.
+So, that having been said, one needs to be both flexible and realistic. I
+think the answer to your problem is caching. After having generated a GET
+for a property I would cache the header values along with the e-tag that was
+used in that GET and return that for HEAD and PROPFIND requests. If someone
+follows the HEAD or PROPFIND with a GET and gets different values, so what?
+That is the very nature of an asynchronous universe. Unless you are using
+LOCKing, transactioning, or some other type of consistency guarantee the
+only thing you can rely upon from request to request is that nothing will
+remain the same. The only important caveat is to make sure that the headers
+do match with the e-tag. Otherwise obviously bad things will result.
+Yaron
+I have an interesting situation and I'm hoping someone can offer a little
+advice.
+I'm writing a WEBDAV server that serves out of an object database (which is
+just a hierarchial tree of objects). Objects can't be transmitted directly
+from the database; they have to be serialized so that they can be
+transferred over HTTP. When serving a GET request, the object is serialized
+and then finding its Content-Length is easy.
+However, when serving a HEAD or PROPFIND request, there is no way to find
+the length without serializing the object (which can be a time-consuming
+process if the object is large). It seems like a waste of effort to
+serialize an object only to find its length.
+As I understand the spec, my server should either send a Content-Length
+header for GET and HEAD methods and the getcontentlength property for
+PROPFINDs, or not at all. This is more strict than I would like.
+Is there a way around this that I don't see? Should I just pay the penalty,
+or should the spec be modified to support only sending the content length
+when it is not wasteful to compute it?
+Wesley Felter - wesley@scripting.com

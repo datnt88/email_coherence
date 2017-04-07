@@ -1,0 +1,92 @@
+Here is a topic from the Tidy documentation -
+This is something you then have to fix yourself as
+Tidy is unsure of where the  should be inserted.
+Are there example web pages or markup where tags missing their TAGC
+cause ambiguity?
+I had simply assumed that under SGML rules, tags were closed
+when a new STAGO was seen, exempli gratia:
+!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd"
+html
+head
+/head
+body
+and it was never possible to be "unsure" where the TAGC belonged.
+An introduction to this topic has been written by Jukka Korpela
+URL: http://www.cs.tut.fi/~jkorpela/html/empty.html  , but to
+be fair to both the author and potential readers, I suspect that
+you would need to go to the technical documentation before you
+had a deep understanding of the the issues involved.
+To repeat, are there any simple examples of ambiguity
+owing to missing TAGCs; if not, what is HTML-tidy driving
+at here?
+Ben.
+OK, you tell me where to put the  in this:
+td nowrap is a deprecated attribute for table data cell elements ...
+I think I see.
+Plugging your example into the WDG validator gives no
+fewer than 10 validation errors.
+!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd"
+td nowrap is a deprecated attribute for table data
+cell elements ... /td
+The code I posted was valid SGML.
+Yes, if you remove the requirement that the mark up is valid, I
+can certainly see that one can create examples where there is more
+than one place that the TAGC could go.
+Even in this case, you could make a rule that the TAGC
+goes in the last place that it could to make a properly
+formed element.
+Of course it is more than arguable that Tidy ought
+not to suggest reparing such a construct with
+as attribute minimization is not part of XHTML.
+I will try feeding a few of these to Tidy and see what
+it does.
+Ben.
+OK, you tell me where to put the  in this:
+td nowrap is a deprecated attribute for table data cell elements ...
+A simple rule works reasonably well:
+Start with tag
+while the next tokens are
+word = (any word)
+OR word (only if word is a known single-enumeration-value
+attribute name)
+process next attribute
+If / process empty tag, else
+if  process start tag, else
+insert  and process start tag.
+The example would become
+td nowrap is a deprecated attribute for table data cell elements ...
+I _think_ the complete list of known single-enumeration-value attributes is
+checked, compact, declare, defer, disabled, ismap, multiple, nohref,
+noresize, noshade, nowrap, readonly, selected.
+It's not a long list. If someone wants to add words to this list for the
+sake of their own extra tags, they should declare them explicitly.
+Consider the following example:
+td nowrap is a deprecated attribute for table data cell elements
+td compact is not deprecated at all
+In Netscape 4.7, that displays as a blank page.
+Adopting this little rule, we get
+td nowrap is a deprecated attribute for table data cell elements
+td compact is not deprecated at all
+which is admittedly missing two words of intended text from the display,
+but that's a *huge* improvement over missing _everything_!
+I can't find anything to snip.
+Both Mozilla and iCAB display the same as your browser does.
+(Of course Tidy should close td and tr tags).
+I have an objection to the process that generates td compact
+from the input you gave.
+IMHO, Tidy should adopt a "first do no harm" rule. In
+other words, it should not attempt a partial repair of
+elements that it does not fully understand. In my view,
+because it is impossible to determine whether the author
+intended
+or
+nowrap is a deprecated attribute for table data cell elements
+Tidy should do nothing.
+I appreciate that there is a case for changing to td , and
+expecting the author to re-check the page in an HTML editor
+or browser, but I personally would not do it.
+The best that Tidy could do is log the problem. (Or perhaps
+add a comment).
+Ben.

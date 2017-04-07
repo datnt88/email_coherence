@@ -1,0 +1,63 @@
+If one "logical" document is split up into several html pages on (say)
+chapter boundaries, should each page be thought of as a complete html
+document (in particular starting with h1 ) or as part of the logical
+document so starting at section level h2 or h3 depending on the
+section level at which the document was "chunked"?
+I've normally preferred using h1 etc.
+The chapters and appendices of the MathML2 (and 1.01 and 1.0) follow
+this style.
+While testing production based on the xmlspec slices.xsl stylesheet I
+note that the generated sectioning level doesn't change when slicing is
+turned on, so chapters use h2-h5 rather than h1-h4 as previously.
+The W3C manual of style doesn't give any guidance on this question.
+It would be useful if the core xmlspec.xsl stylesheet could support this
+style, currently I have added the following to the mathml customistaion
+layer, which could replace all the templates in xmlspec.xsl for
+xsl:template match="div2/head" etc.
+It relies on a global parameter $slice.depth which is set to 1 if you
+are chunking on div1.
+David
+This message has been checked for all known viruses by Star Internet
+delivered through the MessageLabs Virus Scanning Service. For further
+information visit http://www.star.net.uk/stats.asp or alternatively call
+Star Internet for details on the Virus Scanning Service.
+And while on the subject, wouldn't it be nice if we had a recursive div
+element so that sections could be more easily promoted or demoted?
+Michael Kay
+A decent editing tool would do such promotion and demotion for you
+regardless of the DTD. One shouldn't have to corrupt the DTD to
+make up for the failing of the tools.
+(Okay, I'm biased.)
+paul
+And while on the subject, wouldn't it be nice if we had a recursive div
+element so that sections could be more easily promoted or demoted?
+Hmm Not sure. I don't really mind either the "named section" style or
+the "nested div" style. However I don't really like mixing both in the
+same document. (docbook has both styles but I usually try to use just
+one or the other in any given document). I think it would be too big a
+change to throw out div2 and friends, so I'm not sure I'd want to add a
+nestable div.
+Meanwhile another featurelet in slices-common.xsl that I'm overriding in
+the mathml customisation...
+David
+!--
+slices-common has
+which repeatedly produces the string value of an entire chapter, or
+the entire
+spec for every internal reference. saxon produces the mathml spec in
+a third of the time on my machine if this is changed to
+In addition add the test for "this slice" so references in chapter 3
+to other parts of the same file are of the form #foo rather than
+chapter3.html#foo
+--
+select="($target/ancestor-or-self::div1
+|$target/ancestor-or-self::inform-div1
+|$target/ancestor-or-self::spec)[last()]"/
+xsl:if test="generate-id($slice) !=
+generate-id((ancestor-or-self::div1
+|ancestor-or-self::inform-div1
+|ancestor-or-self::spec)[last()])"
+This message has been checked for all known viruses by Star Internet
+delivered through the MessageLabs Virus Scanning Service. For further
+information visit http://www.star.net.uk/stats.asp or alternatively call
+Star Internet for details on the Virus Scanning Service.

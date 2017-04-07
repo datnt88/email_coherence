@@ -1,0 +1,89 @@
+B.10 What form should EMPTY elements take, if there are EMPTY elements
+in XML: e , e/, or e /e (where '/' is assumed the NET string)
+(7.3, 11.2.3)?
+Only one of these, e /e , can be parsed reliably without a DTD,
+unles you are prepared to use lookahead to the end of the document or
+untiul the next close tag of a container.
+Two other possibilities:
+(1) use a naming convention, e.g.
+(1b) add something (e.g. @) as a name start character:
+where all elements starting with @ are EMPTY, by convention.
+An amendment to SGML could allow @ to be a delimiter to start
+a tag of an EMPTY element, and then the convention would become
+supported syntax.
+Both of these are using syntax, but are using a kind of syntax for
+which there is precedent.
+I don't have strong feelings on these, but wanted to raise them since
+they are both compatible with SGML as it stands today.
+Lee
+B.10 What form should EMPTY elements take, if there are EMPTY elements
+in XML: e , e/, or e /e (where '/' is assumed the NET string)
+(7.3, 11.2.3)?
+Another couple of possibilities:
+(2) provide the necessary markup declarations in a "partial DTD" so that
+empty elements can be understood:
+(2b) provide the necessary "instance parameters" rather than whole markup
+declarations (which generally provide more info than is needed for
+read-only processing functions):
+These relate to B.2, required vs. optional DTDs. I find the idea of
+partial DTDs really appealing, since you don't have to create redundant
+PIs (which could possibly get out of sync with the original DTD), but also
+find the PI idea appealing because certain kinds of markup declarations
+contain a lot of overkill info. I prefer both of these over the naming
+convention ideas because the latter mess up the user's available GI
+namespace.
+If supplying instance parameter in whatever form is a possibility, then
+there's no reason to ban EMPTY elements (which are quite popular in many
+DTDs today) from XML, and we can gracefully do away with the need to
+supply the extra info if SGML97 starts allowing the end-tag.
+Eve
+Requiring partial DTDs is the first step on the slope to requiring DTDs and
+greatly complicating XML for everyone. How will validating XML parsers
+distinguish between partial DTDs and full DTDs? How will authors know the
+difference?
+Having said that, this approach has merit and I'm undecided on the best way to
+handle empt elements - other than to say it should be simple, easily understood,
+and accpetable to the masses.
+I don't think full DTDs ever *need* to be required; pretty much all the
+"read-only" applications (such as browsers) would do just fine if they
+had the tiny subset of information that includes, e.g., EMPTY elements.
+You make a really good point about distinguishing partial and full DTDs.
+Perhaps a PI such as ?XML partialdtd is a good way to handle this;
+otherwise the DTD would be assumed to be full, and the instance could
+generate some errors accordingly if some declarations are missing.
+Eve
+Sign me up with Eve on (2) - this has the advantages that it's easy
+to explain, easy to parse, and is consistent with both SGML and HTML
+thinking.
+2b - please, not another syntax for doing the same thing... whether we
+use DSD or DTD, let's use one thing throughout. The difficulty of parsing
+(2) as opposed to (2b) is nowhere near greater enough to justify getting
+into another syntax.
+Cheers, Tim Bray
+tbray@textuality.com http://www.textuality.com/ +1-604-488-1167
+From w3c-sgml-wg-request@w3.org Mon Oct 14 14:21:16 1996
+Date: Mon, 14 Oct 1996 14:39:18 -0400
+From: "Eve L. Maler" elm
+Subject: Re: B.10 Empty elements?
+Resent-From: w3c-sgml-wg@w3.org
+Sender: w3c-sgml-wg-request@w3.org
+Another way would be to say that XML doesn't require full DTDs. Period.
+Without any way to say whether a DTD is full or partial. Basically, the
+application can opt to make whatever use it wants of whatever DTDs it's
+given. If the application comes across an element for which there is no
+declaration in the DTD, it does whatever it is able to do rather than
+necessarily issuing an error message.
+This way, someone could send what they think is a "full" DTD, an then if
+there is an extra element, the application could still work. Better yet,
+if the user of the application decides to extend the language (the one that
+is defined in the DTD that exists) and add a new element, they can do that
+if the application supports that. If we require that all DTDs be marked as
+full or partial, then what was a full DTD given one version of the instance
+can't automatically become a partial DTD for an extended version of the
+instance.
+That is, for XML, all DTDs become "possibly partial" where both an omitted
+DTD and a full DTD are just 'degenerate' cases.
+Tying this back to empty elements, if the instance uses no empty
+elements, a read-only application may well be able to get away with no
+DTD. If there are empty elements, perhaps only those declarations need
+to be included and sent in the partial DTD.

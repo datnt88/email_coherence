@@ -1,0 +1,21 @@
+It seems at odds that an inline comment does not require content:
+XmlComment ::= " !--" Char* "-- "
+and yet a constructed one does:
+ComputedXmlComment ::= "comment" "{" Expr "}"
+It would make more sense as:
+ComputedXmlComment ::= "comment" "{" Expr? "}"
+Surely the only reason for using a computed comment constructor is that you
+want to compute the content?
+And anyway, you can always write:
+comment {""}
+Michael Kay
+By that argument it doesn't make sense to have content optional for any
+of the computed constructors. For example, why not write: element a
+{""} instead of allowing element a {}?
+Another reason for using computed comment constructors (or any
+constructor for that matter) is to avoid escaping the  or using a
+CDATA section when the XQuery happens to itself be embedded in an XML
+document. For example, if I create (or want to match) an empty comment,
+I (used to) have to write !---- which is entirely unreadable. I
+realize that it's not a big issue to write comment {""}, but it simply
+adds inconsistency to the language/parser which seems unnecessary.

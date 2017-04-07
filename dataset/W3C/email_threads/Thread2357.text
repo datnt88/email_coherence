@@ -1,0 +1,56 @@
+Quick suggestion:
+There's some ISO standard, don't know which, which suggests to
+use this notation for dates:
+YEAR-MM-DD HH:MM:SS TZ
+or something like that.
+This format is very handy as you can use lexical comparison
+to compare times.
+Therefore it would be a plus to have this in some future
+HTTP version.. Maybe one should introduce acceptance of
+this style with HTTP/1.1 already so one can switch to
+this syntax only sometime in the future..
+Best regards,
+Yes, this date format is a definite winner, *and* for you bitheads,
+it saves a couple of characters in every date header.
+We use an ISO hierarchy in our Persistent Document Identifier scheme.
+Works nicely to produce chronologically sorted directories world wide
+as it provide hierarchy in an identifier.
+We also use these for http logging.
+First of all, your assertion that lexical ordering suffices to compare values
+of this sort is trivially shown to be false. Suppose I have the two values:
+1990-04-04 07:00:00 -7000
+1990-04-04 00:00:00 +0000
+A lexical comparison will find these values to be different when in fact they
+are the same. If you want to compare time values you have to either normalize
+them with respect to zone or else figure out a way to rank times in different
+zones. This takes the problem out of the realm of simply lexical comparison
+from the outset, for the format you propose at least.
+Second, ISO standards define a zillion different formats for time values, but
+as far as I know the one you describe isn't one of them. (It is, however, quite
+possible that such a format exists and I am unaware of it, as a complete set of
+ISO specifications will easily fill a large bookcase completely.)
+The ASN.1 specifications, for example, define universal time, which can be
+either YYMMDDHHMMZ, YYMMDDHHMMSSZ, YYMMDDHHMM+ZZZZ, or YYMMDDHHMMSS+ZZZZ.
+(There are also some broken implementations around that generate +ZZ instead of
++ZZZZ. Also note the use of two digit years here, and the inability to tell the
+difference between a four digit year and the presence/absence of seconds. ASN.1
+universal times are a monumentally poor way to represent time values in my
+opinion.)
+There is also ASN.1 generalized time, which has a whole bunch of different
+forms, including YYYYMMDDHHMMSS.SSSZ and YYYYMMDDHHMMSS.SSS+ZZZZ and a bunch of
+others. This is a much better way to represent time values, but it is
+unfortunately few if any applications use it.
+However, I suspect that the format you are thinking of is the one in ISO 8601.
+The forms it allows are YYYYMMDDTHHMMSSZ and YYYYMMDDTHHMMSS (the latter is in
+local time. This format is used by the VCalendar specification (currently being
+considered by IETF Calendaring WG), for example. I think having either local
+values or GMT values is kinda strange, but there you go.
+In any case, by restricting yourself to either GMT times or else to local time
+you actually do end up with strings you can compare lexically. Needless to say,
+use of local time is inherently ambiguous and hence not acceptable, but using
+GMT always would work and get you what you want.
+However, I question the need for any of this. While it is true that the formats
+we tend to use for date/time values cannot be compared directly, I remain to be
+convinced that this gives enough of a performance gain to warrant changing
+things.
+Ned

@@ -1,0 +1,96 @@
+Folks,
+The W3C systems Team has prepared a new box for validator.w3.org. A
+nice hefty dual processor. The system is installed and some files were
+copied from the existing host (not all, yet, e.g not /home).
+I installed checklink, but check seems to dislike this new host.
+onsgmls is the well-known "1.5pre8" yet check behaves as if it were an
+outdated version ("invalid, no error"). could be related to perl on
+this new box (v5.8.3, versus 5.6.1 on the old one). That said it's the
+same perl as qa-dev and I haven't seen any issue there. so...
+I may give it another try later, in the meantime, ideas welcome.
+olivier
+Bjoern yesterday helped me find the reason for that...
+It seems that perl -T does not like our usage of IPC::Open3 in the :80
+instance.
+Apparently -T has become even more paranoid with version 5.8 and we're
+not the only ones to have had such an issue.
+= We'll probably have to wait until the upcoming release (which seems
+to work fine even with -T) before we "migrate" w.v.o to this new box.
+Thoughts, or further analysis, welcome, off-list if necessary.
+olivier
+Selon olivier Thereaux ot@w3.org :
+I have also been bitten by this on Debian a few months ago -- when Perl was
+updated to 5.8, the packaged version of the validator stopped working. I
+looked into the problem and came to the same conclusion -- and noticed
+afterwards that Terje already knew about this and, if I am not mistaken, had
+already commited a (short) fix to the CVS, which I backported to the Debian
+package. The backport is easy, in case you are thinking of applying it on
+the current released version so that it runs on the new machine.
+While I'm here, I just wanted to say that I plan to make a separate Debian
+package for the linkchecker, based on the standalone version, but I have had
+some problems with my computers lately (read: they got stolen) and haven't
+been able to do anything. Hopefully, this will be done quite soon so that
+the new separate package will be included in the upcoming Sarge release.
+Frederic
+It seems that $CFG- {'SGML Parser'} and $catalog are considered tainted;
+I untainted them with the result that Perl is unable to find cmd.exe
+which is the result of
+# Get rid of (possibly insecure) $PATH.
+delete $ENV{PATH};
+(I believe that Perl is broken in this regard, it seems to attempt to
+open "cmd.exe" directly rather than relying on %ComSpec% which is an
+absolute reference...) commenting the delete out yields in
+fatalsToBrowser with
+open3: IO::Pipe: Can't spawn-NOWAIT: Bad file descriptor at check ...
+(I) Just run it without -T...
+This does not seem to be the case at least for check v1.305.2.84 on
+Win32 / ActiveState Perl v5.8.2. Hmm, check v1.305.2.12 (that should
+be :80...) appears to have no problem with -T except that I would get
+open3: IO::Pipe: Can't spawn-NOWAIT: Bad file descriptor at check ...
+there too. Hmm, in v1.305.2.84 we have
+# Launder data for Perl 5.8+ taint mode, trusting the config...
+$v =~ /^(.*)$/;
+$cfg{$k} = $1;
+Hmm, of course, now I am unable to reproduce prior Insecure dependency
+fatal errors with v1.305.2.84... though I still get
+open3: IO::Pipe: Can't spawn-NOWAIT: Bad file descriptor at check ...
+Interesting. So it appears that copy &amp; paste read_cfg() from v1.305.2.85
+(latest) to v1.305.2.12 (:80) would fix the problem on non-Win32...
+Hm, possibly a stupid question, but do you know why is any "cmd.exe"
+needed in the first place? I thought that when doing a system(),
+exec(), open3() and friends with the arguments properly split and passed
+in as a list would avoid the need for a shell/command interpreter. Or
+is this different in Windows?
+If the ":80 version" already has the IPC::Run stuff in place, could you
+try with that instead of IPC::Open3, and see if it works better? It'll
+need commenting out a mod_perl check near the first occurrence of
+$HAVE_IPC_RUN, and of course installing it :)
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA1
+I expect this is due to Perl emulating fork() on `doze.
+If you believe that will stop spammers, you're sadly misled. Rusty hooks,
+rectally administered fuel oil enemas, and the gutting of their machines,
+*that* stops spammers! -- Saundo
+-----BEGIN PGP SIGNATURE-----
+Version: PGP SDK 3.0.3
+iQA/AwUBQHQYBKPyPrIkdfXsEQJOxwCeIhUQWnXLKoRHxsWfZOaPIB5vOXAAn3in
+CgOLovXNAgxT+YT+O+BzvrP7
+=7aUc
+-----END PGP SIGNATURE-----
+One reason for that is that Perl uses CreateProcess(...) to spawn new
+processes which has a behavior different from the CRT _spawn*(...)
+routines (and the cmd.exe shell), for example, CreateProcess(...)
+assumes a .exe file name extension if the application name lacks an
+extension, while _spawn*(...) would first search for .com, ... AFAIR
+CreateProcess(...) also expects only executable files, hence you could
+not use it to execute a .cmd file without explicitly using cmd.exe with
+proper arguments. perl/win32/win32.c:win32_spawnvp(...) probably
+contains comments to this effect, long since I last looked at it.
+No, v1.305.2.12 lacks such code, but for v1.305.2.84 IPC::Run seems to
+do better than IPC::Open3 on the command line, but when invoked via CGI
+it hangs (ongmls.exe remains in the process list). It is impossible to
+kill the onsgmls.exe instances through the task manager, I had to `kill
+-f` them...
+Hm. What if you remove the timeout(60) from the run() call, does that
+change anything?
+No.

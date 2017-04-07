@@ -1,0 +1,117 @@
+I've noticed more and more software vendors using CGI applications to allow
+users to download software. Unfortuately at this time there isn't a way
+to tell user-agents to save the code under a name other than the script name.
+This problematic especially when there is more than one selection on a form.
+I would like to suggest a new header for HTTP/1.1:
+Save-As:
+A CGI application could return this header with a file name (and possibly
+path, although that has security implications - Save-As: /etc/passwd for
+instance. Though it would fail on a well maintained system, it is still a
+risk) which would be used by the user agent instead of the script name for
+saving.
+I would have a number of uses for this tag, and I've seen numerous sites
+that have the same aplication. I think this would be a very useful addition.
+-MZ
+Livingston Enterprises - Chair, Department of Interstitial Affairs
+For support requests: support@livingston.com http://www.livingston.com/
+Snail mail: 6920 Koll Center Parkway #220, Pleasanton, CA 94566
+The risk could be minimized by not allowing path information in the
+value. The UA would 'know' the root path or prompt the user..
+Depending on your server and the ability it may have to map request URLs
+to cgi scripts, it may be possible to include a realistic file name
+as part of the URL ... for example, we use a url of the form:
+to convince the UA to save the data under the name zwexport.zwe but the
+'script name' is 'export' and the remainder of the path is simply
+arguments to the script. The server that does this is the user
+interface server built into ZooWorks so we own the server and
+the exact options for other servers are not something I've studied.
+Dave Morris
+Once upon a time David W. Morris shaped the electrons to say...
+That would be my choice. But I wanted to open the option.
+The problem is this:
+You have a form, say 'download'.
+That form has one ACTION. On that form you can check a box to download
+code.tar, code.tar.Z, or code.tar.gz. The user picks the option they want
+then submits the form to the CGI. Since the form has one ACTION only one
+CGI can be called, and since there are 3 possibly names putting an extension
+on the ACTION will be wrong for any 2 of them.
+I've explored this one already. This is a real world situation today.
+And soon I'll have one where users may pick from at least 5 choices on the
+same form for variations of the same software. It doesn't make sense to
+have 5 forms and/or 5 cgi applications.
+So a 'Save-As:' HTTP header would be most useful in this situation. And
+older browsers would behave as they do today, not a problem for combatibility.
+I think we need to look at HTTP's growing use as a replacement or supliment
+for FTP - especially in software download situations where it is desirable
+to force the user to accept a licensing agreement before getting the code.
+Heck - wouldn't it be nice to make users get code only after having seen
+the Release Notes. ;-)
+-MZ
+Livingston Enterprises - Chair, Department of Interstitial Affairs
+For support requests: support@livingston.com http://www.livingston.com/
+Snail mail: 6920 Koll Center Parkway #220, Pleasanton, CA 94566
+MegaZone:
+There already is an ad-hoc standard for it:
+Content-type: application/octet-stream
+See http://www.ics.uci.edu/pub/ietf/http/hypermail/1996q4/0048.html
+and followups for more information.
+If you want to make it into a real standard for HTTP/1.x, you should
+start by writing a small internet-draft.
+Koen.
+you could use the Content-Disposition: header field
+(beware: it's not in the http-v11-spec07 but borrowed
+from MIME) ie send
+Content-Type: application/octet-stream
+Content-Disposition: attachment; filename=code.tar
+from your ACTION script.
+michael
+** Michael Naumann * ESO * mnaumann@eso.org
+** http://www.eso.org/~mnaumann/
+What UAs support this? Or are you supplying a "plug-in" to the UA?
+I've been having trouble with NS trying to name files with characters that
+the UA end OS can not deal with. I tried RFC1806 without any success.
+Any ideas?
+[Snip]...
+Kevin J. DyerDraper Laboratory MS 23.
+Lesson learned by a user: "Beware geeks bearing GIFs"
+Code 302. Issue a redirect from the script to the final file. That is what
+most sites that do this do. There is no real reason to feed it out of the
+script itself. This also allows you to try to load balance download sites
+if that that is desirable.
+Benjamin Franz
+Once upon a time Kevin J. Dyer shaped the electrons to say...
+I tested it in Netscape 3.0 on SunOS 4.1.4 so far and it worked fine.
+Lynx 2.5 on IRIX ignored it.
+I'll test it on MSIE 3.0 and NS 3.0 on Win95 when I get home.
+Let's take this to www-talk@w3.org instead of the WG.
+-MZ
+Livingston Enterprises - Chair, Department of Interstitial Affairs
+For support requests: support@livingston.com http://www.livingston.com/
+Snail mail: 6920 Koll Center Parkway #220, Pleasanton, CA 94566
+Once upon a time Benjamin Franz shaped the electrons to say...
+Yes there is - lawyers. They wanted it so that there was no way to the
+file except via the script which contains a licensing agreement. Redirecting
+to another URL would allow that URL to leak and people to get the code
+directly.
+Yes - cookies could maintain state - and exclude a lot of people.
+Note replies redirected to www-talk@w3.org so we stop bothering the WG.
+-MZ
+Livingston Enterprises - Chair, Department of Interstitial Affairs
+For support requests: support@livingston.com http://www.livingston.com/
+Snail mail: 6920 Koll Center Parkway #220, Pleasanton, CA 94566
+Depends on the specifics of the content ... if its generated dynamically
+it needs to come from the application.
+Dave
+There is a solution that should already serve your purpose.
+The Content-disposition header can contain a "filename"
+parameter for naming a file. When the Navigator sees this
+parameter it will use it as a default filename for saving.
+The following use should work when returned from a CGI script:
+Content-disposition: file; filename=foo.exe
+The Navigator only uses the filename parameter, everything
+else in the header is currently ignored.
+The Content-disposition header is also used in HTTP file upload
+and is documented in Larry Masinter's RFC on file upload.
+:lou
+Lou Montulli http://www.netscape.com/people/montulli/
+Netscape Communications Corp.

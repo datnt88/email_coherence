@@ -1,0 +1,152 @@
+Proposal to close hendler-01
+Summary: rejected
+This request would require substantial changes to the RDF/XML
+grammar, make it more complex, introduce further tricky
+implementation work and require another last call WD. The
+resulting RDF graph can be generated from the existing RDF/XML
+albeit in a long form.
+NOTE * * * This is not yet a response to the issue raiser * * *
+Rationale [LONG - with examples]
+This request would require a substantial change to the RDF/XML
+syntax, so that
+would allow not only a list of node elements, but a list
+of what would might be called 'literal node elements'.
+This change would require another last call WD.
+Grammar Change Choices
+1. The grammar would be changed to:
+start-element(URI == propertyElementURIs ),
+attributes == set(idAttr?, parseCollection))
+(nodeElementList | literalNodeElementList)
+end-element()
+and new grammar productions
+literalNodeElementList ::= literalNodeElement*
+literalNode ::= start-element(URI == ???,
+attributes == set(datatypeAttr?, parseLiteral?))
+literal
+end-element()
+The latter would need new careful rules to handle both datatypes and
+parseType="Literal" forms (or the latter could be ruled out).
+This would mean inventing a new rdf term for ??? that would allow
+literals to be used where nodes were expected. I will use rdf:abc
+for this example rather than pick one.
+2. Alternatively only http://www.w3.org/TR/rdf-syntax-grammar/#nodeElement
+could be changed to be handle the functionality above, but it is one of
+the most complex parts of the grammar and it would be difficult.
+Aside: If nodeElement was changed in this way, it *would* also
+allow literals to be given as subjects of triples. However this is a
+postponed RDF Core Issue:
+and if this choice was made, there would be temptation to
+change all the other working drafts in order to allow it in the
+semantics and abstract syntax, explain in the primer, etc.
+Examples of this new syntax
+So given rdf:abc and either of the above choices, you could then use:
+giving N-Triples:
+http://example.org/node http://www.example.org/ns#propertyElement _:genid1 .
+_:genid1 http://www.w3.org/1999/02/22-rdf-syntax-ns#type http://www.w3.org/1999/02/22-rdf-syntax-ns#List .
+_:genid1 http://www.w3.org/1999/02/22-rdf-syntax-ns#first "a" .
+_:genid1 http://www.w3.org/1999/02/22-rdf-syntax-ns#rest _:genid2 .
+_:genid2 http://www.w3.org/1999/02/22-rdf-syntax-ns#type http://www.w3.org/1999/02/22-rdf-syntax-ns#List .
+_:genid2 http://www.w3.org/1999/02/22-rdf-syntax-ns#first "b" .
+_:genid2 http://www.w3.org/1999/02/22-rdf-syntax-ns#rest http://www.w3.org/1999/02/22-rdf-syntax-ns#nil .
+and all the usual literal datatypes
+giving N-Triples
+http://example.org/node http://www.example.org/ns#propertyElement _:genid1 .
+_:genid1 http://www.w3.org/1999/02/22-rdf-syntax-ns#type http://www.w3.org/1999/02/22-rdf-syntax-ns#List .
+_:genid1 http://www.w3.org/1999/02/22-rdf-syntax-ns#first " a:b xmlns:a="http://example.org/a" Some XML /a:b "^^ http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral .
+_:genid1 http://www.w3.org/1999/02/22-rdf-syntax-ns#rest _:genid2 .
+_:genid2 http://www.w3.org/1999/02/22-rdf-syntax-ns#type http://www.w3.org/1999/02/22-rdf-syntax-ns#List .
+_:genid2 http://www.w3.org/1999/02/22-rdf-syntax-ns#first "10"^^ http://www.w3.org/2000/10/XMLSchema#decimal .
+_:genid2 http://www.w3.org/1999/02/22-rdf-syntax-ns#rest _:genid3 .
+_:genid3 http://www.w3.org/1999/02/22-rdf-syntax-ns#type http://www.w3.org/1999/02/22-rdf-syntax-ns#List .
+_:genid3 http://www.w3.org/1999/02/22-rdf-syntax-ns#first "chat"@fr .
+_:genid3 http://www.w3.org/1999/02/22-rdf-syntax-ns#rest http://www.w3.org/1999/02/22-rdf-syntax-ns#nil .
+Working with the Existing RDF/XML
+All the triples given above can be generated from the existing
+grammar, with the triples written out in long form. This would be
+true for all potential mappings and although inconvenient for
+hand-writing, would be possible.
+The first set of triples written out in longhand RDF/XML
+rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+xmlns:ex="http://www.example.org/ns#"
+The second set:
+rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+xmlns:ex="http://www.example.org/ns#"
+Both of the latter two rdf/xml examples are legal and work in parsers
+conformant with the Jan 23 2003 drafts.
+Summary of adding this form:
+Pros (changing to add this new form)
+Adds a shorthand for a triples form that Hendler and Webont call
+"very important" (Hendler)
+-- http://lists.w3.org/Archives/Public/www-rdf-comments/2003JanMar/0322.html
+and "prefered .. to be allowed" ,"would permit some constructs in
+OWL that are difficult under the current design." (WebOnt)
+-- http://lists.w3.org/Archives/Public/www-rdf-comments/2003JanMar/0335.html
+With grammar choice 2, allows a way to do literal triple subjects.
+Using the current RDF/XML is very long and "extremely ugly" (Hendler)
+Cons (not changing)
+Is creating another new piece of RDF/XML syntax.
+Requires a new last call RDF/XML syntax WD.
+Tricky grammar choices and changes, wordings.
+New implementation burden.
+Adds yet another alternate way to use RDF/XML - already too many options.
+Requires new description in RDF/XML syntax section 2 and in the RDF primer.
+With grammar choice 2, would tempt changes to be made to most all other WDs.
+My personal summary is: sorry, too late for such a large change.
+Dave
+I suggest we note the related comment:
+"This is not an official request to do anything"
+in our reply. (I had thought that this comment was sent on behalf of WebOnt,
+but I can't find the trail).
+Jeremy
+and "prefered .. to be allowed" ,"would permit some constructs in
+OWL that are difficult under the current design." (WebOnt)
+With grammar choice 2, allows a way to do literal triple subjects.
+Using the current RDF/XML is very long and "extremely ugly" (Hendler)
+Cons (not changing)
+Is creating another new piece of RDF/XML syntax.
+Requires a new last call RDF/XML syntax WD.
+Tricky grammar choices and changes, wordings.
+New implementation burden.
+Adds yet another alternate way to use RDF/XML - already too many options.
+Requires new description in RDF/XML syntax section 2 and in the RDF
+primer.
+With grammar choice 2, would tempt changes to be made to most all other
+WDs.
+My personal summary is: sorry, too late for such a large change.
+Dave
+Jeremy Carroll said:
+It was also dated 10 Jan, before the LC WDs were published. PFPS's
+mail was a note that it might be recorded as future work.
+WebOnt's official request in
+was a preference that RDF Core make a change now, but not a requirement.
+Dave
+I'm inclined to agree, and part of my reason is that by trying to fix just
+this problem I think we might miss a bigger opportunity.
+What follows is NOT a proposal, but an explanation of the above comment.
+Note that the formal semantics is now clear that all literal values can
+also be resources (i.e. are in IR). If we had a syntactic form that
+described a resource with the same value as a given literal, it would
+provide a solution to both this problem and the literals-as-subjects problem.
+E.g.
+rdf:LiteralValue [rdf:datatype='...']
+[xml:lang='...'] literalText /rdf:Literal
+would be an alternative form of the production that includes
+rdf:Description ... and typed elements. (The choice of name is just an
+illustration.) (Note there is no provision for indicating a URI -- maybe
+there should be.)
+A variant of this might be to define a new property which identifies its
+subject with its object; e.g. rdf:sameAs. Then one could write:
+or
+This requires no change to the syntax, just a new vocabulary element with
+predefined semantics.
+I think I've illustrated there may be enough ways to solve this problem,
+and some others, that it is probably best deferred to a new working group
+with more time to consider the options here. And, as Dave says, the
+current shortcoming is an inconvenience rather than an unavoidable shortcoming.
+#g
+Graham Klyne
+PGP: 0FAA 69FF C083 000B A2E9 A131 01B9 1C7A DBCA CB5E
+Should we add a new postponed issue to the RDF issue list.
+This is what Peter originally asked for; I thought we had done that and got
+sign off from WebOnt for it ... my memory does not match the records.
+Jeremy

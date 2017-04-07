@@ -1,0 +1,118 @@
+I will soon begin work integrating Tidy into a larger program that I am
+working on, using it to convert existing files into XHTML for input into a
+database. I'm working in MS VC++ 6.0, buiding for a multiprocessor Windows
+NT platform. Has anyone else converted Tidy into a library? Any
+recommendations or things to be aware of?
+I've only looked over the code for a minute or two; the real work won't
+start until after the holiday. But I guess the obvious questions are these:
+Am I spinning my wheels (i.e. has someone already done this that could share
+some of their experiences with me)?
+Which portions of the initialization/uninitialization are "Init once/uninit
+once" and which are "init before each file is parsed/uninit after?"
+I guess the rest of it will be plug-and-chug, and I have no problem with
+that (hey, that's what I get paid for...)
+Thanks to those involved in Tidy development. It is a great program that
+does exactly what I need it to do.
+Douglas Cook - MCP
+Douglas Cook writes in :
+While I am working on a different platform (Mac OS), and not producing a
+library per se (a "plug-in" filter), I have many of the same issues as you
+will, and I can probably give you some advice.
+Depending on how you port the tidy code - since the main() function runs
+the whole show ONCE, you probably want to extract out the bits that will be
+only initialized/terminated once, and put the rest of the main() in code
+that will executed each time. Static variable initialization may or may not
+cause you problems (see below).
+Specifically in my case, I am working in a multi-threaded application, I
+can't (easily) have global variables in my "plug-in", but the "plug-in"
+architecture has "initialize", "run", and "terminate" phases (amongst
+others). I can have multiple instances of the "plug-in" (in multiple
+formats - such as 68K, PowerPC, "FAT" processor architectures, packaged in
+a couple of different ways - code resources, shared libraries (DLL's)),
+which typically share the code, but have their own data.
+In my "initialize" routine :
+(a) I allocate memory for global variables (which get saved/restored on a
+context switch).
+(b) I set up the setjmp() error handler in case parts of tidy get a fatal
+error during initialization.
+(c) If building a version of the code with memory management debugging (if
+I'm not building a debug version, actually the calls do nothing), I
+initialize my memory manager (which in my case means allocating a block of
+memory to track memory allocation requests).
+(d) I do any platform/"plug-in" specific initialization.
+(e) I call InitTidy().
+(f) Because my "plug-in" has a GUI configuration window, I handle any
+configuration that the user may have done (at any time before the "plug-in"
+code is called) by setting the values of tidy global variables (as would
+normally come from command-line options) appropriately. This would be
+equivalent to the command-line option processing loop in tidy(), except for
+opening files. I also support Config files, and I call ParseConfigFile() in
+this case.
+(g) I call AdjustConfig().
+In my "run" routine :
+(a) I switch in (restore) the global variables.
+(b) I set up the setjmp() error handler in case parts of tidy get a fatal
+error.
+(c) I create an output stream and error stream. This would be equivalent to
+the code in tidy() that opens the files.
+(d) My "plug-in" gets handed streams of data, one stream at a time (the
+"plug-in" makes callbacks to the application for more data). For each input
+stream, I process the input in much the same way as tidy() - starting with
+the NewLexer() call.
+(e) I do the rest of the processing as per tidy(), up to the end of the
+routine where it reports errors and closes the output/error streams.
+Everything EXCEPT DeInitTidy().
+(f) I switch out (save) the global variables.
+In my "terminate" routine :
+(a) I switch in (restore) the global variables.
+(b) I call DeinitTidy().
+(c) If building a version of the code with memory management debugging (if
+I'm not building a debug version, actually the calls do nothing), I
+terminate my memory manager (which in my case means reporting any memory
+leaks, and actually disposing memory).
+(d) I do any platform/"plug-in" specific termination.
+The recent versions (15 Apr 99 and later) of Tidy have made my job easier
+than it used to. But I still have problems with variables that are static
+in various files, such as hashtables, since I can't easily make them
+extern, as they have the same names. The compiler/linker cause static
+initialization to be done once (which makes complete sense), but ideally I
+would like to do that each time in my "initialize" routine - I haven't
+found a good way to do that yet (compiler/linker dependent). There are a
+couple of other gotchas that I had to work around. I haven't completely
+solved all the problems yet - like multiple invocations of the code while
+in the application cause me some crashes (again mainly related to those
+static variables and hashtables).
+Hope this helps.
+Regards, Terry
+Java tidy was ok in my case, the latest version is bean compliant an easy to
+automate.
+maybe a DOM-compliant version may be a little bit more "plug &amp; play" ( a
+possible partner : www.docuverse.com, it is in java).
+Yes, more than one person has done this. For instance "Chami" has
+wrapped Tidy as a DLL for use in HTML-Kit, see the Tidy home page
+for a link.
+You can see the details in the code for main().
+Let me know if there are any changes that need to be made to the
+Tidy code itself to forstall any problems arising from regular
+updates to Tidy which otherwise you would have problems from
+benefitting from.
+Regards,
+-- Dave Raggett dsr@w3.org http://www.w3.org/People/Raggett
+World Wide Web Consortium (on assignment from HP Labs)
+I have plenty of suggestions that would make my life easier to update my
+Mac OS port of "tidy" everytime you release a new version grin . I have
+got the updating down to a fine art now, but it would be possible to avoid
+most of it with some changes to base "tidy" code.
+I had been planning to anyway, to write up such a suggestion list - I will
+try to do so soon.
+Just another little thing that caught me on this last update that might
+catch other people porting "tidy" as well - I used my default "case
+insensitive" option in my text comparsion (diff) tool, and it wasn't until
+I was single-stepping through some code did I notice an anomaly. It appears
+that you changed the case of all tag string constants in the code from
+UPPERCASE to lowercase, and changed 1 routine as well to cope with the
+change. I only caught it because I had manually pasted in new tags (e.g.
+"dl") and noticed all other tags were still uppercase (e.g. "ABBR"). I then
+had to make a second pass through the code updating the parts affected by
+the case change. I apparently missed seeing this in the release notes.
+Regards, Terry

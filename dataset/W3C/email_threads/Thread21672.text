@@ -1,0 +1,130 @@
+I think I found a bug in the datatype handling
+of
+sax2rdf.py,v 1.34 2003/08/14 00:00:19 timbl Exp
+Consider this input:
+rdf:RDF xmlns="http://opencyc.sourceforge.net/daml/cyc.daml#"
+xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+DayOfWeekType
+rdf:about="http://opencyc.sourceforge.net/daml/cyc.daml#Sunday"
+dayAbbr
+xmlns="file:/home/connolly/w3ccvs/WWW/2003/09dc-bos/weekDays#" SU /dayAbbr
+index
+xmlns="file:/home/connolly/w3ccvs/WWW/2003/09dc-bos/weekDays#"
+rdf:datatype="http://www.w3.org/2001/XMLSchema#integer" 6 /index
+cwm seems to think Sunday is an integer:
+$ python ../../2000/10/swap/cwm.py --rdf
+../../2000/10/swap/test/syntax/dtdirty.rdf
+!-- using base
+file:/home/connolly/w3ccvs/WWW/2000/10/swap/test/syntax/dtdirty.rdf--
+rdf:RDF xmlns="http://opencyc.sourceforge.net/daml/cyc.daml#"
+xmlns:log="http://www.w3.org/2000/10/swap/log#"
+xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+DayOfWeekType
+rdf:about="http://opencyc.sourceforge.net/daml/cyc.daml#Sunday"
+dayAbbr
+xmlns="file:/home/connolly/w3ccvs/WWW/2003/09dc-bos/weekDays#" SU /dayAbbr
+index
+xmlns="file:/home/connolly/w3ccvs/WWW/2003/09dc-bos/weekDays#"
+rdf:datatype="http://www.w3.org/2001/XMLSchema#integer" 6 /index
+nameString
+rdf:datatype="http://www.w3.org/2001/XMLSchema#integer" Sunday /nameString
+Dan Connolly, W3C http://www.w3.org/People/Connolly/
+Looks like a typo.
+self._dataType = None
+]]] - line 355 sax2rdf.py
+shouldn't be funkyCased:
+self._datatype = None
+Output is then:
+rdf:RDF xmlns="http://opencyc.sourceforge.net/daml/cyc.daml#"
+xmlns:log="http://www.w3.org/2000/10/swap/log#"
+xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+index xmlns="file:/home/connolly/w3ccvs/WWW/2003/09dc-bos/weekDays#"
+rdf:datatype="http://www.w3.org/2001/XMLSchema#integer" 6 /index
+I am trying to run the regression suite, but a bunch of stuff dealing with
+LX is preventing me from success, thus I haven't checked the
+one-character change in (someone who can correct this is welcome to
+check it in). The error is the following each time:
+Traceback (most recent call last):
+File "../cwm.py", line 54, in ?
+import LX.kb
+File "../LX/kb.py", line 9, in ?
+import LX.rdf
+File "../LX/rdf.py", line 13, in ?
+from LX.defaultns import rdfns, lxns
+ImportError: No module named defaultns
+Ryan Lee +1.617.253.5542 (MIT office)
+ryanlee@w3.org http://www.w3.org/People/ryanlee/
+Thanks, Ryan!
+I must re-find that python lint-like thing danc pointed me at.
+Have you tried cvs update -d LX to get the LX code?
+or PYTHONPATH=.. python retest...
+Tim
+I'm up to date, cvs up -d -P. I figured out some things were missing
+(a PYTHONPATH, changing retest.py to use python2 for this system); I'm
+pretty sure that that bit of LX as it is in CVS is holding things up.
+There really is no LX.defaultns anywhere (given that I'm not missing
+something...)
+After some more playing, I managed to circumvent LX complaints. Now every
+test case save #30 works out, and #30 is just a matter of different list
+syntax printing:
+######### Differences from reference output:
+--- ref/daml-ex.n3 Mon Aug 25 22:59:24 2003
++++ ,temp/daml-ex.n3 Mon Aug 25 23:35:21 2003
+@@ -27,10 +27,13 @@
+dpo:subClassOf :Animal .
+:Height a dpo:Class;
+- dpo:oneOf (
+- :short
+- :medium
+- :tall ) .
++ dpo:oneOf [
++ http://www.daml.org/2001/03/daml+oil#first :short;
++ http://www.daml.org/2001/03/daml+oil#rest [
++ http://www.daml.org/2001/03/daml+oil#first :medium;
++ http://www.daml.org/2001/03/daml+oil#rest [
++ http://www.daml.org/2001/03/daml+oil#first :tall;
++ http://www.daml.org/2001/03/daml+oil#rest
+http://www.daml.org/2001/03/daml+oil#nil ] ] ] .
+:Male a dpo:Class;
+dpo:subClassOf :Animal .
+@@ -41,9 +44,11 @@
+:Person a dpo:Class;
+dpo:comment "every person is a man or a woman";
+- dpo:disjointUnionOf (
+- :Man
+- :Woman );
++ dpo:disjointUnionOf [
++ http://www.daml.org/2001/03/daml+oil#first :Man;
++ http://www.daml.org/2001/03/daml+oil#rest [
++ http://www.daml.org/2001/03/daml+oil#first :Woman;
++ http://www.daml.org/2001/03/daml+oil#rest
+http://www.daml.org/2001/03/daml+oil#nil ] ];
+dpo:restrictedBy [
+a dpo:Restriction;
+dpo:onProperty :parent;
+@@ -51,9 +56,11 @@
+dpo:subClassOf :Animal .
+:TallMan a dpo:Class;
+- dpo:intersectionOf (
+- :TallThing
+- :Man ) .
++ dpo:intersectionOf [
++ http://www.daml.org/2001/03/daml+oil#first :TallThing;
++ http://www.daml.org/2001/03/daml+oil#rest [
++ http://www.daml.org/2001/03/daml+oil#first :Man;
++ http://www.daml.org/2001/03/daml+oil#rest
+http://www.daml.org/2001/03/daml+oil#nil ] ] .
+:TallThing a dpo:Class;
+dpo:restrictedBy [
+######### from normal case daml-ex.n3: cwm -rdf owl-ex.rdf -n3
+Ryan Lee +1.617.253.5542 (MIT office)
+ryanlee@w3.org http://www.w3.org/People/ryanlee/
+My bad. Sorry. I got rid of defaultns.py yesterday, and missed
+checking in one of the files that needed to be changed to compensate.
+Oh... Actually, I missed the existence of one that has to be changed
+in about 60 places. Arg.
+/me bumps up the priority of a more general solution by 7 more notches
+-- sandro
+Thanks, Ryan.
+And to think copying you was an after-thought!
+Dan Connolly, W3C http://www.w3.org/People/Connolly/

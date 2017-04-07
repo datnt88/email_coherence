@@ -1,0 +1,105 @@
+Hi all,
+in our draft we have introduced the Reference's Type
+attribute to allow the signer to give a hint that the
+data referenced is of a special kind, such as
+Manifest, Object, SignatureProperty.
+In section 5.2 "The SignatureProperties Element" we
+define the type identifier for signature properties:
+Type="http://www.w3.org/2000/02/xmldsig#SignatureProperty
+My question now is: What is the actual data this type
+identifier qualifies? Is it the enveloping SignatureProperties
+Element, or is it a single SignatureProperty child Element,
+as the name of the type identifier suggests?
+Thanks, Gregor
+Gregor Karlinger
+Phone +43 316 873 5541
+Institute for Applied Information Processing and Communications
+Austria
+I don't think I can speak very well to the functionality or requirements of
+this feature, but I believe the spec says the actual data referenced is the
+thing pointed to by a Reference. Kind of awkward I agree... good ideas are
+welcome!
+4.3.3 The Reference Element
+The optional Type attribute contains information about the type of
+object being signed. This is represented as a URI. For example:
+Type="http://www.w3.org/2000/02/xmldsig#Object"
+Type="http://www.w3.org/2000/02/xmldsig#Manifest"
+Type="http://www.w3.org/2000/02/xmldsig#SignatureProperty"
+The Type attribute applies to the item being pointed at, not its
+contents. For example, a reference that identifies an Object element
+containing a SignatureProperties element is still of type #Object. The
+type attribute is advisory. No validation of the type information is
+required by this specification.
+Joseph Reagle Jr.
+W3C Policy Analyst mailto:reagle@w3.org
+IETF/W3C XML-Signature Co-Chair http://www.w3.org/People/Reagle/
+Hello Joseph,
+I think it would be a good idea, to change the identifier to
+#SignatureProperties, because only the enveloping SignatureProperties
+Element currently has defined an Id attribute, contrary to
+SignatureProperty.
+Otherwhise it would not be possible to refer to such an item using our
+XPointer
+shortcut as part of a URI reference.
+Gregor
+Gregor Karlinger
+Phone +43 316 873 5541
+Institute for Applied Information Processing and Communications
+Austria
+The other approach is to place an ID attribute in SignatureProperty, which
+seems like a better idea. So the identifier is the same, and
+SignatureProperty now has an ID. The grammar for SignatureProperty and
+SignatureProperties permits multiple instances of both, and that begs the
+question of what the semantic meaning is. Now, the grammar doesn't
+explicitly say this, it just states that you can place arbitrary content in
+an Object, and consequently you can repeat SignatureProperties if you so
+decided. But there's also the questin of where the Target attribute properly
+sits. Options:
+A. Remove all Targets; the SignatureProperty can only apply to the Signature
+it is within. (What if nested?)
+B. One and only one SignatureProperties per Signature, which includes a
+Target attribute that defines to which Signature the SignatureProperty(s)
+apply. (Remove Target from SignatureProperty(s)).
+C. Other?
+I advocate B.
+are
+Joseph Reagle Jr.
+W3C Policy Analyst mailto:reagle@w3.org
+IETF/W3C XML-Signature Co-Chair http://www.w3.org/People/Reagle/
+Hi Joseph,
+I am sorry, but I do not understand this question. If we restrict the
+properties
+to be applied only to the signature they are within, I do not see a problem
+with nesting. Can you please give an example?
+If we make this restriction (I do not see an argument against it), I suggest
+to reject the SignatureProperties element at all, since it only works as
+an additional "container" level between Object and SignatureProperty, but
+nothing else.
+In this case I also suggest to reject SignatureProperties. Instead, supply
+each SignatureProperty element with an Id AND a Target attribute.
+Regards, Gregor
+Gregor Karlinger
+Phone +43 316 873 5541
+Institute for Applied Information Processing and Communications
+Austria
+suggest
+That's a good point. It is rather superflous. I'd be interested in what
+others have to say...
+Well, I changed the example to make it clearer this is what should happpen
+(though I'm hesitant to make the change of removing SignatureProperties' ID,
+or the element itself without further discussion (though I agree with you on
+removing it.))
+[p10] Object
+[p11] SignatureProperties
+[p12] SignatureProperty Id="AMadeUpTimeStamp"
+Target=" #MySecondSignature "
+[p13] timestamp xmlns="http://www.ietf.org/rfcXXXX.txt"
+[p14] date 19990908 /date
+[p15] time 14:34:34:34 /time
+[p16] /timestamp
+[p17] /SignatureProperty
+[p18] /SignatureProperties
+[p19] /Object
+Joseph Reagle Jr.
+W3C Policy Analyst mailto:reagle@w3.org
+IETF/W3C XML-Signature Co-Chair http://www.w3.org/People/Reagle/

@@ -1,0 +1,26 @@
+Alright, I'll bite. Give me a good use case for hasAttribute or
+hasAttributeNS versus getAttribute() != null. I'm sure it has something to
+do with ancient programming languages like C++ ;-)
+Keith
+Minor opportunity for memory-management optimization. Some DOMs (eg those
+which run as proxy for other data representations) may not create actual
+Attr objects until they're retrieved. hasAttribute tests for presence
+without requiring that the object be instantiated.
+Basically, it's a workaround for the fact that getAttribute can't
+distinguish attribute-doesn't-exist from attribute-value-is-empty-string.
+Not essential, but "mostly cheap and harmless".
+Joe Kesselman / IBM Research
+There is no way by calling getAttribute() to determine whether an attribute
+exists as an empty string or does not exist. Both cases return an empty
+string, not a null. getAttribute() != null will never happen in an
+implementation that follows the spec properly (I wrote one that didn't, and I
+expect others have, but it will have to be fixed...). You could test
+getAttributeNode() every time before getting the attribute and test that for
+null, but in a number of implementations, the attribute node never gets
+constructed unless it is explicitly referenced, so that causes significant
+extra work, just to discover whether the attribute existed or not.
+There's no "fixing" getAttribute at this point to make it return null if the
+attribute does not exist. It had to do with some environment or another, I
+don't remember which.
+Ray Whitmer
+ray@xmission.com

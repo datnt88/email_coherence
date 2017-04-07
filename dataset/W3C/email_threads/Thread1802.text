@@ -1,0 +1,69 @@
+From: Clemm, Geoff [mailto:gclemm@rational.com]
+From: Julian Reschke [mailto:julian.reschke@gmx.de]
+Related question of the day: what's the response format for the
+version-tree report with depth: 1 applied to a collection that
+itself is not versioned but contains one version controlled member?
+So for depth 1 one would get:
+207 MULTISTATUS
+...now what?...
+RFC3253 seems to indicate that the prop element for the version
+controlled member must return the requested report. The format for
+the version-tree report defines a multistatus response body. So
+would the prop element contain another multistatus sub-tree?
+Yes.
+BTW, I'm not happy with that answer, but it is what RFC3253 says.
+In retrospect, I wish we had given every REPORT response its own
+xml element such as is done with the DAV:merge-preview-report
+(possibly nesting the multistatus within that).
+For any new reports we define, we definitely should do so.
+Cheers,
+Geoff
+From: Julian Reschke [mailto:julian.reschke@greenbytes.de]
+RFC3253 states that for depth != 0, the response must conform to
+whatever RFC2518 has to say about Multi-Status response bodies.
+I think by now we can safely assume that we won't get any kind of
+interoperability for these kinds of reports unless we clarify the
+format.
+I agree that we need to clarify what is intended by 3253 for Depth 0
+REPORT response bodies. In particular, RFC2518 says that a DAV:prop
+node should only contain property values, while RFC3253 says that
+the DAV:prop node in a Depth 0 REPORT response should contain a
+report.
+I haven't seen any server or client implementing the current
+RFC3253 format yet, so I think clarifying *plus* choosing a more
+logical format makes a lot of sense.
+I believe we have two alternatives being proposed:
+(a) Clarify that the DAV:prop node contains reports instead of
+properties, when used in a DAV:response node in a top-level
+DAV:multi-status response body for a Depth 0 REPORT.
+(b) Change the marshalling defined by RFC3253 so that the report
+appears in a DAV:report node instead of the DAV:prop node.
+The advantage of (a) is that it is consistent with what appears in
+RFC-3253. This means that there is at least some chance that someone
+implementing RFC-3253 would pick this alternative.
+The advantage of (b) is that it is more consistent with RFC-2518,
+but unfortunately is not consistent with RFC-3253 and is not something
+that anyone would implement based on existing RFC documents (i.e. there
+is no way they could guess to use a DAV:report node).
+Clearly, Julian prefers (b). While I prefer (a), I'd be happy to
+go with (b) if that is the preference of the working group.
+Anyone else want to chime in here? In either case, I will add this
+issue to the ERRATA document.
+Cheers,
+Geoff
+Yes, it should say "or the collection itself". I'll add that to the errata
+sheet.
+Thanks for noticing that!
+Cheers,
+Geoff
+Assume that the collection at the root of my WebDAV namespace happens to be
+versioned. How do I use locate-by-history to find it?
+Shouldn't this
+"The response body for a successful request MUST be a DAV:multistatus XML
+element containing every version-controlled resource that is a member of the
+collection identified by the request-URL,..."
+be
+"The response body for a successful request MUST be a DAV:multistatus XML
+element containing every version-controlled resource that is a member of
+the collection identified by the request-URL or the collection itself,...."
+instead?

@@ -1,0 +1,230 @@
+Dear all!
+I have comments and question regarding the following attributes/methods
+of the text node interface:
+1. wholeText attribute:
+What is the expected use case of this attribute? Shouldn't this
+functionality moved to the parent, because it is quite similar, to the
+textContent attribute of the node interface? If this functionality is
+really needed then I propose to have a method on node:
+* Collects the text content of all logically-adjacent text nodes of the
+specified text node.
+public String getWholeText(int anIndex); // alternatively:
+getWholeText(Text aTextNode)
+2. replaceWholeText method
+This method has a lot of tree-processing logic that should not be
+executed by a child node on its parent node. I would prefer the parent
+node to have control over the process. Therefore I propose a method on
+the node interface:
+* Replaces the logically-adjactent text nodes always by a NEW text node.
+public Text replaceWholeText(int anIndex); // alternatively:
+replaceWholeText(Text aTextNode);
+3. splitText method
+To be consistent I would also move this method to the node interface too.
+In general I think that the DOM core should not contain too much
+special-purpose functionalites like these once. In addition I assume
+that this attribute and these methods are meant for editing. Therefore
+they should be moved from the DOM core to the NodeEditAS interface.
+--Stefan
+Yoiks! I think "Node" is already too fat and typeless.
+Please don't move text-specific methods into that
+class; keep them in text-specific interfaces.
+- Dave
+One use case: Impedence matching between the DOM and the XPath Data Model.
+XPath sees all adjacent text as a single value; this attribute permits the
+DOM to support that by returning the first text node and assuming the
+caller is clueful enough to retrieve wholetext rather than just nodevalue.
+It's arguably just a convenience method, but a useful and frequently
+requested one -- especially given the proposal that the DOM provide an
+XPath API.
+No, it _shouldn't_ be on the parent; there may be non-text children as
+well, and wholeText just accesses a single adjacent text block rather than
+all text children.
+Joe Kesselman / IBM Research
+The expected use is when you are trying to get an infoset or XPath view
+of the text pieces.
+It is difficult to get an index number if you have a text node, short of
+going back and manually counting, which would make the method more
+trouble than it is worth. An index does not work well at all if there
+are entity references involved in which case you have multiple hierarchy
+levels involved. It is not clear what is the value of greatly
+complicating the signature and invocation and making it a method on an
+ancestor would be. Just finding the proper ancestor to call it on would
+be a multistatement loop -- painful since the point of the method was
+convenience. It also gives the possibility to call it
+incorrectly in many different ways. I also do not believe that it is
+appropriate to add a method this specific to text data to Node.
+See the above objections to using an index and the more-complex signature.
+The NodeEditAS interface has nothing to do with editing a document. It
+has to do with editing an abstract schema. Your suggestion that it
+should belong on node goes against the precedent of DOM 1 and 2 which
+places text editing methods on specific interfaces, such as
+CharacterData. SplitText itself is already a part of the Text interface
+in DOM Level 2. I cannot see why it does not belong there, but I didn't
+see the argument for wholeText / replaceWholeText either.
+Perhaps some users might need an extra warning that nodes outside of the
+target node may be accessed or modified, but I think this is obvious
+from the description, and from the fact that this is a text node which
+is always a leaf node, so the minute you talk about other nodes you
+cannot possibly be talking about descendants. I do not see any problems
+with the current level 3 proposal and level 2 recommendations.
+Ray Whitmer
+rayw@netscape.com
+I have to ask what is the intended use for replaceWholeText? I can defenetly
+see the use getting WholeText since it fits better with XPath. But chainging
+it feels very awkward since it could morph big parts of tree. I think a
+better way of editing a tree using an "XPath/infoset model" would be to have
+users normalize the tree first and then use the normal interfaces.
+/ Jonas Sicking
+Implementations which do not support entity / entity reference
+constructs could clearly normalize such that there is no need for
+wholeText / replaceWholeText, but entities and entity references have
+not been deprecated. Are you asking to deprecate EntityReference nodes
+(those with an expanded hierarchy beneath them -- unexpanded entities
+must still be supported for infoset compliance, not to mention correct
+display of XHTML which requires special display of unexpanded entity
+references)? Or would you declare that XPath just doesn't work on DOM
+implementations which use them? That might not be a fair treatment
+without officially deprecating them. It would seem like harsh treatment
+after the fact to say to implementations that chose to support them that
+XPath functionality depends upon them not supporting them -- without at
+least an official deprecation.
+Also, should users really be required to normalize before using the
+XPath, or is it reasonable to use XPath on an unnormalized tree?
+Normalization may not be a trivial requirement if XPath is being used
+repeatedly as part of a process of mutating a document. Most built-in
+functions of DOM do not requires the user to normalize before calling.
+On the other hand, document normalization is becoming more and more
+significant with Level 2 and 3 features such as namespace and schema
+support so the result of an XPath query might be affected by lack of
+normalization anyway.
+Ray Whitmer
+rayw@netscape.com
+I have to ask what is the intended use for replaceWholeText? I can defenetly
+see the use getting WholeText since it fits better with XPath. But chainging
+it feels very awkward since it could morph big parts of tree. I think a
+better way of editing a tree using an "XPath/infoset model" would be to have
+users normalize the tree first and then use the normal interfaces.
+/ Jonas Sicking
+Sorry, for a moment there i thought that normalize would expand entity
+references. So i guess that my answer is that we need a normalize-like
+method that expands entity references as well as merging textnodes.
+I think this makes an assumption that it is OK to force the user to
+expand them -- that it is not a valid model to preserve the entity
+references while doing XPath processing. That is an easy statement for
+someone using a DOM which doesn't put them in in the first place, but if
+they are there for a reason, it is not obvious why they are suddenly not
+needed just because the user wanted to use XPath. If they are really
+not needed, then the answer would be deprecation, and save everyone lots
+of trouble.
+Not at all, all I'm asking for is some way to expand them, both the ones
+containg textnodes and the ones containg other node-types. (Well.. I do
+think that it would be nice if entityreferences were depecated, but that's
+an entierly different discussion.)
+But this brings up an interesting question: what happens with wholeText and
+XPath when there are unexpanded entityreferences in a tree? Should they
+consider text on either side as separate "text-sections", or should the
+entity be ignored and the text "merged"?
+In real use cases, forcing the user to expand them before he uses XPath
+seems very much like deprecating them. It assumes there is no need for
+the user to keep the entity reference nodes in the tree during and after
+XPath processing.
+The specification says quite specifically, I believe, what happens with
+wholeText and replaceWholeText. It does the right thing and merges
+across entity reference boundaries.
+XPath never changes the tree so it has no need for a replaceWholeText
+method. Similary I'm not objecting to the wholeText property since that is
+needed for clients using XPath.
+The reason that I don't like replaceWholeText is that it basically changes
+underlying data through a view. Adding views to "abstrahize" data into a
+more convinient form is fine, however using that view to change the
+underlying data often leads to complex implementations and non-obvious or
+un-expected behaviour.
+There are lots of things that XPath does not do because, unfortunately,
+the XPath specification has divorced itself as much as possible from DOM
+and document mutation. I can assure you, however, that significant use
+cases exist for XPath in DOM finding parts of the document, including
+text, so that it can be modified, updated, deleted, etc. Were that not
+the case, there would be no need for a snapshot or an invalidating
+iterator -- just make what happens under mutation implementation
+specific since no one should ber doing it -- but the presumption is
+false. We spent time on it because DOMis very concerned about enabling
+applications to modify the document and users will want to do that.
+For example, find all occurrances of the word "foo" in emphasized text
+and change them to "bar". Without both wholeText and replaceWholeText,
+it would be quite difficult to do a simple thing like that, and arguably
+XPath doesn't help much because of all the other processing and manual
+navigation you have to do anyway. But with it, I request all the
+logical text pieces that are emphasized, look for occurances of "foo",
+if there are any substitute "bar" and I don't have to worry about what
+happens if the word "foo" is half in one text node and half in the other
+or if some part of the word is part of an entity reference. There are
+certain cases where replacement is impossible (raises
+NO_MODIFICATION_ALLOWED error) but those are all automatically detected.
+Ray Whitmer
+rayw@netscape.com
+defenetly
+chainging
+have
+Sorry, for a moment there i thought that normalize would expand entity
+references. So i guess that my answer is that we need a normalize-like
+method that expands entity references as well as merging textnodes.
+Not at all, all I'm asking for is some way to expand them, both the ones
+containg textnodes and the ones containg other node-types. (Well.. I do
+think that it would be nice if entityreferences were depecated, but that's
+an entierly different discussion.)
+But this brings up an interesting question: what happens with wholeText and
+XPath when there are unexpanded entityreferences in a tree? Should they
+consider text on either side as separate "text-sections", or should the
+entity be ignored and the text "merged"?
+XPath never changes the tree so it has no need for a replaceWholeText
+method. Similary I'm not objecting to the wholeText property since that is
+needed for clients using XPath.
+The reason that I don't like replaceWholeText is that it basically changes
+underlying data through a view. Adding views to "abstrahize" data into a
+more convinient form is fine, however using that view to change the
+underlying data often leads to complex implementations and non-obvious or
+un-expected behaviour.
+/ Jonas Sicking
+In real use cases, forcing the user to expand them before he uses
+XPath seems very much like deprecating them. It assumes there is no
+need for the user to keep the entity reference nodes in the tree
+during and after XPath processing.
+It's not deprecation. XPath 1.0 is quite clear that entity references
+must be expanded. Section 5.2 of the XPath spec states, "Entity
+references to both internal and external entities are expanded.
+Character references are resolved." Unexpanded entity references were
+never allowed in XPath in the first place so they can't be deprecated
+now.
+Elliotte Rusty Harold | elharo@metalab.unc.edu | Writer/Programmer |
+The XML Bible, 2nd Edition (Hungry Minds, 2001) |
+Read Cafe au Lait for Java news: http://www.cafeaulait.org/ |
+Read Cafe con Leche for XML news: http://www.cafeconleche.org/ |
+XPath 1.0 is quite clear that entity references must be expanded.
+It says the XPath data model sees them as expanded. The XPath model and
+the DOM are not perfectly in synch in several ways; some impedence matching
+must be performed to make them play nicely together.
+If you'd _prefer_ to flatten your entity references first and trust that
+the text node returned by the DOM XPath API is complete and self-contained
+so you can use the nodeValue rather than wholeText, you're certainly free
+to do so. But that will not work well for all applications of the DOM.
+We can either limit the DOM's XPath API to only yield correct results on
+DOMs which have been through that entity-expansion process, or we can
+provide tools that allow obtaining the correct data even from DOMs which
+have not. The DOM Working Group has chosen the latter, as being of greater
+value to a wider range of DOM users, and has provided the wholeText
+accessor to support that mode of operation.
+I really think this is a case of "If you don't like it, don't use it." It's
+easy to implement, and it consumes no resources unless explicitly invoked.
+Joe Kesselman / IBM Research
+In the case we are talking about, they are expanded in the DOM model,
+underneath the entity reference nodes. This is the design. Mechanisms
+such as finding a named node, tree walker, iterators, and so on work
+seamlessly when the cntent is expanded underneath the entity reference
+node. If you want to deprecate that design, that is another story. I
+would not even fight it any more, if people had the resolve to start
+deprecating things.
+We have never insisted on xpath resolution across entity reference nodes
+that were not expanded underneath. No one would expect that to work,
+any more than they expect to be able to traverse there using TreeWalker
+or other mechanisms.
+Ray Whitmer

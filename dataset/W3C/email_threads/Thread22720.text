@@ -1,0 +1,66 @@
+(p. 14) Issue key-2
+In what space is this key unique (Document, DOMImplementation)?
+Shouldn't this be DOMImplementation? If a node3 can be adopted
+from one document into another and "key" is readonly attribute, "key"
+must be in the scope of DOMImplementation.
+(p. 16) Issue isSameNode-2:
+Is this really needed if we provide a unique key?
+It seems to me isSameNode() is redundant if unique key can be
+truly unique within one specific DOMImplementation.
+-Stanley Guan
+Document
+No, it just means that the user has to be careful when he moved a Node
+from one Document to an other since the key might change. Note that it
+doesn't prevent a DOM implementation to implement the uniquess at the
+DOMImplementation level ...
+following our decision on key-2, we decided to keep this one (well, at least,
+for the moment).
+Philippe
+[Following up to message from late March...]
+Now that I'm looking into DOM Level 3 a little more, I'll take a
+brief moment to comment on this issue. (I'm reading the 26-Jan-2001
+draft at www.w3.org/TR/.)
+Given this rather strange idea of a DOMKey that may or may not be
+maintained when moving a node between documents, shouldn't there be a
+feature name that can be tested to determine if the keys are
+maintained in this way? I suspect there are a lot of properties that
+should be testable in this way -- I can imagine the conformance tests
+would lend themselves to be driven in this way. (For the test suite
+we're building for the Python DOM API, we do exactly this: every
+group of tests is categorized according to feature/version pairs that
+can be checked with DOMImplementation.hasFeature().)
+isSameNode() is also conceptually better.
+Frankly, I'd like to see some explanation of the motivation &amp;
+rationale for the DOMKey thing; it certainly seems like a strange way
+to work with objects in Python (possible, but very strange).
+-Fred
+Fred L. Drake, Jr. fdrake at acm.org
+PythonLabs at Digital Creations
+We should probably make sure this rationalle is included in the spec.
+Here's a brief overview of the issue:
+There's been an ongoing request for a way to associate additional data with
+DOM nodes. In some DOM implementations, especially those which act as
+proxies for other data structures, there may be multiple objects which
+share the same node identity (which is why isSameNode is needed)... which
+prevents object identity from being used to make this association.
+DOMKey is intended to be a value which _does_ uniquely identify a node
+within a specific context and which can be used as an index to retrieve
+additional information from non-DOM data structures. In some DOMs which
+don't have the proxying issue, it may in fact be the object identity (eg
+its address), but that's an implementation detail.
+Having set up that concept, we need to decide what the useful scope of the
+context should be. There doesn't seem to be a practical way, to guarantee
+key uniqueness across multiple DOM implementations, so when you copy a node
+its key may already be in use in the other implementation -- and we don't
+want to prevent copying, so we definitely don't want to guarantee key
+uniqueness across implementations. We _could_ choose to guarantee
+uniqueness within all documents in a single a DOMImplementation, but there
+doesn't seem to be a strong use case for forcing that constraint upon all
+DOMs, so we chose to make the weaker statement that the key is unique only
+within a single document and that moving a node to another document may
+(not must!) result in its being assigned a new key.
+(Note that the whole concept of moving nodes between documents is new in
+any case, and that adoptNode will not be supported in all DOMs -- so in
+many cases you're going to fall back on importNode, which creates a new
+node with its own key in any case.)
+Joe Kesselman / IBM Research

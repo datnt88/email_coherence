@@ -1,0 +1,181 @@
+Here is my interpretation of the notes Pat sent me outlining his ideas on
+a model theory for RDF. I've taken one or two hopefully minor liberties
+with the original (which I've included at the end for comparison):
+I've introduced the notion of a set P of properties
+I've introduced the notion of a set of Strings
+I've couched it in terms of an interpretation of n-triples
+As I said in the telecon - all credits to Pat, all mistakes are mine.
+Here goes:
+Let U be the set of URI References (as defined by RDF 2396).
+//ignore lang and namespaces for now
+Let S be the set of of UNICODE strings (UNICODE*)
+An interpretation I consists of:
+A set R of thingies
+A subset P of thingies which corresponds to Properties
+A mapping IN : U - R
+A mapping IEXT : P - R x R // R cross R
+A mapping IS : S - R
+s p o . is true in I if and only if:
+s, o are members of U, p is a member of P
+(IN(s), IN(o)) is a member of IEXT(I(P))
+s p "string" . is true in I if and only if:
+s is a member of U, p is a member of P and string is a member of S
+(IN(s), IS(string)) is a member of IEXT(I(p))
+Pat goes on to demonstrate a use of this base model theory to
+define the meaning of reification:
+I(rdf:subject) = { ((s,p,o), s) : s is a member of U, p is a member of P,
+o is a member of U union S }
+similarly for rdf:predicate and rdf:object.
+Pat points out an issue with reification, and I have another,
+but I suggest we get the base model theory sorted out before we get
+into that.
+And Pat's original notes:
+Its very simple, really. An interpretation I (of a namespace) is a
+set R of thingies and a mapping extI (for relational EXTension) from
+R to sets of pairs of thingies, and an interpretation mapping from
+identifiers (in the namespace) into R. (Literals are required by law
+to map to a certain subset of thingies in a predefined way, but
+otherwise are treated like any other names.) The triple
+s P o is true in I just when 's' 'P' and 'o' are all in the namespace and
+I(s),I(o) is in extI(I(P)); otherwise it is false in I.
+(If someone wants to insist that properties *are* their relational
+extension, that amounts to insisting that extI is the identity on R,
+which is a special case. However the set R might then not be
+well-founded (ie there might be membership loops among its members)
+which many mathematicans are uncomfortable with since its
+inconsistent with ZF set theory; but there are perfectly good modern
+set thoeries that allow it. But this is rather an arcane matter which
+can usefully be ignored by non-mathematicians.)
+For reification, we require that there are a special class of
+thingies corresponding to triples and names, and give special
+interpretations for the 'subject'and 'object' and 'predicate'
+properties as follows (I'll just do 'subject')
+I('subject')= {  [s P o] , s : s,P,o in namespace(I) }
+where [x y z] indicates the thingie in R that stands for the triple
+with subject x, property y and object z.
+A few issues that crop up for reification (1) do we want to say that
+the things in the domain *are* the triples, or are just some category
+of things that are 1:1 with the triples? (2) The way Ive stated it,
+each theory can only reify triples made from its own namespace. Is
+this adequate, or do we want reification to include all possible
+names (even those involving URIs that havnt been invented yet)?
+Brian
+Looks good, mostly...
+I don't think you mean that relative URI references
+are in U. I think U is the set of absolute URI references;
+i.e. URIs with optional #fragment thingies.
+that last P should be little, no? IEXT(I(p))
+Just 3 major things missing:
+1. existentials:
+_:x p o is true in I iff
+o is a member of U, p is a member of P,
+and there is some thingy tx in I's set of thingies
+so that (tx, IN(O)) is a member of IEXT(I(p))
+The substitution (tx for _:x) is
+said to satisfy the triple _:x p o .
+In general, a substitution has
+any number of (thingy for _:name, thingy2 for _:name2, ...)
+pairs.
+2. conjunctions
+a list of triples is satisfied by
+some substitution if each of the triples
+in it is satisfied by that substitution.
+3. putting it all together
+A list of triples is true in I iff there's some
+substitution that satisfies it.
+Yes, let's leave that for a rainy day...
+Just one of Pat's notes seems essential:
+I'd say literals map to themselves. i.e. IS is the
+identity function.
+But that depends on my position on xml:lang...
+Dan Connolly, W3C http://www.w3.org/People/Connolly/
+Yes.
+Yes
+There is a followup message to the original with this in - stuff I added
+that were not in Pat's original notes
+ditto
+Better worded than mine, but ditto
+Could be. Pat did talk about the integer 5 being a literal which is
+not the same thing as the string "5". I figured we could stay
+agnostic on this till we get to datatyping.
+Brian
+Nice work, really!
+^^^RFC
+I guess U and S are denumerable, no?
+Isn't the notation f: A - B used for a function with
+domain A and range B?
+But IEXT is not a funtion at all, it is a relation on
+a cross product R x R which is simply a subset of R x R
+IEXT(I(p)) = { I(s),I(o) el R x R: I(s) I(p) I(o) is true}
+Jos De Roo, AGFA http://www.agfa.com/w3c/jdroo/
+Yup - its like my car knowing the way to work - when I hit that
+capital R the D and F surely follow :)
+Yes
+Yes
+Yes there's something screwy about what I wrote. I think I
+meant to write:
+IEXT : P - powerset(R x R)
+i.e. IEXT is a mapping from from P to relations on R - the
+idea being to ensure that R x R is not a subset of R.
+Is that the same as you are suggesting?
+Brian
+[a correction after some holiday biking]
+I was wrong, IEXT is indeed a function but it's range
+seems to be the set of all subsets of R x R
+(including the empty set?)
+Jos De Roo, AGFA http://www.agfa.com/w3c/jdroo/
+Hi Brian,
+Exactly, although I was wrong in my wording.
+The range of IEXT is indeed the powerset
+(the set of subsets) of R x R
+Beside rdf:subject, rdf:predicate and rdf:object
+being nicely modeled now, I think we can also model
+'sets of triples' and rdf:li as being a property
+to list it's members, so something like
+[ rdf:li [ rdf:subject s1 ; rdf:predicate p1 ; rdf:object o1 ],
+[ rdf:subject s1 ; rdf:predicate p1 ; rdf:object o1 ]]
+but let's further think about that...
+Jos De Roo, AGFA http://www.agfa.com/w3c/jdroo/
+I agree and understand 'substitution' as being a mapping from
+variables to thingies and usually the identity mapping except
+for the given pairs. A substitution denotes bindings of the
+variables and instances of the thingies.
+A substitution is a unifier of two thingies if the instances
+of these thingies by the substitution are identical.
+All the rest is just a matter of computing those unifiers and
+applying some rules of inference.
+do you mean an (ordered) list or a set?
+indeed 'some' substitution is OK
+(not a Most General Unifier or MGU)
+fine
+Well, we had lots of rain here, but that is of course not everywhere...
+Jos De Roo, AGFA http://www.agfa.com/w3c/jdroo/
+Right, exactly. The most obvious way to do this would be to have
+properties denote relational extensions, ie subsets of RxR. However,
+there is a technical advantage to making things just a whisker more
+complicated and distinguishing the relation-thing from its extension
+(I got this idea from Chris Menzel). Then it is quite kosher to allow
+properties of properties, and even properties which apply to
+themselves, without getting caught in wierd set-theoretical loops.
+I'll explain more fully in a document ready soon (hopefully
+tomorrow.) Sorry I have been out of the rdfcore loop for a week and
+am trying to catch up.
+Yes, the subset of RxR can be empty: that is a property that has no
+values (ie is always false).
+Pat
+(650)859 6569 w
+(650)494 3973 h (until September)
+phayes@ai.uwf.edu
+Looks like a good start to me, modulo comments already raised.
+I have a couple of questions/comments:
+Isn't p also a member of U? (And IN(p) a member of P.)
+I would have exp[ectyed this to read:
+(IN(s), IN(o)) is a member of IEXT(IN(p))
+Similar comments.
+I think it would be good to see this formally linked to the syntax of
+N-triples, but I guess that can come later.
+I still have some thoughts about reification, but am happy to let that lie
+until the base elements are settled down.
+#g
+Graham Klyne Baltimore Technologies
+Strategic Research Content Security Group

@@ -1,0 +1,54 @@
+Hi all,
+I'd like to add an extension to mod_dav that provides a live property that
+can be queried/set, which corresponds to "executable" permissions in a
+Unix file system. Joe Orton has also said he'd provide the corresponding
+capability on the client. We just need to settle on How To Do It Right, so
+I'll come here to ask... :-)
+The scenario for this is uploading a CGI script. When the script is first
+placed, it won't have the executable flags turned on. The client then
+follows up with a PROPPATCH to turn the flags on.
+So... I've got a few questions here:
+* is there a more general semantic to use? e.g. all permission types
+rather than just executable?
+* this doesn't really feel like an ACL -- this is actually stating "this
+resource should be executable", rather than adjusting who can interact
+(and how) with the resource
+* should I place this into the DAV: namespace, or use a private one? (I'd
+use http://www.webdav.org/props/ if DAV: wasn't appropriate)
+Other comments/suggestions appreciated, as always!
+Cheers,
+-g
+Greg Stein, http://www.lyra.org/
+This is my worry. Are people going to come along and say "But I want my
+scripts to be chmod 0700" (or whatever)? I'm more tempted by a
+"unix-permissions" type property, and allowing access to the real file
+permissions as an octal value.
+Regards,
+joe
+Caught by the spam filter -- I've added Russ to the accept2 list.
+- Jim
+Russ Pridemore
+It seems to me that this issue could best be dealt with by the
+DAV server configuration instead of depending on clients.
+A developer working with Windows systems for both client
+and server could neglect to set this property and see no ill
+effects. Until the product shipped and someone tried their
+client with a UNIX server.
+My $0.02...
+Russ
+dav-dev maillist - dav-dev@lyra.org
+Here's the slippery slope. What is really needed are more than just
+executable permissions. But, creating just a Unix permissions property
+doesn't handle interoperability very well, since it doesn't map especially
+well to non-Unix filesystems. Then, once you start looking at the needed
+access permissions for DAV, you realize that the ability to create a
+resource, then share it with other users is also important. Next thing you
+know, you're dealing with just about the same set of issues as are in the
+access control draft.
+Yaron's been promising a new revision of the ACL spec. for some time now,
+and I'm anxiously awaiting it. If you have other ideas on how this should
+work, please write them up in either a mail message, or better yet, an
+Internet-Draft. Heck, even writing up the Unix permissions property idea
+would be useful, since it would act as a good null-hypothesis to anything
+else we come up with.
+- Jim

@@ -1,0 +1,371 @@
+It is my current understanding that arbitrary bytes can be encoded in URLs.
+This provide a means for an HTML UA to formulate a response to a form
+submission for arbitrary character encodings. However, I do have one important
+question: how does an HTTP server identify the encoding of such bytes (i.e.,
+the CHARSET) and communicate that encoding to the consumer of this data (e.g.,
+a CGI script)?
+Regards,
+Glenn Adams
+Well... that's stretching it. Arbibrary bytes can be encoded in
+morse code too. A URL is a sequence of US-ASCII characters. Check
+RFC1738:
+2.2. URL Character Encoding Issues
+URLs are sequences of characters, i.e., letters, digits, and special
+characters. A URLs may be represented in a variety of ways: e.g., ink
+on paper, or a sequence of octets in a coded character set. The
+interpretation of a URL depends only on the identity of the
+characters used.
+In most URL schemes, the sequences of characters in different parts
+of a URL are used to represent sequences of octets used in Internet
+protocols. For example, in the ftp scheme, the host name, directory
+name and file names are such sequences of octets, represented by
+parts of the URL. Within those parts, an octet may be represented by
+the chararacter which has that octet as its code within the US-ASCII
+[20] coded character set.
+Er... well.. I suppose so. But that seems like a pretty roundabout
+way to go about it.
+I'd much prefer to see a general purpose replacement for
+the application/x-www-form-urlencoded media type.
+Somethink like text/tab-separated-values might work nicely.
+Or something SQLish, or lispish, or Tcl-ish. text/tab-separated-values
+other encodings. Of course you'd have the same nasty interactions
+between octet 7 for the TAB character as octet 10 and 13 for CR/LF.
+Well... I gather you're still talking about the
+application/x-www-url-encoded media type. The only "specification" for
+that is in the HTML spec. (hang on... I'd better check the CGI
+spec... nope. It just says stuff like "Examples of the command line
+usage are much better demonstrated than explained.")
+I think the character encoding scheme is US-ASCII, or perhaps
+ISO-Latin-1, by convention.
+Like I said... I'd much prefer to see x-www-form-urlencoded replaced
+than having other character sets shoehorned into that hack.
+Dan
+Dan, the file upload proposal includes a complete specification for
+'multipart/form-data' which is intended as a general purpose
+replacement for application/x-www-form-urlencoded. We went through
+multiple iterations both in the HTML working group and also as a
+result of the review given by the folks reviewing new media type
+registration. multipart/form-data is completely capable of dealing
+with multiple character sets, unicode, or whatever coming back as the
+result of filling out a form.
+Check it out:
+ftp://ds.internic.net/internet-drafts/draft-ietf-html-fileupload-02.txt
+I have something written up on this that was going into the
+rfc. It is appended.
+P The URL specification allows arbitrary 8 bit data to form part of
+the TT scheme-specific-part /TT of a URL but requires that only
+octets which correspond to character codes for printable ASCII be
+used in the URL definition. Octets that fall outside of this set must
+be encoded using the EM URL-encoding /EM mechanism, which encodes
+the octet as a '%', followed by 2 hexadecimal digits. The '%'
+sign must also be encoded. /P
+P URL's often point to files on a file system, which increasingly,
+may EM not /EM have a name that uses printable ASCII characters. For
+example, on a Japanese systems, a file might have the name
+"insatsu.html", in which the "insatsu" might be represented in
+romanji, katakana, hiragana, or kanji. In such cases, the octets that
+fall outside the range of printable ASCII would be encoded as per the
+specification, resulting in something looking like the following on
+EUC-based systems:
+P In general, this does not present a problem, because URL's are
+seldom decoded on machines where the coded character set and encoding
+differ from that found within the URL. However, in such cases (for
+example robots), it may, or may not, be possible for the decoder to
+sense the coded character set and encoding used. Even if the decoder
+does correctly guess, it is not guaranteed that they will be able to
+successfully decode the URL, and then process the resulting text. /P
+P To allow the coded character set and encoding to be explicitly
+stated in the URL, the URL syntax should be expanded as follows: /P
+scheme :character-set-data scheme-specific-part
+would be: P
+character-set-data = "[" [ character-set ":" ] encoding "]:"
+character-set = name-string
+encoding = name-string
+name-string = 1*[ alpha | digit | "-" | "," ]
+P and the TT character-set-data /TT part of a URL should be
+optional, thereby resolving any backward compatibility
+concerns. An example of such URL's would be: /P
+P It would also be advisable for the HTTP protocol to provide some
+mechanism for indication the coded character set and encoding used
+with URL's that are parts of a request.. For example, the TT PUT /TT
+method syntax could be extended such that the coded character set and
+encoding of the URL be an optional part of the method parameters: /P
+request-line = method SP request-uri SP optional-charset-data
+SP http-version CRLF
+optional-charset-data = "[" [ character-set ":" ] encoding "]:"
+character-set = name-string
+encoding = name-string
+name-string = 1*[ alpha | digit | "-" | "," ]
+I don't like this model, but prefer another one:
+Let me explain this via an 'ftp' example.
+The FTP protocol doesn't care what character set your file system
+uses. You open a 8-bit connection and send US-ASCII characters to the
+server. If you want to retrieve a file, you send 'RETR xxxx' and when
+you want to store a file, you send 'STOR xxxx', where 'xxxx' are
+characters *NOT* in the native character set of the file system, but
+rather in whatever transcription of that character set is made
+available by the FTP server.
+The *PROTOCOL* doesn't define the mapping between the bytes sent and
+the the file system. This is completely up to the implementation of
+the FTP server.
+Now, the FTP URL scheme defines yet another mapping. If you happen to
+want to send 'RETR /?#frob' to your FTP server, you have to actually
+encode the '#' in the FTP URL. Thus, there's another level of encoding
+in URL - ftp-protocol that sits on top of the encoding chosen by your
+implementation of FTP-protocol - file system.
+The same situation holds with the HTTP protocol. Implementors of HTTP
+servers which deal with files on file systems that allow file names to
+be written in other character sets will have to chose some mapping
+between those files and the HTTP protocol. That mapping is *not* part
+of the HTTP protocol, and I don't think it should be.
+Yep. In section 4.4 of "The Multilingual World Wide Web" I make
+mention of it as well. It is a good solution, and will certainly be in
+the RFC.
+I don't understand how this works, especially the "some transcription"
+part. How is the receiving server to know the name to store it under,
+or is "%B0%F5%BA%FE.html" translated to insatsu.html for storage
+purposes?
+There are 3 problems I have with this model:
+1) It would probably require the use of some kind of database to map
+the local filename to the HTTP representation, because there are
+possible transcription collisions, and because HTTP is stateless.
+2) Without some standard mapping it seems somewhat difficult for a
+browser to decide what to send to the server. Yes, I know
+people will say that the server decides, because they make the
+URL's available in the first place, but what happens if a server
+sends me an EUC URL, and I send it a SJIS one back?
+3) URL's are *not* used solely in HTTP transactions.
+From: Larry Masinter masinter@parc.xerox.com
+Date: Wed, 2 Aug 1995 19:37:40 PDT
+'xxxx' are characters *NOT* in the native character set of the file
+system, but rather in whatever transcription of that character set
+is made available by the FTP server.
+OK. Say the transcription system used by both the FTP client and
+server says:
+(1) if an octet in the local encoding of a file name is in positions
+0x20 - 0x24 or 0x26 - 0x7E of US-ASCII, then use that octet;
+(2) if an octet in the local encoding of a file name is in position
+0x25 of US-ASCII (i.e., '%'), then use "%%"
+(3) otherwise, use %XX for each octet in the encoded file name (in big
+endian order), where XX is the hexidecimal value of each such octet.
+Now, say I am a Chinese version of Windows/NT using Unicode and I ask you for:
+RETR E-W%0B%00.%00T%00X%00T
+That is, in Unicode I have the following encoding of my file name:
+4E2D 570B 002E 0054 0058 0054
+Say you are a Taiwanese server using the BIG5 character set for you file
+names. How do you interpret my request? Do you interpret it as a BIG5
+string? If so, then you think I just asked for the file "E-W??.?T?X?T"
+(assuming for a moment that you don't throw up on NUL and you interpret
+NUL and other C0 escapes as '?'.
+Even if both systems are using the same transcription system, we are still
+hosed because you have no idea of how to interpret the decoded results since
+you don't know what character set encoding applies. If, on the other hand,
+you know that Unicode was the source encoding, then, at least you know you
+shouldn't interpret it as a BIG5 string. You may respond: sorry, I
+don't grok Unicode path names. Or, if you have a Unicode - BIG5 translation
+table on hand, you could correctly translate it to the corresponding BIG5
+encoding: %A4%A4%B0%EA.TXT. On the other hand, if you do misinterpret the
+original file name as a BIG5 string, then you are going to say:
+550 E-W??.?T?X?T: No such file OR directory.
+And I'm going to be clueless about what went wrong.
+If the protocol doesn't communicate this information, then who/what will?
+Regards,
+Glenn
+Let me try again:
+How the http server for www.jacme.co.jp decides to translate strings
+into files in its local file system is COMPLETELY up to the
+implementation of the http server. www.jacme.co.jp could be running
+some object-oriented database operating system which doesn't have
+files at all. It could be running a file system where every file and
+directory was 'named' with a bitmap image rather than a string of
+characters.
+The URL standard makes no claims about the mapping of URLs to anything
+at all in the local file system of the local operating system. It
+defines how URLs are written, and how URLs are translated into
+sequences of octets that are sent in the protocol for the particular
+scheme chosen.
+If you want to build a HTTP server that accepts strings of the form
+[character-set:encoding]:name-string
+then feel free; however, it would have to be written
+This convention requires no changes to the HTTP or URL standards.
+True.
+True.
+Well, this is where we disagree. I think there should be a *standard*
+way to send this information, so as such, the *standard* does require
+changing. I don't mind where the information is put, but one reason
+for preferring:
+over
+is that the latter could very will be a legal name within the system,
+leading to ambiguity. In other words, the information about coded
+character set and encoding must be separated from the name itself,
+because *any* representation of the information could be legal in the
+context of a name (as you mention, anything is legal here).
+I disagree. The person in charge of www.jacme.co.jp is in charge of
+creating the object-name part of the URLs. They can make up unambiguous
+names. End users don't make up URLs, or if they do, they shouldn't assume
+anything about how the server will respond to their requests.
+In the case you give, the server administrator can specify that:
+- [EUC]%B0%F5%BA%FE.html is an alias/link to the file called %B0%F5%BA%FE.html
+- [anything] is truncated from all incoming URLs since it is only useful to
+folks looking at URLs, not the server
+- [EUC]%B0%F5%BA%FE.html returns a different result than [XYZ]%B0%F5%BA%FE.html
+All of these are decisions made by the server adminstrator and anyone who
+he or she allows to create URLs.
+That being said, I think it's fine for people who create URLs that might
+have different character sets to use a consistent naming character set
+scheme, and client makers can choose whether or not they want to do
+something smart about those names. However, it should not be a change to
+the current URL RFC at this very late date. Feel free to create a seperate
+draft that describes this as an optional naming convention.
+--Paul Hoffman
+--Proper Publishing
+But surely the character set in use is a server issue and thus should be
+in the opaque data portion of the URL? The second scheme will be
+understood by server for which that is the correct URL and can be handled
+with current browsers, whereas the first version will probably cause most
+current browsers severe stomach cramps even if the server understood it.
+If the URL is valid for the server its pointing to there shouldn't be any
+ambiguity with legal names in the system as the server will be expecting
+the [EUC] or whatever.
+However, I'd rather see something tacked onto the _end_ of the URL rather
+than at the start of the opaque data section. Maybe something like:
+It just seems more inkeeping with other things I've seen suggested in the
+past.
+Jon
+Jon Knight, Researcher, Sysop and General Dogsbody, Department of Computer
+Studies, Loughborough University of Technology, Leics., ENGLAND. LE11 3TU.
+*** Nothing looks so like a man of sense as a fool who holds his tongue ***
+This is not always true. The [EUC] part could specify one of a myriad
+different coded character sets and encodings, with the following
+octect string being different for each as well. I think it
+unreasonable to expect the administrator to maintain a database of all
+possible alias.
+In addition, I really do think there needs to be a standard way of
+specifying this kind of data. An example of *why* is spiders: they
+walk all over the net indexing pages, and some of online indexes
+display URL's as part of the textual data. Without a standard way of
+specifying the coded character set and encoding, the URL's would
+always have to be displayed in thier raw form.
+Well, I can sympathise with this position. The change I recommend
+is backward compatible, and will be part of the upcoming I18N RFC.
+In message Pine.SUN.3.91.950803180302.496U-100000@weeble.lut.ac.uk , Jon Knigh
+That makes a certain amount of sense, but: what about the poor slob
+clients? It might be useful to make the clients aware of some
+convention for encoding other character sets, so that arabic
+names show up in arabic on capable clients. And once you've
+got agreement between clients and servers, you're talking about
+standardization. :-{
+Dan
+Sad but true ;-)
+They don't have to: they are the ones creating the URLs! If they tack a
+[XYZ] at the front or end of the URL (wherever your proposed standard puts
+it), they should certainly be able to serve it.
+This is an issue for people who create the URLs, and for the Web browser
+writers. It doesn't have anything to do with HTTP or HTML (the two IETF WG
+lists on which this seems to be being discussed). It's a URI issue all the
+way.
+--Paul Hoffman
+--Proper Publishing
+Date: Fri, 4 Aug 1995 08:34:49 -0700
+From: ietf-lists@proper.com (Paul Hoffman)
+It's a URI issue all the way.
+Then the URI standard is in need of revision for I18N. It is hopelessly
+broken.
+Paul Hoffman: It's a URI issue all the way.
+Glenn Adams: Then the URI standard is in need of revision for I18N. It is hopelessly
+broken.
+Larry Masinter:
+Hyperbole is hopelessly broken.
+When there are Internet protocols that define network protocols that
+properly address international issues, then we can invent URL schemes
+for those protocols. Until then, URLs are merely a convenient linear
+form for what exists.
+(This isn't a HTML issue, but it is possibly a HTTP issue. Perhaps
+some future version of what replaces HTTP can properly express
+character encodings in all of the strings, including HEAD attributes,
+etc.)
+Yes, but there is a large number of ways of encoding the strings of
+characters making up the URL. That's my point.
+I can't refrain from reminding you about what we -- three
+IETF:ers from Sweden -- suggested on this subject already in
+May 1993 (and which nobody took any notice of...):
+Date: Tue, 11 May 93 10:36:58 +0200
+Message-Id: 9305110836.AA06718@mercutio.admin.kth.se
+From: Rickard Schoultz schoultz@othello.admin.kth.se ,
+Olle Jarnefors ojarnef@admin.kth.se ,
+Peter Svanberg psv@nada.kth.se
+Sender: Olle Jarnefors ojarnef@admin.kth.se
+(Fri, 07 May 1993 21:45:02 -0400, Keith Moore moore@cs.utk.edu )
+Subject: Re: Wrappers for URLs
+As has already been pointed out in this discussion, non-ASCII
+characters are used a lot in many countries outside USA. In a
+language using the Latin script like Swedish almost 1/3 of all
+words contain non-ASCII letters. In languages such as Greek,
+Russian, Hindi and Chinese no ASCII letters at all are used.
+For ordinary users in these countries it will be unacceptable to
+see their everyday letters represented by %-headed hexadecimal
+digit sequences.
+We propose this solution:
+C) In the human form of URLs non-ASCII characters may be used
+provided a character set indicator is added to the URL
+immediately before the closing " ". This indicator shall
+have the syntax
+"%:" charset
+where "charset" is a value registered by IANA for MIME use.
+The corresponding coded character set defines the mapping of
+the non-ASCII character to a sequence of octets that can be
+represented by the %-mechanism in the program form of the
+URL.
+Take as an example a file called
+l a" s mig
+in the directory pub at host othello.admin.kth.se. Here a"
+is the character LATIN SMALL LETTER A WITH DIAERESIS, coded by
+the octet E4 hex according to ISO-8859-1. (The name of the file
+is Swedish for "read me".)
+The human form URL for this file preferred in Sweden would be
+a" here would in reality be the non-ASCII character.
+The program form would be
+Why is it necessary to include a character set indicator in
+these extended URLs containing non-ASCII characters? It's
+because that makes the URL resistent to character-preserving
+conversion between different coded character sets.
+Say that the URL in the example is included in a text file coded
+with ISO-8859-1, so the non-ASCII character is represented by
+the octet E4. Then this file is transferred to a Mac and
+therefore converted to the Macintosh character set. For the Mac
+user it will look exactly as intended, containing a lowecase a
+with diaeresis (which is necessary to form the Swedish
+expression for "read me"). In the Mac file, however, this
+letter will be represented by 8A instead of E4. Thanks to the
+character set indicator %:iso-8859-1 a client program on the Mac
+will however be able to feed the right octet E4 to the FTP
+program to fetch the correct file from the FTP server (where
+ISO-8859-1 is used in file names).
+It could be argued that occasional non-ASCII letters is nothing
+to make a fuss about: European users can be taught to read and
+input %-sequences instead. But consider a Greek FTP server,
+where almost the whole path of a file is written with Greek
+letters using ISO-8859-7. In that case URLs will be almost
+three times as long and consist of mostly a soup of "%" and
+hexadecimal digits, interspersed with "/". Such URLs will be
+unusable for humans, unless some way of using the real non-ASCII
+letters is provided.
+Another points in connection with internationalized URLs that
+we would like to raise:
+D) The hexadecimal %-headed representation used in the program
+form is very inefficient. In countries with languages using
+other scripts than the Latin URLs may be almost three times
+as long as in English-speaking countries. To reduce this
+unfairness we could, in addition to the %-representation.
+include a &amp;-representation: After "&amp;" would follow a sequence
+of octets encoded by a BASE64-like method into a 33 %
+(instead of 300 %) longer sequence of the characters A-Z,
+a-z, 0-9, + and -. This sequence would be ended by a
+second "&amp;".
+Rickard Schoultz schoultz@admin.kth.se
+SUNET/KTH +46-8-790 90 88 (voice)
+Olle Jarnefors Internet: ojarnef@admin.kth.se
+Information Management Services UUCP: ...!uunet!mcsun!sunic!kth!ojarnef
+Dept of Num An &amp; CS,
+Where can I find the definition of text/tab-separated-values ?
+I've found the name in RFC1700, but I couldn't find its refrences.

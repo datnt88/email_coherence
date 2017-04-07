@@ -1,0 +1,54 @@
+What should I respond if a client asks for the properties Getcontentlength or GetContentType on a collection?
+The spec states:
+"The getcontentlength property MUST be defined on any
+DAV compliant resource that returns the Content-Length header in
+response to a GET."
+But it doesn't say, if the value a supposed to be the same as if I perform a 'Get' on that url. The collection itself doesn't normally have a content, so does this mean that if the collection have a default page. That it should return the values of that page? Or if the server is set to send a generated HTML page listing the children, should the values be text/html and the size of that page?
+Or have I missed something in the spec?
+/Rickard Falk
+GET on a collection is not covered by DAV. You want to get the contents of a
+collection, then do a PROPFIND.
+You therefore don't have to maintain those proprties for collections (they
+also don't make sense).
+--Dylan
+WebDAV should still say what it means if a property "must be defined", but
+doesn't have a value...
+What does it mean to have a property that must be defined, but has no
+meaningful value?
+It means your spec has a design flaw.
+What is an example of such a thing?
+--Dylan
+For DAV:getcontentlength, RFC 2518 states, in section 13.4, that it contains
+"the Content-Length header returned by a GET without accept headers."
+I'm finding it difficult to see how you came to this interpretation.
+Yes, that was the intent for collections.
+If you can retrieve the contents of resource R via a GET on URLs collection/
+and collection/index.html, then this implied to me that resource R had two
+URL mappings. In particular, it meant that a GET on collection/ was
+non-zero, and should result in a value for DAV:getcontentlength and
+DAV:getcontenttype.
+That was also the intent. Now, given the performance implications of this, I
+can easily see why a server might not want to compute a value here. Seems
+like it would be handy to have a value a server could use to indicate that
+the content length is variable, and dynamic, like d:dynamic/ and thus
+allow a server to avoid computing the contents of dynamic resources.
+Doesn't look like it.
+- Jim
+Agreed, I'll add this to the issues list.
+Makes sense to me for a server to just give the property an empty value for
+these cases.
+- Jim
+dynamic would be useful as a return value for any resource that
+has contents generated dynamically, like a servlet. This would be
+a REALLY great addition, IMHO.
+--Eric
+From: w3c-dist-auth-request@w3.org
+[mailto:w3c-dist-auth-request@w3.org]On Behalf Of Jim Whitehead
+Sent: Monday, August 27, 2001 12:24 PM
+Subject: RE: Getcontentlength &amp; GetContentType
+From: w3c-dist-auth-request@w3.org
+[mailto:w3c-dist-auth-request@w3.org]On Behalf Of Jim Whitehead
+Sent: Monday, August 27, 2001 9:25 PM
+Subject: RE: Getcontentlength &amp; GetContentType
+At least in the case where the server in fact does not support GET on
+properties.

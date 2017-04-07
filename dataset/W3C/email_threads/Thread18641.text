@@ -1,0 +1,172 @@
+I don't think we need to address signature schemes based on
+autographs for the following reasons:
+1) The packing format had better allow any signature scheme
+which produces as authentication data a string o' bits
+which is a function of the message and optionaly some
+additional data.
+There are good reasons for allowing an SHA-1 hash or an
+HMAC authentication blob, biometrics should be simply
+another such blob.
+2) Do we think we have a need for significant input of crypto
+expertise? I don't think so, at this level we are treating
+PKCS#1 RSA, DSS etc as well behaved black boxes.
+If we feel we can proceed without detailed instructions along
+the way from Rogaway, Rivest, Kaliski et al we whould expect
+autograph identification methods to be capable of being
+treated in an equally black box fashion.
+3) Biometric techniques are not commodified to the same extent that
+RSA, DSS etc are. Patent issues aside, RSA is RSA whoever you
+buy it from, same for DSS. Even the more 'exotic' reaches
+of cryptography such as eliptic curve are well defined and
+standards defined.
+I don't think it would be possible to address biometric
+techniques without addressing specific proprietary techniques
+which would in turn lead to the issue of endorsement which
+I don't think W3C should get involved in - not unless they
+want to actually conduct trials of biometric techniques which
+I don't think they do.
+4) The applications of biometrics and the applications of digital
+signatures are disjoint. I do not see an overlap, I consider
+biometrics important precisely because they can do things
+which digital signatures cannot. I don't
+No biometric technique is proof against a sampling attack. Each
+person has one and only one biometric profile. Individual
+mechanisms may sample that profile and base their analysis on
+a subset but there is no means of preventing a complete sampling
+of the original.
+At most a biometric proves is that there was knowledge of a
+biometric profile required to create a signature. That is very
+different to the assurance of a digital signature which establishes
+that there was knowledge of a specific piece of information.
+Empirically, it is easier to do a biometric scanning attack than
+a brain scanning attack! It is also easier to learn new pieces of
+information than change your fingerprint or autograph.
+I know there are folk in the biometric industry who dispute this, and that
+is kind of the point. I don't think the argument is usefull or necessary
+however. It is currently raqging with much FUD in the legal arena. I don't
+think we need to have the arguments rehearsed here too...
+Phill
+I agree that careful thought on boundaries is needed here. There are
+potentially three task areas:
+(1) Canonicalizing XML. A reasonable family of clearly defined, stable,
+and relatively easy to implement canonicalizations of XML need to be
+defined. For many applications, you would want to canonicalize. This
+includes cases where you sign XML regardless of how the signature syntax.
+(2) Packaging. This is actually a broader topic than it seems. There are
+potentially many facets as follows, although I think only one is
+interesting here:
+(2a) How to package arbitrary stuff in MIME, documented in RFCs
+2045-2049.
+(2b) How to package XML in MIME, currently documented in RFC 2376 but
+undergoing review.
+(2c) How to package signed/encrypted stuff in MIME, documented in RFC
+1847. (Used in some email formats and convenient to have as a default but
+many protocols have their own syntax with provisions for signature,
+encrypted fields, etc.)
+(2d) How to package arbitrary stuff in XML, undefined: presumably will
+be something like a mapping of MIME into an XML syntax with appropriate
+defaults so that simple cases are very concise.
+(2e) How to package arbitrary MIME in XML, undefined:
+MIME ... /MIME ?
+(2f) How to package signed/encrypted stuff in XML, undefined: possible
+a mapping of the RFC 1847 MIME into an XML syntax. (Only needed as a
+default since many protocols will have their own syntax with provisions for
+signatures, encrypted fields, etc.)
+(3) XML Signature Syntax. There appears to be controversy here. Some want
+to start with CMS/PKCS#7 but map it into XML syntax and extend it to meet
+the requirements, presumably resulting in something like the Richard Brown
+proposal. Others want to just use a PKCS#7 binary blob.
+The blob approach loses all of the transparency and extensibility of
+XML. It is not clear that it can meet the requirements for support of
+keyed hashes. You are locked into having two mutually alien sets of
+encoding/decodig logic: XML and ASN.1/DER.
+On the other hand, wtih XML syntax as show in the Richard Brown
+proposal, you do have the readability and extensibility that are goals of
+XML.
+Quite frankly, if you go with the blob, I don't see any justification
+for calling the result an XML digital signature.
+Thanks,
+Donald
+Donald E. Eastlake, 3rd
+17 Skyline Drive, Hawthorne, NY 10532 USA
+home: 65 Shindegan Hill Road, RR#1, Carmel, NY 10512 USA
+Hi Donald,
+want
+The declared result we are trying to achieve is "Signed XML" which is not
+necessarily the same thing as an XML digital signature. Also, the declared
+result is "Signed XML" and has not been officially called "Cryptographically
+Signed XML".
+Does the signature itself have to be human readable, or does an application
+put functions in place to query the signature blob to obtain the information
+it needs. We will be able to achieve the same end results whichever format
+we choose.
+In my opinion, handwritten signatures are not as safe from tampering as true
+cryptographic signatures, but they do achieve a fairly high level of
+security from encrypting the biometric token. Further, this is the only
+security method I've seen them use, so if we do want blob transparency or
+even translucency, then we are deciding to eliminate handwritten signatures.
+More generally, the approach we use in XFDL is one which says that the
+signing engine produces a 'black box', which we base-64 encode and put into
+character content. A verification uses the verify engine on the base-64
+decoded 'black box'. This approach simplifies integration of new
+cryptographic technologies, frees them from the requirement of XML awareness
+(XML isn't the only format in the world, after all), and allows support for
+non-cryptographic signature technologies. Most importantly, it reduces the
+burden on the W3C/IETF reference code implementers. If we adopt a spec that
+is heavily cryptographic, it may require the reference implementations to
+contain enough of a cryptographic interface that they cannot be freely
+distributed due to export restrictions.
+By comparison XFDL, defines a signature technology interface of only a dozen
+functions, and a new signature technology can be incorporated in two to four
+person weeks. We've done this for CryptoAPI, Netscape, Entrust, and PenOp
+so far, so this is a pretty safe estimate. Because the integration is at
+such a high level, there is no export trouble on our signature engine. The
+only restrictions are on the cryptographic modules themselves, which are
+external to our core product.
+John Boyer
+Software Development Manager
+UWI.Com -- The Internet Forms Company
+jboyer@uwi.com
+Hi Bede,
+Actually, you start out incorrect, but then begin deriving some of the very
+ideas behind handwritten signature technologies. First off, by handwritten
+signature technology, I am not referring to a simple signature bitmap
+(although one can be included for display purposes).
+PenOp is an example of a technology that binds the handwritten signature to
+the document. Further, they would argue that they do a better job of
+binding the document to the signer than cryptography does. I'm not sure I
+agree that they do a better job than cryptography in any area of signature
+technology, but I'm not prepared to argue that the technology is useless, in
+part because several deployments of XFDL use PenOp signatures.
+They bind the document to the signature as follows:
+1) 90 or so measures of a person's handwriting style are recorded into a
+"biometric token".
+2) a secure hash of the document is computed (sha-1 or md5)
+3) 1 and 2 are concatenated and the result is encrypted
+Now, as I just said in a very pleasant phone conversation with Don Eastlake,
+I'm quite sure that the use of encryption is simply to obfuscate matters and
+does not represent a cryptographic strength security solution. Though a
+tractable problem, it is still quite difficult and expensive to reverse
+engineer this technology. Therefore, it makes sense for many types of
+deployments where one expects high volume, relatively low value transactions
+where the organization wants to avoid the cost and difficulty of setting up
+a PKI for walk-in business. It is probably not "reasonable doubt" to assert
+that the organization broke the signature technology since, based on the
+value of the transaction, it is probably too costly to do that or it is less
+expensive to forge the person's signature (the "old fashioned" way).
+So you see, the opaqueness of the blob (offered by the encryption) is how
+these handwritten signature technologies can claim to bind the signature
+(biometric data) to the document (secure hash). Hence, if we only support
+signing technologies that allow a human readable format, then we are, by
+definition, excluding handwritten signature technologies.
+Maybe this is what the group wants to do, but I think it is at least
+important that we know we're making this choice rather than having it sail
+by unnoticed. In UWI's case, I'm pretty sure our executive will not want to
+throw out a good revenue stream because of the standard, so XFDL will most
+likely to continue to support this form of 'signed' XML. It will just be
+unfortunate that the signed XML standard cannot accommodate all kinds of
+signed XML.
+John Boyer
+Software Development Manager
+UWI.Com -- The Internet Forms Company
+jboyer@uwi.com

@@ -1,0 +1,71 @@
+Hi Folks,
+Since some of you have done IE5 interoperability testing successfully I
+was wondering if you could help me out. When I do try to access my
+WebDAV server and open it as Web Folder, IE sends the following
+request:
+OPTIONS / HTTP/1.1
+and my response is:
+HTTP/1.1 200 OK
+Date: Tue, 20 Jan 1998 20:52:29 GMT
+Accept-Ranges: none
+Allow: OPTIONS, GET, HEAD, POST, PUT, DELETE, TRACE, COPY, MOVE, MKCOL,
+PROPFIND, PROPPATCH
+Public: OPTIONS, GET, HEAD, POST, PUT, DELETE, TRACE, COPY, MOVE, MKCOL,
+PROPFIND, PROPPATCH
+DAV: 1, 2
+But right after this my guess is IE thinks I am a frontpage server
+instead of WebDAV Server and sends the following request:
+"GET /_vti_inf.html HTTP/1.1", and after that POST something and so on.
+How do I workaround this, should I be sending redirector or something.
+Any help would be deeply appreciated.
+Thanks,
+Imran
+Do You Yahoo!?
+Get your free @yahoo.com address at http://mail.yahoo.com
+IE5 trys FrontPage first, then falls back to DAV. Just return 404 for
+the GET /_vti_inf.html. IE will follow that up with a POST
+/_vti_bin/shtml.exe/_vti_rpc, which you should also return 404 on.
+In other words, don't do anything special, but let your standard
+GET/POST processing handle the failure. IE5 will do another OPTIONS,
+followed by a PROPFIND, right after those two (failed) requests.
+What surprises me is why you haven't seen the PROPFIND already. How is
+your server built, such that you didn't return 404 for the GET/POST? Can
+you tell us a bit more about your server?
+Cheers,
+-g
+Greg Stein, http://www.lyra.org/
+I do return 404 on GET. I haven't implemented POST so i need to put some
+stub for POST, or maybe even a 501 (Method not implemented). I guess you
+are right if I do normal processing it should be ok. I was just
+debugging on the server side and expected PROPFIND after OPTIONS and
+since I saw GET/POST, I thought maybe I am doing something wrong. I
+think once I handle POST it should be ok.
+Thanks,
+Imran
+Do You Yahoo!?
+Get your free @yahoo.com address at http://mail.yahoo.com
+Urk. IE 5 is finicky. I recommend getting a TCP packet snooper and
+watching the interaction between IE 5 and a server that does speak
+its brand of WebDAV.
+One thing I've noticed in doing this kind of sniffing is that there's
+a header that you can return with OPTIONS:
+MS-Author-Via: DAV
+that may help.
+IE 5.0 Beta didn't like default namespaces; I haven't tested to see if
+IE 5 has fixed that yet. I'm not sure, but I think it needs to have
+the status tag come before the prop in a propstat.
+Be prepared for its upload. When you drop something into Web Folders,
+it first does a HEAD on the prospective location, then does a PUT
+with Content-Length: 0, and then another PUT with the actual file.
+%% Max Rible %% max@glyphica.com %% http://www.amurgsval.org/~slothman/ %%
+%% "Before enlightenment: sharpen claws, catch mice. %%
+%% After enlightenment: sharpen claws, catch mice." - me %%
+Thanks that really helps and gives me the behaviour I want (no junky
+frontpage stuff). Interesting, MS-Author-Via must be a proprietary
+header that allows probably MS DAV servers to distinguish themselves
+from Frontpage server and other third-party DAV servers. So my guess is
+that you sniffed the packets between either Exchange and IE, or IIS 5.0
+and IE.
+--Imran
+Do You Yahoo!?
+Get your free @yahoo.com address at http://mail.yahoo.com

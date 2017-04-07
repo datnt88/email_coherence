@@ -1,0 +1,245 @@
+I believe that the approach outlined in this section is very dangerous
+and can easily lead to queries being accidentally or maliciously altered.
+It is unfortunate that XQuery misuses XML syntax for a non XML language
+(previous comments to this list on XML Query have suggested that it does
+not do that, but I assume now that the current syntax is fixed) However
+this means that great care needs to be taken when inserting XML Query
+fragments into XML documents.
+Even in this small section, three different embeddings are suggested,
+and no indication is given in the embedding syntax about which embedding
+has been used.
+Most problematic are situations where extracting the query using the
+wrong embedding produce a valid, but different, Xquery from the one
+intended.
+For example the second embedding shown
+Could (if the XML parser used, reports CDATA sections) be extracted using
+the embedding used for the first example. the result would be that
+instead of getting an Xquery FOR expression, you get an Xquery CDATA
+constructor, this is a perfectly valid Xquery expression. Of course one
+might to be expected to use common sense to distinguish the cases, but
+machines are not too good at common sense, and in harder cases it would
+be harder to guess.
+Similar things occur with
+If you put that "trivial" embedding through an XML parser which reports
+that the content of the XQuery element is
+("abc","xyz")
+then I don't see how you could reliably decide whether the original
+expression was a sequence of one or two strings.
+Other problems exist with things such as Xquery Comment constructors
+if these are embedded using the first scheme (ie just literally
+included) then whether or not the extracted query contains a comment
+constructor will depend on whether the XML parser used reports
+comments.
+My preferred solution would be to modify the Xquery syntax so that the
+first suggested embedding is always legal and safe, this means
+essentially not using unescaped , modifying the rules for the timing of
+the expansion of character references, and using a different syntax for
+comment and pi constructors (as in xslt) however failing that: section 5
+should be dropped or replaced by a much more fully spec'd proposal that
+would allow Xqueries to be unambiguously and safely embedded in XML
+documents.
+David
+This e-mail has been scanned for all viruses by Star Internet. The
+service is powered by MessageLabs. For more information on a proactive
+anti-virus service working around the clock, around the globe, visit:
+Although interesting, none of your comments are specific to XQuery.
+For example, consider embedding this text in an XML document:
+If you don't escape it first (and unescape it when parsing), then it would
+be interpreted as structure instead of text. If the parser interprets the
+processing instruction to mean something, then you've achieved XML
+injection.
+Now consider embedding the XPath " foo/ &amp;amp; ?foo? " into the text of an
+XML document as you show below. The XPath is just a literal string, but the
+XML parser would treat this as a quote character, followed by an element, an
+entity, a p-i, and a quote character.
+So these problems already exist for XPath, without even resorting to
+full-blown XQuery. Therefore, they can't be avoided, without removing XPath
+from XQuery.
+Also, embedding XQuery queries by wrapping them with CDATA sections clearly
+doesn't work when a query contains the sequence ]] (in a string, a comment,
+as the terminator of a CDATA section, etc.). Although the embedding could
+work around this by splitting into separate CDATA sections at each
+occurrence of ]] , I have yet to see an XML application that uses CDATA in
+this way account for this (and I can name several break when you embed ]] ).
+Just my $0.02,
+michael
+I believe that they are as there is a suggestion that the bits of Xquery
+that _look_ like XML can be inlined into the XML as XML (in particular
+an XML query heavy with literal element constructors might be inlined as
+an element tree).
+If you put a string which is xpath or tex or sgml or anything else into
+xml then yes you have to quote things according to xml rules but you
+just unquote them on the way back and you know where you are.
+It is the suggestion that sometimes you need to do that and sometimes
+you don't that makes this problematic.
+You can't put the sequence ]] in an XML file anyway it's not just that
+you can't wrap a CDATA section around it, that sequence isn't legal
+anywhere (except ending a cdata section.
+An embedding of xquery into XML that is safe and reversible is
+replace each of  &amp; and  by  &amp;amp;  place resulting string in
+XML element.
+Extract element content (not its linearisation) and parse as Xquery.
+That is essentially what you do for Xpath anyway. The danger is the
+suggestion that unless there are  being used as  (rather than element
+constructors) the Xquery can be directly placed in the XML.
+David
+David,
+Many thanks for your comment. This message contains my personal
+observations and do not in any way reflect a Working Group response. The
+Query Working Group will respond formally as soon as they have developed an
+official response.
+You observe correctly (in your third paragraph below) that "no indication
+is given...about which embedding has been used". In fact, speaking as an
+Editor of the XQueryX specification, that was deliberate. Section 5 was
+intended, not to specify a normative way to do a trivial embedding of
+XQuery in an XML document, but to demonstrate that the subject has been
+considered and to suggest some (certainly not all!) approaches that a user
+might follow if a trivial embedding is required for his or her purposes.
+Of course, a conformance statement in the XQueryX document would have to
+make it clear what is normative and what is not. I confess (speaking again
+as an Editor) that I should thought about moving Section 5 into a
+non-normative appendix. I will discuss this possibility with my co-Editors.
+The Working Group, of course, will have to make the decision about whether
+to include any trivial embedding in the normative components of XQueryX, to
+move it to a non-normative part of the document, or to delete it entirely.
+You may be assured that the Working Group continues to develop the XQueryX
+specifications in active pursuit of progression.
+Again, thanks for your comment.
+Hope this helps,
+Jim
+= Facts are facts. However, any opinions expressed are the opinions =
+= only of myself and may or may not reflect the opinions of anybody =
+= else with whom I may or may not have discussed the issues at hand. =
+[Michael Rys] I agree that you always should entitize XQueries in the
+trivial embedding...
+that
+[Michael Rys] This is clearly incorrect. An XML document clearly can
+contain ]] .
+element
+Thanks, that was my main point.
+(Although as I said it would be nice if the "obvious" interpretation of
+as XML could be made safe, as people will try it unless this section
+strongly warns against that.
+[Michael Rys] This is clearly incorrect. An XML document clearly can
+contain ]] .
+Er, depends on your definition of "clearly" I think:-)
+The right angle bracket ( ) may be represented using the string "",
+and must, for compatibility, be escaped using "" or a character
+reference when it appears in the string "]] " in content, when that
+string is not marking the end of a CDATA section
+For example msxml3 (in IE6) says
+of
+The XML page cannot be displayed
+Cannot view XML input using XSL style sheet. Please correct the error
+and then click the Refresh button, or try again later.
+The literal string ']] ' is not allowed in element content. Error
+processing resource 'file:///C:/cygwin/w3ccvs/entities/foo.xml'. Line 1,
+Position 6
+David,
+Many thanks for your comment. This message contains my personal
+observations and do not in any way reflect a Working Group response. The
+Query Working Group will respond formally as soon as they have developed an
+official response.
+You observe correctly (in your third paragraph below) that "no indication
+is given...about which embedding has been used". In fact, speaking as an
+Editor of the XQueryX specification, that was deliberate. Section 5 was
+intended, not to specify a normative way to do a trivial embedding of
+XQuery in an XML document, but to demonstrate that the subject has been
+considered and to suggest some (certainly not all!) approaches that a user
+might follow if a trivial embedding is required for his or her purposes.
+Of course, a conformance statement in the XQueryX document would have to
+make it clear what is normative and what is not. I confess (speaking again
+as an Editor) that I should thought about moving Section 5 into a
+non-normative appendix. I will discuss this possibility with my co-Editors.
+The Working Group, of course, will have to make the decision about whether
+to include any trivial embedding in the normative components of XQueryX, to
+move it to a non-normative part of the document, or to delete it entirely.
+You may be assured that the Working Group continues to develop the XQueryX
+specifications in active pursuit of progression.
+Again, thanks for your comment.
+Hope this helps,
+Jim
+= Facts are facts. However, any opinions expressed are the opinions =
+= only of myself and may or may not reflect the opinions of anybody =
+= else with whom I may or may not have discussed the issues at hand. =
+I agree that making the section explictly non normative would be helpful
+but I cannot agree with this:
+Section 5 was
+intended, not to specify a normative way to do a trivial embedding of
+XQuery in an XML document, but to demonstrate that the subject has been
+considered and to suggest some (certainly not all!) approaches that a user
+might follow if a trivial embedding is required for his or her purposes.
+There is effectively only one way that an Xquery can be placed in XML:
+treat it as a string, quote all XML markup and place it in element or
+attribute content. Of course the actual quoting may use any one of
+several equivalent XML quoting syntaxes, CDTATA sections, predefined
+entities, or numeric character references, there is no need to elaborate
+those choices here.
+However the current section seems to indicate that unless it has a
+mismatched  and so directly embedding the unquoted query would produce
+non-well formed XML, the Query can be simply inlined without quoting
+into an XML document. As I tried to indicate this is a very dangerous
+practice that (because of different meaning for the same syntax of
+character references in XML and Xquery) may cause misinterpretation of
+the Query: what is, apparantly, a single Xquery string can become
+arbitrary Xquery code. The section should explictly warn against that,
+unless the treatment of &amp;#1234; in XQuery can be changed to match the
+behaviour that would result from first parsing the Xquery as a fragment
+of XML.
+David
+This e-mail has been scanned for all viruses by Star Internet. The
+service is powered by MessageLabs. For more information on a proactive
+anti-virus service working around the clock, around the globe, visit:
+What is specific to XQuery is that it uses a syntax which is very close
+to XML syntax but subtly different. In fact, very many well-formed
+XQuery queries are also well-formed XML documents, and in many cases
+putting something like
+will produce the same infoset whether you put it through an XQuery
+processor or through an XML parser. This means that the other cases,
+those where a query is a well-formed XML document but has different
+interpretation, are particularly pernicious.
+Michael Kay
+In fact there are many other ways of writing a query that isn't
+well-formed XML, for example
+is a legal XQuery. Moreover the following is legal both in XML and in
+XQuery, but with completely different parse trees:
+Imagine putting that through an XML parser and the parser reversing the
+order of the attributes!
+I personally think it would be a good idea to define a subset of XQuery
+syntax that parses correctly as XML, and is therefore safely embeddable.
+I think the expressive power of this subset would be identical to the
+current language, it would merely lose a bit of composability and place
+restrictions on the use of character references. The only real problem
+would be how to handle the " " operator, which must be represented as
+in XML but cannot be represented as  in XQuery.
+Michael Kay
+The only real problem
+would be how to handle the " " operator, which must be represented as
+in XML but cannot be represented as  in XQuery.
+This problem would be solved, and the correspondence between Xquery and
+Xpath-in-XML would be improved, if the charef production was removed
+from the grammar and instead an xquery parser was specified as acting
+(as if) all charrefs were expanded (and line endings normalised)
+_before_ parsing the input against the specified grammar. This would
+mean that Charref could appear anywhere (as it can in Xpath in an XML
+attribute) including use as Xquery syntax such as .
+David
+This e-mail has been scanned for all viruses by Star Internet. The
+service is powered by MessageLabs. For more information on a proactive
+anti-virus service working around the clock, around the globe, visit:
+The people who find this similarity pernicious ("they're so close!") must be
+the same people who try in vain to reuse existing XPath 1.0 and XML 1.0
+parsers to implement their XQuery compilers, even though the languages are
+different already at the lexical level, because XQuery superficially seems
+to contain XML and XPath as subsets (even though it doesn't, not really).
+To attempt to serialize the XQuery foo bar /foo as itself is, to be blunt,
+stupid. It's the same as thinking the operator + behaves the same in every
+language that uses it, just because they all happen to use the same syntax
+for it. XQuery places different rules on its element constructors
+(including things like implicit validation) than XML does, and you'd lose
+those rules if you tried to treat the XQuery as literal XML verbatim. And
+as David pointed out, you run into all sorts of places where XQuery and XML
+just don't have the same character content rules at the lexical level.
+But again, this is just my $0.02. I have that feeling of tilting at
+windmills whenever I engage in these debates.
+Michael

@@ -1,0 +1,125 @@
+Since no one answered yet, I'll repost Joseph's question with some
+background. Is this example, with the declaration , valid?
+In FSML, we have something similar to the disclaimer called
+signature restrictions. For example, a signing token, possibly
+qualified by a signer login and password, might be constrained to sign
+purchase orders but not checks.
+What FSML does (in DSIG terms) is add a Restrictions tag to
+SignedInfo . When the token receives the SignedInfo element for
+hashing and signing, it will reject the element if the Restrictions
+value does not match its internal rules.
+Similarly, we added a Sequence tag, with an incrementing number
+maintained by the token, for auditing.
+We were hoping that DSIG would similarly allow application dependent
+tags in SignedInfo , what I've heard called an "open content model".
+Date: Thu, 06 Jul 2000 13:09:20 -0400
+From: "Joseph M. Reagle Jr." reagle@w3.org
+Could you give an XML snippet of this, showing the issue?
+Assuming that the following well formed XML instance reference
+and signature validates, is the following example a valid
+Signature? (It violates the specified content model).
+I'm slightly confusing the syntactical violation with a clear violation
+of semantics ("disclaimer") just to show why this might be important,
+but [x01-03] could be any name space qualified and wellformed XML.
+[s01] Signature Id="MyFirstSignature" xmlns="http://www.w3.org/2000/02/xmldsig#"
+[s02] SignedInfo
+[x01] disclaimer xmlns="http://badactor.com/2000/v3"
+[x02] declaration this signature is invalid on tuesdays /declaration
+[x03] /disclaimer
+[s03] CanonicalizationMethod Algorithm="http://www.w3.org/TR/2000/WD-xml-c14n-20000119"/
+[s04] SignatureMethod Algorithm="http://www.w3.org/2000/02/xmldsig#dsa-sha1"/
+[s05] Reference URI="http://www.w3.org/TR/2000/REC-xhtml1-20000126/"
+[s06] Transforms
+[s07] Transform Algorithm="http://www.w3.org/TR/2000/WD-xml-c14n-20000119"/
+[s08] /Transforms
+[s09] DigestMethod Algorithm="http://www.w3.org/2000/02/xmldsig#sha1"/
+[s10] DigestValue j6lwx3rvEPO0vKtMup4NbeVu8nk= /DigestValue
+[s11] /Reference
+[s12] /SignedInfo
+[s13] SignatureValue MC0CFFrVLtRlk=... /SignatureValue
+[s14] KeyInfo
+[s15a] KeyValue
+[s15b] DSAKeyValue
+[s15c] P ... /P Q ... /Q G ... /G Y ... /Y
+[s15d] /DSAKeyValue
+[s15e] /KeyValue
+[s16] /KeyInfo
+[s17] /Signature
+Ken Goldman kgold@watson.ibm.com 914-784-7646
+Hi Ken. I would argue that your stated use is syntactily invalid with
+respect to the content model as given by the DTD/schema (and I'm pushing
+that we be cognizant of this fact) and also semantically. (This is one
+reason why thinking in terms of a Data Model (via RDF) can be a good thing.
+[1])
+SignedInfo is merely a collection of References with two properties:
+SignatureMethod and C14NMethod. Placing other semantics in there can be
+dangerous. The purposes that you speak of seem much more appropriate to
+SignatureProperties. (Have you considered this?)
+Syntax and semantics are not the same thing, but they obviously are closely
+related and in this instance we can use constraints on the syntax to also
+constrain the ability to make semantic assertions within our specified
+structures. Of course, one could place a similar corresponding statement in
+a Signature Property (invalid on Tuesdays) but that CLEARLY represents that
+this is a TRUST decision and has nothing to do with the signature structure
+nor its Signature Validity.
+[1] http://www.w3.org/Signature/Drafts/xmldsig-datamodel-19991029.gif
+(Somewhat incomplete, but the last/best capture as a di-graph).
+Joseph Reagle Jr.
+W3C Policy Analyst mailto:reagle@w3.org
+IETF/W3C XML-Signature Co-Chair http://www.w3.org/People/Reagle/
+We actually are considering using SignatureProperties as we try to
+fit FSML into DSIG. It's quite klunky because we designed FSML
+assuming a smart card would be doing the signing.
+By moving our Restrictions and Sequence tags out of SignedInfo ,
+we now have to:
+- send two elements, SignedInfo and SignatureProperties to the
+card
+- hash SignatureProperties
+- insert that hash into SignedInfo
+- hash SignedInfo
+- sign that hash
+All of this has to be done atomically inside the card, or the security
+is easily compromised. It's not clear whether the extra processing
+can be done in a cheap smart card.
+Is there a good reason not to permit tags other then references in
+SignedInfo? I can see that it's elegant the way it is, but why is
+opening SignedInfo dangerous.
+In our application, if the smart card can't do the operation
+atomically, we will have to trust the host application, which is
+certainly dangerous.
+Date: Fri, 14 Jul 2000 15:02:09 -0400
+From: "Joseph M. Reagle Jr." reagle@w3.org
+Ken Goldman kgold@watson.ibm.com 914-784-7646
+BTW: I'd appreciate your thoughts on removing SignaturePropeteries as Gregor
+noted it is superfluous to SignatureProperty [1].
+[1] http://lists.w3.org/Archives/Public/w3c-ietf-xmldsig/2000AprJun/0188.html
+Hi Ken, this is a good report on your experience. This aspect is one of the
+earliest design principles:
+2.2. XML-signatures are generated from a hash over the canonical form of a
+signature manifest. (In this document we use the term manifest to mean a
+collection of references to the objects being signed. The specifications may
+use the terms manifest, package or other terms differently from this
+document while still meeting this requirement.)
+This is a result of:
+0. For all Signature applications, implementing the SignedInfo processing
+logic is very easy, there won't be any surprises. Taking advantage of
+SignatureProperties is more complex, but that's commensurate with its
+relative position to validating a simple signature.
+1. The early data model [1] which attempted to associate the syntax with an
+assertion (digraph) based data model. Consequently, someone could run a RDF
+parser over our syntax and pick up the relations of these things.
+2. We want to provide the ability not to include it in SignedInfo (it's own
+Digest or C14N Methods), consequently, supporting within and without is
+unecessarily redundant. (Instead of supporting "inline" signature, and all
+the others, the WG decided to choose the single method.)
+3. It's proved useful in the rat-hole prone debate of Signature semantics.
+If you have something to say about the signature, that is external to our
+defintion of what a XML Signature is, place it outside of SignedInfo.
+While I appreciate your implementation concerns this is a core design
+principle that I don't think is likely to change at this point. (Though if
+others have thoughts based on your experience they should weigh in.)
+[1]
+.gif
+Joseph Reagle Jr.
+W3C Policy Analyst mailto:reagle@w3.org
+IETF/W3C XML-Signature Co-Chair http://www.w3.org/People/Reagle/

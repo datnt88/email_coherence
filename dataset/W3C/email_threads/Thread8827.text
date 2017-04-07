@@ -1,0 +1,186 @@
+Hi,
+This could likely be a problem that has been debated a lot in the past but I
+would appreciate if someone explained
+(or pointed to a previous explanation on the mailing list or elsewhere) what
+the current thinking is regarding this.
+The ebXML Messaging Services Specification (
+of the ebXML message (an XML structure based on SOAP) and the ds:Signature
+element is embedded into the signed
+ebXML message.
+The signed ebXML message is subject to modification, passing through a
+sequence of intermediary SOAP and ebXML
+processors before reaching the ultimate recipient, which also validates the
+signature. One such modification that is difficult
+to predict is change in whitespace (indentation, CRLF characters) in the
+ebXML message. The ds:SignedInfo element
+is itself subject to such modification (being part of the ebXML message).
+A proposed modification to the ebXML Messaging Specification suggests this
+XSL transform in the ds:Reference element:
+xsl:stylesheet version="1.0"
+xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+xsl:strip-space elements='*'/ !-- Strip trivial
+whitespace in all elements. --
+the signature has been made robust to changes in trivial whitespace in the
+ebXML message but outside the embedded
+ds:SignedInfo elements. However, because the ds:SignedInfo elements are not
+processed by any XSL transform (but by
+the algorithm specified in ds:CanonicalizationMethod, for which we are using
+whitespace in ds:SignedInfo invalidates the
+signature.
+To give some context on how ebXML Messaging uses XMLDSIG, I have included an
+sample signature element (taken from
+an ebXML example in the ebXML specification), later in this email.
+The first guess would be that by using a 'smarter' canonicalization
+algorithm for the ds:SignedInfo element, the ds:SignedInfo
+element can also be made robust to changes in trivial whitespace. Rather
+than use the schema-unaware canonicalization
+algorithm ( http://www.w3.org/TR/2001/REC-xml-c14n-20010315 ), it would seem
+that a different canonicalization algorithm
+could be written which, being aware of the XMLDSIG schema, could do a better
+job of eliminating trivial whitespace.
+This 'smarter' CanonicalizationMethod algorithm might certainly not be smart
+enough to always know whether a particular
+whitespace character is significant or not. However, if such an algorithm
+was created that simply removed all whitespace where
+an element has textual content consisting entirely of whitespace (the kind
+xsl:strip-space would remove), people that don't have
+very sophisticated Transform elements (that could get mangled) would be able
+to benefit from it.
+In other words, a 'smarter' XMLDSIG schema-aware CanonicalizationMethod
+algorithm could be published with the caveat that
+changes in whitespace in descendants of ds:SignedInfo would become
+irrelevant. In situations where this might be a problem,
+the earlier schema-unaware canonicalization algorithm could be used instead.
+Just as an example, the stylesheet presented earlier, which is a parameter
+to the ds:Transform element does not contain any
+whitespace that needs to be preserved and so a CanonicalizationMethod
+algorithm that removed all trivial whitespace would not
+hurt us but actually benefit us a lot.
+Here is a typical Signature element, as it is used by the ebXML Messaging
+Specification.
+CanonicalizationMethod
+Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"/
+SignatureMethod
+Algorithm="http://www.w3.org/2000/09/xmldsig#dsa-sha1"/
+Transform
+Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"/
+Transform
+Algorithm="http://www.w3.org/TR/1999/REC-xpath-19991116"
+not(ancestor-or-self::()[@SOAP:actor=
+urn:oasis:names:tc:ebxml-msg:actor:nextMSH]
+ancestor-or-self::()[@SOAP:actor=
+http://schemas.xmlsoap.org/soap/actor/next])
+Transform
+Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"/
+DigestMethod
+Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"/
+DigestMethod
+Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"/
+I was just trying to convey my thoughts on this matter. Thanks for taking
+the time to read this email.
+Regards,
+Sanjay J. Cherian
+Sterling Commerce
+Irving, TX
+Hi Sanjay,
+The "meta" question of allowing transforms over SignedInfo certainly has
+been a topic of discussion in the past with some advocating for this
+functionality. However, the option we proceeded with was to avoid such
+complexity in the core xmldsig processing and to limit processing to a
+handful of well specified and vetted canonicalizations instead of arbitrary
+transforms.
+I expect proposals for infoset and schema augmented/typed canonicalizations
+to be made eventually.
+I've not considered handling white-space text nodes as you suggest, though
+I think it would be simple to specify and implement. (I wouldn't consider
+it "smarter", just different. And what is considered "trivial" to some is
+consider important to others. So I'd call it a alternative canonicalization
+that removes text nodes consisting solely of whitespace characters.)
+Note, I think the behaviour of schema "collapsing" (all whitespace replaced
+by a single '#x20' ) is different than that specified by xsl:strip-space
+(actually removes the text node). Also, schema collapsing applies to type
+string (and its derived types) and consequently (I don't think) would
+collapse the white-space between elements (or mixed content) -- unless I'm
+missing something else in schema that you are referring to.
+Under what circumstances are you loosing the white space? Regardless, why
+not generate your XML and use xml:space="preserve" at the root? That's what
+it is for! smile/
+Joseph Reagle Jr. http://www.w3.org/People/Reagle/
+W3C Policy Analyst mailto:reagle@w3.org
+IETF/W3C XML-Signature Co-Chair http://www.w3.org/Signature/
+W3C XML Encryption Chair http://www.w3.org/Encryption/2001/
+Hi,
+There are several questions here.
+On Transforming SignedInfo:
+We deliberately made a general transform chain unavailable on
+SignedInfo, at least among the mandatory or recommended to implement
+algorithms, because it is a geneal Artificial Intelligence problem to
+figure out if such transforms are safe. Note that they could
+completely screw around with all your References, Signature Algorithm,
+and themsevles. So they can trivially arrange for the post-transform
+version signature to always succeed or always fail and to look
+generally secure. So, for any application allowing Transforms over
+SignedIfno to be secure, you probably need a complete description of
+all allowed sets of Transforms...
+Anyway, to discourage this, we permitted only CanonnicalizationMethod.
+But, of course, it is an algorithm so it can actually do
+anything. (IE, you could define a CanonicalizationMethod that took a
+Transforms as an explicit parameter.)
+On WhiteSpace:
+As I see it, if intermediaries are going to generally reformat things
+to be pretty, then it is kind of hopeless to try to be secure.
+I believe there are actually three types of white space. White space
+inside tags is truly insignificant. It isn't even handed to
+applications. Then there is white space in the content of something
+with element only content that appears between content elements or
+before the first or after the last content element. This is defined by
+the XML spec as "insignificant", although only a validating parser can
+tell that. Nevertheless, such white space is required to be given to
+the application. Since the application can do anything with it, that
+it is flagged as "insignificant" has no security meaning. And
+if you have a non-valiating parser or if the element has mixed
+content, then it doesn't even have this meaningless "insignificant"
+flag affixed to it. Finally, there is actual content white space,
+which can also be changed if some intermediate node pretty printed
+a foo bar /a as
+foo
+bar
+for example.
+Your suggestion:
+If you guys want to define a canonicalization function that deletes
+all pure white space text nodes and make support of it required for
+your application, you can do so. But I'm not sure of your logic in
+doing so but not dropping leading and trailing white space and/or
+changing internal runs of white space to one space or something else
+canonical. And I don't see how this can be safe and secure. You may
+know the schema for SignedInfo but it is harder to know the schema for
+every parameter of every Transform someone might use.
+Donald
+From: "Cherian, Sanjay" Sanjay_Cherian@stercomm.com
+Message-ID: 40AC2C8FB855D411AE0200D0B7458B2B04D636BD@scidalmsg01.csg.stercomm.com
+Date: Thu, 20 Dec 2001 10:32:54 -0600
+Hi,
+If you want to sign a character string so that it can't change, you
+are welcome to do so. The question is, what is the something you sign?
+XML isn't a character string. It is a very complex structure and many
+aspects of its external character string representation are, by
+definition, so insignificant that conformant XML paresers are not
+allowed to communicate then to an application. If you want to create
+binary signatures on binary messages sent through binary channels,
+where some of the data just happens to be XML, you can secure all the
+bits. If you want to create XML signatures on XML sent through XML
+channels, a signature securing all the bits is uselessly
+brittle. That's why XML digital signatures, which by definition are in
+XML syntax and are handled as XML, need various forms of XML
+canonicalization.
+So the "thing" you sign for XML has to be a canonicalization of the
+XML or it isn't a useful XML signature.
+Higher level trust and business aspect mechanisms are out of scope for
+the XMLDSIG working group except possibly as a input to requirements
+for the base cryptographic facility XMLDSIG provides. If you believe
+that it needs to provide a means of "signing every bit" with no
+canonicalization, your needs are met because it can be used that way.
+Donald
+From: Steve Mathews SMathews@conclusive.com
+Message-ID: 5246684B3A2FD511BE2E00D0B7A9280E1A7601@mailgb01.gb.conclusive.com
+Date: Mon, 7 Jan 2002 13:50:43 -0000

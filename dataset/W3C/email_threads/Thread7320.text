@@ -1,0 +1,880 @@
+I've volunteered and Jim has accepted me as document editor for
+the access control issue. I am currently working on a "Requirements"
+draft which will serve as the direction for a later Draft
+Specification for access control.
+It is possible that access control will grow too big for this WG;
+it may grow into either a subgroup of WEBDAV or even a WG of its
+own. This will be determined later.
+Right now, I am soliciting initial input on some major questions
+we need to answer before we can even begin drafting the Requirements
+specification. I would like to propose some initial questions.
+I'll compile responses together, and then that can serve as a basis
+for discussing the pros/cons of different things that could show
+up in the Requirements draft. If you have other issues that you
+think should be discussed, please send them to me.
+1. Should an access control specification attempt to encompass any
+of the following:
+a) Potential extensions to HTTP;
+b) A server-based API approach;
+c) A file-oriented specification (e.g., an Access Control List
+specification for the Web).
+We need to determine if the scope of the Requirements will be
+to include one or more of the above items, and the pros/cons
+of different ways of solving the issue through the different
+overall approaches.
+2. If an API based approach is used, what is the best design
+philosophy to utilize? An ODBC-like approach consisting of
+modular API design which separates implementation from interface
+has already been discussed in this group. Are there other ideas?
+3. Should the Specification attempt to include any of the following:
+a) A _required_ set of access control token-naming-conventions
+b) A _suggested_ set of access control token-naming-conventions
+If either of the above, what should the scope of tokens include?
+What are the kinds of access we need to think about?
+4. Should the access control specification reflect a particular
+file-system convention, e.g., the UNIX-based filesystem, or
+should the specification include any sort of policy and/or
+protocol that abstracts filesystem from access control data?
+If it uses an "abstracted" filesystem, is it safe to assume
+that URL-based conventions are the best way to specify control
+over a file? How does existing work in the areas of filesystems
+(e.g., Andrew, etc.) reflect on these concepts?
+5. Should the specification include any notions around "groups"
+or should this be implementation dependent?
+6. How should the access control specification deal with the identity
+of a user, i.e., what authentication standard/proposal will
+the implementation explicitly support, if any? If an API-based
+specification is pursued, should the API explicitly support an
+interface to a specific authentication interface or should it
+be fairly abstract?
+7. Should there be any embedded/defined support for the object model
+in the access control system, e.g., inheritance of access tokens.
+8. Should the scope of the access control specification include:
+a) Checking to see if a user has a certain permission;
+b) Assigning permissions to a user;
+c) Revoking permissions;
+d) Relating permissions to objects on the Web;
+e) Any other management-related functions?
+9. What are the ideas around non-file-access type permissions?
+(For example, permissions that define what a user is allowed
+to do inside an application).
+10. Should the draft specification intend to ultimately include a
+reference implementation?
+11. What other questions are there?
+Sincerely,
+Jon Radoff
+NovaLink
+Two major issues for access control in authoring situations is
+a) the partitioning of users and the type of operations that these users
+can perform, and
+b) State of the objects and the transactions being performed on these objects
+All of this should fall out from a better understanding of the
+requirements. In any case, APIs have not been traditionally successful in
+IETF like settings. Also, in the context of proxies, gateways, etc. dealing
+with the protocol implicatin is lot more important. So perhaps we can focus
+there first. File oriented specification is a start but web objects are not
+just files.
+Sankar Virdhagriswaranp. no: 508 371 0404
+Although what we do influences what happens at the server and the
+client, ultimately (IMHO) this group is concerned with the
+"over-the-wire" issues. APIs are out of our scope. On (c), if it read,
+"A resource-oriented specification...", I would agree this would be part
+of the specification. Many Webs are now being served by database
+servers -- ordinary files are no longer involved.
+We will probably need both. Offhand, I think our model should be that
+of OS access control, which (for authoring) usually consists of read,
+write, create, and delete. (Others may be able to add to this list.)
+Since we are *Web* Distributing Authoring and Versioning, the spec
+should be at the URL level. This also fits well with how most current
+servers seem to be implemented.
+Although the notion of groups is extremely powerful, I think that this
+is implementation dependent.
+I would recommend that standardly, the standard HTTP authentication
+methods should be supported (which right now is only Basic
+Authentication, although Digest Access Authentication is
+standards-track). Perhaps these could be expanded, such that (for
+example) a SecurID-like scheme could be implemented where it passes the
+current displayed card# as the user ID and the PIN # as the password.
+Basically, my approach is to make the username and password "magic
+cookies", letting the server interpret them how it will.
+Again offhand, I would say only the limited inheritance now given by
+Basic Authentication and Digest Access Authentication (implicit
+re-authentication within a user-agent session).
+Not sure -- I'll need to think more about these issues.
+At the least, this is way out of scope for WebDAV (although an
+interesting idea).
+Only if someone wants to supply it. (W3C's Jigsaw might be a good
+reference server implementation platform.)
+I'm not entirely clear on what the motivation for an API approach is. As I
+recall, it was initially proposed while we were discussing ACLs, and
+several people had objected that this approach was inappropriate because
+it specified a particular implementation strategy. I'm not 100% sold here,
+but it is certainly possible that I have misunderstood the issues at hand.
+Anyway, my take on why APIs are not specified by the IETF is that they
+deal with specific language bindings, and IETF protocols are supposed to
+be platform independent. If API like behavior is really needed, what's
+wrong with an RPC approach? I don't necessarily advocate (or not advocate)
+the use of RPC. My personal opinion is that there's no real reason why we
+couldn't have a standards track RPC protocol (perhaps similar to ONC RPC),
+but of course, that's quite an undertaking.
+Now, before I digress too far, let me ask: Is there a reason why access
+control, in particular, really requires an API-like approach (or at least
+why such an approach is highly desirable)? I am not now talking about
+general issues such as why RPC based protocols are to be preferred to
+messsage based protocols. I don't mean to minimize these arguments. I
+think Tannenbaum one stated that message based protocols are the GOTO
+statements of network programming, and I think he has a point. But without
+minimizing the general issue, I'd like to be clearer on whether there are
+specific requirments in WebDAV and access control that argue for an
+API/RPC approach.
+Gregory Woodhouse
+gjw@wnetc.com / http://www.wnetc.com/home.html
+If you're going to reinvent the wheel, at least try to come
+up with a better one.
+The reason an API based approached was initially suggested was
+to provide a mechanism through which server-based applications
+which act as "receivers" for requests from the client could have
+a standardized mechanism for asking the environment whether the
+user has a particular permission.
+There are some precedents within the IETF/RFC community for APIs,
+namely GSS-API (A security API, not related specifically to
+permissions).
+The CGI standard effectively implements an API by defining
+environment variables as a mechanism for passing information
+between the server and forked processes.
+In addition, it might be possible to develop an API that is
+language neutral by using a technology such as CORBA. The
+principal drawback there is the lack of extensive CORBA
+deployment and the additional overhead associated with using
+it.
+Permissions are essentially a "server" technology. It is unclear
+to me what information regarding permissions would ever be
+transacted between the client and the Web server, other than
+perhaps a denial-of-access response (which is already handled
+in the HTTP 1.0 spec). In addition, the predominant leaning so
+far from everyone has been that a spec that governs the creation
+and management of permissions is out of scope. That leaves us with
+the issue of resolving what a particular user can or can't do.
+Any comments on the above?
+I think there's a distinction that needs to be made here. If permission
+refers to the ability of processes or threads on the server to access
+local resources, then I agree that is out of scope. On the other hand, if
+it refers to access to resources across via a network, then I believe it
+is very much in scope. As far as I can see, the only tricky part is
+assigning different access rights to multiple agents (such as processes)
+on the same host. To be a bit more concrete, suppose host A is home to two
+processes, p1 and p2, and host B is home to resource r. Suppose further
+that p1 should be able to access r and p2 should not. Historically, this
+has been handled by means of credentials. If a process (and, yes, I know
+I'm using OS specific language) posesses the proper credentials, it can
+obtain access to resource r. This basically comes down to an
+authentication problem. If B accepts a TCP connection from A, how does it
+know that the connection was initiated by p1 and not p2? Authentication is
+not an issue that falls outside the scope of the IETF. It would be
+inappropriate for an IETF protocol to use OS specific mechanisms such as
+process IDs to differentiate between p1 and p2, but that is another
+matter, and there is certainly nothing wrong with having an abstract
+number space like TCP/UDP ports that can be mapped to OS specific object
+like processes. This is what we do now.
+To be honest, I am not entirely satified with the approach taken by, say,
+NFS. NFS simply includes the uid and gid of the requesting process in each
+RPC (because it, like HTTP, is stateless). This is obviously not secure
+because any process could claim whatever uid and gid it wanted. As a
+result, an approach referred to as SecureNFS has been developed which uses
+cryptographic methods to prevent rogue processes from claiming uids or
+gids not rightfully theirs. But realistically, any server allowing PUTs is
+going to have to require something like digest authentication, anyway, so
+maybe this isn't so bad. The concepts of user ID and group ID are UNIX
+specific, but I don't see why we couldn't use a similar approach with an
+abstract number space as I suggested above.
+Gregory Woodhouse
+gjw@wnetc.com / http://www.wnetc.com/home.html
+If you're going to reinvent the wheel, at least try to come
+up with a better one.
+I'm a bit worried by the direction this group is taking. It should
+really do no more than propose a set of requirements for security
+problems. I do not see people who are primarilly security people
+posting to this group (I may have missed them).
+Please rememebr that security can be a serious rat hole, particularly
+if questions such as access control are to be discussed. to discuss
+security seriously I would like to see someone such as Jeff Schiller,
+Butler Lampson, Ron Rivest or Taher ElGamal involved. I would urge
+the group to look to other working groups such as SPKI to solve this
+aspect of the problem.
+I would not particularly recommend the API approach. I have serious
+doubts about GSAPI, particularly since it does not solve the problem
+it was intended to (export) and I have never quite been able to wring
+a coherent explanation of objectives, purpose or mechanism from
+the specs. I get the same feeling that I get when reading the
+Windows NT operating system manuals, mechanism without explanation
+of stategy or architecture.
+Phill
+For me the real reason why we don't want to specify an API for this is that API's are the client/server way of doing things and protocols are the Web way of doing things - i.e. let's keep it consistent.
+We should however specify and API whereby the access control can be provided by a third party application (server extension) on the server side thereby relieving the server providers from the necessity of providing the functionality (they only have to support the API).
+Cheers
+Dylan
+From: Jon Radoff[SMTP:jradoff@novalink.com]
+Subject: Re: Access Control Draft
+The reason an API based approached was initially suggested was
+to provide a mechanism through which server-based applications
+which act as "receivers" for requests from the client could have
+a standardized mechanism for asking the environment whether the
+user has a particular permission.
+There are some precedents within the IETF/RFC community for APIs,
+namely GSS-API (A security API, not related specifically to
+permissions).
+The CGI standard effectively implements an API by defining
+environment variables as a mechanism for passing information
+between the server and forked processes.
+In addition, it might be possible to develop an API that is
+language neutral by using a technology such as CORBA. The
+principal drawback there is the lack of extensive CORBA
+deployment and the additional overhead associated with using
+it.
+Permissions are essentially a "server" technology. It is unclear
+to me what information regarding permissions would ever be
+transacted between the client and the Web server, other than
+perhaps a denial-of-access response (which is already handled
+in the HTTP 1.0 spec). In addition, the predominant leaning so
+far from everyone has been that a spec that governs the creation
+and management of permissions is out of scope. That leaves us with
+the issue of resolving what a particular user can or can't do.
+Any comments on the above?
+2 questions and an idea.
+1) Isn't LDAP the standard (or about to become the de facto standard) for verifying who an agent is? Shouldn't we use LDAP (call it X.500) (especially in conjunction with X.509) for this task.
+2) Isn't the cookie methodology the way for clients to tell servers "more about themselves" (in the extended sense of the meaning)?
+I think we should leverage these two existing technologies allowing X.500 cookies to be obtained by clients from an X.500/LDAP server and then be able to pass this cookie to all servers which lie within the domain of the X.500 server as identification credentials. If we don't restrict the access control model to this approach it should at least allow for it to be implemented this way.
+Cheers
+Dylan
+From: Gregory J. Woodhouse[SMTP:gjw@wnetc.com]
+Subject: Re: Access Control Draft
+I think there's a distinction that needs to be made here. If permission
+refers to the ability of processes or threads on the server to access
+local resources, then I agree that is out of scope. On the other hand, if
+it refers to access to resources across via a network, then I believe it
+is very much in scope. As far as I can see, the only tricky part is
+assigning different access rights to multiple agents (such as processes)
+on the same host. To be a bit more concrete, suppose host A is home to two
+processes, p1 and p2, and host B is home to resource r. Suppose further
+that p1 should be able to access r and p2 should not. Historically, this
+has been handled by means of credentials. If a process (and, yes, I know
+I'm using OS specific language) posesses the proper credentials, it can
+obtain access to resource r. This basically comes down to an
+authentication problem. If B accepts a TCP connection from A, how does it
+know that the connection was initiated by p1 and not p2? Authentication is
+not an issue that falls outside the scope of the IETF. It would be
+inappropriate for an IETF protocol to use OS specific mechanisms such as
+process IDs to differentiate between p1 and p2, but that is another
+matter, and there is certainly nothing wrong with having an abstract
+number space like TCP/UDP ports that can be mapped to OS specific object
+like processes. This is what we do now.
+To be honest, I am not entirely satified with the approach taken by, say,
+NFS. NFS simply includes the uid and gid of the requesting process in each
+RPC (because it, like HTTP, is stateless). This is obviously not secure
+because any process could claim whatever uid and gid it wanted. As a
+result, an approach referred to as SecureNFS has been developed which uses
+cryptographic methods to prevent rogue processes from claiming uids or
+gids not rightfully theirs. But realistically, any server allowing PUTs is
+going to have to require something like digest authentication, anyway, so
+maybe this isn't so bad. The concepts of user ID and group ID are UNIX
+specific, but I don't see why we couldn't use a similar approach with an
+abstract number space as I suggested above.
+Gregory Woodhouse
+gjw@wnetc.com / http://www.wnetc.com/home.html
+If you're going to reinvent the wheel, at least try to come
+up with a better one.
+Personally, I think it would be great if one of the aforementioned
+security gurus joined our discussions. Although I do a lot of
+security-related work here at TCE, it is these gentlepeople and others
+like them to whom I look for guidance on my work. It would also be good
+if Jeff and/or Tom Weinstein from Netscape (and their counterparts at
+Microsoft (Bob Atkinson among others)) would join in the discussion.
+There are (in my mental model) 4 basic components to computer security:
+1) Authentication -- are you who you say you are?
+2) Access Control -- are you allowed to perform this operation in this
+way?
+3) Auditing -- just what was it that you did?
+4) Encryption -- Is your data protected from prying eyes?
+As our group is mainly concerned with the HTTP protocol, (3) may be out
+of scope (as this is a server-side issue), unless there is a good reason
+to have user agents examining their audit trails. As for (4), there are
+mechanisms in place (SSL, PCT) to protect the data as it goes over the
+wire. If the data is to be decrypted after it has been dumped into an
+object (file, memory buffer, etc.) on the receiving machine, this is
+likely out of scope for this group. That leaves (1) Authentication, and
+(2) Access Control, as the topics I think (IMHO) we need to concern
+ourselves with.
+The API approach ties us too tightly to a particular architecture or
+architectures. What our concern (again, IMHO) is the actual protocol
+changes needed to support WebDAV. Whether we have a JavaStation
+user-agent talking to a Cray proxy server talking to a 6800 embedded
+HTTP server for the MIT Coke(tm) machine (updating a translation of the
+directions into Hindu) should not matter. What matters is that all
+machines agree on the extended HTTP protocol for performing WebDAV
+operations.
+Maybe the problems with Windows NT stem from their having a "stategy"
+when they should have a "strategy", instead... :) (MLF, a long-time
+Windows NT user who thinks that in Windows NT, Microsoft (perhaps
+inadvertently) created a real operating system, but who thinks they need
+to slow down their pace of development to the point that they can
+consistently address security issues.)
+Mark Leighton Fisher Thomson Consumer Electronics
+fisherm@indy.tce.com Indianapolis, IN
+"ViaCrypt? Vhy not!"
+Hi,
+I am of the proponent of a CORBA based approach for the call
+specifications. I would like to see the drawbacks that Jon is talking about
+the CORBA approach. I feel that the system is quite developed and generic so
+that people could make use of IIOP for communication among the objects on
+the WEB.
+Even then, I would assume the group has to formalize some standard
+interfaces that are to be followed by the developers of tools based on these
+specifications. So I still would like to stick some standard interfaces that
+are bare neccesary for tools to be compliant with the specifications. I do
+recognize that the access control mechanisms would have specifics about the
+host OS on which it is implemented, the platform, internal netwrok etc. So
+it would not be a very good approcah to make developers work with our rigid
+api's, but some common interfaces could be published that the tool
+developers should comply with.
+What do you poeple think about this ?
+Jon Radoff jradoff@novalink.com 05/15/97 05:11PM
+The reason an API based approached was initially suggested was
+to provide a mechanism through which server-based applications
+which act as "receivers" for requests from the client could have
+a standardized mechanism for asking the environment whether the
+user has a particular permission.
+There are some precedents within the IETF/RFC community for APIs,
+namely GSS-API (A security API, not related specifically to
+permissions).
+The CGI standard effectively implements an API by defining
+environment variables as a mechanism for passing information
+between the server and forked processes.
+In addition, it might be possible to develop an API that is
+language neutral by using a technology such as CORBA. The
+principal drawback there is the lack of extensive CORBA
+deployment and the additional overhead associated with using
+it.
+Permissions are essentially a "server" technology. It is unclear
+to me what information regarding permissions would ever be
+transacted between the client and the Web server, other than
+perhaps a denial-of-access response (which is already handled
+in the HTTP 1.0 spec). In addition, the predominant leaning so
+far from everyone has been that a spec that governs the creation
+and management of permissions is out of scope. That leaves us with
+the issue of resolving what a particular user can or can't do.
+Any comments on the above?
+I would agree that 3 and 4 are out of scope. Defining #1 is
+also out of scope, because there are many others working on that
+components. Our role here should be to determine which #1
+we are going to support.
+The purpose of the Access Control document will be concerned
+principally with #2.
+I'd like to thank Jon for taking the lead for coordinating work on access
+control within WebDAV, and for starting a dialog on this topic.
+I agree with both the slicing of the topic into the above four areas and
+the assertion by Jon that we are primarily concerned with how to support
+various authentication schemes (#1), and how to specify Web access control
+(#2), but not #3 and #4.
+I'd like to throw out for discussion a "minimalist" view of access control.
+My hypothesis is the only access control necessary in the client-server
+WebDAV protocol is a method which temporarily changes the access rights of
+a resource such that only (write) lock holders may read the resource, and
+another message which reverts the access rights back to their original form
+once editing is complete (or perhaps this happens automatically once all
+locks are released). This limited access control provides document privacy
+during editing, so authors are assured that others will not be reading
+their preliminary work.
+If more sophisticated access control is needed, this can be accomplished by
+using server-specific forms to modify the access rights according to the
+server's specific access control scheme. I'm not convinced that
+interoperability is needed for more complicated access control.
+Advantages: it's very simple, most likely would be consistent with any
+future access control standard, and seems to handle the most compelling
+case for why there needs to be *interoperable* client-server access
+control. There are many reasons for why it is desirable to have Web access
+control capability, but it is a different argument to say that Web access
+control must be achievable via some interoperability scheme, be it a
+protocol or an API. I'd like to see some scenarios for why we need a
+full-featured access control specification for WebDAV.
+- Jim
+I think this is a good approach that should certainly be included.
+This brings up the topic of whether the specification needs to
+understand the concept of "ownership" of a particular object.
+Yes, there is "ownership" in the sense of the operating system
+ownership of objects, but this ownership is rarely consistent with
+the identities of the actual users editing the files. In fact, it
+is also pretty rare the .htaccess-type security models have
+a logical mapping to individuals involved in content creation.
+Is it necessary to provide users with the ability to change
+ownership of objects? In this sense, the "WebDAV" ownership of
+an object would be distinct from the "operating system" ownership
+of the object. The Web server/WEBDAV implementation would be
+responsible for maintaining whatever lists are necessary for
+providing the object-to-user ownership mapping.
+Another idea: an approach that could eliminate the need for an
+"ownership" concept might be the ability to assign and revoke
+access "tokens" to individual objects. For example, each object
+could have a "Modify Token" which can be set to a particular value.
+The WEBDAV-server implementation would check to make sure the
+authenticated user "owns" that particular token before letting them
+perform the related action.
+I actually thought that you could ignore access control completely
+except for two things:
+1) how does an author CHANGE the access policy of a resource
+2) how does an author SPECIFY the access policy of a new resource
+and that (2) could be defined as
+Inherit the default access policy and then do (1)
+(There's an unfortunate window when items have the wrong
+access policy).
+However, it should be possible to do (1) and (2) for a wide
+range of different kinds of access policies.
+It might be that every resource has a related linked resource
+which is its access policy, and that the access policy could
+be retrieved as text/html (in which case you would get a form
+that would allow you to modify it, if you were so authorized)
+or as some other representation (which a program that was
+knowledgable about the structure of access policies on the
+particular server would be able to directly manipulate it).
+It might be that access policies should be linked to 'realms'
+rather than 'resources' where a 'realm' was some well-defined
+extension set of resources.
+I'm not sure how the discussion got off into APIs and CORBA,
+though.
+Larry
+H:From w3c-dist-auth-request@w3.org Fri May 16 18:45:51 1997
+H:Resent-Message-Id: 199705170135.VAA05148@www19.w3.org
+H:Date: Fri, 16 May 1997 15:54:28 PDT
+H:From: Larry Masinter masinter@parc.xerox.com
+H:Organization: Xerox PARC
+H:CC: w3c-dist-auth@w3.org
+H:Subject: Re: Access Control Draft
+H:X-List-URL: http://www.w3.org/pub/WWW/Archives/Public/w3c-dist-auth/
+H:X-See-Also: http://www.ics.uci.edu/~ejw/authoring
+H:X-Mailing-List: w3c-dist-auth@w3.org archive/latest/792
+H:X-Loop: w3c-dist-auth@w3.org
+H:
+H:I actually thought that you could ignore access control completely
+H:except for two things:
+H:
+H:1) how does an author CHANGE the access policy of a resource
+H:2) how does an author SPECIFY the access policy of a new resource
+H:
+H:and that (2) could be defined as
+H: Inherit the default access policy and then do (1)
+H: (There's an unfortunate window when items have the wrong
+H: access policy).
+H:
+H:However, it should be possible to do (1) and (2) for a wide
+H:range of different kinds of access policies.
+H:
+H:It might be that every resource has a related linked resource
+H:which is its access policy, and that the access policy could
+H:be retrieved as text/html (in which case you would get a form
+H:that would allow you to modify it, if you were so authorized)
+H:or as some other representation (which a program that was
+H:knowledgable about the structure of access policies on the
+H:particular server would be able to directly manipulate it).
+H:
+H:It might be that access policies should be linked to 'realms'
+H:rather than 'resources' where a 'realm' was some well-defined
+H:extension set of resources.
+H:
+H:I'm not sure how the discussion got off into APIs and CORBA,
+H:though.
+H:
+H:Larry
+H:--
+H:http://www.parc.xerox.com/masinter
+H:
+I've been lurking up until now, but I think I need to inject
+something relevant here.
+We've been thrashing thru "web policy"
+here, particularly document format and metadata and one of the
+things that comes up is that a Web document not only has a
+list of authors, but an "information owner" as well who might not
+*be* an author, but *is* responsible for what goes into the document.
+Thus, I can see access control information specifying not only a list
+of authorized authors/editors, but the Information-owner as well (who
+may need to approve changes).
+Conceivably, one might even need to account for the web-server administrator
+who may be the only person allowed to (re)place documents in the server's
+directories (analogous to the "mailing listserver administrator").
+Howard S. Modell
+Adv.Computing Technologist/2 POBox 3707, m/s 4A-25, Boeing D&amp;SG
+howard.s.modell@boeing.com Seattle, WA 98124-2207
+I would add
+3) how does an author DISCOVER the access policy of a resource
+4) how are principals identified
+BTW a forms based solution is not sufficient. As specified in the design
+principals, all DAV mechanisms must be fully machine processable. HTML
+forms do not meet this definition. Still, simpler is better. We don't
+need to solve the world's problems, we just need to solve DAV's problems
+in such a way that others can come along later and build upon our work
+to solve the world's problems.
+Yaron
+Aren't there two issues here:
+a) The "initialization" set of issues: How do I setup the access
+control policy, how do I specify it, etc. (the I here could be an
+author or an information provider or whatever).
+b) The "steady-state" set of issues: What access control policies come
+into effect based on the "state" of the resource/document.
+From a protocol perspective, the second is as thorny issue to address
+as the first.
+Also, as I said in an earlier message, all this need to be partitioned
+off based on the type of user, type of task, and possibly others.
+It seems to me that what you're edging towards is an access control scheme
+with a set of roles (e.g. author, approver, publisher, etc.), with each
+role having separate access rights (e.g., an author may get/put, but not
+move/copy, while a publisher may move/copy but not put).
+While I have seen systems which use such an approach (e.g. Continuus/CM),
+there are some drawbacks. One difficulty is the definition of a canonical
+set of roles. In order to define a role, you have to define the process in
+which that role participates. In the post above, there is an assumption of
+a process in which the work of authors is approved by some other principal.
+However, while this is a common case, it is by no means pervasive. For
+example, I require no approval to publish my personal Web pages, while
+other sites require several approvals prior to publishing.
+I think it should be possible to support a role-based access control
+scheme, but I don't think the actual access control scheme should hardwire
+a set of roles, or a particular authoring process. It is far better to
+develop a set of primitives which can be used to implement a wide range of
+access control policies, and hence allow a workflow/process enactment
+system to be built using these primitives.
+- Jim
+I agree that our approach to access control should not imply a set of
+roles which are too specific to a particular application or document
+management strategy. Instead, I think we should adopt a general scheme
+such as UNIX-style groups, VMS style privileges and rights, or our system
+of keys. Any one of these schemes would suit our needs without locking us
+into a specific set of roles.
+Gregory Woodhouse
+gjw@wnetc.com / http://www.wnetc.com/home.html
+If you're going to reinvent the wheel, at least try to come
+up with a better one.
+H:Date: Mon, 19 May 1997 14:43:42 -0700 (PDT)
+H:From: "Gregory J. Woodhouse" gjw@wnetc.com
+H:cc: howard.s.modell@boeing.com, w3c-dist-auth@w3.org
+H:Subject: Re: Access Control Draft
+H:
+H:I agree that our approach to access control should not imply a set of
+H:roles which are too specific to a particular application or document
+H:management strategy. Instead, I think we should adopt a general scheme
+H:such as UNIX-style groups, VMS style privileges and rights, or our system
+H:of keys. Any one of these schemes would suit our needs without locking us
+H:into a specific set of roles.
+H:
+H:---
+H:Gregory Woodhouse
+H:gjw@wnetc.com / http://www.wnetc.com/home.html
+H:If you're going to reinvent the wheel, at least try to come
+H:up with a better one.
+H:
+a silly question perhaps (excuse me if this has been discussed previously):
+is there some reason why something vaguely like the "certificate"
+systems being used in electronic commerce couldn't work in this
+context? That is, the "document-set-owner" issues "tokens" to
+authors who need to be allowed to access/modify documents in the
+set. When one of those authors wants to "check in" a modified
+document or document-part, he or she must be able to accompany his
+work with the proper "token".
+Note: I'm not saying anything about the complexity of the token, nor the
+protocol for issuing or recognition nor any of the details.
+I'm just sketching a model.
+Howard S. Modell
+Adv.Computing Technologist/2 POBox 3707, m/s 4A-25, Boeing D&amp;SG
+howard.s.modell@boeing.com Seattle, WA 98124-2207
+Not that I can think of. In fact, one example that comes to mind is the
+standard file system for Amoeba (a distributed operating system). In many
+ways, it reminds me of HTTP (immutable files and such), and uses
+essentially this scheme for file access. Basically, the file server
+(called the "bullet server" in Amoeba) issues what it calls capabilities
+which are then required for file access. I quite like this idea.
+I understand. The basic architecture and the security model are more or
+less orthogonal.
+Gregory Woodhouse
+gjw@wnetc.com / http://www.wnetc.com/home.html
+If you're going to reinvent the wheel, at least try to come
+up with a better one.
+I think we're agreeing but I'm not sure. Policies are resources. One way
+of accessing a resource is through forms. It might be the only common
+mechanism of actually operating on the policy, but DAV itself doesn't
+need
+to operate on policy.
+A policy resource could export multiple interfaces, one that was generic
+and form-based, and another that was specialized and 'fully machine
+processable'. (I think that, beyond 'fully machine processable',
+'standardized and uniform' is also a requirement; if different systems
+have different 'machine processable' interfaces, it doesn't help
+interoperability.)
+I think the issues of separating policy discovery from policy
+manipulation
+are common between WEB DAV and other protocols. I was thinking about
+access control for Web Printing, where the policy of access control
+are varied and site dependent ("students account holders are not allowed
+to use the transparency tray except between 9 am and 5 pm"), yet
+a generic client (print driver) might need to interact with the service
+provider to discover policy options, and a system administrator might
+need to set policy options. I've been spending too much time thinking
+about IPP.
+Larry
+I really like the "policy" based approach. It could also provide
+a fairly transparent layer from which could interface with
+implementation specific access permissions.
+Here is an outline for some of what might be included in this
+type of design:
+1) A "security policy" resource, which is identified by a
+token string established by the Web server's administrator.
+This security policy resource is implementation-specific, and
+not defined by WEBDAV. The purpose of WEBDAV in this part
+is principally to define how you name and interact with
+these policy resources.
+2) A standardized protocol -- either an HTTP extension, a forms-based
+approach, an extension to the URL invocation convention, etc.,
+which is capable of a assigning a named security policy to a
+named object. (An object in this context means a particular
+thing you can access via the Web, for example, an HTML document,
+a JPEG image, a Java applet, etc.)
+3) In addition, we could also define "methods" which are associated
+with a given resource. For example, we could identify the
+"read" method for an object, and then assign a particular policy
+to this method for a particular object. "Modify" and "delete"
+might be other standard methods. Under this theory, we
+could also support the object model and inheritance by
+associating policies with classes of objects -- for example,
+all "HTML Objects" have such-and-such policy, all "HTML Objects
+in the Marketing Site" either inherit this policy or have their
+own definition. If any of these things are favored, we need
+to determine what we specify as standard or recommend insofar
+as (a) standard method naming conventions, (b) whether the
+object model is directly support in the protocol or whether this
+is implementation specific.
+The server implementation would be responsible for interpreting
+the policies, matching them up with resources, authenticating the
+user and matching up this information to associate it with
+local policy. Vendors can decide how they want to work with
+policy resources -- some might want this to be administered through
+forms, others through special client software, etc. I don't
+think this would be important to what we recommend.
+It seems that this approach provides a lot of growth potential.
+This also allows for development of standardized APIs outside of
+this particular specification. For example, after the initial
+protocols for this are determined someone could identify a
+CORBA encapsulationg mechanism for modifying security policy
+resources.
+Jon
+It should be possible (where supported) to obtain the old version of a document while the new version is being modified and edited.
+I'd like to throw out for discussion a "minimalist" view of access control.
+My hypothesis is the only access control necessary in the client-server
+WebDAV protocol is a method which temporarily changes the access rights of
+a resource such that only (write) lock holders may read the resource, and
+another message which reverts the access rights back to their original form
+once editing is complete (or perhaps this happens automatically once all
+locks are released). This limited access control provides document privacy
+during editing, so authors are assured that others will not be reading
+their preliminary work.
+Different editable resources might might have different policies
+associated with them, and the difference might not be 'server'
+based. Designs that go from 'attribute of server' to 'attribute
+of resources served by the server' aren't scalable.
+As for how to identify a resource, it's useful to use a uniform
+resource identifier, aka "URI", rather than "a token string
+established by the Web server's administrator", since of course
+the server itself might generate such a thing without the
+administrator's actions.
+WEBDAV need not be involved in the naming of policy resources, unless
+you mean the location of them, and might not need to specify
+the interaction with them, other than that they're network resources
+to be interacted with using the web.
+An individual policy ("students cannot check in changes to their
+grades but can check in changes to their home address") has a structure
+("class X of users can/cannot make change Y to part P of resource V").
+A policy structure might have a "name" before it is assigned to a
+resource, but in general, a particular instance, like any other kind
+of metadata, may not exist outside of the resource to which it applies.
+I think the standard way of associating access policies should be the
+same as the standard way of associating other kinds of metadata.
+In general, the structure of access policies are fine grained
+enough in some situations that they may not be determinable
+a priori While it's useful to have the precondition ("how would
+you react if I tried to change my grade?") or even the elimiation
+of all actions in a given class ("can user X change the metadata
+of resource V"), I don't think the protocol should require that
+the access policy fit the general case in order to have an efficient
+and simple implementation.
+Larry
+Some comments.
+It seems premature to be developing preliminary designs without having a
+clear statement of the requirements. While I realize it is helpful to have
+some kind of design framework in mind when developing requirements, and the
+requirements and design phases have a fuzzy boundary, the requirements
+still need to be specified first.
+For example, if the only requirement for interoperable access control is to
+provide privacy to a draft while an author is working on it, then this
+design is incredibly heavyweight. The only word processor, spreadsheet, or
+HTML authoring tool I know of which exposes access control capability in
+its user interface is FrameMaker, which allows a user to set Unix file
+permissions in its Save As... dialog box. It is not clear to me that this
+functionality is used very often.
+Some questions I'd like to see answered before more design work takes place are:
+Why do I need access control functionality in WebDAV at all?
+When would access control capability show up in the user interface?
+When would access control capability be used by an application to implement
+other features (during some behind-the-scenes processing)?
+This needs to be more precise. A forms-based approach would still use the
+HTTP protocol. I have no idea what the "URL invocation convention" is,
+since an http scheme URL is a location, and has no intrinsic executable
+state.
+The way our charter is written, access control work within WebDAV must
+limit itself to working within the HTTP framework.
+I'm not sure where this is headed. HTTP already defines standard methods
+which are associated with resources, "read" is known as "GET", "write" is
+known as "PUT", and "delete" is known as "DELETE." What is the benefit of
+giving these known, well-defined methods new names? Or are you suggesting
+something similar to the AOLserver model, where they sometimes create
+pseudo methods for assigning access control rights.
+Work on CORBA is outside the scope of activity of this working group, as
+specified in our charter. But, I agree with you, once an interface
+standard has been developed, its packaging in various other formats (CORBA,
+RPC, etc.) is much easier.
+- Jim
+I agree with all except I believe we should evaluate which authentication schemes we consider important and ensure that WebDAV can support them. I think X.500 with X.509 is a good candidate for evaluation. It is also my belief that we have an opportunity to specify HOW a web server interacts with a authentication server and should seize this opportunity now - it might never come our way again.
+Are there any representatives from the two large HTTP server providers (Microsoft or Netscape) participating on this listserver?
+Cheers
+Dylan
+From: Jon Radoff[SMTP:jradoff@novalink.com]
+Subject: Re: Access Control Draft
+I really like the "policy" based approach. It could also provide
+a fairly transparent layer from which could interface with
+implementation specific access permissions.
+Here is an outline for some of what might be included in this
+type of design:
+1) A "security policy" resource, which is identified by a
+token string established by the Web server's administrator.
+This security policy resource is implementation-specific, and
+not defined by WEBDAV. The purpose of WEBDAV in this part
+is principally to define how you name and interact with
+these policy resources.
+2) A standardized protocol -- either an HTTP extension, a forms-based
+approach, an extension to the URL invocation convention, etc.,
+which is capable of a assigning a named security policy to a
+named object. (An object in this context means a particular
+thing you can access via the Web, for example, an HTML document,
+a JPEG image, a Java applet, etc.)
+3) In addition, we could also define "methods" which are associated
+with a given resource. For example, we could identify the
+"read" method for an object, and then assign a particular policy
+to this method for a particular object. "Modify" and "delete"
+might be other standard methods. Under this theory, we
+could also support the object model and inheritance by
+associating policies with classes of objects -- for example,
+all "HTML Objects" have such-and-such policy, all "HTML Objects
+in the Marketing Site" either inherit this policy or have their
+own definition. If any of these things are favored, we need
+to determine what we specify as standard or recommend insofar
+as (a) standard method naming conventions, (b) whether the
+object model is directly support in the protocol or whether this
+is implementation specific.
+The server implementation would be responsible for interpreting
+the policies, matching them up with resources, authenticating the
+user and matching up this information to associate it with
+local policy. Vendors can decide how they want to work with
+policy resources -- some might want this to be administered through
+forms, others through special client software, etc. I don't
+think this would be important to what we recommend.
+It seems that this approach provides a lot of growth potential.
+This also allows for development of standardized APIs outside of
+this particular specification. For example, after the initial
+protocols for this are determined someone could identify a
+CORBA encapsulationg mechanism for modifying security policy
+resources.
+Jon
+%broken record on
+While I encourage you to develop a draft which outlines how an HTTP server
+might interact with an X.500/X.509 server (are these freely available
+specs?) I still feel that until we develop a set of requirements for access
+control for WebDAV, we have no way of knowing whether using an X.500/X.509
+solution meets our needs. Is it overkill? Is it insufficient? I don't
+know because we haven't yet determined our access control requirements.
+Until we do, this is just a solution looking for a problem.
+%broken record off
+One way to start eliciting requirements is to develop some usage scenarios
+for access control. Something along the lines of:
+"Mary and John are using their web distributed authoring spreadsheet,
+DistCalc, to collaborate on a departmental budget. Because the budget is
+sensitive information, after creating the budget spreadsheet resource, but
+before they enter any information, they change the access permissions on
+the resource so only they have read and write access to the resource. Once
+the budget is complete, they add their supervisor to the list of people who
+have read and write access.
+When changing access permissions, they use their Web browser, WebView, to
+pull up the access control page for the spreadsheet resource, which is an
+HTML form. They know where to find this resource, because they know that
+on their distributed authoring server, the entry point for access control
+information is located in /access/. Once on this page, they enter the name
+of the resource, press the "authenticate" button, exchange authentication
+information with the server, and are then shown the access permissions page
+for the resource. They modify the access control information, then press
+the "Modify" button, causing the form to be sent to the server (along with
+authentication information) and processed. When access permissions have
+been changed, they return to working in DistCalc."
+Yes. Apache, Jigsaw, NCSA, and probably others too.
+- Jim
+The "methods" I'm talking about here aren't HTTP methods. It
+is probably closer to the AOLserver model in that there are
+"security permission methods" such as read, mody, etc.
+I'm not proposing that we work on a CORBA spec; simply that an
+object-based approach with security methods would support this
+type of encapsulation model.
+I agree that we are probably drifing into too many areas of
+proposed design, but I think it may be helpful to expose weaknesses
+in going down particular paths with respect to the requirements.
+We don't want a requirements document which is unworkable either
+within our charter or from a techno-political standpoint.
+Jon
+Hi,
+Most of the issues here are related to the interface defination by WEBDAV. I
+am trying to understand if we ought to specify the interface definition (
+and may be some of the implementation specific semantics ). If that is the
+case then I am in complete agreement with the suggestions made out here.
+The issue of policy based approach is fine but I feel that will
+overload the generic approach of the specifications. However, I am of the
+agreement that some amount of help has to be provided to the tool developers
+in terms of building their tools and applications based on the
+specification. I would like to understand how we could provide a
+specification which is very generic and has no implementation bais within
+it, at the same time how to make the specification useful. Most of the time
+specs are either so generic that they are not useful or they are to specific
+for every individual implementation such that two different tool developers
+develop their application on the same specs but they are worlds apart in
+their approach.
+Larry Masinter masinter@parc.xerox.com 05/20/97 01:55PM
+Different editable resources might might have different policies
+associated with them, and the difference might not be 'server'
+based. Designs that go from 'attribute of server' to 'attribute
+of resources served by the server' aren't scalable.
+As for how to identify a resource, it's useful to use a uniform
+resource identifier, aka "URI", rather than "a token string
+established by the Web server's administrator", since of course
+the server itself might generate such a thing without the
+administrator's actions.
+WEBDAV need not be involved in the naming of policy resources, unless
+you mean the location of them, and might not need to specify
+the interaction with them, other than that they're network resources
+to be interacted with using the web.
+An individual policy ("students cannot check in changes to their
+grades but can check in changes to their home address") has a structure
+("class X of users can/cannot make change Y to part P of resource V").
+A policy structure might have a "name" before it is assigned to a
+resource, but in general, a particular instance, like any other kind
+of metadata, may not exist outside of the resource to which it applies.
+I think the standard way of associating access policies should be the
+same as the standard way of associating other kinds of metadata.
+In general, the structure of access policies are fine grained
+enough in some situations that they may not be determinable
+a priori While it's useful to have the precondition ("how would
+you react if I tried to change my grade?") or even the elimiation
+of all actions in a given class ("can user X change the metadata
+of resource V"), I don't think the protocol should require that
+the access policy fit the general case in order to have an efficient
+and simple implementation.
+Larry

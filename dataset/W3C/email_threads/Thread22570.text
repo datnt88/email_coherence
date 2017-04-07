@@ -1,0 +1,163 @@
+How can I put a DocumentFragment in a Document?
+I tried appendChild() but it doesn't work.
+thanks for help.
+A DocumentFragment can never be a child of any other node. If you try to
+append or insert it, its _children_ are appended/inserted instead.
+That convenience feature is the main reason DocumentFragment exists...
+(Anticipating the next likely question: Remember that nodes belong to
+specific Documents, and may only be appended to that Document. If the
+DocumentFragment was created as part of one Document, you can _not_
+directly append its contents to another Document; you need to use the
+importNode method or some equivalent.)
+Joe Kesselman / IBM Research
+Try looping through its children and appending them.
+This is a very unfortunate design constraint that makes caching document fragments in a templating environment fairly inefficient. It usually requires a lot of needless node cloning in most DOM implementations.
+I think this is just one of the many problems with the DOM that came from its browser/scripting heritage (such as Node.previous/nextSibling()) that warrants a better specification for efficient server-side use. The current spec also encourages bloated implementations (Xerces 1.2 is 1.5 megs!), which make them difficult to use in slim client apps or applets.
+I recall that there where a number of people on the early DOM 1.0 lists that where in favor of creating a parallel spec for server-side or thin-client applications. If anybody would like to participate please let me know and perhaps we could start an "Alternate DOM" working group. JDOM has been doing something similar, but it is Java-centric.
+Regards,
+Claude Zervas
+its browser/scripting heritage (such as Node.previous/nextSibling()) that
+warrants a better specification for efficient server-side use. The current
+spec also encourages bloated implementations (Xerces 1.2 is 1.5 megs!),
+which make them difficult to use in slim client apps or applets.
+that where in favor of creating a parallel spec for server-side or
+thin-client applications. If anybody would like to participate please let me
+know and perhaps we could start an "Alternate DOM" working group. JDOM has
+been doing something similar, but it is Java-centric.
+We've talked about defining a "Server DOM" or "Lite DOM" for a long time,
+but this has never been a high priority for the Working Group as a whole. I
+would hope that any Alternate DOM effort could stay on open and friendly
+terms with the W3C WG and IG, even if there's little likelihood that it
+would get actual W3C endorsement any time soon. In my very humble and
+personal opinion, the JDOM people would have made better progress had they
+operated more in the spirit of friendly collaboration with the DOM WG than
+by setting up the W3C DOM API as the thing they defined themselves in
+opposition to.
+As one possiblity, those in the W3C who *are* interested might submit an
+"alternate DOM" proposal that gets drafted by some outside group (with some
+collaboration by DOM WG members) in hopes of being published as a W3C Note.
+This would politely ask the W3C in its collective wisdom to ask the DOM
+working group to consider the proposal; it would not give it any blessing
+from the W3C, but would at least put the proposed subset of the spec in a
+place where people could find it.
+So, what advice might other WG members offer those interested in defining a
+"server DOM" subset? - Start a discussion on this mailing list?
+- Open a public sub-list on the W3C server to encourage discussion?
+- Go over to sml-dev@egroups.com and hang out with your soulmates?
+- Propose an OASIS activity?
+- Wait until your cellphone has a couple of MB of RAM, then use Xerces? :~)
+I personally would like to see some preliminary discussions on this list,
+and then if there is sufficient interest (and not too much outright
+opposition), to ask the W3C to open a public sub-list for the actual
+discussions. If a consensus emerges on a subset, I (at least) would be glad
+to try to get it through the Submissions process -
+Unfortunately, the fact that different (and incompatable) DOM
+implementations may be in use within a single application -- or
+incompatable subclasses of a single DOM implementation, for that matter --
+required that nodes not be guaranteed to be directly transferrable from
+Document to Document. That's one of the downsides of writing an Interface
+rather than a specific set of classes.
+DOM Level 3 is considering adding an "adoptNode" operation which will
+provide a partial escape from this limitation. adoptNode will move a node
+from one Document to another if the implementation judges that this can be
+done safely. It would _NOT_ be guaranteed to succeed in all cases -- or
+even to succeed in the same cases for one DOM that it does for another --
+and if it fails the user has the responsibility of deciding how to recover
+(via importNode or whatever else seems appropriate). But it would partly
+address this efficiency concern without excessively constraining DOM
+implementations.
+There's also some work starting on "embedded DOMs", which hopes to address
+the question of how one can intermix trees from different implementations.
+My own guess is that full DOM behavior can _not_ be maintained across those
+transition points, and that programmers will have to be aware of the
+relationship between the main document and the "alien" subtrees... but
+we'll see what happens as the design progresses.
+Meanwhile, the easiest way to avoid "needless cloning" is to avoid creating
+more Documents than are required. For example, when merging XML files what
+I've sometimes done is parse the additional files as SAX streams, then use
+that to drive a DOM tree builder that creates nodes within the context of
+my main document rather than a completely new one. The resulting tree can
+then be merged with the host document with no special effort.
+Uhm... There's a lot more to Xerces than the DOM, remember.
+And there's a tradeoff between codesize and model size. The XML4J 2.x DOM
+took only about 30K of codespace (10K zipped), since it was originally
+designed for use in applets and the like... but the current Xerces DOM,
+while taking more code (even ignoring the new features), takes less memory
+for the actual document model.
+Also, remember that different DOMs are optimized for different things. I've
+written a DOM subset (the Xalan DTM model) which takes only sixteen bytes
+per node. Admittedly, DTM isn't mutable, and doesn't implement Level 2 --
+but those could be solved, with some work. The downside is that DTM is
+heavily deoptimized for performance of operations which weren't needed for
+my application.
+The DOM is just an API. Pick the implementation that suits your
+application.
+Nobody was ever able to define what operations should or shouldn't be kept
+in a server-side DOM; our conclusion was that there seemed to be several
+_different_ subsets that people wanted. The general question of a reduced
+DOM is still on our open issues list, and will be reconsidered if/when we
+can assemble a set of usecases that define a clearly useful design point.
+For example: One possibility we've considered recently is a better
+definition of a "read-only" DOM subset... either a true subset (which could
+not throw exceptions when written to since that would change the method
+signatures) or subclasses (which could enforce immutability, but would
+require implementation of methods that do nothing _except_ throw
+exceptions). It isn't a top priority right now, but it's still simmering on
+the back burner.
+The DOM is still evolving. If you have specific requirements/requests --
+and even better, if you have practical usecases illustrating what problem
+you're trying to solve, so we can consider alternatives -- please let us
+know!
+(That's too wordy to be a FAQ entry, isn't it.)
+I absolutely concur, and if such an effort gets under way it would make sense to leverage off of much of the hard work that the W3C WG has already performed.
+- Claude
+This is so, and I've done the same thing. I was mainly commenting on the importNode method, but it sounds like this will be solved to some degree by adoptNode.
+What I don't understand is why the concept of "owning document" in the first place, if the WG meant "owning implementation" why not say so? It would have been much more straightforward to eliminate the owning-document constraint and instead just state that nodes must be from the same _implementation_ and hoist the node factory methods out of Document and put them in DOMImplementation. WRONG_DOCUMENT_ERROR would be WRONG_IMPLEMENTATION_ERROR instead, or just simply let the progammer be responsible for maintaining integrity.
+Yes, I was being facetious. I apologize, especially since I use Xerces quite a bit! But it is way too big for smaller client-side applications.
+This is basically translates to: "build your own". There are no published performance specs, and the API vendors don't even mention anything about what their particular implementation may be especially good at. If you mean that we should use non-standard implementations to get the kind of behaviour we need then what is the use of a standardized API ?
+This is good, but given the time constraints and current workload of the WG I think this is probably not going to happen any time soon. I think a parrallel discussion by non-WG DOM users would be useful and once a set of somewhat coherent usecases gets developed maybe a heads up with the WG would be in order at that point.
+For one, I would really like to see iterators for node traversal. I was sad to see them argued out of the level one spec and could never figure out why they didn't come back in L2.
+Also, an event/listener API for document/node modification notification. This is useful in MVC patterns, even on a server app. As one example, say you have a distributed cache of serialized documents (or fragments) and some controller servlets that modify some authoritative document model, any listener caches would receive notifications of the changes and refresh accordingly.
+Thanks,
+- Claude
+You're missing the fact that one implementation may support more than
+one type of document and use different classes of objects depending on
+the type of document being used. This is actually true with Xerces,
+where the XML DOM, HTML DOM, and WML DOM all use different classes of
+objects, even though there is a single implementation.
+The error has been to put everything into the same jar. With Xerces2
+we'd like to have a set of smaller jars, and the design of the parser
+will allow more flexibility within the parser itself. The validator
+could be left out completely for instance.
+I don't understand. Both of these are addressed in DOM Level 2, as part
+of Traversal, and Mutation Events.
+Arnaud Le Hors - IBM Cupertino, XML Technology Group
+first  place,
+Because a single Implementation (as viewed from outside) may want to
+implement different Documents using different, and not-fully-compatable,
+classes. For example, an DOMImplementation may recognize when you're
+creating an SVG document and return DOM nodes that have additional SVG
+interfaces... and some of those added behaviors may not work if the nodes
+are arbitrarily mixed with base DOM nodes, or with nodes that have been
+specialized for other document types.
+The DOM didn't want to forbid this, and thus had to use owning document
+rather than owning implementation.
+Questions about Xerces size belong on the Xerces mailing lists. I'll just
+point out again that there's always the question of what features and
+performance you give up as you trim away code. The nice thing about
+standard APIs like the DOM is that if one product doesn't hit the specific
+trade-off point you need, you can try plugging in another. No one DOM
+implementation is perfect for all applications or (I think) every will be;
+the same is undoubtedly true of parsers.
+Actually, some folks have been publishing performance numbers for XML
+parsers; I don't have a URL handy but I've seen several websites. The
+question is whether those testcases bear any practical resemblence to your
+application. There isn't much the DOM WG can do to help you there; it's a
+Quality Of Implementation issue, and since implementations may be optimized
+for wildly different purposes there is no abstract definition of "quality"
+-- it has to be how well that DOM performs for your use cases.
+How do these requests differ from DOM Level 2's Traversal and Event
+modules, specifically NodeIterator and Mutation Events?
+Joe Kesselman / IBM Research
+re: events &amp; iterators
+Mea culpa, quel idiot! You are right of course. I was hoping, though, that they would be made part of the core spec and that NodeList would go away.

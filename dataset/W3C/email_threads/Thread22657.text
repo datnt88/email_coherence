@@ -1,0 +1,40 @@
+why the DOM version 1 didn't specify a means of getting the actual XML out
+of the DOM document. I'm not really talking about loading and saving
+files, but rather just getting the contents of the DOM doc as a big string
+at least.
+Does someone have a historical perspective on this? I'm trying to
+implement some XML functionality with Xerces and I'm frustrated with the
+hassle of writing reams of code just to get the DOM into usable XML.
+How were people supposed to use the DOM without this basic feature?
+Perhaps hearing a good rationale will make this onerous task less annoying.
+Regards,
+Gavin Stokes
+I can't provide you with any history. However, if you can save to a file,
+you can also save to a String? You didn't mention whether you use Xerces-C
+or Xerces-J? With Xerces-J it is possible to do this without reams of code:
+import org.apache.xml.serialize.XMLSerializer;
+import java.io.StringWriter;
+Document document = ...;
+StringWriter writer = new StringWriter();
+XMLSerializer serializer = new XMLSerializer();
+serializer.setOutputCharStream(writer);
+serializer.serialize(document);
+String serializedXML = writer.toString();
+System.out.println(serializedXML);
+With future Load/Save implementations, you could of course create a similar
+construction.
+Hope this helps,
+--Sander.
+Hi,
+DOM hasn't the opposite method ( XML(String) -- DOM or XML(File) -- DOM)
+like to do this you need a parser (and it isn't into the DOM specification)
+to "serialize" a DOM tree you need a DOM Serializer
+Usually parsers have both of this features (XercesJ...for instance).
+Another important think is that DOM serialization is implementation
+independent - Xerces serialization use the tree at Document-Element level.
+btw, serialization is easy to do.
+bye
+Fabio Gurgone
+For the archive, we are currently looking in adding a DOMString in the
+DOMInputSource and an appropriate method in the DOMWriter.
+Philippe

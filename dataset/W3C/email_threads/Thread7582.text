@@ -1,0 +1,76 @@
+A recent proposal is to leave the DELETE method applied to advanced
+collection members to be as vaguely specified as it currently is in
+the HTTP-1.1 and WebDAV specs, and to define an UNBIND method for
+advanced collections with the proposed advanced collection "delete"
+semantics. In last weeks conference call, I agreed to that proposal,
+but reserved the option to object to it, if I could think of why it
+made me uncomfortable. Well, I'll now exercise that option (:-).
+This proposal has the downside that instead of just issuing a DELETE
+request, an advanced-collection aware client must first issue an UNBIND
+request, and if that fails because the resource is not a member of an
+advanced collection, it then issues a DELETE request.
+But I don't see any upside ... a server that supports advanced collections
+must support UNBIND semantics, so how does it provide any benefit to
+say that an UNBIND request MUST have unbind semantics, while a DELETE
+request MAY have unbind semantics? Perhaps I'm just missing what the
+upside is?
+Cheers,
+Geoff
+As discussed in the teleconference, the proposal was:
+UNBIND: MUST remove binding, MUST NOT destroy any state on the server
+DELETE: MUST remove binding, MAY destroy state on the server
+DESTROY: MUST remove binding, MUST destroy state
+So, the upside was that DELETE would "do the right thing" for downlevel HTTP
+and DAV clients (like Office 2000), but that clients which understand the
+advanced collections specification could do more precise operations by
+selecting either UNBIND or DESTROY, where they'll know exactly what the
+server will do.
+- Jim
+Mmm, even with DESTROY, the client can't really be certain what's going to
+happen in the long term. Suppose the server crashes hard and gets restored
+from last night's backups? (OK, so that's an extreme case, but still.) And, as
+I said before, what if you have interrelated resources, and the only way to
+DESTROY one is to DESTROY them all? The client needs a way to know. (One
+option: DESTROY requires a Targets: header, or perhaps a body, which contains a
+list of URIs; this list of URIs must be exactly the same set as the URIs
+which will be DESTROYed; if not, DESTROY will fail and report the correct
+list. Then the client has the chance to check to make sure that the user
+really does want to DESTROY all of them before resubmitting the request. Of
+course, if the list changes quickly, this will get annoying; but it's safe,
+anyway.)
+I suspect that we're covering the same ground that HTTP/1.1 did when they
+not-quite-defined DELETE. Larry, are you listening to this thread? Can you
+summarize why HTTP/1.1 declined to nail down DELETE too firmly?
+|John Stracke | My opinions are my own | S/MIME &amp; HTML OK |
+|francis@ecal.com|============================================|
+|Chief Scientist | NT's lack of reliability is only surpassed |
+|eCal Corp. | by its lack of scalability. -- John Kirch |
+From: Jim Whitehead ejw@ics.uci.edu
+As discussed in the teleconference, the proposal was:
+UNBIND: MUST remove binding, MUST NOT destroy any state on the server
+DELETE: MUST remove binding, MAY destroy state on the server
+DESTROY: MUST remove binding, MUST destroy state
+Yes, I remember the proposal. It was the updside that I couldn't reconstruct.
+So, the upside was that DELETE would "do the right thing" for downlevel HTTP
+and DAV clients (like Office 2000),
+That's what I don't get. How can "MAY destroy state" be any more desireable
+for a client (or serve to increase interoperability) than "MUST NOT destroy
+state". Requiring that DELETE on an advanced collection member be UNBIND
+still gives downlevel HTTP and DAV clients no more or less than they could
+expect from a conforming server.
+but that clients which understand the
+advanced collections specification could do more precise operations by
+selecting either UNBIND or DESTROY, where they'll know exactly what the
+server will do.
+They can get the same precision with less effort if we define DELETE to
+be UNBIND. I still don't see any benefit to either an up or down level
+client or server that results from introducing a separate UNBIND operation.
+Cheers,
+Geoff
+Perhaps, although looking through the HTTP-WG mailing list archives, I
+couldn't find much in the way of discussion on DELETE. There was one
+discussion on whether it should be in or out of the protocol, but no real
+discussion on its semantics. I'm getting the sense that the semantics of
+DELETE were never discussed in depth on the HTTP-WG list (which doesn't mean
+they weren't discussed off-list).
+- Jim

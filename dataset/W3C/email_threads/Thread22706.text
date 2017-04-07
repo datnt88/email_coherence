@@ -1,0 +1,58 @@
+Perhaps a static_cast (or dynamic_cast) is necessary for converting a DOM_Node to a DOM_Attr.
+DOM_Attr a_node = static_cast DOM_Attr attributeMap.getNamedItem(DOMString(name));
+Eric Lawson
+Isogen International
+Hello,
+I am relatively new to the DOM/XML programming area. This is my first
+problem, by wich I will ask here.
+At first I put here a sample of the code for my problem (C++):
+DOM_NamedNodeMap attributeMap = node.getAttributes();
+char name[100] = "myattr";
+if (attributeMap == NULL) {
+CL_LOG("Error: This node is not of type ELEMENT");
+return ERR_UNSPECIFIED;
+* The next line results in an error of the MSC 6.0 compiler like
+* this:
+Q:\DEVELOP\PROJECTS\CPP\BaseDevelopment\lbXMLConfig\lbDOMConfig\lbDOMC onfig.cpp(872) : error C2440: 'type cast' : cannot convert from 'class DOM_Node' to 'class DOM_Attr' No constructor could take the source type, or constructor overload resolution was ambiguous
+DOM_Attr a_node = (DOM_Attr) attributeMap.getNamedItem(DOMString(name));
+if (a_node == NULL) {
+CL_LOG("Error: Attribute not found");
+return ERR_UNSPECIFIED;
+How must I understand the attributes from the function
+getNamedItem(...) ?
+Is my found node really not of type DOM_Attr ?
+Why is there an interface for DOM_Attr but an expected result
+of this type could not be type cast to it ?
+What am I doing wrong ?
+Thanks
+Lothar
+-------------------------------------------------------- Lothar Behrens | Company: LotharB@powwowwater.de Borsteler Bogen 4 | C++ is the future, LINUX too :-) 22453 Hamburg | have a look at www.wxWindows.org
+The fact that there isn't a standardized DOM binding for C++ makes this
+difficult to answer without knowing exactly which DOM implementation you're
+using. Conceptually, you're doing the right sort of thing -- retrieving a
+Node from the map of attributes and casting it to an Attr. But the details
+of typecasting depend on the details of the binding, so you may get more
+and better answers if you ask in a mailing list which is specific to your
+tools.
+One suggestion: Try rewriting this as:
+DOM_Attr a_node = node.getAttribute(DOMString(name));
+That will avoid having to typecast in your own code.
+Joe Kesselman / IBM Research
+I assume you are using the xerces dom C++ implementation. Try this:
+DOM_Attr a_node = (DOM_Attr&amp;) attributeMap.getNamedItem(DOMString(name));
+For more information look at http://xml.apache.org/xerces-c/index.html
+There is a developer's mailling list and lots of great sample programs
+with their distributions.
+Blaine
+I use the DOM with ASP and JavaScript but i supose
+that it work the same way. The way i get an attribute
+is with node.attributes.getNamedItem(attrName)
+function.
+() Chain Sword VROOOOMMMMM
+___||_______________________ VROOOMMMM
+(0___ |______________________/ VROOOOMMMM
+() "Don?t imitate
+Inovate" www.geocities.com/Area51/6986
+Do You Yahoo!?
+Get personalized email addresses from Yahoo! Mail - only $35
+a year! http://personal.mail.yahoo.com/

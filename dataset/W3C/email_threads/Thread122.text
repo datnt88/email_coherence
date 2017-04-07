@@ -1,0 +1,131 @@
+Hi Dave,
+first I have to tell that I really appreciate using TIDY. It is a
+wonderful tool.
+So I hope you don't mind when I report a problem to you that I got:
+I have to convert some Word 97 files to HTML and I use TIDY to clean
+them(means: I let TIDY create styles). That really works fine if there
+is no list included.
+If there is one TIDY does not convert the font attributes. I tried to
+set the options "--enclose-text true --enclose-block-text true" and
+hoped to get p class="xxx" ... p before the li tag but nothing like
+this happened.
+Do I have to set another option?
+I attach an example code (just if you want to try):
+TIDY's output:
+p
+class="c2" Experimente: /p
+li Autoabgase bilden mit Wasser
+S&amp;auml;uren /li
+li Schadstoffmessungen mit
+Nitritst&amp;auml;bchen /li
+li Bildung von Stickoxiden bei der
+Verbrennung von Benzin /li
+li Messungen mit der
+Gassp&amp;uuml;rpumpe /li
+li Quantitative Bestimmung von bodennahem
+Ozon in der Luft /li
+li Absorption von W&amp;auml;rmestrahlung
+durch Kohlenstoffdioxid /li
+li W&amp;auml;rmeabsorption von
+Kohlenstoffdioxid in Abh&amp;auml;ngigkeit von
+seiner Konzentration /li
+li Modellversuch zum
+"Treibhauseffekt" /li
+li Weitere Experimente befinden sich in
+den angegebenen Artikeln /li
+Input:
+LI W&amp;auml;rmeabsorption von Kohlenstoffdioxid in Abh&amp;auml;ngigkeit von
+seiner Konzentration /LI
+LI Weitere Experimente befinden sich in den angegebenen
+Artikeln /LI /OL
+(The text is wirtten in German, I didn't translate it, because I thought
+it is not important )
+I hope that there exists an easy solution for this problem :-)
+Thanks for your attention, so far.
+Bodo
+Hi Bodo,
+your problem is not the style behaviour of tidy but the HTML syntax
+checker. Font containing list may give the desired effect on most
+browsers but is illegal HTML. You should fix the HTML first (use div
+with style options rather than font is probably easiest).
+What tidy does is the following: First it sees font ol . This is
+illegal. It thinks you forgot /font . So it changes it to
+font /font ol . It sees the empty font tags and deletes it. So
+your opening font is gone. After passing through the list it sees
+/font . Well no font is open any more so /font is also deleted. Now
+all font stuff is gone. Only finally tidy changes font stuff to
+style. But now no font stuff remained, so you cannot get the desired
+effect.
+For you tidy's behaviour might seem undesirable, but it is
+intended. Tidy is a very complex tool performing many tasks:
+* Pretty printing code
+* HTML markup corretions
+* HTML - CSS conversion
+Since there does not exist a flag for only HTML - CSS conversion, you
+always get the HTML markup corretions - whether you want them or
+not. Perhaps you might ask Dave for a flag that tidy performs only one
+of its various tasks (or all but one).
+To give you another example: The pretty printing of tidy introduces
+linebreaks which according to HTML should not matter - but which have
+effects for some browsers. Somoe users therefore might want a flag to
+use all of tidy's features but pretty printing...
+Cheers alex Alexander Biron
+work:http://www.ifh.de/~biron/private:
+Tel (+49)33762-77-233 Tel(+49)30-4948857
+FONT FACE="Arial" SIZE=2 LI Luftschadstoffe im Autoabgas /LI
+LI Autoabgase bilden mit Wasser S&amp;auml;uren /LI
+LI Schadstoffmessungen mit Nitritst&amp;auml;bchen /LI
+I can't really help you your Tidy problem, but I have a comment about your
+FONT tag. Firstly, I get the feeling that the FONT tag is generally
+frowned-upon by many in the "strict HTML compliance" community. I get the
+impression that using CSS instead is more desirable. Nevertheless, I still
+use FONT myself (my reasons for that are at the end of this email).
+Anyhow, I notice that you specify the "Arial" font. However, though I
+haven't been able to verify this personally, apparently the "Arial"
+rendering on Macs is pretty nasty. And, as such, it's recommended that you
+list other font alternatives in your FONT tag. For instance: FONT
+FACE="Geneva, Arial, Helvetica" ... More about this is font problem
+summarized here:
+So, that's my comment about your HTML code ;). But, I'd also like to briefly
+talk about the FONT tag in general, and why I use it. I would really like to
+use CSS in my pages, but it seems that Netscape and IE render font sizes
+differently (arghh!). Is there some solution around this, so that the fonts
+appear the same size on both Netscape and IE, while still using style
+sheets?
+Alex Bischoff 3812078 on ICQ
+export-a-crypto-system-sig RSA-2-lines-PERL
+print pack"C*",split/\D+/,`echo "16iII*o\U@{$/=$z;[(pop,pop,unpack"H*",
+)]}\EsMsKsN0[lN*1lK[d2%Sa2/d0 X+d*lMLa^*lN%0]dsXx++lMlN/dsM0 J]dsJxp"|dc`
+Run a Free Program and You Could Win $1000 -- http://www.distributed.net/
+From: "Bischoff, Alex" Alex.Bischoff@xpedior.com
+For that matter, my X window system comes with neither Geneva or Arial.
+There is, however, Helvetica.
+Never apply a Star Trek solution to a Babylon 5 problem.
+Larry W. Virden mailto:lvirden@cas.org URL: http://www.purl.org/NET/lvirden/
+Unless explicitly stated to the contrary, nothing in this posting should
+be construed as representing my employer's opinions.
+- -
+Bodo uchc01@pop.uni-dortmund.de reported a problem with TIdy
+"losing" font information.
+Alexander Biron biron@ifh.de explained why that happens.
+But I wonder. Putting font ... /font around block-level stuff
+is an *extremely* common mistake. I very frequently see it wrapped
+around table , p , center , and other block level tags.
+Perhaps it would be possible to make a special case of
+font... Block-Level-Tag... ... /font and automatically
+convert it to div ... Block-Level-Tag... ... /div instead?
+No, I haven't a clue how to do that.
+[Valuable advice snipped.[
+So, that's my comment about your HTML code ;). But, I'd also like to briefly
+talk about the FONT tag in general, and why I use it. I would really like to
+use CSS in my pages, but it seems that Netscape and IE render font sizes
+differently (arghh!). Is there some solution around this, so that the fonts
+appear the same size on both Netscape and IE, while still using style
+sheets?
+There certainly isn't any solution using font .
+The people over in our IT Services unit don't understand why I complain
+about their use of absolute font size=N . *They* can read the result.
+But on my screen, it's microscopic. CSS was supposed to fix this by
+giving better, more portable, ways to specify font sizes.
+Don't forget the people using Opera, ICab, and Amaya (which seems to
+agree with Netscape most of the time on my SPARC/Solaris box).

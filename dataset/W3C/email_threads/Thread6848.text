@@ -1,0 +1,112 @@
+Hello,
+as I mentioned earlier (sept) on this list, I'm working with the German
+W3C office to translate all W3C RECs into the German language. Meanwhile
+we have many translators and I started to change the spec-DTD to fit our
+needs.
+My goal is to change as little as possible. The reason why I'm changing
+the DTD at all is, that we want to include non-normative annotations.
+Some of you (Eve and Jose) gave me two advices:
+1) Separate annotations from specs and use XLink to link both together
+2) Use the 'note' element with an 'role' attribute value of (for
+example) 'translators-note'
+My own preference would be choice (1); I would really like to do this.
+Currently I think we can't do this because:
+a) we want to get results as soon as possible
+b) we need good tool support for this; there are good DTD-aware editors
+(unfortunately, although I'd liked it, this is not a research or
+development project)
+c) we want to import the result in a DTD programm (probably FrameMaker),
+that only knows about DTDs
+Of course I could write an application, which merges the spec and the
+annotation together and writes a single XML instance for import in FM.
+But I don't have the time now; maybe in the future.
+I hope that I can later split the specs and annotations that will be
+written, in order to make a XLink application out of what we're
+producing now.
+Ok, choice number (2) looks very good to me. The first little problem
+is, that authors would have to write the correct attribute value in the
+role attribute. But I guess, that shouldn't be a serious problem.
+For a while I thought about not changing the DTD, but there's one point
+that still is a problem: I need a second header element for metadata
+about a translation. In the current version of spec-DTD there's no
+element to place this kind of information in.
+I decided to change the DTD and to include an element called
+transheader. Since I already changed the DTD I added a second new
+element called transnote, to get around the minor problem mentioned
+before. Of course I don't need all child elements of 'header' in the new
+'transheader'.
+I append my very first version of the trans-spec-DTD below. Any answer,
+comment or improvement is appreciated!
+At the moment I don't like that neither an instance of spec-DTD is an
+instance of trans-spec nor vice versa. I'd like to reach compatibility
+of some kind.
+The next step will be to change the XSLT-Stylesheet. Some of the string
+constants, such as 'Table of Contents', have to be changed. Is there a
+place in spec-DTD where to note the language in which the text is
+written? I don't think that 'langusage' is the right place, is it? What
+about an attribute to the spec-Element called 'xml:lang'. Of course I
+could add such an element to 'transheader'. But in my opinion,
+transheader xml:lang="de" would mean that the contents of the
+transheader element is written in German. There's nothing said about the
+contents of the spec element.
+Ok, that are my thoughts for now. Thanks in advance for any help!
+Bye,
+Stefan.
+Mintert Consulting - Building Future Directions
+Following my DTD; it'a almost copy and paste. I removed comments about
+origin and copyright...
+!ENTITY % spec.mdl
+"header, transheader, front?, body, back?"
+!ENTITY % orig-xml-spec-dtd
+PUBLIC "-//W3C//DTD Specification V2.1//EN"
+"xmlspec-v21.dtd"
+%orig-xml-spec-dtd;
+!ENTITY % transheader.mdl
+"version?, pubdate, notice*, publoc, ((prevlocs, latestloc?) |
+(latestloc, prevlocs?))?, authlist, copyright,
+pubstmt?, sourcedesc?, revisiondesc"
+sorry, this should read 'DTP programm'...
+Kind Regards,
+Stefan.
+Mintert Consulting - Building Future Directions
+Hello Stefan,
+For future reference, note that support is being built into Amaya that
+allows for the creation of third-party annotations using RDF and
+XPointer. The only catch is that you don't have a choice of browsers when
+creating or viewing the annotations!
+Your customization layer looks fine. Compatibility will be a problem until
+translation markup facilities can be added to XMLspec, of course. I'm
+collecting enhancement requests for V3.0, so your new elements may get added.
+Actually, the language element inside langusage is indeed meant to
+indicate the language in which the document is written. I think this came
+originally from the TEI DTD. These elements have been in the DTD longer
+than the xml:lang attribute has existed!
+What do people think -- should I add xml:lang to the common attributes, or
+just to the top-level element, or what? Note that the scrap element has
+a lang attribute that references the ID on a language element from the
+header. (Hmm... While xml:lang is supposed to be able to identify "any
+natural or formal language", its values are constrained to come from RFC
+1766, which is meant for natural languages only.) Should I keep this
+setup, or dump it? If I dump it, what should I do on scrap ?
+My preferences: If I'm going for maximum cleanliness, I would want to
+remove the langusage structure entirely, put xml:lang in the common
+attributes, interpret xml:lang at the top level as the language for the
+entire document unless overridden lower down, and keep scrap lang= but
+turn it into a CDATA attribute that just contains a formal language
+name. This is backwards incompatible, but could probably be handled in an
+XSLT conversion script in a reasonable manner. (I doubt a lot of people
+even use langusage or scrap lang= today.)
+Eve
+Eve Maler +1 781 442 3190
+Sun Microsystems XML Technology Center eve.maler @ east.sun.com
+I hope/expect we can address that presently... the
+communication between Amaya and the annotation DB is
+just HTTP, and any browser could support it.
+In particular, I hope we can hook into the "what's related"
+feature of Netscape (and the analog in IE) to at
+least list/find annotations, and probably to add them too.
+See also: http://crit.org/ for a "live within the constraints
+of current browsers" approach. I hope/expect we can
+share annotation databases between the Amaya-based client
+and a crit.org-like client.
+Dan Connolly, W3C http://www.w3.org/People/Connolly/

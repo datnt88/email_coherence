@@ -1,0 +1,63 @@
+One thing that's hard is the rules about how REs adjacent to PIs are
+handled.
+David Durand and I independently came up with a good way of dealing
+with such things
+I've heard about this but never seen it. Could you or David or
+someone please post it to the group? In our informal discussions
+before the advent of the WG, figuring out what to do about RS/RE, without
+busting our 8879 compliance, was one of the most worrying things.
+My "MGML" parsing system does the following:
+At any point in the document, the parser knows from the content model
+whether data can appear. If so, all bytes that are not markup are data.
+If not, all white space is ignored, and non-whitespace non-markup is an
+error.
+This sacrifices some flexibility, but has the immense advantage that you
+can explain it completely in 40 words to both users and programmers. Which
+is not the case for the SGML rules. Unfortunately, I don't think this can
+ever be made 8879-compliant.
+Our goal for XML is something that is crisp and clear as the above, but is also
+8879-legal. If someone on the group could give us a flash of creativity on
+this, that would be wonderful.
+Cheers, Tim Bray
+tbray@textuality.com http://www.textuality.com/ +1-604-488-1167
+David Durand and I independently came up with a good way of dealing
+with such things
+Well, from my reading of the SGML Handbook, it seems that RE and RS
+are not *required* at all. If they occur, they are put there by the
+entity manager. In fact, RE and RS are not really even characters per
+se, they are kind of psuedo-characters (they have a code, and a name,
+but they aren't real characters).
+Anyway, if we assigned some character codes to them that are
+guaranteed to never occur in input, then the parser will never even
+see them (another syntax trick). This will, of course, mean that \n
+and \r will be seen in content, but they could be mapped such that
+they get converted to a space on input.
+I don't claim to be intimately familiar with all the effects that this
+will have in terms of markup regognition etc. but it seems to me that
+this would simplify parsers a great deal, and also get around problems
+with MIME text type requirements (canonical form) etc.
+Right. For example, consider a file from VM (IBM mainframe OS): VM does not
+represent record boundaries by characters: instead, it either makes all
+lines the same length (RECFM F to us ancients), or puts a length prefix in
+front of each record (RECFM V). So RS and RE clearly cannot be characters in
+the source document; if they show up at all, it is because the entity
+manager inserted them. Same is true on other systems, even though RS looks a
+lot like linefeed, and RS looks a lot like carriage return, they're not the
+same thing.
+So all you need do is tell your entity manager that all your files are
+recordless, and that CR and LF are merely whitespace characters (spacechar)
+on par with TAB. To avoid numeric conflict, you'd want to move either them
+or RS and RE somewhere else.
+Having done this, you're safe. It would be most helpful for the SGML
+revision to add the ability to turn OFF any delimiter of function character
+(presumably by setting it to #OFF, or the null string, or some such). Then
+we wouldn't have to go find two unoccupied character codes to assign RS and
+RE to.
+Such a change would also have the benefit that any other delimiters XML
+doesn't use (DSO? PIO? whatever) could be turned off. Why is that important?
+Let's say we ended up not having PIs (just an example!!!): Then our grammar
+would have no mention of the string " ?", so I suppose it would be treated
+as literal data if it showed up in an XML file. Oooooooops, so much for SGML
+being able to parse XML data. But if we could turn off the PIO delimiter,
+we'd be home free. Same argument for various other delimiters we might moot.
+Steve

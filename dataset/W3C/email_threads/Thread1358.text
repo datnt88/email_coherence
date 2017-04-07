@@ -1,0 +1,123 @@
+Attending: Peter(Merant), Boris(IBM), Geoff(Rational)
+Agenda:
+Discuss the changes proposed at the Minneapolis IETF
+- split Variant into separate spec (no objections so far)
+No objections in con-call.
+- merge Fork-Control into Checkout (no objections so far)
+No objections in con-call.
+- define four "feature-sets" or "option-sets" (defined in earlier
+message)
+Ok with con-call participants.
+- defer label header, but keep LABEL method
+Example of reason why you don't want human meaningful strings in a
+header: The Label value needs to be matched against values stored
+on the server. For some languages, the encoding is not enough to
+decide whether or not there is a match ... you need something like
+a language attribute. With labels in XML, that's no problem ... you
+add the language information as an optional element or attribute.
+With a header, there is no good way to provide this info.
+Consensus of con-call: Label header can be removed.
+- defer UPDATE method
+We spent some time discussing the motivation for this. The consensus
+of the con-call was that there was sufficient support for it in the
+working group to keep it in the protocol.
+- should version-controlled configurations always be in the
+checked-out state?
+One more topic was raised, which was a proposal that a
+version-controlled configuration should always be in the checked-out
+state. In particular, it would be initialized to be in the
+checked-out state, and that DAV:keep-checked-out is implicitly
+applied whenever it is checked in.
+The motivation for this proposal is that being "checked in" means
+that the state of the resource should be the same as that of the
+DAV:checked-in version of the resource, and that it must first be
+checked out before this state can be changed. But it is always
+possible to change the state of a version-controlled configuration,
+therefore it is inconsistent to ever have a version-controlled
+configuration in the DAV:checked-in state.
+The consensus of the con-call was that this change should be made.
+Does anyone object?
+Cheers,
+Geoff
+"always possible" ?? How is that? This proposal seems predicated on a VCC
+being mutable, but I don't understand why that would be so. I seem them as
+quite immutable.
+Cheers,
+-g
+Greg Stein, http://www.lyra.org/
+A version-controlled configuration is always associated with a
+baseline-controlled collection (and is used to capture the state
+of the configuration rooted at that baseline-controlled collection).
+Since you can always check-out/modify/check-in the members of the
+baseline-controlled collection, this effectively lets you modify
+that membership of that baseline-controlled collection, unconstrained
+by the current state of the associated version-controlled configuration.
+In contrast a "baseline", like any other version, is always immutable.
+Cheers,
+Geoff
+"always possible" ?? How is that? This proposal seems predicated on a VCC
+being mutable, but I don't understand why that would be so. I seem them as
+quite immutable.
+Cheers,
+-g
+Greg Stein, http://www.lyra.org/
+In the above description, you're modifying the baseline-controlled
+collection (BCC). You aren't modifying the VCC.
+I still see no point in putting the VCC in a permanently-checked-out state.
+If you're concerned about consistency between the BCC and the baseline
+referred to by the checked-in VCC, then the answer is to make the BCC
+readonly. Not to say the VCC is always checked out.
+Checking out the VCC would then allow the BCC to be modified. I have no
+opinion on whether a server can always (force) a VCC to remain checked out.
+But the spec should not mandate that situation.
+[ in Subversion, the VCC cannot be checked out and the BCC is readonly; you
+must use working resources to create a new baseline, all of which is then
+merged into the BCC and VCC ]
+Cheers,
+-g
+Greg Stein, http://www.lyra.org/
+I was talking about this with somebody yesterday. I don't see the argument
+at all. Please give an example where a Label needs a language to resolve
+properly.
+As I see it, we compare the (character) encoded string against those on the
+server. "le" and "le" are exactly the same whether the language is French or
+English.
+By suggesting that there is some language component in there, you are then
+stating that the comparison function on the server must account for
+language. That just doesn't seem right. The logical mechanism is to convert
+the Label: header value into Unicode and compare that to all the labels
+stored on the server (which are also stored as Unicode).
+Unless/until somebody can come up with an example of a string that is
+encoded the same, but interpreted differently based on language, *and* argue
+the expectation that the server should treat that string/language pair
+differently... then I might agree to dropping the Label header.
+But until then, let's keep the Label header. Tossing it means we must
+replace our PROPFINDs with some silly new report and an extra round trip.
+Where is the benefit!?!
+Finally... even if you can show a similarly-encoded string which needs to
+also account for the language, then the Label header can simply look like:
+Label: my-label; language="en-us"
+If we want to be anal about it:
+But the whole language thing seems like a red herring.
+Cheers,
+-g
+Greg Stein, http://www.lyra.org/
+Take the word 'schon' in German, which can also be spelled
+'schoen'. There is a convention that specifies that umlauts can
+be replaced by a following "e" and still be the same word. It is
+not the case that binary comparisons can be done even for equality
+for natural language strings.
+However, your point is still valid--I thought the reasons to get
+rid of the Label header were:
+* make label just a property and remove an option, simplifying
+the client testing problem
+* shorten the spec
+* nobody at the working group cared that much about the header
+* avoid the language pain in the a** with respect to internationalizing
+the header
+The language issue isn't sufficient by itself.
+From: ietf-dav-versioning-request@w3.org
+[mailto:ietf-dav-versioning-request@w3.org]On Behalf Of Greg Stein
+Sent: Tuesday, April 10, 2001 4:20 AM
+Subject: label header (was: Re: Versioning TeleConf Agenda, 4/6/01
+(Friday) 12-1pm EST)

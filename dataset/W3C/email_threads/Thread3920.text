@@ -1,0 +1,549 @@
+[ Sending this to public-p3p-spec@w3.org instead of
+www-p3p-public-comments@w3.org as indicated since the latter is
+closed. ]
+Please find below some comments regarding:
+[P3P]: Beyond HTTP
+P3P Task Force Report 18 April 2003
+$Revision: 1.17 $ on $Date: 2003/05/27 22:32:09 $ GMT
+Comments are inline:
+[P3P]: Beyond HTTP
+P3P Task Force Report 18 April 2003
+Introducing A Web Application Scenario
+An interesting/difficult requirement for Web applications is that of
+initial data solicitation under a privacy policy and subsequent
+delegation/propagation of the solicited data under the policy. Our
+scenario is inspired by:
+* [24]S030 Third party intermediary scenario of the [25]Web Services
+Architecture Usage Scenarios [WSAUS], and
+* The [26]IETF Provision Registry Protocol's (PROVREG) privacy
+scenario
+Our scenario is not intended to be a completely accurate
+representation of real world requirements, nor does our document
+necessarily provide a satisfactory solution. Instead, this scenario is
+intended to be sufficiently represenative to serve our primary purpose
+of exploring generic Web application privacy issues and providing
+recommendations towards [P3P] reuse in that context.
+Scenario Definition
+Quoting from the [27]PROVREG Charter:
+Administration of Domain Name Service (DNS) registration
+increasingly
+distinguishes between the operation of a "back-end" registry data
+base
+service for registrations, versus "front-end" support services by
+registrars who interact with registrants and with the registry.
+Especially for various Top-Level Domains, the desire is to permit
+multiple registrars to share access to the database. Conversely,
+there
+is a desire to allow a registrar to access multiple registries via
+the
+same protocol, even if the registries differ in operational models.
+This is a great example. We should leverage it for the Web Services
+Architecture Usage Scenarios document.
+Soliciting Data from the User and Referencing Policies
+In our scenario, information is solicted from the [34]User by the
+[35]Soliciting Service so as to register the user's domain name. This
+section describes how a policy can be made known to the user agent.
+[[36]Section 2, P3P] provides four mechanisms for indicating the
+privacy policy of a site, the policy reference file
+1. may be located in a predefined "well-known" location, or
+2. a document may indicate a policy reference file through an HTML
+link tag, or
+3. a document may indicate a policy reference file through an XHTML
+link tag, or
+4. through an HTTP header.
+In our scenario, the Soliciting Service has a P3P privacy policy at
+the following URI:
+href='http://registry.example.com/P3P/PolicyReferences.xml'
+[37]Adopting applications that rely upon a data format other than
+[XHTML] to solicit information SHOULD support the first (well known
+location) and fourth (HTTP header) mechanisms; [38]adopting
+applications MUST NOT ever (mistakenly) release information to an
+application it is not familiar with on the basis of [P3P] mechanisms
+that it is familiar with. [39]Adopting applications MAY provide a
+means of associating a policy reference file with their own format.
+I think that for Web services, the policy (or the link to a policy
+reference file) should be expressed as a feature. Features are the
+extensibility mechanism of SOAP 1.2[55]. The Web Services Description
+WG is working on their description and the Web Services Architecture
+WG is evaluating their role in the overall architecture.
+Feature is basically a functionality which can be expressed in
+different ways. In this case, the policy / policy reference would be
+carried by the SOAP message:
+- inside the envelope.
+- by the binding:
+- an RFC2822 header for an email transfer.
+- an P3P's HTTP header when using HTTP.
+- other means.
+Associating with an (Optional) WSDL Description
+An optional feature a Web service is to offer potential clients a
+[WSDL] description of its capabilities prior to interaction. Or, it
+might list itself in a directory [UDDI] such that user agents can
+peruse a description in order to select the most appropriate service.
+An obvious question in these circumstances is should a privacy
+statement be included in a [WSDL] description or [UDDI] entry? This
+would certainly be useful to web service clients that want to select
+services on the basis of a privacy practice.
+WSDL 1.2 has a mechanism to express features. If you were defining
+such a P3P feature, it would define what to express (the properties of
+the feature) in WSDL 1.2 (e.g.a URI reference, etc.). See [56] for the
+description of features.
+Registries would most likely refer to the service description and you
+would get that information for free.
+Transferring Data to a Third Party
+The Movement of Information
+In an intermediary scenario, data (defined broadly to include service
+privacy privacies, and personal information and privacy preferences)
+may move in many directions between the parties of the transaction.
+There are numerous models of interaction between the participants and
+the flows of information. For example:
+* In [P3P], a user's information is solicited by providing it with a
+privacy policy, which the user's client evaluates in light of the
+user privacy preferences. While the released information must be
+redistributed in accordance with the p3p:recipient field, [P3P]
+itself is not necessarily used to mediate those subsequent
+interactions. A [P3P] interaction is one-to-one with a focus on
+the user solicitation.
+* In PROVREG, a privacy policy governs the interaction between
+services (one or more registrars and the final registry). While
+the information exchanged my include user data, the user
+solicitation is out of scope.
+* In EPAL ([47]Enterprise Privacy Authorization Language), "While
+[P3P] formalizes privacy promises to be advertised (i.e., business
+to consumer), EPAL formalizes privacy authorization for actual
+enforcement within an enterprise or for business-to-business
+privacy control."
+One can consider three variables with respect to the flow of
+information within a network:
+Direction of Flow
+In [P3P], policies flow to the user agent, preferences stay
+local to the user agent, and information flows to services. One
+can also conceive of an exchange in which a user publishes his
+preferences and services must agree to them, or user
+preferences accompany user information in its journey -- as
+we've also done in our example scenario via my:Privacy element.
+Points of Decision
+In [P3P], the user's agent (the point of decision) is typically
+his network client. However, one can also imagine a trusted
+network service acting as the user's agent (managing the user's
+identity, information and enforcing his preferences). In
+PROVREG and EPAL services themselves are exchanging policies
+and making decisions.
+Points of Aggregation
+A service which solicits information from a user for
+redistribution to other services might choose to first collect
+and combine the policies of its peers and represent the
+p3p:recipients as having the "same" policy, or it might ask for
+separate parcels of information under a different policy
+corresponding to each of the recipients which it transfers data
+to.
+This is right on target.
+The Scope of Layers and Bindings (HTTP and SOAP)
+Does the [P3P] policy belong at the SOAP level, or HTTP? In the
+majority of cases SOAP will be transported over HTTP, what happens if
+both collect data? Given that a higher level application will likely
+know its dependencies, but its dependencies will not know the
+characteristics of those using them:
+[49]Adopting applications MUST specify where relevant [P3P] statements
+can be found. We RECOMMEND that normative association (not including
+[WSDL] or [UDDI]) be limited to the higher/application layer. We
+RECOMMEND that a higher/abstract layer MAY include the privacy policy
+of layers it is dependent upon, but that lower layers SHOULD NOT
+represent the policies of higher layers. For example, an application
+that transfers data with SOAP over HTTP that uses cookies, SHOULD
+specify:
+1. the [P3P] policy associated with SOAP is normative and includes
+the HTTP policy, or
+2. there are distinct [P3P] policies associated with the SOAP and
+HTTP layers.
+Isn't this already the case with a Web server nowadays? The HTTP
+stack/server may have some logging policies different from the ones a
+CGI has, for example.
+Intermediaries
+Even before data makes it to the Service Provider and its
+p3p:Recipients, if any, the information might travel through various
+intermediaries in order to reach its destination. [[53]Section 1.1.3,
+P3P] speaks to these cases as follows:
+P3P policies represent the practices of the site. Intermediaries
+such as telecommunication providers, Internet service providers,
+proxies and others may be privy to the exchange of data between a
+site and a user, but their practices may not be governed by the
+site's policies. In addition, note that each P3P policy is applied
+to specific Web resources (Web pages, images, cookies, etc.) listed
+in a policy reference file. By placing one or more P3P policies on
+a Web site, a company or organization does not make any statements
+about the privacy practices associated with other Web resources not
+mentioned in their policy reference file, with other on-line
+activities that do not involve data collected on Web sites covered
+by their P3P policy, or with offline activities that do not involve
+data collected on Web sites covered by their P3P policy.
+This semantic continues to stand in circumstances "beyond HTTP."
+However, we may now make the following recommendation:
+1. Adopting applications that want to ensure the privacy of user
+information SHOULD take steps to ensure that no information is
+released to a network intermediary that is not covered by its P3P
+policy. This may be expressed via policy (such as [SOAP] headers)
+or ensured via various end-to-end mechanisms such as session
+security (e.g., [TLS]) or document security (e.g., [XENC]).
+Do we need to say anything more about forwarding and active
+intermediaries? Should we define a "[54]P3P Policy for SOAP
+intermediaries" that only permits the data to be used for the "current
+purpose/admin and no retention" that SOAP intermediaries MUST use?
+Reagle prefers to rely upon the text above unless we are further
+pressed with actual use cases.
+Agreed.
+There is something else which probably needs to be underlined. P3P
+reference policies for resources, whatever the operation on them is.
+With Web services, what the resource is is a little fuzzy (a car? the
+application in charge of selling cars? some state about the sale of a
+car?) and WSDL defines the interface to this target resource. The
+level of granularity here is probably the WSDL operation.
+Regards,
+Hugo
+55. http://www.w3.org/TR/2003/PR-soap12-part1-20030507/#soapfeature
+56. http://www.w3.org/TR/2003/PR-soap12-part2-20030507/#soapfeatspec
+Hugo Haas - W3C
+Thanks for the comments Hugo!
+How is this done? I've read [55] and it's written in the abstract, and I've
+also looked at [56], but I'm not sure how to apply it. (Also, while we've
+been exploring various options, we also having been avoiding the "exotic"
+features unless there some cause to demonstrate them.)
+We've mocked up a header by which a sender can "ask" all intermediary nodes
+to also understand the privacy policies of the carried application data:
+env:Header
+xmlns='http://registry.example.com/2003/soap-header-p3p-extension.xsd'
+xmlns:env='http://www.w3.org/2003/05/soap-envelope'
+Privacy env:role='http://www.w3.org/2003/05/soap-envelope/role/next'
+env:mustUnderstand='true'
+But what does one have to do to represent it as a "feature"? Also, since we
+are not an application ourselves (but expect P3P to be used by "adopting
+applications") we presently can't limit this to any particular MEP. I'd
+expect such a header would be orthogonal to other MEPs and "features".
+So, for example, a UDDI registry would probably know how to pull information
+for its own puproses and translate it into UDDI syntax?
+There's nothing terribly novel in this case. But in your example, we didn't
+have the HTTP and the CGI presenting you with different policies. The
+policy associated with the HTTP was good for your interactions with the
+specified URI (e.g., the CGI). In SOAP, the recipient of the *transport*
+layer (the SMTP recipient or HTTP server the POST is sent to) might be
+different the the SOAP ultimateReceiver, right? Which brings me to the
+question, in SOAP, how do you identify the "ultimateReceiver"? What URI
+should the PolicyRef file refer to, the URI of its immediate transport
+counterpart (I don't think so), or the "ultimateReceiver" -- if you can
+identify that?
+I think this relates to my question above, and Patrick has explored this a
+bit. In our example, we associated it with the definition (my:Privacy is a
+child of the wsdl:definitions), are you recommending it be a child of the
+wsdl:operation element?
+Hi Joseph and Hugo,
+| [37]Adopting applications that rely upon a data format other than
+| [XHTML] to solicit information SHOULD support the first (well known
+| location) and fourth (HTTP header) mechanisms; [38]adopting
+| applications MUST NOT ever (mistakenly) release information to an
+| application it is not familiar with on the basis of [P3P]
+mechanisms
+I've
+I also checked [55] and [56]. Based on my understanding, if we can describe
+the proposed privacy assertions for SOAP messages in the context of MEP and
+also
+describe the proposed privacy assertions' properties in the context of SOAP
+Processing Model and the SOAP Protocol Binding Framework. Then, the proposed
+privacy assertions can become a "feature" or I should say a new "feature" in
+the SOAP framework. From the other aspect, we also have to define the
+event-condition-rules for the proposed privacy scenrio in the context of
+MEP.
+Is my interpretation correct?
+Any illustrative example? Or is there any standard graphical representation
+to
+depict MEP such as Petri-Net? It sounds that this topic is very interesting.
+nodes
+we
+Does Hugo mean that we should have a generic MEP for the proposed privacy
+assertions in SOAP messages? Not tie up with any domain specific
+application.
+information
+Yes, we should have this assumption and I do believe some related research
+should have been done (though I haven't checked it). :-)
+However, you can only see those unautomatic UDDI at
+or http://uddi.microsoft.com
+| [49]Adopting applications MUST specify where relevant [P3P]
+| statements can be found. We RECOMMEND that normative association (not
+| including [WSDL] or [UDDI]) be limited to the higher/application
+layer.
+| We RECOMMEND that a higher/abstract layer MAY include the privacy
+| policy of layers it is dependent upon, but that lower layers SHOULD
+NOT
+didn't
+I would believe that the URI should be the URI of the ultimateReceiver's
+privacy policy. For those intermediaries, that's why we may have to define
+some new roles or "features" for them.
+I would believe that we may have to provide two levels (service and
+operation)
+for optional privacy policies. The operation level's privacy policy can
+overwhelm
+the service level's once there exist any contradiction? In the normal case,
+the privacy policy should be the union of both for each operaiton? If there
+is no operation level so that it is inherited from the servce level.
+However, this may cause more thoughts about UDDI as UDDI has three levels:
+Business Entity, Business Service and tModel.
+Lastly, just a very little typo found at
+"Our scenario is not intended to be a completely accurate
+representation of real world requirements, nor does our
+document necessarily provide a satisfactory solution.
+Instead, this scenario is intended to be sufficiently
+represenative ..."
+Talk to you later. Have a nice weekend!
+Patrick.
+Hi Joseph and Patrick.
+* Joseph Reagle reagle@w3.org [2003-06-03 17:29-0400]
+Let me try to make this concrete.
+We could define the P3P feature, which indicates the policy for a
+service.
+Note that I am not sure that this is what you would want exactly since
+one could imagine:
+- the service pointing out where the policy reference file is for its
+different interfaces.
+- the requester giving a URI of the agreed upon policy for a request:
+this probably is useful in a delegation scenario (in your example,
+the registrar telling the registry what he agreed to) or if one
+could negotiate a privacy policy (the registrant is proposed 2
+choices by the registrar: a 10% discount if he agrees to be
+spammed).
+- a policy reference document instead of a URI.
+- a privacy policy instead of a URI.
+So, anyway, in order to make things concrete, let's try to address the
+second case: expressing a URI to a P3P policy document. I think that
+it is more useful than expressing the URI to a policy reference since
+a WSDL description would already give a list of policies for each
+service. Again, this would probably be up for discussion.
+--8 ----
+P3P feature
+- Name
+- Description
+The P3P feature is used to indicate the P3P policy governing the use
+of a service.
+- Properties
+The P3P feature defines a single property:
+Property name:
+Property type:
+xsd:anyURI
+The value of the http://www.w3.org/2003/06/16-p3pf/id property is the
+identifier for the P3P policy governing the use of the service.
+- Expressing the P3P feature
+When using the http://www.w3.org/2003/05/soap/bindings/HTTP/ SOAP
+HTTP/1.1 binding, the P3P feature is expressed as an HTTP header as
+follows:
+P3P: policy=" URI-Reference "
+In this case the value of URI-Reference is the value of the
+Other bindings may define alternative ways of expressing the P3P
+Reference feature.
+If no alternative way has been defined, the feature and its property
+are expressed in the form of a SOAP header.
+[ Insert here the description of a SOAP header in the spirit of the
+one you used for a policy reference file. ]
+-- 8----
+Does it make things clearer?
+I think so.
+Well, I don't think that UDDI knows about features.
+Let's take the P3P feature again.
+A WSDL 1.2 description of a service with such a feature could be (this
+may be slightly inaccurate, but you will get the idea):
+feature
+uri='http://example.org/2003/06/16-p3pf/'
+property
+uri='http://example.org/2003/06/16-p3pf/id'
+With such a generic feature &amp; property mechanism, a registry would be
+able to express that the service has the following features, and if
+your implementation knows what the P3P feature is, it will be able to
+make good use of it.
+Hmmm... I think that I was confused. I think that a policy reference
+file is fine as a child of wsdl:definitions, but a reference to a
+policy file, i.e. a policy which would apply to an operation, would be
+more specific.
+Which makes me wonder: are policy reference file useful to Web
+services? With WSDL and something like a P3P feature, wouldn't the
+problem addressed by policy reference files taken care of?
+* Patrick.Hung@csiro.au Patrick.Hung@csiro.au [2003-06-07 01:32+1000]
+| [37]Adopting applications that rely upon a data format other than
+| [XHTML] to solicit information SHOULD support the first (well known
+| location) and fourth (HTTP header) mechanisms; [38]adopting
+| applications MUST NOT ever (mistakenly) release information to an
+| application it is not familiar with on the basis of [P3P]
+See my above example. I must admit that I am a bit fuzzy around the
+relationship with MEPs.
+| [49]Adopting applications MUST specify where relevant [P3P]
+| statements can be found. We RECOMMEND that normative association (not
+| including [WSDL] or [UDDI]) be limited to the higher/application
+| We RECOMMEND that a higher/abstract layer MAY include the privacy
+| policy of layers it is dependent upon, but that lower layers SHOULD
+I think that there are different level of abstractions.
+A service could be offered through different bindings and therefore
+endpoints. This is why I am wondering whether using references to
+privacy policies in WSDL documents isn't the most adequate way to do
+this. The P3P feature I gave an example of wouldn't have this problem,
+I think.
+Regards,
+Hugo
+Hugo Haas - W3C
+Hi Hugo,
+Thanks a lot for your explanation and clarification.
+May I ask one more question here. I apologize if I further confuse
+you by my misunderstanding... :-)
+Based on your description, I believe that I have a picture of how
+to define a "feature." Assume my understanding is correct. Then,
+it seems that the "feature" is an independent structure that can
+be applied/attached into UDDI, SOAP or even WSDL, am I correct?
+If I do not misunderstand it, how can I specify/attach the "feature" into
+UDDI, SOAP or even WSDL? Sorry that I am lazy to check the related
+specifications.
+In many cases, I do imagine that we may need a privacy policy at the
+level and then with some other privacy policies at the wsdl:operation/
+level. Thus,
+we may have to do a logical "AND" between the privacy policies in two
+different abstraction
+levels.
+Thanks a lot,
+Patrick.
+* Patrick.Hung@csiro.au Patrick.Hung@csiro.au [2003-06-18 01:27+1000]
+Hmmm... the concept of feature is something abstract which originated
+in the SOAP Version 1.2 work and is in the process of being
+generalized to the Web services architecture.
+The definition of a SOAP feature is:
+More below.
+Let's take another simple example to try and illustrate this.
+Consider the simple "reliable" messaging. Its definition specifies
+what is meant by simple "reliable" messaging, e.g. have the receiver
+send a return receipt to the sender once it got the message, without
+caring about this return receipt getting lost.
+= SOAP 1.2
+A SOAP module realizing the simple "reliable" messaging can then be
+specified. A SOAP module is:
+A SOAP Module is a specification that contains the combined syntax and
+semantics of SOAP header blocks specified according to the rules in
+3.3 SOAP Modules. A SOAP module realizes zero or more SOAP features.
+So this specification would explain what SOAP header blocks would need
+to be inserted in the message and how they would need to be processed
+to implement this feature. I think that this answers your question
+about the relationship with SOAP.
+Note that this feature could be provided by a protocol binding. For
+example, HTTP has responses and therefore the HTTP binding would
+support this simple feature.
+For more details about SOAP 1.2 and features:
+= WSDL 1.2
+Then, for WSDL 1.2, a service may ask you to interact with it using
+this feature. In this case, the WSDL 1.2 description of this service
+would specify this with a piece of XML such as the one I showed for
+the http://example.org/2003/06/16-p3pf/ feature, specifying the
+associated properties.
+This is how a feature would appear at the service description level.
+For more details about WSDL 1.2 and features:
+= Registry
+If you were querying a registry, chances are that the registry was
+populated directly from the WSDL 1.2 description. In this case, the
+registry will tell you that the service support the simple "reliable"
+messaging feature, since it found in the WSDL 1.2 description as
+explained above.
+I hope that this other simple example will shed more light on my more
+relevant P3P feature example.
+Oh, I see.
+Hope this helps.
+Regards,
+Hugo
+Hugo Haas - W3C
+Patrick, I finally got around to adding the references (through some clumsy
+XSLT hackery [1] smile/ ) and I also tried to clean up the use of our
+identifiers and Namespaces[2]. However, it's just as likely I broke
+something, so let me know if I have.
+Hugo, a problem I'm experiencing is when I try to validate our WSDL example
+(wsdl-eg.xml) against our augmented wsdl schema (wsdl-p3p-extension.xsd) --
+because we've added my:Privacy as a child of wsdl:definitions -- XSV gives
+me an error about 'wsdl12-ext.xsd'?
+Schema resources involved
+Attempt to load a schema document from
+/home/reagle/data/2web/WWW/P3P/2003/p3p-beyond-http/wsdl-p3p-extension.xsd
+(source: command line) for no namespace, succeeded
+Attempt to load a schema document from http://www.w3.org/2003/06/wsdl
+(source: import) for http://www.w3.org/2003/06/wsdl, succeeded
+Attempt to load a schema document from
+[1] http://lists.w3.org/Archives/Public/spec-prod/2003AprJun/0017.html
+[2] http://www.w3.org/2003/03/rdf-in-xml.html
+$Revision: 1.21 $ on $Date: 2003/06/10 18:57:29 $
+I don't think we would want to use the HTTP binding though for our main case
+of the user and the registry. In that clase it's closer to end-to-end.
+The former [Processing Model] describes the behavior of a single
+SOAP node with respect to the processing of an individual message.
+BTW: Does that mean that header can only be relevant to a single node? I
+don't think so because it laters says, "Such header blocks can be intended
+for any SOAP node or nodes along a SOAP message path", so perhaps that
+"single SOAP node" is innapproriate?
+Regardless, of augmented our section on the Scope of Layers and Bindings
+(HTTP and SOAP) to cite the Features text from the SOAP spec since it
+coincides with our ealier recommendations:
+Adopting applications MUST specify where relevant P3P
+statements can be found. We RECOMMEND that normative
+association (not including WSDL or UDDI) be limited to the
+higher/application layer. We RECOMMEND that a
+higher/abstract layer MAY include the privacy policy of
+layers it is dependent upon, but that lower layers SHOULD
+NOT represent the policies of higher layers. For example, an
+application that transfers data with SOAP over HTTP and uses
+cookies, SHOULD specify:
+1. the P3P policy associated with SOAP is normative and
+includes the HTTP cookie usage, or
+2. there are distinct P3P policies associated with the SOAP
+and HTTP layers.
+Again, the Non-ambiguity requirement of ([P3P], section
+2.4.1) MUST be respected, "Sites MUST be cautious in their
+practices when they declare multiple policies for a given
+URI, and ensure that they can actually honor all policies
+simultaneously." Furthermore, SOAP Features ([SOAP], secion
+1.3) states that:
+The processing of SOAP envelopes in accordance with the
+SOAP Processing Model (see 2. SOAP Processing Model) MUST
+NOT be overridden by binding specifications. It is
+recommended that, where practical, end-to-end features be
+expressed as SOAP header blocks, so that the rules
+defined by the SOAP Processing Model can be employed.
+Hugo, thank you for this extensive (tutorial!) email!
+I still can't say I understand all of this Feature and WSDL stuff, but I
+think you have a very important point there. A Policy Reference file
+designates a (1) life time (expiration), (2) policies, (3) and set of paths
+for a web site (via INCLUDE and EXCLUDE) where those policies apply.
+Basically a set of URIs over which one does HTTP methods (GET, POST, PUT)
+That makes lots of sense for browsing a web sites, but not so much for Web
+Service.
+In the Web Service case one will be doing port names (operations) as applied
+to a soap:address? In which case, a Policy Reference file isn't really
+needed.
+So we sort of have this, less formally, and we haven't given ita special
+"feature" URI...
+Yes, I think so. So in our scenario, we'd still want the Policy Reference
+file for the XForms/XHTML aspect, but not for the registrar to registry
+aspect.
+Patrick, is your understanding sufficient that you have a sense of what
+changes we could make to our document? I still need to keep thinking it
+through for myself....
+So one alternative is to reference the policy file directly for web
+services rather than the policy reference file. Another alternative is
+to use the extension mechanism to create a more appropriate type of
+reference for web services inside the policy reference file. This
+reference would designate an appropriate scope for a policy that is
+applicable to web services. I don't know enough about what I am talking
+about here to know which would be preferable... but I would like you to
+consider both possibilities.
+Lorrie
+Thanks a lot for your explanation, Hugo!
+Hi Joseph,
+I can't say that I am understanding sufficient... However, I will study the
+SOAP and WSDL "features" and do more thoughts. In the first cut, we
+***may***
+have to revise those SOAP and WSDL examples by using "features" or make the
+"features" version as another option in our document.
+I will be out of office/town and in California from June 22 to July 2.
+That's
+why I may not be able to check e-mails regularly. Anyway, I have bring
+enough
+relevant materials with me for reading during the trip. Will get back to you
+once I get back to office.
+I found a typo in our document: "... secion 1.3) ..." :-)
+Cheers and talk to you later.
+Patrick.

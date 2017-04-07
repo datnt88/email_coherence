@@ -1,0 +1,137 @@
+As we all know, we are presently using URNs for algorithm identifiers that
+are non-sensical -- they do not exist; they have not been registered.
+Assignment of a URN is a managed process.
+I.e., not all strings that conform to URN syntax are necessarily
+valid URNs. A URN is assigned according to the rules of a
+particular namespace (in terms of syntax, semantics, and process).
+[1] ftp://ftp.isi.edu/in-notes/rfc2611.txt
+Of course, we've needed some space fillers in our draft until we come up
+with something better. To that end (something better), I've been looking at
+the various policies of institutions and even have a potential syntactical
+solution that might help our situation.
+In referencing W3C specifications we are ok. While verbose, the W3C uses the
+dated name (URL) of a specification to reference the semantics of that
+specification.
+RFC2611 [1] specifies how to register/request a URN from IANA if we need to
+do so (though I prefer W3C namespace in the XML context) but we can't yet
+refer to other IETF semantics using URNs. The IETF URN Working Group charter
+[2] lists an Informational RFC proposal [3] regarding the allocation of IETF
+URNs to RFCs, but there is still no governing policy to my knowledge.
+[2] http://www.ietf.org/html.charters/urn-charter.html
+[3] ftp://ftp.isi.edu/in-notes/rfc2648.txt
+And of course, this says nothing of other institutions like RSA, ISO, etc.
+When I was speaking with Tim Berners-Lee and Dan Connolly about this issue
+we agreed that "making up" URNs defeats the purpose of URNs: ensuring
+integrity, persistence, and non-collission based institutional management of
+that namespace. The WG needs to use registered URNs, or create our own and
+then define which references apply to which tokens in that name space.
+Dan and Tim suggested something that I think interesting if I understand it
+properly. We might have attributes that look like:
+Or, we could try something along the lines of nesting
+xmlns:IETF="http://www.w3.org/1999/10/signature-core/IETF"
+and in the spec we define what signarure-core/IETF or /NIST means via a
+normative reference.
+What would really be nice is the ability to have qualified attribute values!
+Like:
+This feature is not in the present XML Schema WD [4]. However, the Schema
+WG Chair tells me they expect to have this in the next or following draft.
+[4] http://www.w3.org/TR/1999/WD-xmlschema-1-19990924/
+Any other thoughts? I don't know how the IESG will react, but I've been told
+that W3C will not look kindly upon bogus URNs. (A further request on XML
+Schemas follows in the next message.)
+Joseph Reagle Jr.
+Policy Analyst mailto:reagle@w3.org
+XML-Signature Co-Chair http://w3.org/People/Reagle/
+The IETF process only prohibits normative references to non normative
+IETF RFCs. It does not prohibit reference to normative W3C standards.
+The URN group was denied normative reference standing for good reasons
+unlikely to be resolved to the satisfaction of the IESG this millenia
+(14 months).
+Names arrive at their meaning through usage. The problem with the URN
+working group was that they pretty much ensured that their proposal would
+never achieve any usage. Lack of hierarchy never did much good for
+gopher URLs as I recall. I remain mystified at by the advantages of
+making the URN syntax incompatible with the URL syntax.
+If names are used for a purpose then they have meaning and it is
+inaccurate to describe them as 'bogus'.
+I note that Microsoft is already coding strings such as
+URN:schema-microsoft-com: into IE5.0.
+Whatever naming scheme anyone comes up with, there will be nothing
+to stop someone assigning an incompatible semantics to a name. The
+persistence of names is not a technical issue, it is a political
+and governmental issue.
+[Chances are that somewhere in the universe another planet has
+chosen or will chose an 8bit character set. Given this estimate
+the probability that our URN encoding will turn out to be unique,
+I doubt that the improbability is of cryptological proportions.]
+It seems to me that the IESG is pretty much inviting W3C to take
+the URN registration policy off their hands. If the URN legacy is too
+wedged we could always define a new class of URI, call it a URS
+(Uniform Resource Semiote), provide a means for any party to issue their
+own URS's using the IANA issued DNS infrastructure as registration
+keys.
+Then W3C can issue the needed character strings. If W3C can't manage
+such a process there is a pretty good chance nobody else will either.
+Phill
+Forwarded Text ----
+Subject: Re: Namespaces and URNs
+From: ht@cogsci.ed.ac.uk (Henry S. Thompson)
+Date: 28 Oct 1999 10:39:31 +0100
+The new PWD is due in 8 days and will NOT solve your problem. The one
+after that will.
+Go with [1]. The new PWD will not change much, and nothing in the
+area you care about. There is what amounts to an answer to your
+question, which will be close to what we end up with, in [2], which is
+pointed to from [1]. Look at the Dublin Core example.
+ht
+[1] http://www.w3.org/TR/1999/WD-xmlschema-1-19990924/
+[2] http://www.w3.org/TR/1999/WD-xmlschema-1-19990924/composition-tf.html
+End Forwarded Text ----
+Joseph Reagle Jr.
+Policy Analyst mailto:reagle@w3.org
+XML-Signature Co-Chair http://w3.org/People/Reagle/
+Note, I've moved part of the thread to the XML Signature WG, one other
+orthogonal question:
+So not only is it OK to
+declare CanonicalizationMethod/Algorithm as a URI, it's OK for
+SignatureMethod/Algorithm and DigestMethod/Algorithm as well.
+Is it possible to have a attribute declaration be of one or more types? (In
+an outdated section) the spec forbids:
+Constraint on Schemas: Attribute Locally Unique
+The same full name must not appear more than once in any
+archetypeSpec's attribute declaration set.
+but is there some other way to achieve:
+I've thought about (and John Boyer propsed yesterday) using Internal
+(General) Entities to alleviate the URI glut in the W3C's "first class
+object" paradigm. Bray actually gives this as a possible use:
+In URLs; many XML documents contain lots of URLs; as we all
+know, URLs tend to move around and are painfully difficult
+to maintain. It  is really useful to use entities to help
+make this easier: a href='&amp;home;/bin/wr.pl' .
+Consequently, I could have a signature that looks like:
+Signature xmlns="http://www.w3.org/1999/10/signature-core"
+SignedInfo
+!ENTITY c14n "http://www.w3.org/TR/1999/xml-c14n"
+!ENTITY dsig "http://www.w3.org/1999/dsig-core"
+CanonicalizationMethod Algorithm="&amp;c14n;"/
+SignatureMethod Algorithm="&amp;dsig;/dsaWithSHA-1"/
+ObjectReference Location="http://www.ietf.org"
+DigestMethod Algorithm="&amp;dsig;/sha1"/
+DigestValue encoding="&amp;dsig;/base64" a23bcd43 /DigestValue
+/ObjectReference
+/SignedInfo
+SignatureValue encoding="&amp;dsig;/base64" dd2323dd /SignatureValue
+/Signature
+I assume if we do this is it still possible to declare the value of
+Algorithm as a URI? Or for instance, if you have a general internal
+entity
+that expands to an integer, is the following XML valid:
+!ENTITY favoritenumber "8"
+integer &amp;favoritenumber; /integer
+under the following schema constraint:
+Edinburgh
+2 Buccleuch Place, Edinburgh EH8 9LW, SCOTLAND -- (44) 131 650-4440
+URL: http://www.ltg.ed.ac.uk/~ht/
+Joseph Reagle Jr.
+Policy Analyst mailto:reagle@w3.org
+XML-Signature Co-Chair http://www.w3.org/People/Reagle/

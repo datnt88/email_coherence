@@ -1,0 +1,118 @@
+Sean Mc Grath points out that the namespace problem recurrs in many
+modern programming languages, and that these may give clues to a
+solution.
+Thank you. I was very conscious of the IMPORT mechanism in Modula-2
+when I proposed a solution to namespaces. (You are also correct that
+this is not a solution for sub-classing, an entirely different topic.)
+Briefly, I and several other people looked at several possible ways to
+create qualified names. Qualified names were an obvious requirement,
+since having multiple namespaces obtain within a single element was
+strongly demanded by several important user communities. It was equally
+obvious that the web already has a mechanism for creating unique names,
+specifically URIs.
+*Syntax issues aside* (emphatically), here were the three front-runner
+candidates:
+1The URI-at-the-front method:
+Every element name is qualified by putting the URI of its
+namespace at the beginning, separated by something. For example,
+http://purl.org/schemas#AUTHOR William
+Shakespeare /http://purl.org/schemas#AUTHOR .
+This has obvious problems. Many of the URI characters are not
+legal XML naming characters. Fragment identifiers have unreliable
+semantics. Etc.
+2.The "Java" method:
+Use a form of indirection, in which a namespace is known
+throughout the document by an identifier that is a legal XML name, but
+that name is somehow associated with the controlling URI. In the "Java"
+method, the XML-legal identifier is inside the DTD (or other document
+defining the namespace).
+IMPORT http://www.purl.org/schemas /IMPORT !--
+Somehow associates "xyzzy" with this namespace. --
+This is essentially number one, but without the illegal
+character problem. However, it now requires that the defining document
+be modified to contain the namespace name ("xyzzy"). Worse, it requires
+that the document be machine-readable in a predefined format, and many
+important schemata, such as Dublin Core, are not machine readable and
+will not be for years. That is, it mixes the problem of identifying
+namespaces with the problem of their defining document's format.
+("Author" in the example above actually comes from the Dublin Core, a
+text document.) Finally, it doesn't really solve the namespace problem,
+it just moves it up a level. We still have to somehow manage that no two
+namespaces ever use the same name (e.g. "xyzzy").
+3.The "Modula-2" method:
+Use a form of indirection, in which a namespace is known
+throughout the document by an identifier that is a legal XML name, but
+that name is somehow associated with the controlling URI. In the
+"Modula-2" method, the XML-legal identifier is inside the referencing
+document.
+This simply references a namespace, without any requirements of
+the format (even existence!) of the defining document. The user of the
+namespace is responsible for picking a local name, subject only to the
+requirement that it is unique within the scope of his local use.
+--Andrew Layman
+AndrewL@microsoft.com
+The problem with all these methods is scope.
+XML is concerned with documents that are longer than those on the WWW today.
+XML needs to be able to deal with compound documents, where different
+fragments have been taken from different sources, created with different DTDs.
+In reusing fragments we don't want to have to change the tagging.
+Therefore what is needed is a way of saying that from this element till you
+find the matching end-tag, consider that a separate name space has been set
+up whereby all tags within this scope can be considered to have
+automagically been qualified by a specified name space qualifier.
+The fact that this name space qualifier has the effect of ABC:DEF is
+irrelevant. What is important is that users don't have to remember that they
+need to qualfify DEF by ABC and can continue to call DEF by the name they
+have been used to using when creating DEFs in their normal source documents.
+What my proposal sought to do was to provide a scopable statement of how far
+name spaces applied, while still giving a mechanism for referencing from one
+scope to another with ID references. This feature seems to be ignored by
+most other proposals. One question they must all ask themselves is " how can
+I be sure that an ID in a reused fragment conforming to DTD X will not
+conflict with an ID in a DTD for fragment Y". I would be very grateful to
+hear how this can be acheived wth any of the three proposals made by Andrew
+Layman..
+Martin Bryan, The SGML Centre, Churchdown, Glos. GL3 2PU, UK
+This would seem to make things much harder for the Perl Hacker. At this
+point I think that there should be a single default scope and everything
+else should be explicitly "called in" from another scope. I believe that
+SGML architectures allow this.
+Paul Prescod
+This is a good point, but it's not a fatal flaw of the proposals, just a
+good feature to add to them. I'm rather dubious about the namespace issue
+(as I intend to say later on), but I don't think that scoping is a problem
+for any of the proposals other than the high colonic -- and that proposal
+simply avoids the problem by requiring full qualification.
+FWIW dynamic scope is definitely useful in some cases, and we should
+make sure not to forget to examine techniques and implications of it for
+anything we decide.
+-- David
+David Durand dgd@cs.bu.edu \ david@dynamicDiagrams.com
+Boston University Computer Science \ Sr. Analyst
+--------------------------------------------\ http://dynamicDiagrams.com/
+MAPA: mapping for the WWW \__________________________
+Thank you for bringing up again the important issue of scope. I did not
+address it in my mail discussing how namespaces are named (the "Java
+method" versus the "Modula-2 method") but that was only because I wanted
+to separate the problem into parts. I completely agree that it is
+important.
+In my "Namespaces Version 2" mail last night, I suggest a method that is
+similar in some respects to what you propose. Each element can contain
+within it a list of the namespaces that are used within that element.
+If that element and its contents are moved, or used as a document
+fragment, all those namespaces remain listed and active. (Full details
+in my proposal).
+--Andrew Layman
+AndrewL@microsoft.com
+Good point about the hacker. We need a simple style guide for when
+something is and is not qualified. However, this rule could be
+friendlier than Paul suggests. I could be: If your namespace is the
+same as your containing element's do not use qualification. If it is
+different, you must use qualification.
+By the way, given the existence of entities, and the proposals to use
+architectures, how do PERL hackers ever actually get reliable results?
+--Andrew Layman
+AndrewL@microsoft.com
+From:Paul Prescod [SMTP:papresco@calum.csclub.uwaterloo.ca]
+Sent:Friday, May 23, 1997 4:58 AM
+Subject:Re: Namespaces

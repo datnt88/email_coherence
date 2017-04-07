@@ -1,0 +1,106 @@
+From: Scott Lawrence[SMTP:lawrence@agranat.com]
+Sent: Tuesday, January 20, 1998 11:41 AM
+Subject: Re: First reactions to mandatory draft
+PL Numeric perfixes aren't to allow multiple instances of the _same_
+extension
+PL in one message -- they are to guard against the possibility (to use
+your
+PL example) that two independent parties design an extension, and both
+call it
+PL "Skidoo" (but they will have different URLs for the extension, of
+course),
+PL and still allow both to be used in one request.
+I think that having different URLs to identify the extentions is
+sufficient; if the extentions are so incompatible that they cannot
+be used in the same header syntax unambiguously, then they shouldn't
+be implemented in the same place anyway.
+What? First, if two groups invented the extension independently, there will
+almost certainly be _no_ relation between them. Second, if there's just a
+URL, how can you tell which headers go with that URL?
+I don't want to have to (won't) implement a parser that can deal
+with:
+GET /xyz HTTP/1.1
+Host: foobar
+23-Skidoo: abc
+65-Skidoo: def
+Man: "http://screwball.org/skidoo.html"; ns=23-,
+"http://nutcase.org/skidoo.html"; ns=65-
+by having to backtrack my parser to remove the 23- and recognize the
+'Skidoo'; by the time I get to the Man header, I've seen the
+two numeric prefix headers and discarded them as unrecognized (and
+therefor automatically optional) headers.
+This is independent of the use of numerical prefixes. I always thought it
+was obvious that the Man header was required to come _ahead_ of any uses --
+but I can't recall if the spec _says_ that.
+Even supposing hypothetically that we did do this, what happens to
+the headers now - granted we separated them for transmission, but
+internally the values will be combined anyway as though they were
+sent as
+Skidoo: abc, def
+because that is what header folding rules say we should be able to
+do.
+23-Skidoo and 65-SKidoo are _not_ the same header, so they shouldn't be
+folded.
+We're close to having a registry for header field names anyway; I
+just don't think that this extra complexity is warranted.
+It seems that at least some of the complexity is due to a misconception.
+Paul
+SL I think that having different URLs to identify the extentions is
+SL sufficient; if the extentions are so incompatible that they cannot
+SL be used in the same header syntax unambiguously, then they shouldn't
+SL be implemented in the same place anyway.
+PL What? First, if two groups invented the extension independently,
+PL there will almost certainly be _no_ relation between them. Second,
+PL if there's just a URL, how can you tell which headers go with that
+PL URL?
+If I don't understand the extention it doesn't matter whether or not
+I know what headers go with it - I return an error anyway.
+That is my point, and I'll restate it as a question:
+Is the goal of the draft to specify how to require the use of a
+particular extention, or is it to specify how to do dynamically
+loaded extentions?
+The former is important, the latter is an interesting academic
+exercise.
+PL I always thought it was obvious that the Man header was required
+PL to come _ahead_ of any uses -- but I can't recall if the spec
+PL _says_ that.
+I didn't see it, but even if it did I don't think that there is any
+requirement that proxies preserve header field order so you can't
+count on it.
+PL 23-Skidoo and 65-SKidoo are _not_ the same header, so they shouldn't be
+PL folded.
+They are for CGI purposes after the prefixes have been removed (or
+are we going to require that CGIs also understand prefixes?).
+Scott Lawrence EmWeb Embedded Server lawrence@agranat.com
+Agranat Systems, Inc. Engineering http://www.agranat.com/
+This causes a problem _if_ an application _thinks_ it knows a header field
+but this header field in fact has been used by another extension with
+completely different semantics.
+This is an unavoidable problem when multiple extensions share a single,
+global header field space and no central registry can hinder this. The
+alternative is to pass all extension information as parameters:
+M-GET / HTTP/1.1
+Host: foobar
+Man: "http://screwball.org/skidoo.html"; Skidoo=abc,
+"http://nutcase.org/skidoo.html"; Skidoo=def
+which avoids the problem altogether. The spec already says that all unknown
+parameters should be passed to the extension.
+It is to allow multiple extensions to coexist in a distributed environment
+without knowing about each other. How an application gets to know about the
+semantics of an extension is entirely up to the application - downloading a
+module is only one way.
+There is no reason why prefixes should ever have to be passed outside the
+Mandatory extension mechanism. If the CGI script gets the header fields
+through the Mandatory filter then this can easily strip off the prefixes.
+Henrik
+Henrik Frystyk Nielsen,
+World Wide Web Consortium
+Henrik Frystyk Nielsen:
+I highly prefer this alternative of passing all extension info as
+parameters in the Man header. Dynamically allocating collision-free
+headers is so difficult that is is not worth the trouble (see my
+comments on an earlier PEP draft for a discussion). Why add a
+complicated indirection layer if you do not need one?
+If people really want headers, the draft can tell them to register
+them in the upcoming IANA header registry.
+Koen.

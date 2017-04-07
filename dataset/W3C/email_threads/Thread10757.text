@@ -1,0 +1,180 @@
+On Thu, 28 Nov 1996 16:17:22 -0500 Liam Quin said:
+If SGML can be changed to disable RS/RE processing, or if Charles'
+kludge with SHORTREF works, perhaps we're OK. We do have to get the
+same whitespace behaviour with and without a DTD, so element content
+and data content is not a distinction XML can make, I think.
+I think I agree that simplifying RE/RS handling would be good, but
+in the interests of clarity let me ask: Do you mean we have to make
+the DTD irrelevant to white-space handling
+* because that was decided at some point, or
+* as a direct consequence of some other decision, or
+* because that would be a cleaner design?
+I agree that it would be desirable to make rules which allow
+processors to skip the DTD and still get a wholly correct parse
+tree, er, grove, but I don't think that's possible, since a
+processor cannot resolve entity references or provide correct
+default attribute values without reading the DTD.
+I also believe that if XML makes no distinction between element
+content and mixed content, it will be impossible to build correct
+XML processors on top of SGML parsers.
+It might be worthwhile to distinguish clearly among
+(a) full validation, which checks the instance against the DTD and
+provides the correct grove,
+(b) full parsing, which doesn't validate but does provide
+character-for-character the correct grove, and which requires at
+least some attention to the DTD, and
+(c) minimal or partial parsing, which doesn't require a DTD and
+which is guaranteed (in XML) to vary from the correct grove only in
+specific ways:
+(i) it will have extra white space in element content,
+(ii) it won't provide correct values for defaulted attributes,
+(iii) it won't have information about attribute types like
+ID/IDREF.
+(iv) it won't resolve references to entities not hardcoded into
+the processor.
+I'm not sure (iii) is part of the standard grove output on which we
+want to model the XML processor's output; if it isn't, then that's
+one difference fewer.
+-C. M. Sperberg-McQueen
+First, we have a compriomise on this issue that is far from perfect, but
+took us at least a month of intense debate to reach: why are we re-opening
+it? Let's leave not-so-well-enough alone! I'm wistful for a better
+(different) solution, but given that everyone (including me) seems to find
+the compromise livable, shouldn't we leave it in place?
+Yes.
+Yes, as well: if this is not the case, then applications will produce
+different results depending on whether a DTD is present or not.
+I dunno, none of the proposals we've considered leads to a "clean
+design" other than making all whitespace significant (a policy that has
+been vetoed for compatibility reasons).
+We already determined that resolving entity references is not required: the
+XML data structure cannot completely hide entity references from
+applications in that way that SGML parsers do. Default attributes at least
+have fixed values, so they must offer relatively little to an application
+that doesn't care about DTDs.
+We did determine, I think, that some differences would exist between the
+SGML and XML "data streams" in the case of RE near markup. This was deemed
+acceptable compared to the horrendously complex SGML status quo.
+This is far to complex: two kinds of parsing are enough.
+I don't know from groves, but if we repeat the mistakes of the ESIS on
+ID/IDREF (making them into crypto-types that the application can't see), we
+are truly foolish. for the same reason we need to make sure that empty
+elements are treated as a distinct type from elements with no content:
+another ESIS mistake that I thought we had forsworn. Or are we going to
+give up trivial XML- XML filtering?
+I am not a number. I am an undefined character.
+David Durand dgd@cs.bu.edu \ david@dynamicDiagrams.com
+Boston University Computer Science \ Sr. Analyst
+--------------------------------------------\ http://dynamicDiagrams.com/
+MAPA: mapping for the WWW \__________________________
+On Mon, 2 Dec 1996 16:02:35 -0500 David G. Durand said:
+I think some people are interested in re-opening it because Charles
+seems to have found a way to get RE Delenda Est behavior out of SGML
+processors. At least, it's the behavior I thought was intended for
+REDE: record ends are always passed through in mixed content, and
+all white space is eaten in element content. Since many people gave
+up on REDE solely for compatibility reasons, Charles's new proposal
+seems to open the possibility of getting something materially better
+than the compromise we have now.
+When was that? I don't remember that decision, and I'd like to
+refresh my memory on the wording.
+Actually, I rather suspect that Lee was just failing to distinguish
+his own opinions from logical necessities and from decisions made in
+the design to date, and since he has scolded others on that account,
+I thought I'd ask to make sure.
+Yes, they will. How is this incompatible with any decision we've made?
+I don't remember a decision saying they can't produce different results,
+only a series of strenuous attempts to minimize the set of differences.
+It didn't go to zero, and won't while XML has attribute defaults and
+entities. Since I'd rather have attribute defaults and entities than
+lose them, this seems like a good deal to me.
+The goal is to let some useful applications skip the DTD, if they can.
+Right now, very few useful applications can skip the DTD, because most
+useful applications are guided in their actions by element boundaries,
+and these cannot be reliably detected without knowing which elements
+have declared content. In XML, there are no CDATA or RCDATA elements,
+and EMPTY elements are detectable without a DTD. The only remaining
+types of information for which a DTD is essential are:
+- content models (for validation)
+- attribute types and default values (for recognition of IDREFs
+etc. and for full provision of all attributes which apply to each
+element instance)
+- entity declarations (for resolution of entity references)
+- element vs. mixed content (for elimination of white space in
+element content)
+I can think of useful applications which require this information; I
+can also think of useful applications which don't. Removing the
+last item from the list doesn't add or shift any applications I can
+think of.
+And brought up again for further discussion precisely because, as
+Charles explained, we may find a compatible way to do it - at least
+for mixed content.
+I don't say these things are earth-shattering; I do think they
+constitute differences between the parse tree produced by processors
+which read the DTD and those which don't. The parse trees aren't the
+same and tweaking the rules for white-space handling in element content
+won't make them the same. So I don't see why we should depart from SGML
+by saying that white space should be preserved in element content. If
+that were the only difference between DTD-less parsing and DTD-aware
+parsing, we might have something to discuss, but it's not and we don't.
+Not all REs near markup; only REs in pathological positions, and
+they won't appear or disappear, they'll only be moved from their
+actual position by SGML parsers, and left alone by XML processors.
+?discussion of validation, production of correct ESIS, and
+simple parsing with almost-correct ESIS?
+Which two do you choose?
+I suggested we distinguish the three concepts of validatiion,
+generation of correct ESIS, and minimal parsing because we seem to
+be using all three of these distinct concepts while pretending to
+ourselves that there are only two concepts involved. If one of
+these three is unnecessary, by all means tell us which it is so we
+can do without it.
+Michael
+Mr. McQueen writes
+Not necessary for a parser per se. The parser can do it's job without
+validating it, and validation of content models could be performed
+using the post-parse data structures (event stream/tree).
+Yes. I would be interested in hearing why people wish to necessarily
+have the entire attribute set appear on each element instead of just
+the attributes that had values specified (ie. I wonder if applications
+couldn't be built for the latter case that are effectively the same as
+the former).
+Only really needed for the *type* of the entity, which, assuming
+object labelling in storage managers, may be available elsewhere.
+Resolution can begin with the name of the entity itself...
+This is not a strictly *necessary* distinction.
+Well, that's not what I intended. I have always advocated a first-line
+approach that says that _all_ characters not in a tag or a comment are
+significant, and part of the parse tree. This is a _simple rule_. Anything
+else is a complicated rule, although I agree that the behavior Charles is
+claiming would provide a much-less complex rule. But I don't like the fact
+that we would have different answers about the contents of the document
+depending on the processor. I suppose it's no worse than the current mess.
+OK. You've convinced me. Now can someone check to see if the standard is
+unabiguous enought about shortrefs and whitespace handling that this hack
+will actually work? At least sgmls, nsgmls, and some of the commercial
+products need to be checked.
+We should still have two kinds; I think three is too many. We should simply
+abandon the notion of ESIS-equivalent parsing. We have minimal parsing
+(different ESIS), and validating. If people find that they want only some
+of the functionality of a validating parser (e.g. whitespace handling only)
+they will implement it into their minimal parser, but we need not have a
+formal compliance level for that. We can delcare that implementing some
+validation features in a minimal parser is _not_ an error in conformance.
+This is very non-ISO, but quite IETF in intent, I think.
+-- David
+Can we start interpreting "RE Delenda est" as a statement, rather than en
+exhortation?
+I am not a number. I am an undefined character.
+David Durand dgd@cs.bu.edu \ david@dynamicDiagrams.com
+Boston University Computer Science \ Sr. Analyst
+--------------------------------------------\ http://dynamicDiagrams.com/
+MAPA: mapping for the WWW \__________________________
+I cannot see any reason they could not. The reason for "real" defaulted
+values as I see it is so that the DTD designer can direct that all
+applications get the same default value, which "#IMPLIED" cannot insure.
+Administrative sanctions on application builders can have the same effect.
+(Though the may be tough to enforce in some open environments....)
+Dave Peterson
+SGMLWorks!
+davep@acm.org

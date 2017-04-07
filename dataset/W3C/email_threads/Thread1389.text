@@ -1,0 +1,75 @@
+I agree with Lisa's criticism of my counter-proposal,
+i.e. that it prevented DAV:all-dead-prop from being
+used as a property name.
+To avoid the introduction of the DAV:include element,
+and to reflect that fact that we are "adding stuff to what
+DAV:allprop returns", another minor variant we could consider
+would be:
+Cheers,
+Geoff
+class )
+From: ietf-dav-versioning-request@w3.org
+[mailto:ietf-dav-versioning-request@w3.org]On Behalf Of Lisa Dusseault
+Sent: Friday, May 25, 2001 6:28 PM
+Subject: RE: PROPFIND allprop with more properties (was AW: Resource
+class )
+D:propfind xmlns:D="DAV:"
+D:all-dead-prop/
+D:checked-in/
+D:checked-out/
+D:version-name/
+/D:propfind
+D:propfind xmlns:D="DAV:"
+D:all-dead-prop/
+D:prop
+D:checked-in/
+D:checked-out/
+D:version-name/
+/D:prop
+/D:propfind
+Could you explain?
+Old servers will ignore the "include" element -- a new client
+will be aware
+that is was ignored because the additionally selected
+properties will not
+turn up anywhere in the multistatus response. An old client
+will never use
+the "include" element, therefore there'll be no
+interoperatibility issues.
+I don't understand what you're saying about the "include" element.
+Maybe you should go back to the proposal. We have suggested adding an
+include element as child of propfind , which can be used to specifically
+add properties to those which would be reported by allprop . This allows to
+get the RFC2518- allprop *plus* specific properties from DeltaV/ACL with
+one call.
+Nevertheless, I do have strong logic for putting the property names under
+some container, and that's to distinguish property names from non-property
+names. "all-dead-prop" is not a property name. "checked-in" is. If they
+So do I. Please check what we proposed -- you were quoting from Geoff's
+example, not ours.
+We are currently doing it this way (with "include" in our own namespace):
+are glommed together in a list, then that's treating "all-dead-prop" as if
+it was a property name. That prevents the server from ever having a
+property called "all-dead-prop", since the XML element with that name was
+used the way you're proposing.
+This one won't interoperate with old servers, because allprop is defined
+to be EMPTY (in RFC2518).
+So if you hit an old server, you'll have to two two additional requests
+( allprop and prop with the three named properties), while with
+include , it will be just one additional request (using prop to get the
+three additional properties).
+BTW: chapter 23.3.2 of RFC2518 gives a very similar example for legally
+extending PROPFIND.
+I find the arguments in RFC2518 Ch. 23.3 (esp. 23.3.2.2) very convincing.
+Thus the most backward compatible solution is using include in its own
+namespace:
+where I don't specifically care what the namespace is (could also be
+"DAV:extended" or "DAV:addons-to-rfc2518"). If an implementor follows
+RFC2518, non-aware servers have to accept this message as a valid
+propfind/allprop (and indeed all I could test against do).
+Can someone of the more experienced DAVers suggest a good namespace?
+//Stefan
+I can't see why putting it into the DAV: namespace would be a problem.
+Although I'd prefer to have other WebDAV related specs (like ACL and deltaV)
+use their own namespaces, this one seems to apply to all WebDAV servers, no
+matter whether any combination of ACL and DeltaV is implemented...

@@ -1,0 +1,90 @@
+
+So if we want to avoid confusing clients that want to interoperate
+with those implementations, we probably can at most say that
+"PROPPATCH SHOULD NOT modify the etag or modification date".
+Sounds good. So then an ETAG change on a resource indicates to a
+client that the GET response *MIGHT* have changed.
+Hopefully we can make that a very strong SHOULD so that client checking
+for the "lost update problem" as part of a PUT isn't thrown off.
+One thing I was concerned about is resources whose GET output changes
+often in hard to predict ways. For such live resources, the server
+might chose to change the ETAG continuously rather than try to track
+if the GET output has changed. If this is a red-herring, let me know.
+Upon initial blush, I'd think that this means that "lost-update-checking"
+will always fail. But I think the answer to that is, you don't do a PUT
+against the live resource. You should do your PUT/PROPPATCH requests
+against source resources because they don't have this behavior.
+Does everyone agree on that?
+J.
+Am Samstag den, 27. April 2002, um 17:11, schrieb Jason Crawford:
+Fine with me.
+I think for continuously changing content, the server should not
+generate an ETag at all. If content changes more frequently than
+clock resolution (1 second), the server should send an Expires
+header with a date in the past.
+Such resources would most likely be read only, I agree.
+//Stefan
+From: Jason Crawford [mailto:ccjason@us.ibm.com]
+So if we want to avoid confusing clients that want to
+interoperate with those implementations, we probably can at most
+say that "PROPPATCH SHOULD NOT modify the etag or modification
+date".
+Sounds good. So then an ETAG change on a resource indicates to a
+client that the GET response *MIGHT* have changed. Hopefully we
+can make that a very strong SHOULD so that client checking for the
+"lost update problem" as part of a PUT isn't thrown off.
+I'm not sure that one can specify "degrees of SHOULD" (:-),
+but certainly one could mention the negative effect that violating
+this SHOULD has on caching clients.
+One thing I was concerned about is resources whose GET output changes
+often in hard to predict ways. For such live resources, the server
+might chose to change the ETAG continuously rather than try to track
+if the GET output has changed. If this is a red-herring, let me know.
+Yes, this is a red-herring (and even if it weren't, it is an HTTP-1.1 issue,
+not a WebDAV issue. Whether or not such a server choses to return
+a continuously updated ETAG, or no ETAG at all is just a server choice.
+Upon initial blush, I'd think that this means that "lost-update-checking"
+will always fail. But I think the answer to that is, you don't do a PUT
+against the live resource.
+I don't think we need to (or should) make such a statement. You could
+have a time-of-day resource that is live and continuously updated,
+but which allows a PUT to reset the time. You of course wouldn't
+use an If-Match etag with such an update request.
+You should do your PUT/PROPPATCH requests
+against source resources because they don't have this behavior.
+That will certainly be the common case, but I don't see that we have
+to say anything to that effect.
+Cheers,
+Geoff
+Are servers commonly expected to keep GET on a source resource bitwise
+identical with the last PUT? It seemed transcoding, canonicalizing,
+or other postprocessing at PUT time would be expected to routinely
+change strong ETags (in fact we do that sort of thing to deter abuse
+of a free hosting service). Are common clients unable to accomodate
+this?
+Am Montag den, 29. April 2002, um 19:49, schrieb Erik Seaberg:
+Not at all. Etags are no CRC on the content - a client cannot
+calculate an ETag before the PUT.
+Etags are not to be touched by caching proxies. With transcoding
+proxies,
+I'm not sure what they should do.
+To answer your question: I don't think that any plain HTTP or WebDAV
+client will be confused by rapidly changing Etags as such.
+However, the other side of the coin is that it makes sense for editable
+content (say a PDF document) to keep their ETag between PUTs. Clients
+can then use the ETag (and are indeed encouraged to do this) to check
+for unexpected changes to the document they are about to replace.
+//Stefan
+This is a really good point:
+At risk of belaboring the obvious, I'd like to add that clients SHOULD check
+the ETag when doing a PUT request (it's just one extra header). This should
+be done even if the client things they've locked the file because locks can
+go away or (although wrongly) be used by another process owned by the same
+user.
+Thus, if clients SHOULD check the ETag before putting the file, it makes it
+even more important for servers not to change the ETag unless the contents
+have actually changed. Changing the ETag when the body is unchanged could
+result in a poor user experience, if their application has to pop up a
+dialog or return an error saying "The file you are trying to save MAY have
+been changed. Do you want to save your changes anyway?"
+lisa

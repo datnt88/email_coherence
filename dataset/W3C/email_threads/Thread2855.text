@@ -1,0 +1,282 @@
+To the HTTP WG from the IPP WG:
+I've tried to post this twice before, but it never makes it into the
+archives at
+or
+The IPP WG would really like clarification on this point: Is the intent of
+the HTTP/1.1 spec to say that an HTTP/1.1 server MAY reject any request
+without a defined Content-Length? This would imply that a conformant
+HTTP/1.1 server MAY reject any request with the "chunked" transfer-coding.
+-Carl Kugler
+---------------------- Forwarded by Carl Kugler/Boulder/IBM on 01/12/99
+04:33 PM ---------------------------
+Carl Kugler
+01/07/99 08:27 AM
+From: Carl Kugler/Boulder/IBM@IBMUS
+Subject: Re: IPP Chunked POST: SUMMARY (Document link not converted)
+All HTTP/1.1 applications that receive entities MUST accept the
+"chunked" transfer-coding (section 3.6), thus allowing this mechanism
+to be used for messages when the message length cannot be determined
+in advance.
+Apparently that should be interpreted as "MUST accept the 'chunked'
+TRANSFER-CODING, but NEED NOT accept REQUESTs with that transfer-coding."
+Correct - all HTTP 1.1 servers must be able to process requests encoded
+as chunked data, but they are still allowed to refuse the request for
+other reasons.
+To me, the presence of the 411 status code means that an HTTP/1.1 server
+MAY refuse to accept a request for the specific reason that entity body is
+encoded with the "chunked" transfer-coding:
+411 Length Required
+The server refuses to accept the request without a defined Content-Length.
+The client MAY repeat the request if it adds a valid Content-Length header
+field containing the length of the message-body in the request message.
+-Carl
+I don't know who can provide any sort of authoritative response - don't
+take mine as being 'from the HTTP WG'; I'm just another HTTP server
+vendor.
+First, I think that the note Harry Lewis sent titled "IPP Chunking
+Explanation" [1] sums it up pretty well. An HTTP server certainly has the
+option of using the "Length Required" code for whatever reason it wants
+to. My own judgement would be that a printer design that did not allow for
+very large inputs of indeterminate length would be a poor one, and as a
+result I would not choose an HTTP layer implementation that restricted me
+to CGI.
+[1] 872566FF.0013A85F.00@d53mta05h.boulder.ibm.com
+(Can't seem to find a web-accessible ipp list archive...)
+Scott Lawrence Director of R &amp; D lawrence@agranat.com
+Agranat Systems, Inc. Embedded Web Technology http://www.agranat.com/
+Yes. A conformant HTTP/1.1 server MAY reject any request for any reason,
+just one of them being 411 Length Required. There would be no reason to
+define 411 if it could never be used by a conformant server. The wording
+in the spec is poor -- it should have said that an HTTP/1.1 application
+is required to understand the "chunked" transfer-coding, not accept it,
+since it is referring to message parsing and not the response status.
+Why is this necessary? Because an Internet protocol cannot require a
+server to accept denial of service attacks.
+....Roy
+Thanks, Roy.
+I'd like to propose that the wording be clarified in the spec. I have
+encountered servers that "accept" a chunked POST with 200 (OK) and then
+silently discard the message body, passing a zero-length entity-body to the
+service layer (CGI or servlet), so I think some implementors are
+misinterpreting the current wording.
+I propose adding something along these lines:
+"If a server disallows message bodies encoded with the chunked
+transfer-coding in requests to some resource, it MUST return an error code
+in the response to such requests. If this is the primary reason for
+rejecting a request, the response MUST contain the 411 (Length Required)
+error code."
+Also, this sentence should be reworded:
+Section 4.4, Message Length:
+All HTTP/1.1 applications that receive entities MUST accept the ?chunked?
+transfer-coding (section 3.6), thus allowing this mechanism to be used for
+messages when the message length cannot be determined in advance.
+becomes something like:
+All HTTP/1.1 applications that receive entities MUST understand the
+?chunked? transfer-coding (section 3.6), thus allowing this mechanism to be
+used for messages when the message length cannot be determined in advance.
+This does NOT mean that servers must accept messages containing bodies
+encoded with the chunked transfer-coding.
+-Carl
+"Roy T. Fielding" fielding@kiwi.ics.uci.edu on 01/22/99 10:54:56 AM
+Subject: Re: Resend: Re: IPP Chunked POST: SUMMARY
+of
+Yes. A conformant HTTP/1.1 server MAY reject any request for any reason,
+just one of them being 411 Length Required. There would be no reason to
+define 411 if it could never be used by a conformant server. The wording
+in the spec is poor -- it should have said that an HTTP/1.1 application
+is required to understand the "chunked" transfer-coding, not accept it,
+since it is referring to message parsing and not the response status.
+Why is this necessary? Because an Internet protocol cannot require a
+server to accept denial of service attacks.
+....Roy
+Roy and Carl,
+I am now quite worried that there may be many cases of HTTP servers refusing
+to accept chunked POST requests. Rejection is not just because of CGI
+scripts. Apparently, denial of service is a reason that a conforming
+HTTP/1.1 server might reject chunked encoding POST. Doesn't such rejection
+jeopardize interoperability with IPP clients that send chunked POST
+requests?
+First, I'd like to understand more about such denial of service, since I
+would think that a server would just timeout if the client didn't send the
+next chunk in a reasonable amount of time. Also if the client sent too much
+data with multiple chunks, the server could reject the next chunk with the
+413 error code. So I don't understand the denial of service reason to allow
+a conforming HTTP/1.1 server to reject a chunked request and am seeking
+enlightenment.
+Thanks,
+Tom
+An IPP server is not going to be a general-purpose HTTP server,
+and implementing it as a CGI script would be braindead anyway,
+so why does the fact that a general-purpose HTTP server reject
+some non-length-given POST requests matter to IPP?
+In other words, if you are already assuming that the destination
+server can handle an IPP message, why can't you assume that it can
+also handle chunked input? The fact that it isn't required by HTTP
+in general doesn't mean you can't require it for particular resources.
+Or even for any IPP gateway. Apache, for instance, includes the
+ability to parse and forward chunked input within the core server --
+it is only the mod_cgi module that won't accept it.
+The denial of service case exists for any service. Basically, the
+service needs some mechanism of rejecting a request and giving a
+reason for that rejection, preferably providing a means for the client
+to workaround the limitation if it is legitimate. The 411 and 413
+response codes describe two such reasons.
+....Roy
+That sounds like a very considered opinion, can you elucidate?
+For the record, we've implemented IPP as CGI (well, a set of C++ functions
+called by our general purpose embedded web server) and all seems to be
+running fine. I can think of many reasons why you'd want to base it on an
+existing web server, not the least of which is keeping the code size
+reasonable. I would imagine that most printer OEMs would do a lot of soul
+searching before deciding to use two separate instances of much the same
+code in a printer...
+Cheers,
+Nick Webb
+Auco, Inc.
+Roy, would implementing it as a Java servlet be braindead? Should every
+application that uses HTTP as a transport build in its own HTTP
+implementation, even if one is already available on the platform? Even in
+the future?
+-Carl
+http-wg@hplb.hpl.hp.com on 01/22/99 02:52:23 PM
+Subject: Re: Resend: Re: IPP Chunked POST: SUMMARY
+An IPP server is not going to be a general-purpose HTTP server,
+and implementing it as a CGI script would be braindead anyway,
+so why does the fact that a general-purpose HTTP server reject
+some non-length-given POST requests matter to IPP?
+In other words, if you are already assuming that the destination
+server can handle an IPP message, why can't you assume that it can
+also handle chunked input? The fact that it isn't required by HTTP
+in general doesn't mean you can't require it for particular resources.
+Or even for any IPP gateway. Apache, for instance, includes the
+ability to parse and forward chunked input within the core server --
+it is only the mod_cgi module that won't accept it.
+The denial of service case exists for any service. Basically, the
+service needs some mechanism of rejecting a request and giving a
+reason for that rejection, preferably providing a means for the client
+to workaround the limitation if it is legitimate. The 411 and 413
+response codes describe two such reasons.
+....Roy
+This discussion is getting off track. There is a problem here and it
+may well impinge on IPP. But the problem is not with the HTTP spec.
+The problem is that there is no way to use CGI with chunked message-bodies.
+This is can be viewed as a limitation of CGI (CGI's problem) or a
+limitation of the most popular implementations of HTTP (HTTP implementor's
+problem). But it is not a problem with the HTT Protocol. HTTP does
+not prevent using chunking with CGI and it is not hard to find servers
+which support this, even though the most popular ones do not.
+You might also blame the CGI protocol for not permitting the use of
+chunked input. This could only be changed in a new version of CGI.
+It is not very helpful to tell people what they want to do is braindead.
+Obviously, some uses of CGI are useful and appropriate and some are not.
+Also this really has nothing to do with denial of service which can be
+done in lots of ways more easily than using chunking.
+I am not sure what recourse people have at this point. You could try
+to persuade Apache developers to implement this feature. I am not
+sure if it would be possible to write an Apache module to do this.
+You could also try to support a new version of the CGI spec which would
+permit CGI to take chunked input. Neither of these would deal with the
+existing base of installed servers, though.
+But the one thing which does seem clear is that no change or
+clarification in the HTTP spec can can help.
+In that regard, I would suggest that a server which rejects chunked
+message-body but returns a 200 status is not in compliance with the
+spec as it stands now.
+John Franks
+john@math.nwu.edu
+That is not CGI, nor is an embedded web server general-purpose.
+Any server where you have control over the nature of the resources
+back-end is not general-purpose.
+The reason it doesn't make any sense to implement IPP via a CGI script
+is because the server is being installed specifically to listen to IPP
+requests on the IPP port, and thus doesn't need to deal with the
+multifaceted heterogenerity of resources on a general-purpose HTTP server.
+It therefore doesn't make sense to have an IPP implementation that is
+generic among many servers (the ONLY reason to ever use CGI).
+Your own implementation uses a server-specific API on a specific set
+of pre-allocated printer resources within an embedded system. That is
+exactly what I would expect of an IPP implementation, and there is no
+reason why you can't support chunked requests. My point was that it is
+silly to limit IPP capabilities to the lowest common denominator of
+existing HTTP origin servers, since IPP isn't an existing HTTP service.
+....Roy
+That depends on the servlet API.
+No application should use HTTP as a transport. If it used HTTP as HTTP,
+there wouldn't be any need for a separate implementation, but it would
+still be desirable to base the service on the best capabilities of HTTP
+and not on the characteristics that might be true of some other resources
+that are accessible via HTTP.
+....Roy
+Agreed.
+One of many is still one. It is the reason that this is hard to
+implement correctly on a general-purpose server. If it wasn't for that
+reason I would have implemented it last year for 1.2.
+A configurably limited input buffer that redirects the request body
+before calling the script could either be implemented in the core
+(where dechunking is already being done) or within a mod_cgi replacement
+(duplicates effort, but certainly do-able). OTOH, it is easier to just
+implement IPP as a module.
+Just replace mod_cgi with something that passes chunked to the script --
+it is only a one word change, but requires scripts that can parse chunked.
+Yep, since the status shouldn't be OK if the action wasn't successfully
+performed, and you can't perform a POST successfully without understanding
+the request body.
+....Roy
+Original Article: http://www.egroups.com/list/http-wg/?start=8506
+Unfortunately, the Servlet API spec is silent on the issues of
+Content-Length and chunking.
+I don't think everyone would agree with that statement. See
+Network Working Group Keith Moore
+Internet-Draft University of Tennessee
+5 August 1998 Patrik Faltstrom
+Expires: 5 February 1999 Tele2
+On the use of HTTP as a Substrate for Other Protocols
+draft-iesg-using-http-00.txt
+As an absolute statement, that's absurd. Everything done with HTTP is
+running applications. It is myoptic to claim that a CGI program is
+anything other than an application which uses HTTP as the transport.
+The CGI program in conjunction with its host HTTP server must follow
+the HTTP protocol to transport requests to the server and responses
+back.
+The issue is to define the characteristics of applications which are
+appropriate for implementation using HTTP.
+Conversely, given the availability of a high quality HTTP implementation
+for the application context, finding a need to replace that
+implementation would make me wonder if HTTP is an appropriate transport
+choice. OTH, there a lot of parameters to optimize and some
+applications may be better served with a custom HTTP implementation.
+For example, if the application is to serve web resources based on a
+RDBMS, one might make different implementation choices than if the OS file
+system is the data respository.
+Dave Morris
+I _strongly_ agree.
+Well said.
+- Chris
+Well, I WAS hoping this statement didn't cover surfing the Web:-}
+Spencer
+The Web uses HTTP as a transfer protocol, not a transport protocol.
+HTTP includes application semantics and any application that conforms
+to those semantics while using HTTP is also using it as a transfer
+protocol. Those that don't are using it as a transport protocol,
+which is just a waste of bytes.
+This is a topic for some future IETF hallway conversation, not two
+standards mailing list, so I apologize in advance for not continuing
+this further.
+....Roy
+Chunking is on the to-discuss list for CGI/1.1+. We're waiting until
+the CGI/1.1 stuff is complete before really gearing up on the next
+version. The list is currently quiet, but please feel free to
+join it; see http://Web.Golux.Com/coar/cgi/ .
+#kenP-)}
+Ken Coar http://Web.Golux.Com/coar/
+Apache Group member http://www.apache.org/
+"Apache Server for Dummies" http://Web.Golux.Com/coar/ASFD/
+Although this seems like an important clarification, I don't think
+it fits simply as an editorial change. If it's worth pursuing this
+at all, it will belong in another document (a HTTP implementation
+guide?) or in the HTTP/1.1 revision for "Standard".
+then
+to the
+code
+?chunked?
+for

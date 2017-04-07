@@ -1,0 +1,51 @@
+Seems like a feature which would really help
+web-page response time using less resources than multiple
+simultaneous connections, but it seems to have never been
+adopted.
+I know of no browser that supports it.
+What are the "GOTCHAs" that keep it from being adopted?
+The biggest one that comes to mind is fact that one
+of the responses in the pipeline may not have a content-length.
+What could be done about that?
+Doug.......................
+The latest version of Opera uses pipelining.
+Use Transfer-Encoding: chunked.
+-Carl
+Thankyou for digging that up, but does it
+mean that by a server SHOULD or MUST use self-defined message
+lengths? This doesn't seem to give the browser author any assurance
+that his pipelined requests won't be aborted by a premature connection
+close due to a no CONTENT-LENGTH response.
+Seems to me that you only pipeline after you've gotton one
+request through a connection because you don't know whether the
+other end supports persistent connections. After that first request, which
+handles the negotiation, you'd like to be able to pipeline with worry about the
+pipeline being
+cut off.
+Doug.......................
+"Carl Kugler" kugler@us.ibm.com on 04/27/2001 11:53:53 AM
+Subject: Re: Whatever happenned to HTTP 1.1 Pipelining
+I found this sentence in section 8.1.2.1, Negotation:
+In order to remain persistent, all messages on the connection MUST have a
+self-defined message length (i.e., one not defined by closure of the
+connection), as described in section 4.4.
+-Carl
+dillon@hns.com
+04/27/2001 cc:
+08:36 AM Subject: Re: Whatever happenned to
+HTTP 1.1
+Pipelining
+I naturally thought about that, but is there anything is the RFC
+that says that Transfer-Encoding: chunked SHOULD or MUST be used on
+persistent
+HTTP 1.1 connections instead of sending with no content-length?
+I don't recall seeing that.
+Doug................
+"Carl Kugler" kugler@us.ibm.com on 04/27/2001 10:22:42 AM
+Subject: Re: Whatever happenned to HTTP 1.1 Pipelining
+Use Transfer-Encoding: chunked.
+-Carl
+Then they have to resend the requsts to which they have not received
+responses. This is why only idempotent requests can be pipelined.
+You always have to worry about the possibility that the pipeline is cut
+off.

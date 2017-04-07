@@ -1,0 +1,65 @@
+This mailing list has been pretty quiet. I posed a bunch of questions
+over the past month or so, but I haven't seen resolutions. I'll
+summarize:
+1) http://www.ics.uci.edu/pub/ietf/http/hypermail/1998q2/0031.html
+(Digest)
+a) No definition for non-terminal request-digest.
+b) In Authorization, the client can omit cnonce=. If qop=auth-int
+and cnonce is omitted, should Authentication-Info in the server's
+response say 'cnonce=""', or should cnonce be omitted there, too?
+2) http://www.ics.uci.edu/pub/ietf/http/hypermail/1998q2/0035.html
+Recommending that the (Digest) nonce include Etag seems like a bad
+idea -- it makes the nonce non-reusable for other entities.
+3) http://www.ics.uci.edu/pub/ietf/http/hypermail/1998q2/0040.html
+(Digest) In a response that sends multipart/byteranges, does the
+digest-uri-value of A2 digest the MIME headers and separators?
+4) http://www.ics.uci.edu/pub/ietf/http/hypermail/1998q2/0069.html
+I think allowing TE: identity; q=0 is a bad idea. I think "identity"
+should always be allowed.
+Dave Kristol
+Should be
+request-digest = " *LHEX "
+It should be illegal to omit cnonce with qop=auth-int
+A note should say that ETag should only be used with one-time nonces.
+I would think yes.
+Paul Leach is doing the editing of this.
+John Franks
+john@math.nwu.edu
+Thanks, Dave. I was just telling Jim that we needed a revised Issues List,
+and you've gone and written one. The background focus has been on getting
+tested interoperable implementations, including implementations of Digest;
+when we have enough implementations, then some of the answers to your questions
+will be clearer.
+Larry
+I thought Jerrfey Mogul made a good point about wanting to forbid
+identity when compression would be highly desireable (as in the
+case where bandwidth is very expensive). However, I agree with
+you that since chunked encoding is _always_ acceptable it seems
+somewhat silly to disallow identity in that case. So...
+Perhaps in some cases the amount of data to send is so large that
+the receiving computer won't have enough space allocated in its
+internal representation of the content length to store the Content-
+Length header's value. ;-) I guess also that if you're thinking of
+performance, maybe the idea is that the hex representation of
+chunked transfer is more efficient to convert to binary. And then
+there's the case of an interrupted transfer. It's probably easier for a
+client to figure out which characters were received successfully in
+order to request the rest if those characters come in little chunks
+rather than one long stream...
+OK, these are a stretch.
+Adam
+Adam
+I thought Jerrfey Mogul made a good point about wanting to forbid
+identity when compression would be highly desireable (as in the
+case where bandwidth is very expensive). However, I agree with
+you that since chunked encoding is _always_ acceptable it seems
+somewhat silly to disallow identity in that case. So...
+I probably wasn't clear enough in that message. For Accept-Encoding,
+"identity; q=0" is presumably justified by the point I made, but
+I finished that message by saying "the rationale that applied to
+Accept-Encoding probably does not apply here." I.e., while I'm
+not sure I agree with Dave Kristol that "TE: identity; q=0" is a
+"bad idea", I didn't mean to imply that I thought it was necessarily
+a good idea, either.
+-Jeff
+P.S.: I've never seen my name spelled like *that* before :-)

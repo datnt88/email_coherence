@@ -1,0 +1,146 @@
+Yes, the consensus of the working group was that we would not
+use a bug in a single (albeit very widespread :-) implementation
+as a driver for this issue.
+So the current argument for removal of these resourcetype values
+is not because they interact poorly with the buggy client, but rather
+that they are not needed for any client (buggy or not).
+Cheers,
+Geoff
+From: Jim Amsden
+The reason we can't introduce new resource types for all of the
+versioning
+resources is because we have to support down-level clients that only know
+about DAV:collection. For new resources that down-level clients couldn't
+possibly know about, workspaces, activities, baselines, etc., we don't
+have this restriction. I agree with Greg and Tim. We should be as
+specific
+as we can about declared type and only compromise when required by
+interoperability considerations.
+I thought we had rather strong guidance that working around bugs in a single
+implementation was NOT recommended. Clarification, Jim?
+I'd also point out that frequently it will be OK even with buggy clients to
+introduce new resource types. For example, I don't suppose it will be that
+easy for non-versioning-aware clients to stumble across URLs of collections
+of version-histories, activities, baselines and workspaces. Not all of
+these new resources are even browsable, and they may not appear in any
+regular URL space that regular clients are expected to use.
+So I think we're real close here. Since we agree that there *may* be
+circumstances where new DAV:resourcetypes will need to be introduced
+(otherwise its a pretty useless property), then any issues with current
+servers that don't parse DAV:resourcetype properly would have to be
+addressed anyway. Given solutions to that problem, we are then faced with
+an opportunity to describe some of the more interesting static
+characteristics of the new DeltaV resources in a DAV:resourcetype as a
+convenience to client writers so they don't have to know the methods and
+properties supported by a particular type to know the type. This is of
+course not required, but since it is 1) more convenient, 2) standard OO
+practice, 3) established DAV practice, 4) solves any potential subtype
+override ambiguity problem, 5) is already (partially) in the DeltaV spec,
+and 6) fits well with our use of resource type names in the spec, it seems
+like a reasonable thing to conisder.
+I like Tim's approach of including the supertype tags in the resource type
+with the subtype name first. This shouldn't break any client that follows
+the RFC2518 convention of ignoring unknown XML tags, provides all the
+static type information needed, and makes it very easy for clients to
+check for the type they are interested in by simply using
+getAllElementsByTagName() on the DAV:resourcetype element. Clients that
+can't handle this are not following the DAV spec and should probably be
+fixed rather than forcing the protocol to work around them.
+"Clemm, Geoff" gclemm@rational.com
+Sent by: ietf-dav-versioning-request@w3.org
+06/21/2001 02:05 PM
+Subject: RE: Removing the DAV:activity and DAV:version-history and DAV:bas eline
+resource type values
+For those (likely very few) new resource types that have exactly
+the same properties and methods as an existing resource type, you would
+be free to add an additional value to the DAV:resourcetype property.
+But since none of the resources introduced by the versioning protocol
+have this characteristic (i.e. they all have a set of new properties
+or methods that they support), we needn't add new resource type values
+in the DeltaV protocol.
+Cheers,
+Geoff
+DAV:bas eline resource type values
+I agree with Geoff that *most* new resource types do result in at least
+one new method and/or property. But this is fundamentally a poor thing to
+depend on as we know there can be (and therefore probably will be)
+subtypes that don't add new methods or properties, but only override
+behavior of their superclass. By not resolving the resource type issue to
+support such situations, we may be just putting the problem off in such a
+way that it will need to be solved in some very different manner by some
+future protocol extension. This is what keeps nagging at me.
+I don't have any strong opinion, but when I saw a recent mail that listed
+about 5 values in resourcetype , it made me wonder if there was a subtype
+hierarchy for all the values listed (especially when values such as
+version-controlled/ were added) or whether they were orthogonal concepts.
+If orthogonal concepts were present, then they *could* be in separate
+properties rather than introducing the concept of sub-types etc.
+Eg:
+*could* be done as
+I am not recommending it - just raising it as an alternative. I am still
+struggling to understand all the versioning concepts flying around here
+and after reading the DeltaV draft spec! In some ways I am happy to
+see that people on this list are still trying to work out things too
+(ie - its not just me!) Mind you it also makes me a little worried that
+people are still trying sort out what basic concepts mean. And the
+complexity of it all seems quite high to me (a new comer) at the moment.
+But I guess that is why it is draft! :-) :-) :-)
+ajk
+From: Alan Kent [mailto:ajk@mds.rmit.edu.au]
+If orthogonal concepts were present, then they *could* be in separate
+properties rather than introducing the concept of sub-types etc.
+Eg:
+*could* be done as
+Yes, this is the approach that the "DAV:supported-live-property-set"
+folks are advocating. But rather than just a property whose value
+is "TRUE", we try to define a property with interesting semantics that
+characterize the resource (e.g. DAV:version contains the stable URL
+that identifies that version).
+I am not recommending it - just raising it as an alternative. I am
+still struggling to understand all the versioning concepts flying
+around here and after reading the DeltaV draft spec!
+There are never a shortage of interesting things to debate (:-). Some
+things are proposed new features or modified behavior of existing
+features. Some things are general HTTP or WebDAV issues that have
+arisen in a versioning context. Some things are questions of how
+certain desired behaviors can be exposed or requested by the existing
+protocol.
+In some ways I am happy to
+see that people on this list are still trying to work out things too
+(ie - its not just me!)
+There are always new folks on the list, so never feel shy about
+asking newbie questions ... sometimes the response will be just a
+reference to an old thread, but that just helps motivate us to
+get the FAQ written (:-).
+Mind you it also makes me a little worried that
+people are still trying sort out what basic concepts mean.
+Those are the issues that *never* get resolved (:-).
+"What is a resource?" "When should information be
+marshalled in a header or in the body?" And our current
+"What is a resource type?". These are the kinds of
+metaphysical debates that occur while there aren't any
+more concrete issues open (:-).
+And the complexity of it all seems quite high to me (a new comer)
+at the moment.
+I'd recommend starting by identifying the functionality that you want
+to expose on your server, and then figure out how you would support
+the core-versioning package (just the "version-control" feature)
+with your server. Once you have done that, you have identified
+how your server will interoperate with all core-versioning clients.
+If all of your functionality is exposed by the core-versioning
+package, then you are done, and you can ignore the rest of the versioning
+protocol.
+If you still have some interesting features you would like to expose
+in an interoperable way, decide whether you want to support the
+in-place-checkout feature or the workspace feature. (If you want to
+support both, randomly pick one to investigate first.)
+If you want to support in-place-checkout, that is included in the
+server-workspace package, so you'll also need to read up on the
+version-history and workspace features.
+If you want to support working resources, that is included in
+the client-workspace package, so you'll also need to read up on
+the update and label features.
+And finally, if you're doing heavy duty versioning, there are
+the advanced versioning features.
+Cheers,
+Geoff

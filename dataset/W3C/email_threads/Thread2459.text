@@ -1,0 +1,67 @@
+Certainly, if a message/http body part is transported through e-mail,
+it must follow e-mail rules for heading lines, line folding, line
+breaks, etc. So possible chapter 19.1 should have added to it (to
+avoid confusion) that if a message/http body part is transported
+through HTTP (in the trace) then its use of line length, line folding
+and line breaks can follow HTTP conventions, but if a message/http
+body part is transported through e-mail, then it must adhere to
+e-mail rules in this respect.
+I've always found this one of the most annoying things about how
+MIME was specified. If all message types must obey the same rules
+as an RFC 822 message, then why would you ever need more than
+message/rfc822?
+HTTP does have the ability to send proper MIME line folding, line breaks,
+etc. However, for various other reasons it might be better to use
+application/http instead, particularly when the entire message needs
+to be content-transfer-encoded in order to pass through e-mail.
+Perhaps we should change the media type, or simply define both?
+....Roy
+I agree that it is annoying. However, the minute you try and lift these
+rules you get into the area of nested encoding. Simply put, we could
+not reach consensus on a standard that allowed for this possibility.
+Even today my assessment of the present situation is that there is no chance of
+lifting these restrictions.
+Ned
+E-mail does not permit content-transfer-encoding of a multipart,
+only of individual parts, I believe.
+Jacob Palme jpalme@dsv.su.se (Stockholm University and KTH)
+for more info see URL: http://www.dsv.su.se/~jpalme
+I was only referring to single parts. The message type has its own
+encoding restrictions, which is why it may be more appropriate to
+recommend use of "application/http" even though the semantics of
+"message/http" seemed like the right choice at the time.
+This is actually fairly important, since it determines the most likely
+method of performing WebDAV operations via E-mail. The other advantage
+of "application/http" is that it can be defined as a pipeline of requests
+or a pipeline of responses.
+....Roy
+I thought the difference between message/rfc822 and message/http
+was that the outermost heading, the header immediately following
+the Content-Type:Message heading, was to be formatted and
+interpreted according to e-mail versus http rules. For example,
+a message/http header can contain an "Age:" header field, but
+such a field is undefined in a message/rfc822 heading.
+However, it is probably not permitted to include Content-Encoding
+or Transfer-Encoding in headings transported through e-mail,
+even if the heading is of type message/http, since those encoding
+format may not be permitted in e-mail?
+Jacob Palme jpalme@dsv.su.se (Stockholm University and KTH)
+for more info see URL: http://www.dsv.su.se/~jpalme
+Excerpts from mail: 2-Feb-98 Re: Issue: message/http or .. Jacob
+Palme@dsv.su.se (1058*)
+Sure, you could do that. You'd just have to encode it a layer up. If
+you had the equivalent of:
+Content-type: message/http
+Content-Transfer-Encoding: binary
+[binary data]
+and you wanted to send it through email as a message/http type, you
+could do something like this:
+Content-type: message/rfc822
+Content-Transfer-Encoding: base64
+Q29udGVudC10eXBlOiBtZXNzYWdlL2h0dHAKQ29udGVudC1UcmFuc2Zlci1FbmNvZGlu
+ZzogYmluYXJ5CgpbYmluYXJ5IGRhdGFdCg==
+What's less clear to me is *why* you'd want to do this.... -- Nathaniel
+Imagination was given to man to compensate him for what he is not;
+a sense of humor to console him for what he is. -- Francis Bacon
+Nathaniel Borenstein nsb@fv.com | FAQ &amp; PGP key:
+Chief Scientist, First Virtual Holdings | nsb+faq@nsb.fv.com

@@ -1,0 +1,218 @@
+I'd be be happy to see CHILD(N) refer to the Nth "proper" element. It is intuitive enough and psuedo-element linking can always be achieved as a type of sub-element linking instead.
+James
+What does CHILD(N) mean in mixed content? Counting pseudo-elements
+is icky to start with, but with our shakiness as to white space in
+element content, it's even shakier. James has suggested just
+bagging the whole pseudo-element handling thing. Comments?
+Does this refer just to addressing (pseudo)elements or to the whole
+question of whitespace handling?
+As we've mentioned, a parsed document may have a different number of
+pseudoelements after parsing according to whether validation is switched
+on or off. Therefore unless *that* problem is solved, I think the current
+problem is insoluble.
+Note that we can always identify mixed content even from WF documents.
+So is the question:
+should we abandon CHILD(N) completely
+OR
+should CHILD(N) be undefined if one or more elements are #PCDATA?
+I would NOT like to abandon CHILD(N) for element content. It's perfectly
+reasonable to write:
+and ask for CHILD(2). It would be very difficult if we lose this.
+P.
+Peter Murray-Rust, domestic net connection
+Virtual School of Molecular Sciences
+What does CHILD(N) mean in mixed content? Counting pseudo-elements
+is icky to start with, but with our shakiness as to white space in
+element content, it's even shakier. James has suggested just
+bagging the whole pseudo-element handling thing. Comments?
+Cheers, Tim Bray
+tbray@textuality.com http://www.textuality.com/ +1-604-708-9592
+OR
+should CHILD(N) not count children that are data
+characters/pseudo-elements (just as it ignores children that are processing
+instructions)?
+That seems like the obvious solution to me.
+James
+It should mean the n-th element (not element or pseudo-element).
+Pseudo-elements don't seem to me to buy you anything.
+Either we have sub-element addressing or we don't.
+- If we do, then we can just count/search all the data character children or
+descendants of an element: pseudo-elements aren't essential.
+- If we don't have sub-element addressing, what's the use of being able to
+address a pseudo-element if you can't address inside it?
+Either way pseudo-elements add nothing but confusion and complexity.
+James
+intuitive enough and psuedo-element linking can always be achieved as a type
+of sub-element linking instead.
+I presume you mean, element as opposed to subelement. "Proper" is an SGML
+term for an element instance which is valid by virtue of a content model, as
+opposed to by virtue of an inclusion exception -- which I presume cannot be
+what you mean, right?
+But still, how do we refer to content that isn't a whole subelement? That's
+a major subtraction of functionality.
+For example, it makes it impossible for external links to refer to anything
+that the original author didn't tag: like, pointing to a word or phrase and
+describing it as a typo, an allusion, a desired link origin, a noun, or
+whatever. Bad thing to leave out of a language, IMHO.
+Steven J. DeRose, Ph.D., Chief Scientist
+Inso Electronic Publishing Solutions
+(formerly EBT)
+From: James Clark jjc@jclark.com
+If one considers those just learning XML, particularly those coming
+from the world of HTML (where it's often tough getting across an
+understanding of the difference between tags and elements -- heck,
+most of books on the market get it wrong...), trying to promote
+'pseudo-elements' is really going to confuse many people. Even if the
+concept is understood in the abstract, how many people would be able
+to accurately count that which they can't always even see?
+Support for pseudo-elements sounds like an enormously deep hole to
+put on the learning curve. I'd drop it entirely.
+Murray
+Murray Altheim, SGML Grease Monkey altheim[@]eng.sun.com
+Member of Technical Staff, Tools Development &amp; Support
+Sun Microsystems, 2550 Garcia Ave., MS UMPK17-102, Menlo Park, CA 94043 USA
+"Give a monkey the tools and he'll build a typewriter."
+If we view that as a major deal, it's easily soluble with a hack: since
+there are only 2 cases, you merely have to represent somewhere which case
+your locators assume.
+Or (better), choose a counting algorithm that keeps locators invariant
+across the two cases: like, decide that pseudoelements consisting solely of
+whitespace just do not count. Maybe it sounds stupid, but it also looks a
+whole lot better to me than not having a solution at all.
+Steven J. DeRose, Ph.D., Chief Scientist
+Inso Electronic Publishing Solutions
+(formerly EBT)
+Yep, sorry. The confusion is magnified by the fact 'sub-element' seems to be used in this thread to mean part of an element's content (ie possibly character data).
+Yes, I agree. But it is separate from the question of what CHILD(N) means. I'd like to see CHILD(N) mean the Nth child *element* and, in addition, would like some means of addressing character data.
+For example, it makes it impossible for external links to refer to anything
+that the original author didn't tag: like, pointing to a word or phrase and
+describing it as a typo, an allusion, a desired link origin, a noun, or
+whatever. Bad thing to leave out of a language, IMHO.
+That was the very point I made in response to Tim's Link-6 post.
+James
+James K. Tauber / jtauber@jtauber.com
+Perth, Western Australia
+What reason is there to suppose that the word or phrase will be a complete
+pseudo-element? You would have to have some mechanism for addressing within
+the pseudo-element; and if you have such a mechanism you can use for
+addressing the character data directly from the containing element without
+going via a pseudo-element. Pseudo-elements are neither necessary nor
+sufficient for referring to untagged words or phrases.
+James
+RE delenda est.
+For those who came into the room late, this means that we should abandon
+SGML comaptibility with respect to whitespace, and require that application
+interfaces pass all whitespace characters \t \r \n literally in any data
+context. This would require changes to SGML to pass data in element content.
+However, that decision has been taken and I think most of us pray nightly
+that we won't revisit it, so that we won't have to run through the
+arguments again...
+Perhaps we could declare that pseudo elements are not counted at all: we
+would need a special keyword to address PCDATA, and could then treat all
+PCDATA in an element as a single string. This is unambigous, but also very
+counterintuitive:
+would have (for addressing purposes) two addressible PCDATA chunks:
+"something for effect" and "highlighted". They would be addressed as "The
+PCDATA in p and the PCDATA within hp , and could be further addressed
+into as via token numbers or offsets within the PCDATA.
+This addressing model is less obvious than the pseudo-element model, but
+(if used with some tokenization scheme) is much less sensistive to being
+put off by whitespace anomalies.
+-- David
+David Durand dgd@cs.bu.edu \ david@dynamicDiagrams.com
+Boston University Computer Science \ Sr. Analyst
+--------------------------------------------\ http://dynamicDiagrams.com/
+MAPA: mapping for the WWW \__________________________
+In message 3.0.32.19970518111401.00b18a30@pop.intergate.bc.ca Tim Bray
+The problem is, that if that is so, then CHILD(N) is useless for addressing
+PCDATA in all cases.
+Are you addressing the EMTPY tag son/ ? If so, I didn't think that we
+were proposing to lose it. The problem is only with pseudo-elements, not
+CHILD per se.
+But you raise the point that would be perfectly plausible to have markup like:
+Julie
+Joe
+Melissa
+and address "Julie" as CHILD(2).
+If we bag pseudo elements (even the way I suggested, by concatenating them
+all together), we lose that.
+Fromn you other posts, It looks as though MathML would need something
+similar to the above, to address PCDATA chunks between SEP/ s. And this
+seems a very legitimate need.
+-- David
+David Durand dgd@cs.bu.edu \ david@dynamicDiagrams.com
+Boston University Computer Science \ Sr. Analyst
+--------------------------------------------\ http://dynamicDiagrams.com/
+MAPA: mapping for the WWW \__________________________
+Yes, but it you use empty tags as separators (line TEI's "milestone tags"),
+then you can't address the things between the tags by counting.
+If you want to use separators.
+I guess you can use spans to pick two adjacent milestones and select the
+thing between them. So maybe it's not necessary, only convenient.
+-- David
+David Durand dgd@cs.bu.edu \ david@dynamicDiagrams.com
+Boston University Computer Science \ Sr. Analyst
+--------------------------------------------\ http://dynamicDiagrams.com/
+MAPA: mapping for the WWW \__________________________
+But surely the content between the empty elements may use tags, which will
+mean it's not necessarily a single pseudo-element, so pseudo-elements won't
+help. Isn't this exactly the sort of thing spans are intended for?
+James
+The other possibility is to count within all the data character
+*descendants* of an element instead of within all the data character
+children of an element. This avoids the white space anomalies but doesn't
+run into the issue you raised.
+James
+On Sun, 18 May 1997 05:38:50 -0400 (EDT) Tim Bray said:
+If I understand the postings I've seen on this topic so far, the
+argument for counting pseudo-elements is that this is currently the only
+method we have for pointing at strings within the document that are not
+themselves elements or bounded by elements.
+The arguments against are that (1) the XML white-space rules mean
+different processors may provide different child counts, which is surely
+a deal-breaker, and (2) pseudo-elements don't actually buy us anything,
+since anything we can do with them we can do with other forms of
+addressing within character data, if we have any, and if we don't have
+any then pseudo-elements only help when what we want to address happens
+to be coextensive with a pseudo-element.
+I think James Clark is right that pseudo-elements by themselves don't
+get us much; their main advantage in my view is that they allow the
+pointer to get as close to a string as possible before starting to count
+characters, bytes, or tokens. If anyone thinks it's obvious what effect
+element boundaries should have on any of these counts, I suggest they
+try discussing it in a group of three. The alleged complications and
+stickiness of pseudo-elements are child's play compared to deciding how
+to count characters across subelements.
+Because they help make it possible to minimize the scope for error in
+byte/character/token counts, and because they seem to me intuitively
+necessary, I think pseudo-elements make a lot of sense in counting
+children in the Full-SGML context. After the adoption and
+implementation of the 8879 TC, when Full-SGML parsers have the capacity
+to pass *all* white space (including the white space in element content,
+unless this got changed in Barcelona), the variability Peter Murray-Rust
+points out can go away, and XML can require all processors to pass all
+white space, even in element content.
+But I don't think it would be the end of the world if XML 1.0 did
+not count pseudo-elements as children.
+Not mentioned so far is the fact that the base specification we're
+working from defines CHILD the other way: pseudo-elements do count, in
+CHILD and other keywords of TEI extended pointers.
+Agreement with the TEI specification is not as crucial to most
+participants in the work group as agreement with 8879, but it *is*
+important to some of us. At the very least, it would be a friendly
+gesture to the TEI if we could find a way to avoid the name conflict
+that will arise if TEI pointers use CHILD in one way and XML pointers
+use it in a different way. The editors of the TEI will certainly ask
+the TEI's technical review committee to consider changing some parts of
+the TEI extended pointer notation to agree with XML's changes -- but I'd
+be grateful not to be forced into choosing between harmonization with
+XML and compatibility with the original TEI spec, particularly since
+the only strong argument for dropping pseudo-elements -- that XML's
+white-space rules allow different processors to get different counts --
+does not apply in the Full-SGML context.
+-C. M. Sperberg-McQueen
+Count me in favour of keeping psuedo-elements, and normalising
+whitespace passing rules so that DTD and DTD-less parsing produce
+exactly the same result.
+And me too.
+Bert

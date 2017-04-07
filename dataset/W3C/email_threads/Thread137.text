@@ -1,0 +1,69 @@
+4-Aug-2000 Tidy fails to tidy nested anchor elements. This bug has
+existed ever since the 24-Nov-1999 version, but it did not exist in the
+26-Jul-1999 version. By a truly amazing coincidence (especially given
+how long this bug has existed), Bjoern Hoehrmann reported this same bug
+as I was preparing this message.
+The bug appears to be in parser.c's ParseInline() function which assumes
+that anchor elements are pushed on the istack. That was once a valid
+test but not any longer. I think the following change fixes it. Note
+that a second bug must also be fixed in the immediately following if
+statement (it must check for /a end tags) to prevent an infinite loop,
+something that the first bug had prevented from happening.
+(As is always the case for me, I verified the fix in Java and translated
+it to C, but I don't have a C compiler to verify the translation.)
+*** 1170,1181 ****
+an A tag to ends any open A element
+but A href=... is mapped to /A A href=...
+! if (node- tag == tag_a &amp;&amp; !node- implicit &amp;&amp; IsPushed(lexer, node))
+/* coerce a to /a unless it has some attributes */
+! if (node- attributes == null)
+node- type = EndTag;
+ReportWarning(lexer, element, node, COERCE_TO_ENDTAG);
+PopInline(lexer, node);
+--- 1170,1182 ----
+an A tag to ends any open A element
+but A href=... is mapped to /A A href=...
+! if (node- tag == tag_a &amp;&amp; !node- implicit &amp;&amp;
+! (element- tag == tag_a || DescendantOf(element, tag_a)))
+/* coerce a to /a unless it has some attributes */
+! if (node- type != EndTag &amp;&amp; node- attributes == null)
+node- type = EndTag;
+ReportWarning(lexer, element, node, COERCE_TO_ENDTAG);
+PopInline(lexer, node);
+------------------------ Example HTML document -------------------------
+Randy
+further testings showed:
+[_] a a
+[_] pre img
+[x] pre object
+[_] pre big
+[_] pre small
+[_] pre sub
+[_] pre sup
+[_] button input
+[_] button select
+[_] button textarea
+[_] button label
+[_] button button
+[x] button form
+[x] button fieldset
+[_] button iframe
+[x] button isindex
+[x] label label
+[x] form form
+[x] means tidy handles it "correctly".
+See http://www.w3.org/TR/xhtml1/#prohibitions for more information about these
+prohibitions.
+regards,
+Bj?rn H?hrmann ? mailto:bjoern@hoehrmann.de ? http://www.bjoernsworld.de
+Thanks for the patch, I tested it and it appears to work fine.
+I also dropped the PopInline since this is now longer needed
+now that Tidy doesn't push anchors onto the inline stack.
+Regards,
+-- Dave Raggett dsr@w3.org http://www.w3.org/People/Raggett
+World Wide Web Consortium (on assignment from HP Labs)
+Many thanks for doing the tests, I will try to deal with
+these in the next release.
+Regards,
+-- Dave Raggett dsr@w3.org http://www.w3.org/People/Raggett
+World Wide Web Consortium (on assignment from HP Labs)

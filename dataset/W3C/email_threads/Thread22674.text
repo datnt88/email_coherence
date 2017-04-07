@@ -1,0 +1,68 @@
+Hi
+We are trying to generate a XML file dynamically after querying the
+database. For this we are first creating the tree structure then using
+XMLSerializer we generating the XML file. But when we try to link a xsl
+sheet using createProcessingInstruction , the instruction is not getting
+included. But the XML file is getting generated without any error . Is there
+any other way of doing this ? What should be given as target?
+Document doc =
+(Document)Class.forName("org.apache.xerces.dom.DocumentImpl").newInstance();
+doc.createProcessingInstruction("xml-stylesheet"," type=\"text/xsl\"
+href=\"http://localhost:8080/examples/jsp/XMLProject/quiz1_xsl.xsl\"");
+Regards
+Jayashree
+(Document)Class.forName("org.apache.xerces.dom.DocumentImpl").newInstance
+Don't do that; it's not only nonportable but isn't really supported.
+Instead, obtain the DOMImplmentation obect (which currently does require a
+nonportable step):
+DOMImplementation
+domImpl=org.apache.xerces.dom.DOMImplementationImpl.getDOMImplementation();
+and then use
+Document doc=domImpl.createDocument(...);
+Note that createDocument forces you to create the root element.
+Then, after you create the ProcessingInstruction node, remember to insert
+or append it as a child of some other node; otherwise it won't be part of
+your document tree. In this case, what you probably want to do is insert it
+as a child of the Document node, before the Document Element:
+ProcessingInstruction myPI = doc.createProcessingInstruction
+("xml-stylesheet"," type=\"text/xsl\"
+href=\"http://localhost:8080/examples/jsp/XMLProject/quiz1_xsl.xsl\"");
+doc.insertBefore(myPI,doc.getDocumentElement());
+Joe Kesselman / IBM Research
+Thank u. But when i give like this i am getting a compiling error
+DOMImplementation
+domImpl=org.apache.xerces.dom.DOMImplementationImpl.getDOMImplementation();
+saying DOMImplementation not found in type declaration. (i think must
+becos DOMImplementation is a interface)
+But if i change DOMImplemetation to DOMImplementationImpl this error
+is fixed but i am not able to invoke createProcessingInstruction() method.
+is there any work around for this?
+Regards
+Jayashree
+domImpl=org.apache.xerces.dom.DOMImplementationImpl.getDOMImplementation();
+it
+The line you're asking about -- retrieving the DOMImplementation object --
+is specific to a particular implementation of the DOM. Since you're asking
+about the Xerces implementation, this really belongs on the Apache
+Xerces-J mailing list.
+But I've just rechecked the current version of the Xerces code, and I
+believe the line I gave you really should work should work -- assuming, of
+course, that you have imported the DOM APIs
+import org.w3c.dom.DOMImplementation;
+DOMImplementation
+domImpl=org.apache.xerces.dom.DOMImplementationImpl.getDOMImplementation
+If you didn't do the import, try:
+org.w3c.dom.DOMImplementation
+domImpl=org.apache.xerces.dom.DOMImplementationImpl.getDOMImplementation
+Either should fix your "DOMImplementation is not found" problem.
+Joe Kesselman / IBM Research
+everything is fine. But the instruction is not getting included. The XML
+is getting
+generated with out the PI .
+domImpl=org.apache.xerces.dom.DOMImplementationImpl.getDOMImplementation
+domImpl=org.apache.xerces.dom.DOMImplementationImpl.getDOMImplementation
+I believe we've closed this one out -- combination of using
+getDocumentElement rather than trying to create a new root element, and
+using insertBefore to place the PI before the root element, seems to have
+done what was needed.
+Joe Kesselman / IBM Research

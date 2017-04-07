@@ -1,0 +1,124 @@
+1. There is a problem I mentioned earlier with literals like
+"badnumber"^^xsd:integer . They have to denote something, but they
+shouldn't denote a literal value (because they, er, don't, right?)
+The trouble is that until we go ask the datatype, RDF can't tell the
+difference between one of these and "12345"^^xsd:integer. So in the
+basic RDF MT, we need to say that typed literals denote something but
+we don't yet know even if its a literal value, so it has to be in IR,
+not in LV (as at present).
+So what do we do when we find out that it is bad? The current draft
+invents an ad-hoc thingie (a triplet) to be the value in this case,
+but that is not a good solution. Better would be to say that it
+denotes some unknown but arbitrary thing which, whatever it is, is
+not a literal value. This adds a slightly odd technical extension to
+the definition of datatyped interpretation, which will now include a
+new mapping IBL from datatyped literals to things in IR that are
+*not* in LV, which are the 'things' that the literal will denote *if*
+it is badly typed. So, just a warning, I am going to make this
+change. It actually makes the semantic rules easier to state and the
+Lbase translation more transparent.
+2. Now that subClassOf and subPropertyOf have 'iff' semantics, that
+raises a slight complication: it means that anything with an empty
+class extension, which right now includes anything that isn't a
+class, is a subclass of anything, and similarly for properties. That
+has a lot of unintuitive consequences, and I propose to remove them
+by *defining* classes to be things that are in rdfs:Class, similarly
+properties and rdf:Property, and then restricting the 'iff'
+definition of subClassOf to hold only between classes, and again
+similarly for properties.
+Summary of fix:
+IP is defined to be {x: x, I(rdf:Property) in IEXT(I(rdf:type)) }
+IC defined to be {x: x, I(rdfs:Class) in IEXT(I(rdf:type)) }
+aaa rdfs:subClassOf bbb is true iff ///I(aaa), I(bbb) are both in IC
+and /// x in ICEXT(I(aaa)) implies x in ICEXT(I(bbb))
+and similarly for subproperty
+The ///-/// marks the fix. This should not change any of the current
+rdfs closure rules (though if it wasn't done they would need
+changing.) It should have been done this way from the start, so this
+is a technical fix of a bug, in effect, and I apologize for not
+incorporating it into this draft in time.
+3. Recent changes, including the above, require several changes to
+some of the lemma proofs; these will be fixed. Herman ter Horst has
+kindly checked through the proofs in detail and made several good
+suggestions.
+4. Does everyone agree that rdfs:member rdf:type
+rdfs:ContainerMembershipProperty . ? I can go either way, but this
+will require a small tweak.
+Pat
+IHMC(850)434 8903 home
+40 South Alcaniz St.(850)202 4416 office
+FL 32501 (850)291 0667 cell
+phayes@ai.uwf.edu http://www.coginst.uwf.edu/~phayes
+s.pam@ai.uwf.edu for spam
+From: pat hayes phayes@ai.uwf.edu
+Subject: Technical tweaks to the MT, for reviewers.
+Date: Fri, 8 Nov 2002 11:47:33 -0600
+Actually, not for properties, I think, because EXT is only defined on IP.
+I actually happen to not particularly like depending on the fact that EXT
+is undefined on non-properties to make non-properties not be subPropertyOf
+every property, so I support the change for properties too. There are
+other places in the model theory where the fact that something is not
+defined is used.
+peter
+From: pat hayes phayes@ai.uwf.edu
+Subject: Technical tweaks to the MT, for reviewers.
+Date: Fri, 8 Nov 2002 11:47:33 -0600
+I think that I would prefer the interpretation of bad literals to be
+elements of LV that are not in L2V for any datatype. I think that this is
+just a stylistic preference, but there may be consequences in
+more-expressive languages (such as OWL, but I can't think of any). Perhaps
+the easiest way to go would be to require bad literals just not to denote
+anything in any datatype value space, and leave whether they are in LV
+open.
+peter
+OK, I see what you mean, but not how to do it elegantly. There is no
+way to refer to the set of things in any L2V value space..... Of
+course I could introduce one, but then what is the point of having LV
+The difference in entailments is whether we want
+aaa ppp any literal, even a bad one
+--
+aaa ppp _:xxx .
+_:xxx rdf:type rdfs:Literal .
+Right now, it does not; this works only for good literals. If we say
+it does, then is there any way to distinguish good from bad literals?
+Pat
+IHMC(850)434 8903 home
+40 South Alcaniz St.(850)202 4416 office
+FL 32501 (850)291 0667 cell
+phayes@ai.uwf.edu http://www.coginst.uwf.edu/~phayes
+s.pam@ai.uwf.edu for spam
+From: pat hayes phayes@ai.uwf.edu
+Subject: Re: Technical tweaks to the MT, for reviewers.
+Date: Fri, 8 Nov 2002 15:20:38 -0600
+Agreed. I'm not unhappy with the way you suggest, so why not go your way,
+and I'll see how to work with it in OWL. If it causes problems, we'll just
+have to figure out a solution. :-)
+peter
+Can someone point me at the rationale for having iff rather than if here?
+Hmmm... I don't know. Why do we need rdfs:ContainerMembershipProperty at
+all? I'm tempted to suggest deleting it: any reasons for not doing so
+will hopefully answer your question ;-)
+#g
+Graham Klyne
+Because without the IFF, subClassOf might not be transitive.
+Similarly subPropertyOf. Peter P-S noticed this a while back. BUt
+more generally, it seems best to nail down the sub-thingie meanings
+exactly since they are kind of basic.
+I'm not the person to ask. BUt in any case the consensus seems now to
+be that rdfs:member is not one of them.
+Pat
+IHMC(850)434 8903 home
+40 South Alcaniz St.(850)202 4416 office
+FL 32501 (850)291 0667 cell
+phayes@ai.uwf.edu http://www.coginst.uwf.edu/~phayes
+s.pam@ai.uwf.edu for spam
+Gottit, thanks. (When I asked that, I was getting confused between
+subclass and range, etc.)
+#g
+Graham Klyne
+Sender:ext pat hayes phayes@ai.uwf.edu
+1. There is a problem I mentioned earlier with literals like
+"badnumber"^^xsd:integer . They have to denote something, but they
+shouldn't denote a literal value (because they, er, don't, right?)
+How about rdf:nil ;-)
+Patrick

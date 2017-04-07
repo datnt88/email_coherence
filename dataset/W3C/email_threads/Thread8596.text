@@ -1,0 +1,66 @@
+Hello Joseph,
+I think there are still two errors in the SignatureProperties section
+(5.29 of the current editor copy of the XML-Signature working draft:
+element name='SignatureProperty'
+complexType content='mixed'
+any namespace='##other' processContents='lax' minOccurs='1'
+maxOccurs='unbounded'/
+attribute name='Target' type='uriReference' use='required'/
+attribute name='Id' type='ID' use='optional'/
+/complexType
+/element
+1. Since the content model is mixed, also a SignatureProperty Element
+with no subelements, but only textual content should be allowed.
+Therefore
+the minOccurs attribute should have a correct value of '0'
+!ELEMENT SignatureProperty %Object.ANY;
+!ATTLIST SignatureProperty
+Target CDATA #REQUIRED
+Id ID #IMPLIED
+!ENTITY % Object.ANY
+'(#PCDATA|Signature|SignatureProperties|Manifest)*'
+2. The content model for SignatureProperty according to the DTD definition
+allows
+also things like Signature and SignatureProperties, which are in the
+namespace
+of XML-Signature. This is in contradiction with the declartion of
+namespace='##other' in the schema above.
+Regards, Gregor
+Gregor Karlinger
+Phone +43 316 873 5541
+Institute for Applied Information Processing and Communications
+Austria
+Ok. Fixed.
+!ELEMENT SignatureProperty %Object.ANY;
+!ATTLIST SignatureProperty
+Target CDATA #REQUIRED
+Id ID #IMPLIED
+!ENTITY % Object.ANY
+Right. This isn't really a mistake as much as a best effort since the DTD is
+limited (and I didn't want to create too many entities) and the schema
+permits specificity and I know it wouldn't make sense just to throw a naked
+signature in SignatureProperties... I could create a SignatureProperties.ANY
+that was #PCDATA only, I could make the schema definition ##any, or leave it
+as is. What's your preference?
+Joseph Reagle Jr.
+W3C Policy Analyst mailto:reagle@w3.org
+IETF/W3C XML-Signature Co-Chair http://www.w3.org/People/Reagle/
+The schema declaration is fine. It expresses what we want, namely that
+anything is allowed except structures from the dsig namespace.
+None of the possible solutions for the DTD corresponds with this intention;
+I think the less ill one would be to declare SignatureProperty #PCDATA only,
+since it does not contradict the schema definition so obvious as the
+current content model ;-)
+Regards, Gregor
+Gregor Karlinger
+Phone +43 316 873 5541
+Institute for Applied Information Processing and Communications
+Austria
+only,
+Ok:
+!ATTLIST SignatureProperty
+Target CDATA #REQUIRED
+IdID #IMPLIED
+Joseph Reagle Jr.
+W3C Policy Analyst mailto:reagle@w3.org
+IETF/W3C XML-Signature Co-Chair http://www.w3.org/People/Reagle/

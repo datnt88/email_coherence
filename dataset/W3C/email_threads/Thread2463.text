@@ -1,0 +1,277 @@
+Here's something that has puzzled me about HTTP server
+implementations. What happens if the server encounters an error after
+it sends, say, a "200 OK" response and part of the entity body?
+Example cases include an origin server that gets a timeout from a CGI
+part way through relaying the CGI's output, or when a proxy acts as a
+pure relay and, for example, its connection to the next hop server (is
+that upstream or downstream? :-) breaks. The server has no way to
+signal to its client that the previously claimed success has now turned
+into an error.
+Dave Kristol
+One could always invent a 1xx response which says "This current response
+just went south."
+Yaron
+No, then it's too late. Because the server has already sent the
+response headers, the client would be looking for the entity body, not
+headers. My whole point was that, once the server began sending the
+entity body, there's no way for it to inform the client, "Whoops,
+things have gone bad."
+Dave Kristol
+No, then it's too late. Because the server has already sent the
+response headers, the client would be looking for the entity body, not
+headers. My whole point was that, once the server began sending the
+entity body, there's no way for it to inform the client, "Whoops,
+things have gone bad."
+First of all, note that RFC2068 requires that (section 14.14)
+It must be possible for the recipient to reliably determine
+the end of HTTP/1.1 requests containing an entity-body, e.g., because
+the request has a valid Content-Length field, uses Transfer-Encoding:
+chunked or a multipart body.
+(Perhaps that "must" should be a "MUST"?)
+So if the response headers include a Content-length field, one
+would assume that if the server runs into an error, it can terminate
+the TCP connection before sending the specified number of bytes; the
+recipient should pay attention to the discrepancy. In fact, section
+13.8 says:
+A cache that receives an incomplete response (for example, with fewer
+bytes of data than specified in a Content-Length header) may store
+the response. However, the cache MUST treat this as a partial
+response. Partial responses may be combined as described in section
+13.5.4; the result might be a full response or might still be
+partial. A cache MUST NOT return a partial response to a client
+without explicitly marking it as such, using the 206 (Partial
+Content) status code. A cache MUST NOT return a partial response
+using a status code of 200 (OK).
+I.e., the current specification seems to cover the case where
+a Content-Length doesn't match the number of bytes sent.
+I'm not sure that RFC2068 has similar language for non-caching
+clients, but it would seem reasonable to implement the same
+kind of sanity checking. (In passing, I note that at least one
+of the existing browser caches that I have used does not do so!)
+In the case of a server sending a chunked response intending to
+put the content-length in the footer (which is allowed by
+section 3.6 of RFC2068 (Transfer Codings)), it seems reasonable
+that the server could signal an error by sending a completely
+bogus Content-length. E.g., if you have sent 4096 content bytes
+before recognizing the error, send a chunk footer with
+Content-length: 1000000000000
+and the recipient should know that something is wrong. In some
+cases, the server might have to pad the chunk past the point
+where the error occurred.
+I would imagine that in some server implementations, it's hard
+to tell that a sub-process (e.g., CGI script) screwed up. But
+in a UNIX-based server, if the CGI process exits with an error
+status, then the server should presumably find some way of
+sending a bogus length value before closing the connection.
+I doubt this is possible in all cases, but we can't specify
+sloppy programming out of existence.
+-Jeff
+"Henry Sanders (Exchange)" henrysa@EXCHANGE.MICROSOFT.com pointed
+this out to me:
+Umm, where do you see this in section 3.6? I read it as saying that
+you're only allowed to send entity header fields in the footer
+which are explicitly defined as appropriate, as I don't see any
+wording anywhere explicitly defining Content-Length: as
+appropriate. I know our server doesn't check for Content-Length: in
+the footer, and I don't think our client will either.
+I may have misread this section.
+But, it says:
+The chunked encoding is ended by a zero-sized chunk followed by the
+footer, which is terminated by an empty line. The purpose of the
+footer is to provide an efficient way to supply information about an
+entity that is generated dynamically; applications MUST NOT send
+header fields in the footer which are not explicitly defined as being
+appropriate for the footer, such as Content-MD5 or future extensions
+to HTTP for digital signatures or other facilities.
+Content-length is definitely an entity-header (see section 7.1), and I
+think it is clearly "information about an entity that is generated
+dynamically" (although whether "that is generated dynamically" refers
+to the "entity" or the "information" is ambiguous).
+What's interesting is that there seem to be NO fields in RFC2068
+that are "explicitly defined as being appropriate for the footer",
+including Content-MD5. I searched the document for the word "footer",
+and (besides section 3.6) it appears in only one other section (8.2).
+There is no mention at all in the section on Content-MD5 (section 14.16).
+Does your server or client actually have a list of headers that it
+*does* allow in the footer? Where did this list come from?
+I think we have some document-editing to do. Either we have to
+remove the "MUST NOT" from section 3.6, or remove the example of
+Content-MD5, or add a list of "explicitly allowed in the footer"
+headers.
+Anyway, it seems quite reasonable to allow Content-Length to appear
+in a footer. And it seems to solve the "midcourse correction"
+problem, in most cases.
+-Jeff
+I looked at the wording in 3.6, which, after translating double negatives,
+says that applications can only send header fields in the footer if the
+header field is explicitly allowed for that purpose. I probably didn't look
+in the right place for it, but I saw no such words in 14.16 Content-MD5
+(mentioned in 3.6), though I'm sure the intent was there to use it that way.
+However, I seem to recall discussions about Content-Length as a chunked
+footer, and I seem to recall it was considered a bad idea. Presumably if it
+were present, it should be ignored, since the chunking overrides it. That's
+a long-winded way of saying I don't think your idea will work to signal a
+failure in the chunked case.
+Dave Kristol
+Around the time of the LA IETF there was some desire to remove
+footers entirely from chunked T-E. Phill Hallam objected strongly
+to this, and a compromise was reached where Content-MD5 was allowed
+in the footer for 1.1 and future versions of HTTP might allow other
+headers. The issue was considered closed for draft 04 in
+The wording has changed a bit since then (I vaguely remember that
+happening as an editorial change) , but I believe the intent is
+still the same, which is that only Content-MD5 is valid in an HTTP
+1.1 chunked footer.
+Thanks for digging this up (although the message you cite doesn't
+specifically address this issue). I probably ignored most of that
+discussion when it took place.
+I agree that the text could use some clarification. I think the
+simplest change consistent with my understanding of the intent
+would be to add a sentence to 14.16 saying "This header is allowed
+in the chunked Transfer-Encoding footer".
+That's a reasonable resolution to the confusion regarding Content-MD5.
+I'll bug Jim Gettys to add that.
+Regardless, our server
+supporting this hasn't shipped yet, and I'm willing to change it if
+there's consensus that other headers should be allowed in the
+footer.
+I'm still not sure if I agree with the sentiment conveyed by Dave Kristol,
+that
+I seem to recall discussions about Content-Length as a chunked
+footer, and I seem to recall it was considered a bad idea.
+But if the consensus is that Content-Length doesn't belong in the footer,
+then perhaps we need to define a new "footer-eligible" header that
+serves purpose that we are looking for: "Stop this response, I didn't
+mean it when I said '200' back in the header". E.g., a new header
+called "Failed:" which can convey an updated status code and message.
+E.g.,
+HTTP/1.1 200 OK
+Transfer-Encoding: Chunked
+18
+This is a complete
+0
+Failed: 500 Internal Server Error
+Just a modest proposal, of course.
+-Jeff
+It turns out that our server doesn't check for any headers in the
+footer, with a comment in the code indicating that the only footer
+defined for 1.1 is Content-MD5:, which we don't support. My recollection
+of why this was done this way was fuzzy, so I went back and checked the
+mail archives. Around the time of the LA IETF there was some desire to
+remove footers entirely from chunked T-E. Phill Hallam objected strongly
+to this, and a compromise was reached where Content-MD5 was allowed in
+the footer for 1.1 and future versions of HTTP might allow other
+headers. The issue was considered closed for draft 04 in
+wording has changed a bit since then (I vaguely remember that happening
+as an editorial change) , but I believe the intent is still the same,
+which is that only Content-MD5 is valid in an HTTP 1.1 chunked footer.
+I agree that the text could use some clarification. I think the simplest
+change consistent with my understanding of the intent would be to add a
+sentence to 14.16 saying "This header is allowed in the chunked
+Transfer-Encoding footer". Regardless, our server supporting this hasn't
+shipped yet, and I'm willing to change it if there's consensus that
+other headers should be allowed in the footer.
+Henry
+Well, independant of whether Content-Length belongs in the footer, I was
+uncomfortable with the side-effect usage proposed earlier. What you
+proposed above is close to what I was thinking of suggesting.
+An alternate less modest proposal ....
+0
+Reset-Response: xxx abcde asdl
+CRLF
+Where the xxx... is a status code and interpretation. With appropriate
+status codes (appropriate to be defined), a replacement response would
+immediately follow and might be a full error response with optional
+content. This approach appeals to me because is allows for the maximum
+amount of communication between the server and the user for problem
+understanding/ resolution.
+Yeah .... I agree ... either of these may be out of scope for the
+transition we are facting from propsed- draft.
+Dave Morris
+HS Around the time of the LA IETF there was some desire to remove
+HS footers entirely from chunked T-E. Phill Hallam objected strongly
+HS to this, and a compromise was reached where Content-MD5 was allowed
+HS in the footer for 1.1 and future versions of HTTP might allow other
+HS headers. The issue was considered closed for draft 04 in
+HS http://www.ics.uci.edu/pub/ietf/http/hypermail/1996q2/0058.html .
+HS The wording has changed a bit since then (I vaguely remember that
+HS happening as an editorial change) , but I believe the intent is
+HS still the same, which is that only Content-MD5 is valid in an HTTP
+HS 1.1 chunked footer.
+"JM" == Jeffrey Mogul mogul@pa.dec.com :
+JM Thanks for digging this up (although the message you cite doesn't
+JM specifically address this issue). I probably ignored most of that
+JM discussion when it took place.
+HS I agree that the text could use some clarification. I think the
+HS simplest change consistent with my understanding of the intent
+HS would be to add a sentence to 14.16 saying "This header is allowed
+HS in the chunked Transfer-Encoding footer".
+As I recall, there was a consensus in Memphis that the
+Authentication-Info header should be allowed in the footer, and I've
+proposed wording both to clarify the paragraph that started this
+discussion and to add explicit statements allowing both
+Authentication-Info and Content-MD5 in the footer. See:
+HS I seem to recall discussions about Content-Length as a chunked
+HS footer, and I seem to recall it was considered a bad idea.
+We did agree that Content-Length could be added by a Proxy, for what
+that is worth; it doesn't seem so different.
+JM But if the consensus is that Content-Length doesn't belong in the footer,
+JM then perhaps we need to define a new "footer-eligible" header that
+JM serves purpose that we are looking for: "Stop this response, I didn't
+JM mean it when I said '200' back in the header". E.g., a new header
+JM called "Failed:" which can convey an updated status code and message.
+Our present implementation just closes the connection without
+sending the terminating (zero-length) chunk. Browsers all seem to
+display some sort of error when you cut off a response in the middle
+if you've passed Content-Length in the header; we assume that they
+would do the same for this case.
+Scott Lawrence EmWeb Embedded Server lawrence@agranat.com
+Agranat Systems, Inc. Engineering http://www.agranat.com/
+Actually, those words were mine.
+That's different. A proxy can collect the entire chunked response and, once
+successful, can add a Content-Length header in the message headers (and eliminate
+chunking). If there's a Content-Length as a footer, then we have to decide what
+to do if that length disagrees with the entity body length gathered through
+chunking. Jeff Moguls's solution, "consider the response to be broken", is one
+choice. Another possibility is "disregard the (obviously wrong) header".
+Dave Kristol
+Our present implementation just closes the connection without
+sending the terminating (zero-length) chunk. Browsers all seem to
+display some sort of error when you cut off a response in the middle
+if you've passed Content-Length in the header; we assume that they
+would do the same for this case.
+This makes sense as long as the content that *is* received is
+non-corrupt. I guess the worrisome case is if the failing
+content-generation mechanism generates bogus content, not just
+truncated content.
+The browsers I've used, when they see a premature close for a
+non-chunked response, display the data received so far, and a "Transfer
+Interrupted!" warning. This doesn't necessarily warn the user "and by
+the way, what you already have on your screen might be bogus".
+But this is probably just "advice to client implementors", not
+something we need to put into the spec. (And I've seldom seen
+any content-generator realize when it has generated bogus data,
+although I have certainly seen enough cases where the output was
+clearly broken.)
+-Jeff
+Probably because if the server/application cares enough to know the data
+might be bogus, it has made provisions to purge the partial output and
+start over. If you've been busy generating HTML and forwarding it to a
+client and discover some kind of error condition, it is really tough in
+the general case to generate additional HTML which one can be sure will
+be seen by the user in a meaningful way. (For example, if one is in the
+middle of generating a table but the error routine doesn't close the
+table, the browser may not display the error message, etc.)
+My latest project takes the effort to queue all output until the response
+is complete. If an intermediate failure is detected. the queued output is
+purged and an error response generated.
+Dave Morris
+The only useful thing a server could say at that point is the equivalent
+of 500 Internal Server Error, which is no better than just cutting-off
+transmission of the message and closing the connection. If the message
+is properly delimited, the client should be capable of seeing that
+something is missing and act appropriately. A multiplexing HTTP should
+be capable of terminating a "thread" early without harming the rest of
+the connection, so I think trying to get HTTP/1.x to handle it would
+be a mistake.
+....Roy

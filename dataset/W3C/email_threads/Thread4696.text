@@ -1,0 +1,167 @@
+I am wondering why the following functions are not included:
+Obviously there are hundreds (thousands!) of functions that we could have
+included but have not. We have consciously tried to keep the library as
+small as possible, and in fact some people complain that it is already much
+too large compared with XPath 1.0.
+1) Equivalents to the Java indexOf() and lastIndexOf() operations on
+strings.
+A typical use case of the latter is to extract the last part of a
+path, e.g. "/this/is/my/path". In this particular case, there is a
+simple workaround, for example:
+fn:tokenize("/this/is/my/path", "/")[last()]
+This is potentially less efficient than a function implementing a
+dumb lastIndexOf() though, and there are arguably cases where you
+just need the index in the string rather than a token.
+With string handling functions, we have been guided by experience with XPath
+1.0. There are a few things that XPath 1.0 users find difficult to achieve,
+and we have plugged most of these gaps. In my experience most of the use
+cases for indexOf() in Java are so that you can then use substring() to do
+the equivalent of XPath's substring-before() and substring-after(). More
+complex string processing in XPath 1.0 requires recursive user-written
+functions, but from what I can see this will very rarely be needed in XPath
+2.0. If you showed a use case for which there isn't a simple workaround,
+your case would be more convincing. If the worst comes to the worst, you can
+write indexOf yourself using string-to-unicode and unicode-to-string.
+2) A regexp function that simply returns a sequence of matching
+groups. I know that XSLT 2.0 provides xsl:analyze-string which
+provides advanced matching functionality, but given the
+presence of
+fn:matches, fn:replace and fn:tokenize in XPath, there is room for
+such a function in XPath itself.
+Can you provide a use case?
+3) There is fn:escape-uri, but no unescape-uri. Java for example
+provides an URLDecoder and an URLEncoder.
+This has been requested before, but I'm not aware of any context where
+unescaped URIs (which are not URIs at all, of course) are needed. Do you
+know of such a context?
+Michael Kay
+I guess the approach I would have chosen would have been to look at
+existing libraries, for example the Java String and Pattern/Matcher
+classes, and try to match the functionality available there (which is
+there most of the time for a reason).
+While substring-before() and substring-after() are useful and mirror
+each other, they both start searching at the beginning of the
+string. Java's lastIndexOf() starts searching at the end of the
+string. I am not particularly looking for functions returning the
+position of the searched substring, and I would be happy to have a
+substring-before() and substring-after() that can also start from the
+end of the string. In my experience cases where you need to search
+from the end are almost as frequent as cases where you need to search
+from the beginning.
+2) A regexp function that simply returns a sequence of matching
+groups. I know that XSLT 2.0 provides xsl:analyze-string which
+provides advanced matching functionality, but given the presence of
+fn:matches, fn:replace and fn:tokenize in XPath, there is room for
+such a function in XPath itself.
+Sure. Let's say my regexp is:
+"/some-path/([0-9]*)/xyz/([0-9]*)"
+I want to extract the first group and the second group. Java's Matcher
+class gives you access to the matched groups by index, e.g. if my
+input string is "/some-path/1234/xyz/12", the first group will return
+"1234" and the second group "12". In Java you access them with
+matcher.group(0) and matcher.group(1).
+The function would looke like this:
+fn:matching-groups($input as xs:string?,
+$pattern as xs:string) as xs:string*
+3) There is fn:escape-uri, but no unescape-uri. Java for example
+provides an URLDecoder and an URLEncoder.
+The idea is to be able to decode an already encoded ("escaped" in the
+current terminology) URI. If you receive a query string from a Web
+browser, you may need to decode its parameters. Typically this task is
+done by your Web server, but your application may happen to have to
+handle non-decoded URI parameters. In addition to this, there is a
+reason of symmetry: if you provide a function to encode, you may as
+well provide a function to decode.
+-Erik
+From: public-qt-comments-request@w3.org [mailto:public-qt-comments-
+request@w3.org] On Behalf Of Erik Bruchez
+Sent: Tuesday, October 14, 2003 12:47 PM
+Subject: Re: Missing functions in XQuery 1.0 and XPath 2.0 Functions
+and O
+perators
+could
+So let's all just implement the functions of XPath 1.0 (since we need
+them for backwards-compatibility). Then, should we use the Perl
+functions, or the Java functions, or the C/C++/C# functions, or the
+SQL-functions or the EXSLT functions and/or...
+The point is that we attempt to design a function library that provides
+the minimal support necessary to provide interoperability among
+implementation. If you add too many functions, you will not get achieve
+that and you will add to the delay of the spec...
+Note that there is nothing that forbids us to add more functions later
+or encourages implementers to provide additional functions in their
+implementation which then can be used to gather information about their
+usefulness. This then can be used to determine future extensions of the
+function library...
+Best regards
+Michael
+Remember that I am just talking about functions operating on strings
+here. But yes, of course, ideally one should look at all of those
+languages and libraries. There will be a lot of overlap between all
+those anyway.
+Sure. String functions are usually quite easy to implement though, and
+I doubt that it would be a huge obstacle to building interoperable
+implementations to add a couple of string functions.
+But the usefulness of many functions can be already determined by
+looking at what's available in existing function libraries. Take XPath
+1.0 for example. It has a starts-with() function, but no
+ends-with(). Maybe somebody used that argument back in 1998 / 1999
+that if you added ends-with(), the spec would be delayed and that it
+would limit interoperability, and that ends-with() is after all not
+that useful a function anyway. But I think that even at the time
+(almost the prehistory of XML ;-) it was possible to foresee that such
+a function would be useful, and it would have been possible to build a
+decent string function library in 1.0 without too much hassle by just
+looking at what was already in the Java API, for example. All I am
+doing here is to try to avoid repeating the same mistake and then to
+be stuck for another 4 years with a lacking function library.
+That's for the theory. Note that I find the current selection of
+functions in XPath 2.0 quite good already, but some holes are
+questionable, which was the point of my initial comment.
+-Erik
+speaking personally (i.e. without any W3C hats on!) I find this
+use case compelling -- I have always found it frustrating when
+languages add simple regexp matching without this, especially as
+every regexp library I've ever used at the programming language
+level provides the functionality.
+There are lots of functions one might want -- I've often wanted
+"ends-with" for looking at file extensions in XSLT, for example,
+but implemented one myself as a named template.
+On decoding URLs and a QUERY_SRING or QUERY_PATH, I suspect you'd
+also want access to environment variables in order to access the
+query in the first place, and that opens a whole new can of worms.
+So, my take is I agree about the regexp function, but not so much
+about unescaping URIs and splitting out parameters, I think.
+Best,
+Liam
+Liam Quin, W3C XML Activity Lead, liam at w3.org, http://www.w3.org/People/Quin/
+We are 100% in agreement about this one.
+Absolutely not! I am simply talking about transforming or querying
+documents containing encoded URLs. URL encoding and decoding functions
+fit perfectly in a functional language as they do not have any side
+effect. This is true for the current fn:escape-url(), and would be
+true for fn:unescape-url() (or whatever it is called).
+This is a scenario I hit recently: A Web form based on XForms allows
+the user to enter an URI, possibly with encoded query parameters, for
+example:
+%2Fhome%2Fthread.jsp%3Fthread_id%3D21921
+That form is submitted. An XForms instance containing that URI is
+created, and looks like this:
+my-uri http://example.org/rss?url=http%3A%2F%2Fwww.theserverside.com\
+%2Fhome%2Fthread.jsp%3Fthread_id%3D21921 /my-uri
+Now, assume you want to process the XForms instance using XSLT or
+XQuery (that's what we typically do in the product my company is
+developing), and that you would like to decode the URL. You can easily
+parse the string with regexps, with fn:tokenize() for example, and
+obtain the value of the "url" parameter:
+http%3A%2F%2Fwww.theserverside.com%2Fhome%2Fthread.jsp%3Fthread_id%3D21921
+Then you need a function to decode it and get the original URL:
+Somebody must have argued for the presence of fn:escape-url(). I argue
+for the presence of the inverse function, both for reasons of
+usefulness and of symmetry.
+-Erik
+Thanks, that use case clearly shows me what you mean, and I now see
+why you want this feature.
+Liam
+Liam Quin, W3C XML Activity Lead,
+liam at w3.org, http://www.w3.org/People/Quin/

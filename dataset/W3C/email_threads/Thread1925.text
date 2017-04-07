@@ -1,0 +1,249 @@
+The issue comes up of how to use the return from the server;
+traditionally, most protocols just use the TCP stream to return
+responses and/or errors, and you can't interspearse other traffic over
+the return channel.
+This was my question. From your description in the BOF, it seemed to me
+that HTTP needed an out of band (OOB) channel, what you called call back
+channel. Currently, TCP does not have such a thing. By OOB channel, I
+mean a stream which is not constrained by the original TCP stream. This
+means data sent/received in the OOB channel is independently handled. My
+question is if there is such a OOB channel, how it will be used?
+Once you have a multiplexing layer that enables its use, if the server
+needs to call back the client, this is easy and much faster to do over
+an existing TCP connection than establishing a new TCP connection, which
+saves packets, the round trip times to establish a connection, and it may
+not even be possible to establish a separate TCP connection (think about
+how firewalls work.
+Mutiplexing is not what I really meant. By multiplexing several application
+streams over a single TCP stream, all those streams are still constrained by
+the single TCP stream. The constraints are the result of TCP's requirement
+of in-order delivery of segments. An OOB channel does not have this problem.
+You may ask about all those congestion control/avoidance, timer, ... of the
+OOB channel. But I think we need to understand if such an OOB channel is
+useful, and how it is going to be used before we can decide how those things
+are to be handled, hence my original questions. I want to know if my
+understanding of the requirement is correct.
+If the OOB channel is only used for a small amount of "expedited" data, the
+whole problem can be much more easily solved in the existing TCP with some
+modifications. But if the OOB channel is going to be used just like another
+TCP stream, it is probably not possible because what you want is really 2
+streams.
+If you are doing a distributed object system on top, your natural programming
+model is to send object references around that get called; method invocations
+in this sense often invert client and server to get thie jobs done. We exploi
+t
+this in the prototype HTTP-NG implementation; if there is a callback to
+an object on the "client", it goes over a new session we establish
+in the MUX over the same TCP connection, rather than establishing a new
+connection, saving a connection establishment (with the multiple packets
+and RTT's as a result). As RTT's are large in the Internet, this is a major
+win for many uses.
+Going a level lower, does this kind of call back require a substanial amount
+of data being sent? By substanial, I mean more than 1 or 2 TCP segments. In
+today's Internet, you may assume 1 TCP segment can take about 1 KB data.
+And about the most commonly asked for feature of the Web is some way to
+provide notifications. I've had people describe to me amazingly gross
+ways of doing really ugly things inside of HTTP to do this. Yuk....
+By notification, did you mean the server wanted to send some control data
+while it was still busy sending response data to the client?
+Can you also explain your requirements about getting more info from TCP? I
+guess this was what you meant by a better socket API. Please correct me if
+this is not what you meant.
+K. Poon.
+kcpoon@eng.sun.com
+The issue comes up of how to use the return from the server;
+traditionally, most protocols just use the TCP stream to return
+responses and/or errors, and you can't interspearse other traffic over
+the return channel.
+The WebMux model is more symmetric than what I think you are referring to
+with your OOB channel. For example, I expect that in many cases, the role
+of the server and client will simply swap so that the server can initiate a
+new channel to the client and send a request. There should be no
+constraints on the amount of data going in either direction.
+Jim mentions some scenarios where this is useful. Another example is an
+inter-cache communication where two caches can cooperate as two peers in a
+Web of caches and not only as a downstream vs. upstream cache.
+Maybe your question is really whether we need to be able to prioritize
+streams either from the client to the server or the other way. In fact, we
+have been discussing this as there are several scenarios where this comes
+up in typical Web applications. My feeling is that it should be done at a
+higher layer and not try and deal with it in neither TCP nor WebMux.
+Note that there is no reason why bidirectionality can't be done in TCP
+already and if peers can reuse state then this may be just as efficient as
+what we are attempting to do in WebMux. I don't believe that the firewall
+argument is useful here as I can't see why firewall administrators should
+be more willing to have outgoing Mux channels than outgoing TCP
+connections. However, I don't think your question is whether WebMux can be
+done completely in TCP (in fact it can't) so I will not dive into this
+discussion here.
+Yes, this is what we have in mind. When we implemented HTTP/1.1 with
+persistent connections, pipelining, and output buffering, it would have
+been extremely useful for us to have had access to segment sizes, timers,
+etc. The best we can do for now is to guess these parameters.
+Henrik
+Henrik Frystyk Nielsen,
+World Wide Web Consortium
+From: Henrik Frystyk Nielsen frystyk@w3.org
+Date: Sun, 13 Dec 1998 18:08:13 -0500
+Subject: Re: Some clarifications
+The issue comes up of how to use the return from the server;
+traditionally, most protocols just use the TCP stream to return
+responses and/or errors, and you can't interspearse other traffic over
+the return channel.
+This kind of call back is common in distributed object systems.
+Good example.
+The issue is one of initiation: a firewall admin is much more comfortable
+if the application is known to have been started on behalf of someone
+inside the firewall. (I speak as one once upon a time responsible for
+Digital's major Web firewall relay). The information a firewall
+admin most wants/needs are:
+o who is making the request.
+o what protocol is being relayed (so that it can be verified that
+that is actually being used).
+o what type of content is being transferred.
+Mux makes a firewall only slightly harder to engineer, and it provides
+at least as good identification of what protocol(s) are in use.
+And there are times one really wants such information.
+For example, say you have a highly interactive application.
+Most socket buffers are quite large, and you can have many seconds
+of data "stuck" in the socket buffers. If the bandwidth observed is
+low, you may really want/need to avoid writing (committing to transmission)
+data into the socket buffers.
+But the socket interface currently hides the information required for
+an application to adapt its behavior.
+We plan to write up a note to circulate what problems we have using
+TCP and the problems we have with the current socket interface.
+- Jim
+I misunderstood what you guys mentioned in the BOF... I was wondering what
+Jim's callback channel was. Since TCP stream is bidirectional, I thought
+Jim was asking for some channel which expedited data could be sent, outside
+the original TCP stream. So I guess what he was asking for was a mux.
+I don't think it is very easy. For one thing, unless you use T/TCP, you
+need to pay the initial 3-way handshake cost when opening multiple TCP
+connections to the same host. Sharing window (congestion and send) info
+among multiple TCP connections need a lot of thoughts. Note that a lot of
+existing implementations already have some form of state sharing. RTT, RTT
+variance, cong window threshold, and MSS info are shared and are used to
+initialize TCP connections. But this does not solve the problem you are
+talking about.
+BTW, a mux over TCP means that if a packet of one session is dropped, all
+packets from other sessions, depending on the window size, may have to be
+delayed until the dropped packet is recovered. With multiple TCP streams,
+this is not a problem. But to me, a mux over TCP is easier to understand
+and implement than sharing TCP states (correctly) and let TCP do the work
+(correctly again).
+So I guess you guys want an API which gets info like netstat does. BTW,
+the TCP_MAXSEG socket option gives you the segment size. It is implemented
+in many TCP stacks. Maybe people on this mailing can write a document which
+lists those info needed and propose to have them added to socket API.
+K. Poon.
+kcpoon@eng.sun.com
+Please do so. The worry I have is how an application is going to use
+those info. An app can use it wisely while another app may abuse it.
+An app may choose to open another connection to speed up a transfer
+when it sees RTO going up (which implies retransmissions), not knowing
+that this may cause more congestion. But in some cases, this allows
+the app to get a larger share of bandwidth, as in HTTP 1.0.
+In writing such a document, please include a somewhat detailed analysis
+of how the extra info will be used and what benefits they can bring to
+an app.
+K. Poon.
+kcpoon@eng.sun.com
+From: Kacheong Poon Kacheong.Poon@eng.sun.com
+Date: Mon, 14 Dec 1998 19:18:19 -0800 (PST)
+Subject: Re: Some clarifications
+No, I wasn't asking for expedited data, though a mux layer can be used
+that way by the multiplexing code having some notion of priority and
+scheduling some high priority message before data on other mux sessions.
+Yes, MUX is a form of fate sharing, so that other channels may be blocked
+waiting for the recovery of the underlying TCP.
+On the other hand, by putting everything into a single (or few) TCP
+connections, you are much more likely to get the congestion information
+"right", and be running TCP in the steady-state, rather than searching
+for the point at which congestion is encountered, causing the initial
+packet drop.
+The big problem I see is if a second packet gets dropped, and so you do
+a long time out before trying to restart. This "stalled connection" is
+so painful that human behavior is to abort the connection and restart it
+(the infamous "stop" button on a browser, followed by "reload" on the
+browser). Again, better to throw away and reestablish a single TCP connection
+than N of them, the current situation.
+It is the second packet drop with is a killer, not the first (due to fast
+restart). If something could be done to avoid such a long timeout to
+recover after a second packet drop, this would be goodness.
+Without real experience with deployed applications, it isn't clear what
+the consequences of this fate sharing are in practice.
+Thanks for the pointer; there is other information we'd like as well.
+Henrik and I hope to get something together for the end-to-end list by
+early in January (time between now and the holidays is short).
+- Jim
+From: Kacheong Poon Kacheong.Poon@eng.sun.com
+Date: Mon, 14 Dec 1998 19:29:52 -0800 (PST)
+Subject: Re: Some clarifications
+Hiding the information doesn't mean they won't abuse the priviledge in
+any case. This worry is specious, in my view.
+It is not clear that in fact they get more bandwidth in practice; multiple
+connections did allow them to at least keep a modem line busier.
+In our experience, we're able to get higher performance over a single
+connection than exisiting implementations have gotten over 4 connections
+(see our SIGCOMM paper, and more recent tests we need to go into further
+has our Amaya browser beating IE and Netscape over a single connection).
+Of course...
+- Jim
+By second packet drop, did you mean a retransmitted packet got dropped?
+If a retransmitted packet got dropped, it will cause a TCP timeout. But
+if what you meant was 2 packets got dropped in a single window, either
+NewReno or SACK can recover from it without causing a timeout. I think
+now many implementations have both.
+One area it will help is because of the long train of packets, fast
+retransmit/recovery or SACK can be invoked to recover from packet loss.
+This is not true if there are only a few packets in transit, which will not
+trigger enough duplicate ACKs to invoke those recovery mechanisms.
+From TCP's point of view, this is a single stream. So all our understandings
+of TCP's congestion and loss recovery behaviors still apply. OTOH, if
+we use TCP state sharing, it is not clear how multiple streams to the
+same host will react to those network events.
+The only implementation I know of which has this TCP state sharing is
+from the Berkeley folks. Their simulation results look good. But since
+the shared state structure is accessed by all TCP connections to the
+same host whenever a packet is sent or received, it will not scale in real
+world.
+So I think having a mux over TCP is a better solution to your problem in the
+meantime. I guess this is what you guys think too...
+K. Poon.
+kcpoon@eng.sun.com
+No, I am not against letting applications know more about the connection
+state. But I want to point out that this can also give "bad" apps more
+info to abuse the network in ways that are more detrimental than they
+are doing today.
+The results in your paper may not apply here. Firstly, I think we are
+talking about a general mux over TCP, not HTTP specific. So the pipelining
+and compression techniques may not be applied because the mux does not know
+about the application's transfer behavior so it cannot tune its behavior.
+Suppose the app knows about the mux, it also may not be able to tune its
+transfer behavior to fit the model. Not all apps are like HTTP.
+Secondly, probably the only test case in your paper which may show the
+unfairness of multiple TCP streams is the high bandwidth/high latency test.
+The reason is that this is the case where those connections pass through
+links which are shared by other network traffic. In this case, to show
+that using more connections do not let an app get more bandwidth, you need
+to compare HTTP 1.0 results using, say 2 and 4, connections. Showing
+HTTP 1.1 is better just tells us that HTTP 1.1 is better than 1.0. It
+does not really tell us about performance implication of multiple TCP
+connections.
+As I mentioned in my previous mail, a long train (I also imply larger window
+here) of packets helps in recovering packet loss. If HTTP 1.0's transfer
+size is small in your tests, a packet loss may cause a timeout. This can have
+a big effect on the results. So for a general mux, we need to know the
+transfer size of an app before we can do any comparison. Your results may
+apply if the app we are talking about has similar transfer size as HTTP 1.0.
+OTOH, a few studies have shown that an app using multiple connections
+gets an unfair advantage over an app using single connection. This has to
+do with how the congestion window is increased and how TCP reacts to packet
+loss. Using multiple connections is more aggressive in both cases. Note
+that this does not imply that the app will get better throughput. It may
+or may not, depending on the network condition. That is why I mentioned
+above that if a "bad" app knows more about the network condition, it may be
+able to abuse the network in a smarter way.
+K. Poon.
+kcpoon@eng.sun.com

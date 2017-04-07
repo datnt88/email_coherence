@@ -1,0 +1,143 @@
+F&amp;O section 7.5.4 (definition of function fn:substring-before) states:
+"If the value of $arg2 is the zero-length string, then the function returns
+the zero-length string."
+But later example is given:
+"fn:substring-before("Baloney!","") returns "Baloney!". "
+Then 7.5.5 fn:substring-after states:
+"If the value of $arg2 is the zero-length string, then the function returns
+the value of $arg1."
+I think error in definition of fn:substring-before, behavior should be the
+same as in fn:substring-after.
+"If the value of $arg2 is the zero-length string, then the function returns
+the value of $arg1."
+If definition is correct and example mistaken, I think it is bad idea to
+return zero-length string in such case.
+Best regards,
+Noe Michejda
+7th Portal S.C.
+Thanks. Personal response:
+XPath 1.0 compatibility is obviously important here. The XPath 1.0
+specifications are rather terse on these matters, but the only way you
+can interpret them consistently (and the way that implementors have
+consistently interpreted them) is that all the string-matching functions
+behave as if every string (including the zero-length string) contains a
+zero-length string right at the start. This means that the example is
+wrong, and fn:substring-before("Baloney!","") should return "".
+Michael Kay
+Note that one of the examples in 7.5.5 says:
+fn:substring-after("Who there?","") returns "Who there?".
+This does assume that each string contains the zero-length string at the
+start. OTOH, the example
+fn:substring-before("Baloney!","") returns "Baloney!".
+Seems to assume that every string contains the zero-length string at the
+end.
+We need to decide consciously whether every string implicitly contains a
+zero-length string at the start, at the end or both.
+All the best, Ashok
+[mailto:public-qt-comments-request@w3.org] On Behalf Of Kay, Michael
+Thanks. Personal response:
+XPath 1.0 compatibility is obviously important here. The XPath 1.0
+specifications are rather terse on these matters, but the only way you
+can interpret them consistently (and the way that implementors have
+consistently interpreted them) is that all the string-matching functions
+behave as if every string (including the zero-length string) contains a
+zero-length string right at the start. This means that the example is
+wrong, and fn:substring-before("Baloney!","") should return "".
+Michael Kay
+Another personal response without WG consultation:
+If every string contains the zero-length string at the beginning *and* at
+the end (which, by the way, I believe they all do), then I would expect:
+fn:substring-after("Who there?","")
+to return "Who there?". That is, the function finds the first instance of
+the zero-length string, which is the one immediately preceding "W", and
+returns everything following it, which is, of course, the remainder of the
+string, or "Who there?".
+By the same reasoning, I would expect:
+fn:substring-before("Baloney!","")
+to return "". My reasoning is that the function finds the first instance
+of the zero-length string, which is the one immediately preceding "B", and
+returns everything preceding it, which is, of course, yet another
+zero-length string, or "". (I guess that means that I believe that every
+string contains an infinite number of zero-length strings before and after
+the remaining parts of the string. But I don't want to try to count
+them...) This particular example uses a string in which no two characters
+are the same character. But surely fn:substring-before("Who there?","e")
+would return "Who th" instead of "Who ther" (that is, the search always
+starts at the beginning of the string and not at the end).
+My reasoning, by the way, for the conclusion in the previous paragraph
+derives from the F&amp;O Last Call WD, Section 7.5.4, "fn:substring-before", in
+which the first paragraph (Summary:) says "Returns the substring of the
+value of $arg1 that precedes in the value of $arg1 the first
+occurrence...". Therefore, the substring of "Baloney!" that precedes the
+FIRST occurrence of "" (the zero-length string) is "" (the zero-length
+string). Therefore, even if every string contains the zero-length string
+both at the beginning and the end (which I believe is true), it is only the
+FIRST such zero-length string that affects the result of
+fn:substring-before, not the final such zero-length string.
+I thus conclude that Mike Kay's personal response (copied below) is
+accurate and the second example in Section 7.5.4.1, "Examples", is
+incorrect. That means that I disagree with the suggestion made in Noe
+Michejda's original comment.
+But this is my personal opinion, and the WG's must make the final decisions.
+Hope this helps,
+Jim
+= Facts are facts. However, any opinions expressed are the opinions =
+= only of myself and may or may not reflect the opinions of anybody =
+= else with whom I may or may not have discussed the issues at hand. =
+Thank you for your comment. We agreed to correct both the wording and
+the example on 7.5.4 as suggested in the joint WG meeting on Jan 19.
+Please let us know if this is satisfactory.
+All the best, Ashok
+[mailto:public-qt-comments-request@w3.org] On Behalf Of Noe Michejda
+F&amp;O section 7.5.4 (definition of function fn:substring-before) states:
+"If the value of $arg2 is the zero-length string, then the function
+returns
+the zero-length string."
+But later example is given:
+"fn:substring-before("Baloney!","") returns "Baloney!". "
+Then 7.5.5 fn:substring-after states:
+"If the value of $arg2 is the zero-length string, then the function
+returns
+the value of $arg1."
+I think error in definition of fn:substring-before, behavior should be
+the
+same as in fn:substring-after.
+"If the value of $arg2 is the zero-length string, then the function
+returns
+the value of $arg1."
+If definition is correct and example mistaken, I think it is bad idea to
+return zero-length string in such case.
+Best regards,
+Noe Michejda
+7th Portal S.C.
+Basically I have feeling, that both fn:substring-before and
+fn:substring-after
+should return same value when called with zero-length string
+- either zero-length string or unchanged first argument.
+Returning first argument is little bit more natural for me.
+But it's only feeling, I don't have any strong arguments for any of above.
+Maybe small one, (but contrary to my previous suggestion): other string
+functions returns
+zero-length string, when called with empty-sequence as parameter, so maybe
+fn:substring-after should do the same.
+Anyway I don't think, that logic of having 'virtual' empty string at
+beginning or end
+of every string should be determinant here.
+Best regards,
+Noe Michejda
+7th Portal S.C.
+If you consider fn:substring-before('xxxxxxx','x') and
+fn:substring-after('xxxxxxx','x') you wouldn't expect them to
+return the same.
+(Of course, otherwise we wouldn't need two different functions)
+I think it is important, and even more, it is logical and conistent.
+Let fn:substring-after($a,$b) return $c
+Let fn:contains($b,$bb) return true
+Then I do expect that fn:contains(fn:substring-after($a,$bb), $c) is true.
+Don't you?
+In other words: if $c follows $b and $bb is in $b then $c follows $bb.
+So we would have to argue whether fn:contains($a,'') should return true.
+I think it should.
+Best regards,
+Oliver
+(not a WG member)

@@ -1,0 +1,154 @@
+Peeps,
+No one asked for this; but iTQL[1] hasn't been mentioned here before
+(or much, anyway), so I thought I'd take a look at it. But I've only
+used it briefly; I welcome comments, clarifiations, amplifications.
+Best,
+Kendall Clark
+[1] http://www.kowari.org/
+An Evaluation of Kowari's iTQL
+[itql+] iTQL supports the requirement or design objective
+[itql-] iTQL does not support the requirement or design objective
+[itql?] iTQL's support is unclear or underterminable by me
+(Here I'm collapsing the server, its protocols for data access, and
+the query language per se into the single term "iTQL", which is,
+speaking precisely, the query language only.)
+In general, iTQL looks like this:
+select columns from models where constraints order by
+variables limit count offset count ;
+Query Exemplar (optionally formatted for legibility):
+select
+$title $link $description
+from
+where
+$article http://purl.org/rss/1.0/title $title
+and
+$article http://purl.org/rss/1.0/link $link
+and
+$article http://purl.org/rss/1.0/description $description;
+Requirements
+[itql+] 3.1 RDF Graph Pattern Matching
+where
+$article http://purl.org/rss/1.0/title $title
+[itql+] 3.2 Variable Binding Results
+select
+$title $link $description
+[itql-] 3.3 Extensible Value Testing
+[itql-] 3.4 Subgraph Results
+[itql+] 3.5 Local Queries
+URIs in the from clause can be of the type file:// and the Kowari
+driver is decoupled from the various means -- RMI, SOAP, Beans -- of
+remote access.
+[itql-] 3.6 Optional Match
+[itql+] 3.7 Limited Datatype Support
+Supports  and  on doubles; 'before' and 'after' for xsd:date &amp;
+xsd:dateTime typed literals.
+[itql-] 3.8 Bookmarkable Queries
+I've seen no method for expressing an iTQL query as a URI.
+[itql+?] 3.9 Bandwidth-effificent Protocol
+Depends on whether you think RMI is efficient. But see next item.
+[itql+] 3.10 Result Limits
+"order by" specifies a sort order of the results as one or more
+variables. Not a protocol feature, per se, but could be construed as
+making results easier to handle in bandwidth-constrained use cases,
+I suppose.
+"limit" takes a positive integer that represents the maximum number
+of solutions in the query result. Recommends use of order by with
+limit, but both are optional.
+"offset" takes a positive integer that represents "the number of
+leading rows to skp at the beginning of the query result"; also
+recommended to be used with order by.
+[itql-] 4.1 Human-friendly Syntax
+IMO, of course. Warts:
+- lower case keywords are hard to read
+- unclear how to shorten URIs, if possible at all
+- seem to be some builtin qnames which use visually-busy  delimiters
+- "$" variable prefix is more Perlish than the more common "?" prefix.
+- visual looseness of the where clause bits very hard to read, though
+optional parens help a bit here
+[itql-] 4.2 Provenance
+[itql-] 4.3 Non-existent Triples
+[itql+] 4.4 Aggregate Query
+In spades. Tutorial worth quoting at length --
+Because models are sets of statements, it's meaningful to compose
+them using set operations. The FROM clause permits set union
+using the or operator and set intersection using the and
+operator, with parentheses used to control association. For
+example:
+... from rmi://site.domain.net/server1#model1 and
+rmi://site.domain.net/server1#model2 and
+would query only statements appearing in all three
+models. Distributed queries are expressed by composing models
+from different servers, for example:
+... from rmi://site.domain.net/server1#model1 or
+rmi://othersite.otherdomain.net/server2#model2 ...
+would query the combined statements of two models at different
+sites. Note that distributed queries require much more network
+traffic than queries to a single server, and are consequently
+slower.
+... from rmi://site.domain.net/server1#model1 xor
+rmi://othersite.otherdomain.net/server2#model2 ...
+in parallel would query two models at different sites forming a
+single result set. Assumes each site is capable of resolving all
+contraints delcared in the WHERE clause.
+[itql-] 4.6 Additional Semantic Information
+And naturally, I'm honor-bound to provide some of them. :)
+Extensibility is handled by considering a datatype processor to be a
+named graph. For example, the limited XML Schema support Kowari
+currently has is represented by a named graph that notionally contains
+an infinite number of statements, including 1  2, 1  3, 1  4,
+2003-12-31 is before 2004-01-01, and so forth. You extend by adding
+new datatype processors, which from the language's point of view are
+just new named graphs. The predicates appearing in the statements
+within those processors are your extended operations. There's no
+special syntactic support for extensibility; it just falls out of
+having set operations in the "from" clause and being liberal about the
+kinds of graphs the system is willing to query.
+It's true that there's no specific grammar like SeRQL's "CONSTRUCT" to
+generate subgraphs. For the commands that modify the content of a
+graph and need this functionality (the "insert" and "delete" commands),
+a "select" command is valid as a source parameter as long as it has 3
+columns that can be interpreted as triples.
+Optional matching is performed using "subquery()" aggregate functions
+in the "select" clause.
+Quite true. There is no way to express an iTQL query as a URI.
+There actually is an "alias" command in an iTQL session which functions
+similarly to the "USING" and "USING NAMESPACE" clauses in RDQL and
+SerQL respectively. The difference is that "alias" is a separate
+command from the "select" command and sets the namespace mapping on the
+session, rather than being a clause of the "select" command and being
+scoped for that command only. The rationale for doing it this way was
+that you could run a startup script to predefine all the well-known
+namespace mappings like "rdf" and "dc", rather than repeatedly
+specifying them. This does presume the existence of a stateful
+session, though. An "alias" command looks like this:
+alias http://www.w3.org/1999/02/22-rdf-syntax-ns# as rdf;
+After calling this command on the session, rdf:type would be
+equivalent to http://www.w3.org/1999/02/22-rdf-syntax-ns#type
+wherever it appeared in subsequent commands. What iTQL certainly does
+egregiously is to use the same  syntax for both URI references and
+qname abbreviations. Aliasing "http" would cause great confusion, for
+instance. Both RDQL and SeRQL do it properly, making URI refs and
+qnames lexically distinct.
+There actually aren't any built-in qnames; rather, there's just a
+default initialization script that runs a list of "alias" commands to
+predefine half a dozen common namespaces.
+The $ prefix for variables is actually based on XPath rather than Perl.
+Given an arbitrary choice, we figured it should look like other W3C
+standards. :)
+I wondered about this; but couldn't decide if that was *really*
+satisfying the requirement. I'm glad to have the record corrected, but
+I'm not sure I really understand this just yet.
+Can you say more about this, Simon? One uses a subquery as part of a
+search which may fail to match?
+I guess I should have been more clean; "alias" didn't seem to be part
+of the query language per se. It has the same effect -- and I like
+this design idea; it reminds me of the Haskell prologue -- but for
+small devices, say, it's not as helpful as USING, IMO.
+Yeah, that was one part of the syntax which is not so human-friendly,
+for met at least.
+Fair enough. :
+Thanks for correcting my mistakes!
+Best,
+Kendall
+Hmm... nifty... that's a design I don't think I've seen before.
+Dan Connolly, W3C http://www.w3.org/People/Connolly/

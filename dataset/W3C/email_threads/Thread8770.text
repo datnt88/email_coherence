@@ -1,0 +1,75 @@
+Joseph,
+Is [1] sufficient for your concerns about base64?
+[1]
+The relevant point is:
+4. what is the canonical form for base64Binary values?
+Respose: Option A: 76 characters from the base64 alphabet, then a
+newline
+sequence; repeat as needed; last line of more than 0, less than 76
+characters, also terminated by newline sequence.
+But I am not sure about the consequences of introducing a canonical form for
+base64Binary values: Is a schema validating parser enforced to report only
+the
+canonical form of the value to the application?
+* If yes, then my concerns are addressed, if the signature application is
+ENFORCED to produce the canonical form of the digest value's base64
+lexical representation.
+* In the current draft of XMLDSIG, this enforcement is not established.
+Without such an enforement, the signature will break if the creator
+of a signature does not produce the canonical representation, and if
+the validator of the signature uses a validating parser.
+* If no, my concerns are not addressed.
+Liebe Gruesse/Regards,
+DI Gregor Karlinger
+Phone +43 316 873 5541
+Institute for Applied Information Processing and Communications
+Austria
+Hi Gregor,
+As far as I (possibly we) understand it, schema-normalized values are
+*not* exposed as part of the standard XML infoset (and thus probably
+not DOM), but as part of the post schema-validation infoset, which is
+an augmentation, not a replacement, of the XML infoset.
+So, any canonical form for base64 should not affect signature processing.
+Also, there is a proposal that schema validation be an *explicit*
+transform, so the possibility of sender/recipient schema validation
+conflict (defaulted values) may be reduced. Of course, this won't
+really help in the case of same-document references.
+Merlin
+r/gregor.karlinger@iaik.at/2001.08.06/09:43:41
+Is [1] sufficient for your concerns about base64?
+[1]
+Baltimore Technologies plc will not be liable for direct, special, indirect
+or consequential damages arising from alteration of the contents of this
+message by a third party or as a result of any virus being passed on.
+In addition, certain Marketing collateral may be added from time to time to
+promote Baltimore Technologies products, services, Global e-Security or
+appearance at trade shows and conferences.
+This footnote confirms that this email message has been swept by
+Baltimore MIMEsweeper for Content Security threats, including
+computer viruses.
+This is correct unless these values where specified via a default value in
+the schema content model.
+Right, generally it won't be a problem, but since schema validation (in a few
+instances) could affect the serialized form, it should be considered a
+transform that is explicitly enumerated.
+Merlin,
+As far as I know you are using Xerces as parser for your toolkit. How do
+you deal with the related behaviour of Xerces? Xerces does not provide
+an interface for "exposing the post-schema validation infoset , beyond
+that provided by DOM or SAX;".
+So this means that if I turn on validating parsing in Xerces I get a DOM
+document with schema-normalized base64Binary values. It seems that Xerces
+does this validation not on all types. For instance, no normalization is
+done for an integer type. Currently I have not found a way to avoid this
+behaviour.
+As you state, this does help neither for same-document references nor for
+getting the octets that form the input of cryptographic signature
+validation.
+BTW, Merlin: I have not able to send you email to merlin@baltimore.ie in
+the last couple of days, since I always get back an unknown user error
+from the baltimere.ie postmaster.
+Liebe Gruesse/Regards,
+DI Gregor Karlinger
+Phone +43 316 873 5541
+Institute for Applied Information Processing and Communications
+Austria

@@ -1,0 +1,213 @@
+Why not pass the full URI in a header line? No change to the request
+line necessary, and essentially upwards compatible. Perhaps:
+Full-URI: http://foo.bar.org/index.html
+Mike Cowlishaw
+IBM UK Laboratories
+This, or some variation upon it, has been discussed several times
+on the mailing list. The most common response is that it includes
+too much extra information which would better appear in the Request-URI.
+Rather than discussing that again, let's simplify it a bit:
+Host: foo.bar.org
+since that is the only thing interesting which was left off the request.
+[Before anyone mentions it: no, the port number is not interesting].
+We should then ask ourselves why this is desirable and what it allows
+us to achieve? The only desirable aspect is that it allows a single
+IP address and port to use the same default root address for multiple
+hostnames. For example, both
+get resolved to
+If those two hostnames were intended to represent separate organizations,
+as in the case of a single server providing Internet-presence-for-hire
+(i.e., vanity hostnames), then there may be a slight political/marketing
+problem if the result was a page that required the user to select from
+all of the various home pages.
+Note that it has no other advantage, as the only non-distinguishable link
+to that server is the root. So, the next question is what would adding
+a "host" header (or the equivalent) achieve? Well, we already know that
+existing clients do not support such a header, and it would take quite a
+bit of time to get them to, so the server cannot rely on its existence
+to provide the switching mechanism among the intended home pages. Thus,
+the best that it can do is provide a supplement -- if the header is present,
+the choice is made automatically; otherwise, the user is presented with
+a "choose one of the following" default page.
+The next question is: are there any better ways of accomplishing what
+is desired? The answer is Yes and No. Yes in that just putting the
+full URI in the Request-Line achieves the same effect (plus many more
+important effects) and would be consistent with the existing protocol
+for communicating with proxies. No, because doing so will not work with
+1.0 servers and thus cannot be introduced before version 2.0.
+The final question is: Does the additional functionality justify the cost
+and effort of including the Host header in the 1.1 standard, with the
+necessarily strong recommendation that it be included with all requests?
+In my opinion, the answer to this last question is NO. Allowing a server
+to automatically choose the root URL from among the roots associated with
+multiple vanity hostnames is simply not a sufficiently important piece of
+functionality to justify its inclusion as part of the 1.x standard.
+In order for such a feature to be added to the protocol, it will have to
+justify itself externally to the standards process. In other words, if
+a sufficient number of WWW browsers and servers implement a header with the
+above syntax and semantics, that header will be added to the specification.
+When in doubt, bottom-up standardization is better than top-down.
+......Roy Fielding ICS Grad Student, University of California, Irvine USA
+No, but the fragment identifier (i.e. the #foo that may go on the end
+of a URL) could be there, and could be interesting in some cases.
+There had been some discussion of extending fragments to allow
+searches for particular strings, line references, that sort of thing;
+including it in the request line could allow servers to do
+preprocessing or only send part of the document if such is
+appropriate, which could in theory be more efficient. I don't find
+this compelling, but it is another potential advantage of sending a
+full URL.
+I wouldn't quite agree there. Other site-level conventions
+(e.g. /robots.txt, /site.idx, a file for site-level description
+information if one is made, etc.) could also benefit from this header.
+It also could permit a smoother migration of name; for example, if you
+need to change the name of your server, this header could permit the
+old and new names to be mapped together briefly but permit logging of
+which Referer: URLs are still pointing to the old name.
+That said, I'm inclined to agree that the benefits are not terribly
+overwhelming.
+- Marc
+Marc VanHeyningen URL:http://www.cs.indiana.edu/hyplan/mvanheyn.html
+Time for $.02 from the peanut gallery. The benefits are not terribly
+overwhelming, it serves only a few specific purposes, and it involves the
+addition of a single request header. Given that this has been discussed and
+requested and discussed again for the past 6 months, why not mollify the
+people who want this feature and simply add it to the spec?
+Rather than continuing to thrash this around repeatedly in e-mail, just
+write the paragraph about it in the standard and let the standards process
+finish off the discussion. One of the complaints many have about HTML and
+HTTP is that the standards process is creeping at a snail's pace, forcing
+commercial developers to strike out on their own when the standards
+"keepers" ignore or discard their requests for feature incorporation into
+the DRAFT standards.
+In the grand scheme of things, this feature requires NO modifications to
+existing servers and about a 2 line modification to clients that want to be
+compliant. Let's stop talking about it and put a strawman in the standard!
+If it turns out to be a bad idea, we can delete it. That's been done
+before. In the meantime, it'll stop complaints that the standards process
+isn't responsive and accomodate the people who want this feature.
+Chuck Shotton
+cshotton@biap.com http://www.biap.com/
+cshotton@oac.hsc.uth.tmc.edu "I am NOT here."
+According to Roy T. Fielding:
+I suspect that the ability to customize the default page based on
+hostname part of the URL is the single most requested feature from
+server maintainers. I doubt that a week goes by without a thread on
+this subject in c.i.w.providers. The practice of using multiple IP
+addresses on a single host for the sole purpose of working around this
+deficiency in the protocol is becoming increasingly common.
+Those who are critical of adding a new HTTP header just for "vanity
+addresses" should keep in mind that the likely alternative is the
+wasteful use of IP addresses just for vanity addresses.
+John Franks
+rom Roy T. Fielding:
+rom John Franks:
+Though I can't find it right now, there is actually a web page/tutorial
+devoted to using multiple IP addresses on one network interface for this
+purpose.
+Not only is it likely, it is happening quite a bit. There are plenty of
+businesses buying machines and connections exclusively to put up web
+servers, and they often want to split costs with other businesses.
+I agree with Roy that some protocol enhancement should drive the addition
+of a Host: header. It is currently possible to put more than one server at
+one address by assigning one of them a non-standard port number
+(http://www.name.dom/ and http://www.name.dom:8080/). A Host: header could
+provide the same functionality in a transparent manner. As Chuck Shotton
+mentioned, this addition would require no change to servers. The benefit
+-- allowing providers to seperate offerings into categories without making
+the user choose from a home page menu -- seems worthwhile. Not just to
+businesses.
+M. Hedlund march@europa.com
+Fortunately, the changes on each side are really minor. In fact there
+are no changes required on the server side if the request is funneled to
+a CGI script (where one would look for the "HTTP_HOST" environment
+variable).
+So, client folk, it's up to you.... do I hear any takers?
+It seems to me to be the *definition* of something easy to add - if
+semantically or systemically there are no objections to it, then browser
+authors should be encouraged to take 10 minutes to add it. In fact, I
+don't even see a terrible upgrade issue - if there's a host with multiple
+vanity hostnames going to it, and it doesn't get a Host: header, it can
+give a default page with a list of all pages, whereas if it does get a
+Host: header it can give the appropriate vanity home page.
+In some respects this gets into the need for an HTTP user agent
+definition, possibly even a numbered-level classification scheme.
+Agreed. Now if only I could find my way around X Mosaic source code...
+Brian
+brian@hotwired.com brian@hyperreal.com http://www.hotwired.com/Staff/brian/
+Well, after reading all the comments, I have come to the following
+conclusions:
+1) Too many web developers work on the weekends;
+2) Marketing has too much influence on web technology; and,
+3) There's not much I can do about either one.
+So, which one should we include in the 1.1 specification:
+Host: foo.bar.com
+or
+Orig-URI: http//foo.bar.com:8001/home/is/where/the/wallet/is.html
+Also, should it be:
+a) recommended for all requests
+b) recommended only for requests to standard URLs like / and /site.idx
+I am assuming that it will not be recommended for requests that already
+use the full URI, and that will remain the goal for 2.0. One of the things
+that we intend to require for 1.1 is that servers know their own set
+of hostnames and do the right thing if they receive a full-URI using one
+of those hostnames. That would not mean that 1.1 clients would send
+full-URIs, only that we would have some reasonable hope of doing so for 2.0.
+......Roy Fielding ICS Grad Student, University of California, Irvine USA
+Agree. (unfortunately)
+Agree!
+Disagree! You're working very hard to put together a good standard. If it
+meets the needs of developers and users and gets accepted in a timely
+fashion, this will have much more influence on the WWW than rogue
+commercial development organizations.
+As you mentioned earlier, this is all that is *required*, since everything
+else should be in the URL as received. It is certainly is easier to
+implement because no parsing is required to extract this info.
+On the other hand, this format is a little more work to parse, but contains
+valuable information that is often lost or munged when data passes through
+proxies, etc. Looking at just long-term usefulness, this version seems to
+have a greater chance at being able to support multiple, unforeseen uses.
+(it certainly makes implementing proxy servers easier...)
+Yes!
+No!
+Why not be consistent? Proxies can still munge a full URI as easily as they
+can mangle a current version. Might as well maintain it unscathed in the
+header field where the real server can grab it.
+Chuck Shotton
+cshotton@biap.com http://www.biap.com/
+cshotton@oac.hsc.uth.tmc.edu "I am NOT here."
+Host:, as it's the only unique part of the request, and we should
+definitely try to keep the amount of stuff in the request headers down.
+It should be recommended for all requests - otherwise collections of HTML
+pages will be nowhere nearly as portable.
+However, one way to reduce the number of times it has to stick Host: into
+the headers would be to do a reverse-lookup of the IP number associated
+with that Host, and if it returned the same hostname, then that must be
+the canonical hostname for that IP number and thus no Host: header is
+needed (presuming providers don't do something stupid like have multiple
+reverse DNS tables for the same IP numbers :) Just a thought.
+Brian
+brian@hotwired.com brian@hyperreal.com http://www.hotwired.com/Staff/brian/
+Date: Sun, 12 Feb 1995 12:50:45 -0800
+From: march@europa.com (M. Hedlund)
+It's even more complicated than that. I have a permanent 24 h link
+home over modem, and five machines home on my net. I've set up a web
+tree elsewhere, right at a T1 socket, but can't stick it into my named
+database for obvious reasons. I want to have www.homenet.com point to
+it (by DNS), and have the server at the T1 socket do the right thing.
+Modifying httpd to look at the header and pick the root from a config
+file would be trivial, if the information were just passed. Playing
+games with IP addresses is not an option in my case, since I doubt the
+T1 link owner will let me play around with their routers and interface
+configurations.
+Since any old Sparc-1 with 2GB disk and 32MB memory will make a
+splendid server, the expensive resource is net bandwidth. In the
+future, more and more small businesses, individuals, and organizations
+(the San Francisco Aids Foundation is trying to do something very
+close to what I'm trying to do), will buy shares in a dedicated
+off-site web server. It'll sit right next to an existing T1 socket to
+reduce telco costs
+I can't see why there's even any discussion about this. Just add the
+damn field to the spec so people can get things working.
+-- Jan Brittenson
+bson@eng.sun.com

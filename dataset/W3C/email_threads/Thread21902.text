@@ -1,0 +1,66 @@
+I got a lot done today (and tonight and early the next morning). As I have a conference call in less than 6 hours, I have to crash.
+The source in the CVS will DTD validate, schema validate, generate java code, compile and jar. The only things missing to run is the definition of a test suite (which should take all of a few minutes by capturing the output of a dir or ls depending on OS preference).
+The "junit-run" target which produces the JUnit adapter jar apparently has some problem. Probably induced by the "avalon-run" target which still works.
+I did the build with a CVS build of Ant and Xalan 2.1. Two test files would cause Xalan 2.1 to lock up (look in build.xml for excludes to see the particular names). These files could be transformed using Xalan 2.2 D9 or Saxon, however Xalan 2.2 had many problems with Ant, so it was easier just to exclude them for the time being.
+I used Sun's MSV (multischema validator, http://www.sun.com/software/xml/developers/multischema/;$sessionid$OHJQSFIAACAN3AMTA1FU5YQ) to check the tests against the schemas which will identify underdeclared variables and bad literals before starting the generation and compile steps. To run MSV:
+java -jar \msv-20010719\msv.jar build\dom1.xsd tests\level1\cases\*.xml
+I would like to compliment the active members of this mailing list for
+all the progress that has been accomplished so far. It takes a little
+bit of work to get everything to work, but it is really nice that
+(almost?) everything is automated using Ant, SED, patch, etc. I did not
+have the org.apache.testlet package available, so I added
+excludes="Avalon*.*" to the javac task in the junit-run target. By the
+way, the Avalon Development Team has decided to discontinue development
+of Testlet in favor of the JUnit testing framework (see
+to use the JUnit option for Java.
+One small issue:
+- The nodeclonenodefalse test seems to fail because the expectedResult
+list contains two Strings, while the result list contains a String and
+an Integer. This could be fixed by removing the quotes for the second
+member of expectedResult ( member 0 /member ), but it could also be
+rewritten as indicated below.
+Original test:
+getElementsByTagName interface="Document" obj="doc"
+item interface="NodeList" obj="elementList" index="1"
+var="employeeNode"/
+assertEquals actual="result" expected="expectedResult"
+Modified version:
+getElementsByTagName interface="Document" obj="doc"
+item interface="NodeList" obj="elementList" index="1"
+var="employeeNode"/
+assertEquals actual="cloneName" expected="employee"
+assertEquals actual="length" expected="0"
+The modified version asserts that the nodeName is equal to "employee"
+and that the cloned node has no children without using two lists. Maybe
+the first version was easier to generate from the original tests, but I
+would prefer the modified version for new tests, because it is shorter.
+Freek
+Behalf Of Curt Arnold
+I got a lot done today (and tonight and early the next morning). As I
+have a conference call in less than 6 hours, I have to crash.
+The source in the CVS will DTD validate, schema validate, generate java
+code, compile and jar. The only things missing to run is the definition
+of a test suite (which should take all of a few minutes by capturing the
+output of a dir or ls depending on OS preference).
+The "junit-run" target which produces the JUnit adapter jar apparently
+has some problem. Probably induced by the "avalon-run" target which
+still works.
+I did the build with a CVS build of Ant and Xalan 2.1. Two test files
+would cause Xalan 2.1 to lock up (look in build.xml for excludes to see
+the particular names). These files could be transformed using Xalan 2.2
+D9 or Saxon, however Xalan 2.2 had many problems with Ant, so it was
+easier just to exclude them for the time being.
+I used Sun's MSV (multischema validator,
+FIAACAN3AMTA1FU5YQ) to check the tests against the schemas which will
+identify underdeclared variables and bad literals before starting the
+generation and compile steps. To run MSV:
+java -jar \msv-20010719\msv.jar build\dom1.xsd tests\level1\cases\*.xml
+Okay, that is impressive. I got the test suite to build only 5 hours ago and ran out of steam before I trying to run it, and somebody replicates the build and runs it first.
+Using multiple asserts (as suggested) is definitely much preferred over building expected and results lists and then doing an assertEquals. With the multiple asserts, you will know which part failed.
+If there isn't some kind of iterative loop, then you shouldn't be using assertEquals(List,List) or assertEquals(Collection,Collection). However, when you do have an iterative loop, then those
+constructs are extremely useful. The pattern was inherited from the early NIST work which could only have one assert per test.
+While repairing some other issues, I did take the liberty of rewriting a few other places where assertEquals(Collection/List, Collection/List) were used, but I did not try to fix any others that
+compiled successfully.
+I had noticed the discontinuation of Avalon testlet development (announced 1 Aug, I believe) right after completing the Avalon testlet adapter. Definitely, JUnit was primary emphasis. I had done the
+Avalon Testlet since the Batik project were interested by the DOM test suite, but couldn't run Junit as part of their build process. I assume that Apache and JUnit have found some way to work with
+each others licenses. I apparently bungled the JUnit target when I added the Avalon code.

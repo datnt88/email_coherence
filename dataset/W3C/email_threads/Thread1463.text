@@ -1,0 +1,282 @@
+Hi,
+The Baseline Collection captures the state of resources that were in the
+Baseline-Controlled Collection when the Baseline was created or when the
+Version-Controlled Configuration checked-in.
+In my opinion the resources in the Baseline Collection should be frozen
+(since they just capture state), but, the specification only seems to
+disallow CHECKOUT of a member of this collection.
+Section 12.11 defines (in precondition
+DAV:must-not-update-baseline-collection)
+that CHECKOUT cannot be done on a member of a Baseline Collection.
+Shouldn't
+other operations, eg COPY, MOVE, PUT, DELETE, PROPPATCH also be prevented on
+members of a baseline collection?
+If these methods can be done on members of the baseline collection then
+the baseline is not stable and can be changed without checking out the
+Version-Controlled Configuration...this seems odd....
+Regards,
+Peter Raymond - MERANT
+Principal Architect (PVCS)
+WWW: http://www.merant.com
+From: Peter Raymond [mailto:Peter.Raymond@merant.com]
+The Baseline Collection captures the state of resources that were
+in the Baseline-Controlled Collection when the Baseline was created
+or when the Version-Controlled Configuration checked-in. In my
+opinion the resources in the Baseline Collection should be frozen
+(since they just capture state), but, the specification only seems
+to disallow CHECKOUT of a member of this collection.
+Yes, the intent was for the dead properties and content of the
+baseline collection and its members to be frozen. We can't really say
+what happens to live properties (e.g. a "last accessed time" property
+could change).
+Section 12.11 defines (in precondition
+DAV:must-not-update-baseline-collection) that CHECKOUT cannot be
+done on a member of a Baseline Collection. Shouldn't other
+operations, eg COPY, MOVE, PUT, DELETE, PROPPATCH also be prevented
+on members of a baseline collection?
+Since the members of a BCC are all checked-in VCR's, the only way
+they can be changed is if they are first checked-out, which is
+why it is sufficient to just disallow CHECKOUT.
+Cheers,
+Geoff
+Yes, all modifications to the baseline collection are illegal -- in many
+implementations the collection will be a 'virtual' reflection of the
+contents of the baseline. Clearly there is already the mechanism within
+DAV to disallow these methods (e.g., supported method set) but calling them
+regular version-controlled resources is misleading -- they are in no way
+'regular'.
+Regards,
+Tim Ellison
+Java Technology Centre, MP146
+IBM UK Laboratory, Hursley Park, Winchester, UK. SO21 2JN
+Peter Raymond
+m cc:
+Sent by: Subject: Legal operations on members of a Baseline
+ietf-dav-versioning-requ Collection...
+est@w3.org
+2001-09-27 10:42 AM
+Please respond to Peter
+Raymond
+Hi,
+The Baseline Collection captures the state of resources that were in the
+Baseline-Controlled Collection when the Baseline was created or when the
+Version-Controlled Configuration checked-in.
+In my opinion the resources in the Baseline Collection should be frozen
+(since they just capture state), but, the specification only seems to
+disallow CHECKOUT of a member of this collection.
+Section 12.11 defines (in precondition
+DAV:must-not-update-baseline-collection)
+that CHECKOUT cannot be done on a member of a Baseline Collection.
+Shouldn't
+other operations, eg COPY, MOVE, PUT, DELETE, PROPPATCH also be prevented
+on
+members of a baseline collection?
+If these methods can be done on members of the baseline collection then
+the baseline is not stable and can be changed without checking out the
+Version-Controlled Configuration...this seems odd....
+Regards,
+Peter Raymond - MERANT
+Principal Architect (PVCS)
+WWW: http://www.merant.com
+Hi,
+The Baseline Collection is a collection so there is nothing to stop you
+doing a PUT on that collection. Unless we explicitly have a precondition
+for PUT that says you cannot put to a baseline collection.
+Same for destination for a MOVE or COPY.
+Regards,
+Peter Raymond - MERANT
+Principal Architect (PVCS)
+WWW: http://www.merant.com
+The Baseline Collection captures the state of resources that were
+in the Baseline-Controlled Collection when the Baseline was created
+or when the Version-Controlled Configuration checked-in. In my
+opinion the resources in the Baseline Collection should be frozen
+(since they just capture state), but, the specification only seems
+to disallow CHECKOUT of a member of this collection.
+Yes, the intent was for the dead properties and content of the
+baseline collection and its members to be frozen. We can't really say
+what happens to live properties (e.g. a "last accessed time" property
+could change).
+Section 12.11 defines (in precondition
+DAV:must-not-update-baseline-collection) that CHECKOUT cannot be
+done on a member of a Baseline Collection. Shouldn't other
+operations, eg COPY, MOVE, PUT, DELETE, PROPPATCH also be prevented
+on members of a baseline collection?
+Since the members of a BCC are all checked-in VCR's, the only way
+they can be changed is if they are first checked-out, which is
+why it is sufficient to just disallow CHECKOUT.
+Cheers,
+Geoff
+The definition of the DAV:baseline-collection property states:
+"each member of this collection has the same
+DAV:checked-in version and relative name as a
+member of the baseline-controlled collection at
+the time the baseline was created"
+I believe this makes it sufficiently clear that no operations
+that would add/remove/change members of the DAV:baseline-collection
+are allowed.
+Cheers,
+Geoff
+Hi,
+The Baseline Collection is a collection so there is nothing to stop you
+doing a PUT on that collection. Unless we explicitly have a precondition
+for PUT that says you cannot put to a baseline collection.
+Same for destination for a MOVE or COPY.
+Hi,
+OK...I guess that section does make it clear.
+But, how much of the normative text should be captured in pre and post
+conditions? Without any pre or post condition to enforce the paragraph
+that you quoted do vendors have to obey that paragraph?
+Would I am getting at is that other areas where we are enforcing something
+we explicitly enforce it using pre or post conditions. But not this one.
+Regards,
+Peter Raymond - MERANT
+Principal Architect (PVCS)
+WWW: http://www.merant.com
+The definition of the DAV:baseline-collection property states:
+"each member of this collection has the same
+DAV:checked-in version and relative name as a
+member of the baseline-controlled collection at
+the time the baseline was created"
+I believe this makes it sufficiently clear that no operations
+that would add/remove/change members of the DAV:baseline-collection
+are allowed.
+Cheers,
+Geoff
+-----Original Message-----
+Hi,
+The Baseline Collection is a collection so there is nothing to stop you
+doing a PUT on that collection. Unless we explicitly have a precondition
+for PUT that says you cannot put to a baseline collection.
+Same for destination for a MOVE or COPY.
+Yes, we normally prefer to define constraints in the form of preconditions,
+but in this case, the single statement "must never change" in the property
+definition was so much simpler that repeating it in each "mutating" method.
+But I agree that this normative aspect of the property
+definition should be highlighted. I suggest we change the "has" to a
+"MUST have" in the definition to make this point (a change that fits the
+"no-repagination" goal :-).
+Cheers,
+Geoff
+Hi,
+OK...I guess that section does make it clear.
+But, how much of the normative text should be captured in pre and post
+conditions? Without any pre or post condition to enforce the paragraph
+that you quoted do vendors have to obey that paragraph?
+Would I am getting at is that other areas where we are enforcing something
+we explicitly enforce it using pre or post conditions. But not this one.
+Regards,
+Hi,
+Still seems odd that text buried in the definition of a property of
+a baseline version is defining the behaviour of methods on the members of
+a baseline collection. But the "MUST have" change is certainly an
+improvement.
+A better solution would be to add the definition of the Baseline Collection
+to section 10.2 (Advanced Versioning Terms, we currently define
+"Configuration",
+"Baseline Resource", "Baseline-Controlled Collection" etc, but it does not
+define
+"Baseline Collection". I guess there is no room for this definition, I
+think it
+would solve all my issues with baseline collections:
+Baseline Collection
+A Baseline Collection captures the state of the baseline-controlled
+collection at the time the baseline was created. Particularly, for
+each version-controlled resource in the configuration rooted at the
+baseline-controlled collection a new version-controlled resource will
+be created in the baseline collection that MUST have the same
+DAV:checked-in version and relative name. Any collections needed to
+create a consistent copy of the configuration namespace should also be
+included.
+This collection cannot be modified except by checking-out and
+checking-in a version-controlled configuration. At most one member
+of this collection can have a DAV:checked-in version from a given
+version history.
+I like the definition because it makes it clear that a Baseline Collection
+captures not only version-controlled resources (as the current specification
+incorrectly hints) but that it also captures any collections needed to get
+to
+those VCRs (in the namespace). It also makes it clear that the baseline
+collection should not be modified in any way except when version-controlled
+configurations are checked-out and checked-in.
+Regards,
+Peter Raymond - MERANT
+Principal Architect (PVCS)
+WWW: http://www.merant.com
+Yes, we normally prefer to define constraints in the form of preconditions,
+but in this case, the single statement "must never change" in the property
+definition was so much simpler that repeating it in each "mutating" method.
+But I agree that this normative aspect of the property
+definition should be highlighted. I suggest we change the "has" to a
+"MUST have" in the definition to make this point (a change that fits the
+"no-repagination" goal :-).
+Cheers,
+Geoff
+-----Original Message-----
+Hi,
+OK...I guess that section does make it clear.
+But, how much of the normative text should be captured in pre and post
+conditions? Without any pre or post condition to enforce the paragraph
+that you quoted do vendors have to obey that paragraph?
+Would I am getting at is that other areas where we are enforcing something
+we explicitly enforce it using pre or post conditions. But not this one.
+Regards,
+From: Peter Raymond [mailto:Peter.Raymond@merant.com]
+Still seems odd that text buried in the definition of a property of
+a baseline version is defining the behaviour of methods on the
+members of a baseline collection. But the "MUST have" change is
+certainly an improvement.
+The only way to get access to this collection is through the
+DAV:baseline-collection property of a baseline, so I'm not sure that
+this is reasonably characterized as being "buried" (i.e. you'll have
+to read this property definition if you are ever going to access the
+baseline collection).
+A better solution would be to add the definition of the Baseline
+Collection to section 10.2 (Advanced Versioning Terms, we currently
+define "Configuration", "Baseline Resource", "Baseline-Controlled
+Collection" etc, but it does not define "Baseline Collection". I
+guess there is no room for this definition, I think it would solve
+all my issues with baseline collections.
+I'd prefer not to define the term "baseline collection" because it is
+easy to confuse it with "baseline-controlled collection". This preference
+may be colored by the re-pagination that would be required to add
+it now (:-), so it would be worth re-raising the issue when we go
+to "draft standard".
+Baseline Collection
+A Baseline Collection captures the state of the baseline-controlled
+collection at the time the baseline was created. Particularly, for
+each version-controlled resource in the configuration rooted at the
+baseline-controlled collection a new version-controlled resource
+will be created in the baseline collection that MUST have the same
+DAV:checked-in version and relative name. Any collections needed
+to create a consistent copy of the configuration namespace should
+also be included. This collection cannot be modified except by
+checking-out and checking-in a version-controlled configuration.
+At most one member of this collection can have a DAV:checked-in
+version from a given version history.
+You'd want to get rid of the sentence beginning "This collection
+cannot be modified except by". A collection identified by a
+DAV:baseline-collection property cannot be modified.
+I like the definition because it makes it clear that a Baseline
+Collection captures not only version-controlled resources (as the
+current specification incorrectly hints) but that it also captures
+any collections needed to get to those VCRs (in the namespace).
+Yes, I agree that the current definition of DAV:baseline-collection
+could make this more explicit (although it does state that the relative
+names of the members must be the same, which really does mandate the
+introduction of those intermediate collections).
+How about the following:
+The last sentence of the DAV:baseline-collection is actually
+redundant, because it follows from the CHECKIN preconditions. If
+I delete that sentence, I have room to emphasizes the creation of any
+needed intermediate collections. In particular, the revised
+definition of DAV:baseline-collection would be:
+"This property contains a server-defined URL for a collection, where
+each member of this collection either is a version-controlled resource
+with the same DAV:checked-in version and relative name as a
+version-controlled member of the baseline-controlled collection at the
+time the baseline was created, or is a collection needed to provide
+the relative name for a version-controlled resource."
+Would anyone object to this change?
+Cheers,
+Geoff

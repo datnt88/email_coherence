@@ -1,0 +1,120 @@
+FYI, members of this list might be interested in the 4th International
+Workshop on Web Site Evolution (WSE 2002), being held October 2, 2002, in
+Montreal, Canada.
+- Jim
+From the Web page:
+The potential of the Web as a vehicle for offering a variety of services is
+becoming more apparent as Web sites evolve their contents from static
+information to more dynamic and interactive forms. A number of new standards
+and commercial products are emerging, offering a basis for developing
+Web-based services from dynamic composible resources, extending both the
+range and scope of services that can be made available through the Web.
+The goal of this one-day workshop is to bring together members of the Web
+design, software engineering, and information technology communities to
+discuss techniques for migrating to Web services. Architectural styles and
+tool support for service-based Web sites are currently quite diverse.
+Expertise in constructing service-based Web pages is quite limited, and
+experience accounts are lacking. The explosion of non-traditional computing
+platforms for browsing the Web, such as PDAs, WAP-enabled phones, and
+Internet appliances, is forcing Web professionals to rethink the separation
+of form from content and the range and scope of services offered via the
+Web.
+WSE 2002 will provide an opportunity for the exchange of information related
+to exciting new research and empirical results in areas including (but not
+limited to):
+* Migrating to Web services
+* Web quality determination and improvement through process and product
+control
+* Enhancing Web sites to make them more accessible, reliable, and usable
+* Analyzing and reverse-engineering Web site content and structure
+* Making Web site content available in multiple formats for multiple
+platforms
+* Applying traditional software engineering activities such as
+architecture, metrics, and testing to Web sites
+* Case studies of large-scale Web site reuse, reengineering, and evolution
+WSE 2002 is co-located with the IEEE International Conference on Software
+Maintenance (ICSM 2002). ICSM is the IEEE Computer Society's flagship event
+focused on the modernization of existing systems. ICSM 2002's theme of
+"maintaining distributed heterogeneous systems" nicely compliments WSE
+2002's overall theme and goals.
+Hi,
+re: RFC2518 issue: PROPFIND_INFINITY.
+So the plan is that servers MAY reject PROPFIND with depth infinity, and the
+currently suggested return value is 403 (forbidden).
+Now what applies to PROPFIND should apply to REPORT as well, right?
+The ACL draft defines only reports with depth == 0, and requires 400 (bad
+request) otherwise.
+RFC3253 is silent about that issue, suggesting that servers may not reject
+the request.
+It would be nice if we could make this consistent before it's too late...
+Julian
+What do you have in mind for making this consistent?
+There are some reports in RFC-3253 that are usefully applied with
+Depth 0 (e.g. DAV:expand-property and DAV:version-tree). There are
+others that only make sense for Depth=0 (DAV:compare-baseline and
+DAV:merge-preview). So I agree that we can make the reports that only
+make sense for Depth=0 to say so explicitly, as does the ACL spec.
+Is that what you had in mind?
+Cheers,
+Geoff
+Hi,
+re: RFC2518 issue: PROPFIND_INFINITY.
+So the plan is that servers MAY reject PROPFIND with depth infinity, and the
+currently suggested return value is 403 (forbidden).
+Now what applies to PROPFIND should apply to REPORT as well, right?
+The ACL draft defines only reports with depth == 0, and requires 400 (bad
+request) otherwise.
+RFC3253 is silent about that issue, suggesting that servers may not reject
+the request.
+It would be nice if we could make this consistent before it's too late...
+Julian
+Sorry for not being clear.
+What I meant is that for the same reasons a server may want to reject
+PROPFINDs with depth infinity, it may want to reject REPORTs with depth
+infinity as well. In particular, I can use DAV:expand-property to simulate a
+PROPFIND/DAV:prop, so it doesn't seem to make sense to change RFC2518 to
+make PROPFIND/DAV:prop/depth-infinity optional, while requiring support for
+an equivalent REPORT (DAV:expand-property).
+Julian
+I agree that if PROPFIND MAY refuse to process a Depth:infinity
+request, than it should also be the case that REPORT MAY refuse
+to process a Depth:infinity request. For REPORT, I'd also define
+a DAV:error value for this condition, so that a client can tell
+that it is non-support for Depth:Infinity that caused the failure.
+But note that I think it is fine for specific reports to return 400
+(meaning that the report by definition does not allow
+the specified Depth), while other reports return 403
+meaning that this implementation
+does not support it, even if it the report is defined for
+that Depth.
+Cheers,
+Geoff
+Sorry for not being clear.
+What I meant is that for the same reasons a server may want to reject
+PROPFINDs with depth infinity, it may want to reject REPORTs with depth
+infinity as well. In particular, I can use DAV:expand-property to simulate a
+PROPFIND/DAV:prop, so it doesn't seem to make sense to change RFC2518 to
+make PROPFIND/DAV:prop/depth-infinity optional, while requiring support for
+an equivalent REPORT (DAV:expand-property).
+Julian
+Ok,
+so we have:
+- REPORT not defined for this depth -- 400 (bad request)
+- REPORT is defined, but server doesn't allow depth infinity -- 403
+(forbidden). Should we define an error condition name for this situation and
+add that to the RFC3253 (proposal: "DAV:depth-infinity-allowed")?
+Julian
+That sounds sensible to me.
+If there are no objections, I'll add this as the resolution
+to this issue to the RFC 3253 Errata/Issue list.
+Cheers,
+Geoff
+Ok,
+so we have:
+- REPORT not defined for this depth -- 400 (bad request)
+- REPORT is defined, but server doesn't allow depth infinity -- 403
+(forbidden). Should we define an error condition name for this situation and
+add that to the RFC3253 (proposal: "DAV:depth-infinity-allowed")?
+Julian
+The proposal makes sense to me, as does the error condition name.
+Elias

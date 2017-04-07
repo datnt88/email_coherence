@@ -1,0 +1,114 @@
+Change to:
+If clients cache the results of name lookups for performance reasons,
+they are strongly encouraged to get and observe the TTL (Time To
+Live) information reported by the name server. If this is not
+feasible, clients must not cache the results of name lookups for
+longer than 10 minutes, and must immediately discard a name lookup
+result if a network error occurs when using the result to initiate a
+connection.
+I have some additional ideas. Danzig., et.al (SIGCOMM92 ??) shows that
+NEGATIVE caching DNS will help to reduce DNS traffic quite a bit.
+Negative cache means when DNS lookup fail (may be after 2-3 trails) for
+that particular host, we should cache the result (the failure) for a short
+time to avoid subsequent look up (which likely to fail again). Say 2 minutes.
+Anawat
+While this is a useful suggestion, it doesn't fall in the domain of being
+a security issue. It might be considered for an HTTP implementation
+recommendations document.
+Dave Morris
+Ted Hardie redrafted my words on DNS. I like his wording better than
+mine. I added a reference to DNSSEC, which should be issued later
+this month.
+Koen Holtman and Dave Morris have expressed concerns about the
+requirement being mandantory (Must vs. should), and proposed an
+alternate based on a arbitrary timeout (with no defense as to how
+that timeout might be chosen), believing that the implementation
+is difficult.. Personally, I believe this
+requirement not too hard to implement (given the discussion,
+and the claim of Phil Hallam-Baker that he's implementing it.),
+and believe the requirement should be "must".
+However, I've not head much from those in support of the requirement.
+(which is how the draft read, afterall; to first order, silence
+was taken as agreement).
+If you believe this requirement should be a "must" please send
+me mail (privately, so we don't get a flurry of messages on the list).
+If you believe it should be a "should", then please also send me mail.
+If should, please also indicate how you would resolve the timeout
+issue which results if the recommendation is not mandantory.
+- Jim Gettys
+Section 14 (new subsection to Security Considerations):
+DNS Spoofing
+Clients using HTTP rely heavily on the Domain Name Service, and are
+thus generally prone to security attacks based on the deliberate
+mis-association of IP addresses and DNS names. The deployment of
+|DNSSEC[DNSSEC] should help this situation. In advance of this deployment,
+however, clients need to be cautious in assuming the continuing
+validity of an IP number/DNS name association.
+In particular, HTTP clients should rely on their name resolver for
+confirmation of an IP number/DNS name association, rather than caching
+the result of previous host name lookups. Many platforms already can
+cache host name lookups locally when appropriate, and they should be
+configured to do so. These lookups should be cached, however, only
+when the TTL (Time To Live) information reported by the name server
+makes it likely that the cached information will remain useful.
+If HTTP clients cache the results of a host name lookups in order to
+achieve a performance improvement, they MUST observe the TTL
+information reported by the name server
+If HTTP clients do not observe this rule, they could be spoofed when a
+previously-accessed server's IP address changes. As renumbering is
+expected to become increasingly common [RFC 1900], the possibility of
+this form of attack will grow. Observing this requirement thus
+reduces this potential security vulnerability.
+This requirement also improves the load-balancing behavior of clients
+for replicated servers using the same DNS name and reduces the
+likelihood of a user's experiencing failure in accessing sites which
+use that strategy.
+Addition to 16. References:
+[dnssec]Whatever is appropriate; it is up for a vote at the IESG this
+month, and may be issued as an RFC in time.
+[RFC 1900]
+B. Carpenter, Y. Rekhter,
+Renumbering Needs Work /a . RFC 1900, IAB, February 1996.
+You are not supposed to do negative caching with a time larger than the
+zone SOA MINIMUM field. See section 4.3.4 of RFC 1034.
+Donald
+Date: Sun, 31 Mar 1996 18:43:00 -0800 (PST)
+From: David W. Morris dwm@shell.portal.com
+Subject: Re: (DNS) consensus wording
+Donald E. Eastlake 3rd +1 508-287-4877(tel) dee@cybercash.com
+Carlisle, MA 01741 USA +1 703-620-4200(main office, Reston, VA)
+% From dwm@shell.portal.com Mon Apr 1 18:04:05 1996
+% It is my understanding that MUST and SHOULD are defined terms and
+% strongly encouraged is not as far as RFCs are concerned. Thus, I
+% offer the following editorial alternative to Koen's suggestion (which
+% I endorse):
+% If a client caches the result of a DNS lookups, it should observe the
+% TTL (Time To Live) reported by the DNS server. If the TTL value is
+% not available, the client must not cache the result of a DNS lookup
+% for longer than XX minutes. In either case, the client must immediately
+% discard a name lookup result if a network error occurs when using the
+% result to initiate a connection.
+% Rationale for other changes:
+% 1. I believe this paragraph is about DNS name lookups and should be
+% specific
+% 2. We don't care what the motivation is for the caching
+% 3. I'm not sure that 10 minutes is the right number ... my IPSs tell me
+% that 24 hours must be allowed for DNS change propigation. Given
+% rational expectation for rate of change of the value, I would prefer
+% a larger number ... or if we have a DNS expert, perhaps there is
+% a DNS defined default TTL for cases where not is specified.
+% I can live with the 10 minutes but it was a detail which I felt should
+% surface for expert comment.
+RFC 1034 does not say anything about intended time of propagation -
+it rather specifies that "if a change can be anticipated, the TTL can be
+reduced prior to the change", and it can even be set up to 0, meaning that
+it must not be cached. Of course this should be done only in
+particular cases (prior to a major change), but I think it is
+exploited by multi-IP servers to share workload (IMO a bad move - a TTL
+of 10 minutes would have been ok)
+My own understanding of TTL is that *every* request has a TTL - if not
+explicitly, it is set up from the MINIMUM field in the Zone Authority data.
+If DNS lookup is considered a threat for the Net, I would suggest to set
+the maximum caching at 30 minutes - I am not sure if is a Good Thing,
+however. I'd rely to DNS data.
+.mau.

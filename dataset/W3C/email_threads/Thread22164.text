@@ -1,0 +1,76 @@
+All
+I work with Mary Brady at NIST and have been
+running the NIST DOM Level 2 tests through
+SUN's MSV tool and have some questions.
+Several tests such as documentcreateattributexmlnsillegalname.xml
+and documentcreateelementxmlnsillegalname.xml
+have failed because a double quote is used as element content
+for one of the member nodes. A "unexpected character literal"
+error is returned.
+I've tried several different ways
+to escape the double quote and haven't had any luck. Can
+someone give me a suggestion.
+Also the namednodemapsetnameditemxmlnsreplaceitem.xml test
+uses an underscore in the values of attributes(ex. ret_node). MSV returns
+"attribute "name" has a bad value: the value does not match the
+regular expression "[A-Za-z] [A-Za-z0-9]*".
+Since Java variable names are valid if they contain underscores shouldn't
+they also be valid for the tests.
+Rick Rivello
+Quick query: Hadn't there been a decision to move to shorter test names
+(with, perhaps, an index document that mapped them to mnemonic names)?
+Joe Kesselman / IBM Research
+I think that it was discussed with no real resolution -- quite
+honestly, it's a real hassle on our side, so if we are going to
+do it, we'd only want to go through the process once. The
+last recollection I have is something on the order of
+MethodNameXX.xml
+This will require changes to both the filename and the id
+inside the xml file.
+I seem to recollect that one of the transformations for applying
+metadata info to the file, and in particular, the subject tag,
+depended upon the long filename. If so, this should be applied
+prior to changing the filenames.
+Can anyone think of a way to automatically change the filenames?
+I'm really not interested in hand editing all of these files -- it's
+prone to introducing errors (as well as time consuming).
+--Mary
+The regular expression pattern for stringLiteral in dom-to-xsd.xsl had been
+"[^"]*", requiring that any string literal start with a quote, have no
+interior quotes and have no interior quotes. It is now "([^"]|\\")*" which
+allows you to have \" in the interior.
+The consensus of the group was that overly expressive test names were a
+nuisance and new tests should use simple mixed case names based on the
+method under test (or a general capability like EventPropagation) and a
+numeric identifier, so this test could be called SetNamedItem01.xml. The
+text matrix generated from the metadata provides sufficient information to
+browse the tests by description. Changing the existing DOM L1 names in the
+CVS repository was too much of a nuisance to try to fix, so we were going to
+live with them. See
+messages in August and September.
+The schema is definitely trying to subset the capabilities, not to reproduce
+the full capabilities, of any one language. There are two options here,
+either we can add underscore the the regular expression (if anyone knows a
+language that doesn't allow underscores in variable names, speak up) or you
+could change your variable names to conform to the current regular
+expression. Since underscores in member names are contrary to Java's style
+guides, I think it would be better to rename your variables to "retNode" for
+example.
+It's easy enough for us to rename to variable -- in fact,
+we already have -- but limitations such as this should
+specifically be called out in documentation that is
+prepared for others submitting tests or be fixed. I
+don't have strong feelings -- but I have seen alot of
+code over the years in a variety of languages with
+underscores used in variable names.
+--Mary
+been
+which
+the
+to
+returns
+shouldn't
+reproduce
+you
+style
+for

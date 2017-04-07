@@ -1,0 +1,364 @@
+Apache was recently changed to skip LWS (more specifically, SP and
+HT) characters between the field name and colon in a HTTP header.
+Previously, Apache would treat this header as having a name including
+the space character, "Authorization " (!):
+Authorization : mumble
+Current versions treat it as a header with name "Authorization".
+This change was made because someone could send a message with a
+header like that through Apache's proxy, and the proxy would fail to
+recognise that header.
+This change to Apache raising several questions about the syntax of
+HTTP headers, particularly as Apache was changed to look for LWS and
+ignore it there, yet many other servers I have looked at (Squid,
+thttpd, phttpd, lighttpd) assume a field-name is followed immediately
+by the colon.
+1. Is LWS permitted between the field-name and colon?
+The grammar of RFC 2616 suggests that it is, because ":" is a
+separator character, and thus the rule for implied LWS between
+a token and a separator applies
+The wording suggests otherwise, although it is not explicit:
+Each header field consists of a name followed by a colon
+(":") and the field value. Field names are
+case-insensitive. The field value MAY be preceded by any
+amount of LWS, though a single SP is preferred.
+The wording explicit states LWS is permitted after the colon,
+suggesting that the intention is that it's not permitted before
+the colon.
+Many authors have taken that interpretion, resulting in most of
+the servers I looked at not accepting LWS before the colon.
+(They should probably reject the request, but all of them treat
+it as an unknown header name including a space in the name token).
+Apache now, and Mozilla, accept LWS at that position.
+2. What about LWS before the field-name?
+At first sight, this doesn't make sense: LWS at the start of
+the line indicates folding. However, all implementations I looked at
+accept a line beginning with LWS immediately after the
+Request-Line or Status-Line. Some of them treat the initial LWS
+as part of the field-name (they don't enforce the limited character
+range of tokens), or they skip the LWS.
+Apache doesn't look for and ignore LWS prior to the first field-name.
+Neither do Squid, thttpd or lighttpd. Mozilla and phttpd do.
+Technically, the grammar disallows LWS before the field-name:
+Implied LWS is only implied _between_ words and separators.
+Both of these inconsistencies between programs, and also that lone CR
+is treated as LWS by some and not others, lead to potential security
+holes due to non-compliant messages that claim to be HTTP/1.1.
+Although it isn't the standard's role to state how a program should
+respond to every kind of invalid message, it would be good to clarify
+these points because they do have security implications (which was
+Apache's stated reason for their change):
+1. Whether LWS is actually permitted between the field-name and colon.
+(Grammar says it is; wording suggests it isn't. Implementations vary).
+2. Whether LWS is actually permitted before the field-name.
+(Grammar says it isn't. Implementations vary).
+3. That lone CR in a line is explicitly not allowed and SHOULD (or
+MUST?) be rejected, for the specific reason that implementations
+vary as to whether it is treated as LWS, which has security
+implications for programs which must match on the field-name.
+4. That invalid field-names (such as containing control characters
+or LWS) SHOULD (or MUST?) be rejected.
+Just a few little thoughts. The most immediate question is number 1,
+as implementations vary in their interpretation of the standard on that.
+-- JAmie
+generated Apache bug report that caused the change.
+I believe Apache team did the right thing: skipping whitespace
+characters before colon is desirable/correct, and the bug had, albeit
+remote, security implications.
+Yes.
+I believe the wording does not suggest anything beyond what it
+explicitly says. "MAY X" does not imply "MUST NOT Y". I hate cases
+where formal grammar is "explained" in semi-formal language, causing
+doubts and contradiction. In this particular case, however, a [less
+formal] MAY rule does not really contradict the [more formal] grammar.
+The fact that implementations vary does not prove that this wording
+implies something; there are other, more important, reasons for
+implementations to vary on the subject.
+Yes, most HTTP servers use ad hoc parsers instead of generating
+correct parsers for RFC 2616-based grammar. You can argue that the
+implementations in the field are more important than the RFC. If you
+do that, and if you are consistent, many grammar
+simplifications/changes would be required.
+They should accept the message, ignoring LWS (if any).
+Do you mean SP or HT before the field-name? CRLF before the field-name
+would indicate the end of headers (the field-name would be a part of
+the body then).
+IMO, documenting behavior on all valid and invalid inputs is what the
+ideal protocol specification must do. It is too late for HTTP, of
+course.
+IMO: Yes. Grammar says it is. The wording does not suggest it is not.
+Implementations vary.
+There are probably many special cases here (folding, CRLF, first
+header, other headers, etc.). Implementations vary.
+How does one reject an invalid field-name? Do you mean that they
+should not be forwarded by proxies? But a proxy may be (should be?)
+acting like a tunnel when the message seems to be corrupted. Or do you
+mean origin servers should ignore them? But an origin server may be
+(should be?) acting like a tunnel to CGI-like applications when the
+message seems to be corrupted.
+I bet that implementations vary with regard to many if not most
+HTTP/1.1 MUSTs. That is, for many MUSTs you can find implementations
+that violate them under some conditions. This is expected given
+complexity and ambiguity of the standard itself combined with absence
+of compliance enforcement on top of the "garbage in, compliance out"
+development spirit.
+Alex.
+Unfortunately, fixing it has introduced new, albeit remote, security
+implications. Previously a Squid proxy or other (old) Apache proxy
+would have forwarded "Authorization :" and not applied the proxy
+requirements when that header is forwarded, and the origin server would
+have ignored it.
+The new Apache as origin server will treat it as a proper
+Authorization header, and may send a response that is inappropriately
+cached, unknown to the origin server.
+Now that is a remote security implication indeed. It's not obvious
+that you could use it for anything useful, but it's not obvious that
+you can't, and Authorization isn't the only such header.
+You see? It's fixed a bug, and removed one obscure security
+implication, but replaced it with a new one. Given that there are
+more Squid proxies than Apache proxies on a typical path, the new one
+is marginally more dangerous. :)
+I agree. That's what I thought when I read the grammar for the first time.
+I agree that there's no contradiction, but I disagree with you about
+the suggestion of intent. Why would the text explicitly mention LWS
+after the colon but nothing about LWS before it, instead of saying,
+with no ambiguity, "the colon may be surrounded by any amount of LWS,
+though none is preferred before and a single SP is preferred after"?
+"MAY X" does not imply "MUST NOT Y". I hate cases
+I agree there is no logical contradiction, however the wording does
+suggest another rule, precisely because it draws attention to one side
+of the colon only. Importantly, the rule for implied *LWS says
+"Except where noted otherwise, ...". In other words, implied LWS is
+_only_ implied where the text does not "note otherwise" something else.
+I think this is an example of the text "noting otherwise", even though
+it does not explicitly say that it is noting otherwise.
+That means there is no logical contradiction with _not_ allowing LWS
+before the colon. Unfortunately, both interpretations fit.
+Sure, but the fact that _all_ implementations I've seen of servers,
+except for the new Apache behaviour, implement no LWS before the colon
+strongly indicates that is how people are reading it. I know a lot
+of implementers are sloppy about following the RFC, or have other
+reasons for ignoring it, but some of the authors are quite
+conscientious and there is no compatibility problem with writing code
+which accepts LWS there. So we can conclude that authors who were
+conscientious understood the text to apply, and that it was one of the
+"Except were noted otherwise" instances of the implied LWS rule.
+I honestly thought the same, until I saw the Apache patch. Even
+though I'd wondered about the implied LWS, I took a guess that the
+text describing the header syntax is an instance of "noted otherwise".
+And as you know I'm quite conscientiously following the RFC where possible.
+So, I'm saying the standard is ambiguous at that point -- either
+reading is possible, and a clarification would be good.
+Yes.
+I see one case: the line is non-empty and begins with LWS, either SP
+or HT. Either it's a folded continuation of the previous line, or
+it's the line after Request-Line or Status-Line, in which case it's
+not and grammatically it would match the header syntax if the header
+syntax permitted LWS before the field-name.
+Implementations do vary, but remarkably few reject this; most accept
+it as a field-name beginning with LWS! Otherwise skip the LWS.
+Both of these behaviours are bugs, but worse than that: they're both
+security holes. The same kind of hole which motivated your patch to
+Apache, but through a slightly different route.
+Since they are invalid, the same way one rejects invalid HTTP message
+syntax: with a 400 response, if no other 4xx is appropriate. Proxies
+and servers alike should reject it, rather than forwarding tunneling it.
+Why? Because passing them along, in either direction, enables the
+exact remote security exploits which motivated the patch to Apache to
+allow LWS before the colon. There is also the problem of CRs: Apache
+doesn't remove CRs before the colon, but it does treat CR as LWS at
+other places where tokens are scanned. Other clients and servers are
+different, so there it is plausible that a CR may be used as "LWS"
+which Apache doesn't trim but something else does.
+Is it not better to reject messages which are clearly out of spec? It
+depends whether there are practical reasons to keep forwarding them.
+In the case of control chars and LWS in header names, I think there
+aren't, but I have not done any surveys to guage it seriously.
+Do you see, that changing Apache in that way, while possibly correct,
+fixes one obscure security flaw while introducing another. Neither
+behaviour results in a secure server.
+As regards what the spec should say, I suggest it should be
+unambiguous where appropriate, and it should lead the way in
+indicating how servers SHOULD reject certain constructs for security
+reasons, even if it will be a long time, if ever, before the
+recommendations are actually widespread among implementations.
+Presently I find the syntax of headers is ambiguously presented,
+precisely because you can understand the text is an instance of the
+"except where noted otherwise" clause for implied *LWS, or you cannot.
+Both interpretations make sense linguistically to me, and even if I'm
+wrong, it indicates clearer text is appropriate.
+And, even though the syntax does not allow control characters or lone
+CRs in headers, and probably does not allow LWS before the field-name
+of the first header line, it would be good for the RFC to suggest a
+policy among implementations, of making a point of rejecting those.
+Without guidance from the RFC, implementors will do exactly what they
+are doing: copy each other, and do the simplest in the belief that
+real web servers have to do that sort of thing to be robust in the
+real world. Perhaps they do, perhaps they don't, but most
+implementors will take into account guidance from the RFC and other
+related documents, if it is available.
+I think it's reasonable for the RFC to suggest implementation SHOULD
+reject such headers, instead of letting the implementor make an
+unguided decision, because it is easy, probably not harmful (this
+should be checked empirically of course), and prevents a number of
+theoretical and subtle security flaws due to different programs having
+different interpretations of non-compliant header names.
+This is different from a blanket suggestion to reject all invalid
+syntax: it's not reasonable for the RFC to suggest implementations
+reject field _values_ which don't match the grammar. That is likely
+to break real setups. The former is a good in real life (I am
+guessing; maybe something really depends on it); the latter is not,
+and the RFC may as well say so.
+Fwiw, my implementation strategy is to read the RFC and related RFCs,
+and to read the code for a number of servers and clients in order to
+figure out in what ways deviation from the RFC or extra rules are
+needed for the real world. Unfortunately, there's no way to determine
+whether an implementation quirk that lots of programs have in common
+is needed for the real world, or just like that for other reasons,
+like everyone copying each other, or it being an obvious ad-hoc
+implementation method.
+-- JAmie
+Oof! And my old code may even be responsible for the Squid parsing
+bug! :-/
+There is no "new" bug if you consider that there are origin servers
+other than Apache out there and that some of them might be compliant
+in this parsing aspect.
+It looks like to avoid compatibility problems with broken proxies,
+Apache origin server should not authenticate based on valid but
+"difficult to parse" Authentication header.
+Because that is the way RFC 2616 and most other RFCs are written:
+Prose text comments on typical use cases or known compatibility
+issues. Formal grammars are supposed to cover everything. This is not
+how most RFCs are read and implemented, unfortunately.
+Please remember this if you happen to write an RFC :-)
+Agreed: A clarification would be good. Please submit an errata. A
+short errata may help to engage HTTP authors/gurus that are most
+likely ignoring these long messages.
+IMO, SP or HT before non-first header is line folding and should be
+interpreted as such. SP or HT before the first header is a malformed
+message that should be rejected.
+Indeed!
+I think I agree. At least, I am glad that there is a security issue
+(albeit a remote one) that illustrates why implementing specs by
+looking at examples is dangerous.
+In an ideal world, yes. The common interpretation of IETF philosophy
+to convert garbage input into compliant output and the (related) real
+world demands do not allow that kind of purity, at least not for HTTP.
+I am sure that new restrictions will break some old implementations.
+HTTP has been around for too long. Since the real issue here is
+security, perhaps the errata should simply explain why using
+Authorization header-based authentication is a bad idea, regardless of
+the header value. We now have SSL/TLS instead (with their own security
+flaws :).
+Alex.
+How do I submit errata?
+The errata page says to join this list. Well, I did, I asked some
+questions and got this far. What is the next step?
+-- Jamie
+AFAIK, IETF does not have a formal mechanism for submitting errata.
+Just post a concise e-mail, one for each error, suggesting specific
+RFC text changes. With some luck, your changes will be propagated to
+the official errata page and to the next revision of the protocol
+specs.
+Alex.
+I think the errata in question is hinted at in
+but it would be nice to write up a summary of how
+the spec should actually change, so that we can judge
+'consensus' on the proposed text.
+Note that Scott Lawrence maintains a HTTP errata page
+at http://purl.org/NET/http-errata
+To report suspected errors that are more technical
+in nature, please verify the errors with the authors
+and/or appropriate area directors of the IESG before
+sending them to the RFC Editor for posting.
+In this case, though, we got the RFC editor to point to
+Scott's page.
+Jim Gettys claims that
+draft-gettys-http-v11-spec-rev-00.txt
+already includes all of the existing errata, so, once
+there is clear agreement, the change could also be
+incorporated.
+Larry
+That's one of them. (Despite the subject of that message, that
+specific message is about 100 Continue and when to send it).
+The others are:
+2. Clarification of whether LWS is permitted before the colon in
+headers. Various people understand the RFC differently, as can
+be seen in their implementations.
+3. Require agents to reject messages with malformed field names,
+and perhaps field names which have LWS before the colon,
+because not doing so leaves open certain security holes due to
+proxies and other intermediate agents not recognising or filtering
+headers that are interpreted by another agent.
+Notably, headers with LWS _before_ the field name should be
+rejected. (Yes, certain widely used software treats it as part
+of the name when it's the first header line, instead of as a
+continuation line, and other widely used software skips the LWS
+there).
+If LWS is not permitted before the colon, messages with that
+should be reject as well. (Even if it's decided that RFC2616
+permits LWS there, in my opinion it makes sense to decide that
+LWS should not be permitted there, and require implementations
+to reject any message which has it. Nobody sends messages with
+LWS there (because most agents don't accept it), and rejecting
+it closes a potential security hole. Note that rejecting it is
+different from Apache's old behavior, which was to accept LWS
+there and treat it as part of the field name, thus passing along
+a dangerous name through it's proxy).
+4. Suggest agents reject messages with CR in any part of the header,
+except as part of the CR NL sequence. Again potential security
+holes: some proxies split lines on any of CR, NL or CR NL.
+Working around deployed bugs yes, but the implementation
+suggestions may as well recommend this.
+Practical implementation issue: NL CR CR NL is known to end the
+headers from some very old servers, so robust clients accept it
+and this is documented in a few places. Not sure if CR CR NL
+has been used to end non-empty header lines, but it's easy to
+see how this could arise, from quirky CGI implementations.
+5. Clarification as to whether it's ok to send any part of a response
+before reading all of the request body and whether a client should
+accept that. The RFC text _seems_ to indicate that this should work,
+for non-"error status" responses only, with complient agents.
+But I may have misunderstood it, and there's no doubt that some
+implementors have misunderstood or ignored section 8.2.2.
+This is potentially useful for a server which does on-the-fly
+translation of a submitted request: the streamed request could
+be translated on-the-fly to a streamed response. This is
+potentially useful even for web browsers, hence the reason for
+testing against those.
+This also has other streaming uses: using an HTTP
+request-response pair as a substrate for another bidirectional
+protocol, temporarily.
+Tests with many clients indicate that its ok with most of them,
+and some clients accept the response while continuing to stream
+the request, while others stream the whole request before
+accepting the response, so servers must be prepared to keep
+reading the request even when response writing blocks (to
+prevent deadlock). If the server does that, for all of these
+clients this method can be used.
+However, I saw failure with Mozilla 1.2, which seems to abort
+the request on seeing part of the response even if it's 200 OK,
+but I did not have enough time to investigate properly. Didn't
+try any version of MSIE.
+It would be good to know whether this is ok (a) in theory
+according to the standard; (b) in practice. The RFC errata
+should at least clarify (a).
+6. What is the definiton of "error response" as used in section
+8.2.2. It may be that the words "error response" will be
+deleted in order to clarify point 5 above, which would make
+point 6 moot.
+-- Jamie
+Jamie,
+As suggested by Larry and myself, it is probably time for you
+to post specific, concise changes to RFC 2616. After a discussion,
+some or all of those changes can be incorporated into RFC errata.
+We have discussed these issues. Some of them seem pretty
+straightforward specification bugs, some may be less appropriate for
+an errata. Hopefully, this semi-idle group would be able to come to
+rough consensus once you post specific changes. If not, you can always
+try to contact IETF IESG directly, but, again, you will need specific
+changes written up and discussed here first.
+Please post specific errata, how you want it to appear on the
+official errata page. Dedicating a single e-mail subject/thread to
+each change you post may be a good idea.
+Thank you,
+Alex.

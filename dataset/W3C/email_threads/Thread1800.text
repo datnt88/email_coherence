@@ -1,0 +1,58 @@
+There are special methods like subscribe, invoke...
+I search the initial request from the sharepoint client extension to identify the sharepoint server.
+have anyone a idea
+thanks
+Andreas
+I think it's a mix of
+- proprietary, but partly documented methods defined in MS Exchange [1]
+- the proprietary and undocumented "INVOKE" method (seems to basically
+marshall some of the COM methods such as for getting the version history)
+- a set of proprietary live properties
+Good luck. Better invest your time in writing clients for servers that
+conform to open standards.
+[1]
+http://msdn.microsoft.com/library/default.asp?url=/library/en-us/wss/wss/_w
+ebdav_methods.asp
+Hi,
+consider the following scenario:
+- "a" is a version controlled resource with some kind of auto-versioning
+enabled, for instance DAV:checkout-unlocked-checkin,
+- it's DAV:checked-in property refers to a version with a DAV:checkout-fork
+property of DAV:discouraged and a non-empty DAV:successor-set property.
+Non-versioning aware client attempts to modify the resource.
+Possible outcomes:
+a) request is rejected (409 with
+DAV:checkout-of-version-with-descendant-is-discouraged),
+b) request is accepted and the version history will fork.
+I think both behaviours are allowed, but which one makes more sense? Right
+now, I'm preferring to reject the request (standard operations on a
+checked-in resource shouldn't introduce forks into the version history).
+Opinions?
+The only behavior that seems to me to be consistent with the standard
+is (a), rejecting the request. The only way that CHECKOUT can succeed
+on a version that has DAV:checkout-fork as DAV:discouraged, and already
+has a successor, would be if the CHECKOUT had a DAV:fork-ok argument,
+and there is no way for a versioning-unaware client to add a DAV:fork-ok
+argument to the auto-checkout.
+Cheers,
+Geoff
+Hi,
+consider the following scenario:
+- "a" is a version controlled resource with some kind of auto-versioning
+enabled, for instance DAV:checkout-unlocked-checkin,
+- it's DAV:checked-in property refers to a version with a DAV:checkout-fork
+property of DAV:discouraged and a non-empty DAV:successor-set property.
+Non-versioning aware client attempts to modify the resource.
+Possible outcomes:
+a) request is rejected (409 with
+DAV:checkout-of-version-with-descendant-is-discouraged),
+b) request is accepted and the version history will fork.
+I think both behaviours are allowed, but which one makes more sense? Right
+now, I'm preferring to reject the request (standard operations on a
+checked-in resource shouldn't introduce forks into the version history).
+Opinions?
+Well, the spec doesn't say anything about the type of checkout that is
+automatically performed. Not saying anything doesn't mean that anything
+different than a "default" CHECKOUT is forbidden, right=
+So I think it would be compliant to default to a CHECKOUT *with*
+DAV:fork-ok, however I personally wouldn't do that.
