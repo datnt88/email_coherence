@@ -1,0 +1,26 @@
+I'm going over the DOM Level 2 tests and have a question about the systemId attribute within the DocumentType interface. 
+Some of the parsers return the absolute URI while others return just the file name. 
+Are both valid? 
+If not what should be returned? 
+Rick Rivello Given Phillipe's response, it would appear that the tests as originally written are valid. 
+These tests -- one from DOM Level 1 and another in DOM L2, capture the system id as a string -- look backwards in the string for the first occurrence of "/", and then strip off what would be the system id without the baseURI. 
+This is done using the java String lastIndexOf method, followed by a subString method. 
+In order to add these test cases, we either need to add these language constructs to the schema and language specific transformations, or we could possibly add another assert element, assertURIequals , with corresponding language specific code to do the comparison. 
+Any thoughts? 
+--Mary [moved to www-dom] The DOM specification doesn't say anything about that. 
+It is defined as a URI reference by the XML 1.0 specification. 
+The Infoset doesn't say anything either. 
+So I guess both relative and absolute forms of the systemId are valid in that case, even if DOM Level 2 doesn't give access to the baseURI. 
+Philippe If I remember things correctly, I think this would be a good issue for an errata that would clarify what should be returned. 
+I think all but one parser test (perhaps Crimson) returned the literal contents of the systemId and the remaining one absolutized the URI. 
+Definitely the intention of the author is different when they chose to use a relative URI instead of an absolute URI and not preserving that distinction loses information. 
+I'll try to confirm the observations on as many parsers as possible. 
+Probably be good to clarify it in the InfoSet too. 
+To support either decision, I would prefer to have an explicit assertURIEquals element instead of trying to add all the general string processing capabilities to DOM TS ML. assertURI could look like: assertURIEquals actual="somevar" scheme="http|file|..." ? 
+path="" ? 
+host="" ? 
+file="" ? 
+query="" ? 
+fragment="" ? 
+isAbsolute="true | false" ? 
+So for the tests that would accept either absolutized or relative URI's, the test would have been: 

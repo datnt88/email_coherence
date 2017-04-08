@@ -1,0 +1,137 @@
+Clark Warner &amp; I discussed doing this simple little draft at the Interop event; well, now it's published. 
+If there's interest from other implementors (besides Xythos and Apple), I'm happy to pursue standardizing this in some simple form. 
+lisa Behalf Of Internet-Drafts@ietf.org A New Internet-Draft is available from the on-line Internet-Drafts directories. 
+Title: Quota and Size Properties for DAV Collections Author(s): L. Dusseault, C. Warner Filename: draft-dusseault-dav-quota-00.txt 
+Pages: 4 WebDAV servers are frequently deployed with directory quota (size) limitations. 
+This Internet-Draft discusses the two properties and minor behaviors needed to interoperably deal with quotas on WebDAV repositories. 
+A URL for this Internet-Draft is: To remove yourself from the IETF Announcement list, send a message to ietf-announce-request with the word unsubscribe in the body of the message. 
+Internet-Drafts are also available by anonymous FTP. 
+Login with the username "anonymous" and a password of your e-mail address. 
+After logging in, type "cd internet-drafts" and then "get draft-dusseault-dav-quota-00.txt". 
+A list of Internet-Drafts directories can be found in or ftp://ftp.ietf.org/ietf/1shadow-sites.txt Internet-Drafts can also be obtained by e-mail. 
+Send a message to: mailserv@ietf.org. 
+In the body type: "FILE /internet-drafts/draft-dusseault-dav-quota-00.txt". 
+NOTE:The mail server at ietf.org can return the document in MIME-encoded form by using the "mpack" utility. 
+To use this feature, insert the command "ENCODING mime" before the "FILE" command. 
+To decode the response(s), you will need "munpack" or a MIME-compliant mail reader. 
+Different MIME-compliant mail readers exhibit different behavior, especially when dealing with "multipart" MIME messages (i.e. documents which have been split up into multiple messages), so check your local documentation on how to manipulate these messages. 
+Below is the data which will enable a MIME compliant mail reader implementation to automatically retrieve the ASCII version of the Internet-Draft. 
+Hi, in WebDAV, the owner of a lock can be reported using the DAV:owner element ( http://www.greenbytes.de/tech/webdav/rfc2518.html#ELEMENT_owner ): The owner XML element provides information sufficient for either directly contacting a principal (such as a telephone number or Email URI), or for discovering the principal (such as the URL of a homepage) who owns a lock. 
+It is documented to have ANY content, while the examples (for instance, http://www.greenbytes.de/tech/webdav/rfc2518.html#rfc.section.8.10.8 ) use an embedded DAV:href element: opaquelocktoken:e71d4fae-5dec-22d6-fea5-00a0c91e6be4 While this isn't a problem per se, it seems to have created a situation where implementors are unsure how to set and process the owner element. 
+For instance, the WebDAV library used in Microsoft Office 2000 seems to compare the (text) contents of the owner element (as returned in the response) with the value it has sent. 
+If they don't match, it assumes that the LOCK operation has failed and reports that the document was opened as "read only" (which I'd say is clearly a bug). 
+I think to "fix" this, we whould collect more implementation data. 
+Maybe this is a case where we could take advantage of XLink ( http://www.w3.org/TR/xlink/ )...: D:href xlink:role="DAV:principal-homepage" DAV:href="http://www.ics.uci.edu/~ejw/contact.html" Jim Whitehead D:href xlink:role="DAV:principal-email" DAV:href="mailto:ejw@foobar.com" Jim Whitehead D:href xlink:role="DAV:principal-resource" DAV:href="/users/ejw" Jim Whitehead or a simpler version that probably wouldn't "break" Office: D:owner xlink:role="DAV:principal-resource" DAV:href="/users/ejw" Jim Whitehead Julian Actually, the DAV Interop showed that you just can't mess with the contents of lock owner as it is now. 
+Adobe clients rely on setting the lock owner specifically to their own string. 
+DAV:owner value must be set by the client. 
+RFC2518 could extend lockdiscovery in a couple ways: - create a new element of some kind for clients to use, to contain a URI pointing to the owner. 
+Make a clearer specification about what this element contains. 
+- create a new element of some kind for servers to use to put their conception of who created the lock. 
+Probably this is a PrincipalID from ACLs. 
+lisa Interesting. 
+So both Adobe clients and MS Webfolders assume that in a LOCK response, the DAV:owner will be identical with what they have submitted? 
+I think this is a bug. 
+Has it been reported? 
+(I know that at least Adobe occasionally is following this list). 
+Julian As far as I know. 
+This was discussed at the interop event and a spec clarification item was added about it. 
+My memory of the item is roughly that "lock owner strings belong to clients, not servers, so servers should not mess with them." 
+:^) Adobe follows this list closely. 
+We don't always have as much time to respond as we would like, but you can be sure we read everything. 
+As far as the behavior of relying on owner strings to be "dead" being a bug, I don't think so, and even if I did it's quite unlikely to change. 
+My interpretation of the current spec is that the owner string is intended for use by clients to allow for conventions around cooperating over locked resources. 
+In the section you quoted, there is an unfortunate ambiguity in the passive voice about "information sufficient for contacting" because it doesn't say who is supposed to be doing the contacting - other clients or the server. 
+Adobe's interpretation is that it was other clients who would be doing the contacting, and thus the owner string should be meaningful to (and under the control of) clients. 
+Servers, after all, have the authenticated username of the agent who obtained the lock, so they have resources not available to the clients to know whom to contact. 
+Another way of seeing the dilemma here is to ask: suppose clients wanted to store conventional information about lock owners with the locked resource, how would they do that? 
+As we considered that question at Adobe, there seemed to be three fairly straightforward answers: 1. put it in the lock owner string, which the client sets anyway when obtaining the lock. 
+2. put it on another dead property. 
+this has three disadvantages relative to (1): it requires another round trip (PROPPATCH) in addition to the LOCK; there's no way to guarantee that the server supports any other given property as a dead property (many have good reasons for making all properties live and that's completely allowed by the spec); and other clients have to know the convention *and* know which kind of client client obtained the lock in order to get this information [so you're back to (1) on the "who obtained it" anyway]. 
+3. put it in the resource content. 
+I'm sure you can come up with just as many good reasons for not doing this as we did :^). 
+It's the clear loser. 
+Thus Adobe's bottom line was: clients need a dead property for storing conventional owner information, and the OWNER string is something you already set when locking (so no extra roundtrip) that seems in the spec to be under client control. 
+So let's use that. 
+What came out of the interop event was that (a) Adobe wasn't the only client doing this, and (b) clarifing the spec so that OWNER strings are definitely under client control would not break any servers. 
+Hence the issue as I wrote it up above. 
+By the way, servers are currently not required to return owner information on lock discovery. 
+I think we need to fold this into the issue as well, and force them to return it. 
+Clients who don't want it returned can simply not put sensitive things in the string (or leave it empty). 
+dan P.S. I'm still trying to find time to respond at length to the UNLOCK-NOT-OWNER issue; which I believe is related because in my earlier response I raised this whole question of "clients can't know who has a resource locked." 
+I'll see if I can get to that this week. 
+But until then, I just want to point out that there's a security problem with requiring servers to tell clients who (as in the server-side uname) has locked a given resource: it provides a way for clients to discover unames through which the server can be attacked. 
+This is one of the many considerations that cause administrative protocols to be structured quite differently from individual-contributor protocols, and one of the reasons that I resist pushing DAV in administrative directions (such as being able to unlock someone else's lock). 
+-d. 
+Daniel Brotsky, Adobe Systems tel 408-536-4150, pager 877-704-4062 I think that if it provides value for Xythos and Apple, it undoubtedly will provide value for others in the future. 
+I know that quota support is a frequently requested feature for mod_dav. 
+The current draft is really not that far away from being able to be sent along for a working group last call. 
+IMO, it needs the following changes: * Add a brief introduction which: - Provides a little bit of background on the operational scenario(s) that require this capability (i.e., setups like Sharemation, iDisk, etc.) - Describes the approach: provide two read-only properties that clients can use to discover quota information * Add the standard reference to RFC 2119, "Key words for use in RFCs to Indicate Requirement Levels" and then change the text to use MUST/SHOULD/etc as appropriate. 
+* Add a reference to the definition of a "protected" property. 
+* Add a security considerations section. 
+The only one I can think of is that a hacker might preferentially attack an account with large quota. 
+* Change all places where "directory" or "directories" is used to refer to "collections" instead. 
+DAV doesn't have directories, because we weren't developing a network file system protocol (oops, guess we did by accident). 
+* Add a references section, and add the DAV and DeltaV specifications, along with RFC 2119. 
+* Add an example PROPFIND request that shows these properties being retrieved. 
+* Define each property in a similar manner to existing properties in DAV and DeltaV (i.e., have the XML DTD specification for each one -- should just be ANY). 
+* Complete Clark Warner's address. 
+Some thoughts on the specification: - Does it make sense to allow DAV:quota to be writeable? 
+If so, then there should probably be an associated ACL privilege defined. 
+It seems like a read-only quota standard offers a lot of value, so it probably doesn't make sense to allow DAV:quota to be writeable. 
+- It might make sense to have DAV:quotaused be renamed DAV:spaceused. 
+It seems to me this property has utility beyond just the quota case. 
+- DAV:quotaused is listed as being optional. 
+I didn't understand that. 
+It seems to me that any quota enforcing server should know how much space is currently being used, according to their accounting policy, right? 
+- Jim Oh, one other comment. 
+What is the expectation on the relationship between the quota values for a given collection, and its subcollections. 
+For example, if I have collection hierarchy, where A, B, &amp; C are collections: A B C Would DAV:quota be the same for every collection? 
+If so, how should that be interpreted. 
+If the value of DAV:quota is 20 meg on A, B, &amp; C, then does this imply: a) I have a total of 60 meg of storage (20 meg for A + 20 meg for B + 20 meg for C) OR b) I have a total of 20 meg of storage, and the DAV:quota value is just replicated on all subcollections. 
+Similarly, does DAV:quotaused include space used by sub-collections (Depth infinity), or is it just a Depth 1 space used measurement? 
+- Jim From: w3c-dist-auth-request@w3.org [mailto:w3c-dist-auth-request@w3.org]On 
+Behalf Of Daniel Brotsky Sent: Tuesday, September 25, 2001 6:48 PM Subject: RE: RFC2518 issue with lockdiscovery/activelock/owner OK, I read and forgot about that. 
+I still don't understand why a client would compare the contents of the DAV:owner element contained in the response to the successful LOCK method call with what he sent. 
+I would have hoped / assumed that the right thing to do is: a) attempt the LOCK b) if the LOCK method success, store the contents of DAV:owner *that was sent back by the server* for later comparisons. 
+The behaviour seen in MS Office just doesn't make any sense... Regards, Julian First of all, the previous statement should appear somewhere in the RFC, and the examples should be adjusted to be compliant to this statement: for instance, in 8.10.8 
+[1] the whitespace inside the href child element is not preserved. 
+I would be interested to work on this definition. 
+I think it's essential that a server can provide enough information to a client to discover the actual owner of a lock, no matter whether and what *his* client has submitted as DAV:owner. 
+First tests show that extending DAV:activelock with new child elements didn't have any negative impact of MS Office and Adobe GoLive. 
+Julian [1] http://www.greenbytes.de/tech/webdav/rfc2518.html#rfc.section.8.10.8 Hi, if for some reason a server doesn't have one of these timestamps for a resource, what should it report on PROPFIND for these properties? 
+a) Property not found (HTTP 404), b) Empty property (this seem to be backed by the wording in section 7.4 [1], but is reported as error by Adobe GoLive, c) Property silently suppressed (not reported at all) -- this seems to work with GoLive. 
+In addition, how should the server behaviour upon a PROPFIND/propname on this resource? 
+Julian [1] http://www.greenbytes.de/tech/webdav/rfc2518.html#rfc.section.7.4 How do you define "the actual owner of a lock" in an interoperable way? 
+What would a client do with that information? 
+Cheers, Geoff I would be interested to work on this definition. 
+I think it's essential that a server can provide enough information to a client to discover the actual owner of a lock, no matter whether and what *his* client has submitted as DAV:owner. 
+First tests show that extending DAV:activelock with new child elements didn't have any negative impact of MS Office and Adobe GoLive. 
+a) The principal that requested the LOCK (if known). 
+b) It might provide a user with contact information. 
+Having a server capture and make available principal information of this kind is a privacy and security problem, which is why it is defined to be client controlled. 
+If a server ignores what the client has requested, and stores more information (or even just a different format), this could violate the user's privacy/security wishes. 
+Cheers, Geoff a) The principal that requested the LOCK (if known). 
+b) It might provide a user with contact information. 
+To me, the answer to "what information should be available in the lock owner field" depends on who or what you assume will consume this information. 
+If the consumer is a person, then the contents of this field could be quite minimal. 
+In many collaboration scenarios, a simple string giving the person's name (or alias they employ when using the system) would suffice to let other collaborators know who has the lock. 
+If there is a potentially large number of collaborators, it might be nice to have some additional contact information, like a phone number, email address, or a Web page, but this isn't strictly necessary. 
+People usually know who could potentially take out a lock on a resource. 
+Knowing this set of people, it requires little additional information to determine exactly who, from that set, has the lock. 
+So, for a human consumer, the goals of the lock owner field are (a) to identify the collaborator who took out the lock, and (b) to provide some means of contacting them. 
+While the principal URLs used in the ACL specification are certainly identifiers, they're not particulary human-readable, unless the client knows to go grab the displayname property off of the identified resource. 
+In retrospect, the choice of placing URLs in the lock owner field is not a great one, since popping a URL up in someone's face isn't very helpful. 
+What should they do with it? 
+It's not clear. 
+If you're assuming the consumer of the information is a computational process (either the client, or an agent), then the need for more structured information in the lock owner field is necessary. 
+For a computational process, the principal URL from the ACL spec. 
+makes more sense, since this is a machine parseable identifier for the person. 
+What should we do here? 
+Well, certainly 2518 should be clarified to indicate that the client controls this string, and the server must preserve it exactly. 
+This is the de-facto case today. 
+Additionally, We should move away from the use of URLs in the lock owner, in favor of having a single human-readable string that identifies the principal, and possibly also provides some contact information. 
+It should be allowed to use an alias, instead of your real name or username, to address privacy/security concerns. 
+If an alias is used, it is the responsibility of the person using the alias to communicate this alias to other collaborators. 
+- Jim I think it makes sense to report a set of URLs (for instance phone number, email address, homepage). 
+Which URL is which could be flagged using the xlink:role attribute ( http://www.w3.org/TR/2001/REC-xlink-20010627/#link-semantics ). 
+A user agent can then select the type of links it can process (for instance offering to invoke the mail program or to issue a phone call). 

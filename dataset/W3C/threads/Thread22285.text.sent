@@ -1,0 +1,38 @@
+Thanks a lot for your reply. 
+Let me ask a little more. 
+1. 
+Is it possible a Attribute have 'value', 'Text', 'Entity Reference' simultaneously ? 
+And How it is represented by XML as a text? 
+2. Is it possible a Attribute have several 'Text' Nodes or 'Entity Reference' Nodes? 
+And How these multi-values can be represented by XML as a text? 
+Please somebody explain to me, why Attribute shoulld be a Node. 
+Is it possible Attibute have some child Nodes? 
+What will be happen if insertBefore() is called like below? 
+myNode.insertNode(myAttribute, 
+prevNode); If the answers are 'No' and 'Error', again, why Attribute shoulld be a Node? 
+After asking whether Attr can have children (which it can), your example tries to use an Attr as a child node, which it can not be. 
+This is not unique to Attr. 
+Also Document and DocumentFragment are never child nodes. 
+But each of these three can be the root of a hierarchy of values. 
+Section 1.1.1 in the recommendation gives a list of which nodes are parents and children of which other nodes. 
+Attr has to be a node so that it can have entity references in addition to text as children. 
+But it is never a child node, which would make as little sense as making a Document or DocumentFragment a child node. 
+There are getAttribute and setAttribute functions on Element so that users who do not need to manipulate entity references inside attributes can ignore attributes as nodes. 
+Some implementations may never actually construct nodes for the attribute values if the nodes are never explicitly requested. 
+Ray Whitmer ray@imall.com 
+This is how I understand it... The following tag: Would be the following core DOM tree. 
+An Element with a nodeName of INPUT The element would have 2 Attr nodes in its attributes NameNodeMap The first has a name of TYPE. 
+It has one child 'Text' Node. 
+The value of this Attr would be 'TYPE' The second has a name of VALUE. 
+It has three children. 
+The first child is a Text Node for 'something ' The second child is a EntityReference for the &amp;lt The third child is a 'Text' Node for ' something else' However, I have a question about the second attr. 
+Should its value attribute return 'something &amp;lt something else' or should it return 'something  something else' ? 
+Mike Olson FourThought LLC If  were a normal entity reference, then the tree would be exactly as you describe, and the value returned when the attribute is requested as a string either by calling Element.getAttribute("VALUE") or Element.getAttrributeNode("VALUE").getNodeValue() is 'something  something else'. 
+However  is one of five predefined XML entities (also amp, gt, quot, apos) which the parser will generally translate strait to the character equivalent in the text as it builds the parse tree, so for these entities, you just get a single text node for the attribute children instead of three. 
+It would be converted back to  on output automatically, even if it was set as " " in an attribute string or text node. 
+This is described under "Interface EntityReference" in the core specification. 
+It is also worth pointing out that a parser may see fit to not preserve any entity references at all but expand them all and then you would get no entity reference nodes at all. 
+Ray Whitmer ray@imall.com 
+And in HTML there are no other types of entities. 
+So you will never have an EntityReference node in an HTML document tree. 
+Arnaud Le Hors - W3C, DOM Activity Lead - 

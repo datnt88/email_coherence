@@ -1,0 +1,93 @@
+I've posted an XSLT transform and a generated XML Schema from the DOM 1 xml sources at http://home.houston.rr.com/curta/domtest/genschema.zip 
+It is really fresh and only superficially checked. 
+I executed the transform with SAXON 6.2.2. 
+It should be pretty easy to generate both XML Schema and DTD's from the DOM specs XML sources and so eliminate the need for XML Schema to DTD conversion. 
+However, I started with XML Schema first, as always. 
+The transform isn't smart enough yet to handle an read-write property name that has different types in different uses or methods with different calling signatures in different uses. 
+I've not tried the transform against the level 2 sources, but I did take a quick look at them. 
+There were a couple of issues, first the directory entries in the xml-sources.zip 
+file contained "..", for example, one file was named "..\..\..\pubtext\xmlspec-v21-dom.dtd". 
+This requires you to unpack to a directory at least 3 levels deep. 
+It would also be helpful to know what parameters can accept a null string or node. 
+I'm not sure that I understand your shorthand. 
+So point by point: * Use IDL for attribute / method names Do you think the recent schemas do not use IDL for attribute method names? 
+* Specify var's, parameters, and returnTypes according to the spec: Spec always -- required in the schema Spec sometimes -- optional in the schema Spec never -- should not appear in the schema returnType's do not need to be in the tests since they are fixed by the DOM spec. 
+I believe that anything that is fixed by the DOM spec should not be replicated in the instance document or implied to be in the instance document by fixed or defaulted attributes in the DTD. 
+Any code generation can get the needed information either from the DOM spec or from annotations in the schema. 
+I would require a var attribute for any read-only accessor or any non-void function. 
+I think it is highly unlikely that you would want to invoke a function or access a property where it would not be beneficial to make an assertion on the return value or use it in a later call. 
+If there is a method or property where the return value is meaningless, then the overhead of declaring a variable to hold it is trivial. 
+Making it optional when it is used 99% of the type is more likely to cause errors. 
+Read-write properties have both var and value optional, however omitting both out is a no operation. 
+I've had a change of heart on parameters. 
+In my manual schema, parameters that could be null were optional. 
+However that information is not in the xml source for the DOM spec and I don't think we want to introduce any supplimentary information. 
+So if the parameter is required, how do you specify that it is null. 
+One option would be to make allow "null" as a special value in the argument. 
+Unfortunately, that could seriously complicate the code generation for C++. 
+It is a little more awkward in the test, but it could greatly simplify the C++ code generation, if null parameters are passed by passing in declared but uninitialized variables, such as: I would explicitly declare all variables. 
+For languages where their is no common ancestor class, then it would be critical and potentially complicated to infer the appropriate type. 
+It is safer to code the tests with explicit declaration now and find out later that it was unnecessary than to depend on the ability to infer types from context and find out later that it was difficult to do. 
+* Interface name -- should be inferable from somewhere, or defined as an attribute on the method name - defaulted as an attribute in cases where it is unambiguous - one of a list if it is available in more than one place. 
+The interface attribute has to be there when the same method or property is introduced in multiple interfaces (ProcessingInstruction.data and CharacterData.data for example). 
+If not required, then we need to choose whether the interface attribute is: a) not present in the DTD or schema b) an optional attribute whose only acceptible value is the interface that defined the method. 
+c) an optional attribute whose acceptible values are the defining interface and any derived interfaces. 
+Specifying a derived interface adds an implicit instanceOf assertion. 
+I think that using an explcit instanceOf assertion is more appropriate than implying one by specifying a derived type. 
+That is, I would prefer: to Option b would allow tests to anticipate an method or attribute being multiple defined. 
+* Exceptions -- correspond according to the spec -- ie, only be able to specify the particular exceptions that can be thrown on a given attribute or method. 
+any others ... In my recent schemas, assertDOMException code="INDEX_SIZE_ERR" can be used to assert that the enclosed statement should throw a DOM Exception with code=INDEX_SIZE_ERR. 
+Only statements that have been declared to throw DOMException can appear within assertDOMException however there is nothing that constraints the code to be an appropriate value for the method. 
+I had originally had an expectException="" attribute on the statement which could constrain the code values to the declared list. 
+However that had the disadvantages of either requiring all invocations to have ID so that the exception assertions could be identified or risking that exception assertions would not have an ID. 
+Also, it would require mixing the production of the try {}/catch {}/fail production in a lot of places. 
+If it is compelling to make sure that the codes are in synch, then I would introduce specific assertions for each code, i.e. but that seems overkill to me. 
+[mb] I agree that this overcomplicates the transformation -- it seems as though it would be easier to put them in. 
+I think it is easier for the transform to go to one resource for its definition of the DOM than to try to reconcile some information from the instance and some from a DOM definition or derivative. 
+However, we won't resolve that until we see each others attempts at transforms. 
+If I'm wrong we can add the returnValues to the DTD's at that time and it would not disrupt the tests that have been authored. 
+[mb] methods such as importNode, cloneNode, normalize, etc make changes to the dom tree and you already have a handle to it that can be used later. 
+Introducing a var where one is meaningless is confusing to the test writer. 
+I don't follow your point regarding assiging a call to var when nothing is returned. 
+Something is returned from importNode and cloneNode and there are statements that you could make about the return value. 
+I think the user experience in a DTD or schema aware editor would be better if var was required for methods that returned a value. 
+However, maybe that is something we could experiment with during test authoring. 
+Next time I generate the schema, I'll make it optional. 
+[mb] Could you explain what the assertInstance of would do after transformation? 
+In Java it would be something like: if(!(node instanceof Comment)) { fail(); In ECMAScript the transform might convert it to: if(node.nodeType 
+!= COMMENT_NODE) { fail(); [mb] Overkill? 
+Have you seen the size of the schema recently? 
+Why would we tighten up constraints everywhere else and not follow through here -- it seems that we are 90% there already -- why not finish the last 10%? 
+Okay, so generate an assert element for every exception code whose only valid content are those methods or properties that throw that specific code. 
+Curt, I second Dimitris, in that I'd be perfectly willing to help in either generating the schema, or supplementing it after the fact -- just let me know where you need help. 
+[mb] I agree that this overcomplicates the transformation -- it seems as though it would be easier to put them in. 
+[mb] Please forward details on how this would happen. 
+I am reading it as the transformation that generates the code would have to read both the instance test definitions and the DOM spec, look up for each method what the returnType should be, and then generate the code. 
+On the other hand, if we specify them in the schema def, they will be visible in the instance, and accessible to the transformation directly without having to go elsewhere. 
+NOTE: I don't want to proceed with more than one transformation. 
+According to the minutes, NIST has responsibility for the Java transformation. 
+If you plan on writing one as well, let's discuss it, and try to avoid creating a mess with the transformation. 
+I would much prefer the divide-and-conquer method to the everybody try everything and try to reconcile things in the end. 
+[mb] Sorry, that's what I get for working without a net (the DOM spec). 
+Just glancing through, I've picked up the following where the spec says No Return Value: normalize, appendData, deleteData, insertData, replaceData, setAttribute, setAttributeNS -- I'm sure there are others. 
+I just quickly looked at the Return Value section, so if I've overlooked something, forgive me. 
+I'll look a little closer in the morning. 
+I agree that var should be required for methods that return values. 
+My point is that is should not exist for methods that do not return values. 
+Ditto for any other part of a DOM construct -- only define attributes on these methods if they actually are there in the spec -- if not, don't define them. 
+If they are optional, we should discuss whether they should be optional in the schema, or (null | CDATA) -- in particular, I'm thinking of parameters that can either be null or supplied. 
+[mb] Could you explain what the assertInstance of would do after transformation? 
+[mb] I'll have to look at particular tests to see what, if anything, would come after this statement and what the impact would be. 
+--Mary [mb] Overkill? 
+Have you seen the size of the schema recently? 
+Why would we tighten up constraints everywhere else and not follow through here -- it seems that we are 90% there already -- why not finish the last 10%? 
+Those should not have a "var" attribute, if they do that is a production error. 
+In the handwritten schema, I had mistakenly used the "DOMFunction" type when I should have used the "DOMSubroutine" type. 
+I believe I had corrected that with the last handwritten schema and wrote a mea culpa. 
+In the generated schema, I may not have made the appropriate check and reintroduced the problem. 
+I'm going to be travelling over the weekend, so tonight will be the last I can work on this until next week. 
+I'll try to clean up as much as I can and hand it over. 
+[mb] I'll have to look at particular tests to see what, if anything, would come after this statement and what the impact would be. 
+The reason that there is an assertInstanceOf/ and no explicit casting is that you can't depend on the language (specifically ECMAScript) to preserve type-safety, so anytime that you really want to assert that a particular variable is of a specific type is to use an assertInstanceOf/ or use a method or property that is introduced by that type. 
+Since ECMAScript has no concept of casting, I thought it was easier if the Java code generator just produced the appropriate cast operators. 
+It would get produced to: Node attr; String attrName; attrName = ((Attr) attr).getName(); or var attr; var attrName; attrName = attr.name; 

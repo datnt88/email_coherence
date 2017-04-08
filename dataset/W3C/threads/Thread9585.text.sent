@@ -1,0 +1,26 @@
+Running ARP against the zip all_20021213.zip 
+I had the following incorrect results (two not mine): datatyping - my error - test001 test002 rdfms-nested-bagIDs 008 old nt file is correct, new one is wrong. 
+rdf-ns-prefix-confusion 0007 should be OBSOLETE. 
+(The version of ARP used is not yet publicly available - it should be in the jena2 cvs on sourceforge before christmas). 
+Jeremy Jeremy Carroll said: (I'm using the CVS/web which might be different) The current CVS 1.3, Jan having just changed it is not correct. 
+It uses rdf:ID to identify the object of the statement of the property element some:prop. 
+This is incorrect, rdf:ID on a property element always identifies the reified node. 
+A blank node is generated in such cases, when there are property attributes. 
+Firstly, the some:prop property element is about the blank node from the rdf:Description and has as an object, the generated blank node, let's call it _:j2 So change: _:j0 http://example.org/prop 
+http://www.w3.org/2000/10/rdf-tests/rdfcore/rdfms-nested-bagIDs/test008.rdf#aReification . 
+to _:j0 http://example.org/prop 
+_:j2 . 
+The reification of the above triple is missing (+4 more triples) since it is pointed at from the bag. 
+Let's call that node _:j4. 
+The pointer from the bag is wrong: http://www.w3.org/2000/10/rdf-tests/rdfcore/rdfms-nested-bagIDs/test008.rdf#bag http://www.w3.org/1999/02/22-rdf-syntax-ns#_1 _:j3 . 
+should point at the reification of the above http://www.w3.org/2000/10/rdf-tests/rdfcore/rdfms-nested-bagIDs/test008.rdf#bag http://www.w3.org/1999/02/22-rdf-syntax-ns#_1 _:j4 . 
+The following other changes are needed: The statement from the property attribute hangs off the blank node (_:j2) not the 'aReification' node. 
+from http://www.w3.org/2000/10/rdf-tests/rdfcore/rdfms-nested-bagIDs/test008.rdf#aReification http://example.org/propAttr 
+"val" . 
+to _:j2 http://example.org/propAttr 
+"val" . the corresponding reification of that triple in the bag _:j3 http://www.w3.org/1999/02/22-rdf-syntax-ns#subject http://www.w3.org/2000/10/rdf-tests/rdfcore/rdfms-nested-bagIDs/test008.rdf#aReification . 
+to _:j3 http://www.w3.org/1999/02/22-rdf-syntax-ns#subject _:j2 . 
+i.e in summary, we should revert to CVS 1.2 which has all these changes and I previously reported, works fine. 
+Dave Heh, thank goodness for that. 
+OK, I'll revert to 1.2 jan grant, ILRT, University of Bristol. 
+http://www.ilrt.bris.ac.uk/ printf 'cat\nhello world' | `sh -c 'read c; echo $c'` 

@@ -1,0 +1,55 @@
+Caught by the spam filter. 
+I have asked to have this email address for Mike added to the accept list for the WebDAV list. 
+- Jim [mailto:Mike_Spreitzer.PARC@xerox.com] 
+In IETF jargon, a "charset" encompases: (1) an abstract set of characters, (2) an association between numeric codes and abstract characters, and (3) a way to encode those numeric codes in byte sequences. 
+"Unicode" is about (1) and (2), and XML recognizes the need for (3) as well. 
+My question is this: does a WebDAV server preserve (1), (2), and (3), or just (1) and (2)? 
+That is, if I write entity bodies or properties or other metadata in one particular encoding, are read operations required to return that content in the same encoding? 
+(2) an association between numeric codes and abstract characters, and (3) a way to encode those numeric codes in byte sequences. 
+"Unicode" is about (1) and (2), and XML recognizes the need for (3) as well. 
+My question is this: does a WebDAV server preserve (1), (2), and (3), or just (1) and (2)? 
+That is, if I write entity bodies or properties or other metadata in one particular encoding, are read operations required to return that content in the same encoding? 
+It seems to me that WebDAV is silent on this question - it just does whatever HTTP 1.1 does. 
+HTTP mandates support for UTF-8, which defines the encoding (your point number 3). 
+I don't see (but may have missed) any language that prohibits other encodings. 
+By "same encoding" did you mean same algorithm (e.g. always UTF-8) or byte-for-byte identical when using the same algorithm? 
+If the latter, section 3.4 of RFC 2068 says "a character set may provide more than one sequence of octets to represent a particular character", which to me implies that HTTP servers in general, and WebDAV serves in particular, need not guarantee that the octet sequence returned by a GET is byte for byte identical with the one created with a PUT. 
+I don't even see a requirement there that the sequence returned be the 'canonical' one, if there is a choice. 
+That's my opinion, but I don't consider myself expert. 
+Jim That's starting to answer the question for entities; HTTP/1.1 doesn't have properties. 
+HTTP/1.1, at the start of section 9.6, says ``The PUT method requests that the enclosed entity be stored under the supplied Request-URI''. 
+I'd say the most natural interpretation of this is that the entity body be preserved byte-for-byte. 
+I assume that properties will be treated just like entity bodies. 
+the Uh, I think you'll find some disagreement on this. 
+For one thing, consider active content (e.g. server side includes). 
+Earlier traffic on this list (Sorry, I don't have time to search for it) has stressed the *absence* of any such guarantee. 
+WebDAV does not, for example, promise that the result of a COPY is byte-for-byte the same. 
+It says (7.8.1) the result is "a new resource ... whose state and behavior match that of the source resource as closely as possible". 
+This is the last I'll say on the topic. 
+Hopefully someone better informed will speak up. 
+OK, thanks. 
+I too hope others speak up. 
+Am I right in presuming a server is allowed to offer "content negotiation" over charset of a resource given to it, necesarily in exactly one charset, by PUT? Presumably a server is also allowed to be completely inflexible in its "content negotiation" over charset. 
+If these things are so, then I would not be surprised to hear that (1) a server is allowed, but certainly not required, to return exactly (byte-for-byte) the given entity body when given no guidance through Accept-Charset, and (2) a server is allowed, but certainly not required, to map given entity bodies into a single charset preferred by the server and offer only that charset in "content negotiation", and (3) lots of other variations, as these are all a matter of server policy, which the protocol aims to not restrict. 
+Does WebDAV have anything like charset negotiation for properties? 
+If not, it's not obvious to me that the above analysis would apply to properties. 
+Section 14.2 of defines the accept-charset header that allows charset negotiation. 
+This would apply to any method it is used with. 
+Thus sending accept-charset with a PROPFIND does cause negotiation over the charset used in the PROPFIND response. 
+Section 15 of specifies that all DAV systems MUST support the charset requirements of XML. 
+Section 2.2 of http://www.w3.org/TR/REC-xml#syntax specifies that all XML systems MUST support UTF-8 and UTF-16. 
+Therefore you are guaranteed that that all DAV servers will be able to accept properties in UTF-8 or UTF-16 and be able to return properties in one of those two charsets. 
+I hope this clarifies matters, Yaron HTTP explicitly places no requirements on the relationship between the data sent by a PUT and the data returned by a subsequent GET. 
+Any number of transformations (including charset, encoding, or whatever) might be applied, for example. 
+# HTTP/1.1 does not define how a PUT method affects the state of an origin # server. 
+Larry I think you are reading too much into that sentence. 
+HTTP/1.1 does not define the extent to which a successful PUT affects the overall state of the origin server, such as how many new resources are created as a result of the PUT (versioning), or how it may impact interdependent resources (collections, derived resources like server-side include, etc.). 
+However, it does define the semantics of what the PUT means for the exact resource being PUT. 
+In particular, the origin server is not allowed to transform the content and then reply with 200 or 204 -- doing so would destroy the correspondence between the resource and the entity-header fields PUT with the entity, and make operations like a write-read-verify impossible. 
+The only way to allow that sort of thing would be to introduce a new response code for 2xx Accepted with Transform, which would tell the UA that it needs to re-GET the resource if it wants to know what was actually created. 
+[BTW, I do think it would be a good idea for WebDAV to add such a response code.] 
+Folks who are worried about derived resources like server-side includes or automatic charset translaters should rest easy -- WebDAV servers will not allow such resources to be PUT directly. 
+Instead, the server must inform the client that the derived resource does not allow PUT, and that its "source resource" is at another URL. 
+The same applies to resources that are negotiation handles for variants. 
+In addition to simplifying the semantic questions, this approach makes it easier for a server to control read access for things that non-authors should never see. 
+....Roy 

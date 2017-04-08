@@ -1,0 +1,75 @@
+I was about to send out the datatypes message to rdf interest, but I'm concerned that we have new information that means I need to change it. 
+Have we agreed that test A does not hold for untidy literals? 
+Patrick has, and I think Jeremy has. 
+If so then I need to modify (simplify) the message - tests B and C can be dropped. 
+The reasons we might decide that test A does not hold are: o it requires a special case in the reification machinery o it requires a special case in the container machinery o it interacts badly with rdfs:subPropertyOf I need some feedback from the WG on this. 
+Brian Hmmm... I could live with one special case (for reification), but I'm less comfortable with two (for containers as well). 
+I think it would be perfectly possible to have special semantics for these cases, but it starts to feel less reasonable. 
+Which, to me, makes the entailment: a someProp "lit" . 
+b someProp "lit" . 
+a someProp _:x . 
+b someProp _:x . 
+look less feasible in the absence of: a someProp "lit" . 
+b anotherProp "lit" . 
+a someProp _:x . 
+b anotherProp _:x . 
+But I do think this is a matter of taste, rather than a forced outcome. 
+As for: I'm inclined to say "relax", but I'd be too tentative to be convincing. 
+If we have: a someProp "lit" . 
+b someProp "lit" . 
+a someProp _:x . 
+b someProp _:x . 
+I think it's pretty clear that: _:a dc:title "4th July" . 
+_:b dc:date "4th July" . 
+dc:title rdfs:subPropertyOf dc:property . 
+dc:date rdfs:subPropertyOf dc:property . 
+_:a dc:property _:l . 
+_:b dc:property _:l . 
+So the problem you raise is what happens when different datatypes are applied to dc:title and dc:date? 
+If the datatypes have no literal- value mappings in common, then I think that simply means the graph is not satisfiable. 
+I.e. there is no (DT-)interpretation that satisfies the antecedent so the entailment is trivially valid. 
+(Datatyping, as currently discussed, applies only to a specific property and not necessarily to its superproperties.) #g Graham Klyne Yup, but its beginning to give me the heebee jeebees. 
+Right. 
+The logic survives, as best I can understand it, but is this the behaviour we want to specify? 
+Would someone ever want to build a language on top of RDFS which had some notion of a TOP property. 
+If they did, what would the implications for datatypes be? 
+Are we willing to accept the constraint that all subProperties of a property must have the same datatype constraint? 
+Or is there some magic in the model theory that can allow them not to? 
+I need to find time to sit and think about this. 
+Brian It occurred to me that our discussion of datatypes and tidiness has a clear parallel with the Java language. 
+Java has built-in datatypes (int, double etc.), whose instances do not have object identity. 
+For each such datatype, there exist a "wrapper" class (Integer, Double, etc.), whose instances do have object identity. 
+It seems what we are struggling with is whether we want RDF datatypes to be "int"s or "Integer"s. 
+In fact, the stack-in-the-ground draft attempts to allow both ints and Integers to be used in such a way that one can be magically equivalent to another. 
+The basic question about literals - tidy or untidy - can also be restated in a simplified form: do we want literals to have identity (be Strings) or not (be some kind of immutable char arrays). 
+In RDF, the inline idiom corresponds to using ints, whereas bNodes can be seen as instances of Integer. 
+In Java, ints and Integers are, of course, different things. 
+I doubt that it is beneficial do glue these different concepts together in RDF. 
+The motivation for using ints in Java is execution efficiency. 
+The motivation for using the inline idiom in RDF is encoding efficiency. 
+RDF is an information exchange language. 
+I don't think that encoding efficiency is critical for RDF. 
+There seem to be two paths from where we stand: (1) use XSD datatypes as ints. 
+Extend the graph model to include the primitive datatypes in the graph syntax. 
+Introduce "wrapper" datatypes as RDFDT classes if needed. 
+(2) use XSD datatypes directly as Integers. 
+Forget about ints and wrapper datatypes. 
+Alternative (1) does not work if we have untidy literals. 
+In this case, each literal has identity, including ints. 
+Alternative (2) works both with tidy and untidy literals. 
+As to tidiness, I'm confident that both tidy and untidy literals can be made to work and that the problems with reification and subproperties in the untidy case can be resolved. 
+If RDF is based on tidy literals, applications that need untidiness can utilize bNodes. 
+If RDF is based on untidy literals, equality for literals can somehow be hooked into applications where needed. 
+In this case, however, even simple containment tests (e.g., is [Bob age "10"] contained in the graph?) would require some kind of basic reasoning, lookups of property definitions, support of RDF Schema and RDF Datatyping etc. 
+This may be a too long stick to swallow for a desperate Perl hacker. 
+Still, I would agree with Pat that untidy literals could of course appear in the subject position - they became identity, why not? 
+Brian, if you are going to rephrase your message, the distinction between ints and Integers may be a helpful intuition. 
+Sergey Er.. wait. 
+In this case you could rationally apply one dtype constraint to dc:title and a different one to dc:date, and don't apply any dtype constraint to dc:property, so the above example would have any particular force. 
+The current 'stake' proposal would only require that the literal fit into both lexical spaces, and I presume that would be OK if "4th July" is a well-formed DC date format. 
+Not really, since (never mind datatypes for now) the whole point of subPropertyOf is that the subproperty implies the superproperty, ie if A ex:foo B . 
+ex:foo rdfs:subPropertyOf ex:baz then A ex:baz B . and then add datatyping on ex:baz, and you get the equivalent of having it for ex:foo automatically. 
+That is, the implication that is involved here isn't really to do with datatyping but to do with subPropertyOf. 
+HOWEVER, the point is that datatypes inherit downwards, not upwards. 
+In the above example, if you were to datatype dc:property, then both dc:title and dc:date would inherit that datatying constraint, in effect; but you could datatype them (differently, if you like) without dc:property being affected in any way. 
+Pat Pat IHMC(850)434 8903 home 40 South Alcaniz St.(850)202 4416 office phayes@ai.uwf.edu 

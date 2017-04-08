@@ -1,0 +1,193 @@
+I'll try to explain the notion behind "GET for EDIT" cookies a little since both Jim and David's responses showed that my initial explanation left a bit to be desired. 
+Me: 1. 
+A fundamental component of "GET for EDIT" has to be a cookie that represents any stored context in the document server that needs to be reunited with the document on checkin. 
+Most, if not all, SCM systems are aware of their users' activity and use this awareness to keep users from stomping on each other's work. 
+
+Jim: I think that use of cookies might be necessary in an implementation. 
+However, I suspect that you can maybe do it all with only MD5 authentication (i.e., only knowing the user). 
+David: I'm not sure of the role for the cookie in this (just call me dense (later on in this mail I guess why you might use one)). 
+But the reservation and context establishment should be handled by LOCK. 
+If a server requires special reservation for editing, it's the client's responsibility to obtain a lock on the file before doing a PUT. 
+If the client already has a cached copy, a "conditional GET" based on the version at the server might be useful. 
+I think decoupling the access control aspects (LOCKing and so forth) from the GET/PUT operations gives us a lot more generality, extremely easily. 
+I don't see any situation where "get for edit" is really different from "LOCK resource for writing" followed by GET. 
+If the client has a local copy, the GET could even be conditional on the version they have being a leaf (though this would not be a requirement). 
+Then we might even be able to PUT a few times before releasing the lock! 
+Attempts to PUT without a needed lock could bounce on servers that need or want to enforce such a discipline on their clients. 
+Me again: Locking ("reservations") can be handled by LOCK, I quite agree. 
+But SCM systems don't hang all their context on a lock: they hang it on the "checkout". 
+That's when the user tells the system, "I'll be changing this here document," and the system records that fact for the day when the user says, "Uh, here's that document I changed." 
+The SCM system uses this context to keep track of the dozens (thousands?) of users out there, all trying to change the same set of documents (but invariable all starting with different revisions of those documents). 
+Not all SCM systems require a lock before checking in documents, and some acquire that lock automatically, so many PUTs are likely to happen in the absense of a LOCK. 
+But _all_ SCM systems (except CVS) require some sort of checkout (locking or non-locking) before checkin. 
+Now you could fudge it, and by remembering the URL and revision do a paired checkout/checkin to establish the required context. 
+But this defeats a feature that all modern SCM systems boast: tracking user activity. 
+They have this feature because users don't remember what they're doing, and they certainly don't remember what other people are doing. 
+Half the job of SCM systems (and by extension, version aware web servers) is to keep track of who is doing what to what, just to remind everyone involved. 
+Those scenarios I cooked up (where Joe and Jane keep stepping on each other) weren't just from my past experience: they were from my past week's experience. 
+Only one user can LOCK a file. 
+If the context is established on LOCK then there will be only one context per document, precluding Joe and Jane from finding out that they're doctoring the same text. 
+Normally SCM systems have a tight association between the checkout context and the checked-out file, because often there is no way to work "outside" of the SCM system. 
+But if the SCM system is the backend of a version-aware web server, with the actual work happening in "stateless" web clients, then that context must be represented by a cookie. 
+The cookie belongs to the underlying SCM system; whether it is an MD5 hash of the document contents, some cryptic string churned up from bowels of the SCM database, or "allworkandnoplaymakesjohnnyadullboy" is not HTTP's or a Web authoring tool's business. 
+They just have to keep it associated with the checked-out document so that it can be reunited with the checkout context at checkin time. 
+This cookie is the single most important component of distributed web authoring, IMHO. 
+Christopher Christopher Seiwald Perforce Softwarewww.perforce.com 
+seiwald@perforce.com 
+f-f-f-fast SCM1-510-865-8720 Well, _my_ interpretation of lock is that it's a notofication of intent to modify a resource. 
+I don't think (but not everyone agrees with me) that we can specify a single policy for locking that will work for everyone: but we can define operations the servers can interpret to "do the right thing" based on the policies that they implement, and the clients can meaningfully implement in way that will let them be used effectively with different servers. 
+I don't think (and intentionally avoided requiring) that we can guarantee that the same client used with different server will work exactly the same way with each server. 
+But a client should be able to work with different servers and make effective use of the policies that the servers do provide. 
+So an argument that CHECKOUT/CHECKIN are required separate from a LOCK/GET/PUT/UNLOCK cycle would have to be a case where a server needed to have _both forms_ of operation in place, _and_ have both forms operate oaccording to different semantics. 
+We want sufficient operations to span the space of behavior, but I don't think that the different behaviors need distinct representations in the protocol, unless they need to be simultaneously implemented. 
+I think we have to handle CVS too, which means we already can't _require_ a CHECKOUT method. 
+If you don't need a lock, then LOCK followed by GET _is_ a checkout. 
+Maybe the name LOCK is bad. 
+Maybe NOTIFY (of intention to write) would be better? 
+I don't have a problem with a server having a policy that passes out multiple locks (as long as we can represent the state properly). 
+I don't see the problem with the client having to present the version number with the document when reigstering an update. 
+Is the cookie a persisten session identifier? 
+I'm still having trouble understanding what it is, rather than what you wan tot do with it... 
+I'm not sure that this has to be the case. 
+I'd rather relax the semantics of lock, and keep a single protocol with access and update orhtogonal than tighten the defintion, add more methods, and make client and server implementation harder and more policy-dependent. 
+What is the context? 
+If I understood that maybe I would undertsand everything. 
+I still don't see what the cookie is _needed for_. 
+MD5 was just an example... What does the cookie identify: a state of the document, a granted access request, a bunch of session information, or something else? 
+May be. 
+I can see some use for session identifiers (So I can check out the same thing 5 times and post a variety of variants). 
+Couldn't non-exclusive reservation also be handled by some kind of generic "attach meta-data" operation; I suspect we will need something like this as a hook for specific config management strategies in the second phase anyway? 
+-- David David Durand dgd@cs.bu.edu | david@dynamicDiagrams.com 
+Boston University Computer Science | Dynamic Diagrams Hmmm, are you using the general computer meaning of "cookie", or specifically the Cookie and Set-Cookie mechanisms? 
+The reason I ask is that the Content-Version and Derived-From fields in earlier HTTP drafts were intended to carry that information for versioned resources, and there is no reason why this group cannot complete their definition for HTTP/1.2 (in fact, that is what I am hoping). 
+I suppose that Cookie/Set-Cookie could be used, but there are a variety of concerns (like which cookie, what is its realm, how do you deal with normal cookie control for privacy, etc.) which would need to be addressed. 
+...Roy T. Fielding Department of Information &amp; Computer Science (fielding@ics.uci.edu) 
+Hi folks, I have been lurking on this list for while. 
+I think that I follow Christopher's reasoning here, and I would like to paraphrase here just to make sure I have it right... 
+When a user "checks out" a document for editing, the revision contrl system "should" record who it is that is checking out the document so that when the same user attempts to "check in" the document there is a mechanism to say "Hey, remember me? 
+I am checking in the document that I previously checked out for editing. 
+Here it is." 
+The RCS can verify that it is the same user that is recorded and proceed, or reject the action if it is not the same user. 
+Christopher is asserting that a "cookie" is the best, if not the only, way to manage the session. 
+Is that about it? 
+Murray Murray Maloney "Life is a daring adventure, Technical Director or it is nothing" SoftQuad Inc -- Helen Keller Much has floated around about this that I mean to answer, but for now Murray has posted the most straightforward inquiry. 
+Very close, except I'm not asserting that the revision control system _should_ record anything when a user starts to edit a document. 
+Instead, I say that there are many systems that _do_ record something, and that HTTP _should_ cart around a token ("or cookie" ) of this recorded information. 
+For something like RCS or CVS, the cookie might be only a name and rev of the document. 
+For Clearcase or Perforce, the cookie might be an inscrutable pointer to info in its database. 
+For less version-stringent systems, there may be no cookie at all. 
+Perhaps there is another way? 
+Christopher More questions below... Right. 
+I quoted "should" to indicate that it was a goo idea, not a requirement. 
+The cookie, in this case, is like a certificate that lets the user know that the transaction was completed and that the document has officially been checked out. 
+I would think that the cookie should only contain the most basic of information, such as a pair of values to validate the check out (an ID) and a record of the cookie that was issued. 
+The RCS could, at its discretion, maintain a database of the pointer into the database etc. Certainly the document itself could carry information along with it, in a META tag or on any tag that we can legitimately propose. 
+This would allow arbitrary authoring tools to have access to whatever information the RCS provides -- without having to inspect any cookies that might be associated with the document. 
+I am including Notepad in my definition of arbitrary authoring tools. 
+For debugging purposes, I think that it will be useful to carry info in the document. 
+Murray Maloney "Life is a daring adventure, Technical Director or it is nothing" SoftQuad Inc -- Helen Keller Well, while we're on the subject of GET for EDIT, I'd like to throw some addition confusion into the mix... Often times I am reviewing some source prior to changing. 
+I don't check it out until I'm ready to 'do my thing'. 
+Instead, I get a copy of the code. 
+What I do want is to be notified if the code changes. 
+So, I need to register with the SCS my Email address and the code I'm interested in. 
+I then need a way of 'breaking' that registration. 
+Another use of this is to monitor when source gets modified because it may trigger me to do something (like look at it, or update a milestone in my project plan). 
+In a way, this is part of workflow. 
+Does this type of asynchronous notification of change make sense or am I way out in left field with this. 
+Bruce Brown America Online/Santa Barbara 511 Bath St. Santa Barbara, Ca. 93101 805.882.2350 x 125 You know, it might very well be that the right conception of both distributed authoring and versioning should be to make them work independent of network protocol, by exchange of appropriate _messages_. 
+That is, rather than a "CHECKOUT" method, just use "POST" with an appropriate "CHECKOUT" method. 
+Rather than returning the data as HTML and trying to embed the versioning information inside it, return the data in a container (multpart/related comes to mind) that has both the versioning information and also the related data. 
+I especially like the idea of a "checkin" data object that could work with a MAILTO URL as well as an HTTP one. 
+Larry I don't have a problem with this, except that we have HTTP PUT, and the versioning stuff must work with it (to my mind, PUT is un-useful without versioning, but that is (perhaps) only my problem). 
+If we move all the versioning stuff into a special content-type that must be processed, versioning updates will be implemented differently from non-versioning updates. 
+This will reduce the ability of versioning to work with legacy authoring environments, and _require_ special work for versioning to be supported at all. 
+I think this violates some of the requirements, unless we remove PUT, define POST as "form-only" and make all updates use a content-type (w/ simple options that allow versioning). 
+I liked the multipart/HTTP you suggested for transactions, but that's a CM and not a versioning issue. 
+I think that we agree that CM support will not work well will legacy software, except insofar as we can support the update of single resources. 
+-- David David Durand dgd@cs.bu.edu | david@dynamicDiagrams.com 
+Boston University Computer Science | Dynamic Diagrams I'm responding to a bunch of messages, all about cookies. 
+1. 
+What about Content-Version and Derived-From? 
+(Dan Connolly) If I read the spec right, Content-Version reflects the contents of the document. 
+That is, if the same document is dished up twice it is supposed to have the same Content-Version value. 
+As I argued before (and will continue arguing until I wear people down :-) the identity of the source is not sufficient information for a "checkin", because the VC system underneath the version-aware web server may wish to find any context associated with a prior "checkout". 
+Now Roy Fielding says that Content-Version is opaque and could be used exactly for this purpose, 'cause no one would be the wiser if the Content-Version were different for each checkout of the same document. 
+This is true, but now the names of these fields are losing their meaning, no? 
+If it's checkout context, call it "Checkout-Context" (or "Checkout-Cookie"). 
+2. Let's put the cookie in a META tag. 
+(Murray Maloney) Then we can't version things other than HTML, right? 
+3. Appeals that this doesn't belong in a standard: Some systems may want to use cookies, others may want to just do a redirect with a URL extension. 
+However my concern isn't that tokens may be needed but rather that we are over specifying. 
+We need to be careful about not throwing in the kitchen sink. 
+In this case there are clearly systems which may need token support but they can use the already existing cookie standards to handle this. 
+As such there is no need to explicitly mention said support in the versioning standard. 
+Small is beautiful when it comes to standards. 
+Yaron I totally agree with "small is beatiful." 
+As far as I know, there is no field which can carry the checkout context token. 
+As far as I can see, this is the most important token to carry. 
+Chuck everything else. 4. David Durand's 3-checkout scenario. 
+Dead-on. 
+The intent is not to support directly all these weirdo scenarios, but rather with a single swipe support all VC systems in their various context-heavy or context-light ways. 
+Christopher It reflects the contents of the Entity, which includes both the body document and the entity-header fields (metainformation about the document). 
+If the server is providing different information per checkout, then it is in fact changing the entity. 
+Checkout does not have meaning on all systems, whereas version has a generic meaning (at times, too generic). 
+It is intended to be as flexible as possible. 
+The "Content-" prefix is a requirement of MIME for what HTTP calls entity-header field names. 
+.....Roy BTW, I can set the www-vers-wg@ics.uci.edu list Reply-To at any time -- the reason it is not on by default is that many people find it annoying, particularly when you have cross-list discussions (like this one). 
+From: "Roy T. Fielding" fielding@liege.ICS.UCI.EDU 
+Not to beat a dead horse (but this one's still kicking): I'm pushing for us to recognise "checkout" as a meaningful act for the version abstraction we are trying to support, whether or not the underlying system can make real use of it. 
+It means "GET the SOURCE for EDIT". 
+"GET" because the document has to be fetched (or via existing methods determined that the user has the requested copy), "the SOURCE" because the user needs the document as it is prior to any server-side interpretation, and "for EDIT" so that the VC backend is aware of the user's activity. 
+All VC systems can cook up a checkout cookie; some VC system will have difficulty without one. 
+The simpler systems - RCS, SCCS, and CVS may well be wrapped with some layer that provides the context. 
+Here's how I see them being used, again with Perforce thrown into the mix because it has fairly modern VC semantics: CHECKOUTLOCKCHECKIN RCSProbably justVerifies thatVerifies SCCSemits URL+version,the cookiethat cookie so that therepresentsrepresents subsequentthe head rev.LOCKed rev. 
+LOCK or SUBMITMay be a no-op can make sure user if the SCCS/RCS has the head rev.wrapper does May imply LOCK,LOCK on CHECKOUT. 
+since RCS/SCCS don't normally support unlocked checkout. 
+CVSEmits the lineThrows up itsVerifies from the CVS/Entrieshands becausethat cookie file that reflectsCVS doesn'trepresents the file+rev beingsupport locking.head 
+rev. 
+edited. 
+ClearCaseEmits view-extendedVerifies thatVerifies pathname and rev ofcookie representsthat cookie file being checked out.checked-out 
+filerepresents Because of CC's auto-and does a CCLOCKed rev. 
+branching, the rev mayreserved checkout. 
+be different that what was requested. 
+PerforceEmits client pathnameVerifies thatVerfies and rev of filecookie representsthat cookie being checked out.checked 
+out file.represents head rev. 
+There is use for the checkout cookie for all these systems, even if the cookied degrades into being little more than "Content-Version". 
+Since All VC systems can make use of the cookies, and some need them for sane operation (checkin without checkout under clearcase is a no-go), it makes sense to use a single tag across all underlying VC systems. 
+IMHO, of course. 
+Christopher If I read the spec right, Content-Version reflects the contents of the document. 
+That is, if the same document is dished up twice it is supposed to have the same Content-Version value. 
+This may be a silly question, but it's probably not the last time you'll hear it, so I might as well ask --- how does this differ from an HTTP/1.1 entity tag (as used in the Etag:, If-match:, If-none-match:, and If-range: headers)? 
+(These are opaque tags which are intended to identify different variants of a resource for caching purposes. 
+They come in two varieties, "strong" and "weak". 
+A strong entity tag always denotes the exact same set of octets. 
+A weak one may denote multiple versions --- in the colloquial sense --- with minor, semantically insignificant differences, which may still differ enough so, for instance, you can't mix byte-ranges of different ones willy-nilly). 
+rst If we have a CHECKOUT method, then we don't need the LOCK method I propose. 
+But we must tell clients to ask for a checkout before trying a put, in case they need one. 
+We cannot require that clients do a special GET operation before posting an update because it's not always required, and could just send a lot of redundant bytes. 
+A system is free to implement the protocol so that sending the redundant bytes is a requirement, but I don't think the protocol should require it. 
+I myself don't see, nor have I heard any argument showing how my proposal for a separate operation (wh/ probably should not be called LOCK) to reserve a resource, separate from GETing it, is functionally inferior to a joined-at-the-hip checkout that is not as flexible. 
+Maybe the REQUEST(old LOCK) operation needs a "GET required" status code for systems that want to make me consume some fresh bytes. 
+This brings me to a question. 
+One of the points that I am most attached to is the "configuration management treated separately" requirement. 
+The simplest foundation for any versioning system is to turn resource addresses into ordered pairs of (ID x version). 
+Once we have that we can implement lots of policies on top -- the number of CM systems implemented on top of RCS tends to support that claim. 
+So I'd like to hold off discussions of these complex policy issues until we have to get to them. 
+And I think that if Content-version can serve as a cookie, then it should, because it makes the model for the simple stuff simpler, and doesn't add much work for a complex system anyway. 
+I'm afraid that with tabs changed to spaces by some mailer, your table of policies was too hard for me to decipher. 
+But I think that this needs to go on hold. 
+I think we want a wide variety of version styles to work nicely. 
+I also think that client requirements have to be simple to be widely implemented -- and if they're not to be widely implemented outside the hard-core configuration management community, then standardization is a waste of time. 
+Why is it bad for a "checkout-style" cookie to be the same thing as the version-ID (ie. the Content-version header)? 
+It works for complex systems and simple ones, and is less work for simple systems. 
+I think we may have actually run this to ground. 
+Either we're talking about a single field associated with a resource, and we're arguing about whether to call it a Cookie or a Content-version, or we're claiming that two fields are required. 
+I don't see that we need two fields. 
+In fact, I think that the negotiation flexibility gained in the separation of resource reservation from data movement makes it easier to and negotiate the assignment of different version numbers at reservation and release times. 
+I even think treating a cookie as a "temporary version number for the working version" is a nice concrete way to think of the semantics of parallel sessions. 
+If we really need two fields, then we can probably postpone the discussion. 
+If we don't, then I'd argue that Content-version is the name that should win because it best represents the simple case. 
+But I must say that if we're just arguing about the name of a field I don't care, except for the confusion that it will cause. 
+-- David David Durand dgd@cs.bu.edu | david@dynamicDiagrams.com 
+Boston University Computer Science | Dynamic Diagrams I don't think there are any legacy authoring environments that use PUT without also using a bunch of non-standard stuff around it. 
+Larry 

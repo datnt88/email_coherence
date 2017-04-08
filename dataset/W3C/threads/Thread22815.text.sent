@@ -1,0 +1,25 @@
+Hello, I have a question about the CSSPrimitiveValue's setStringValue() method in the current DOM2 specification. 
+The specification states that an INVALID_ACCESS_ERR exception is to be raised if the CSS value doesn't contain a string value or if the string value can't be converted into the specified unit. 
+Should this also say that it will be raised if the attached property doesn't support the string value or the unit type? 
+Also, what is expected to occur with CSSPrimitiveValue's getPrimitiveType() method in the following case? 
+Assume I have a CSSPrimitiveValue named 'primitiveValue'. 
+Also, assume that primitiveValue's attached property can contain CSSValues of type CSS_VALUE_LIST and CSS_PRIMITIVE_VALUE . 
+What happens in the following situation? 
+value.setCssText("a, 
+valid, list") // no exception raised according to current specification. 
+value.getPrimitiveType() 
+== ????. 
+A similar example can be given for CSSValues of type CSS_VALUE_LIST and CSS_CUSTOM. 
+Thanks for the clarification, Blaine Brodie in I noticed that further up the method's description, this previous is stated, so please ignore the previous question. 
+I do, however, have another question about setStringValue(). 
+Which of the following is the correct way to use setStringValue in the following cases? 
+setStringValue(CSS_STRING, "\"this way\"" ); or setStringValue(CSS_STRING, "this way" ); setStringValue(CSS_URL, "url(###)" ); or setStringValue(CSS_URL, "###" ); primitiveValue.setCssText("a, 
+valid, list") // no exception raised according to // current specification. 
+primitiveValue.getValueType();// 
+now returns CSS_VALUE_LIST primitiveValue.getPrimitiveType() 
+== ????. ^^^Sorry added some information that I forgot about in my previous post. 
+Blaine Our intent is to have: setStringValue(CSS_STRING, "this way"); and setStringValue(CSS_URI, "###"); The return value of getStringValue doesn't need to be parsed. 
+This case appears on properties 'border-spacing', 'quotes', 'play-during', 'counter-increment', 'counter-reset', 'size', and 'text-shadow'. 
+It means that the implementation has to do a special handling for theses cases. 
+In your case, it would mean that getPrimitiveType() has an undefined result since the value is no longer a primitive value. 
+Philippe 

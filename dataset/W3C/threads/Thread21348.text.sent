@@ -1,0 +1,346 @@
+I've done a little more work on a client for Annotea, with a view to supporting annotations in Page Valet. 
+Since Page Valet generates a normalised representation of page markup showing validation errors and accessibility warnings as and when they arise in the markup, it makes sense to use annotea's pseudo-xpointers[1] (which valet already uses) to reference annotations to the markup. 
+This is essentially equivalent to what any other annotea client can do, but because Valet is a diagnostic tool, the view and its purpose differ. 
+As soon as I had a working prototype, it became abundantly clear that there is a deep and fundamental flaw in Annotea: we construct long and detailed pseudo-xpointers, but these become totally useless as soon as a page is updated. 
+And annotea has no mechanism for dealing with this, nor indeed even to detect that a page has changed. 
+It seems to me that annotations need some expiry mechanism for when the annotated resource changes. 
+This should be qualified by the significance of a change: for example, a page bearing todays date may not be regarded as changed when the date becomes tomorrow. 
+The problem of measuring when a change is significant is one that has been discussed in ER, where we have considered document hashing. 
+My prototype implementation[2] hashing on ESIS by filtering nsgmls output appears to do the job, and might be worth considering for Annotea: * Where a document's Elements have changed (as measured by the hash), the xpointer is invalidated. 
+* As changes are made, the quality of the annotation is reduced as the significance of a change increases. 
+Quality exceeding some threshold could be a database search criterion; dropping below some threshold could be used to delete or archive the annotation. 
+For example, if the Headings have changed, there is a strong chance the earlier annotations are no longer applicable. 
+[1] They are xpointers only when a page is well-formed XML, which is neither usual on the Web nor required by Annotea. 
+[2] http://lists.w3.org/Archives/Public/w3c-wai-er-ig/2001Dec/0029.html 
+Nick Kew Site Valet - the mark of Quality on the Web. 
+First, the amount of problems depends on what kinds of changes are made to the page and how well id's are used. 
+Sometimes updates can cause only minor problems e.g. many reviewing changes are often local and the annotation stays pretty much in the right area even after changing the document (I use annotations myself all the time now for creating comments and reading them in context while changing the page and I haven't had problems yet). 
+But you are right, there is a lot of research that has been done and can be done in this area. 
+While we have been thinking of different ways of detecting the changes in the document or even that the information that the document has changed and looking some of the research on robust pointers we have not had resources yet to concentrate on this problem. 
+So I'm very happy that you are doing that with other EARL people. 
+Annotea does not prevent the use of additional mechanisms that will make the pointers more robust. 
+New information can be added to schemas for instance about the document version CVS or ETAG or a checksum. 
+And the clients can be taught to understand that info when available. 
+Second, how to change the status of annotations either manually or automatically as part of the review process is an interesting problem and we have been discussing about couple of approaches (in our future to do list). 
+If there are use cases, ideas, solutions etc. we are interested in hearing about them. 
+Marja "Marja-Riitta Koivunen" marja@w3.org 
+to id's simply aren't used though, for example one might expect Annotation easy, yet #xpointer(/html[1]/body[1]/table[1]/tbody[1]/tr[1]/td[2]/h1[1]) or #xpointer(start-point(string-range(/html[1]/body[1]/table[1]/tbody[1]/tr[ 1]/td[2]/ul[1]/li[3],"",23,1))/range-to(end-point(string-range(/html[1]/b ody[1]/table[1]/tbody[1]/tr[1]/td[2]/ul[1]/li[3],"",40,1)))) (which considering it's trying to point to an A element shows a pretty dodgy creation interface IMO.) are a couple that the page has, id's aren't well used on the general web (generally only in connection with javascript and the few people who duplicate name/id in their anchors.) and the kind of fuzzy pointers we're getting on even very simple documents such as the one above illustrate how easily they can be moved within the document. 
+Again on the Annotea front page we have Jose Kahan saying "Great work Art!" and pointing to #xpointer(/html[1]/body[1]/table[1]/tbody[1]/tr[1]/td[2]/p[10]) which today points to "Others are strongly encouraged to start their own Annotea servers." 
+yet http://web.archive.org/web/20010703011339/www.w3.org/2001/Annotea/ which whilst not being from the right date (it's as close as web.archive.org 
+has.) it does point to a paragraph discussing Art Barstow's javascript bookmarklet approach. 
+I think it's clear fuzzy pointers without a mechanism to know how reliable the fuzzy pointer is can't realistically be used. 
+Jim. 
+We have done some work in the area of robust anchoring for annotations on web pages. 
+We found that using "human-level" page content as the basis for anchoring was more effective than using the internal structure of the page. 
+That is, when a user annotates a sentence in a paragraph, she is thinking about the text that she is annotating, not the fact that it is the 3rd sentence in the 5th paragraph, for instance. 
+By anchoring to the "human-level" content (the actual words that a user sees), we can better meet the user's expectations when the page is modified. 
+When the page is edited or updated, our annotations "catch up" with the content they are anchored to, even if that content has gotten moved around or changed. 
+And the content-based approach allows users to annotate *any* text they see on the webpage, not just structural elements of the page such as whole paragraphs, whole table cells, etc. 
+Another interesting side effect of this approach is that we can annotate the same content even if it is stored in completely different formats. 
+For instance, the Microsoft Word editor may be used to create a document that is then saved as Microsoft's .doc 
+format and as html. 
+The exact same content is now in two completely incompatible formats with incompatible internal structures. 
+However, because we anchor to content, which is the same across the two formats, the annotations created on the .doc 
+version can be displayed on the html version and vice versa. 
+I wonder how this could be applied to the Annotea system? 
+If you are interested in learning more about the work we have done in this area, please check out our papers: CHI 2001: rch.microsoft.com/research/coet/Annotations/chi2001/paper.pdf&amp;pub=ACM 
+Microsoft Research TR: ftp://ftp.research.microsoft.com/pub/tr/tr-2001-107.pdf Dave David Bargeron Interactive Visual Media Group Microsoft Research One Microsoft Way Redmond, WA 98052 davemb@microsoft.com 
+"Marja-Riitta Koivunen" marja@w3.org 
+to id's simply aren't used though, for example one might expect Annotation easy, yet #xpointer(/html[1]/body[1]/table[1]/tbody[1]/tr[1]/td[2]/h1[1]) or #xpointer(start-point(string-range(/html[1]/body[1]/table[1]/tbody[1]/tr 1]/td[2]/ul[1]/li[3],"",23,1))/range-to(end-point(string-range(/html[1]/ b ody[1]/table[1]/tbody[1]/tr[1]/td[2]/ul[1]/li[3],"",40,1)))) (which considering it's trying to point to an A element shows a pretty dodgy creation interface IMO.) are a couple that the page has, id's aren't well used on the general web (generally only in connection with javascript and the few people who duplicate name/id in their anchors.) and the kind of fuzzy pointers we're getting on even very simple documents such as the one above illustrate how easily they can be moved within the document. 
+Again on the Annotea front page we have Jose Kahan saying "Great work Art!" and pointing to #xpointer(/html[1]/body[1]/table[1]/tbody[1]/tr[1]/td[2]/p[10]) which today points to "Others are strongly encouraged to start their own Annotea servers." 
+yet which whilst not being from the right date (it's as close as web.archive.org 
+has.) it does point to a paragraph discussing Art Barstow's javascript bookmarklet approach. 
+I think it's clear fuzzy pointers without a mechanism to know how reliable the fuzzy pointer is can't realistically be used. 
+Jim. 
+Hello Jim, Thanks for your remarks concerning the Annotea page. 
+Yes, we could have added ID pointers, but this slipped by. 
+On the other hand, note that all the news items on the W3C home page do have a distinct ID attribute remember some talk about producing all of our specs with ID attributes. 
+It's not fair to say that because we forgot to add the ID attributes to our main pages, XPointers don't work at all. 
+The proof is that when you have those attributes, the annotation is connected to them. 
+We have never tried to hide this limitation of XPointer. 
+You call them fuzzy pointers, but in reality, it's a limitation of XPointer. 
+We have identified two problems for XPointers, in both our paper and in the Amaya on-line documentation: - orphan annotations: an annotation can't be attached anymore to a document. 
+- misleading annotations (this is what you refer to as fuzzy pointers). 
+An annotation is attached to a wrong place in the document. 
+Besides promoting the use of the ID attribute, we don't have a any good solution today to make XPointer more robust. 
+There are some ideas floating around to solve this problem, some of them proposed by the Annotation group at Microsoft. 
+The consensus seems to be that it's better to have orphan annotations than a possibility of misleading annotations. 
+This is an open research item and we would like to have a contribution coming from the annotations community. 
+I agree with you on this and this is a known limitation that we have documented. 
+We're missing a FAQ for Annotea to make this clear and also to say where we're expecting more contributions and which kind of documents you can annotate better with the existing technology. 
+I'd say that if you have a live document, it's better you use ID's if you plan to modify it. 
+-jose "Jose Kahan" jose.kahan@w3.org 
+making My complaints are not about the Annotea page, I was using that as an example of perhaps the best quality page for annotations, yet it still has problems, I was using it to highlight the weakness in Fuzzy Pointers (I don't think either your changes over time as evidenced by web.archive.org 
+are inappropriate) I call them Fuzzy Pointers becuase the documents they are used on are _HTML_ and XPointer isn't defined for anything other than XML and we're relying on HTML normilasations being similar enough that we can use them between different parses. 
+document. 
+There is no solution to either of these problems and that is what we need, it seems to me that XPointer isn't a solution to providing context in HTML resource. 
+(Sean Palmer has also raised problems with any context information surviving HTTP content-negotiation resource, rather than the resource itself. 
+open Within the Evaluation and Repair group we've discussed checking when resources have changed and the extent of those changes - similar mechanisms I think are needed in Annotea so you know if a resource is likely orphaned through the document structure changes. 
+Jim. 
+I agree that we cannot make all the content of the Web suddenly use ids, however, for a group creating a document for review purposes it does not sound too difficult. 
+Amaya even has a command for adding ids automatically to a page. 
+The Annotea page does have ids in the headers but I now added some also to the navigation bar. 
+It did not use the automatic Amaya command as it was added later. 
+The goal is to use ids when possible. 
+It could be there is an error in creating the pointers in which case it needs to be corrected. 
+I'll ask Jose. 
+Are these new pointers? 
+If they are very old they might also be from era before the ids. 
+And I'm really happy that you are helping us to make the pointers more robust. 
+Some annotations to W3C pages are from the experimentations before the id era. 
+We should at some point clean them but they are there now partially to remind us about the problems. 
+Here I disagree somewhat. 
+It depends so much of the usage. 
+We use the pointers in annotations all the time for reviewing purposes. 
+Naturally you need to be aware of the problems but why should we stop using them as it helps so much. 
+If someone comments a page and explains textually the location of the comment the pointing can be fuzzy too. 
+It can be fuzzy even without any changes to the document if the text describing the location in the document is ambiguous. 
+And it can be even more fuzzy after I change the page dramatically. 
+Furthermore, nothing in Annotea prevents adding the description to annotations if it is badly needed. 
+Even if we add comments by editing the same document, we might accidentally make a change where the comment is left behind to a funny location. 
+I do agree with you that there is lot to do here to make it better and more robust and also add supporting features that help to archive the annotations in their places before major document updates. 
+(And after that we can develop social processes to prevent problems.) So I'm exited to see what you and the others come up with to enhance Annotea. 
+Marja ... which isn't really true - eg do HTML4 tables contain an implied tbody element if it isn't explicitly present in the document? 
+From memory, Annozilla says yes, and Amaya says no. Matthew "Matthew Wilson" matthew@mjwilson.demon.co.uk we're them I've looked into this from an ER perspective, and found Mozilla, IE and OpenSP's normalisations to be very similar - Amaya I don't think normalises. 
+Jim. 
+When we realized this to be a problem we asked (through someone) from the XHTML WG to get a standard rules for canonical conversion from HTML to XHTML . 
+It will be needed for other purposes too, not just for XPointer. 
+We decided not to work on this part until we get the rules. 
+If there are big problems because of this let us know, I'll see what can be done. 
+Marja Of course it does! 
+If IDs are used for all elements, then we can happily reference them - provided we don't have an editor that moves them around! 
+But an ID gives us an element (or attribute): trying to extend it to a range as Annotea does[1] is problematic. 
+That's why I suggested a method for measuring document change (or more precisely, a family of equivalence measures). 
+OK, I think you should separate the manual and automatic cases. 
+Doing it manually is just a case of a software tool maintaining dependency information and basic housekeeping. 
+I find the automated situation more interesting: for example, if a document has changed, I want to be able to detect which annotations are affected and should be archived off or flagged for human attention. 
+The person doing the [1] Yes I know XPointer does that too. 
+There are cases when you *can* meaningfully refer to a range; my point it that to try and do so in the presence of change is not sensible. 
+Nick Kew Site Valet - the mark of Quality on the Web. 
+ID attributes for everything are fine for a scenario where all contents are tightly controlled by a publishing system that manages them. 
+But that's a rather restricted scenario, and clearly not applicable to the Web at large. 
+Jim and I worked through several implementations of fuzzy pointers in the course of interfacing our respective software agents. 
+What we have now appears to be equivalent to Annotea, except in that it identifies an element and not a range. 
+They are XPointers into a normalisation of the document markup - hence fuzzy (as Jim calls them). 
+No it isn't! 
+Using fuzzy pointers, Jim's client software can query my server, and does NOT misplace an earl assertion (or annotation). 
+The problem isn't fuzziness, it's change! 
+I'm making one such suggestion! 
+There are some ideas floating But we have both! 
+Nick Kew Site Valet - the mark of Quality on the Web. 
+David (and Jim further down this email) 1- Yes to "human-level" content I deeply agree with you about anchoring to "human-level" content. 
+In Yawas, I also use the same approach where annotations are anchored to the annotated content (namely the highlighted text). 
+But I also found it useful to store the occurrence of the content you annotate in the document (e.g. you stores (2,"human-level"). 
+As you pointed out, the nice effect of anchoring to the content is that you can map annotations from one document format to another. 
+In Yawas, I found it occurring on the web itself with the same web page hosted on different servers. 
+For simplicity, Yawas currently anchors annotations to one URL. 
+But I will certainly now have to compute a kind of content-based document signature instead of URL: this will allow Yawas to map annotations correctly, independently of the URL. 
+Maybe later I will implement mapping to different document formats (e.g. sometimes it's true that I annotate a paper in HTML format with Yawas and later on find the PDF or DOC version: it would be neat to map my annotations). 
+By the way, congratulations for your excellent work on repositioning annotations (both the TR and paper which I've read before). 
+2- Some issues with image annotation Regarding annotating images that Jim evoked, we are also working on XLibris here at FXPAL (Yawas was done before that when I was doing my PhD in France). 
+XLibris supports freeform annotations over text and/or images. 
+An annotation can overlap an image. 
+If the annotation overlaps more the image than the text, then we attach the annotation to this image. 
+As for the textual content of a document, image content can also change and their annotations need to be repositioned. 
+As for text, it would certainly make sense to use a "human-level" content. 
+Previous work on this area includes annotation of video, where annotations can be mapped sometimes in real-time using image tracking techniques. 
+3- Peer-to-peer annotations I'm also very interested in USING all these annotations. 
+I think annotation servers are a good way to start. 
+Storing all annotations on an annotation server is like forcing you to send your bookmarks to a bookmarks server. 
+I would rather see a more peer-to-peer solution where standalone annotations can be embedded in documents, not requiring any annotation server. 
+Like people do when they take their interesting bookmarks and author a web page. 
+As with hyperlinks, everyone could easily author annotations. 
+An example is http://www.cnn.com#annotation-content+text=+from=laurent (Tomas Phelps and Robert Wilensky used a similar encoding for their robust urls). 
+Possibly, existing search engines could crawl the web and index these embedded annotations. 
+When a user accesses a document, he/she could ask for the annotations on this content (regardless of the URL, document format). 
+For more private annotations (e.g. a group of people working together around a document), you could also point your annotation client to a set of web pages likely to contain annotations relevant to this group as you do it today in Annotea clients by pointing them to an Annotea server. 
+I'd like to get some feedback about this idea of peer-to-peer annotations. 
+Laurent. 
+No, no, NO! That's only half the story! 
+For IDs to work properly, you need to *guarantee* that they will be anchored to elements across edits, regardless of who edits a document or what tools they use. 
+This is the province of a document management system, not a mere editor. 
+Robustness in the presence of consistently-used IDs is easy. 
+I want to see it everywhere! 
+A review is a situation that can be well-handled by annotation-aware tools. 
+That one's easy: a snapshot represantation comprising both the document and the annotations will suffice, and can be processed (eg with XSLT) to whatever format you please. 
+It's exactly what Valet does to show errors and warning in-situ in a document, for instance. 
+Nick Kew Site Valet - the mark of Quality on the Web. 
+Yep (and a lively discussion that was)! 
+Fundamentally we should add not only a time dimension (my original point) but also an HTTP dimension before our pointers are reliable. 
+Dealing with HTTP is simpler, insofar as we can make the assumption that two equivalent requests will generate equivalent responses. 
+We should however extend the protocols to keep a record of HTTP negotiation headers[1], so we can be sure we're not annotating totally different resources. 
+Yep. 
+I think I'll crosspost this back to ER, in case anyone from our original discussion has more to say. 
+[1] simple test: where there's a Vary header, keep a record of the values used for negotiable headers in the request as part of a pointer. 
+Nick Kew Site Valet - the mark of Quality on the Web. 
+As Jim already mentioned, we've discussed this on ER, and identified a de-facto standard that works well with existing tools. 
+I'm not sure this should really be a matter for the XHTML WG. 
+The object of the exercise is to convert to XML, regardless of whether it happens to be XHTML. 
+Converting to XHTML isn't even very meaningful in the case of HTML flavours other than 4.x, including that generated by lots and lots of snake-oil authoring tools. 
+Nick Kew Site Valet - the mark of Quality on the Web. 
+It's a good idea, it's also trivial, the only problem is the resource discovery of peoples annotations, the current Annotea RDF is fine, I could add parsing of user annotations stored elsewhere than a server trivially. 
+I can't see a simple mechanism though without a search engine to get out and find these user annotations, also what's the motivation for these private annotations when you can use an annotea server. 
+Certainly distributed systems have their uses, however as you're not usefully annotating domains you control I can't see how the resource discovery portion of the problem works. 
+Jim. 
+I'm not sure what ER is - is there a URL for this discussion you mentioned? 
+Matthew Wilson "Matthew Wilson" matthew@mjwilson.demon.co.uk from the to mentioned? 
+Sorry ER, is the Evaluation Repair group the posts around, although I fear much was discussed on IRC before we had archives. 
+#er on irc.w3.org * often discusses annotea these days you can often find me and Nick if you want to grill us on it. 
+Jim. * The channel's even got its own Annotea bot. 
+I looked closer and found it to be my mistake - I easily forget that the content conceptually under headers is not under headers in HTML structure. 
+So I added more ids with the automatic id generation command in Amaya. 
+It asks which elements to give the id to. 
+For users like me it could also suggest a good default set of elements to give to id to. 
+Marja OK, to follow up to myself, let's spell that out. 
+An annotation can include its own date, and a document last-modified date - more useful where available. 
+But this doesn't help to measure which changes are significant. 
+The solution Valet uses to track changes is hashing on an ESIS representation. 
+The most useful hash for testing the validity of annotation pointers is that on document elements. 
+I'd suggest that these be properly integrated into annotea: * An annotea client should compute a hash when it makes an annotation * The server stores the hash within the rdf: * Queries on the database return a hash. 
+* The client rendering an annotation computes a hash on the document at the time of reading it. 
+If this differs from the hash associated with the annotation, the pointer is invalidated. 
+* Document management software can use this to prompt an administrator to deal with annotations, or can do so automatically if this is considered appropriate. 
+At this point, if annotations are kept their hashes can be updated. 
+A more sophisticated document management system might want to use more hashes (Valet already does). 
+Nick Kew Site Valet - the mark of Quality on the Web. 
+Resource discovery of people's annotations: 1- same model as search engine (most likely you won't get ALL annotations, but you could get back the most popular ones if the engine is Google-like) 2- if you know you work with a group, you can agree to embed your annotations in a set of web pages that the client parses to extract the annotations What's the motivation for these private annotations when you can use an annotea server? 
+1- My question now: how can you reference your annotation stored in an annotea server? 
+Even if you could, how long would you be sure this URL provided to you by the server will be valid? 
+By having stand alone annotations encoded in hyperlinks, you only have the risk that the document you annotate changes. 
+2- You need an annotea server, not with embedded annotations: everyone could start authoring annotations (as they did with web pages, which lead to VERY useful techniques to use these links - like Google) 3- Having your standalone annotations embedded in your web page is safer (you don't need the server to tell you the anchor point and the comment 4- You can defer the publication of your annotations (as most people do when they first create personal bookmarks and then decide they are worth sharing). 
+This could also reduce the amount of junk annotations. 
+The only limitation I found of encoding the annotation in a URL is that it does not permit to store long comments. 
+One solution then would be to use a link within the url, as in: But maybe that's not a problem. 
+Annotea team: could you give us a quick number for the average length of a comment in your annotation servers? 
+By the way, when I tested Yawas, the most prominent use was the highlight function. 
+I had to redesign it so that users could quickly highlight, not having to fill in a form or even a comment. 
+Laurent. 
+From a purely selfish point of view, can I add a requirement: * The hash can be computed from the element using standard ECMAScript and DOM methods. 
+Matthew "Matthew Wilson" matthew@mjwilson.demon.co.uk and It's okay Nick is never going to get that one past me, and with 80% of Annotea implementations using ECMAScript and DOM, I think it's others who should be coping with what we can do... Jim. 
+Not a problem. 
+A hash on a string comprising the (lowercase) names of all elements in a DOM - separated (eg) by space - will do nicely. 
+If you and Jim agree on the fine detail based on what's easy to do in your respective browsers, that'll be fine by me. 
+Text content and attributes should be ignored: changes to these might slightly shife a pointer, but won't invalidate it to the point of becoming totally wrong and/or misleading. 
+Nick Kew Site Valet - the mark of Quality on the Web. 
+"Nick Kew" nick@webthing.com and all All HTML 4.01 elements? 
+perhaps to cope with elements which different parsers may ignore, for example IE places a moomin element into the DOM, and I don't believe Mozilla would. 
+I still think it might be worth adding id's or href's or something as changes of these do indicate changes of substance of the document, although that's perhaps something more for other areas. 
+Jim. 
+Erm, you lost me. 
+Surely you can set the parser NOT to generate extraneous gunk? 
+I don't think so. 
+They indicate change which may affect the annotation, but won't invalidate the XPointer to it. 
+As for links, flagging when they've changed is a separate issue. 
+Maybe we can use annotea for that, but it's not what the present proposal is about. 
+Nick Kew Site Valet - the mark of Quality on the Web. 
+Hello Matthew, That's correct. 
+Amaya does add that element when it's missing. 
+However, as we can't be sure that all browsers normalize HTML in the same way, we decided to not take into account the internal added elements when producing an XPointer. 
+On the other hand, if everyone normalized HTML in the same way, then, for a valid HTML document, we could have an XPointer working. 
+Note that the XPointer spec says specifically that it cannot be used with non XML documents. 
+We have left this option open in Amaya for the moment, but I'm not sure if we should continue doing so. 
+On the one hand, if you only point to well formed XML documents, you are sure that other browsers can construct the same tree. 
+However, for HTML you need to have a valid document. 
+Not all browsers construct their internal DOM tree in the same way. 
+An XPointer to an HTML document made by one application may not be interpreted in the samw way by another application. 
+So, here's an open question to all of you, what do you want to do with this? 
+Just point to XML documents? 
+Or shall we (meaning the people in this list) propose a mechanism that allows to solve this problem? 
+-jose Nick, Jim, Have you document your fuzzy XPointer proposal? 
+All I have is some remarks on it in this thread. 
+It would make it easier to evaluate it if you mailed it or put it online. 
+We can put it online on the Annotea pages if you want, to faciliate its discussion. 
+Thanks, -jose Hello David, Thanks for your feedback. 
+I'm aware about your work and have read your papers :) A limitation about your schema is that it only allows to annotate text. 
+It's not possible to use it to annotate an SVG image or a MathML formula, for example. 
+That's where the structure becomes important. 
+You may also want to annotate a whole chapter or a section of a document. 
+-jose This fundamental flaw was clear to me and the other members of the Crit project group as soon as we read the early specifications for XPointer. 
+We responded by suggesting that XPointer adopt a simple text-based pointer scheme, using whitespace-insensitive string matching, but our request was ignored. 
+Instead, XPointer grew more complex, adding even more features that were perhaps academically interesting, but few people would use (or even understand) -- while neglecting to add the simplest, most basic, and most usable method for anchoring annotations. 
+I find this extremely unfortunate. 
+It is vital that annotations be anchored in a manner that the *user* understands. 
+It is not sufficient even to invent a fantastically intelligent algorithm for re-anchoring when the document is modified. 
+The re-anchoring must be so simple and predictable that a typical user can learn to figure out what is going to happen when the document changes. 
+Given that all the user gets to see in a rendered document is the textual content, it follows that the textual content must drive the anchoring of annotations. 
+This is how Crit works. 
+See http://crit.org/. 
+Crit has worked this way since 1997 when it was first introduced, and while it has some other problems -- it is slow and its current implementation doesn't scale very well at all, for example -- we have never had a problem with anchoring annotations to changing documents. 
+When the string target is unchanged, the annotation sticks; when the string target is no longer present, the annotation falls off. 
+This is easy for people to understand. 
+Users can reattach annotations themselves after they fall off, if they are still relevant. 
+Until we achieve Xanadu-style live editing of annotated, versioned documents, i don't think it is really possible to do much better. 
+See http://crit.org/http://crit.org/draft-yee-url-textsearch-00.txt for the specification of the anchor protocol that Crit uses. 
+-- ?!ng Bravo. 
+The truth of this last statement should be obvious to everyone. 
+Of course it has to be human-level content; it is humans that these systems are supposed to serve, after all -- or have we forgotten that? 
+I saw your presentation at CHI 2001, and thought you guys did some pretty cool work with your anchoring algorithm. 
+I was sad that you didn't cite Crit in your paper, but I now see that at least you mentioned it in your tech report. 
+I was impressed by the clever results you got by keeping track of keywords and context, as you do. 
+But i have to say i'm not certain that's necessarily a win. 
+With an algorithm like that, there are a few issues: 1. 
+For deployment as an interoperable standard, you have to specify the algorithm and any data it relies on so that all implementations produce exactly the same result. 
+So you would need to standardize all your tuning parameters, scoring weights, thresholds and so on. 
+2. It is unreasonable to expect that a user could duplicate all of the steps in your algorithm to predict the outcome. 
+This makes it possible to have failures that no user could prepare for or defend against. 
+There's still potential for fuzzy matching algorithms as a way of suggesting possible relevant areas of the target document after an annotation has been orphaned. 
+It would be worth comparing the utility of this to the utility of simply displaying the original anchor with some context. 
+-- ?!ng Our currently published work in the area of robust annotation anchoring only covers anchors for selected text content, that's true. 
+However, the same basic approach (e.g. feature extraction) applies equally well -- if not better -- to images, video, audio, etc. 
+In general, annotation of any medium by an end user will be more effective in the face of change if the annotations are anchored with content-based anchors. 
+In particular, this implies that anchoring for any specific medium is medium-specific: annotations will be anchored to images using a different algorithm than if they are anchored to text. 
+In the short term, this complicates the standards picture quite a bit. 
+But if the goal is to create standard ways to effectively serve end users with respect to annotations on web resources, it is (I believe) the best way to go. 
+Format-specific structure-based anchoring techniques will end up frustrating and surprising end users more than it helps them. 
+In the long term, the immediate need for a family of robust anchoring algorithms actually points toward a deeper problem: The standards that exist today for the display and manipulation of text, images, video, audio, etc. provide insufficient information about the internal semantic structure of those media, and that's why we have to create work-arounds to make up for it. 
+And I don't think RDF is the answer, though it is a good start. 
+What we need is a MUCH better understanding of the *internal* semantic structure of all kinds of media. 
+MPEG 4 and 7 are examples of attempts to standardize an enhanced understanding of the internal semantic structure of video, and can be taken as models for where we need to head with text, images, audio, and other basic media types. 
+Annotation is not the only field that will benefit from enhanced standards in this respect: Indexing, search, document organization, and many other applications also need these improvements. 
+On the issue of annotating whole sections of a document, you are absolutely right, human-level structural information such as chapters of a book or sections of a document, are really important contextual clues for annotation. 
+We have not yet focused on integrating these clues into our algorithm, though we recognize they are very important. 
+But though these clues are structural in nature, they are still "human-level" as opposed to format-specific: A book chapter is a book chapter is a book chapter, whether it is represented in pdf or html or .doc or ascii. 
+So I think my original assertion stands, that and end-user annotation anchoring scheme must be based on human-level content, not format-specific structure. 
+Dave Hello David, Thanks for your feedback. 
+I'm aware about your work and have read your papers :) A limitation about your schema is that it only allows to annotate text. 
+It's not possible to use it to annotate an SVG image or a MathML formula, for example. 
+That's where the structure becomes important. 
+You may also want to annotate a whole chapter or a section of a document. 
+-jose structure that anchoring can Thanks for your comments Ka-Ping. 
+I mostly agree with your first assertion -- that we would need to standardize all aspects of our algorithm if it were to be useful as an interoperable standard. 
+However I also partly disagree -- our empirical observations from subsequent studies showed that different users choose different anchoring confidence thresholds below which annotations are automatically orphaned by our algorithm. 
+That means that some users care less about precise anchoring than others. 
+So I don't think we could freeze the confidence thresholds -- they are dependent on user preference, the nature of the material being annotated, the task, and other factors. 
+A natural result of this is that I will get different anchoring results than someone else might. 
+This is acceptible, though, as long as I like my anchoring results more than the other person's ; ) I am not sure I understand your second assertion. 
+The algorithm is deterministic, and relies only on human-level content, so it should produce the same results given the same human-level content (and same confidence threshold settings), regardless of format. 
+What sort of failures do you envision? 
+If you mean orphaning, then yes, of course there will be orphans. 
+This is not a failure of the algorithm, though...it is in the nature of dynamic document annotation. 
+If I annotate a paragraph in a webpage today, and tomorrow the paragraph simply disappears from the webpage, then what is the anchoring algorithm to do? 
+The final arbeiter is always the user, so *any* anchoring algorithm, regardless of how robust it tries to be, must be prepared to ask the user for help when it reaches an impass such as this. 
+Dave structure Bravo. 
+The truth of this last statement should be obvious to everyone. 
+Of course it has to be human-level content; it is humans that these systems are supposed to serve, after all -- or have we forgotten that? 
+I saw your presentation at CHI 2001, and thought you guys did some pretty cool work with your anchoring algorithm. 
+I was sad that you didn't cite Crit in your paper, but I now see that at least you mentioned it in your tech report. 
+I was impressed by the clever results you got by keeping track of keywords and context, as you do. 
+But i have to say i'm not certain that's necessarily a win. 
+With an algorithm like that, there are a few issues: 1. 
+For deployment as an interoperable standard, you have to specify the algorithm and any data it relies on so that all implementations produce exactly the same result. 
+So you would need to standardize all your tuning parameters, scoring weights, thresholds and so on. 
+2. It is unreasonable to expect that a user could duplicate all of the steps in your algorithm to predict the outcome. 
+This makes it possible to have failures that no user could prepare for or defend against. 
+There's still potential for fuzzy matching algorithms as a way of suggesting possible relevant areas of the target document after an annotation has been orphaned. 
+It would be worth comparing the utility of this to the utility of simply displaying the original anchor with some context. 
+-- ?!ng No. It's just something we reached between us; a simple recipe: - Normalise to XML - Construct a pointer into the DOM on that XML e.g. "http://www.foo.bar/doc.html#html[1]/body[1]/p[3]/a[1]" 
+Well, it's basically the same thing you already have in Annotea, except in that we don't do ranges. 
+Nick Kew Site Valet - the mark of Quality on the Web. 
+Is there a precise definition of this normalization? 
+Or is it just what one might reasonably expect? 
+Matthew The latter. 
+It's a demo-of-concept prototype, not a full-blown spec. 
+The goal was to find a representation we could both work with. 
+My suggestions would be: (1) Run Page Valet on some test cases - it generates the normalisation or (2) Look at Jim's Javascript client code, which I imagine must be quite similar to what you'll want. 
+If you'd like to move it towards a formal standard, I could scribble down something a little more detailed. 
+Nick Kew Site Valet - the mark of Quality on the Web. 

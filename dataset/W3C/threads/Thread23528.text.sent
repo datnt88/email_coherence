@@ -1,0 +1,107 @@
+Hi, I'm trying to implement the method LSSerializer.writeToString and would like to know what encoding declaration should be written if serializing the document node. 
+Should it always be "UTF-16", or should it be the current xmlEncoding (e.g. ISO-8859-1)? 
+What about if the DOMString is UTF-16LE encoded, as in our implementation: should it always be "UTF-16" or "UTF-16LE" in this case? 
+Any hints? 
+I did not find any explicit information. 
+The specs say: "this method completely ignores all the encoding information available", but I'm not sure about what this really means. 
+NOTE: After 2 months (!) of efforts to subscribe to this list, I received the first mail from the list (2004-01-28). 
+Since it is the only one I received until now, I'm not sure if everything's working well: is there simply not much traffic (I really did not expect that!), or does the list have problems dispatching mails? 
+Thanks in advance, Kasimier Buchcik Traffic on this list tends to be episodic. 
+Someone will bring up a specific question about the working draft our about something particularly fuzzy in a past recommendation, it'll get batted around for a few days, and then die out again once the Working Group understands the question and has either answered it or has decided they need time to think about it. 
+How much is happening thus depends on how badly people are confused, or how strongly they disagree with a detail of a published draft. 
+The DOM working group's internal mailing lists are much more active, of course. 
+Joe Kesselman, IBM Next-Generation Web Technologies: XML, XSL and more. 
+"The world changed profoundly and unpredictably the day Tim Berners Lee got bitten by a radioactive spider." -- Rafe Culpin, in r.m.filk Hi, Hmm, a pity. 
+I see. 
+And I have an uneasy feeling that my question will likely not be answered; so I should set up a bot to resend it once a week. 
+Well, for the sake of the DOM: I hope that! 
+At least I thank you for showing me that there does exist *some* DOM activity; It started to feel like a ghost town. 
+Thanks and regards, Kasimier Buchcik I thought this was resolved a few weeks ago but I didn't find traces of it in the current internal version of the draft. 
+I'll have to track this down further. 
+For some reasons, the system is now waiting for me to acknowledge the subscriptions to this list so I might have missed yours. 
+Philippe It has been clarified that writeToString is using the same encoding as the DOMString type itself, i.e. UTF-16. 
+You raise an interesting point regarding the value of the XML declaration encoding itself and I don't think we considered it in the past. 
+XML requires processors to understand "UTF-8" and "UTF-16" (see section 4.3.3 of XML 1.0 [1]). 
+In other words, the values "UTF-16BE" and "UTF-16LE" are not required to be supported. 
+Our reason to have them in LSSerializer was to give the ability to choose between LE and BE, but not necessarily to have them in the XML declaration. 
+As indicated in XML, entities encoded in UTF-16 MUST begin with the Byte Order Mark, so I see no reason why the value of the XML declaration encoding should contain "UTF-16BE" or "UTF-16LE", especially since this introduces some interoperability troubles. 
+Proposal: The LSSerializer MUST support the value "UTF-8", "UTF-16", "UTF-16LE", and "UTF-16BE". 
+If the value is "UTF-16", the choice between big endian or little endian is platform dependent. 
+If the UTF-16 encoding is in use, the value of the XML declaration encoding (if serialized) MUST be "UTF-16" and, as required by XML, the serialized content MUST begin with the Byte Order Mark. 
+If the UTF-8 encoding is in use, the value of the XML declaration encoding (if serialized) MUST be "UTF-8", and the serialized content SHOULD NOT begin with the Byte Order Mark. 
+* XML uses a MAY instead of SHOULD NOT regarding UTF-8. 
+The recommendation for the LSSerializer is not to generate the BOM unless the implementation has some good reasons to do so. 
+Philippe [1] http://www.w3.org/TR/2004/REC-xml-20040204/#charencoding Philippe Le Hegaret scripsit: That means that entities encoded in the encoding named "UTF-16" must begin with a BOM. 
+Entities in the encodings "UTF-16BE" and "UTF-16LE" must not begin with a BOM, but must have an appropriate encoding declaration. 
+John Cowan jcowan@reutershealth.com I am a member of a civilization. 
+--David Brin Looking again at XML 1.0 3rd, it says that UTF-16 encoded entities MUST being with a BOM. 
+Unless I'm misinterpreting the meaning of "UTF-16 encoded entities", I would say that it does include UTF16-BE and UTF16-LE as well. 
+Philippe Correction, after stopping by Martin Duerst's office: I was misinterpreting the meaning of "UTF16 encoded entities". 
+The BOM is indeed not required for UTF-16BE or UTF-16LE. 
+Philippe I can understand "should not" in this case, but I don't see a need for "must not." 
+If that's enforced, then parsers that don't understand the "UTF-16LE" or "UTF16-BE" encoding declarations have little hope of heuristically discovering the actual encoding. 
+-Steve Schafer Fenestra Technologies Corp Philippe Le Hegaret scripsit: The sentence in the previous paragraph: # The terms "UTF-8" and "UTF-16" in this specification do not apply to # character encodings with any other labels, even if the encodings or # labels are very similar to UTF-8 or UTF-16. is intended to cover UTF-16BE and UTF-16LE, as well as CESU-8. 
+Only the encodings actually named "UTF-16" and "UTF-8" are allowed without an encoding declaration, and the "UTF-16" encoding actually requires a BOM in XML, though not in plain text generally. 
+After all, the whole point of the encodings "UTF-16BE" and "UTF-16LE" is that they MUST NOT begin with a BOM: if the first two bytes are 0xFE 0xFF or 0xFF 0xFE, that represents a U+FEFF character, and if document is not well formed. 
+Trust me on this one. 
+I was there. 
+:-) One Word to write them all, John Cowan jcowan@reutershealth.com One Access to find them, http://www.reutershealth.com 
+One Excel to count them all, http://www.ccil.org/~cowan 
+And thus to Windows bind them. 
+--Mike Champion Steve Schafer scripsit: Not at all. 
+You can heuristically discover it by looking for the XML declaration (ignoring NULs and interpreting the non-NULs as ASCII). 
+There are really only five cases for the Appendix F heuristic: 1) There is a UTF-16 or UTF-32 BOM followed by an ASCII encoding declaration with embedded NULs. 
+Believe the declared encoding. 
+2) There is a UTF-16 BOM but no encoding declaration. 
+The encoding is "UTF-16", and the BOM tells you whether it's big- or little-endian. 
+3) There is an ASCII encoding declaration. 
+Believe the declared encoding. 
+Skip any UTF-8 BOM that may be present. 
+4) There is an encoding declaration in EBCDIC. 
+Believe the declared encoding. 
+5) Otherwise, the encoding is UTF-8. 
+Skip any UTF-8 BOM that may be present. 
+The UTF-16LE and UTF-16BE encodings require an encoding declaration, so they fall into case 1. CESU-8, which is very like UTF-8, falls into case 3. Henry S. Thompson said, / "Syntactic, structural, John Cowan Value constraints we / Express on the fly." 
+jcowan@reutershealth.com Simon St. Laurent: "Your / Incomprehensible http://www.reutershealth.com 
+Abracadabralike / schemas must die!" http://www.ccil.org/~cowan 
+Hi, Yes, I think so. 
+RFC 2781 does say: "Text in the "UTF-16LE" charset MUST be serialized with the octets which make up a single 16-bit UTF-16 value in little-endian order. 
+Systems labelling UTF-16LE text MUST NOT prepend a BOM to the text." 
+But the dilemma I see is that our Delphi implementation needs the DOMString not to have a BOM. 
+And this is fine when reading the Load &amp; Save candidate recommendation: (http://www.w3.org/TR/2003/CR-DOM-Level-3-LS-20031107/load-save.html) "When outputting unicode data, whether or not a byte order mark is serialized, or if the output is big-endian or little-endian, is implementation dependent." 
+Maby it's just my understanding of the DOMString until now, which seemed to be quite bound to the implementing application. 
+If I get a Node.nodeValue (in our Delphi implementation) I expect the DOMString to be encoded in UTF-16, little-endian with no BOM. 
+If I serialize with LSSerializer.writeToString 
+I would get a UTF-16 with a BOM - as the XML spec states. 
+This would arise problems with DOMString operations, since I cannot predict if the DOMString came from the LSSerializer or not. 
+I assumed that the DOMString was designed to be of consistent structure in an application, and that LSOutput.characterStream and LSOutput.byteStream would play the role of a *pure* XML entity. 
+So is the DOMString really intended to represent a XML entity or should it be handled more like a interface to the implementing programming language? 
+Thanks and regards, Kasimier Buchcik Hi, This is true if you mean that a BOM must not be existent if the document is labelled "UTF-16LE" or "UTF-16BE", and thus aready serialized. 
+IOW if you want to serialize a little-endian encoded entity you are free to declare "UTF-16" and use a BOM *o*r declare "UTF-16LE" and ommit a BOM. 
+Regards, Kasimier Buchcik By the way phillipe, I think the mails working fine its just no ones mailing! 
+Sorry I can't answer your question I'm just an observer for the time being. 
+Kevin McDonagh Kevin McDonagh Apple Tv Design info@appletv.co.uk Hi, Although I might get flamed about repeating a question (I posted it further down the tread), I still need to clarify the format of the DOMString if using LSSerializer.writeToString. 
+As you wrote, I see that the declaration needs to be "UTF-16". 
+But is it required to use a BOM? (http://www.w3.org/TR/2003/CR-DOM-Level-3-LS-20031107/load-save.html) "When outputting unicode data, whether or not a byte order mark is serialized, or if the output is big-endian or little-endian, is implementation dependent." 
+Unicode 4.0, 2.6 Encoding Schemes: "When a higher-level protocol supplies mechanisms for handling the endianness of integral data types, it is not necessary to use Unicode encoding schemes or the byte order mark. 
+In those cases Unicode text is simply a sequence of integral data types." 
+"Note that some of the Unicode encoding schemes have the same labels as the three Unicode encoding forms. 
+This could cause confusion, so it is important to keep the context clear when using these terms: character encoding forms refer to integral data units in memory or in APIs, and byte order is irrelevant; character encoding schemes refer to byte-serialized data, as for streaming I/O or in file storage, and byte order must be specified or determinable." 
+If I get a Node.nodeValue (in our Delphi implementation) I expect the DOMString to be encoded in UTF-16, little-endian with no BOM. 
+If I serialize with LSSerializer.writeToString 
+I would get a UTF-16 with a BOM - as the XML spec states. 
+This would arise problems with DOMString operations, since I would have to check first if some of the DOMStrings has a BOM. 
+I assumed that the DOMString was designed to hold integral data and that LSOutput.characterStream and LSOutput.byteStream would be expected to fulfill the requirements of an encoding scheme. 
+So, once more: has the DOMString to hold a BOM if serializing with LSSerializer.writeToString? 
+Regards, Kasimier Buchcik The Group rediscussed this issue and came up with the following proposal (however, I added "byte-order-mark-needed" warning): The following sentences were removed: When outputting XML data, implementations are required to support the encodings "UTF-8", "UTF-16BE", and "UTF-16LE" to guarantee that data is serializable in all encodings that are required to be supported by all XML parsers. 
+The following sentences: "When outputting unicode data, whether or not a byte order mark is serialized, or if the output is big-endian or little-endian, is implementation dependent." 
+should read: Implementations are required to support the encodings "UTF-8", "UTF-16", "UTF-16BE", and "UTF-16LE" to guarantee that data is serializable in all encodings that are required to be supported by all XML parsers. 
+When the encoding is UTF-8, whether or not a byte order mark is serialized, or if the output is big-endian or little-endian, is implementation dependent. 
+When the encoding is UTF-16, whether or not the output is big-endian or little-endian is implementation dependent, but a Byte Order Mark must be generated for non-character outputs, such as LSOutput.byteStream or LSOutput.systemId. 
+If the Byte Order Mark is not generated, a "byte-order-mark-needed" warning is reported. 
+When the encoding is UTF-16LS or UTF-16BE, the output is big-endian (UTF-16BE) or little-endian (UTF-16LE) and the Byte Order Mark is not be generated. 
+In all case, the encoding declaration, if generated, will correspond to the encoding used during the serialization (e.g. encoding="UTF-16" will appear if UTF-16 was requested). 
+No. a DOMString object never contains a BOM, since it is a character oriented output. 
+Philippe On Thu, 19 Feb 2004 12:08:03 -0500, Philippe Le Hegaret plh@w3.org 
+UTF-8 is "non-endian." 
+When the encoding is UTF-16LS or UTF-16BE Typo: UTF-16LS -- UTF-16LE In all case, the encoding declaration, if generated, Typo: In all case -- In all cases -Steve Schafer Fenestra Technologies Corp 

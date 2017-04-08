@@ -1,0 +1,53 @@
+2) Using DNS will not work for mobile clients. 
+For example, consider a laptop named SKWAN01.INTRA.MICROSOFT.COM. 
+While plugged into the Microsoft corporate net, it queries for and receives the TXT RR: w3-ns-pac.intra.microsoft.com. 
+IN TXT "service:yp-http://proxy1.intra.microsoft.com:8080/proxy.ins" 
+I unplug my laptop and take it on a visit to Netscape. 
+When I plug into the Netscape corporate network, I query for the TXT RR per above and the query fails. 
+At this point, I have no way of finding the proxy servers for that network, and automatic configuration fails. 
+I don't really follow this logic. 
+When you visit Netscape, I assume you'll get a different IP address. 
+I also assume that means you'll have a different hostname--maybe visitor01.intra.netscape.com 
+Pardon that. 
+I was assuming dynamic DNS. 
+Future Microsoft clients (and DNS servers) will be dynamic-DNS enabled. 
+When they receive a new IP address, they will register that address under their name. 
+However, you make a good point. 
+When I plug my laptop in at Netscape, I need a new IP addr. 
+Either 1) they are running DHCP and this discussion is moot, the client can receive the URL via DHCP, or 2) I have dig into my laptop and enter a new IP address by hand - in which case a) the client could do a reverse lookup to determine it's name, or b) I could hand configure the new name, or c) I could hand enter the proxy information. 
+After all, some sysadmin is going to have to give me an IP (and DNS IPs, and gateways, etc etc), I might as well be given the proxy server info too. 
+I am also not opposed to storing this information in two places. 
+I am only concerned that we solve the automatic configuration problem. 
+Cheers, - Stuart Kwan Microsoft Corp. Having the info in two places isn't necessarily a bad thing. 
+Each solution has its place. 
+Oh the DHCP end of things I am looking at the URL as not just a place to get proxy configuration but as a place to get any and all configuration information I might need. 
+It is the "entry" point from where I can start making requests for all sorts of interesting things. 
+Yaron BTW, a hallway conversation today with Fred Baker indicates there may be serious security problems with serverloc.... Now I just have to try to button hole Jeff Schiller to understand if this will make serverloc useless for this application, or whether serverloc is likely to get fixed in finite time. 
+I'll try to catch Jeff Tuesday.... - jim I talked to Jeff Schiller (IETF area director for security) about the serverloc security problems.... 
+The problem is that anyone, anywhere, can advertize the service, and potentially arrange to get a client to use a service (in this case, a proxy) of the attacker's choosing. 
+The security compromise for serverloc to go to proposed standard is to allow one, via public key crypto, verify the new advertisements. 
+The problem from our point of view is that the solution to serverloc's security problem reduces to the previously unsolved problem: having to distribute different keys to different browsers, which isn't better than what we have now, having to distribute the first proxy configuration information to the browser. 
+A solution to this might be to use DHCP to distribute the keys required, but is not yet specified. 
+Now, DHCP has its own set of security problems, but I note that people are already trusting it in the first place to get their IP addresses (for the mass market). 
+So without being expert at either protocol, it sure sounded like in the short term a DHCP based solution might be best, though in the longer term, something that is more dynamic than just information acquired at boot time would be a better solution (so that when a browser gets restarted, you can pick up the current proxy, or fail-over if a failure is detected while talking to a proxy. 
+And in the long term, this may not be either/or. 
+Hope this helps discussions.... - Jim Yes your point is valid.. Actually, I had suggested using their intermim DNS solution in the meantime, until they get that and other issues worked out. 
+The DNS solution isnt vulnderable to the issues they point out. 
+(IMHO , if im wrong, slap me ) According to Jim Gettys, Josh R Cohen /Server Engineer josh@early.com 
+Netscape Communications Corp. josh@geeks.org (This message is sent from my private email account to reach me for business related issues, mailto:josh@netscape.com ) Expanding on my previous idea we could actually use the URL in DHCP to direct us to a "services server". 
+Once there we can then interrogate the resource specified by the URL to get such interesting things as autoproxy scripts. 
+These scripts can contain all sorts of fascinating information, such as time outs on the script's lifetime as well as provisions for how to get updated proxy information. 
+Rather than filling DHCP up with endless URLs for every service, why not just use it as an entry point? 
+Yaron One problem I see is that this approach would require yet another server to be available on a 7x24 basis (in addition to DHCP and DNS). 
+This must be OK, but the reliability issues should be considered carefully. 
+Dave MOrris Well, most often, the resource is being retreived from an HTTP server (in our case) or a proxy. 
+If the proxy is down, the pac file is useless anyway. 
+Josh Cohen Netscape Communications Corp. Netscape Fire Department "Mighty Morphin' Proxy Ranger" Server Engineering josh@netscape.com http://home.netscape.com/people/josh/ 
+That was my objection ... to the suggestion the DHCP or DNS provide a single URL pointing to a services name / location server. 
+I think it a possibly undesirable design to add yet another server to the 7x24 list. 
+The original post had been that multiple URLs could identify the locations of different server types. 
+Dave Morris the original post, ie the draft, was from me, and that wasnt what I said. 
+I meant that the DNS record was a pointer to the PAC URL. 
+If you meant yaron's original post, then I see your point. 
+However, it seems that a service location server is inevitable. 
+It may be SVRLOC or something else, but I've come to accept that there willl be some sort of svrloc server.. (yes, it suffers from point of failure problems.. ) Josh Cohen Netscape Communications Corp. Netscape Fire Department "My opinions, not Netscape's" Server Engineering josh@netscape.com http://home.netscape.com/people/josh/ 

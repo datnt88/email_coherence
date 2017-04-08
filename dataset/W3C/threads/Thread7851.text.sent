@@ -1,0 +1,26 @@
+Hi all, if '/a.html' is a resource which is *not* locked and the client sends a ... ... on that resource, the mod_dav server responds witth a: /a.html HTTP/1.1 200 OK So, mod_dav sends an empty lockdiscovery element. 
+IIS responds with: /a.html HTTP/1.1 200 OK So, IIS sends no lockdiscovery property at all. 
+In RFC2518; section 8.1 I found the following sentence: "A request to retrieve the value of a property which does not exist is an error and MUST be noted, if the response uses a multistatus XML element, with a response XML element which contains a 404 (Not Found) status value." 
+Does this sentence applies only to user-defined properties and not to DAV build-in properties like the lockdiscovery property? 
+What is the correct server behaviour? 
+Best, Hartmut Hartmut, DAV:lockdiscovery is a live property that always exists for every resource that supports locking. 
+So mod_dav is correct in returning the empty property given that there are no locks. 
+I suppose IIS could be considered correct too as there isn't that much difference between an empty element and no element in this case. 
+Hartmut Warncke M cc: Sent by: Subject: Retrieving the lockdiscovery property from a non w3c-dist-auth-requ locked resource est@w3.org 
+03/15/2001 05:12 AM Hi all, if '/a.html' is a resource which is *not* locked and the client sends a ... ... on that resource, the mod_dav server responds witth a: /a.html HTTP/1.1 200 OK So, mod_dav sends an empty lockdiscovery element. 
+IIS responds with: /a.html HTTP/1.1 200 OK So, IIS sends no lockdiscovery property at all. 
+In RFC2518; section 8.1 I found the following sentence: "A request to retrieve the value of a property which does not exist is an error and MUST be noted, if the response uses a multistatus XML element, with a response XML element which contains a 404 (Not Found) status value." 
+Does this sentence applies only to user-defined properties and not to DAV build-in properties like the lockdiscovery property? 
+What is the correct server behaviour? 
+Best, Hartmut It looks like the server implementors decided that lockdiscovery exists on all class 2 DAV resources. 
+Otherwise, you wouldn't be able to tell the difference between "resource has no locks" and "resource does not exist". 
+I don't see anything in 2518 to specify it, though. 
+|John Stracke | http://www.ecal.com 
+|My opinions are my own. 
+| |Chief Scientist |===============================================| |eCal Corp. |You know that logic puzzle with the fox, the | |francis@ecal.com|goose and the grain? 
+What kind of farmer owns a| |*fox*? 
+| Do we want to modify the spec to specify what behavior we expect? 
+
+It looks like the server implementors decided that lockdiscovery exists on all class 2 DAV resources. 
+Otherwise, you wouldn't be able to tell the difference between "resource has no locks" and "resource does not exist". 
+I don't see anything in 2518 to specify it, though. 

@@ -1,0 +1,86 @@
+They're described in I've put the major classes of test case in place (as I see them) - still to do: JJC's entailment (whether we want to approve it or not), round out the test cases for the other XSD datatypes. 
+Test case name &amp; description... names are as given in the manifest file (relative to http://www.w3.org/2000/10/rdf-tests/rdfcore/datatypes/) - see manifest file for related files. 
+test001 A simple datatype production; a language+datatype production. 
+Simply duplicate the constructs under test002 A parser is not required to know about well-formed datatyped literals. 
+non-well-formed-literal-1 Without datatype knowledge, a "badly-formed" datatyped literal cannot be detected. 
+non-well-formed-literal-2 With appropriate datatype knowledge, a "badly-formed" datatyped literal is a semantic error. 
+semantic-equivalence-within-type-1 Demonstrating the semantic equivalence of two lexical forms of the same datatyped value. 
+semantic-equivalence-within-type-2 As semantic-equivalence-within-type-1; the entailment works both ways. 
+language-important-for-non-dt-entailment-1 language-important-for-non-dt-entailment-2 Language attributes on a datatyped literal make them distinct for the purposes of non-datatype-aware entailments. 
+language-ignored-for-numeric-types-1 language-ignored-for-numeric-types-2 language-ignored-for-numeric-types-3 Language doesn't affect the semantic equivalence of some datatypes, when doing a DT-entailment. 
+semantic-equivalence-between-datatypes Members of different datatypes may be semantically equivalent. 
+This last one needs confirmation. 
+jan grant, ILRT, University of Bristol. 
+http://www.ilrt.bris.ac.uk/ Generalisation is never appropriate. 
+Well done Jan. Good to see this moving forward. 
+test1: rdf is not well formed xml. 
+xml:lang="fr" 10 /eg:bar should be xml:lang="fr" 10 /eg:baz language-important-for-non-dt-entailment-1 this is not what I expected [[# Language doesn't affect the semantic equivalence of some datatypes, # when doing a DT-entailment. 
+However, it represents a difference # when doing DT-unaware entailment.]] 
+We know that: a b "foo"@@en# datatype . 
+c d "foo"@@fr# datatype . 
+entails a b _:l . 
+c d _:l . 
+for all datatypes except rdf:XMLLiteral. 
+It is not necessary to be datatype aware to figure out this entailment. 
+I suppose there is always the possibility that someone has given a different URI for rdf:XMLLiteral. 
+Hmm, that's a shame. 
+Its only true if we know datatype is distinct from rdf:XMLLiteral. 
+This feels a bit shady, but I guess you are right. 
+non-well-formed-literal-2 The representation of a semantic error is that the erroneous triple entails the empty graph. 
+I'm not sure this captures it. 
+Any graph entail the empty graph, right? 
+I remember something in the model theory about a bad literal denoting something, just not a datatype. 
+If I remember rightly we would have a negative entailment: a b "foo"^^xsd:integer does not entail a b _:v . 
+_:v rdf:type _:c . 
+_:c rdf:type rdfs:Datatype . 
+and it does if we replace "foo" with "10". 
+language-ignored-for-numeric-types-1 The comment: [[Language doesn't affect the semantic equivalence of some datatypes, when doing a DT-entailment]] Where some = all except rdf:XMLLiteral. 
+semantic-equivalence-between-datatypes I'd rather we didn't say this at all. 
+This is a statement about the features of xml schema datatypes, not about rdf and datatyping. 
+If we do decide to keep it (grrrr) then I'd suggest formulating it differently. 
+The way this is put suggests that a b "10"^^xsd:integer . 
+entails all other datatype representations of the same value. 
+Suggest instead: a b "10"^^xsd:integer . 
+c d "1E1"^^xsd:decimal . 
+entails a b _:v . 
+c d _:v . 
+which is more constrained. 
+Brian It does? 
+Doh. 
+I still think that's broken; but I'll fix the test case. 
+Basically these cases outline the various issues - I'll correct them as appropriate. 
+NO. 
+This is related to what Pat was complaining about. 
+Basically, a "Positive entailment test" with premise document P and consequent document C passes if: - P has an interpretation (ie, contains no semantic errors wrt the constraints imposed by the interpretation rules used for the test case) AND - P entails C. A "negative entailment test" passes if: - P has no valid interpretations (contains a semantic error) OR - P is ok but does not entail C. The reason for this is to permit the following tests to be expressed: these are all the scenarios we want to be able to test (I think) - Document D1, semantically ok (wrt some interpretation constraints, let's say, rdf+rdfs+dt[xsd:integer] ). 
+Document D2, contains semantic errors wrt the same interpretation constraints (the MT makes it always come out false). 
+Document D3, a well-formed entailment of D1. Document D4, a well-formed document that is not entailed by D1. 
+With the current test definitions, these can be expressed naturally by introducing an empty document, E. Then D1 is semantically ok (+ve ent test, D1 - E) D2 has semantic errors (encoded by -ve ent test, D2 -/- E) The relationship between D1 and D3 is captured by (+ve ent test, D1 - D3) The relationship between D1 and D4 is captured by (+ve ent test, D1 - E) (+ve ent test, D4 - E) (-ve ent test, D1 -/- D4) If you want to use straightforward _entailment_ (not this modified notion used for the test cases) then you can do so BUT this requires you to come up with a URI for a document that is abosultely false - ie, unsatisfiable under any set of constraints. 
+While such a document, F, might be handy, it seems a bit beyond the scope of a test case document to slip it under the radar. 
+It also means that most of the scenarios outlined above require multiple test cases to encode. 
+It seemed simplest to avoid the need for F and to leave test cases captured using the current constructs. 
+I'm happy to revise this if you think it's necessary. 
+jan jan grant, ILRT, University of Bristol. 
+http://www.ilrt.bris.ac.uk/ Semantic rules, OK? 
+Is this _really_ the case? 
+I thought we'd got _distinct_ literal nodes for "foo"^^ datatype , "foo"@en^^ datatype and "foo"@fr datatype in the abstract syntax; then it's down to a _datatype_ entailment to throw away the language tag if it's unimportant. 
+That is, eg:foo eg:bar "10"@en^^ xsd:integer . 
+datatype[xsd:integer]-entails eg:foo eg:bar "10"@fr^^ xsd:integer . 
+analogously to the dataype[xsd:integer]-entailment of eg:foo eg:bar "010"^^ xsd:integer . 
+Thus datatypes that care about language tags have them available for the lexical- value mapping if required...? I'd understood that we'd got tidy, lang-tagged, datatyped literals behaving themselves as of several telecons ago. 
+Is it really the case that eg:foo eg:bar "baz"@en^^ datatype . 
+eg:pop eg:bar "baz"@fr^^ datatype . 
+simple-entails eg:foo eg:bar _:l . 
+eg:pop eg:bar _:l . 
+Argh, jan jan grant, ILRT, University of Bristol. 
+http://www.ilrt.bris.ac.uk/ 
+On modesty: whoever said "it's hard being perfect" obviously wasn't me. 
+No, it shouldn't. 
+In simple entailment, the only things known to co-denote are identical literals, and that 'identical' includes all the stuff stuck on it. 
+We can change this, but that's the way it is right now. 
+Pat IHMC(850)434 8903 home 40 South Alcaniz St.(850)202 4416 office FL 32501 (850)291 0667 cell phayes@ai.uwf.edu http://www.coginst.uwf.edu/~phayes s.pam@ai.uwf.edu for spam [Patrick Stickler, Nokia/Finland, (+358 40) 801 9690, patrick.stickler@nokia.com] 
+It should be changed/fixed. 
+The above entailment should hold. 
+Any application should be able to conclude that any two typed literals which have identical lexical form and datatype URI denote the same value, irrespective of any lang tag, and that conclusion should be possible without any special datatype knowledge. 
+I.e., it's just an RDF entailment, not an RDF + datatypes entailment. 
+Patrick How do you know that datatype does not denote (i.e. is a pseudonym for) rdf:XMLLiteral? 
+Brian 

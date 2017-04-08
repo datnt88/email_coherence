@@ -1,0 +1,153 @@
+Is it a mistake for XPath to try to incorporate so much of XQuery, or is this what users really want? 
+Jeni's answered many of the technical issues, but just to pick up on this question which goes I think to the heart of the problem. 
+The way the question is phrased highlights the warped view of history that has caused Xpath2 to be so alien. 
+Xpath is an existing language, and Xquery is just a draft spec, so the question shouldn't be about Xpath incorporating Xquery, but rather Why has Xquery failed to pick up on so many of the lessons learned from over two years of Xpath use? 
+Look at the only comparable thing to supporting schema types in Xpath1 DTD ID support and the id() function. 
+Have users been crying out for more of this? 
+No! The usual advice is to use xsl defined keys instead. 
+Jeni said: - dereferences -- id(), which does basically the same thing, is very rarely used because people tend to want to make their stylesheets robust in case DTDs aren't available for some reason, so use key() instead. 
+I don't see that dereferencing will be any different, although if it used XML Schema identity constraints it would be a lot more compelling Using XSL keys allows you to tune your index to the needs of the stylesheet rather than whatever features the author of the dtd/schema for that document type thought might be useful things to index on. 
+They also protect the stylesheet from optional behaviour by XML parsers which might or might not report the ID information. 
+So what does Xpath 2 do? 
+Firstly it provides the bizarre = operator which is a restricted version of id(), then for all the new types it stresses the id() approach of inferring type information which might possibly be supplied by a suitable parser, rather than the approach that has proved far more robust, allowing the stylesheet to specify what types it wants to use for the content of certain elements. 
+David This message has been checked for all known viruses by Star Internet delivered through the MessageLabs Virus Scanning Service. 
+For further information visit http://www.star.net.uk/stats.asp 
+or alternatively call Star Internet for details on the Virus Scanning Service. 
+(b) you have to write it in XML Schema rather than XQuery/XSLT. 
+which rather drives a hole through the argumment that XPath2 is not dependent on Schema but takes a PSVI from any source. 
+If I wanted all elements matching copyright/date to be years I'd much rather do something like xsl:key specifying an Xpath match, together with a type. 
+Given that I have Xpath available why should I go to a completely different language to specify some subcollection of my elements that should be dates? 
+There are still issues here: yes. 
+David This message has been checked for all known viruses by Star Internet delivered through the MessageLabs Virus Scanning Service. 
+For further information visit http://www.star.net.uk/stats.asp 
+or alternatively call Star Internet for details on the Virus Scanning Service. 
+I do think that it's a lot easier to add features to a language than it is to take them away; XPath 2.0 should be *core* functionality, not XQuery minus node-constructors. 
+And the other users of XPath -- XPointers, XForms, XML Schema, should be considered as well. 
+I think most people seem to be agreeing with you. 
+Does anyone disagree? 
+Jonathan Hi Jonathan, [Moved to public-qt-comments@w3.org] 
+Mike Kay forwarded your email to our internal lists. 
+I will try to summarize the results of this thread for the XPath task force, and ask for this to be put on our agenda. 
+I don't think it's anything I haven't said before, including on the comments lists. 
+XPath 2.0 incorporates a number of *statements* that are already provided by XSLT 2.0. 
+The for "expression" and the if "expression" would be classed as statements in any other language. 
+The reason they are not called statements in XPath 2.0 is that XPath 2.0, like XQuery, is a functional language, and it doesn't really have statements. 
+They do resemble traditional statements syntactically, but these are expressions to be evaluated, not statements to be executed. 
+Is the syntactic form the problem - that it looks too much like the XSLT statements? 
+I think that might be part of the problem. 
+As others pointed out, I'm wrong to think in terms of expressions and statements, but I think anyone that doesn't have a large dose of Lisp/Scheme etc. in their blood (i.e. the majority of people working with XSLT, most of whom are either programmers in the VB/Java line, or not programmers at all) will think in these terms. 
+There seems like there should be a qualitative distinction between the jobs that XPath and XSLT carry out. 
+I've demonstrated through my posts here that I'm surpremely unable to articulate what the distinction should be, but I know it ain't the one that's being made at the moment. 
+- for expressions, because XSLT has xsl:for-each, although I do think that a simple mapping operator would be essential if there weren't for expressions - conditional expressions, as they currently are, because XSLT has xsl:if and xsl:choose, although I do think that a simple conditional expression (i.e. test ? 
+true : false) would be vital if there weren't if expressions For these two, you are essentially asking for a simpler syntax to be used in XPath to express a subset of the functionality of existing expressions in XQuery. 
+I am a little allergic to this, because that means that XQuery would probably have to support both, moving the duplication out of XPath and into XQuery. 
+Is changing the syntax of if and for important enough to justify this? 
+Yes. 
+I can see why you'd be slightly allergic to it, but I think it actually simplifies the things that you'd want to do as well. 
+Instead of: for $b in document("http://www.bn.com")/bib/book return { $b/title } { $b/author } You could use: document("http://www.bn.com")/bib/book - result {title} {author} /result Rather than: for $b in document("www.bn.com/bib.xml")//book 
+where count($b/author)  0 return { $b/title } for $a in $b/author[position() =2] return $a if (count($b/author)  2) then et-al/ else () You could use: for $b in document("www.bn.com/bib.xml")//book 
+where count($b/author)  0 return { $b/title } { $b/author[position() = 2] - . 
+} { (count($b/author)  2) ? 
+et-al/ : () } Basically, with the for expression, it saves you from having to make up variable names for the simplest kind of for expression, which is just a mapping of an expression over the items in that sequence. 
+It's also handy when you need to have the sequence that you iterate over with the for expression be generated with another for expression -- a lot like the / operator, but for general sequences. 
+I've been told that XQuery people don't like the "line noise" of XPath, and prefer to use keywords instead. 
+In some ways that's because you have the whole document to play within; in XSLT, we have to put everything in attribute values -- XPath is the concise side of the XSLT+XPath language -- so short is best. 
+So if you don't want to have a short syntax, an alternative compromise would be to have a really small core of XPath, smaller than XPath 1.0, something that incorporated only the operators/functions/axes that are used across XPath 1.0, XQuery, XPointer, XML Schema and XForms, then have XSLT extend this with a few axes, operators and functions, to create a XSLT-version of XPath that addresses the requirements of XSLT users. 
+Since you like use cases, to demonstrate why this is important for XSLT+XPath, let me use an amended version of one of the XQuery use cases, 1.4.4.6. 
+The query is "For each item whose highest bid is more than twice its reserve price, list the item number, description, reserve price, and highest bid." 
+Let's say that instead it was "Return a sequence of the highest bids of those items whose highest bid is more than twice its reserve price." 
+Since we want to return a sequence of values, and XSLT 2.0 doesn't support the generation of sequences of existing nodes, we need to do this with XPath. 
+The original query is: for $item in document("items.xml")//item_tuple 
+let $b := document("bids.xml")//bid_tuple[itemno 
+= $item/itemno] let $z := max(for $x in $b/bid return decimal($x)) where $item/reserve_price * 2  $z return $z An XPath/XSLT version would be: select="document('bids.xml')//bid_tuple" / select="for $item in document('items.xml')//item_tuple 
+[reserve_price * 2 max(for $x in $bids[itemno = $item/itemno] return decimal($x))] return max(for $x in $bids[itemno = $item/itemn] return decimal($x))" / Of course most people will simplify this by defining a function that will calculate the maximum bid for a particular item, though the fact that you can't assign values to variables in XPath means that unless you've got fairly sophisticated memoisation, you're going to be calculating the maximum bid twice for each item. 
+The version that I'm proposing is: select="document('bids.xml')//bid_tuple" / select="$bids[itemno = current()/itemno]" / Say that I then decided that I wanted the $highest-bids variable to hold a sequence of bid elements instead, so that I could include information on the reserve price on them. 
+With the current syntax, because this process now involves generating nodes rather than values, I have to use XSLT to do the sequence generation. 
+I guess there are a couple of ways I could do it. 
+I could reuse my existing code: select="document('bids.xml')//bid_tuple" / select="for $item in document('items.xml')//item_tuple 
+[reserve_price * 2 max(for $x in $bids[itemno = $item/itemno] return decimal($x))] return max(for $x in $bids[itemno = $item/itemn] return decimal($x))" / or I could completely rewrite it: select="document('bids.xml')//bid_tuple" / select="$bids[itemno = current()/itemno]" / select="max(for $x in $b return decimal($x))" / which is obviously very similar to the version that you'd use with the design that I'm suggesting; it's very easy to change that version to the one above. 
+Perhaps people won't have to change code between creating new nodes and returning sequences of existing nodes or atomic values that often, I'm not sure, but they will have to change their thinking between the two tasks frequently. 
+In XQuery, the two mechanisms are exactly the same, which makes it very easy to know how to approach a given task. 
+I just want that to be true in XSLT as well. 
+Other things I feel less strongly about; I wouldn't abandon XPath 2.0 if they remained, but I don't particularly see the point of them (or the requirement, if you want to go by use cases): - comments in XPaths -- if an XPath gets long enough that you need to embed comments in it, you should break it up and use XML comments instead Or perhaps we need to think about how to use XQuery and XSLT together, so that people can use XQuery when they need complex expressions like these. 
+I think that what people need is more support in XSLT, not another language tacked on to XSLT. 
+To be honest, I think that the kind of merger that people have in mind when they talk about using XQuery and XSLT together is to replace XSLT with XQuery. 
+Much as I can see the advantages of XQuery, I do think that there are advantages to having an XML syntax, such as the fact that it can be parsed by existing tools, edited in existing editors, easily manipulated by other programs and so on, so I don't want to see that go. 
+If there was to be a merger, I'd like to see XSLT becoming the XML syntax for XQuery. 
+If people viewed it like that, they might start to understand why there doesn't need to be replicated functionality in XPath and XSLT. 
+- the "union" operator -- when is it ever a good idea to have more than one symbol for the same operator? 
+Would you want the 'intersect' operator in XPath? 
+If so, I would rather use 'union' and 'intersect' than '|' and 'intersect'. 
+Yes, I do want the 'intersect' and more importantly 'except' operators in XPath. 
+If you were designing the language from scratch, your argument would be valid. 
+But you're not, you're building on top of XPath, and XPath already has '|'. 
+I know it's not consistent with the rest of the naming scheme. 
+I'm sorry. 
+- eq/ne/lt/gt/ge/le -- these do exactly the same as =/!=/ / / =/ =. 
+The only difference for XPath (as far as I can see) is that if the arguments are sequences then they (due to fallback processing) compare the first of the items in those sequences rather than every combination of values of those sequences. 
+I can't think of any occasion in which that's useful. 
+I bet you rewrote that last sentence three times before you came up with a formulation this polite ;- I wrote the entire email three times! 
+;) You didn't want me to go into the functions, did you?... Oh yes!!! 
+The status quo is that XPath is going to inherit the entire function library. 
+If you don't want this, let's hear the feedback. 
+OK, I'll work through it in detail. 
+My main impression of the December drafts is that it basically provides more or less the same set of functions (if you ignore all the constructors and operators), but with (it appears to me) less detailed descriptions (though more examples, which are great), without consideration of the functions that have been requested for XPath 2.0 by XPath 1.0 users (and implemented in libraries such as EXSLT and FXSL), and without consideration about how easy it's going to be for people to use the functions to achieve real tasks. 
+But I'd like to be able to make more constructive comments about individual functions... there's just so darned much to go through. 
+I wonder if anybody has time to raise this subject on xsl-list@lists.mulberrytech.com. 
+I don't have time to participate in another active discussion, but it would be interesting to see whether those people agree. 
+To be honest, I doubt whether many people have had the energy to go through the WDs, so any opinion they do have will have been formed by the generally positive demonstrations of XSLT 2.0 that there have been on the list or by the generally negative impression that XPath 2.0 is based on the PSVI and therefore hideously complex because XML Schema is hideously complex. 
+It's hard to get an objective assessment, given that most people who could raise the question would have their own bias. 
+Perhaps Max could ask for people's opinions on individual features. 
+The main reason that has been given for including all these features in XPath is the claim that XSL users really want them. 
+If that's not the case, I really think we should keep XPath simpler. 
+We want the functionality, we just don't want all of it in XPath. 
+Cheers, Jeni Jeni Tennison Jeni, I haven't kept up on all your threads and the replies (some of them), but, if it hasn't been pointed out before: one articulation of the difference between the responsibilities of XPath and XSLT: XPath: 1) An addressing mechanism into trees and sequences. 
+2) Constructs sequences of values. 
+(And, yes, it might be interesting to try and separate (1) into a subset, though I have my doubts given complex predicates). 
+XSLT: 1) Constructs trees. 
+The separation of these responsibilities helps to reduce the complexity of either. 
+Each is a tool tuned to it's respective task. 
+Each can be expected to have some redundant mechanism, such as iteration and conditional evaluation. 
+The question is where you draw the line. 
+From your previous posts I understand you think the line might be drawn in a different place. 
+While I think we have it divided just about correctly now, obviously this may well be an area of contention for years to come. 
+Yes, that's the general problem, not only with the mulberry list. 
+While your posts have been thought provoking, in terms of seeing the hideously complex, I think you should keep in mind that you're still seeing very intermediate results. 
+Hopefully some functionality is yet to be pruned, some seemingly complex functionality needs polishing, and a few bad (or incomplete) ideas need to fixed. 
+The question is, do we need a general change of direction? 
+Given the many opinions and 3 years (or whatever it's been) of discussion, I actually think we're doing fairly well, and the results will be a healthy design balance, with very positive connotations for the Web. 
+Certainly the results will not be perfect. 
+But I think we're on a pretty reasonable track, with light being seen at the end of the long tunnel. 
+Our design center(s) drives down to some very fundamental questions, such as what is XML? 
+ASCII text that is tagged, or semantically rich typed data? 
+With the introduction of schemas, the answer evolves somewhat from the first to include the second. 
+I truly believe that even document users will need and want the rich typed data, whether they know it yet or not, and visa versa with data users. 
+Surely people will use XML in both domains. 
+This is the magic, challenge, and risk of XML: trying to be all things to all people. 
+To some extent, XPath 2.0 has to inherit these challenges and risks. 
+-scott (Speaking for myself... these are not necessarily representative views of my company, or the XSL Working Group). 
+Hi Scott, Yes, Mike's explained that distinction, and I can see that it is internally consistent one to make. 
+I'm sure that there are those in the WG that have made the following points, but just in case... 1. 
+When you're writing the code, it's much easier to work out how to achieve a task based on what you want to do rather than what you want to do it to. 
+The thought process "OK, I want to have a loop that creates a sequence of atomic values, so I have to do that using XPath, which means using a for expression" is less intuitive than the thought process "OK, I want to loop, so I need to use xsl:for-each". 
+I think that we'll often get situations where users will know how to achieve a task when using XSLT but not understand how to achieve the comparable task when using XPath (and vice versa), particularly since the approach to looping is fairly different. 
+2. I don't buy the separation-reduces-complexity argument. 
+XPath is certainly more complex, and XSLT is no less complex with the current separation. 
+Aside from the ability to create an atomic value, what savings have been made on the XSLT side due to the extra complexity of XPath? 3. Mike's made an argument that the tools are easier to write because they can focus on the optimisation of the XPath side of the equation. 
+But XQuery has a single approach: for $i in $list for $i in $list return foo / return 'foo' Aside from syntax, I can't see a difference between these queries and the XSLT: Perhaps XQuery implementers have some ideas about telling the difference that could help. 
+4. There are things that are lacking in the XPath version of sequence manipulation that are present in the XSLT version of sequence manipulation that I believe will make the XPath version a lot harder to deal with. 
+In particular, I'm thinking of variable assignment and the ability to keep track of the context position of an item in a sequence. 
+I think that people are going to have to create their own functions so that they can use XSLT variable assignment to get around those problems, and I think that's a bad idea on usability grounds, and because I think function use should be a choice rather than a necessity in a programming language. 
+Sure. 
+I understand from personal experience how frustrating it is to receive feedback on areas that you already *know* need work. 
+I'd like to direct comments on the areas that you're interested in getting feedback on; on the other hand, it seems risky to wait until the WDs become Candidate Recommendations before I comment on a feature that doesn't seem right to me -- I think you'd be even more irritated by my comments if they came later in the process. 
+Perhaps it would help, in the drafts or separately, for you to list those sections that you're pretty certain are representative of how you intend things to be, so that we can focus our reading and comments on them. 
+Or perhaps there's a particular style of comments that you'd prefer? 
+I'm very glad that you feel like that; I'd be worried if the driver was wandering through the train checking the map. 
+Sitting here in the carriage, I'm seeing increasing unease on the faces of many of the other passengers as the names of stations flash past. 
+Perhaps we all got on the wrong train; perhaps this is an alternative route we don't know about and once we emerge from the tunnel we'll be reassured; or perhaps the driver didn't realise that the train was supposed to be heading somewhere else. 
+Whichever case it is, it's not going to get resolved by us hiding behind our newspapers hoping that everything's OK or that someone else is talking to the crew. 
+Please understand: by making comments at all, I'm trying to be constructive by supplying an external, user perspective, not trying to make trouble by destroying the delicate balance of compromises that have led to the current design. 
+I suggest alternatives because I believe that's more useful than abstract critiques, not because I have particularly fixed ideas about what a solution should look like. 
+I know that the WGs have an incredibly difficult task on their hands, and that you've all put in a lot of work to get to where you are now, and I do appreciate that effort, even if I don't agree with the outcome. 
+Cheers, Jeni Jeni Tennison 

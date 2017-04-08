@@ -1,0 +1,54 @@
+I would like to propose the following changes/clarifications be made to the datatyping spec (the latest restructured document) based on recent discussions: 1. Replace the usage of rdf:type for typed literals to rdf:datatype (having the pairing rdf:datatype/rdfs:Datatype mirror the current pairing rdf:resource/rdfs:Resource for syntactic attributes taking URIref values and which identify members of a specific class). 
+2. Move section 1.2 Desiderada to a non-normative appendix. 
+3. Streamline introductory material, with references to the other specs as appropriate. 
+4. Clarify the nature of literals in section 1.5 and the nature of typed literals in section 2.3 so that it is clear that all that is relevant to datatyping is the unicode string component, no matter how many other components may exist within a literal's structure. 
+5. Clarify the relation of rdfs:Literal, rdfs:Datatype, and typed literal (begs the question of whether rdfs:TypedLiteral is warranted, as a subclass of rdfs:Literal...) 6. Clarify the verbage in section 3.1, Global Datatyping Assertions, so that it is clear that RDF does not assert any constraints, but only that an application is free to do so (reference to other specs as appropriate which discusss this nature of rdfs:range in general, Primer?) 7. Rework the presentation of Part 2 as "Suggestions for Future Work" (or split it off into an entirely different document?) 8. Expand example in 3.1 to include triple with 'age' arc, as suggested. 
+9. Clarify agnostic position of RDF regarding datatype clashes, as for any contradiction, in section 3.2 I'm sure other changes/modifications/corrections will also be required before we publish the first WD, but the above seemed to be the major ones for the moment. 
+I'm still awaiting comments from Pat and Sergey... 
+Is the above OK with the WG? Patrick Patrick Stickler Chief Technology Specialist Forum Nokia, Nokia Mobile Phones patrick.stickler@nokia.com 
+(+358 50) 483 9453 Yep. 
+Yep; although it's odd to move the motivational material to the end. 
+Editorial stuff like this doesn't need WG approval. 
+I think this is an error; I've already put my position on this (ie, that a string and a langstring would appear to be different types) This does need clarification, yes. 
+But hang on... you suggest that eg:foo eg:age (xsd:integer)"10". 
+might (with literals "at the blunt end") imply... (xsd:integer)"10" rdf:type xsd:integer . 
+But if "TypedLiteral" is the class of typed literals, then whenever xsd:someType rdf:type rdf:Datatype . 
+then we have that members of xsd:sometype are members of rdfs:TypedLiteral, and hence members of rdfs:Literal. 
+Which would kind of imply (since subclassing is a relation of class extensions) that xsd:integer rdf:type rdf:Datatype . 
+implies xsd:integer rdfs:subClassOf rdf:Literal . 
+... which is why I suggested Datatype is a superfluous extension (particularly since it seems that all literals should carry a type, but I don't wish to descend into "dogmatic assertions" here :-) ) Yes, again I think the conversation that has arisen about of the constraining nature or otherwise of rdf:domain and range is probably going to happen with datatypes. 
+Yes - again, we need a bag for "here's stuff that we'd like to do". 
+Seems fine. 
+That's my tuppence :-) jan grant, ILRT, University of Bristol. 
+http://www.ilrt.bris.ac.uk/ "NOP" is a trivial implementation of an executable Z subset. 
+No. This is not correct. 
+I'll try to clarify. 
+A member of rdfs:TypedLiteral will contain, as one of its components, a member of rdfs:Literal. 
+The other component of a rdfs:TypedLiteral is a member of rdfs:Datatype. 
+rdfs:TypedLiteral is *not* rdfs:subClassOf rdfs:Literal. 
+rdfs:TypedLiteral is *not* rdfs:subClassOf rdfs:Datatype. 
+We have three classes, rdfs:Datatype, rdfs:Literal, and rdfs:TypedLiteral, which are participating in RDF datatyping. 
+Members of the first two classes are paired components of members of the latter class. 
+Members of rdfs:Datatype are datatypes conforming to the core characteristics defined for all RDF datatypes. 
+Members of rdfs:Literal are literals, sans any typing (3-tuples of string/xmlbit/lang, or union of string/langstring/xmlstring/xmllangstring, whatever the WG decides). 
+Members of rdfs:TypedLiteral are pairings of a member of rdfs:Datatype and a member of rdfs:Literal, and a member of rdfs:TypedLiteral denotes a specific, unambiguous datatype value -- i.e. a member of the value space of the datatype. 
+Members of the value space of a datatype are *not* members of rdfs:Literal, nor are they members of rdfs:Datatype (the latter I hope is obvious). 
+They are datatype values, and the only mechanism for denoting specific datatype values in RDF (as proposed) is a typed literal node. 
+The class extension of a member of rdfs:Datatype is the value space of the datatype, not the lexical space, not a set of typed literals, etc. 
+The rdfs:range property asserts that a property value is a member of a given RDF class, and if that class is an rdfs:Datatype, then that property value is asserted to be a member of the value space of that datatype. 
+Typed literal nodes, members of rdfs:TypedLiteral, denote members of value spaces of datatypes, and therefore are compatable property values -- presuming that the datatype value denoted by the typed literal node is in fact a member of the value space of the datatype specified in the range assertion. 
+Is that any clearer? 
+I agree fully that all literals should carry a type, explicit or implicit, and this is the untidy view. 
+Or rather, to avoid an untidy treatment, we'd the need to disallow inlined literals entirely, making all literals typed literal nodes. 
+Patrick [explanation cut] Your point of view is explicitly clear; however, I don't consider the situation it describes to be "clear". 
+I'll shut up though because I want to hear what others have to say on this. 
+Yes, I like two of the the options you outlined in the appendixes for treatment of inline literals - either pick a "default" type (which is ugly but easy) or use the untidy "mutable type" option, which I find quite compelling, although I confess I've not looked closely at technical consequences. 
+jan grant, ILRT, University of Bristol. 
+http://www.ilrt.bris.ac.uk/ Semantic rules, OK? Fair enough. 
+And sorry about any remaining unclarity, wherever it may be. 
+Well, having a default type is either non-monotonic, if we allow later schema assertions to change it, or is rather fragile process-wise, requiring great care in the order in which schemas are loaded into the knowledge base. 
+Either case is IMO unacceptable for real world use (even if it technically could be made to work). 
+Having the implicit datatype denoted by a system identifier, similar to bnode identifiers, seems a very elegant and clear way to model literals as contextual names. 
+Of course, that presumes we *are* modelling them as contextual names, which of course is the crux of the whole untidy/tidy debate, whether inline literals are global names or contextual names... Patrick Please can we focus on getting the part 1 datatypes stuff moving forward and come back to tidyness issues later. 
+I'm hoping to keep part 1 moving rapidly and am concerned about it getting distracted by a return to the tidy/untidy debate. 
+Mother henish'ly Brian OK, Mom ;-) (but he started it... ;-) Patrick Stickler, Nokia/Finland, (+358 50) 483 9453, patrick.stickler@nokia.com 

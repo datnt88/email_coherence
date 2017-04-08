@@ -1,0 +1,54 @@
+Attached please find the slightly reworked NIST DTD with the following changes, as well as a _very_ simplistic XML document showing what it is we want to do: 1. Element TestData added and defined 2. Element Load added and defined (content is pointer to file location) 3. Element Assertion added and defined Attribute Type to indicate type of assertion made (as in Junit, Same will not be use since DOM does not test sameness of objects) Actual assertion content given as the text value of the Assertion element 4. Element test can contain multiple assertions, to be used instead of expected_results Element test has new attribute SpecPointer with the pointer to the relevant part of the specification This reflects the discussion that has been going on on the various topics. 
+TestData allows for information about the author as per the DOM TS Process document. 
+The Load element simplifies for the harness application to locate the file as well as know what to do with entities and whitespace. 
+Assertion could be used instead of expected_results Allow for a day or so for sending the rewritten XSLT that will generate a particular binding as well as the more comprehensive XML document, similar to the one previous sent to the list, with the new tag-set introduced. 
+Repsect has been paid to the fact that tests will most certainly be developed in some different framework, but submitted in this vocabulary. 
+We believe importing to and exporting from this format is pretty straightforward. 
+Also please bear in mind that the most crucial aspect of the DTD is the functionality, it will certainly need to be rewritten in order to enhance readability (but those changes will be purely cosmetic), eg. concerning use of caps, capitalization, naming convention and so forth. 
+Also, it could be an idea to divide the DTD into smaller modules, one for the core functionality and one for each particular language (with their respective entity declarations). 
+We've also thought along the lines of JXUnit, but since we do not want to favour any language over another, we've decided to propose that we go along the lines laid out in the attached DTD and just make sure we have the possibility of exporting to that framework (among others). 
+Mary, could you please check on the definition of type? 
+I've defined it as content:ANY in this version of the DTD, please advise. 
+We would also need to check the programming constructs as they seem to be very complexely nested. 
+You are encouraged to divide various topics for discussion that will most certainly come up into separate threads. 
+So, ladies and gentlemen, the floor is yours. 
+Any comments/ideas/criticism highly appreciated. 
+Kind regards, /Dimitris I guess I have a couple of observations: There seems to be no indication of how to set up the test, particularly what document should be loaded. 
+Of course, all the NIST tests load "staff.xml" 
+but that will be different when incorporating tests from difference sources. 
+A generic CALL element is being used to call methods defined in the DOM spec and provides information that could potentially conflict with the DOM spec. 
+For instance: In this call, the generic CALL element specifies that the return type of NodeList.item() is a Node and that the call takes one parameter. 
+Those are already known from the DOM spec. 
+The test could be a lot cleaner, if the calls to known DOM properties or methods were represented by something like: !-- what I think this test was really trying to check but the NIST harness didn't support -- Since the tests can be identified by a URI, the metadata could be specified using RDF: The TRY element doesn't add information. 
+In this test, there is no expectation of an exception so if any is encountered the test framework should identify it as a failure. 
+In cases where there is an expectation of an exception, the exception is expected on one particular call and that expectation could be specified as part of the element for the call. 
+The date is not compatible with the XML Schema datatypes "date" type. 
+I've inlined my coments below. 
+Mary Brady NIST, Web Technologies mbrady@nist.gov 
+what document should be loaded. 
+Of course, all the NIST tests load "staff.xml" 
+but Yes, a pointer to the file to be loaded should be included. 
+This is a problem for the NIST tests as well, as they all do not load "staff.xml". 
+spec spec. 
+For OBJECT_NUMBER="NONE" ASSIGNMENT="=" ASSIGNMENT_OBJECT_NUMBER="NONE" STATIC="NO" INFIX="NO" Although you see a variety of attributes associated with the call, many of these are defaulted and are only required in special circumstances. 
+At first pass, the CALL element was quite simple. 
+As we stepped through our tests, it became necessary to tweak this line for additional functionality. 
+The following come to mind: * support for operating on a named parameter -- not necessarily the result of the previous call * type casting * Multiple parameters of the same type * Invoking a method with and without assignment The test writer is only required to use the additional functionality when necessary. 
+Otherwise, appropriate default values are supplied. 
+The snippet of test code that Curt supplied is after the expansion of attribute defaults and entities -- what the test writer supplies in this case is the following: 
+
+NodeList.item() is a Node and that the call takes one parameter. 
+Those are calls This boils down to a matter of syntax and where what functionality should be placed. 
+Even in this scenario, with you deal with more complex tests, you are still going to have to deal with multiple parameters of the same type, operating on a named parameter, and invoking a method with or without assignment. 
+Type casting could probably be handled in the transformation side -- since not all dom calls have the same name across bindings, this mapping to a specific binding will have to be handled somewhere -- are you proposing in the transformation? 
+specified using RDF: RDF:about href="http://www.w3.org/dom1test#elementAssociatedAttribute dc:Author Mary Brady /dc:Author dc:Description ... /dc:Description /RDF:about What does this buy us? 
+should expectation exception="INDEX_SIZE_ERR"/ Yes, it could, but you are then dependent on a particular harness. 
+We were trying to keep the harness rather simplistic. 
+The key here would be to identify where exceptions could potentially occur and come up with the syntax to cover it. 
+So far in these comments, I see syntax issues -- are there any functional issues that we have missed? 
+I was suggesting definiting elements that correspond to the generic properties and methods of the DOM interfaces and that they can then be transformed to the appropriate binding specific form. 
+I'm not an RDF junky, so maybe someone else can fill in here. 
+It just seemed an area where me might be reinventing the wheel and it might just be easier and interoperate better if we just adoped RDF. 
+I don't see that. 
+When this element is transformed into the appropriate language and test framework, it will need to be expanded into an appropriate construct (probably a try, catch, fail combo), however that the specification that this call is expected to result in a DOMException with a code of INDEX_SIZE_ERR seems to be totally independent of the target framework or language. 
+How were you going to handle cases where the expectations are different depending on whether the parser is ignoring element content whitespace, expanding entity references or using a pseudo-PI for the XML declaration? 

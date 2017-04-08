@@ -1,0 +1,60 @@
+2518 is at best ambiguous, and a worst, contradictory on this topic. 
+I would vote for (a) property not found. 
+(b) is a possible interpretation, but an empty value violates the DTD for this property. 
+The comment about "mandatory properties" in section 7.4 is not very useful, because "mandatory properties" is never defined in 2518. 
+(c) violates the requirement in 8.1 that missing property errors be reported (d) is just obviously wrong (:-). 
+Cheers, Geoff Hey everyone... 
+The following posting about four months ago was not answered. 
+Do we have an answer? 
+Is this a general problem for properties? 
+Let's hear what you think... BTW... I'd like to mention, but not necessarily recommend an option. 
+See (d) below. 
+Hi, if for some reason a server doesn't have one of these timestamps for a resource, what should it report on PROPFIND for these properties? 
+a) Property not found (HTTP 404), b) Empty property (this seem to be backed by the wording in section 7.4 [1], but is reported as error by Adobe GoLive, c) Property silently suppressed (not reported at all) -- this seems to work with GoLive. 
+d) Return a fixed but not correctly supported value. 
+For example, always respond with 1/1/1990. 
+In addition, how should the server behaviour upon a PROPFIND/propname on this resource? 
+Julian Why would that be a violation? 
+Well, there always is that question about whether foo /foo is a node with no children, or a node with a single empty string child. 
+Since section 2.4 of the xml spec says: "All text that is not markup constitutes the character data of the document", and since I do not consider "nothing" to be "text", I go with the interpretation that says foo /foo contains no character data, and therefore does not match a #PCDATA declaration. 
+Cheers, Geoff Why would that be a violation? 
+Geoff, as far as I can tell, PCDATA is defined in: where it says: [Definition: An element type has mixed content when elements of that type may contain character data, optionally interspersed with child elements.] 
+In this case, the types of the child elements may be constrained, but not their order or their number of occurrences: Note the "may". 
+Besides, this would mean that with DTDs you can't have elements that are restricted to arbitrary text content, but may not be empty. 
+This is clearly not the case. 
+Finally: in doubt, try it with a validating parser. 
+Yes, I'd agree that this clearly supports Julian's position that an empty element of the form " a /a " matches a #PCDATA DTD declaration. 
+So I modify my rejection of choice b (i.e. returning an empty element) to be: The definition of DAV:creationdate states: "If present, it contains a timestamp of the moment when the resource was created". 
+An empty value does not meet this requirement (although one could debate the meaning of "present"). 
+Cheers, Geoff Geoff, as far as I can tell, PCDATA is defined in: where it says: [Definition: An element type has mixed content when elements of that type may contain character data, optionally interspersed with child elements.] 
+In this case, the types of the child elements may be constrained, but not their order or their number of occurrences: Note the "may". 
+Besides, this would mean that with DTDs you can't have elements that are restricted to arbitrary text content, but may not be empty. 
+This is clearly not the case. 
+Finally: in doubt, try it with a validating parser. 
+OK, so what's your suggestion then? 
+a) or c)? 
+My rationale for rejecting (c) was: "(c) violates the requirement in 8.1 that missing property errors be reported" So that leaves (a) as my choice for the most consistent interpretation of 2518. 
+Cheers, Geoff OK, so what's your suggestion then? 
+a) or c)? 
+If mod_dav's backend repository does not support the property, then it operates according to (a) already (return a 404). 
+I think that makes the most sense (obviously :-), and would continue to vote for that option. 
+Cheers, -g Greg Stein, http://www.lyra.org/ 
+(I've seen the whole thread on this topic; this just seems to be the most appropriate message to respond to...) Amen. 
+So do I. Actually I believe this language in section 7.4 is causing problems all over the place, and should become an issue in its own right (unless it's already in the lock-null resource issues elsewhere). 
+As far as I can tell, it's the only place where the notion of "having no value" is suggested as a possibly different from and preferable to "not existing". 
+The problem is this language ...Additionally the lock-null resource MUST have defined on it all mandatory DAV properties. 
+Most of these properties, such as all the get* properties, will have no value as a lock-null resource does not support the GET method. 
+First of all, as Geoff points out, there is no definition of "mandatory" properties anywhere. 
+Second, this offhand "MUST have defined on it all mandatory DAV properties" is really bad language for a spec: the lock-null resource is either a resource (in which case the spec says elsewhere what MUST be true about it) or it's not (in which case this section should say explicitly how it MUST behave). 
+Finally, the sentence starting "Most of these properties..." contradicts the example in 8.1.2, where a resource that doesn't support GET explicitly doesn't have the get* properties. 
+I very much think the phrase "will have no value" was simply a think-o, and was meant to mean "will not be present on the resource". 
+I really think we need to exorcise this language from the spec, and if we do there's no reason that I can see not to have (a) be the proper response when a specific property that's not present is asked for by name. 
+This includes creationdate, which says in its description: The creationdate property should be defined on all DAV compliant resources. 
+If present, it contains a timestamp of the moment when the resource was created (i.e., the moment it had non- null state). 
+dan P.S. Yes I know that my own company's products are not consistent in their notions of what responses are appropriate for "mandatory" properties. 
+But I don't think this paticular one is an issue where backwards-compatibility concerns should block fixing this ambiguity/self-contraduction in the spec: it may just be that older clients (some of which are Adobe's) will complain (hopefully not break) until they get upgraded. 
+-d. 
+P.P.S. 
+I know there was discussion about the "empty vs. missing" property issue earlier, at least on dav-dev, but I don't have access to the archives right now. 
+Do we have an issue about this already? 
+-d. 

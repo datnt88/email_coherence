@@ -1,0 +1,110 @@
+Here is the draft changes for the specification of the OPTIONS method. 
+As stated in the attachment, there is some overlap with PEP. 
+Overall, PEP is much more flexible and efficient. 
+OPTIONS is simpler at the possible expense of efficiency. 
+However, OPTIONS is simple and easy to implement, and thus more likely to be accepted in the HTTP/1.1 spec. 
+I think that since many things which were once supposed to be part of the HTTP/1.1 spec are now on their own track, Its essential to have a simple mechanism of detecting support for those extensions as a part of the core HTTP/1.1 protocol. 
+Josh Cohen Netscape Communications Corp. Netscape Fire Department #include disclaimer.h 
+Server Engineering josh@netscape.com http://people.netscape.com/josh/ 
+Options Method specification: Overall Changes: the URI '*' refers to the server, independent of any specific URI. 
+The host: header may be used to specify a named proxy or origin server in a chained environment The max-forwards: header may be used to specify a maximum number of hops the request may be forwarded in a chained environment The actual OPTIONS message is contained in the request/response body. 
+Editing changes: In section 5.1.2: - If a proxy receives a request without any path in the Request-URI and - the method specified is capable of supporting the asterisk form of - request, then the last proxy on the request chain MUST forward the - request with "*" as the final Request-URI. 
+For example, the request - OPTIONS http://www.ics.uci.edu:8001 
+HTTP/1.1 - would be forwarded by the proxy as - OPTIONS * HTTP/1.1 - Host: www.ics.uci.edu:8001 - after connecting to port 8001 of host "www.ics.uci.edu". 
++ Proxy Servers should use the Host: or max-forwards: header + to determine whether or not to forward the reqeust as + specified in section 9.2 In section 9.2: If the Request-URI is an asterisk ("*"), the OPTIONS request is intended to apply to the server as a whole. 
+A 200 response SHOULD include any header fields which indicate optional features implemented by the server (e.g., Public), including any extensions not defined by this specification, in addition to any applicable - general or response-header fields. 
+As described in section 5.1.2, an - "OPTIONS *" request can be applied through a proxy by specifying the - destination server in the Request-URI without any path information. 
++ general or response-header fields. 
++ OPTIONS messages may be passed through a proxy by using + either the host: header to indicate the intended destination + of the OPTIONS message. 
+The max-forwards: header may also + be used to indicate that the destination is the Nth hop, + as specified by the max-forwards: header. 
++ Origin servers supporting 'virtual interfaces' or + 'virtual servers' may use the Host: header or the max-forwards: + header to determine the intended destination as well. 
+New definitions: 9.2.1 OPTIONS Messages 9.2.1.1 
+The REQUEST: The body of the OPTIONS request will containt the specific information requested. 
+The body will be of mime type TBD (text/ietf-http-options) 9.2.1.2 
+The REPLY: The server will respond with 200 if it supports the OPTIONS method. 
+The OPTIONS reply will contain a content of mime type TBD ( text/ietf-http-options ) 9.2.2.1 Body definition: 9.2.2.2 REQUEST: The body will be a text formatted content, where: body = 1(header-token) #(request) header-token = "OPTIONS" options-version new-line options-version = "1.0" request = command-token (feature-token | "*" ) new-line new-line = CRLF command-parameters = token (defined per command ) 9.2.2.3 REPLY: body = 1(header-token) #(response) header-token = "OPTIONS" options-version new-line options-version = "1.0" response = command-token feature-token response-parameters new-line new-line = CRLF feature-token = token response-parameters = token (defined per command ) 9.2.3 OPTIONS commands 9.2.3.1 COMPLIANCE command-token = "COMPLIANCE" REQUEST command-parameters = feature-token | "*" REPLY feature-token = opaque string representing a feature/extenstion response-parameters = token representing feature/extension specific parameters 9.2.4 Usage: The first line contains: OPTIONS options spec version Followed by a series of answers, as defined according to the command issued: COMPLIANCE: The COMPLIANCE response is a list of COMPLIANCE indications, one per line: COMPLIANCE feature-name parameters where feature-name was the argument to the COMPLIANCE request. 
+parameters is an optional opaque string indicating parameters for that feature. 
+9.2.5 Examples 9.2.5.1 To list all extensions supported by proxy "proxy4.mcom.com" 
+OPTIONS * HTTP/1.1 Host: proxy4.mcom.com 
+Content-type: text/ietf-http-options Content-length: 44 (or whatever) OPTIONS 1.0 COMPLIANCE * HTTP/1.1 200 OK Server: SuperServer/1.0 Content-type: text/ietf-http-options Content-length: 44 ( feh ) OPTIONS 1.0 COMPLIANCE http://foobar.pep.org/pepmeister/ 
+COMPLIANCE set-proxy COMPLIANCE wonder-bar-http-widget-set COMPLIANCE rfc1543 9.2.5.2 Probing for a feature which is NOT supported: OPTIONS * HTTP/1.1 Host: proxy4.mcom.com 
+Content-type: text/ietf-http-options Content-length: 44 (or whatever) OPTIONS 1.0 COMPLIANCE http://foobar.pep.org/evil-not-implemented 
+HTTP/1.1 200 OK Server: SuperServer/1.0 Content-type: text/ietf-http-options Content-length: 44 ( feh ) OPTIONS 1.0 9.2.5.3 Probing a 1.0 server/proxy ( response will vary ) OPTIONS * HTTP/1.1 Content-Type: text/ietf-http-options Content-length: 40 HTTP/1.0 400 Malformed URL Proxy-agent: Netscape-Proxy/2.52 Date: Wed, 16 Jul 1997 02:35:54 GMT Content-type: text/html Content-length: 157 Your browser sent a request that this proxy could not understand. 
+/BODY /HTML Connection closed by foreign host. 
+9.2.6 Applicability The OPTIONS method is intended to provide a mechanism by which a downstream client or proxy may query an upstream proxy or origin server about what HTTP/1.1 extensions it supports. 
+While this has some overlap with the PEP[ref] specification, it only provides functionality for the lower spectrum of PEP. 
+It is simple to implement and should be a MUST for implementations. 
+Along with the simplicity comes a cost. 
+OPTIONS request need a network round trip, while PEP does not. 
+Therefore, should PEP become a standard, or be rolled into this specification, implementations are encouraged to use PEP where applicable to gain extra flexibility and performance, however, they MUST support OPTIONS as well. 
+JC The actual OPTIONS message is contained in the request/response JC body. 
+What about backward compatibility with RFC 2068? 
+Our current implementation doesn't expect or send any message body with the OPTIONS method: Request: Response: OPTIONS * HTTP/1.1 HTTP/1.1 200 OK Host: www.agranat.com 
+Date: Tue, 22 Jul 1997 20:14:06 GMT Connection: close Server: Agranat-EmWeb/R3_0alpha4 User-Agent: wwwreq/1.6 
+Connection: close Allow: HEAD, GET, POST, TRACE, OPTIONS Re-reading the spec, it is possible that we should have used 'Public' rather than 'Allow' in that response. 
+I believe that our thinking was that we wanted re result to get back through a proxy, but I'm not sure. 
+Our response is consistent with Apache: OPTIONS * HTTP/1.1 HTTP/1.1 200 OK Host: www.apache.org 
+Date: Tue, 22 Jul 1997 20:21:51 GMT Connection: close Server: Apache/1.3-dev 
+User-Agent: wwwreq/1.6 
+Content-Length: 0 Allow: GET, HEAD, OPTIONS, TRACE Connection: close (hmm... apache doesn't list POST... perhaps it is interpeting that as 'OPTIONS /') ... but not quite what John Mallery's Common Lisp server does (it uses the Public header) [I folded the 'Public:' for this mail]: OPTIONS * HTTP/1.1 HTTP/1.1 200 OK Host: wilson.ai.mit.edu 
+Date: Tue, 22 Jul 1997 20:25:37 GMT Connection: close Server: CL-HTTP/63.61 (Symbolics Common Lisp) User-Agent: wwwreq/1.6 
+Connection: CLOSE Public: post, PUT, TRACE, OPTIONS, DELETE, GET, HEAD Cache-Control: NO-CACHE ... any others out there? 
+A section defining some variation on the above as the expected behaviour if no body is sent (no Content-Length header) would do the trick. 
+I just checked, and if there is a body, we just ignore it and send the response above, so I guess that a client could detect that a server like our current version just didn't know about this when it got back no body. 
+I can't easily run that test on those others... On another note, is it your intention that the feature-token values be specified as a part of whatever document defines the feature? 
+If so, we should add feature-token values to the next HTTP/1.1 for the optional features it specifies. 
+Scott Lawrence EmWeb Embedded Server lawrence@agranat.com 
+Agranat Systems, Inc. Engineering http://www.agranat.com/ 
+I realize that some people were opposed to the introduction of qvalues on Accept-Encoding. 
+However, during today's editorial-group discussion of the CONTENT-ENCODING issue, we realized that the syntax for the various Accept-* request headers in RFC2068 is almost, but not quite, uniform, and we reached a tentative agreement that it might be a good idea to have all of the Accept-* request headers (Accept-Range is a response header) have similar syntaxes. 
+Anyway, here are the BNFs in question, from RFC2068: 14.1 Accept Accept = "Accept" ":" #( media-range [ accept-params ] ) media-range = ( "*/*" ) *( ";" parameter ) accept-params = ";" "q" "=" qvalue *( accept-extension ) accept-extension = ";" token [ "=" ( token | quoted-string ) ] 14.2 Accept-Charset Accept-Charset = "Accept-Charset" ":" 1#( charset [ ";" "q" "=" qvalue ] ) 14.3 Accept-Encoding Accept-Encoding = "Accept-Encoding" ":" #( content-coding ) 14.4 Accept-Language Accept-Language = "Accept-Language" ":" 1#( language-range [ ";" "q" "=" qvalue ] ) language-range = ( ( 1*8ALPHA *( "-" 1*8ALPHA ) ) | "*" ) The CHARSET-WILDCARD issue, already declared "closed", changes the BNF for 14.2 (Accept-Charset) to include "*", based on ftp://ds.internic.net/internet-drafts/draft-holtman-http-wildcards-00.txt so that the BNF there is now: Accept-Charset = "Accept-Charset" ":" 1#( charset [ ";" "q" "=" qvalue ] ) Henrik's proposed solution for CONTENT-ENCODING, at would modify the BNF for 14.3 (Accept-Encoding) to be Accept-Encoding = "Accept-Encoding" ":" #( codings ) codings = ( content-codings | "*" ) As you can see, there are only two non-uniformities remanining among these four sections: (1) The Accept header allows extension parameters, not just qvalues. 
+(2) The Accept-Encoding header does not allow qvalues. 
+I'll also note that RFC1945, while not defining qvalues, does say: D.2.3 Accept-Encoding The Accept-Encoding request-header field is similar to Accept, but restricts the content-coding values which are acceptable in the response. 
+I.e., there seems to have been an intent that Accept-Encoding be similar in form to Accept, and (perhaps) that the omission of a qvalue here was simply an oversight. 
+(Note that RFC1945 explicitly allows "*/*" in the Accept header, so it implicitly allows "*" in the Accept-Encoding header, and so I think we need to include "*" in the Accept-Encoding header simply for compatibility with RFC1945.) As I said in my previous message, introducing qvalues for Accept-Encoding won't work "if any existing servers or proxies would choke on a qvalue in an Accept-Encoding header." 
+But (so far) nobody has asserted than this is an actual problem. 
+-Jeff Great! 
+I guess this might go along well with my suggestions to streamline and concentrate the explanations, too. 
+Regards,Martin. 
+I feel that the burden of proof that adding q values does *not* introduce new problems is entirely on your side. 
+You need to show that this does not break or disable existing implementations. 
+As stated, this would be a clearly infeasible burden of proof for ANY change to the protocol, since nobody has an exhaustive list of existing implementations. 
+One could just as easily argue that the same requirement should apply to your proposed (and accepted) change to Accept-Charset, draft-holtman-http-wildcards-00.txt, which changes the RFC2068 syntax to allow wildcards. 
+You do make a plausible argument that implementations of RFC2068 would ignore "*" in Accept-Charset, but I don't recall seeing the results of exhaustive testing. 
+I repeat my request: if anyone has specific information that this is an actual problem, I would certainly withdraw the proposal. 
+At any rate, I have looked at the source code of a number of servers (including Apache), and tried a few experiments (including via an existing commercial proxy implementation). 
+It looks like if Accept-Encoding includes a content-coding with a qvalue, it's simply ignored. 
+(The fact of the matter is that almost NO clients actually send Accept-Encoding today; Henrik thought that there were none in actual use, but I found a few uses in our proxy traces, all from Lynx users.) By the same logic as you used in draft-holtman-http-wildcards-00.txt, where you said it was OK to define "*" in Accept-Charset because RFC2068 servers would simply ignore it, it should be OK to introduce qvalues in Accept-Encoding if the servers also would simply ignore the associated content-coding. 
+However, it might be a good idea to include this note for client implementors: Note: use of a qvalue with a content-coding defined in RFC2068 ("compress" or "gzip") may cause an RFC2068-compliant implementation to ignore the content-coding value. 
+-Jeff Jeffrey Mogul: Well, I guess I disagree with your tentative agreement about what might be a good idea. 
+I feel that the burden of proof that adding q values does *not* introduce new problems is entirely on your side. 
+You need to show that this does not break or disable existing implementations. 
+At this stage in the standards process, we are supposed to be fixing problems based on implementation experience. 
+For me, this means that compatibility considerations *always* outweigh considerations of cosmetic uniformity. 
+So you'd better show that the compatibility considerations are absent. 
+Koen. 
+If you merely look at the specifications, there is enough evidence that HTTP/1.0 had intended the "accept*" headers to be consistent and that the distinctions in HTTP/1.1 were different parts. 
+From that point to not require a burden of proof in order to reinstate consistency. 
+If there's evidence that this would cause some interoperability difficulty, then we should certainly consider this carefully, but we're otherwise on good grounds procedurally for proceeding. 
+Larry (as wg chair) Sorry, that's nonsense. 
+The specifications are different because the implementations are different. 
+Henrik and I spent well over a year looking at different implementations in order to derive the syntax for each header field -- had they been the same, we would have been overjoyed to use a single syntax. 
+The most painful thing about the HTTP spec work was dealing with shortsighted designs and then having to explain them to others. 
+There is no q-value for Accept-Encoding because the following two fields are not equivalent Accept-Encoding: x-gzip;q=1, x-compress;q=1 Accept-Encoding: x-gzip, x-compress for any of the existing server implementations of HTTP/1.x. 
+It is therefore wrong for the specification to suggest that it would be. 
+If such a change is made, then there must also be a requirement (not a note) that prevents the use of a q-value with any encoding other than identity. 
+Otherwise, you will have changed the protocol. 
+.....Roy This is more a reminder to implementers than a response. 
+The RFC 2068 definition of OPTIONS does allow a body in both the request and the response -- it just doesn't define what to do with it, and then confuses the issue by a poor example (mea culpa). 
+Whether or not a message body is present is defined by section 4.3: The rules for when a message-body is allowed in a message differ for requests and responses. 
+The presence of a message-body in a request is signaled by the inclusion of a Content-Length or Transfer-Encoding header field in the request's message-headers. 
+A message-body MAY be included in a request only when the request method (section 5.1.1) 
+allows an entity-body. 
+For response messages, whether or not a message-body is included with a message is dependent on both the request method and the response status code (section 6.1.1). 
+All responses to the HEAD request method MUST NOT include a message-body, even though the presence of entity- header fields might lead one to believe they do. 
+All 1xx (informational), 204 (no content), and 304 (not modified) responses MUST NOT include a message-body. 
+All other responses do include a message-body, although it may be of zero length. 
+It is easy to forget about checking for a message body. 
+I know, because I fixed a bug in Apache 1.2.1 last week having to do with this same issue. 
+Failing to check is a problem because, if the connection is persistent, the unread message body will be mistaken for the next request. 
+.....Roy editorial note: the second sentence in that middle paragraph is bogus. 

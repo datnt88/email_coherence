@@ -1,0 +1,34 @@
+In the abstract model object model section 18 is the following: "XML defined the "well-formed" (WF) state for documents which are parsed without reference to their DTDs. 
+" This is not worded well, because WF documents still MUST include internal entities and MAY include external entities (see XML 4.4,3). 
+However XML says at 2.1 "[Definition: A textual object is a well-formed XML document if:] 1.. 
+Taken as a whole, it matches the production labeled document. 
+2.. 
+It meets all the well-formedness constraints given in this specification. 
+3.. 
+Each of the parsed entities which is referenced directly or indirectly within the document is well-formed." 
+So even a WF document is parsed with reference to (the entity declarations in) the DTD. 
+I think it is worthwhile avoiding this mistake, because already so many XML system get entities wrong. 
+Cheers Rick Jelliffe Quoth Rick, re AS section 18 description of WF: Valid criticism, both because "DTD" can refer to the internal subset and because XML did not officially define a processor type/mode in which no attempt is made to use the external subset. 
+Many implementations do offer that as a nonstandard feature (or by deliberately creating a situation where external subset retrieval will fail, eg by plugging in a SAX Entity Resolver which no-ops that request), and perhaps the XML REC _should_ have defined and named that behavior... but it didn't. 
+We can, if we want to. 
+Maybe we should; there's clearly a demand for it. 
+But we'd have to come up with a name for it and spell out exactly what it does; WF ain't it. 
+And if you really want to process without _any_ reference to the Document Type, including its internal subset... we can do that too but that's yet another mode, and again we would have to assign it a name and precisely define its behavior. 
+(I'm not convinced this one is really desirable, since it's hard to argue that the internal subset is not intended to be taken as part of that specific instance document.) Joe Kesselman / IBM Research Eh? I sure think it did. 
+The external subset is an unnamed entity, so it falls under the options for a non-validating parser. 
+That was the clear intent. 
+... actually that'd be clearly outside the scope of the XML REC, so don't call it "XML". 
+- Dave They said that this was legitimate behavior for a nonvalidating processor. 
+As far as I can tell, they didn't provide any terminology for distinguishing this case from that where the attempt is made, and that lack of terminology has been an ongoing problem for XML users. 
+I would be happier if someone closer to XML's core told us what to call this case... but if they don't, and we're going to provide an API that exposes it, I think that nomenclature responsibility falls squarely on us. 
+"A nonvalidating parser running with an EntityResolver that blocks attempts to retrieve the External Subset" works as a descriptive, but is impossibly ungainly for discussion... and is more closely tied to specific APIs than I really like. 
+It's a fairly commonly seen case; it needs a name. 
+Especially if we decide to actually make it directly requestable through the API... which I think might be a good idea; the parser itself is much better equipped to know which external entity requests are intended for use as External Subsets than the EntityResolver is. 
+Document yet ... actually that'd be clearly outside the scope of the XML REC, so don't call it "XML". 
+Raised it mostly so folks could shoot it down; thanks for doing so. 
+Joe Kesselman / IBM Research The parse would be non-validating, whether an attempt was made or not. 
+The problem was ... what? 
+The "org.xml.sax.ext.EntityResolver2" interface (see the SAX website, that information available to the resolver. 
+Not that it can cause PEs to be "skipped"; it can only resolve them to empty content, which is a much simpler thing. 
+Having thought about this a bit, I can still say that I think it's a lot more usable to just have controls that affect all external entitiees of a given type: PE or GE. Attempting more granular control, particularly of PEs, creates needless confusion and potential for error. 
+- Dave 

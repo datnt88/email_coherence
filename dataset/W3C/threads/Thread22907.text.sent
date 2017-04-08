@@ -1,0 +1,30 @@
+Several methods in DOM2 interfaces, e.g. Element.getAttributeNS, has a namespaceURI. 
+If the element or attribute one want to fetch has no namespace, should the namespaceURI parameter be null or the empty string? 
+As I can see, the current CR is vauge. 
+In Java there is a clear difference between null and the empty string. 
+* You have just read a message from Mikael St?ldal. 
+* * Remove "-ingen-reklam" from the address before mail replying. 
+* In the Namespace spec, there is no difference between the empty string and no namespace. 
+("The default namespace can be set to the empty string. 
+This has the same effect, within the scope of the declaration, of there being no default namespace. 
+") In the DOM, we say the Node.namespaceURI field is "null if it is unspecified." 
+As far as I can tell we don't, but probably should, say that specifying "" is equivalent to specifying null. 
+Anyone disagree? 
+Joe Kesselman / IBM Research I disagree. 
+I think the DOM spec explicitly rejects an empty string as being equivalent to no namespace. 
+Setting a namespace attribute is not the same as setting/getting a namespace URI on a node. 
+Either way, I think it's important that the DOM2 spec makes it clear and explicit whether null or the empty string should be used, or if both are (must be) accepted. 
+It's not very important which one is choosen, but I would prefer to use the empty string as no namespace and explicitly disallow null. 
+That would be consistent with SAX2. 
+* You have just read a message from Mikael St?ldal. 
+* * Remove "-ingen-reklam" from the address before mail replying. 
+* After a few emails, we clarified the spec as following: Note that although the XML specification defines that using the empty string for a namespace URI is equivalent to unsetting the namespace, because the DOM does no lexical checking, the empty string will be treated as a real namespace URI in DOM Level 2 methods. 
+Applications must use the value null as the namespaceURI parameter for methods if they wish to have no namespace. 
+Philippe I can't find this clarification in the new DOM2 PR. DOM Level 2 doesn't perform any URI normalization or canonicalization. 
+The URIs given to the DOM are assumed to be valid (e.g., characters such as whitespaces are properly escaped), and no lexical checking is performed. 
+Absolute URI references are treated as strings and compared literally. 
+How relative namespace URI references are treated is undefined. 
+To ensure interoperability only absolute namespace URI references (i.e., URI references beginning with a scheme name and a colon) should be used. 
+Note that because the DOM does no lexical checking, the empty string will be treated as a real namespace URI in DOM Level 2 methods. 
+Applications must use the value null as the namespaceURI parameter for methods if they wish to have no namespace. 
+-- Document Object Model Core Mon, 25 Sep 2000 18:27:47 GMT Philippe 

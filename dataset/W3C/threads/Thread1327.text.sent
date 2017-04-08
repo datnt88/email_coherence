@@ -1,0 +1,73 @@
+At a recent deltav presentation I was giving, someone suggested that "version selector" was not a very good term, since a checked out version selector doesn't really select a version. 
+I believe this is a very good point, and would like to consider selecting a less misleading term. 
+My favorite would be "version controlled resource", which we could shorten to just "controlled resource" in contexts where it is unambiguous. 
+We can then say that the VERSION-CONTROL request creates a version controlled resource at the request URL. 
+It also then is very natural to refer to a checked-in version controlled resource and a checked-out version controlled resource. 
+I'm going to make a pass through the document to see how this works out in practice, and then if this goes smoothly, I'd like to post it for general comment. 
+Any objections? 
+Cheers, Geoff Seems fine... but don't we already use "version controlled resource" to refer to any of the resources managed by DeltaV? 
+(hrm; maybe not ; do we need/want one?) Cheers, -g Greg Stein, http://www.lyra.org/ 
+I just finished an editing pass over the protocol, and the only time we used the term "version-controlled" was in reference to resources that had already had the VERSION-CONTROL operation applied to them, so current usage in the protocol is consistent with replacing the term "version selector" with "version-controlled resource". 
+I've never encountered the need to have a term for "any kind of resource managed by DeltaV", so I don't think we need one (and even if we did, I don't think we'd want to use "version-controlled for that concept). 
+I'll post the results of this editing pass as a 10.7 working draft, so folks can see what this really would look like. 
+Cheers, Geoff Date: Mon, 4 Dec 2000 11:18:27 -0800 From: Greg Stein gstein@lyra.org 
+Seems fine... but don't we already use "version controlled resource" to refer to any of the resources managed by DeltaV? 
+(hrm; maybe not ; do we need/want one?) Cheers, -g Greg Stein, http://www.lyra.org/ 
+The problem with the version selector is that it is a chameleon; its behavior and semantics change dramatically during a checkout--modify-in-place--checkin cycle. 
+Finding a single name that conveys all that may be difficult. 
+No matter what it's called, I believe a better definition for version selector (or version-controlled-resource) is needed beyond the current operational description in the Terms section of the specification. 
+It should include the motivation for the concept, which has been requested several times on this list. 
+The part in the current definition about putting an existing resource under version control is defined rigorously in the section on VERSION-CONTROL, so it seems like it should be removed from the definition of version selector. 
+From a recent discussion with Geoff Clemm and my own reading of the specification, I would define version selector this way, which may still be too operational: "Version selector: The concept of the version selector is to allow a single URL to track a resource through the checkout-modify-checkin cycle from one version to the next. 
+It has a unique URL distinct from the URLs of both its associated version history and the version which is its current target. 
+It is a resource that represents any of the saved states of a resource under version control. 
+It is logically bound at any given instant to a copy of the content and dead properties of one version in the version history from which it selects, or, when the version selector is checked out, to the content and dead properties of a version-to-be in progress. 
+On servers that support the CHECKOUT method on version selectors, after a version selector has been checked out, the copy becomes a writable working copy and can be modified 'in-place' with methods like PUT and PROPPATCH, without affecting the selected version that was checked out. 
+On checkin, this working copy is captured as a new version in the associated version history, and the version selector is bound to the new version." 
+--Chuck Fay FileNET Corporation, 3565 Harbor Blvd., Costa Mesa, CA 92626 Just a couple of comments (and a change to "version-controlled resource" :-) From: "Fay, Chuck" CFay@filenet.com "Version-controlled resource: The concept of the version-controlled resource is to allow a single URL to track a resource through the checkout-modify-checkin cycle from one version to the next. 
+It has a unique URL distinct from the URLs of both its associated version history and the version which is its current target. 
+Note that a version-controlled resource does not have a current target when it is checked-out. 
+It is a resource that represents any of the saved states of a resource under version control. 
+This is a correct statement, but I'd be a little concerned that folks might confuse "saved state" with "version". 
+It is logically bound at any given instant to a copy of the content and dead properties of one version in the version history from which it selects, I'd probably avoid the term "bound" since it is not a binding in the way we are using the term in the Binding protocol. 
+Probably I'd just say "when it is checked-in, it's content and dead properties are a copy of those of a version in its version history". 
+or, when the version-controlled resource is checked out, to the content and dead properties of a version-to-be in progress. 
+I know what you mean, but "version-to-be in progress" is quite a mouthful (:-). 
+On servers that support the CHECKOUT method on version-controlled resources, after a version-controlled resource has been checked out, the copy becomes a writable working copy and can be modified 'in-place' with methods like PUT and PROPPATCH, without affecting the selected version that was checked out. 
+On checkin, this working copy is captured as a new version in the associated version history, and the version- controlled resource is bound to the new version." 
+I definitely don't want to say that it "is bound to the new version". 
+It continues to be a completely separate resource (with its own live properties), even when it is checked in. 
+A checkin just changes the state of the version-controlled resource (to be "checked-in"), and creates a new version whose content and dead properties are a copy of that of the version-controlled resource. 
+Cheers, Geoff Here's another cut at a definition of version-controlled resource, taking into account Geoff's comments, and trying to pare it down to the essential elements: "Version-controlled resource: The concept of the version-controlled resource is to allow a single URL to track a resource through the checkout-modify-checkin cycle from one version to the next. 
+It is a resource with a unique URL distinct from the URLs of both its associated version history and any of the versions in that version history. 
+At any given instant when it is in a checked-in state, it has a copy of the content and dead properties of one version from its associated version history. 
+Immediately after it is checked out, it has a writable working copy of the content and dead properties of the version targeted when it was checked out. 
+This working copy can be modified 'in-place' with methods like PUT and PROPPATCH, without affecting the selected version that was checked out. 
+A checkin changes the state of the version-controlled resource back to 'checked-in', and creates a new version in its associated version history whose content and dead properties are a copy of that of the version-controlled resource at the time of checkin." 
+Incidentally, I find "version-controlled resource" to be a bit of a mouthful also (:-). 
+I think something like "version handle" would be better, since it's designed to be the handle by which a version is taken through the checkout-modify-checkin cycle. 
+It shifts from object to object in the process, just as a handle might in a program. 
+For your consideration, here's the same definition with "version handle" instead of VCR: "Version handle: The concept of the version handle is to allow a single URL to track a resource through the checkout-modify-checkin cycle from one version to the next. 
+It is a resource with a unique URL distinct from the URLs of both its associated version history and any of the versions in that version history. 
+At any given instant when it is in a checked-in state, it has a copy of the content and dead properties of one version from its associated version history. 
+Immediately after it is checked out, it has a writable working copy of the content and dead properties of the version targeted when it was checked out. 
+This working copy can be modified 'in-place' with methods like PUT and PROPPATCH, without affecting the selected version that was checked out. 
+A checkin changes the state of the version handle back to 'checked-in', and creates a new version in its associated version history whose content and dead properties are a copy of that of the version handle at the time of checkin." 
+--Chuck Fay FileNET Corporation, 3565 Harbor Blvd., Costa Mesa, CA 92626 Sure by this definition rather than Versioning Handle, why not Version URL. 
+From the call a spade a spade school of thought. 
+"Fay, Chuck" CFay@filenet.com on 05-12-2000 08:51:37 PM ietf-dav-versioning@w3.org Subject: RE: version-selector = version-controlled-resource Here's another cut at a definition of version-controlled resource, taking into account Geoff's comments, and trying to pare it down to the essential elements: "Version-controlled resource: The concept of the version-controlled resource is to allow a single URL to track a resource through the checkout-modify-checkin cycle from one version to the next. 
+It is a resource with a unique URL distinct from the URLs of both its associated version history and any of the versions in that version history. 
+At any given instant when it is in a checked-in state, it has a copy of the content and dead properties of one version from its associated version history. 
+Immediately after it is checked out, it has a writable working copy of the content and dead properties of the version targeted when it was checked out. 
+This working copy can be modified 'in-place' with methods like PUT and PROPPATCH, without affecting the selected version that was checked out. 
+A checkin changes the state of the version-controlled resource back to 'checked-in', and creates a new version in its associated version history whose content and dead properties are a copy of that of the version-controlled resource at the time of checkin." 
+Incidentally, I find "version-controlled resource" to be a bit of a mouthful also (:-). 
+I think something like "version handle" would be better, since it's designed to be the handle by which a version is taken through the checkout-modify-checkin cycle. 
+It shifts from object to object in the process, just as a handle might in a program. 
+For your consideration, here's the same definition with "version handle" instead of VCR: "Version handle: The concept of the version handle is to allow a single URL to track a resource through the checkout-modify-checkin cycle from one version to the next. 
+It is a resource with a unique URL distinct from the URLs of both its associated version history and any of the versions in that version history. 
+At any given instant when it is in a checked-in state, it has a copy of the content and dead properties of one version from its associated version history. 
+Immediately after it is checked out, it has a writable working copy of the content and dead properties of the version targeted when it was checked out. 
+This working copy can be modified 'in-place' with methods like PUT and PROPPATCH, without affecting the selected version that was checked out. 
+A checkin changes the state of the version handle back to 'checked-in', and creates a new version in its associated version history whose content and dead properties are a copy of that of the version handle at the time of checkin." 
+--Chuck Fay FileNET Corporation, 3565 Harbor Blvd., Costa Mesa, CA 92626 

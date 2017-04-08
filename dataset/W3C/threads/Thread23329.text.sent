@@ -1,0 +1,117 @@
+I've started looking at the DOM Level 3 drafts again, and have come across the following issues as I've started a preliminary implementation for Python. 
+(If anyone's interested, it's part of the "minidom" implementation in PyXML: http://pyxml.sf.net/.) These comments pertain to the "Core" specification. 
+I've been referring to the 9 April 2002 drafts, and have not as yet attempted to implement all of this specification. 
+(In particular, I have not addressed the normalization features.) 1. DOMImplementationSource interface. 
+The big question is "Why?" 
+The bootstrapping problem doesn't seem to go away; the description refers to a "binding-specific list of available sources". 
+Why not just have a binding-specific list of implementation objects? 
+These could then be queried just as effectively as a list of sources, and probably more efficiently as well; the API presented for this interface requires that the list of feature specifications be parsed by each implementation source, rather than once. 
+The format of the string passed to the getDOMImplementation() method also begs another question: How does an implementor tell the difference between a version number and a feature name? 
+It *looks* obvious when read casually, but there needs to be some guarantee that version numbers can be distinguished from feature names. 
+Stating that version numbers begin with a decimal digit and feature names do not, and that neither can contain spaces, would be sufficient. 
+2. Document.renameNode(). 
+a. 
+Is the NODE_RENAMED "event" fired on the UserDataHandler object if the same node object is used for the renamed node? 
+Whether this is needed is entirely application specific, so it makes sense to fire this event regardless and allow the application to check for src == dst in their handle() method if the distinction is relevant. 
+b. 
+What special consideration needs to be made for the document element? 
+Does the "name" attribute of an associated DOCUMENT_TYPE_NODE get updated if the document element is renamed? 
+Or is an exception thrown (and which one?)? c. 
+In the description of when NAMESPACE_ERR can be raised by this method, reference is made to "qualifiedName", but there is no such parameter. 
+I'm sure this is just an editorial detail and can be fixed easily; I'd suggest removing all but the last sentence of that paragraph, and change "Also raised," to "Raised" in the last sentence. 
+3. UserDataHandler.NODE_DELETED 
+It is not at all clear what it means for a node to be deleted. 
+Does it mean that the object is being finallized, or that the node is has been removed from the document tree (possibly temporarily)? 
+How would it interact with persistent nodes, which move in and out of memory? 
+Typos: Document.strictErrorChecking description: 1st sentence: "errors checking" should be "error checking" last sentence: "defaults" should be "default" Document.renameNode() 
+description: 2nd para, last sentence: "attach" should be "attached" Text.replaceWholeText() description: 1st sentence: "the a specified" should be "the specified" -Fred Fred L. Drake, Jr. fdrake at acm.org PythonLabs at Zope Corporation Last August, I sent a note to this list with a variety of comments on the DOM Level 3 Core draft (the 9 April 2002 draft): Naturally, I never received a response (which was not a surprise), but I've noticed that not even the most trivial typos were corrected in the 22 October 2002 draft. 
+Does the WG read this list, or am I wasting my time in reviewing the drafts of these specifications? 
+I can understand that any actual decisions can take a long time when work is done by committee, but I do expect the editor can deal with typos. 
+I'd also expect that the issues raised be recorded in the little lists of issues distributed throughout the document. 
+Perhaps I misunderstand how the W3C goes about it's work? 
+Just in case, I'll try another comment, this one more about the flexibility of specific bindings. 
+The Python DOM binding provides a function getDOMImplementation() which takes the name of a DOM or feature information (it can be called either way), and returns a DOMImplementation object. 
+The feature information is not expressed as a simple string but as a structured value. 
+This function was defined separately from the DOM drafts as our bootstrap mechanism (Feb 2001), but the name is identical. 
+This function would normally be called in one of these ways: from xml.dom import getDOMImplementation # get anything available dom = getDOMImplementation() # get the low-memory (hah!) implementation dom = getDOMImplementation("xml.dom.minidom") # get a DOM with specific features dom = getDOMImplementation(features=[("ls-load", "3.0"), ("xml", "2.0")]) I've added this to our reference implementation to come a little closer to the current draft: # get a DOM with specific features dom = getDOMImplementation(features="ls-load 3.0 xml 2.0") Note that passing a single string as an anonymous argument doesn't work, since that is interpreted as the name of a specific implementation. 
+This variant would be equivalent to the previous call: dom = getDOMImplementation(None, "ls-load 3.0 xml 2.0") Another difference is perhaps more important: If there is no suitable implementation, getDOMImplementation() raises a Python ImportError exception (this is a standard Python exception, not something created specifically for the DOM). 
+Now for my question: In defining the binding, is it reasonable to simply declare that this is close enough? 
+I'm very disinclined to provide a separate object to server as a DOMImplementationSource and change the argument list slightly -- having two methods with the same name and functionality but different signatures seems a bit rediculous, and I don't think we can really change the existing bootstrap interface since there's too much legacy code. 
+Comments? 
+-Fred Fred L. Drake, Jr. fdrake at acm.org PythonLabs at Zope Corporation Many comments do get responses on this list. 
+The monitoring of this list is far from perfect, but also is quite active. 
+We try to respond in every case. 
+You were correct to be annoyed that typeos and more that you reported were not corrected in the latest draft. 
+We appreciate the reminder. 
+I would have responded to this earlier, but I was out of email contact for a few days. 
+When a specification reaches last-call, this is the only forum where official issues may be raised, and any issue raised here about a specification during it's last-call period must be responded to. 
+It is the working group's clear intent to also follow issues on specs such as core that are not yet in last-call. 
+I apologize that we seem to have not reacted to the earlier message. 
+We appreciate the pointer. 
+I can assure you that the editors of the specification will look at the message if they have not already done so. 
+Did this happen through coincidence? 
+I am not familiar enough with Python, but if it were Java or Javascript, a number of alternatives spring to mind in where to put the DOM version of the method. 
+It seems wrong to combine a DOM-specified signature with one specified by something else that is legacy. 
+Please realize that the DOM specification is still an unstable working draft. 
+For this reason, advice I give you could be easily overridden. 
+The fact that you are chasing the current signature is due to the fact that is is simply not stable. 
+Legacy code should not be considered to be an issue where implementation was of an unstable working draft, unless the method was already there from external sources. 
+Having said that, the bindings have a degree of freedom in doing what is appropriate for their purposes and if legacy code is a fact you cannot ignore, then so be it. 
+It seems to me like you have a method that makes assumptions that may be wrong in the DOM-specified version of the bootstrapping mechanism. 
+I would suggest that you have a distinct method for dealing with the DOM-specified bootstrapping mechanism that does not conflict with your legacy method or requirements. 
+If this requires renaming it because of an unfortunate naming conflict, then so be it. 
+If you can put it statically onto a different object, perhaps that is the proper way. 
+It is our intent that the DOM-specified version also be able to react to additional feature names that may be used to identify a specific implementation or things not known to DOM, such as your "dom.xml.minidom" tag. 
+But the call should only succeed if it satisfies all requested features. 
+It is my belief that there are significant failures that are not be related to failure to import some library. 
+The library in question may well implement all of the features in question, for example, but not be able to supply them in the requested combination, because of the narrowness of a part of it's implementation. 
+This is one reason why the library supplies the source object that examines the required feature set in detail before supplying something. 
+The DOM WG does not attempt to enumerate all the possible reasons why the request may fail. 
+A Binding-specific exception may be appropriate in this case, as long as it is well-documented and does not interfere with users who may want to react to the failure. 
+Applications may immediately retry with a smaller or alternative set of acceptable features. 
+Given that this failure does not begin to describe all possible failures, it seems to me that it could really complicate the application which wants to continue to look for a matching implementation, becaused somethimes there would be this exception and sometimes there would be none, but it would still fail. 
+The DOMImplementationSource is provided as a very flexible way for implementations to supply additional implementations of feature combinations, possibly dynamically combining them. 
+It permits the implementations great latitude in how they assemble their feature sets. 
+The pieces may all be there, but they may not be exactly assemblable in the combination requested. 
+I think you may well be compromising the capabilities of the API for bootstrapping someone's required feature set if you do not permit the implementation to judge and possibly even dynamically create at runtime the requested feature set. 
+Ray Whitmer rayw@netscape.com 
+I'm glad to hear this list is monitored; for those of us not affiliated with W3C member organizations, this is the only way to get comments in. 
+That's not a problem; I really don't expect an instant reponse! 
+I'm not actually concerned about getting any personal response; what does concern me was that information and comments I provided did not seem to have any effect at all -- I think I brought up some real issues that at least warrented open issues in a subsequent version of the draft. 
+Had those been acknowledge *somehow*, I probably wouldn't have checked whether the typos got fixed. 
+;) Thanks for the updates on the process, and I'll look forward to the next draft. 
+I described the Python bindings: Ray asked: Yes; we did not know anything about the eventual DOM 3 interface at that time (20 months ago). 
+I'd be surprised if the DOM WG did, though I've been surprised before. 
+In general, I agree. 
+The catch is that two distinct groups (the W3C DOM WG and the Python XML-SIG) are working in the same area. 
+I definately understand the draft status -- one of the reasons for starting implementaiton work is to determine if there's anything about the draft that will cause substantial difficulties for implementors, or which will cause unexpected performance behaviors for applications. 
+I'd say that makes this the right time to comment on the draft, so that we (users) end up with something that makes sense and works as expected. 
+I'm not concerned with legacy code that relied on interfaces defined in old drafts -- our documentation states clearly that anything based on drafts is subject to change until the final recommendations are implemented. 
+I *am* concerned about legacy code that relied on something the XML-SIG defined that was not covered by the DOM of the time. 
+For now, we've decided to leave the implementation of that particular feature alone until we see either of - changes in the DOM Level 3 draft, or - further comments from our own user community. 
+There do seem to be some differences. 
+I suspect that would be the easiest to maintain. 
+If the XML-SIG finds a good name/place for it, that's all we really want at this point. 
+I think I can deal with the differences in assumption in a sligtly different way and make it work for both interfaces without introducing the additional complexity for implementations that don't need it. 
+I understand that; I agree that our use of ImportError is potentially misleading, but consider this a minor detail. 
+Since any Python code can raise this exception, it can do this whenever appropriate. 
+There is precedent in interpreting ImportError as "feature not available" in Python. 
+Yes, that's where our existing API falls down. 
+We haven't had any requests for that ability, though, so it's not clear how real of a limitation that is. 
+I'm fairly certain it won't be difficult to accomodate, so I think we're actually in pretty good shape. 
+Thanks for your time, and for paying attention! 
+-Fred Fred L. Drake, Jr. fdrake at acm.org PythonLabs at Zope Corporation The DOMImplementationRegistry query the list of DOM implementations. 
+Given the query, it will be up to the DOMImplementationSource to return a DOMImplementation or not. 
+"XML 3.0 Events 3.0" may return a different implementation than "XML 3.0". 
+Picking which implementation is the best given the query is up to the source. 
+The source may (and will) be provided be default inside the DOM implementation package. 
+For Java, the property will be given in the jar file for example. 
+Or I may decide to provide my own source based on other criteria. 
+It is correct that the list must be parsed by each DOMImplementationSource but we don't expect the users to call this method more than once in their DOM application, don't we? 
+A feature name must be valid XML, therefore it cannot start with a number. 
+agreed. 
+We matched the replaceChild method in that case: the DOM implementation may raise an error if it does not support the renaming of the document element and the DocumentType node is not updated if it does. 
+I renamed the name of the parameter to match createElementNS/createAttributeNS. 
+Once the parameter is renamed to qualifiedName, the description of NAMESPACE_ERR makes more sense. 
+have a look at: Fixed. 
+Philippe 

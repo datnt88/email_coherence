@@ -1,0 +1,167 @@
+Short version: "SHOULD" in literal equality considered dangerous. 
+I am not particularly wedded to SHOULD, and next time the WG considers this I will suggest MUST. 
+As for Presumably the alternative choices would have been to deprecate the language tags on RDF literals, in favor of either using XML with parsetype literal, d:name rdf:parseType="literal" span xml:lang="fr" chat / / or RDF itself d:name [ lang:french "chat" ]; The latter I of course find by far the most manageable. 
+But I am sure you have all been all around the options. 
+I take that to be specifically out of charter for this WG; in that I find M&amp;S to be consistent and clear on this and I believe that my suggested (Unicode String,Lang-Tag?) pair representation of a literal to be a more explicit rearticulation of what it says. 
+While that isn't perfect, I believe xml:lang is used by RDF users and there is no critical problem with it. 
+Jeremy Would you please elaborate on that? 
+i.e. please give an example (or several examples) of how RDF users use xml:lang, and what software they use to process it according to their expecatations? 
+All of my attempts to deal with xml:lang have run into critical problems. 
+For example, I tried to do a visualization of the RDF schema for RDF, using cwm, and I couldn't find a way to get it to filter the french labels from the english labels... because the xml:lang information isn't in triple form. 
+I'm starting to think this is worth changing the charter over: if the xml:lang stuff is to be significant, it must be in triple form. 
+Dan Connolly, W3C http://www.w3.org/People/Connolly/ 
+This issue came up at today's telecon. 
+Both chairs indicated that if the WG goes with Sergey's suggestion of using bNodes for expressing structured literals, and the WG felt that the lang-string stuff was too much in conflict with this, then we should seek to be rechartered. 
+(And I think I understood this more generally, i.e. the charter requirement to move forward on types may require us to request an easing of some of our other charter restrictions). 
+For what its worth, using Jena 1.2 does give programmatic access to the xml:lang read in from RDF/XML. 
+I believe we do not yet do lang tag comparison in a case insensitive fashion, but I think ARP normalizes case on input. 
+Jeremy Doesn't this just represent a deficiency in cwm? 
+jan grant, ILRT, University of Bristol. 
+http://www.ilrt.bris.ac.uk/ Perhaps, or perhaps it represents a deficiency in the design of literals. 
+Why is it we can query on any other property of anything using RDF properties, but we can't query the language of a label using RDF properties? 
+Regardless, my request stands: Dan Connolly, W3C http://www.w3.org/People/Connolly/ Certainly, if you like, and indeed one I could fix by storing a language tag (or absence of one) along with every literal. 
+No sweat. 
+But then, for Dan to be able to use it, he would need built-in functions: rdf:languageCode a rdf:Property; rdfs:domain rdf:Literal; rdf:range rdf:String; rdfs:label "language code"; rdfs:comment """Langauge tag of a litteral, indicating the natural langauge used. 
+An ISO langauge code, see ISO _____""". 
+rdf:stringBit a rdf:Property; rdfs:domain rdf:Literal; rdf:range rdf:String; rdfs:label "string without language code"; rdfs:comment """The string value of a litteral, without any language code.""". 
+to actaully extract the data, or do langauge-independant comparisons for example. 
+Not to mention a function to build a complex Literal up from String and language tag.... Tim from todays telecon [14:53:58] gk Need a decision: [14:54:05] DanC yes, please, let's go this way! 
+note that all XML Schema scalar values can be written (uri-for-primitive-type, unicode-char-seq) [14:54:57] JosD exactly DanC [14:55:00] gk Do we go the way of using blank nodes for literals, or do we regard literals as structured entities....(attempt) [14:55:07] DanC ... and that the XML Schema spec specifies a canonical lexicalization (unicode-character-string) for each value; so there's a well-defined mapping in both directions. 
+[14:55:38] gk Literals as separarate animal in the model theory, or just another kind of resource node? 
+(another attempt) [14:55:56] DanC please let string literals denote strings. 
+hmm... what to do with xml:lang. 
+]] -- http://ilrt.org/discovery/chatlogs/rdfcore/2001-10-19.html and your and Sergey's proposal S3 (S3) use bNodes [M&amp;S,TBL] Examples: John_Smith weight [units Pounds, rdf:value "10"], or John_Smith weight [pounds [decimal "10"]] ]] -- http://lists.w3.org/Archives/Public/w3c-rdfcore-wg/2001Oct/0343.html [TBL] http://www.w3.org/DesignIssues/InterpretationProperties.html 
+I find that a very reasonable path to follow! 
+Jos Yes, but I have concerns that it could break some reasonable existing interpretations. 
+I like the general idea of capturing the language/type information in RDF triples, but I can see some possible difficulties. 
+Let's see if I can build this by example: (1) -- ex:Subj ex:prop "chat" . 
+I think this is pretty uncontroversial. 
+But let's see what happens when language tagging (or data typing) information is introduced: (2) -- I feel that it is important that the triple: ex:Subj ex:prop "chat" . 
+should still be generated; i.e. having the presence of xml:lang force an "interpretation property" form, such as: (2a) ex:Subj ex:prop _:a . 
+_:a lang:en "chat" . 
+would be confusing, because adding the xml:lang property (compared with (1)) makes a triple disappear. 
+That seems to me like a landmine for unwary developers. 
+Also, it presumes that the extra information is available at triple-generation time (which is true for xml:lang, but maybe not for data typing). 
+Similar considerations would apply to an translation like: (2b) ex:Subj ex:prop _:a . 
+_:a rdf:value "chat" . 
+_:a xml:lang "en" . 
+which is what the example cited above from Sergey's (S3) seems to suggest. 
+Another approach, overcoming this objection, is to interpret (2) as: (2c) ex:Subj ex:prop "chat" . 
+"chat" xml:lang "en" . 
+but this introduces a different set of considerations: - we have to admit literals as subjects, at least in the abstract syntax. 
+(I don't see this as a problem, just something to be faced.) - each *instance* of a given literal may have a different model theoretic interpretation; e.g. the "chat"s in: "chat" xml:lang "en" . 
+"chat" xml:lang "fr" . 
+must denote different things, I think. 
+In turn, I think this means that each *instance* of a literal must correspond to a different graph node (which have distinct identities to hand the different interpretations onto). 
+Yet another approach is suggested by DanCs technical note on using XML schema data types: (2d) ex:Subj ex:prop "chat" . 
+ex:Subj _:prop _:a . 
+_:a rdf:value "chat" . 
+_:a xml:lang "en" . 
+This avoids all the above issues, but requires the introduction of an unidentified property (_:prop). 
+I have a really hard time to see how that would work in practice, especiially if ex:Subj has multiple qualified properties: ex:Subj ex:does "chat" . 
+ex:Subj ex:about "chat" . 
+ex:Subj _:prop _:a . 
+_:a rdf:value "chat" . 
+_:a xml:lang "en" . 
+ex:Subj _:prop _:b . 
+_:b rdf:value "chat" . 
+_:b xml:lang "fr" . 
+From this, not knowing the association between the unknown properties and the given properties, it's not possible to tell which literal is to be interpreted in English, and which in French. 
+Having got this far, I find myself wondering if a combination of Dan's approach PLUS interpretation properties could work: (2e) ex:Subj ex:prop "chat" . 
+ex:Subj ex:prop _:a . 
+_:a lang:en "chat" . 
+In this case, the presence of xml:lang qualifier forces the generation of two extra triples, having the form of blank node and an interpretation property, but leaves the original property intact. 
+But this too seems to have some subtle problems: suppose it were used as an element of a daml:Collection type of list -- would the duplication of a listhead property not result in an ill-formed list when subjected to further analysis? 
+If one accepts that language tagging can be viewed as kind of type information, I think many of the issues raised by xml:lang are also raised when one wants to use XML schema data types (or any other data types). 
+A clean solution to this problem will address both sets of issues. 
+I find all of the above feel somewhat unsatisfactory, except (2c), and that approach requires that some aspects of the model theory need to be fundamentally revisited, which appears to me like a big bite to take in RDF 1.0. 
+Earlier today, I was thinking that we should do as little as possible about data typing because it seems to be such a difficult area, but having xml:lang to deal with seems to require us to face the issues now. 
+I have ignored the issues of treating the language information as part of the literal itself, but as we have seen that seems to introduce its own set of difficulties, and I don't think it really helps with the data typing case (e.g. we can't infer this extra information from schema data types when available). (Maybe this is what Jan meant when he talked today about two levels of typing?) Still undecided, #g Graham Klyne MIMEsweeper Group Strategic Research http://www.mimesweeper.com 
+RDF Schema uses it. 
+I don't recall any negative feedback about that. 
+Eric has an outstanding action to write up his use case. 
+Can you please list the other critical problems you refer to. 
+It would be good to capture those too. 
+Brian That is not what this particular chair said. 
+I believe I said, that datatyping was important, that we should 'get it right', and if getting it right was in conflict with the charter, we should solve the charter problem. 
+I note ;) that one way to solve this sort of charter problem would be to leave such an issue for the next round. 
+I say this not because I'm advocating that at this stage, but just to make sure folks understand we are not necessarily running out an liberalising the charter right now. 
+Brian Yes and there are a few more like that, aren't there: o Why can't I query the namespace of property using properties? 
+o Why can't I query the uri of resource using properties? 
+Why are you bringing this up again? 
+We have been round this already. 
+My recollection is that we examined this issue, we looked at use cases, we found some where the M&amp;S spec of how to handle xml:lang was useful and we found no major problems with it. 
+We then put that issue aside for a while to look at other issues with literals, since it was not right to make any decision about xml:lang without considering those other issues at the same time. 
+We have since had a look at the parseType literal issue and are now considering datatyping. 
+If you want to bring the xml:lang part of the problem up again at this stage, then the question I have is what are these other critical issues to which you referred earlier. 
+Please make the case there is a real problem. 
+Brian Because I have looked high and low for the use cases you refer to below, and I can't find them. 
+Then it should be easy enough to satisfy my request by pointing into the record. 
+What are these use cases? 
+Who's using xml:lang, and how? 
+i.e. is there some software out there that I can use as a pattern for how to implement literals in cwm? 
+I didn't refer to any other critical issues: just that I can't "see" xml:lang using rdf properties. 
+I have made the case to my satisfaction. 
+If you're not convinced, then, well, you're not convinced. 
+Dan Connolly, W3C http://www.w3.org/People/Connolly/ Actually, we do have a property for that use case: rdfs:isDefinedBy. 
+It has to be explicitly stated, but that's the only thing that makes sense; it doesn't make sense to speak of *the* namespace of a property, in part because it doesn't make sense to speak of *the* name of a property: a property can have lots of names. 
+Er... in cwm, I can. 
+it's called log:uri. 
+(and it gives *a* URI, not *the* URI of a resource, provided it's been told one). 
+As TimBL explained (Fri, 19 Oct 2001 14:00:37 -0400), I could enhance cwm to destructure literals similarly, but the result is extremely distasteful. 
+Then please point me at the relevant test inputs and/or the software that handles these test inputs to the satisfaction of the users. 
+Dan Connolly, W3C http://www.w3.org/People/Connolly/ 
+We had 3. Martyn had one where xml:lang was not used. 
+Jan had one where it was. 
+Eric had one where it was - though he still owes us a write up of that one. 
+Your right. 
+In you said [[[ All of my attempts to deal with xml:lang have run into critical problems. 
+What are these critical *problems*? 
+Are there any pointers I can look at? 
+Brian ??? 
+I wonder how that's relevant... Jan? Got any example files? 
+What software are you using? 
+That's the one I keep hearing about. 
+I phoned him about it, and he said they ended up using properties to represent language, not xml:lang. 
+From the same message: For example, I tried to do a visualization of the RDF schema for RDF, using cwm, and I couldn't find a way to get it to filter the french labels from the english labels... because the xml:lang information isn't in triple form. 
+As far as I know, none of the RDF query systems allows me to say "show me the english labels from the RDFS schema". 
+You have already seen it: Dan Connolly, W3C http://www.w3.org/People/Connolly/ 
+I think it supports your point of view. 
+Ahh. 
+I wondered about that. 
+I believe he reported that M&amp;S's treatment of xml:lang was fine for their needs. 
+Did I misunderstand? 
+Would be trivial in prolog. 
+I just had a look at RDQL and that does not, but its hardly surprising folks don't implement this feature of M&amp;S when its presence in the spec keeps getting attacked. 
+Surely it can't be that hard to implement; I did a little hacking on Jena. 
+Jena's basic query mechanism uses a selector object: iter = model.listStatements(selector) 
+will return all statements selected by the selector. 
+There is a dumb selector which matches on the fields of statement, with null matching anything. 
+iter = model.listStatements(new 
+SelectorImpl(null, RDFS.label, null)) will select all the statements with an RDFS.label property. 
+I've added a new class AnyLiteral which matches any literal with a given language property. 
+Thus iter = model.listStatments( 
+new SelectorImpl( null, RDFS.label, model.createAnyLiteral("fr"))); will select all statements with RDFS.label as the property and has a value which is a literal with a language tag matching "fr". 
+I haven't tested it thoroughly, but it seems to work. 
+It does select all the french language labels from schema. 
+Ya wanna the code? 
+This is actually quite a nice model. 
+Instead of using null to match 'any', maybe I should extend what I have done with literals and have AnyResource and AnyProperty classes. 
+They could implement regular expression matching on the URI, or match on namespace or whatever. 
+Hmmm, this trick could be used to implement aboutEachPrefix. 
+Brian Yes, I've just come to the same realisation. 
+It's a very nice idea. 
+jan grant, ILRT, University of Bristol. 
+http://www.ilrt.bris.ac.uk/ Scrabble gematria: "BIBLE" = "DOGMA" Right, and so can anything else. 
+There is something wierd going on here. 
+We seem to be vanishing into a use/mention black hole. 
+Look: the lang is an attribute *of the literal itself* , right? 
+Not of the value of the literal. 
+So if we want to state it in triples, what do we use to *refer to* the literal? 
+If we use the literal, it refers to whatever its value is, which might be all kinds of things, depending on the datatyping information available, but in general will not actually be the literal itself. 
+So to refer to the actual literal - the syntactic object in the triple - we would need a name for the literal. 
+We havn't got any names for literals, however. 
+Since literals are not themselves the literal values in any literal datatyping scheme (are they?), the only way we could refer to a literal would be to give it a URI and use that. 
+To do that systematically would require some systematic way of assigning URIs to literals (not literal values, but literals themselves.) 
+Is there any such way available? 
+Pat IHMC(850)434 8903 home 40 South Alcaniz St.(850)202 4416 office phayes@ai.uwf.edu 

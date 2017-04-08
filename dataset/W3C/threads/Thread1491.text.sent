@@ -1,0 +1,132 @@
+The protocol seems to allow a workspace to contain multiple bindings (names) for a single version-controlled resource. 
+We're trying to understand how multiple bindings coexist with workspaces and baselines, for our implementation. 
+The multiple bindings are introduced in the MERGE and UPDATE semantic additions of the VERSION-CONTROLLED-COLLECTION feature. 
+The DAV:update-version-controlled-collection-members postcondition includes the following condition on new version-controlled member creation: If a new version-controlled member is in a workspace that already has a version-controlled resource for that version history, then the new version-controlled member MUST be just a binding (i.e. another name for) that existing version-controlled resource. 
+And an earlier thread talked about UPDATE of a Version Controlled Configuration: Is This A Bug? - Baseline feature: Is it possible to construct a workspace which contains multiple VCR's with different DAV:checked-in versions for a given VHR by doing a MOVE of a VCR from one baseline-controlled collection to another, and then UPDATING the VCC's for those BCC's? 
+I think the intent of the spec is clear (only one VCC for a given version history in a given workspace), but I agree that we are missing a postcondition on the MOVE operation. 
+A workspace is required to have only one VCR for a given version history, so any operation that would violate that constraint (which a MOVE could) should fail. 
+Similarly, we should clarify in the extended UPDATE semantics, so that it is clear that the UPDATE of a VCC causes an existing VCR to be bound into a collection, if there already is a VCR for a given version history in the workspace. 
+I interpreted the last sentence of the reply to mean that the DAV:set-baseline-controlled-collection-members postcondition added by BASELINE to UPDATE (and MERGE), should include a statement similar to that in DAV:update-version-controlled-collection-members, requiring the creation of a binding to an existing VCR in the workspace. 
+Is this the right interpretation? 
+Is it also right to imply that the DAV:checked-in version of the VCR (assuming that it is checked-in) remains as it was preceding the MERGE / UPDATE, in particular the DAV:checked-in version does _not_ necessarily match the version held in the baseline? 
+Should there be a similar extension to the DAV:select-existing-baseline postcondition? 
+This would cover the case of initializing a collection from an existing baseline, where the collection is a member of a workspace, and both the workspace and baseline contain VCRs for the same version history. 
+Also, how should BASELINE-CONTROL behave on a workspace containing such duplicate bindings? 
+For example, suppose a workspace contains /ws/cmp1/src/foo.html and /ws/cmp2/src/bar.html, and that /ws/cmp2/src/bar.html is a binding (another name for) the resource, /ws/cmp1/src/foo.html. 
+If you first BASELINE-CONTROL /ws/cmp1, and then BASELINE-CONTROL /ws/cmp2, should the second BASELINE-CONTROL operation omit the VCR identified by /ws/cmp2/src/bar.html 
+(because it is already a member of a configuration created by baseline-controlling /ws/cmp1)? 
+If it is omitted, then it seems like the baseline of cmp2 has lost some important information about the structure of component 2 (cmp2). 
+If it is not omitted, then it seems to conflict with the description of configuration membership. 
+Thanks, Alison. 
+The statements and opinions expressed here are my own and do not necessarily represent those of Oracle Corporation. 
+From: Alison Macmillan [mailto:alison.macmillan@oracle.com] 
+... the DAV:set-baseline-controlled-collection-members postcondition added by BASELINE to UPDATE (and MERGE), should include a statement similar to that in DAV:update-version-controlled-collection-members, requiring the creation of a binding to an existing VCR in the workspace. 
+Is this the right interpretation? 
+Yes. 
+Is it also right to imply that the DAV:checked-in version of the VCR (assuming that it is checked-in) remains as it was preceding the MERGE / UPDATE, in particular the DAV:checked-in version does _not_ necessarily match the version held in the baseline? 
+No, the DAV:checked-in version will be updated. 
+For an UPDATE, the version should be set to be the version held in the baseline. 
+For MERGE, it should be the MERGE of the version held in the baseline with the version held in the workspace (i.e. whichever one is the descendent of the other, otherwise checked out with the merge version added to the DAV:merge-set). 
+Should there be a similar extension to the DAV:select-existing-baseline postcondition? 
+This would cover the case of initializing a collection from an existing baseline, where the collection is a member of a workspace, and both the workspace and baseline contain VCRs for the same version history. 
+Yes (this would set the existing VCR to be the version specified in the baseline). 
+Also, how should BASELINE-CONTROL behave on a workspace containing such duplicate bindings? 
+For example, suppose a workspace contains /ws/cmp1/src/foo.html and /ws/cmp2/src/bar.html, and that /ws/cmp2/src/bar.html is a binding (another name for) the resource, /ws/cmp1/src/foo.html. 
+If you first BASELINE-CONTROL /ws/cmp1, and then BASELINE-CONTROL /ws/cmp2, should the second BASELINE-CONTROL operation omit the VCR identified by /ws/cmp2/src/bar.html 
+(because it is already a member of a configuration created by baseline-controlling /ws/cmp1)? 
+If it is omitted, then it seems like the baseline of cmp2 has lost some important information about the structure of component 2 (cmp2). 
+If it is not omitted, then it seems to conflict with the description of configuration membership. 
+Yes, in this case, the baseline of cmp2 would not contain a version of /ws/cmp2/src/bar.html 
+(that would have to be provided by a baseline of cmp1). 
+If you have versioned collections, the version of /ws/cmp2/src would indicate that it has a member (named bar.html), and would know its version history, but the version would need to be specified by a baseline of cmp1. 
+If you made a baseline of cmp1 a sub-baseline of the baseline of cmp2, this would ensure that a version would be selected any time that baseline of cmp2 was selected. 
+Cheers, Geoff Hi, I understand why the baseline of cmp2 would not contain a version of /ws/cmp2/src/bar.html, but this does seem odd. 
+I can think of a common use case for which this may cause problems: Imagine you have a workspace: /ws/project1 This is web site and various pages on the site use a common JAVA Script based advert banner. 
+So in your workspace you have: /ws/project1/adverts.js (this is a VCR) /ws/project1/default.htm (this is a VCR) /ws/project1/news (this is a collection) /ws/project1/news/adverts.js (rather than another copy of advert.js this is just a binding to the VCR at /ws/project1/adverts.js). 
+/ws/project1/news/default.htm (this is a VCR). 
+So you have the adverts.js 
+file used at both the top level of the web site and in the news section of the website. 
+Now lets imagine you do a BASELINE-CONTROL on /ws/project1/news to capture the news section of the site in a baseline. 
+The baseline collection will have a member which is a binding to /ws/project1/adverts.js (since the baseline-controlled collection had a binding to this VCR). 
+Now imagine you do a BASELINE-CONTROL on /ws/project1 according to Geoffs e-mail I think this will NOT contain adverts.js, it will only capture the default.htm, 
+because the VCR for adverts.js 
+already has a DAV:version-controlled-configuration property and so cannot be a member of two configurations. 
+This seems really odd, because now if you use BASELINE-CONTROL to populate a new collection with the contents of the baseline that you took of /ws/project1 it will NOT create a advert.js 
+at the top level and so the web page would be broken! 
+Even if the baseline of /ws/project1/news was a subbaseline of the baseline of /ws/project1, the adverts.js would still NOT be created at the top level when the /ws/project1 baseline is used. 
+I don't have a good answer to how I would propose we fix this, but it certainly seems like a problem. 
+We could always just capture one baseline of /ws/project1 and NOT capture /ws/project1/news as a baseline (eg just have one baseline of the whole thing), but this is forcing the user down this route, they may have wanted to track /ws/project1/news as a component. 
+Am I on track? 
+Regards, Peter Raymond - MERANT Principal Architect (PVCS) WWW: http://www.merant.com 
+... the DAV:set-baseline-controlled-collection-members postcondition added by BASELINE to UPDATE (and MERGE), should include a statement similar to that in DAV:update-version-controlled-collection-members, requiring the creation of a binding to an existing VCR in the workspace. 
+Is this the right interpretation? 
+Yes. 
+Is it also right to imply that the DAV:checked-in version of the VCR (assuming that it is checked-in) remains as it was preceding the MERGE / UPDATE, in particular the DAV:checked-in version does _not_ necessarily match the version held in the baseline? 
+No, the DAV:checked-in version will be updated. 
+For an UPDATE, the version should be set to be the version held in the baseline. 
+For MERGE, it should be the MERGE of the version held in the baseline with the version held in the workspace (i.e. whichever one is the descendent of the other, otherwise checked out with the merge version added to the DAV:merge-set). 
+Should there be a similar extension to the DAV:select-existing-baseline postcondition? 
+This would cover the case of initializing a collection from an existing baseline, where the collection is a member of a workspace, and both the workspace and baseline contain VCRs for the same version history. 
+Yes (this would set the existing VCR to be the version specified in the baseline). 
+Also, how should BASELINE-CONTROL behave on a workspace containing such duplicate bindings? 
+For example, suppose a workspace contains /ws/cmp1/src/foo.html and /ws/cmp2/src/bar.html, and that /ws/cmp2/src/bar.html is a binding (another name for) the resource, /ws/cmp1/src/foo.html. 
+If you first BASELINE-CONTROL /ws/cmp1, and then BASELINE-CONTROL /ws/cmp2, should the second BASELINE-CONTROL operation omit the VCR identified by /ws/cmp2/src/bar.html 
+(because it is already a member of a configuration created by baseline-controlling /ws/cmp1)? 
+If it is omitted, then it seems like the baseline of cmp2 has lost some important information about the structure of component 2 (cmp2). 
+If it is not omitted, then it seems to conflict with the description of configuration membership. 
+Yes, in this case, the baseline of cmp2 would not contain a version of /ws/cmp2/src/bar.html 
+(that would have to be provided by a baseline of cmp1). 
+If you have versioned collections, the version of /ws/cmp2/src would indicate that it has a member (named bar.html), and would know its version history, but the version would need to be specified by a baseline of cmp1. 
+If you made a baseline of cmp1 a sub-baseline of the baseline of cmp2, this would ensure that a version would be selected any time that baseline of cmp2 was selected. 
+Cheers, Geoff From: Peter Raymond [mailto:Peter.Raymond@merant.com] 
+I understand why the baseline of cmp2 would not contain a version of /ws/cmp2/src/bar.html, but this does seem odd. 
+I can think of a common use case for which this may cause problems: /ws/project1/news/adverts.js is just a binding to the VCR at /ws/project1/adverts.js. 
+BASELINE-CONTROL on /ws/project1/news BASELINE-CONTROL on /ws/project1 according to Geoffs e-mail I think this will NOT contain adverts.js, it will only capture the default.htm, 
+because the VCR for adverts.js 
+already has a DAV:version-controlled-configuration property and so cannot be a member of two configurations. 
+Correct. 
+This seems really odd, because now if you use BASELINE-CONTROL to populate a new collection with the contents of the baseline that you took of /ws/project1 it will NOT create a advert.js 
+at the top level and so the web page would be broken! 
+Yes, because baselines of project1 depend on baselines of news, so you only get consistent states if you have baselines of project1 contain a subbaseline of news. 
+Even if the baseline of /ws/project1/news was a subbaseline of the baseline of /ws/project1, the adverts.js would still NOT be created at the top level when the /ws/project1 baseline is used. 
+Why not? 
+Although the protocol does not require the baseline to remember the names of members from other baselines, it certainly can do so, in which case it will know to populate /ws/project1/advert.js with a binding to the same VCR as /ws/project1/news/advert.js. 
+If the server supports VCCls, then if for sure will track this information in the binding-set of the collection version for /ws/project1. 
+I don't have a good answer to how I would propose we fix this, but it certainly seems like a problem. 
+We could always just capture one baseline of /ws/project1 and NOT capture /ws/project1/news as a baseline (eg just have one baseline of the whole thing), but this is forcing the user down this route, they may have wanted to track /ws/project1/news as a component. 
+Am I on track? 
+I think the only thing you missed is that a baseline is allowed (and if it supports VCls, required) to track the names of members from other configurations. 
+Cheers, Geoff Hi, [Geoff wrote]: Thanks Geoff, that makes sense. 
+1. 
+Why not make this the recommended behaviour (that servers SHOULD capture the names of resources that appear in other configurations, rather than not include those resources in the baseline). 
+2. Another possibility would be to make this client-driven, eg let the client send a XML element in the body of the BASELINE-CONTROL or CHECKIN of a VCCn request to indicate that it wants names captured for resources that appear in other configurations). 
+It seems like such crucial data (in order to make the baseline a consistent snapshot of the baseline-controlled collection). 
+Any preferences as to which of the above approaches? 
+I could add it to my proposed baseline feature extensions/clarifications? Regards, Peter Raymond - MERANT Principal Architect (PVCS) WWW: http://www.merant.com 
+I understand why the baseline of cmp2 would not contain a version of /ws/cmp2/src/bar.html, but this does seem odd. 
+I can think of a common use case for which this may cause problems: /ws/project1/news/adverts.js is just a binding to the VCR at /ws/project1/adverts.js. 
+BASELINE-CONTROL on /ws/project1/news BASELINE-CONTROL on /ws/project1 according to Geoffs e-mail I think this will NOT contain adverts.js, it will only capture the default.htm, 
+because the VCR for adverts.js 
+already has a DAV:version-controlled-configuration property and so cannot be a member of two configurations. 
+Correct. 
+This seems really odd, because now if you use BASELINE-CONTROL to populate a new collection with the contents of the baseline that you took of /ws/project1 it will NOT create a advert.js 
+at the top level and so the web page would be broken! 
+Yes, because baselines of project1 depend on baselines of news, so you only get consistent states if you have baselines of project1 contain a subbaseline of news. 
+Even if the baseline of /ws/project1/news was a subbaseline of the baseline of /ws/project1, the adverts.js would still NOT be created at the top level when the /ws/project1 baseline is used. 
+Why not? 
+Although the protocol does not require the baseline to remember the names of members from other baselines, it certainly can do so, in which case it will know to populate /ws/project1/advert.js with a binding to the same VCR as /ws/project1/news/advert.js. 
+If the server supports VCCls, then if for sure will track this information in the binding-set of the collection version for /ws/project1. 
+I don't have a good answer to how I would propose we fix this, but it certainly seems like a problem. 
+We could always just capture one baseline of /ws/project1 and NOT capture /ws/project1/news as a baseline (eg just have one baseline of the whole thing), but this is forcing the user down this route, they may have wanted to track /ws/project1/news as a component. 
+Am I on track? 
+I think the only thing you missed is that a baseline is allowed (and if it supports VCls, required) to track the names of members from other configurations. 
+Cheers, Geoff I believe that capturing the relative names of resources from other configurations should be required baseline behavior (i.e. a MUST). 
+If you could include that in your baseline extension writeup, that would be great! 
+If someone comes up with an important reason for this information not to be captured, I would be willing to weaken this to SHOULD, but I believe we should first try for MUST. 
+Cheers, Geoff [Geoff wrote]: Thanks Geoff, that makes sense. 
+1. 
+Why not make this the recommended behaviour (that servers SHOULD capture the names of resources that appear in other configurations, rather than not include those resources in the baseline). 
+2. Another possibility would be to make this client-driven, eg let the client send a XML element in the body of the BASELINE-CONTROL or CHECKIN of a VCCn request to indicate that it wants names captured for resources that appear in other configurations). 
+It seems like such crucial data (in order to make the baseline a consistent snapshot of the baseline-controlled collection). 
+Any preferences as to which of the above approaches? 
+I could add it to my proposed baseline feature extensions/clarifications? 

@@ -1,0 +1,49 @@
+Greetings, $ java -cp ".;../jtidy-04aug2000r2/build/Tidy.jar" 
+Test16 index.html 
+err.dat java.lang.Error: java.util.MissingResourceException: 
+Can't find bundle for base name org/w3c/tidy/TidyMessages, locale es_ES at org.w3c.tidy.Report. 
+clinit (Report.java:137) at org.w3c.tidy.Tidy.parse(Tidy.java:1111) 
+at Test16.run(Test16.java:48) at java.lang.Thread.run(Unknown 
+Source) the r3 seems to be broken, at least at Sourceforge. 
+Any idea? 
+OK, this seems due to the fact that your locale is set to es_ES, and a matching message file can not be found. 
+As a quick fix, you can try copying src/org/w3c/tidy/TidyMessages.properties to TidyMessages_es_ES.properties somewhere in your CLASSPATH. 
+I need to work out how to make it easy to handle locale-specific message files with JTidy. 
+Any ideas, anyone? 
+-Sami lempinen@iki.fi 
+http://www.iki.fi/lempinen/ apt-get a life $ java -cp ".;../jtidy-04aug2000r2/build/Tidy.jar" 
+Test16 index.html 
+err.dat java.lang.Error: java.util.MissingResourceException: 
+Can't find bundle for base name org/w3c/tidy/TidyMessages, locale es_ES at org.w3c.tidy.Report. 
+clinit (Report.java:137) at org.w3c.tidy.Tidy.parse(Tidy.java:1111) 
+at Test16.run(Test16.java:48) at java.lang.Thread.run(Unknown 
+Source) the r3 seems to be broken, at least at Sourceforge. 
+Any idea? 
+I'll test this out as soon as I can but normally, the resource loader would look for TidyMessages_es_ES, then TidyMessages_es, then TidyMessages. 
+So, we shouldn't need to change anything in JTidy. 
+Juan, what release of the JDK are you running? 
+Also, do you have Tidy.jar in your CLASSPATH? 
+Gary $ java -cp ".;../jtidy-04aug2000r2/build/Tidy.jar" 
+Test16 index.html 
+err.dat java.lang.Error: java.util.MissingResourceException: 
+Can't find bundle for base name org/w3c/tidy/TidyMessages, locale es_ES at org.w3c.tidy.Report. 
+clinit (Report.java:137) at org.w3c.tidy.Tidy.parse(Tidy.java:1111) 
+at Test16.run(Test16.java:48) at java.lang.Thread.run(Unknown 
+Source) the r3 seems to be broken, at least at Sourceforge. 
+Any idea? 
+This is handled with the java ResourceBundle mechanism which works just fine for me. 
+Juan - I think I found the problem!! 
+You specify in your -cp argument the r2 release of JTidy. 
+This release inadvertently omitted the TidyMessages.properties file from Tidy.jar. 
+This is why you couldn't find it. 
+If you use the r3 release, this should be fixed. 
+Gary Hi, name org/w3c/tidy/TidyMessages, locale es_ES at org.w3c.tidy.Report. 
+clinit (Report.java:137) at org.w3c.tidy.Tidy.parse(Tidy.java:1111) 
+at Test16.run(Test16.java:48) at java.lang.Thread.run(Unknown 
+Source) the r3 seems to be broken, at least at Sourceforge. 
+Any idea? 
+Actually, I did something else: I put TidyMessages.properties into the .jar. 
+It didn't seem to be there in r2, and, once again, I couldn't download r3 properly. 
+That way, I didn't have to figure out where to put it, and, right, I can't modify it, but I can always do a jar cvfu and update it with a fresh copy. 
+Now, it runs perfectly. 
+J 

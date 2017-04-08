@@ -1,0 +1,152 @@
+I attach a copy of the syntax document for your consideration for publication as a working draft. 
+I think the following people were actioned to review it (no minutes as of this date recording it) Jeremy Carroll Jos De Roo Patrick Stickler but others, feel free :) The attached files corresponds to CVS version 1.333 of (CVS http://cvs.ilrt.org/cvsweb/redland/rdfcore/syntax/index.html ) plus the attached relaxng which are for information, not part of the document, but are intended to be published with the working draft. 
+I think I need to carry on trying to improve the very new section 2 but it could be published as is. 
+Dave # RELAX NG Schema (non-XML) for RDF/XML Syntax # This schema is for information only and NON-NORMATIVE # It is based on one originally written by James Clark in # http://lists.w3.org/Archives/Public/www-rdf-comments/2001JulSep/0248.html # and updated with later changes. 
+namespace local = "" namespace rdf = "http://www.w3.org/1999/02/22-rdf-syntax-ns#" datatypes xsd = "http://www.w3.org/2001/XMLSchema-datatypes" start = doc doc = RDF RDF = element rdf:RDF { nodeElementList } nodeElementList = nodeElement* # Should be something like: # ws* , ( nodeElement , ws* )* # but RELAXNG does this by default, ignoring whitespace separating tags. 
+nodeElement = element * - (local:* |rdf:RDF |rdf:ID|rdf:about |rdf:bagID|rdf:parseType|rdf:resource |rdf:li ) { (idAttr | aboutAttr )?, bagIdAttr?, propertyAttr*, propertyEltList # FIXME: Not sure if it is possible to say "and not things # beginning with _ in the rdf: namespace". 
+ws = # Not used in this RELAX NG schema; but should be any legal XML # whitespace defined by http://www.w3.org/TR/2000/REC-xml-20001006#NT-S propertyEltList = propertyElt* # Should be something like: # ws* , ( propertyElt , ws* )* # but RELAXNG does this by default, ignoring whitespace separating tags. 
+propertyElt = resourcePropertyElt | literalPropertyElt | parseTypeLiteralPropertyElt | parseTypeResourcePropertyElt | parseTypeOtherPropertyElt | emptyPropertyElt resourcePropertyElt = element * - (local:* |rdf:RDF|rdf:Description |rdf:ID|rdf:about |rdf:bagID|rdf:parseType|rdf:resource) { idAttr?, nodeElement literalPropertyElt = element * - (local:* |rdf:RDF|rdf:Description |rdf:ID|rdf:about |rdf:bagID|rdf:parseType|rdf:resource) { idAttr?, text parseTypeLiteralPropertyElt = element * - (local:* |rdf:RDF|rdf:Description |rdf:ID|rdf:about |rdf:bagID|rdf:parseType|rdf:resource) { idAttr?, parseLiteral, literal parseTypeResourcePropertyElt = element * - (local:* |rdf:RDF|rdf:Description |rdf:ID|rdf:about |rdf:bagID|rdf:parseType|rdf:resource) { idAttr?, parseResource, propertyEltList parseTypeOtherPropertyElt = element * - (local:* |rdf:RDF|rdf:Description |rdf:ID|rdf:about |rdf:bagID|rdf:parseType|rdf:resource) { idAttr?, parseOther, any emptyPropertyElt = element * - (local:* |rdf:RDF|rdf:Description |rdf:ID|rdf:about |rdf:bagID|rdf:parseType|rdf:resource) { (idAttr | resourceAttr)?, bagIdAttr?, propertyAttr* idAttr = attribute rdf:ID { IDsymbol aboutAttr = attribute rdf:about { URI-reference bagIdAttr = attribute rdf:bagID { IDsymbol propertyAttr = attribute * - (local:* |rdf:RDF|rdf:Description |rdf:ID|rdf:about |rdf:bagID|rdf:parseType|rdf:resource) { string resourceAttr = attribute rdf:resource { URI-reference parseLiteral = attribute rdf:parseType { "Literal" parseResource = attribute rdf:parseType { "Resource" parseOther = attribute rdf:parseType { text URI-reference = string literal = any IDsymbol = xsd:NMTOKEN any = mixed { element * { attribute * { text }*, any }* } Looks good. 
+One immediate nit: "The RDF Model Theory ([RDF-MODEL]) is a graph consisting of nodes " ...the Model Theory itself isn't a graph; it's a theory. 
+So we kind of want to say 'the RDF model is a', except we don't seem to use the word 'model' that way anymore. 
+Same goes for 'the RDF data model', I think. 
+"The RDF Model Theory" [RDF-MODEL] defines RDF as a graph..." perhaps? 
+I've started using the phrase "the RDF information model" as a way of talking about the RDF style of representing stuff. 
+Not sure it'd work in this context though. 
+Dan Hi Dave, in "3 Data Model" last line ... part of the node ro computed from the string-value of contained nodes. 
+^^or in "3.6 Identifier Node" 2nd sentence ... These nodes are created by giving two values for the for the ... in "5.9 Production resourcePropertyElt" the N-Triples statement ... e.parent.subject.string-value 
+e.URI n.subject.string-value; . 
+I would propose to drop reification! 
+so proposal to drop its sentences in 5.5, 5.9, 5.10, 5.11, 5.12 and 5.14 as well as "5.26 Reification Rules" Jos De Roo, AGFA http://www.agfa.com/w3c/jdroo/ 
+PS my review is in no sense complete (I lost half of this day with a serious panic situation in my family today, but it was a false alarm, and everything is alright now, luckily) Patrick's Comments: All in all, a great document, Dave. 
+Only minor points came to mind. 
+1. Would it be good to add somewhere in section 2 para 2 a footnote or reference to some other section which warns users of RDF about the potential for unintended URI collisions based on direct concatenation of namespace to local name (loosing the partition) so that folks are aware of that issue and can avoid it when crafting qnames. 
+Section 6 hints at some of these issues, but should they be more explicit? 
+Particularly with regards to possible URI collisions? 
+2. Section 2 para 3, it would probably help users understand the striping structure of the serialization if there was a very simple graphic. 
+3. Section 2 para 5, you may want to change "property value is a string" to something like "property value is represented as a string" to avoid any incompatabilities with the eventual data typing clarifications. 
+I think we all are at least in agreement that values denoted by serialized literals are represented as a string, whether they are or are not a string. 
+4. Section 2 para 6, you may wish to change "replacing the rdf:Description element" with "replacing the rdf:Description element name" as the element itself corresponds to an rdf:Description element and only the name change signifies the typing. 
+5. Section 3, list item "Element Information Item", you're missing a square bracket after "local name". 
+6. Section 3.6 para 1, you need to define what a "bNode" is in relation to a bnodeID. 
+Since "bNodes" are not in the orig specs, folks will not know what they are (unless they've been lurking about the mailing lists). 
+Question: Should we have a shared glossary of terms for all RDF specs? 
+If so, we could then simply reference terms in general documents and not have to repeatedly define them or risk a loss of reader understanding if not defined. 
+7. Section 5.5 bullet list 1, since you define the namespace for RDF and the terms within that namespace sans any prefix, I think it is reasonable to omit the prefixes everywhere those terms are referenced, since 'rdf:' is not mandated by the spec and (it appears that) it is not necessary to differentiate those terms from other namespaces. 
+It is also probably misleading to state conditions in terms of undefined prefixes. 
+If the prefix is manditory in those examples, then there should be a clause somewhere saying that in this document, the prefix 'rdf:' will be used to refer to the RDF namespace. 
+8. Section 5.12, the generation of "local" identifiers for bNodes seems to take a per-instance scope view, yet these productions are for producing an RDF graph which may have content from multiple instances. 
+Are we speaking only of generating a single graph from a single instance, which must later be merged into a larger graph constituting the combined knowledge space? 
+If so, then we're OK with this scope, but it perhaps should be clarified that what we are generating is an instance specific graph and merging issues are not herein addressed. 
+If however we are talking about a graph that should be mergeable with any other RDF graph without any considerations beyond tidying of nodes with equivalent URI labels, then we have the issue of creating bNode identifiers which are unique for that broader scope, which may in fact span more than one system. 
+In such a case, would it be too presumptuous to recommend (though not mandate) GUIDs or UUIDs as bnodeID values? 
+9. Section 5.26, the names subject, predicate, and object are not included in the listed terms included in the RDF namespace given in section 4.4, where it presents an "exhaustive" list of terms. 
+10. 
+Section 5.27, some discussion (possibly) should be provided for scenarios where there is a mingling of rdf:li and rdf:_n in the actual serialization. 
+Should li-counter consider the explicit _n values? 
+Should it ensure resume counting after the explicit _n value? 
+Does the parser have to ensure no collisions or does it create a partial ordering? 
+11. 
+Section 6, should a recommended algorithm for generating qnames on re-serialization be provided? 
+One simple means of achieving reasonable round-tripping of at least qnames is to provide the RDF/XML writer with a set of namespace declarations to use and have it select for each URI the namespace which has the maximal intersection with the URI and use that for deriving the qname. 
+12. Appendix A.2 rdfms-qname-uri-mapping, this issue also includes the potential for collision, not just "wrong" URIs. 
+13. Appendix A.2 rdfms-difference-between-ID-and-about, should the decisions about this be more explicit in the normative sections? 
+[Note: I didn't review Appendices B and C] Cheers, Patrick Jos: Mike Dean posted an interesting provenance example to webont: My take on this was not - wow a use case for reification, but ... This use case needs provenance. 
+Provenance is an important part of the information; hence the provenance model should be an *explicit part* of the overall schema/ontology for the information being collected. 
+i.e. RDF reification can be seen as a one size fits all solution for provenance, which history shows as having fitted hardly anyone. 
+A better way, which is more in tune with the extremely open undogmatic nature of the semantic web, is to allow many different schemata for provenance to flourish and not to give preference to any one of them. 
+I think we should not *drop* reification, just not encourage it. 
+We can treat reification as a purely syntactic macro, turning an rdf:ID on a property element into the reification quad. 
+We could offer no model theory, and no primer. 
+It is there simply as a backward compatibility thing. 
+Jeremy Jeremy: I think the rdf:ID is a good idea ;-) and then just say some-rdf-document#idea eg:saidBy hp:Jeremy . 
+and of course, an engine/application interpreting that sentence has to *dereference* the subject (but that's all determined by the verb semantics) Jos Jeremy-- I'm not sure what you're saying here. 
+Certainly people are going to have their own views about what sort of information to provide about "provenance", and hence that needs to be part of the overall model/ontology, as you say. 
+However, it's not clear to me that that observation means we can pass on dealing with the issue of how people do things like make comments about RDF statements (or groups of them), or do the other things for which "RDF reification" is currently cited as the solution. 
+Mind you, I don't necessarily think that "RDF reification", as currently defined, is the right way to do these things, but these seem to be basic issues in applying RDF, and I don't think we can punt on them. 
+--Frank Frank Manola The MITRE Corporation 202 Burlington Road, MS A345 Bedford, MA 01730-1420 Jeremy: Frank: I think my point is precisely that we SHOULD punt on them. 
+Despite the best efforts of the first group RDF reification has not solved the problems it set out to solve, or any others that anyone hopes it might solve. 
+We are not chartered to modify it to actually solve problems (even if we knew how), hence are choices are: 1: drop it 2: or pass on it In fact, the observation that reification hasn't solved any problems argues moderately convincingly that these problems don't actually need to be solved. 
+I note that Dave is currently minded to continue with what I see as a fatally flawed understanding of the syntax of reification (see subsequent message), and as such I am now wavering from "passing" to "dropping", however I will check with my HP colleagues before doing so ... [I wonder if Brian with his "HP colleague" hat on may support my making a proposal that he with his "chair" hat on then stomps on as out of charter?] 
+Jeremy Patrick: These issues were all resolved before I joined the WG. 
+The rdf:li is a simply macro that starts at 1 for each element and increments on each occurrence. 
+Nothing clever. 
+I guess following the issues list gets to the discussion eventually. 
+Jeremy Still on Patrick's comments: Patrick: I think that would be a good addition; not necessarily this time round. 
+Jeremy My comments on the body of the text (not the appendices) First - great work, a lot done over last time. 
+I'll section my comments as BUGS (7), TYPOS (2), PHRASING (5), SUGGESTIONS (4), CLARITY (1). 
+I'll use ***** to separate issues. 
+I would suggest only attending to TYPOS in this release. 
+(My view is that fixing the bugs is likely to introduce new unknown ones). 
+Although these are the easier bugs: 1, 3, 4, 7. 2 could best be addressed for this release by noting that the processing of bagID is incomplete in this WD. 5 and 6 are not sufficiently serious to require attention, even if the bar is set higher than the Connolly level. 
+BUGS (things where I think you have made a mistake, not merely where we differ) 1. Section 5.5 "if there is a propertyAttr attribute [...] with a.URI = rdf:li". 
+This is illegal, as previously decided. 
+error001.rdf 
+2. bagID Section 5.5 "Then for all statements generated above (except the previous statement)" A trivial point and a non-trivial one. 
+2.1 I prefer "(except the immediatly previous statement)" 2.2 They are not reified with node n. 
+The rules as written would do the following: == _:a eg:a "a" . 
+_:a eg:b "b" . 
+#foo rdf:type rdf:Bag . 
+#foo rdf:subject _:a . 
+#foo rdf:predicate eg:a . 
+#foo rdf:object "a" . 
+#foo rdf:type rdf:Statement . 
+#foo rdf:subject _:a . 
+#foo rdf:predicate eg:b . 
+#foo rdf:object "b" . 
+#foo rdf:type rdf:Statement . 
+The following are the underlying errors: the node n which you pass to 5.26 is used as the identifier for the reification quad, but you have created it as a bag in which to collect the various reification quads. 
+you have not specified anywhere the fact that rdf:_NNN arcs are used to add the reifications to the bag. 
+you appear not to have decided whether the following example creates one reification or two Approaches I have considered for correctly specifying this typically use: + a bagLiCounter that behaves similarly to your liCounter + a more complex passing of information up or down the parse tree. 
+in ARP the current subject has a property being the bag of reifications which defaults to null. 
+Whenever a triple is created the bag is considered, and the code branches if it is non-null, specifically catching the case above, where the reification that it was going to produce anyway is added to the Bag. in Snail the reification rules are blocked when there is a bagID, and the bagID is explicitly processed first. 
+propertyElt productions are then marked with a reification attribute, corresponding to rdf:ID. 
+in another approach (not documented) every property element production produces its reification, if a label is provided with an rdf:ID attribute then it is used. 
+The nodeElement production then discards the reifications which have blank node roots, unless there is a bagID attribute. 
+Your treatment of bagID on emptyPropertyElt is similarly defective. 
+3. 5.9 resourcePropertyElt In the rule: "nodeElement" == "ws* nodeElement ws*" 4. 5.12 parseTypeResourcePropertyElt Your text "start_element(URI=rdf:Description, subject=n, attributes=set(bagIdAttr=a) c end_element()" == Better text "start_element(URI=rdf:Description, subject=n, attributes=set() c end_element() " This has nothing to do with bagID. 
+5. 5.14 emptyPropertyElt The text doesn't cover the case with bagID and optional rdf:ID. 
+e.g. or If you want to follow M&amp;S para 232 then the the rdf:ID is a reification :-). 
+M&amp;S doesn't specify what the bagID means in this case either. 
+ARP takes it to introduce a new node which is an empty Bag. 6. 5.15 idAttr 5.17 bagIDAttr No statement about unicity of ID. 
+Any such statement needs to be clear that both come from the same space. 
+7. 5.18 propertyAttr rdf:li should be in the list of exclusions. 
+Personally I would also exclude: rdf:subject rdf:predicate rdf:Seq rdf:Bag rdf:Alt rdf:Statement rdf:Property TYPOS 8. "precisely called an directed" = "precisely called a directed" 9. "properties and form for skipping" = properties and for skipping" PHRASING, ISSUES (aka minor points with no suggestions) 10. 
+I don't like Dan's "defines RDF as a graph" - I think this is a discussion topic at some point. 
+For me, and I think for Pat, the graph is the primary syntax for RDF. 
+Certainly the current text will do for now. 
+11. 
+"turns sequences of Node, Arc," = "turns paths in the graph of the form Node, Arc," (I prefer the more technical graph theoretic language - not important). 
+12. Section "4.3 Notation Forms" does not print well. 
+13. 
+Do we need to say anything about dialects such as RSS or PRISM that do not require the full RDF/XML syntax or a triple based approach to processing RDF. 
+i.e. at some level any processing that does not violate the model theory is cool! 
+14. 
+In section 5.1 "the grammar may be entered several times", ARP currently remembers the ID state and prohibits the reuse of an ID across reinvocations in the same document. 
+What do you think? 
+I have no axe here. 
+e.g. ARP gives an error with all of the following: and and SUGGESTIONS 15. 
+Every use of production "ws" is currently "ws*". 
+Since "S" already is 1 or more space characters, these uses of "ws" could be "ws?". 
+My preference would be to define "ws" as "S?" and then use "ws" undecorated in the relevant productions (propertyEltList etc.) 16. 
+I think the document would benefit from an introduction to the processing model used in the triple production rules e.g. 
+This document describes the relationship between an RDF/XML document and an N-triple document by describing a particular processing of the XML Infoset. 
+The N-triple document then naturally describes an RDF graph, (as in Model Theory). 
+This particular processing model is illustrative and non-normative; any other processing model resulting in the same RDF graph may be used. 
+In particular: + triples may be generated in any order + duplicates may be eliminated at any point + there is no requirement on RDF processors to support N-triples in any way The processing model converts the XML Infoset into a closely related set of Information Items, and then processes these Information Items using declarative "grammar" rules and procedural rules generating triples that are added to the N-triple output. 
+17. 
+The phrase "generate a local identifier" occurs a few times. 
+It may be clearer to add a subsection at the end of section 5 which clarifies that these identifiers are new on each invocation and unique with file scope. 
+This would behave similarly to the List Expansion Rules or the Reification Rules as a function in the processing model. 
+18. 
+How about dropping parseTypeOtherPropertyElt? In M&amp;S the corresponding section reads to me as here is how to handle bad input. 
+As a rule we are trying to drop any such suggestions. 
+CLARITY 19. 
+I believe you have implied that comments and processing instructions get stripped before computing the string-value of a Text Node. 
+This is however unclear. 
+Jeremy Jeremy-- I don't think we disagree on how effective "RDF reification" has been in solving problems. 
+My concern has to do with exactly what "drop" or "punt" means. 
+In the current official W3C RDF specs, "RDF reification" is cited as the solution for certain problems (e.g., statements about statements, including which statements came from which Web source). 
+If "drop" is interpreted literally, it means all references to reification, and those problems, are simply eliminated from the spec, without further comment. 
+I don't believe it would be very responsible for us to do that. 
+I'd prefer to see some explicit discussion (possibly in a non-normative appendix) describing those problems, and stating explicitly that we don't explicitly deal with those problems in our (revised) specifications. 
+--Frank Frank Manola The MITRE Corporation 202 Burlington Road, MS A345 Bedford, MA 01730-1420 

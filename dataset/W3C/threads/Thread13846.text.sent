@@ -1,0 +1,96 @@
+There seems to be a gap in the guidelines - this is certainly a perception of the UA group - which do not adequately deal with "dynamic HTML". 
+There are several things that leap to mind. 
+1. 
+For automatically generated websites (eg sites produced by database-backed systems, perl scripts, etc) ensure that the output is valid and accessible HTML. 2. The use of 'event' attributes (onMouseOver, onFocus, etc) can cause problems, because only some of these events have keyboard (let alone voice-input) equivalents. 
+I think this is one that needs to be talked through with UA, PF and DOM (the groups that spring immediately to mind) but a sensible first pass would be to suggest that only those events which can be described as logical rather than device-dependent (onSubmit and onChange are the two which spring to mind, although with a little help from our friends it should be possible to expand the repertoire, and UA are dealing with this problem at the moment) should be used. 
+3. The future use of 'DHTML' for such joys as group editing (which is currently possible in Lotus Notes I think), very flash displays, context-sensitive information, and all those things I can't make out (even from the shoulders of the giants I ride) look likely to ensure that we need to revisit the techniques document, and the more 'technically specific' guidelines, often in consultation with the UA group at least. 
+That gives us all more to look forward to. 
+Charles McCathieNevile w3c-wai-gl@w3.org (Charles McCathieNevile) 10/22 4:35 AM 2. The use of 'event' attributes (onMouseOver, onFocus, etc) can cause problems, because only some of these events have keyboard (let alone voice-input) equivalents. 
+I think this is one that needs to be talked through with UA, PF and DOM (the groups that spring immediately to mind) but a sensible first pass would be to suggest that only those events which can be described as logical rather than device-dependent (onSubmit and onChange are the two which spring to mind, although with a little help from our friends it should be possible to expand the repertoire, and UA are dealing with this problem at the moment) should be used. 
+
+I agree that the distinction should be made between syntactic, application-level (logical) events and device-dependent, action-level events. 
+That is, identify "what I'm doing" or "what is happening" instead of "how I'm doing it"? 
+This parallels the use of HTML to identify the purpose of an element em rather than its rendering in some medium b . 
+Similarly, the Guidelines should encourage the use of application-level events while discouraging the use of action-level events. 
+With this emphasis, onFocus and onBlur *are* application-level (logical) events. 
+I can focus on a field by tabbing to it, by clicking in it, or possibly by referring to its label. 
+The means by which a user can focus on a field is (should be) a browser issue, not an authoring issue. 
+"Focus" and "Blur" are independent of the means used to produce these effects. 
+There may also be a need to distinguish between events which are the direct result of user action - for example: onSubmit, onReset, onFocus, onBlur - and those that occur asynchronously or represent an unexpected result - such as onLoad, onError. 
+For example, I'd like to be able to identify an error message to be presented to a user in case a required field is incomplete, or a field contains incorrect data. 
+This error might be presented to the user as soon as they try to leave a field (onBlur) or when they try to return the form to the server for processing (onSubmit). 
+Ideally, the validation criteria and error messages should be directly associated with the field, much as a LABEL can be. 
+Presently, there is no syntactic, application-level means of identifying this information. 
+As an author, I must decide if, when and how to present the error to the user, which immediately raises accessibility concerns. 
+Chris is right, so for the sake of completeness I looked up all the event attributes again. 
+Those which I think are device-dependent, and we should recommend not be used are: onMousedown, onMouseup, onMouseover, onMousemove, onMouseout, onKeydown, onKeyup, onKeypress, onClick, onDblclick Those which seem to be logical events are: onFocus, onBlur, onSelect, onChange, onSubmit, onReset, onLoad, onUnload. 
+It should also be possible to define something like 'onActivate' - which would be equivalent to onClick for a link, but I guess this belongs to other groups. 
+Charles McCathieNevile First I agree this version PA Guidelines should say something about DHTML events. 
+Probably in A.11 a general statement and a technique as follow. 
+That might be a little too restrictive for authors. 
+Since we don't have the more logical onActivate (I'm really sorry we missed this one in HTML4 review...), how about asking that both devices (pointer and keyboard) be supported whenever one is: [one would have to check how browsers react to that before making it a technical] That's more or less equivalent to onActivate, expect that it's for any KeyPress, so the verify() function would have to check for Keypress=Return or SpaceBar for instance. 
+I support Daniel's solution and concur with his regret that more generic event names have not been included in HTML. 
+However, I recall reading somewhere (but can not remember the reference, unfortunately) that the keyboard events were supposed to apply to speech input as well, though maybe this comment was meant to refer only to the keyboard characters that can be assigned to links and form fields. 
+(Note for UA people - the discussion comes from page authoring and which events should and should not be used - the initial premise was that all device-dependent events should not, although hopefully some could be replaced by 'logical events - ones which can be activated by keyboard, voice input, etc) If onKeyPress passes no information about which key was pressed, then it could be mapped, along with onClick, to a new onActivate by UAs, providing a pathway for transition to the 'logical event' which we could ask for in future HTML. 
+There may be equivalents to onMouseDown, onMouseUp which should be considered at first in the context of making selections - I don't know how to do this using the keyboard in any browsers although I understand that mapping a mouse to the keyboard is offered by Windows systems. 
+How this would translate to voice systems (or mobile phone systems, with voice and a limited number of keys) I am not sure. 
+But I do think that until we have some ide of how to proceed with this the page-authoring guidelines should recommend against it. 
+I know that people will ignore that where they feel they need a rollover highlight for their client, but they can decide that this will not compromise accessibility without throwing out the whole guidelines. 
+(Have some faith in the audience) Charles McCathieNevile I don't think that recommending against using onClick and similar attributes is that good. 
+The reason being that it may encourage people to do the wrong thing. 
+For example one can write a gracefully transforming JavaScript thing with: A href="some-url" onClick="some-script" some text /A Now if we disallow using onClick he may write A href="some-script" some text /A that (depending on the script) may work just as before with Javascript on. 
+But doesn't work otherwise. 
+(The second construct is invalid as some-script will not be a valid URL but validators don't report errors in CDATA attribue values.) Another problem with excluding all these atributes, is that they constitute all the "intristic-event" generic attributes, so it would be very difficult to use scripts to the extent that script fans will forget about the WAI. 
+I think we should find the analogies between mouse events and keyboard and speach and make a note of that in User-Agent guidelines. 
+One should remember that the names of the attributes are platform specific due to the fact that most were introduced as vendor extentions, but some of them have clear analogies: onClick and the sugested onActivate, for example. 
+Regards, Nir Dagan Assistant Professor of Economics Universidad Pompeu Fabra Barcelona (Spain) website: http://www.nirdagan.com 
+"There is nothing quite so practical as a good theory." -- A. Einstein I don't think that recommending against using onClick and similar attributes is that good. 
+The reason being that it may encourage people to do the wrong thing. 
+For example one can write a gracefully transforming JavaScript thing with: Now if we disallow using onClick he may write that (depending on the script) may work just as before with Javascript on. 
+But doesn't work otherwise. 
+(The second construct is invalid as some-script will not be a valid URL but validators don't report errors in CDATA attribue values.) Another problem with excluding all these atributes, is that they constitute all the "intristic-event" generic attributes, so it would be very difficult to use scripts to the extent that script fans will forget about the WAI. 
+I think we should find the analogies between mouse events and keyboard and speach and make a note of that in User-Agent guidelines. 
+One should remember that the names of the attributes are platform specific due to the fact that most were introduced as vendor extentions, but some of them have clear analogies: onClick and the sugested onActivate, for example. 
+Regards, Nir Dagan Assistant Professor of Economics Universidad Pompeu Fabra Barcelona (Spain) website: http://www.nirdagan.com 
+"There is nothing quite so practical as a good theory." -- A. Einstein TO:charlesn@srl.rmit.EDU.AU 
+I think that what realy matters is whether the page is functional with and without client side scripts. 
+You can do things that are OK with any attribute. 
+O.K.: rollovers that change appearance of links when the mouse rolls on them. 
+(as long as the links are noticeable and functional without this effect) Not OK: a link that leads to an important document but works only with scripts on, and gives error message "unknown/unsupporeted URL scheme" otherwise. 
+We can't rule against attributes that have no substitute. 
+First the W3C should come with platform independent events list, then deprecate the current ones. 
+This is what was done with deprecated markup. 
+HTML4.0 deprecated many things because there is a better alternative mechanism. 
+Stylesheets, for example, or an alternative element (OBJECT instead of APPLET). 
+Frames that have many problems are not deprecated because some of their functionality isn't replaced (yet). 
+Regards, Nir. 
+Nir wrote that we shouldn't 'complain' about events like rollovers. 
+I think that while he is right in the sense that they do not yet compromise accessibility, there will hopefully come a time in the near future when there is a better mechanism for events. 
+In the example of a rollover it could happen by using a 'logical event' to operate on the Style properties of an element. 
+This would make that rollover transferable across different media (potentially at least). 
+However, if we leave the possibility unremarked, when we come to the situation where wwe are in a position to fix it up properly we will have not only rollover events working as they do now but event driven dynamic objects for which there is no simple accessible alternative, written using an out of date 'mode'. 
+This is the problem we currently have with TABLEs and CSS - the TABLE has become such a ubiquitous (although very clearly wrong) way of doing things that it is difficult to undo it, and the real solution looks to be a slow transition as sites are completely rebuilt, rather than a logical translation to a better mode. 
+This contrast with the use of a standardised D-link of some kind, which can relatively easily be converted to LONGDESC when the time comes. 
+If we could identify events we wanted, pathways by which some existing events could be translated into new ones (as happened with MENU and DIR, which were transformed into lists, as I understand it) and include those in the guidelines then we will not convince everyone. 
+But at least the information will be there for those who are interested. 
+Perhaps what we want are some informative notes looking towards future developments, and the way in which changes are likely to be made - such as: Avoid the use of device specific events such as onMouseMove in favour of logical events such as onBlur. 
+Note that some device-specific events are likely to be autmatically translated into logical events (onClick and onKeyPress to an onActivate event) while others may simply disappear as being too specific to a particular device to be universally generalised (onDblClick) These sort of guidelines would require thought and input from UA, and probably a number of other groups as well. 
+It may be a couple of years before these features might be implemented in browsers which are commonly used, (based on the theory that take-up rates on new browsers are slowing down). 
+On the other hand it would provide a good incentive for people to read the guidelines carefully if they gave ideas about how to future-proof (by supporting the accessibility features which we hope will become part of the next generation of the web) their material a little better. 
+Again, it seems that people are finding it harder to justify the expense of rapid changes to their websites in the real world, and as it moves from an interesting new gadget to a serious part of working the cost of playing with it has to start being justified better. 
+(This is really a rehash of the argument for supporting CSS from the beginning rather than saying 'use TABLE' now, but change it when CSS layout is introduced. 
+Or another way of looking at the consequences of that argument.) worth 2 cents ? 
+Charles McCathieNevile One guideline that page (script) authors should follow has to do with behavior which responds to mouse position without the user exercising any command discretes. 
+These are the handlers for events including onmouseover and not including ondblclick. 
+This class of behaviors should cause incremental changes to the finish of the display and not make any change in the actual or perceived structure and content of the document. 
+The should all be expendable, in the sense that (for example) the audio usefulness of the site is not materially degraded by omitting them altogether. 
+I think that the authors should be reminded that the user may be viewing the browser window through a screen magnifier and not have the full window in view in their assessment of what constitutes a small perturbation of the display. 
+Al Scripts and embedded objects are really new user interfaces that need to follow the UA guidelines. 
+It would be difficult, if not impossible, to have a browser user agent smart enough to figure out what a script or embedded application is doing and how to create an accessible user interface. 
+Therefore people doing scripting or writing embedded applications need to follow UA and GL guidelines for making there part of the interface accessible (providing keyboard events for all functions, for example). 
+This said many people would probably raise the complance flag. 
+many script writers will not consider accessibility guidelines (or even know about them). 
+So the user agent may be able to provide simple repair techniques, for example providing keyboard navigation and synthesis of certain keyboard events bound explicitly to a particular element (i.e ignore bubbling of events). 
+This may repair many simple scripts to provide some level of accessibility. 
+Jon Jon Gunderson, Ph.D., ATP Coordinator of Assistive Communication and Information Technology Division of Rehabilitation - Education Services University of Illinois at Urbana/Champaign 1207 S. Oak Street Champaign, IL 61820 Voice: 217-244-5870 E-mail: jongund@uiuc.edu 
+WWW:http://www.staff.uiuc.edu/~jongund 

@@ -1,0 +1,17 @@
+This is especially true regarding "templatish" objects that may or may not be thought of as "content" depending on what you are doing with them. 
+I suspect that this is also an issue with ASP, PHP, et. al. too - it would be great to be able to manage these things in a standards-based way, but currently DAV is very static-file centric in its approach. 
+I'm not knocking that - but it makes the practical use of DAV pretty limited on sites that can't get by on just static files. 
+I've been hoping that we can wrangle the time to make some contributions in this area. 
+Well, I would certainly welcome work in this area. 
+So far, people have not been taking to the "source link" approach, where to find the unprocessed source of an object, you look up a URL in the source link on the original resource (by performing a PROPFIND), then perform a GET on the destination URL of the source link. 
+- Jim When you say people have not "been taking" to that approach, does that mean they just don't like it, are not implementing it, or both? 
+It seems like the best approach to me. 
+There is no way to determine where the content is actually coming from without these links, any method we use for this is going to have them. 
+Has anyone been using or seen any implementations of the source resource links? 
+--brett As a solution to this, on one of my DAV setups, I've created two Locations pointing to the same filesystem directory: Alias /users-go-here /some/path Alias /author-goes-here /some/path-source (where /some/path-source is a symlink to /some/path; I just realized I can probably drop the symlink and use the same filesystem target in both cases) I then force everything in the source directory to text/plain so that CGI, PHP, etc won't execute in there. 
+This allows the author to interact with the source files: ForceType text/plain Of course, all of this is simply getting around the dynamic vs static stuff and providing access to the source of (dynamic) pages. 
+It isn't a solution to the DAV:link thing (yet). 
+I haven't thought about it completely, but may create a new Apache directive that reads something like: DAVSource /users-go-here /author-goes-here This would apply to any resource under that namespace, creating a similar source URI into the target namespace. 
+It would also set up an Alias and a ForceType record. 
+The biggest thing that has stopped me is simply time :-) and researching on whether mod_dav can reach into the Alias and ForceType mechanism (or whether I'd have to reimplement). 
+Cheers, -g Greg Stein, http://www.lyra.org/ 

@@ -1,0 +1,48 @@
+In practice shouldn't Node have a void */Object attribute on which to hang user data? 
+I'm writing an ncurses, DOM, MVC thingy and in order to communicate keystrokes from the controller to the form components in the view through the DOM model it's obvious that a data pointer is necessary. 
+Or did I miss something? 
+Mike This is a very timely subject! 
+The working group will meet next week, and this is on the agenda. 
+I personally agree that we need a standard interface to attach a pointer / reference to arbitrary data to a DOM node. 
+The working group proposed a DOMKey mechanism to make it easy for applications to maintain an external mapping between DOM nodes and arbitrary data, but this has proved unworkable. 
+I believe the main objection to an arbitrary data pointer is that it would be difficult to guarantee that a DOM implementation would "do the right thing" when a node is cloned, destroyed, etc. Anyway, anyone wanting this feature in Level 3 should make their strongest case for it immediately! 
+Well, I have since realized that Events should be used to solve my immediate problem, however I can contribute my opinions on the issues you mention above. 
+Deallocation is of course specific to languages that require explicit management of memory and adding an interface for it would be unecessary for other languages such as Java, ECMA Script, etc. 
+I believe it is good coding style to deallocate memory at the same API level and nearby the code that allocated it. 
+I would rather have the functionality and be required to traverse a tree to deallocate these userPtrs than not have the functionality at all. 
+In practice, I could imagine it may not even be necessary to deallocate them through the DOM tree. 
+They may be referenced elsewhere. 
+One could easily maintain a linked list of these poitners for just this purpose. 
+Cloning is more difficult. 
+However, again I believe it can be left to the user. 
+I do not beleive there are any routines that implicitly provoke cloning of nodes within the DOM. 
+Callers are always directly or indirectly responsible for cloning and therefore providing a semantic for cloning userPtrs would be mearly a convienience operation. 
+IMHO a userPtr attribute should be added to Node interface without facilties for deallocting or cloning them as these would only be in both cases conienience operations. 
+Mike This will cause problems in languages such as C++, as how will you know when to delete the object that is pointed to? 
+You would have to There would be a user defined semantic specific to the application. 
+This is actually quite common. 
+See man menu_usrptr (3X) from the curses library. 
+The mechanism would likely be to simply free all userPtrs when any node is deallocated. 
+Or it might be decided based on attributes of the node or userPtr itself. 
+The burden here is that you must traverse each node of the branch and deallocate each userPtr explicitly. 
+maintain a list elsewhere of what nodes have what pointers so you know when they are not being used, defeating the purpose of having the pointer stored in the node in the first place. 
+The other alternative is to have either memory leaks or potential for crashes. 
+Maintaining a separate list of these pointers would be perfectly reasonable. 
+This would not defeat the purpose of the userPtr. 
+The userPtr would not be for storage as much as access. 
+By associating the data with a node you can access it based on the hierarchial stucture of the DOM tree itself. 
+Not deallocating the userPtr is not an alternative. 
+While this feature may be useful in some languages (e.g ECMAScript), I Actually, I don't believe it would be of much use to ECMAScript. 
+It would be of use to applications that use the DOM for storing and organizing state outside of the original XML/HTML content. 
+For example, an MVC application might use the DOM as it's Model. 
+As such it is required to contain *all* of the data associated with the Model. 
+The Controller and View are not allowed to communicate data because any new Views should be able to extract *all* data from the Model and not have to worry about interfacing with the Controller. 
+In this case the DOM is being used as a data store and convievably it might be used to hierarchially organize transient state that was not defined in the XML or HTML source. 
+But of course the userPtr might be used for anything. 
+believe it would cause too many implementation problems in languages that require explicit memory allocation/deallocation. 
+The only reasonable solution is to simply define the userPtr without any facilities to manage it. 
+Anything more would indeed lead to implementation problems (in fact I do not beleive a portable interface could even be defined). 
+Adding a void *userPtr member to Node is of course trivial. 
+Mike We've revived, and improved, an old version of this proposal, and there seems to be a rough consensus that it's worth pursuing. 
+Watch the Core working drafts, which is where this will appear if no showstoppers arise. 
+Joe Kesselman / IBM Research 

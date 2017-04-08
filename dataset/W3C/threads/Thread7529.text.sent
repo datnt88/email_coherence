@@ -1,0 +1,85 @@
+7.1: Are there any atomicity guarantees for PROPFIND? 
+Section 8.3 could be interpreted as applying only to depthwise operations. 
+For depth 0 PROPFIND, a client should have a way to know that, for example, the values of all the live properties in a reply were valid taken as a whole at some instant. 
+If such a guarantee is not provided, clients may resort to abusing the lock mechanism. 
+7.10: The requirement that a COPY be octet-for-octet identical is overly restrictive. 
+This prevents, for example, an intelligent HTML copy that fixes relative links in the content such that they continue to work from the location of the copy. 
+12.12.1: 
+Is it the intention of this protocol to not allow a server to support different lock types in different parts of its namespace? 
+Editorial: In 2.4 the value of a property is described as being a well-formed XML *document*. 
+However, it is the response to each method that is the well-formed document; the value of each returned property (e.g. in PROPFIND) is just well-formed XML. 
+7.1 There are no guarantees for atomicity on depth 0 PROPFINDs because most servers could not implement it. 
+The problem is especially acute with live properties where the very act of reading one property may cause the value of another property to change, calling into question what "atomicity" really means in that scenario. 
+Atomicity in general is an issue that has been repeatedly examined within the working group and the general determination has been that it is simply too expensive a guarantee to require of the overwhelming majority of servers. 
+Locking is a "poor man's" atomicity guarantee and as most systems have locking built in, rather than having to simulate it at the HTTP level, it also tends to have fairly decent performance while providing the strongest atomicity guarantee that most systems are capable of providing. 
+I freely admit it isn't a perfect solution but the consensus has been that it is good enough for now. 
+7.10 The requirement says that the copy must be octet-for-octet identical, however it never says octet-for-octet identical to what. 
+For example, if I execute a COPY on the URL used to retrieve the output of a calculated resource (a fancy way of saying I'm copying the URL of a CGI file not the URL of the CGI file's source) what exactly is copied? 
+The source? 
+Possibly. 
+Perhaps the system can actually "move" the live resource and make it work at the destination. 
+More likely the result will be a "snap shot" of the output or maybe not. 
+The point is that the power of HTTP is its flexibility, a "resource" can be anything. 
+This is both a gift and a curse. 
+A gift because it allow HTTP to morph to do anything. 
+A curse because it makes it impossible to nail down some definitions. 
+I suppose magic has its price. 
+In this case the price is that one needs to be a bit, creative, in reading the standard. 
+So, when you copy that file, who says you aren't just copying a snap shot, a snap shot which was smart enough to update the links. 
+TNSTFL 12.12.1 
+What you found is a bona fide bug. 
+Turns out it happened twice in the spec. 
+What was missing was the href entry inside the response element. 
+That properly scopes the response. 
+2.4 An excellent point, it now reads "The value of a property is, at minimum, well formed XML." Yaron I think Ralph made a good point. 
+The spec should be more precise about what is within the scope of a copy. 
+Allowing the spec to be read "creatively" should be discouraged. 
+As the spec stands, it is an octet for octet copy of the resource in question (if that means HTML broken links, then that is what it means). 
+It could be argued that this should be restricted to "source" resources - but this is probably too restrictive. 
+If you analyse the HTML Link issue a little more closely, then it is not only COPY, but also MOVE which has to be taken into account and in the case of MOVE, it is not only the moved resource which has to be modified, but all the resources which link to it. 
+If it was just COPY, then I would be happy to allow for the definition to state that the COPY should be an octet-for-octet binary copy of the source resource which MAY differ in content where it is necessary to maintain the integrity of embedded links. 
+When you take MOVE into account, then there are lots of options from having the above statement apply to MOVE and COPY, saying nothing about the result or the side-effects of either MOVE or COPY or having a blanket statement about acceptable side-effects for WebDAV methods. 
+Has anyone dealt with similar issues in other standards WGs? 
+Cheers Dylan 7.10 The requirement says that the copy must be octet-for-octet identical, however it never says octet-for-octet identical to what. 
+For example, if I execute a COPY on the URL used to retrieve the output of a calculated resource (a fancy way of saying I'm copying the URL of a CGI file not the URL of the CGI file's source) what exactly is copied? 
+The source? 
+Possibly. 
+Perhaps the system can actually "move" the live resource and make it work at the destination. 
+More likely the result will be a "snap shot" of the output or maybe not. 
+The point is that the power of HTTP is its flexibility, a "resource" can be anything. 
+This is both a gift and a curse. 
+A gift because it allow HTTP to morph to do anything. 
+A curse because it makes it impossible to nail down some definitions. 
+I suppose magic has its price. 
+In this case the price is that one needs to be a bit, creative, in reading the standard. 
+So, when you copy that file, who says you aren't just copying a snap shot, a snap shot which was smart enough to update the links. 
+TNSTFL To quote Larry Masinter "There be Dragons Here". 
+We have been down this path previously and it leads to madness because the types of possible primary and side effects are unlimited. 
+Any attempt to restrict them would end up being arbitrary. 
+Even attempts to just define what "octet for octet" even means have utterly failed. 
+For example, Dylan implies that "octet for octet" means that HTML links will be broken. 
+However if what is being copied is a calculated resource, such as a CGI file, then the resource is certainly within its right to generate an output to be copied that does not have any broken links. 
+We can not be more precise without turning HTTP into an RPC, which it most certainly is not. 
+Both the power and the curse of HTTP is that it does not have and can not have precise definitions. 
+Unfortunately few realize this until they have embarked upon the ultimately futile quest to define the undefinable. 
+The purpose of the DAV definition of COPY and MOVE is to say that, at minimum, one can expect that the result of a COPY or MOVE will be some stream of bytes at the destination. 
+Unfortunately we can not be more specific about what those stream of bytes would actually represent without inappropriately restricting the freedom of the server. 
+Yaron P.S. Hum.. is that a new slogan? 
+HTTP != RPC? =) I understand. 
+My suggestion was to remove those words to avoid the implication that a server that did an "intelligent copy" (whatever that may mean to it) is not DAV-compliant. 
+Move does have the same problem as you point out. 
+I didn't notice any words in the description of Move that would restrict an implementation's options with respect to modifying the resource in arbitrary ways as a side-effect of the Move. 
+-R Well then get rid of the octet-for-octet and just say nothing. 
+Cheers Dylan To quote Larry Masinter "There be Dragons Here". 
+We have been down this path previously and it leads to madness because the types of possible primary and side effects are unlimited. 
+Any attempt to restrict them would end up being arbitrary. 
+Even attempts to just define what "octet for octet" even means have utterly failed. 
+For example, Dylan implies that "octet for octet" means that HTML links will be broken. 
+However if what is being copied is a calculated resource, such as a CGI file, then the resource is certainly within its right to generate an output to be copied that does not have any broken links. 
+We can not be more precise without turning HTTP into an RPC, which it most certainly is not. 
+Both the power and the curse of HTTP is that it does not have and can not have precise definitions. 
+Unfortunately few realize this until they have embarked upon the ultimately futile quest to define the undefinable. 
+The purpose of the DAV definition of COPY and MOVE is to say that, at minimum, one can expect that the result of a COPY or MOVE will be some stream of bytes at the destination. 
+Unfortunately we can not be more specific about what those stream of bytes would actually represent without inappropriately restricting the freedom of the server. 
+Yaron P.S. Hum.. is that a new slogan? 
+HTTP != RPC? =) 

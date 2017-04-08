@@ -1,0 +1,49 @@
+I have seen where groups are publishing specWeb96 numbers approaching 1000 URLs per second. 
+Using the common log file format and assuming an average entry of 100 bytes this translates to over 8 Gigabytes of data in a 24 hour period. 
+Given the importance of tracking hit information with respect to advertising revenue and in some cases user profiling, what are servers doing with the size of this log information? 
+I would imagine that very few servers are actually running at the 1000 requests/second rate for a 24 hour period. 
+(Actually, the highest reported SPECweb96 number, from a Digital AlphaServer, is still slightly below 1000 requests/second.) The SPECweb96 rules, which are available at do require that something equivalent to a CLF log entry is written to stable storage for each request. 
+At 1000 request/sec, and using your figure of 100 bytes/request, this works out to 100 KB/sec, which is at least a factor of ten below the rates that modern disk drives can sustain. 
+On the other hand, the rules also say: RUNTIME, the time of measurement for which results are reported, must be the default 600 seconds for reportable results. 
+The WARMUP_TIME must be set to the default of 300 seconds for reportable results. 
+In other words, nobody runs one of these benchmarks for 24 hours, and so nobody has to collect 8 GB of logging info to meet the SPECweb96 rules. 
+The busiest Web site that I know of is still somewhere below 100 million requests/day, the last time I checked. 
+That works out to about 10 GB/day of log info, but this site spreads it out over lots of machines. 
+I would guess that they probably do something like compressing it and storing it offline (I used gzip on a CLF file and got it down to under 7 bytes/request). 
+Or they run it through some software to extract a statistical summary, and then delete the full log. 
+Or both. 
+Is the hit-metering draft that I have seen reference to going to address this? 
+Not if you're referring to the one that Paul Leach and I have been working on. 
+We're working on a heavily revised draft, but it still won't discuss log formats. 
+Phill Hallam has issued some drafts on ways for servers to ask proxies for their logs, and I would imagine that he has considered the costs associated with retrieving tens or hundreds of megabytes of log info like this; the hit-metering work that Paul and I am doing is designed to avoid this kind of thing. 
+Is there a more appropriate forum for a question such as this? 
+I think any discussion of log-exchange over the network had better face up to the log-volume issue. 
+As for what a server does, locally, I think that's probably off-topic for the HTTP-WG. 
+-Jeff I have seen where groups are publishing specWeb96 numbers approaching 1000 URLs per second. 
+Using the common log file format and assuming an average entry of 100 bytes this translates to over 8 Gigabytes of data in a 24 hour period. 
+Given the importance of tracking hit information with respect to advertising revenue and in some cases user profiling, what are servers doing with the size of this log information? 
+Is the hit-metering draft that I have seen reference to going to address this? 
+Is there a more appropriate forum for a question such as this? 
+-Doug You may consider giving a look to: Which propose a smart log file format to deal with the number of write accesses to the http log. 
+Anselm. 
+I have indeed considered these problems. 
+But I distinguish between several different uses of log files. 
+The main point for a spec is to have a format that is a neutral interchange medium that all servers might be expected to implement. 
+The Extended log file format does have provision for compression by collapsing a series of entires with the same value to a single line beginning with a number to show the number of times it occurs. 
+I don't think that you can fairly claim that I have a "megabytes" of data problem without accepting that your scheme has a worse one. 
+Rather than beginn a communication for every hit I parcel up the infomation to be exchanges and pass it in a single communication at a cost of a single line of text per hit. 
+In the "simple" exchange protocol you have to create an entire message per hit - much more expensive. 
+I would imagine that a large national cache with a trafic in the tens of millions of hits per server per day would want to exchange log information frequently. 
+I would expect such a server to be keeping an in-memory index to the cache since without such an index it would be unable to keep up with that level of load in any case. 
+Recording the number of hits would mean a single slot in the index structure. 
+Its probably not even an additional slot since I would expect the cache maintenance algorithm would require the same data. 
+At a chosen time the proxy would simply traverse the list of servers which had requested notification and walk down the tree of index records for each one. 
+If a more comprehensive exchange of information were required the server would need to keep a per-hit record somewhere. 
+I designed the log file format so as to allow such a server to simply append information to the end of the log. 
+Such a server would keep an additional separate log for each subscribing server. 
+The additional effort required to do this is no more than twice the effort of current log keeping methods. 
+As to the issue of whether to support fast binary formats for logging I don't think that these should be standardized at this moment in time. 
+The first priority is to have a common interchange standard so that there can be a hope of creating analysis tools. 
+A binary format with features such as k-d tree indicies and full indexicallity would be nice. 
+I don't think that the perl hackers are likely to be able to implement such a scheme and the commercial vendors are unlikely to be interested in it unless they can design it themselves. 
+Phill 

@@ -1,0 +1,80 @@
+Actually they are quite distinguishable. 
+A HTTP/1.1 client, who expects all 1.1 servers to support chunked transfer, would probably become hopelessly confused by server B's behavior and thus be unable to communicate with server B. But the behavior, as seen from the client, is the same in either case! 
+The key here is that the "length required" error would not tip off the 1.1 client that it shouldn't use chunked transfer because in so far as the 1.1 client is concerned using chunked transfer does provide length information so therefore the error's requirement has been met. 
+No, the 411 specifically says "The server refuses to accept the request without a defined Content-Length. 
+The client MAY repeat the request if it adds a valid Content-Length header field containing the length of the message-body in the request message." 
+The 411 means that the client must provide a Content-Length header, not just the length information embedded in the chunked transfer-coding. 
+Of course, if the client does provide a Content-Length header, then it must use the "identity" transfer-coding. 
+Thus failing to support chunked transfer in a 1.1 server prevents interoperability, which is the very definition of non-compliance. 
+Yaron From: Carl Kugler [mailto:kugler@us.ibm.com] 
+Sent: Tue, August 17, 1999 3:54 PM Subject: Re: IPP Chunked POST Re: IPP Chunked POST Roy T. Fielding (fielding@kiwi.ics.uci.edu) 
+Thu, 17 Dec 1998 22:03:24 -0800 In my opinion, Ken Coar is correct in saying that for a server to be *both* HTTP/1.1 compliant and CGI/1.1 compliant it MUST buffer chunked POST data and provide a Content-Length for the CGI script. 
+Sending 411 is HTTP/1.1 compliant. 
+Failure to parse the chunked encoding (and puking) would be non-compliance, but requiring a content-length for a given resource is necessary for many reasons (DoS and legacy system protection). 
+This is a meaningless distinction. 
+Consider this thought experiment: we have two HTTP servers, A and B. Server A can and does parse the chunked encoding. 
+But it sends a 411 "Length Required" response with a "Connection: close" header in response to any request that does not include a "Content-Length" header. 
+This is a compliant server. 
+Server B understands no transfer-coding except "identity". 
+It cannot receive or decode the "chunked" transfer-coding. 
+It sends a 411 "Length Required" response with a "Connection: close" header in response to any request that does not include a "Content-Length" header. 
+This is a non-compliant server. 
+If we look at these servers as black boxes, observing their behavior only through their external interfaces, they are virtually indistinguishable (unless we look at the product tokens or something). 
+So it's meanless to say that all HTTP/1.1 applications that receive entities must understand (be able to receive and decode) the "chunked" transfer-coding. 
+My point is that on the server side, it's a meanless MUST. 
+An ostensibly HTTP/1.1 compliant server can always (legally) respond with 411 whenever it encounters a chunked request. 
+Then there is no way to tell (short of taking apart the server) whether or not the server is actually capable of receiving and decoding the chunked transfer-coding. 
+This seems to be a widely exploited loophole. 
+-Carl "Yaron Goland (Exchange)" yarong@Exchange.Microsoft.com on 08/17/99 05:51:56 PM Subject: RE: IPP Chunked POST All requirements must be taken within the context of the over all standard. 
+Given that the standard requires Chunked at a MUST level it is fair to interpret that requirement as over riding an optional response code. 
+Yaron From: kugler@us.ibm.com [mailto:kugler@us.ibm.com] 
+Sent: Tue, August 17, 1999 4:23 PM Subject: RE: IPP Chunked POST Actually they are quite distinguishable. 
+A HTTP/1.1 client, who expects all 1.1 servers to support chunked transfer, would probably become hopelessly confused by server B's behavior and thus be unable to communicate with server B. The key here is that the "length required" error would not tip off the 1.1 client that it shouldn't use chunked transfer because in so far as the 1.1 client is concerned using chunked transfer does provide so therefore the error's requirement has been met. 
+Thus failing to support chunked transfer in a 1.1 server prevents interoperability, which is the very definition of non-compliance. 
+Yaron -----Original Message----- From: Carl Kugler [mailto:kugler@us.ibm.com] 
+Sent: Tue, August 17, 1999 3:54 PM Subject: Re: IPP Chunked POST Re: IPP Chunked POST Roy T. Fielding (fielding@kiwi.ics.uci.edu) 
+Thu, 17 Dec 1998 22:03:24 -0800 In my opinion, Ken Coar is correct in saying that for a be *both* HTTP/1.1 compliant and CGI/1.1 compliant it MUST buffer chunked POST data and provide a Content-Length for the CGI script. 
+Sending 411 is HTTP/1.1 compliant. 
+Failure to parse the chunked encoding (and puking) would be non-compliance, but requiring a content-length for a given resource is necessary for many reasons (DoS and legacy system protection). 
+My point is that responding to Transfer-Encoding chunked by sending 411 and Connection close is HTTP/1.1 COMPLIANT behavior. 
+By which I mean that it does NOT violate HTTP/1.1. 
+My mileage does vary. 
+I have encountered product groups which refuse to take the development and testing hit to make a server capable accepting chunked POSTs, when it can legally reject them with 411. 
+-Carl "Yaron Goland (Exchange)" yarong@Exchange.Microsoft.com on 08/18/99 11:11:38 AM Subject: RE: IPP Chunked POST You are free to implement whatever you want but I am certainly not going to ask MS to take the development and testing hit to allow our clients to work around servers which choose to knowingly violate HTTP/1.1. 
+Your mileage may vary, Yaron From: kugler@us.ibm.com [mailto:kugler@us.ibm.com] 
+Sent: Wednesday, August 18, 1999 8:00 AM Subject: Re: IPP Chunked POST Sending 411 is HTTP/1.1 compliant. 
+Failure to parse the chunked encoding (and puking) would be non-compliance, but requiring a content-length for a given resource is necessary for many reasons (DoS and legacy system protection). 
+This is a meaningless distinction. 
+Consider this thought experiment: we have two HTTP servers, A and B. Server A can and does parse the chunked encoding. 
+But it sends a 411 "Length Required" response with a "Connection: close" header in response to any request that does not include a "Content-Length" header. 
+This is a compliant It cannot receive or decode the "chunked" transfer-coding. 
+It sends a 411 "Length Required" response with a "Connection: close" header in response to any request that does not include a "Content-Length" header. 
+This is a non-compliant server. 
+If we look at these servers as black boxes, observing their behavior only through their external interfaces, they are virtually indistinguishable (unless we look at the product tokens or something). 
+So it's meanless to say that all HTTP/1.1 applications that receive entities must understand (be able to receive and decode) the =93chunked=94 transfer-coding. 
+If the purpose of the text was to delineate one lame example from another, then I'd agree with you. 
+The reason it is there is to prevent an HTTP/1.1 application from mistakenly thinking the chunked encoding is *no* encoding and saving the chunk-sizes as part of the data. 
+As far as the protocol is concerned, recognizing Transfer-Encoding chunked, and responding with 411 and connection close, is equivalent to parsing the chunked encoding. 
+Nobody is going to prevent you from building a server that responds with 411 to every request without implementing chunked. 
+It would be a dumb thing to do, but the standard doesn't prevent people from doing dumb things (only things that won't interoperate with others via HTTP). 
+....Roy We might make replying '411 and connection close' to a chunked encoding 'conditionally compliant' rather than 'compliant' because otherwise, as has been pointed out, there are inteorperability problems. 
+This isn't an errata, but it belongs on the issues list. 
+On the other hand, a server can legally also reply '200 OK' to every POST, and just ignore the data. 
+A server can legally reply '404 Not Found' to every GET, too! 
+So the fact that there are some stubborn implementors doesn't mean we should change the standard. 
+There is still a 'call' for an HTTP implementation guide; it isn't in the charter of the HTTP working group, but this kind of advice might belong there. 
+There is no interoperability problem here. 
+The server response is understandable by the client. 
+Any server has the right to deny service rather than buffer an unknown amount of data. 
+No change is needed to the spec. 
+....Roy with the availability of 413 (request too large), 411 was not made clear to me from the specification.. it's only from working with it for the last year that I've come to some clarity on the topic, and who knows if that's shared with other folks. 
+In a previous episode Roy T. Fielding said... :: [..] Any server has the right to deny :: service rather than buffer an unknown amount of data. 
+a server does not commit to an all or nothing buffering process.. it can buffer and if the request seems to be getting too large, it may abort with 413... requiring attempts at chunked processing never requires commitments to unknown amounts of material. 
+Each chunk is labeled with a length and the server is free to send back 413 if the length of the upcoming chunk pushes it over a threshold of that which it is willing to buffer. 
+However, I can see that under some circumstances like CGI a server might be unwilling to continue to buffer a chunked request at some threshold (and it must be buffered because CGI requires a content-length) but if it had come with a c-l it could be streamed to the CGI, so 411 would seem to convey the feeling. 
+However, making that threshold 0 is ridiculous. 
+The vast majority if CGIs take very little input.. there are exceptions of course but presumably they can be designed in an environment that can either afford the buffering or done with something other than CGI 1.1 that doesn't have the CL problem. the 411 distinction of "you must be capable of doing chunked, but you're never actually required to do it" is too fine of a line in my opinion.... but that's a retrospective, there really isn't anything that can be done about it now even if we agreed the semantics for it needed to be stronger. 
+(and I suspect we don't agree.. que sera sera). 
+-P Quite right. 
+Also, the fact that an implementation or product is compliant does not automatically mean that it is a good or even a fully featured implementation. 
+Kyle Dent 

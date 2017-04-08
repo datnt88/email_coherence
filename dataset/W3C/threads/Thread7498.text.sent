@@ -1,0 +1,40 @@
+I have a few questions about the intended semantics of URIs that are external members of collections. 
+In particular, I am curious about those URIs for which the server named in the URI is not the same as the server that stores the collection. 
+If server S has a collection C that contains an internal member P and an external member Q, when I do a PROPFIND on C I should expect to get back a multistatus that contains a results for both P and Q, right? 
+And this is independent of the identity of the server in the URI for Q. Does this mean I can also do a PROPFIND on server S for the URI Q? and likewise a PROPPATCH? 
+Surely this must be so, since it would be weird to be able to retrieve the property by asking the collection (with Depth non-zero), but not directly. 
+And if I can do a PROPFIND (of a non-live property) I ought to be able to do a PROPPATCH. 
+And if I can do a PROPPATCH, I should be able to do a LOCK and UNLOCK, too Now in that case, does WebDAV say anything about the semantics of a GET on Q? 
+Is it silent? 
+May a server return 404? 
+(not found)? 
+May it return 302 (Moved Temporarily)? 
+Near as I can tell the spec is silent on these matters, and I wish it said something explicitly. 
+Likewise, if URI Q is a member of two collections on S, it must be external to at least one of them. 
+Does the spec say anything about whether the set of properties visible on Q MAY or MUST NOT in any way on which collection it is part of? 
+Imagine, for example that two different users, A and B, each have a collection (Ca and Cb) stored on S, and they each add Q as an external member to their collections. 
+If A sets a property on Q, will B see it, too? 
+This might surprise B. I hope there are well defined obvious answers to these questions, that someone will tell me what they are, and that the next version of the documentation will include them. 
+best wishes Jim The purpose of the external member mechanism is to provide a place to record a set of URIs that are associated with a collection, that is it. 
+Attempts were made in the past to give them additional semantics but after months of debate all these proposals were resoundly turned down as completely unworkable. 
+Please refer the copious, nearly endless, discussions on the topic in the mailing archive for further details. 
+You can also refer to previous versions of the DAV spec which contained various proposals to extend the functionality of external members beyond a simple storage mechanism. 
+Yaron That's fine, very sensible decision, but could you or some other author answer the questions? 
+I simply can't tell from reading the spec what the semantics *are*. 
+The spec should be clear on the issues, otherwise people will simply guess, and likely guess inconsistently. 
+If possible the spec should say clearly what happens, if the matter is server-specific or undefined, it should say that too. 
+To restate them, briefly: 1) can I do a PROPFIND on an external URI? (*) Do the results depend in any way on the collection that contains the external URI? 2) can I do a PROPPATCH? 
+3) Can I do a LOCK? 4) What are the semantics of GET or PUT on an external URI. 
+* by "do a PROPFIND" I mean if I do one, will I get back some useful values, not just a 404 error. 
+Yours in confusion Jim I think I finally understand the source of your confusion. 
+Does the existence in the next draft of an optionally read-only required property called externalmembers answer your questions? 
+Yaron From:Jim Davis [SMTP:jdavis@parc.xerox.com] 
+Sent:Saturday, January 17, 1998 5:05 PM Subject:RE: semantics of external members Inadvertently caught by the spam filter. 
+- Jim I would say so. 
+We have found it useful in our product thinking to see there as being a distinction between intrinsic document properties (last modified, content length, content type, etc.) and what we call "item properties" which it has by virtue of its relationship to a collection (a name, a position in the ordering, a bunch of other product-specific things). 
+When you set a document property, then surely it doesn't matter which collection it is 'in' -- and for an external URI, surely it can exist 'in' no collection at all -- and therefore, yes, one rational position to take is that it changes everywhere. 
+On the other hand, clearly item properties are collection-specific. 
+However, we have also found that indeed it is disquieting to people to have someone changing a document property in their collection also changing it someone else's collection. 
+In summary: I think it is possible to argue it both ways, and the spec should allow for either. 
+-- Mary Holstege@firstfloor.com | Mary Holstege, PhD (650) 254-5161 | 444 Castro Street, Suite 200 mailto:holstege@firstfloor.com 
+| Mountain View, CA 94041 http://www.firstfloor.com 

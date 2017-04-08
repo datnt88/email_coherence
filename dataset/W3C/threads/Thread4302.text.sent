@@ -1,0 +1,19 @@
+Section 3.7.1.3 "Content" of the new XQuery draft does not say what happens to namespace nodes in the content of a direct element constructor. 
+There are two choices: (1) They are allowed, and treated as in the context expression of a Computed Element Constructor. 
+I.e. they must precede attributes which must precede other content. 
+(2) They are not allowed, in which case the specification should say that, as it does for document nodes. 
+I think (1) is more consistent. 
+Otherwise, why can the content of a direct element constructor allow attributes but not namespaces, while the content of a computed constructor allows both? 
+An alternative is to dis-allow *both* attributes and namespace nodes in direct element constructors, since you can create attributes using both literal attributes as well as attribute nodes in enclosed content, and that's arguably a bit of a weird hack. 
+Since we have computed element constructors, we don't need this special handling. 
+--Per Bothner per@bothner.com 
+http://per.bothner.com/ 
+XQuery does not provide the namespace axis, and does not provide any other construct that allows you to get your hands on a namespace node. 
+Therefore, the sequence that provides the content for a new element can never contain namespace nodes, except in the very limited and controlled way allowed by computed namespace constructors. 
+Michael Kay That wasn't the issue I've asked about. 
+I was asking why not allow: let $n := namespace metric {"http://example.org/metric-system"} 
+altitude { $ns, attribute {"metric:unit"} {"meter}, 10000 } /altitude However, I now see the following sentence which I overlooked before: The immediately enclosing expression of the computed namespace constructor must be a computed element constructor; otherwise a static error is raised. 
+I missed this, as I would have expected this constraint to be expressed in the grammar. 
+That could express it clearer, and also add the cnstraint that the namespace nodes must come first: CompElemConstructor ::= (("element" QName "{") | ("element" "{" Expr "}" "{")) ((CompNSConstructor ("," CompNSConstructor)* | ExprSingle) (", " ExprSingle)*)? 
+"}" --Per Bothner per@bothner.com 
+http://per.bothner.com/ 

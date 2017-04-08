@@ -1,0 +1,37 @@
+I'm currently trying to implement a significant subset of DOM2 in Gdome, and have run across a number of questions. 
+Here's my current set: General Is there a reasonable DOM2 implementation I can use as a reference? 
+Ideally, it would contain all of DOM2 core plus events and css. 
+EventTarget::removeEventListener What happens if there are two listeners A and B on a target, and A removes B? Is B guaranteed to be called? 
+What if A and B are bubble listeners on an an ancestor of the target? 
+What if A and B are bubble listeners on two different ancestors of the target (B ancestor of A)? Attr::value What is the difference between Attr::nodeValue and Attr::value? 
+Node::normalize What events are appropriate? 
+Deletion of additional Text nodes followed by mutation of the first Text node? 
+(this is what I percieve to be the reverse of Text::splitText). 
+Any help on these would be appreciated. 
+Sorry if they're a FAQ. 
+Raph A quick followup to my own mail: I RTFMLA after I sent the last message, so _now_ I see Xerces and David Bromwell's DOM implementation. 
+I've linked these, and a few other things relevant to Gdome, on the Gdome web page: Sorry to post too quickly before. 
+Raph Hi, yes. 
+The chain of EventListeners is determined _before_ the initial dispatch. 
+i.e: your EventListener list is "cloned" at the beginning of the dispatch process. 
+same. 
+The ancestor listener won't be called in bubbling phase. 
+Notice that in capturing phase it's the child listener that won't be called. 
+It's the same. 
+The first method is a generic one from Node and the second one has a convenient syntax for the attributes. 
+Don't know. 
+Your solution sounds good. 
+In our implementation, we call Node::removeChild then Node::appendChild. 
+The events are the ones posted by those 2 methods but I don't know if it's the solution. 
+Thierry. 
+Thierry Kormann Koala/Dyade/Bull @ INRIA - Sophia Antipolis Adding or removing a listener during processing of an event takes effect after all existing listeners of the node dispatching that event have been processed. 
+This is true for all phases of dispatch. 
+In this case the change would be seen, because the node dispatching B has not yet started processing the event. 
+Historical, for compatability with "DOM Level 0". 
+No functional difference. 
+There are a few other redundancies in the DOM, for the same reason. 
+All events corresponding to the changes being made to the document. 
+The exact sequence of events is unspecified, since the exact sequence of operations performed by the normalize operation is unspecified. 
+Joe Kesselman / IBM Research My implementation has the low level mutation code trigger the events, so the normalize() code doesn't do anything special. 
+(It's just a convenience method over lower level code.) Since the DOM spec doesn't specify the order for these events, you could use that order or several others. 
+- Dave 

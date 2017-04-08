@@ -1,0 +1,55 @@
+Since locking is a bit of a rage at the moment, I just wanted to clarify something relating to infinite depth locks. 
+I believe according to the spec that if I do a depth infinity lock on /a/b/c then if I do an unlock on /a/b/c/d/e using the same lock token, the lock is completely removed from all resources (that is, from /a/b/c down). 
+Other possible interpretations that I think are not what the spec says are (1) /a/b/c stays locked, only /a/b/c/d/e (and descdenants) are unlocked (2) You are not permitted to unlock /a/b/c/d/e - you should unlock /a/b/c I also noticed that if you successfully delete a resource (a binding?) then 'all its locks are removed' which for a depth infinity lock implies that if you delete /a/b/c/d/e then the lock on /a/b/c would also be unlocked. 
+With the recent lock and lock null resource discussion, I was trying to rethink what is the best way to implement locking with depth infinity. 
+I had previously come to the opinion that the easiest approach to get the semantics right was to keep a lock table of URLs - not apply the locks to the real resources. 
+This is because you do not unlock single resources, you remove the depth infinity lock from the table. 
+(There might have been other reasons as well.) 
+But the current semantics of depth infinity lock is not the same as depth 0 locking all of the resources in the tree. 
+This creates weird edge cases (such as above) which I am not 100% of sure the correct/best way to resolve. 
+Does anyone use depth infinity locks? 
+How have people implemented them such that deleting /a/b/c/d/e will remove the lock on the whole tree? 
+Or am I missing something here? 
+Thanks! 
+Alan I believe the only sensible way to interpret depth infinity locks are to say that: - the lock is "on" the URL that was locked - the lock "affects" the resource mapped to that URL, and if that resource is a collection, then it "affects" all members of that collection. 
+This means that we should extend the current lock discovery information with the URL that the lock is "on", so that a client knows the scope of the lock. 
+If this were added, it would be reasonable to require a client to issue the UNLOCK against the locked URL. 
+The alternative is to allow the UNLOCK to be applied to any URL that identifies a resource that is affected by the lock. 
+I could live with that, if the working group prefers it, but I prefer the "must unlock the locked URL" approach. 
+For one thing, it is more compatible with the approach taken by the ACL spec for inherited ACEs (i.e. you cannot change inherited ACEs). 
+Cheers, Geoff Since locking is a bit of a rage at the moment, I just wanted to clarify something relating to infinite depth locks. 
+I believe according to the spec that if I do a depth infinity lock on /a/b/c then if I do an unlock on /a/b/c/d/e using the same lock token, the lock is completely removed from all resources (that is, from /a/b/c down). 
+Other possible interpretations that I think are not what the spec says are (1) /a/b/c stays locked, only /a/b/c/d/e (and descdenants) are unlocked (2) You are not permitted to unlock /a/b/c/d/e - you should unlock /a/b/c I also noticed that if you successfully delete a resource (a binding?) then 'all its locks are removed' which for a depth infinity lock implies that if you delete /a/b/c/d/e then the lock on /a/b/c would also be unlocked. 
+With the recent lock and lock null resource discussion, I was trying to rethink what is the best way to implement locking with depth infinity. 
+I had previously come to the opinion that the easiest approach to get the semantics right was to keep a lock table of URLs - not apply the locks to the real resources. 
+This is because you do not unlock single resources, you remove the depth infinity lock from the table. 
+(There might have been other reasons as well.) 
+But the current semantics of depth infinity lock is not the same as depth 0 locking all of the resources in the tree. 
+This creates weird edge cases (such as above) which I am not 100% of sure the correct/best way to resolve. 
+Does anyone use depth infinity locks? 
+How have people implemented them such that deleting /a/b/c/d/e will remove the lock on the whole tree? 
+Or am I missing something here? 
+Thanks! 
+Alan 
+
+If this were added, it would be reasonable to require a client to issue the UNLOCK against the locked URL. 
+The alternative is to allow the UNLOCK to be applied to any URL that identifies a resource that is affected by the lock. 
+I could live with that, if the working group prefers it, but I prefer the "must unlock the locked URL" approach. 
+I'd even be comfortable with the approach that you don't even have to say where the lock is. 
+The lock is supposed to be globally unique. 
+And if the client wants to verify that it understands where the lock is, it could use an IF header. 
+(Actually right now the IF header is used for UNLOCK, but changing that is on the issues list.) 
+Of course if we feel the *server* *always* needs to verify the client's knowledge of the lock location, I can live with that too. 
+J. The problem with not saying where the lock is, is that the lock token doesn't need to be a URL (i.e. it might not be something you can send a HTTP request to). 
+So you need to send the UNLOCK request to a resource that is guaranteed to understand it, which for sure is the locked URL, and almost for sure is any child of the locked URL (since all those children are affected by the Depth:infinity lock). 
+Cheers, Geoff 
+
+If this were added, it would be reasonable to require a client to issue the UNLOCK against the locked URL. 
+The alternative is to allow the UNLOCK to be applied to any URL that identifies a resource that is affected by the lock. 
+I could live with that, if the working group prefers it, but I prefer the "must unlock the locked URL" approach. 
+I'd even be comfortable with the approach that you don't even have to say where the lock is. 
+The lock is supposed to be globally unique. 
+And if the client wants to verify that it understands where the lock is, it could use an IF header. 
+(Actually right now the IF header is used for UNLOCK, but changing that is on the issues list.) 
+Of course if we feel the *server* *always* needs to verify the client's knowledge of the lock location, I can live with that too. 
+J. 

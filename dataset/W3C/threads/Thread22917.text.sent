@@ -1,0 +1,26 @@
+Is there any difference between Document.getElementsByTagName() and Element.getElementsByTagName()? 
+I'm working on a non-object-oriented implementation. 
+Sould a single function stand for both? 
+K. Ari Krupnikov DBDOM - bridging XML and relational databases A single function should work for both; I believe there's no behavioral difference. 
+Joe Kesselman / IBM Research The only difference is the scoping. 
+When invoked on Document it looks throughout the whole document. 
+On Element it looks only throughout the Element subtree. 
+Arnaud Le Hors - IBM Cupertino, XML Technology Group Hi, getElementsByTagName will return a new NodeList object containing all the matched Elements. 
+According to spec., NodeList objects in the DOM are live. 
+This seems to be a requirement too strict to be fulfilled because the new list could be different from underlying list. 
+Whenever changes made to the underlying document structure needs to be reflected in all relevant NodeLists? 
+Is this a strict requirement needed for all compliant implementations? 
+Thanks, -Stanley Guan That is a strict requirement for compliance. 
+YES, it requires that NodeList somehow be made aware of changes in the subtree it covers. 
+YES, it means that the index number for a given node may change whenever the document changes. 
+And YES, it is tough to implement this efficiently. 
+In my experience so far, you have to settle for making common cases efficient and accept a performance hit on the less common cases... which requires that DOM authors decide which cases are common for the applications they expect to serve. 
+The following is personal opinion: If you're just trying to use getElementsByTagName, my general advice is "Consider alternatives." 
+I generally try to steer users toward the DOM Level 2 Traversal mechanisms, or toward an explicit tree-walk if they're coding in DOM Level 1. 
+Even though NodeIterator requires similar notification when the document changes, its recovery mechanism is a lot simpler and less expensive. 
+TreeWalker's recovery is trivial since it just stays with its current node, and most user-written tree walks are equally simpleminded. 
+If folks must use getElementsByTagName, I usually recommend they consider loop-until-null solutions rather than getting the length in advance. 
+This may allow the DOM to perform some optimization. 
+Other DOMs may behave differently, but I think these approaches are generally the way to bet unless you know otherwise. 
+Of course if folks don't care about performance, and/or are sure they will not alter the DOM during the NodeList's lifetime, the answer may be "Use whatever call or object best expresses your intent, and hope that the DOM's authors considered your usage pattern one of those worth optimizing for." 
+Joe Kesselman / IBM Research 

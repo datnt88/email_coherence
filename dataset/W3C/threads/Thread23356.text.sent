@@ -1,0 +1,23 @@
+As long as we're on the subject of .insertBefore() 
+Why does this method, when no second argument is specified, append the child? 
+.appendChild 
+already does this - why not make .insertBefore() 
+insert at the beginning by default? 
+Opportunity for added functionality aside, consider that a loop to add elements to the end of a list is simple: for( i = 0; i  len; i++ ) node.appendChild( list[ i ] ); Whether the node begins empty or not. 
+But a loop to add elements to the beginning is not: for( i = 0; i  len; i++ ) { if( node.childNodes.length 
+== 0 ) last = node.appendChild( 
+list[ i ] ); else node.insertBefore( list[ i ], last ); While I realize the for loop could be optimized, that's not the point. 
+There are many varied cases where objects must be repeatedly added to any number of lists, which may or may not be empty at the time. 
+The call may not happen directly inside of a for loop, but several methods down, the top-most being called in such a loop, etc. 
+Why not make this call as simple as: node.insertBefore( list[ i ] ); -Chris "SoopahMan" Moschini Hi, what about for( i = 0; i  len; i++ ) node.insertBefore(list[i], node.firstChild()); ok there are two method calls instead of only one but I think this is acceptable (and inserting at the beginning of the list is IMHO less common than appending) -- luca child? 
+The next-sibling of the last sibling is null. 
+Hence, insert-before null is taken as a request to insert at that point. 
+Did we have to support that behavior? 
+No. But it's cheap and easy to implement, it makes sense when you understand the rationalle, and it makes some kinds of code a trifle easier to write. 
+Would you really have preferred that we throw a null pointer exception? 
+(It's far too late to change it, in any case.) We have something like that. 
+Rather than using a list to hold your nodes, make them children of a DocumentFragment node, which has the magic property that inserting/appending it actually inserts/appends its children. 
+Joe Kesselman, IBM Next-Generation Web Technologies: XML, XSL and more. 
+"The world changed profoundly and unpredictably the day Tim Berners Lee got bitten by a radioactive spider." -- Rafe Culpin, in r.m.filk 
+This is a Level 1 change and would break existing DOM implementations, so it can't be done. 
+Philippe 

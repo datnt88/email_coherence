@@ -1,0 +1,37 @@
+Two annotations to the Element interface: a) removeAttribute and removeAttributeNS need a NOT_FOUND_ERR in order to operate in the same way as a NamedNodeMap. 
+b) setAttributeNS NAMESPACE_ERR: "... if if [sic] the qualifiedName has a prefix different from "xml" and "xmlns" and the namespaceURI is null or an empty string.": 
+This condition is left out in the corresponding Document.createAttributeNS 
+method. 
+Are they different by intention or by mistake? 
+If the quoted passage shall remain: Is it also intended to raise an exception if prefix and namespace URI are both null or an empty string? 
+Dieter Koehler, M. A. - dieter.koehler@ppp.uni-bamberg.de 
+Mittlere Kaulberg 22, D-96049 Bamberg, +49(0)951-5190726 "http://www.philo.de/Philosophie-Seiten/": 
+1000+ Philosophie-Links "http://www.philo.de/VirtualLibrary/14.de.htm": Deutsche Philo-Links "http://www.philo.de/xml/": 
+Open XML - XML-Komponenten fuer Delphi removeAttribute is Level 1. 
+In Level 1, removing an attribute that doesn't exist is a no-op. 
+I don't think we can change that now without risk of breaking existing code. 
+Given that precedent, I'd rather have removeAttributeNS be consistant with removeAttribute than with the NamedNodeMap. 
+Joe Kesselman / IBM Research What about a 'supports' attribute to allow a more flexible reaction? 
+(That might also be a solution for some namespace problems discussed in other threads.) Consequence: When coding the API I cannot easily use a NamedNodeMap to store the attributes of an element. 
+Well, I can catch the exception, but that is neither elegant nor fast. 
+Dieter Koehler, M. A. - dieter.koehler@ppp.uni-bamberg.de 
+Mittlere Kaulberg 22, D-96049 Bamberg, +49(0)951-5190726 "http://www.philo.de/Philosophie-Seiten/": 
+1000+ Philosophie-Links "http://www.philo.de/VirtualLibrary/14.de.htm": Deutsche Philo-Links "http://www.philo.de/xml/": 
+Open XML - XML-Komponenten fuer Delphi That's one solution. 
+If we assume that removing a nonexistant attribute is an uncommon action -- which is probably true -- performance is probably not a major concern; you only pay a penalty if the exception must be thrown and caught. 
+Another approach is to check whether the named item is present in the NamedNodeMap before you remove it. 
+Another approach is to provide yourself with a private mechanism that doesn't throw the exception. 
+What a DOM implementation publishes to the outside world, and what it looks like internally, may be very different things. 
+There are existing Level 1 DOM implementations that handle this case successfully. 
+"If it happens, it must be possible." 
+Joe Kesselman / IBM Research But then the remove-routine of the namedNodeMap would check that again. 
+Well, we can define any divergent behavior and code it separately. 
+But would it not be appropriate when similar things would work alike? 
+Similar behavior might make the DOM more pleasant for the end user, too. 
+Dieter Koehler, M. A. - dieter.koehler@ppp.uni-bamberg.de 
+Mittlere Kaulberg 22, D-96049 Bamberg, +49(0)951-5190726 "http://www.philo.de/Philosophie-Seiten/": 
+1000+ Philosophie-Links "http://www.philo.de/VirtualLibrary/14.de.htm": Deutsche Philo-Links "http://www.philo.de/xml/": 
+Open XML - XML-Komponenten fuer Delphi The question is "similar to what". 
+We can make the namespaced Level 2 method similar to the NamedNodeMap only at the cost of breaking similarity with the non-namespace Level 1 method. 
+There are arguments for and against either answer. 
+Joe Kesselman / IBM Research 

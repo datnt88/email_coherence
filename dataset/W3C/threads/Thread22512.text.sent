@@ -1,0 +1,43 @@
+According to the PR-DOM document (Level-1-19980818/DOM.ps), 
+document.write 
+writes to an document on which document.open has been used and doing document.open 
+on an existing document clears that document. 
+This doesn't seem to cater for the most common case of document.write, 
+to insert customised HTML (e.g. browser specific) into a document, in place of the SCRIPT element, as the document loads. 
+(An interesting question arises in trying to formalise this case in terms of implied calls to open and to the script fragment, as to whether the structure is recursive, i.e. can code introduced by document.write 
+include script which in turn replaces itself by a recursive call of document.write. 
+This is not something I have a need for at the moment, though.) David Woolley - Office: David Woolley djw@bts.co.uk BTS Home: david@djwhome.demon.co.uk Wallington TQ 2887 6421 England 51 21' 44" N, 00 09' 01" W (WGS 84) David, The PR-DOM doc does not say that you have to explicitly open() before write(). 
+I think most implementors of the DOM API's HTML layer will either not implement open/close/write/writeln entirely or follow the behavior of IE and NS implementation closely so you have nothing to worry about. 
+Don Park Docuverse If you're expecting folks to follow the NS and IE behaviors, you should probably hint at those behaviors in the spec, for the benefit of those who believe the spec rather than existing implementations is the best description of the Working Group's intent. 
+If open() really isn't required and serves only to start a new document, it should probably be renamed from open() to something like reset(). 
+Joe Kesselman / IBM Research Unless stated otherwise, all opinions are solely those of the author. 
+I would disagree. 
+The definition of document.write 
+says: Write a string of text to a document stream opened by open(). 
+Tom me, that makes an explicit open a pre-requisite for using write. 
+David Woolley - Office: David Woolley djw@bts.co.uk BTS Home: david@djwhome.demon.co.uk Wallington TQ 2887 6421 England 51 21' 44" N, 00 09' 01" W (WGS 84) I would disagree. 
+The definition of document.write 
+says: Write a string of text to a document stream opened by open(). 
+Tom me, that makes an explicit open a pre-requisite for using write. 
+David Woolley - Office: David Woolley djw@bts.co.uk BTS Home: david@djwhome.demon.co.uk Wallington TQ 2887 6421 England 51 21' 44" N, 00 09' 01" W (WGS 84) David, When you get a Document interface through some DOM implementation specific method, the Document is implicitly opened so that you can invoke editing methods. 
+If you are right then no one should be able to insert or delete nodes without invoking the open method in HTMLDocument. 
+Don Park Docuverse There is no precondition that "open" should be called for node.insert() that I can find, nor any obvious statement that there is an implicit call of document.open(). 
+Although I've only searched the postscript (with the intelligent search tool in ghostscript) the only hits I found on open were for the document object and in the index. 
+If there is an implicit open, I think this should be explicit in the document. 
+I think it should also be made clear whether the initial load of the document can be treated as an implicit document.write, 
+which would then tend to imply that document.write is fully recursive, i.e. document.write 
+can create an immediate script fragment which itself calls document.write, 
+directly or indirectly. 
+(Iterative may be more correct in that the rendering can be delayed and scripts can probably be deferred until rendering occurs.) Note that Netscape's jsguide document says that document.write in a fully rendered document generates an implicit document.open 
+which results in a new window, if an explicit one hasn't been performed. 
+An implicit open would still cause problems if insert/delete really required the document to be open in that sense, as the document need not be rendered until it is closed, whereas it seems to me tha the most useful time to use insert/delete is in response to events on a fully rendered document. 
+To some extent, though, the DOM is becoming academic as it implements a different model for modifying the document from that used by IE4 (inner and outer HTML) and NS 4 seems not to have any equivalent facilities. 
+A the moment I can only use it to help define a lowest common denominator, where it is acceptable to our marketing people to avoid taking IE4 to the limit. 
+However, it was in trying to define this lowest common denominator that I hit the problem, as the W3C DOM seemed to force a lowest common denominator without load time HTML generation. 
+David Woolley - Office: David Woolley djw@bts.co.uk BTS Home: david@djwhome.demon.co.uk Wallington TQ 2887 6421 England 51 21' 44" N, 00 09' 01" W (WGS 84) David J Woolley scripsit: In addition, implementing the DOM PR as written forces HTML DOMs to have HTML parsers associated with them. 
+I note that the latest version of Don Park's DOM SDK does not support these methods at all. 
+John Cowancowan@ccil.org e'osai ko sarji la lojban. 
+John, Docuverse DOM SDK PR2 does not implement following methods: HTMLDocument.open 
+HTMLDocument.close HTMLDocument.write HTMLDocument.writeln HTMLSelectElement.setOptions HTMLTableElement.setTBodies HTMLTableRowElement.setCells HTMLTableSectionElement.setRows First four methods will be implemented when the HTMLReader and scripting language support is completed (soon). 
+Remaining four methods were not be implemented because they will be deprecated. 
+Don Park Docuverse 

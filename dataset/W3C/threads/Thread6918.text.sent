@@ -1,0 +1,108 @@
+This is a couple'o (key) messages from a thread over on the bxxpwg@invisible.net 
+list that may be of interest to folks here. 
+The discussion is nominally about whether the URI identifying a service that may be available via muliple protocols should convey/reflect this and how it might do so. 
+The bxxpwg@invisible.net is here.. ..and the message that instigated the thread is here.. JeffH ------- Forwarded Message 1 From: "Marshall T. Rose" mrose+mtr.netnews@dbc.mtview.ca.us "Eamon O'Tuathail" eamon.otuathail@clipcode.com Subject: Re: [BXXPwg] SOAP over BEEP Date: Thu, 14 Jun 2001 15:59:22 -0700 roy - thanks. 
+In general, if the service is available via multiple protocols and the naming syntax for those protocols will differ, then use a protocol-specific addition to the URI scheme (like the wcip.beep 
+scheme above). 
+That is the normal way of doing it because the authority syntax is often dependent on the transport used (e.g., TCP ports and defaults). 
+OTOH, if the syntax for naming will be the same, but the naming authority will differ based on the lower-layer protocol, then I would include beep within the authority component. 
+However, I have yet to see a good example of this in practice. 
+in most of the recent cases that i have seen, the only thing that differs is how the data gets moved, e.g., going from soap/http to soap/beep, or ice/http to ice/beep, etc. in both cases, you have a situation where the path is going to be the same, and i have difficulty understanding whether the "use beep" bit should be present in the scheme component or the authority component. 
+for example, may very well be a valid thing for someone doing soap over http. 
+so, what should we be using for the soap over beep case? 
+here are four possibilities, i'm sure there are more... beep://example.com/ 
+soap.beep://example.com/ 
+soap://example.com/?proto=beep 
+beep://example.com?profile=http://iana.org/beep/soap ideally, i would prefer to avoid having to use a new scheme everytime someone moves yet another service on top of beep. 
+thanks, /mtr ------- Forwarded Message 2 From: "Marshall T. Rose" mrose+mtr.netnews@dbc.mtview.ca.us "Eamon O'Tuathail" eamon.otuathail@clipcode.com , "Marshall Rose" mrose@dbc.mtview.ca.us Subject: Re: [BXXPwg] SOAP over BEEP Date: Thu, 14 Jun 2001 23:44:58 -0700 If I were to invent it from scratch, I would probably choose something like web://example.com:http.tcp.80/path web://example.com:http.udp.7149/path soap://example.com:beep.tcp.21212/path with the first ":http.tcp.80" being the default for the web. 
+Obviously, that is getting pretty ugly. 
+For some reason I think this looks better web.http.udp://example.com:7149/path 
+soap.beep.tcp://example.com:21212/path 
+It also better fits the architecture of most URI handling software, which typically consists of a table of (scheme name , handler routine) tuples. 
+0. well, i agree that using "web:" instead of "http:" would certainly make things a lot more clear, but that's water under the bridge. 
+1. let me understand your reaction to ideally, i would prefer to avoid having to use a new scheme everytime someone moves yet another service on top of beep. 
+Hmmm, why? 
+Logically, they are distinct services. 
+Keep in mind that the "http" URL is specific to HTTP over TCP, even though HTTP itself is not dependent on TCP. 
+If we were to deploy a new HTTP-over-SCTP service, we would need a new URL scheme because the authority syntax of hostname:port is specific to TCP, not HTTP. 
+i don't think that the http/tcp to http/sctp analogy is a good one. 
+what i'm trying to understand is whether it is a good thing to define two schemes for soap.beep.tcp and ice.beep.tcp or to just have one scheme for beep over tcp. 
+for all three schemes, the authority part remains the same. 
+in guess i see your point that beep://example.com?profile=http://iana.org/beep/soap is pretty week. 
+2. anyway, in comparing: soap://example.com:beep.tcp.21212/path soap.beep.tcp://example.com:21212/path 
+i guess i prefer the latter since when we move from "beep.tcp.21212" to "beep.ipv6.21212" the thing to the left is going to be funky. 
+what isn't clear to me is whether the iana is going to be happy when i start registering url schemes in groups of three, e.g., ice: ice.beep: 
+ice.beep.tcp: 
+/mtr ------- End of Forwarded Message Thanks for bringing it up here; this is an issue folks have been noodling on for years: Short UDIs UDIs should be kept short and devoid of information that indicates the mechanism by which the document is retrieved. 
+(in the theoretically clean implementation, the protocol information should not be present). 
+-- DosDonts -- /DesignIssues TimBL, ~1990 See also: Decoupling the URL Scheme from the Transport Protocol crud... 404 ... google search... ah: 30 Nov 1995; rtor@ansa.co.uk 
+But folks have mostly avoided the practical side of this issue by layering everything on top of http; a noteable exception is https:, where I wish we would have avoided putting the "secure" flag in the name. 
+I hope to find time to study the practical details of the design you're discussing. 
+But for now, I hope the historical pointers are useful/interesting... Dan Connolly, W3C http://www.w3.org/People/Connolly/ p.s. 
+I'm on holiday next week, 16-23 Jun. 
+This has also come up in a few other places. 
+The one that was the most practical was in CNRP where we were also layering some XML over some transport (smtp, http and some UDP transport were the most popular). 
+We came up with two solutions and picked the easiest one (#2) for now: Solution 1) Use NAPTR to map between a protocol independnet URI and the transport dependent one. 
+Solution 2) Encode the transport information in a service description object and then specify one of the transports as mandatory to implement but only require that it be able to publish those service description objects. 
+Solution 1 can be considered a specific case of solution 2. The general case is creating some common rendesvous point where the transport information is discovered.... -MM Michael Mealling| Vote Libertarian! 
+| urn:pin:1 michael@neonym.net 
+| | http://www.neonym.net 
+| go:Michael Mealling There are a couple separate issues. 
+First, it is definitely preferable that the identifier contain only that information necessary to identify the naming authority and the name within that authority. 
+However, it is also true that every accessible resource needs at least one identifier that is not generic in nature, providing sufficient information to act as an address for accessibility. 
+This specific identifier might only be published by redirection from a less direct identifier, but it needs to be possible to publish it as a URI, which means there needs to be a scheme to support it. 
+Second, the identifier does not identify which protocols are to be used by the client to access a resource. 
+What it does do is identify which protocols are necessary in order to communicate with the naming authority in order to resolve the name into an authoritative resource that can be accessed. 
+Thus, an HTTP client may use an HTTP proxy in order to make requests using a wais URL, but at some point in a non-cached request chain, a client will use WAIS over TCP (as defined by the wais URL scheme) to contact the naming authority. 
+So, regarding the issue at hand, there are only three possibilities: 1) the mechanism of contacting the naming authority is defined by the URL scheme, as is the case for http (HTTP via TCP) and https; 2) the mechanism is encoded as part of the authority component, just as the TCP port number is defined in many schemes; or, 3) the protocol elements that use URI are modified to allow references to be composed of multiple URI, as in ssl://example.com(http://example.com/foo) Historically, (1) is the only option that has ever been implemented. 
+(3) cannot be deployed without an Internet flag day. 
+(2) is possible, but will require changes to deployed parsers and RFC 2396. 
+(1) is therefore my recommendation because it is easier to implement and safer to deploy. 
+This is because a proper URI manipulating application will already be architected to handle different URI using a table of scheme-specific handlers, and we simply get better code reuse characteristics (and fewer unanticipated errors) if a new scheme is defined for each type of naming authority. 
+There is no question that this is the ideal, for the same reason that many people seek URNs as the better means of identifying long-lived resources, but it is not sufficient to build a working system unless there is some other identifier or implied context that does provide that information. 
+That is just mentioning the difference between transport protocol and naming authority, which I hopefully described above a little clearer. 
+But we could not have avoided that. 
+The security context must be established before the client uses the URL in any other way, which meant that an http URL cannot be used because of the risk of older browsers mistaking it for a normal request without secure communication. 
+An alternative could have been to use a compound URL, but like the "ssl" example above the result would be a lot of redundant information. 
+The only thing "saved" by doing so is the cost of adding a URL scheme to the namespace, which has proven to be of zero cost for those applications that are implemented in accordance with the WWW architecture, which expects the URI scheme namespace to be extensible. 
+In fact, the advantage of using https over http.ssl is that we can now negotiate the security context rather than assume it is SSLv1. 
+In any case, http and https define two entirely different naming authorities, even when their implementations reside on the same machine. 
+It therefore makes sense that they be different schemes. 
+....Roy I'd prefer that they found out some other way than peeking in the name. 
+But maybe there's no way to do that; there certainly wasn't at the time. 
+Really? 
+Hmm... 
+I'm not sure what you mean by that. 
+Do you mean that the authority comes from the PKI certificate hierarchy, rather than the DNS hierarchy? 
+I guess that makes sense. 
+Dan Connolly, W3C http://www.w3.org/People/Connolly/ 
+Since it's somewhat pertinent; One group of issues (11 and 13) for XMLP is what port to run on, and possibly how to identify the use of SOAP in URIs. 
+Although SOAP messages currently use unadorned schemes (e.g., http), there is some pressure to use a separate default port and identify the use of XML messaging with a different scheme. 
+To that end, one of the suggested approaches is: soap.http://www.example.com/service 
+soap.beep://www.example.com/service 
+or perhaps a syntax like soap:http://www.example.com/service 
+It would be nice to have reccommendations as to: a) whether or not it's a Good Idea to make the use of XML Messaging visible in URIs b) if it is necessary to have a different URI scheme for XML Messaging, due to a different default port, how that should be formatted. 
+(I'm not speaking for the group here, just giving a heads-up). 
+Cheers, Mark Nottingham, Research Scientist Akamai Technologies (San Mateo, CA USA) I can't think of any. 
+Even DNS tricks aren't really suitable because most apps just use gethostname and have no access to the other DNS records. 
+I meant that they default to different TCP ports, and the port is part of the naming authority (witness the significant difference between "official" web servers run on port 80, and non-official ones commonly run on port 8000). 
+However, I suppose we could claim that https://example.com:80/place/foo refer to the same naming authority. 
+*shrug* That kind of thing is considered bad practice, since secure http services shouldn't share the same runtime environment as non-secure services. 
+....Roy normal AG:: Can you expand on this last idea a bit? 
+Under what circumstances is the URL not usable without a security failure? 
+Al You speak of contacting a naming authority when what is needed is to contact a binding authority (one that knows bindings from the identifier to (addresses of) resources) -- and that's not necessarily the same, even though it is the same in http. 
+Naming authorities mint and (usually) bind names; others can bind those names, too. 
+Do you have an example of such a mechanism in mind? 
+I don't see how it could encode more than a name or address where such a mechanism is implemented and a protocol for talking to it -- in which case we're back at (1). 
+-- where, incidentally, the first URI needs to be of type (1) -- otherwise we're moving the problem rather than solving it. 
+The bottom line seems to be that impure names (containing the address of their resolver) are always going to be convenient in several respects but equally will always have the problems that we know well. 
+Pure names (not containing or strictly implying the address of a resolver) are always, by definition, going to be matter for domain-specific applications and services to resolve. 
+'The naming system' can at best define standard protocols for minting names and for presenting them for resolution by those apps and services (implicit in your example 3). 
+It doesn't seem to have another role to play in an open world like the Internet. 
+Tim. 
+Tim Kindberg internet &amp; mobile systems lab hewlett-packard laboratories 1501 page mill road, ms 1u-17 palo alto ca 94304-1126 usa www.champignon.net/TimKindberg/ 
+timothy@hpl.hp.com voice +1 650 857 5609 I was referring to naming authorities in the sense of RFC 2396. 
+I don't find that other distinction useful -- all bindings are names, all names are bindings, and only the manager of a namespace can be authoritative about whether the binding of name -- resource -- representation is valid. 
+I was only referring to the contact protocol stack, just as "http" URLs imply that the port number (defaulting to 80) is TCP even though HTTP can be transmitted over many different transport protocols. 
+An example would be which modifies the authority syntax to indicate other transports than TCP. 
+In general, though, I feel that is less readable than new scheme names. 

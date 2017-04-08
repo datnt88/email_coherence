@@ -1,0 +1,30 @@
+| Consider a set up like below : | S1W1S2 | S1 and S2 are two normal servers, while W1 is a webserver with the DAV | inculcated. 
+| If I want to get a file F1 from W1(at directory D1 say) to S1(at | directory D2) I can say : | COPY /~D1/F1 HTTP/1.1 | Host: www.W1.com | Destination: http://www.S1/D2/F1 | W1 would then transfer the file from W1 ro S1. Yes, assuming S1 supports PUT and W1 supports COPYs onto remote servers. 
+Although this is allowed in the dav spec, Xythos is the only server I know of that has implemented it. 
+| What should happen if I want to stream the file from S2 to S1 via W1 ? 
+| Would the following transaction be performed by W1 ? 
+This is not possible with the current webdav spec. 
+The source file must reside on a DAV-enabled server, or at least one that makes sense of a COPY request. 
+However, Xythos' dav implementation makes this possible by supporting COPY with a Source: header. 
+So you could perform your request with two transactions: COPY /temp HTTP/1.1 Host: www.W1.com 
+Source: http://www.s2.com/D1/F1 COPY /temp HTTP/1.1 Host: www.W1.com Destination: http://www.s1.com/D1/F1 Again, assuming S1 supports PUT and W1 is an Xythos Dav server. 
+Keith Accidentally caught by the spam filter. 
+- Jim Hi, I require a clarification in the functioning of the WebDAV. 
+Consider a set up like below : S1W1S2 S1 and S2 are two normal servers, while W1 is a webserver with the DAV inculcated. 
+If I want to get a file F1 from W1(at directory D1 say) to S1(at directory D2) I can say : COPY /~D1/F1 HTTP/1.1 Host: www.W1.com Destination: http://www.S1/D2/F1 W1 would then transfer the file from W1 ro S1. What should happen if I want to stream the file from S2 to S1 via W1 ? 
+Would the following transaction be performed by W1 ? 
+COPY /~D1/F1 HTTP/1.1 Host: www.S2.com Destination: http://www.S1/D2/F1 
+If no, then what should be transaction to be sent across to W1? If yes, then : Would W1 create a file and retain a copy for itself while transferring it to S1 ? 
+Any sort of clarification would be most welcome. 
+Thanks, Sathya From: sathyanarayanan_s [mailto:sathyanarayanan_s@infy.com] 
+Consider a set up like below : S1W1S2 S1 and S2 are two normal servers, while W1 is a webserver with the DAV inculcated. 
+What should happen if I want to stream the file from S2 to S1 via W1 ? 
+Would the following transaction be performed by W1 ? 
+COPY /~D1/F1 HTTP/1.1 Host: www.S2.com Destination: http://www.S1/D2/F1 No, the transaction would be performed by www.S2.com (since that is the host you sent it to). 
+W1 is never mentioned in this request, and therefore is not involved in processing it. 
+If no, then what should be transaction to be sent across to W1? Some have asked for a Source: header for COPY to allow you to copy to a WebDAV server (the Destination: header only lets you COPY from a WebDAV server). 
+If both a Source and Destination header were supported at the same time by a server, you could get the functionality you are asking for. 
+But note that a non-WebDAV server does not have collections, so even if you tried to copy something that looked like a collection (e.g. copying /x/y, when there is a resource /x/y/foo.html), 
+unless you are copying from a WebDAV server, you would just copy the content of whatever GET would return from /x/y, and not a collection (or any properties, since only WebDAV resources have properties). 
+I would probably vote against such a Source header for COPY, because of these edge cases around copying a collection, but I could be swayed (:-). 
+Cheers, Geoff 

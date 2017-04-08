@@ -1,0 +1,20 @@
+How can I effectively process data with result that consist of two outputs (first is a main result, and second is a log). 
+In order to achieve required results I have to perform either: a) two time processing: first in order to get main result and another to get log; or b) create temporary tree with both main result and log, and then create two result xml(s) by filtering data in that temporary tree. 
+From my user's perspective it would be useful to have a stack of active named (or indexed) output trees and ability to dynamically switch between them. 
+The following example demonstrates such a hypothetical feature: Generate here main result Put here log data Generate here main result again !-- 
+Here we have result in $result and log in the $log -- or Generate here main result Put here log data Generate here main result again !-- here we have result in the principal-result-document and log in the secondary result-document. 
+-- In these examples tree-name attribute defines a name of tree (temporary tree or result tree) and xsl:output-tree element defines what destination to use for output. 
+Nesterovsky Vladimir vladimir@nesterovsky-bros.com I think the problem of producing two separate result documents is exactly the same as producing a single document that contains the "main result" and the "log" as separate sub-elements. 
+We don't allow "interleaved" writing in either case, and I don't think the two cases are essentially different. 
+In both cases the stylesheet must be written to produce one output first, then the other. 
+I recognize there are use cases where this can cause difficulty. 
+Your particular use case, of producing a log, is covered I think by xsl:message . 
+Whether xsl:message meets the requirement depends rather on the implementation. 
+I know that some implementors provide very little control over the destination of messages, and some discard the message entirely, but this is a matter for implementors, not for the specification itself. 
+Any attempt to offer interleaved writing - including the xsl:message capability - suffers from the fact that the sequence of nodes in the result tree will depend on the order of execution of instructions in the stylesheet. 
+For example, if xsl:message is included inside xsl:variable, then the number of messages output and their relative order depends on the order in which variables are evaluated, and on whether their values are held in memory or re-evaluated on demand. 
+Michael Kay From my user's perspective it would be useful to have a In my case log tree after the further processing is appending to a main result. 
+result held I suppose a small set of rules could be tailored in order to guaranty consistent order of output operations. 
+For example something like this: a) all xsl:output-tree (hypothetical element) elements are executing in the order of appearance; b) if variable contains such element then after variable declaration it should be evaluated one time with option to execute xsl:output-tree elements in content of variable declaration, in other cases (if any) xsl:output-tree in the content of variable is not evaluated. 
+In general these rules do not impose any restrictions on the order of content execution if it does not contain any xsl:output-tree element and just force variable evaluation when it contains xsl:output-tree element. 
+Nesterovsky Vladimir vladimir@nesterovsky-bros.com 

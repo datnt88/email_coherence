@@ -1,0 +1,111 @@
+How does one subclass DOM Nodes? 
+For example, if I have an application that wants to have a DOM tree composed of subclasses of an Element implementation class, how do these Element subclasses get created? 
+Is the DOMImplementation class used somehow to get at a Node factory somehow? 
+K Get Your Private, Free E-mail from MSN Hotmail at http://www.hotmail.com. 
+Share information about yourself, create your own public profile at How does one subclass DOM Nodes? 
+Is the DOMImplementation class used somehow The Document node is the factory for all nodes contained in that document. 
+You could subclass Document to provide special handling of specific Elements. 
+Note that this is inherently nonportable. 
+First off, the actual construct-and-configure sequence for the nodes is implementation dependent; you need to know exactly how your DOM implementation handles this before you can rewrite the createElement method appropriately. 
+Secondly, and just as important: When you subclass, you're always subclassing a specific parent class; to move a subclassing to another DOM, you'd have to edit the code to change that parent even if all else was the same (which is unlikely). 
+Another possible approach,less elegant but more portable, would be a "lightweight subclassing" scheme. 
+Here, you would annotate "standard" nodes rather than subclassing them -- eg, by providing one or more tables indexed by node identity which can be used to retrieve whatever additional information and/or code you want to associate with it. 
+The challenge here is that "node identity" is not necessarily the same as the address of the Node object (eg if your DOM is a proxy for some other data structure, you might have several objects proxying the same datum and thus representing "the same node), so it isn't clear what could be used as an index for those tables. 
+DOM Level 3 is investigating this. 
+Joe Kesselman / IBM Research Yes, event handlers are another way of adding behavior to a node. 
+Note that you aren't limited to mutation events -- anything which conformed to the Event interface can be dispatched through the DOM's event system. 
+In fact the example you use of a "Draw" event is almost certainly just such an example; DrawEvent probably shouldn't be based on MutationEvent since it doesn't represent a change made to the document's content or structure. 
+At this time there are no Creation Events. 
+It's an interesting thought... though I believe it could be done almost as easily by "wrappering" the DOM's existing factory methods, which might actually be a cleaner solution. 
+If you really think Creation Events are better, I can be persuaded to add them to the Open Issues List. 
+Joe Kesselman / IBM Research nodes indexed I may be wrong, but it is my impression that Mutation Events are another extensibility mechanism. 
+Instead of having a class heirarchy for Elements, it might be possible to have a heirarchy of ElementListeners instead. 
+When an Element has an ElementListener registered on it, it will be augmented with the ElementListener's behavour. 
+With this approach, communicating with the added behaviour would be through the dispatch of events rather than through function calls - so you lose the function call semantics in favour of a very flexible extensibility mechanism. 
+For instance, instead of calling Draw method, you can dispatch a Draw Event to the element. 
+I think this could possibly be another use case of an At-Target only dispatch. 
+There is potential in a class of events that are only dispatched to single nodes. 
+To further the extensibility, it may also be possible to introduce Creation Events. 
+Creation Event Listeners could be registered on the document node to watch for the creation of new nodes. 
+When a node is created, the Creation Event Listener would have the opportunity to initialise new nodes with behaviour by adding Element Listeners to Elements for example. 
+I have been told before that Mutation Events represent an extensibility framework. 
+I take it that this is a representation of what they meant - but I can't be sure. 
+Thanks -John conformed In an Oh yeah - I forgot to say that without Creation Events/subclassing/ wrapping, the only way of adding event handlers transparently (eg. 
+for users to be unaware that there is additional behaviour) is to propagate event listeners via DOMNodeInserted or DOMNodeInsertedDocument ... which is my reason for saying MutationEvent is an integral part of extensibile. 
+Mutation Event allows a node to be initialised and uninitialised with behaviour as it is added to or removed from the document. 
+Freeing clients from the need to initialise each node when they create and insert them is a good thing in my opinion because clients cannot be trusted by a "value added" implementation to do the right thing in this regard. 
+solution. 
+This may (or may not) be true for say adding behaviour by one "value added" implementation in an OO language. 
+For example: A visual tool subclasses Document and overrides all its factory methods to support display of those nodes. 
+This is done by factory methods adding event listeners to created nodes during factory method calls. 
+But: + there are languages that have no concept of subclassing. 
+For these languages, you'd probably create a wrapper object - but the danger is that some clients may get access to the underlying object and create nodes that bypass initialisation. 
+DOM is full of methods where you can get access to the underlying document object. 
+(eg. 
+evey node has getOwnerDocument) To block this every node needs to be wrapped when they are created. 
+This is so much overhead because it must be done regardless of whether or not all nodes need additional behaviour. 
+For instance only I want all elements to have added behaviour, but I will still need to wrap all nodes because some client may use ownerDocument. 
++ adding further behaviour will often necessarily involving adding another subclassing or wrapping layer. 
+In the case of subclassing, this requires one "value-added" implementation to be statically dependent on another, even though it does not use any value added behaviour of the latter. 
+You be not able to have a document with only one behaviour and another with only the other behaviour and another with both behaviours. 
+(Ofcourse, you can resort to multiple inheritance - but not everyone can or wants to go there) + in the case of subclassing I can only add behaviour statically. 
+I can't have a document and then decide - "I'm going to display this" and dynamically add behaviour to the document. 
+Being able to iterate over all of a document's nodes will be of assistance to the ability of adding behaviour dynamically. 
++ Events are language neutral - whether you have a flattened prototyped language like javascript or an OO language like C++/Java. 
+This is important for DOMs that have multiple language bindings. 
+By implementing factory methods as creation event aware means they clients using all language bindings can extends and use extensions in a single consistent manner. 
+My conclusion is that creation events, mutation events and events generally are powerful tools for enabling extensibility. 
+Extensibility has always been the reason for my interest in events. 
+BTW, using events as an extensibility mechanism also implies that it needs to be FAST. 
+If the event course of extensibility is taken, there needs to be an investigation on how performance of the event system can be improved. 
+I would not like to thing that the DOM Events API intrinsically imposes a poor performance event system on all DOM Event implementations. 
+Thanks -John Designing for generality usually does impose some costs.The 
+DOM Event system may not be ideal for all applications which need event-like behavior. 
+It shouldn't have to perform "poorly" (though actual performance is, as always, up to the individual implementation), but it may not perform as well as an event system which was precisely tailored and tuned to a specific application. 
+In this case: If all you want is to call an additional behavior on a single node, the overhead of having to construct an object to carry its parameters, having to look up the function by name, and having to be prepared for the possibility that the event may be distributed to other listeners all contribute overhead that wouldn't exist in the simple subclassing case. 
+It's roughly the same kind of overhead as calling a Java method via reflection... _plus_ having to search for capturing handlers, even if bubbling is turned off. 
+Joe Kesselman / IBM Research So far I follow. 
+I don't understand what you write in parentheses. 
+Isn't a DOM node object in a tree unique? 
+If it is unique, then why would using its address not work as an index into the table? 
+K Get Your Private, Free E-mail from MSN Hotmail at http://www.hotmail.com. 
+Share information about yourself, create your own public profile at Summary: In most DOMs, you can use your language's object-identity operator to test node identity. 
+But this is a binding/implementation detail, and is _not_ guaranteed by the DOM spec. 
+We expect to provide a more portable solution in DOM Level 3. Long version: Don't confuse a DOM node and a DOM Node Object. 
+The former is a node in a DOM tree, and has a unique identity -- but it may not be an object; it may be a row in a table, or a database record, or a point in a text buffer, or something which is computed when it's needed. 
+The DOM API says nothing about how the data is stored, and that storage may not map 1:1 to DOM objects. 
+The latter -- the Node object -- is an object which implements the DOM's Node interface and represents the corresponding node in the DOM tree. 
+It must be uniquely identifiable, but there is no promise in the DOM Recommendation that the "==" operation (or your language's equivalent) suffices to test node identity. 
+It happens to work that way in most existing DOMs, but not in all. 
+Some otherwise reasonable DOMs would pay a significant performance penalty if asked to guarantee that == could be used for this purpose. 
+For example, they may be generating front-end Node objects on demand, using them, then returning them to the heap when the user is done with them; in that case the same node may have a different Node object each time you access it -- and may in fact have more than one Node object at the same time. 
+This was probably an oversight in the DOM spec, and we're planing to fix it. 
+It's called out in the Level 3 Requirements (rather tersely, I admit) as * node identity. 
+Is this object the same node as that one? 
+and is addressed in the Level 3 Working Draft by boolean isSameNode(in Node other); But exposing the node's identity outside the DOM, eg for this "side-data lookup table" we've been discussing, is more complicated. 
+We have to resolve questions about how the identity is represented (or abstracted) and what its actual scope of uniqueness should be (Document? 
+DOMImplementation? 
+All DOMs running in the same process even if they aren't based on the same implementation?). 
+We haven't yet resolved all those issues completely; watch the evolving Working Drafts for more information as it becomes available. 
+Joe Kesselman / IBM Research Isn't a DOM node object in a tree unique? 
+It's easy to confuse the DOM -- which is only an API -- with the data structures behind it, which may not be object-oriented at all. 
+Many of the currently available DOM implementations do store the data directly in their Node objects, so folks tend to assume that others will also do so. 
+That is not necessarily the case. 
+A _node_ is unique, because it's defined as representing a specific instance of a specific fragment of the XML document being manipulated. 
+But there is no promise in the DOM spec that there is a one-to-one mapping between nodes and DOM Objects. 
+For example, there may be nodes in the document for which no programing-language Object yet exists, if the DOM is being clever and creating Objects only when they're actually needed. 
+(For example, EntityReference nodes in some DOMs don't actually copy their children from the Entity definition until the first time the user tries to look inside the reference.) Conversely, in some DOM implementations there may be multiple Objects which represent the same Node. 
+As long as they behave properly -- altering the node via one of them changes the node as seen by all the others -- and as long as there is _SOME_ way to ask "is this the same node as that one", that can be a fully compliant implementation of the DOM. 
+We should have standardized how one asks that last question. 
+We simply forgot to do so. 
+In most (but not all) DOM implementations, it happens to be true that the language's == operator can be used for that purpose, but the DOM does not promise this. 
+This oversight will be corrected in DOM Level 3, when we introduce isSameNode() and (possibly, if we can agree upon a definition we like) getNodeKey(). 
+(If you're a low-level-code hacker -- C or Assembler -- you might want to think about this as a double-indirection problem. 
+In some DOMs, nodes are really pointers to data stored elsewhere. 
+Comparing the identity of the pointers will not reliably tell you whether or not they point to the same thing; you have to ask them what they're pointing to and compare that. 
+getNodeKey() asks that question; isSameNode() combines asking that question and comparing the results.) 
+If it still doesn't make sense... maybe someone else should attempt an explanation. 
+I'm running out of different ways to describe the problem. 
+But this issue really _does_ affect some other DOMs. 
+Even if your particular DOM allows you to use == and get the right result, isSameNode() will be preferred for portabilty reasons. 
+Joe Kesselman / IBM Research 

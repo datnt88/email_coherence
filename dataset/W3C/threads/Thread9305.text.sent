@@ -1,0 +1,25 @@
+Here's how Nokia's "Wilbur" RDF Toolkit implements "rdf:aboutEach": The current (released) implementation is "unoptimized" and does not care how much stuff it needs to keep around until each "aboutEach" has been expanded. 
+An optimized version is in the works, one that is somewhat clever in deciding which triples to keep around. 
+The basic implementation works as follows: 1) When "aboutEach" is encountered, its "target" node (the one which is the result of resolving the value of the "aboutEach" attribute) is stored away (actually, pushed into the state stack of the parser's state machine), and a temporary anonymous node is created. 
+2) The description is parsed normally, using the temporary node (just created) as the subject for all the resulting statements. 
+3) The real "target node" is popped from the stack and it is verified that it actually is an RDF container. 
+4) loop for triples x collected using the temporary node loop for triples y representing the elements of the target container add triple(y.object, 
+x.predicate, x.object) end loop delete x end loop As I said, this is "unoptimized". 
+The next version provides some improvements: a) Only keep around triples from containers. 
+b) If reasonably implementable (not of this sure yet), perform #4 piecewise within step #2 above. 
+This still does not take into account situations where the "aboutEach" is encountered *before* the corresponding container, in which case we still have to keep the temporary node and its triples around until the container is parsed. 
+It seems that depending on ordering of the "aboutEach" vs. the container, triples resulting from one or the other have to kept around for awhile to produce the correct result. 
+We have discussed adding a flag to Wilbur which would generate an error if "aboutEach" is encountered, making sure you can run the parser in a truly stream-based fashion. 
+Wilbur is available at http://purl.org/net/wilbur/ 
+Regards, - Ora Ora Lassila mailto:daml@lassila.org http://www.lassila.org/ 
+Ora Lassila said: This is exactly the case that I wanted to elaborate when I said in one meeting that aboutEach was difficult to implement. 
+Take a large RDF/XML document with many containers - say the dmoz.org 
+data dump - and put an aboutEach at the start. 
+Easy, you can expand the aboutEach as you go. 
+Now move it to the end. 
+Difficult, since you have to store every container node and properties until you reach the end, then go back and apply the aboutEach. 
+aboutEach always felt to me like a higher-level construct that didn't fit easily into RDF. 
+You show implementation evidence that implementing it fully is hard. 
+I think SiRPAC has a big streaming / not-streaming code switch and pervasive different code paths because of this. 
+I would like to throw aboutEach out of RDF however I would like to know if there are other deployed uses of it (not *potential* uses!) Dave I concur with this view. 
+#g Graham Klyne Baltimore Technologies Strategic Research Content Security Group 

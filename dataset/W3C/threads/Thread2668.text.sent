@@ -1,0 +1,33 @@
+Hi, I just wonder if we use persistent connection, if the HOL blocking would affect the performance and in this case non-persistent connection will do better. 
+Jacinle hi, HOL blocking means Head Of Line blocking What i mean is consider Alice send out a request for a large latest hit MP3 file and then a request for a small text file which both resides on the same server. 
+so the response for MP3 file will block the second response and the response that follow in the persistent connection case. 
+Kaming Young What is HOL blocking? 
+|John Stracke | http://www.ecal.com 
+|My opinions are my own. 
+| |Chief Scientist |================================================| |eCal Corp. |Vlad was not a vampire, but that's the only nice| |francis@ecal.com|thing that could be said about him. 
+| HOL blocking means Head Of Line blocking What i mean is consider Alice send out a request for a large latest hit MP3 file and then a request for a small text file which both resides on the same server. 
+so the response for MP3 file will block the second response and the response that follow in the persistent connection case. 
+The HTTP/1.1 Draft Standard (RFC2616) address the head-of-line blocking issue with respect to proxies, in section 8.1.4, where it says: A proxy SHOULD use up to 2*N connections to another server or proxy, where N is the number of simultaneously active users. 
+I can't remember why we didn't say "to avoid head-of-line blocking" in this sentence, since this is precisely the reason for saying that proxies aren't expected to multiplex lots of clients on one connection. 
+The same paragraph says: A single-user client SHOULD NOT maintain more than 2 connections with any server or proxy. 
+The reasoning behind that requirement is related to a kind of head-of-line blocking. 
+Consider a client loading a long HTML page with lots of images. 
+The client should probably start the process of loading the images (on connection #2) while continuing to load the HTML (on connection #1); we don't want the images blocked until the entire HTML file is loaded. 
+I'm not sure it makes sense for a single browser window to be simultaneously loading a text file and an MP3 file, but I guess it would make sense for a single user to be loading both in separate windows of a single browser application. 
+Even so, the spec still allows these two simultaneous connections. 
+Anyway, we never specifically defined "single-user", so I think a client implementor should use good judgement in deciding whether a browser with multiple active windows counts as one "user" or several. 
+The point of these requirements was not to force people to suffer from head-of-line blocking. 
+It was to allow the implementation of clients and proxies that do not suffer from head-of-line blocking, while discouraging them from using more TCP connections than necessary. 
+-Jeff Hi, Thank you so much for enlightening me. 
+How could a client know in advance that it will have got a hugh response so that it opens another connection? 
+specification by file type? 
+Kaming Although, in the case of a proxy if a client is trying to get requests from a number of different servers, through the same persistent connection to a proxy, then it's not too difficult to get in a situation where a proxy can't immediately return a response to the client because it's not ready or able to reply to a previous request (on that same connection) from the client. 
+For example, a client could pipeline requests to a.com and b.com through a proxy. 
+b.com might be fast and reply right away to the proxy, but the proxy can't forward the data to the client because a.com hasn't replied yet (and thus the response from b.com must be queued). 
+Even though the client can maintain two connections to the proxy, this doesn't eliminate the problem (although it does make it less likely). 
+The problem can also because worse in the case where b.com is cached by the proxy (or a delta [i.e., "IM:" header ] can be computed for b.com), but a.com is not cached. 
+Adjusting HTTP so that responses can be returned back in a different order from requests would be one way to address the issue. 
+It would also be useful in the case where two requests are made to the same server, and the second request can be serviced much sooner than the first request (e.g., the first request might be some sort of CGI request). 
+In the case of a significant amount of pipelining, the feature would also give a server the ability to choose the best order in which to produce responses (e.g., long MP3s last). 
+I'm personally not a fan of "enhancing" protocols, so I'm interested in any suggestions that people might have for working within the current confines of HTTP. 
+MD 

@@ -1,0 +1,160 @@
+From: Dan Simon dansimon@microsoft.com 
+(I'll make another pitch here for not explicitly specifying the hash function or functions used in the "handshake hash"; if this news about MD5 had come out a year later, then the body of the spec itself would have had to be revised, instead of just the list of valid hash functions). 
+Absolutely. 
+Explicitly specifying the handshake hash functions in SSL is a weakness of the protocol, not a feature. 
+Regarding the meeting in the Bay Area at the end of the month, someone from Atalla will certainly be there. 
+(Probably myself and Dave Maracchini.) Susan Langford Sr. Cryptographic Analyst, Atalla langford_susan@tandem.com 
+This is forwarded to this group. 
+We should keep the secrets in the inner hash in the MAC in SSSl/STLP/ the name of the day protocol. 
+Taher As it has been already announced in this list, MD5 is broken for collisions (Hans Dobbertin has extended his own techniques used against MD4 to attack MD5 as well). 
+MD5 needs to be dropped (hope everyone already did) from any use that requires resistance to collisions by plain MD5. 
+One application that is NOT broken with Dobbertin's attack is HMAC with MD5. 
+Collisions in plain MD5 do not compromise HMAC-MD5 as the latter uses secret IVs and hides the result of the inner iterated function. 
+The question is whether the new attack has a significant potential of being developed further to break also HMAC-MD5. 
+Beyond our own assessment we have got the opinion of a few first line cryptographers that they see no way to make these techniques work against the use of MD5 in HMAC. 
+With permission of Hans Dobbertin I reproduce this note he sent to me over the weekend in response to my question of whether he sees any application of his results to break HMAC-MD5: Date: Sat, 4 May 1996 22:48:09 +0200 (MET DST) From: Hans Dobbertin Hi Hugo, I looked in your paper which you have sent me in January. 
+To answer your question I can assure you that I cannot image any way to attack MD5 as it is used in HMAC. 
+To be more precise, from the recent attack on MD5 (compress) one cannot derive any reservation against the use of MD5 in this context. 
+(Perhaps one could argue that the randomness of MD5 is not sufficiently investigated ..., but that is another question, and I personally do not see a problem here.) Best regards, Hans This does not mean in any way that HMAC-MD5 is going to be secure forever. 
+It is only to stress that the new attack is not necessarily a reason to drop MD5 from its current use in IPSEC. 
+I believe that we can keep using it until new developments will bring HMAC-MD5 closer to a break. 
+Remember this "principle" from draft-ietf-ipsec-hmac-md5-txt.00: Message authentication, as opposed to encryption, has a "transient" effect. 
+A published breaking of a message authentication scheme would lead to the replacement of that scheme, but would have no adversarial effect on information authenticated in the past. 
+This is in sharp contrast with encryption, where information encrypted today may suffer from exposure in the future if, and when, the encryption algorithm is broken. 
+Following this principle I believe we can keep enjoying the better speed of MD5 at least for some time (weeks? 
+months? 
+years? 
+who knows?) Just to stress this: there is NO known security advantage in keeping MD5 relative to going to SHA-1. 
+The only issue here is performance. 
+It is there where the trade-off seems to favor MD5 right now. 
+Having said all of this here is a short note on the theory behind HMAC-MD5. 
+In our paper we have chosen to make much stronger assumptions than needed on the underlying hash function. 
+This is motivated by the search of easy to state and well-defined assumptions together with a simple and correct analysis. 
+One of these assumptions on the hash function which we call "weakly collision resistance" requires resistance to collisions when the IV is secret. 
+In a strict sense such collisions can be found for MD5 using Dobbertin's techniques. 
+However, this is possible through extension attacks that are prevented in HMAC by the outer application of MD5. 
+Therefore, the actual function HMAC-MD5 remains secure. 
+In our coming Crypto'96 paper we will elaborate more on the analytical issues and strength of assumptions. 
+In particular, we may suggest an additional (more conservative) variant of HMAC in which one appends a key to the data before hashing (in the inner transformation). 
+However, this has to be seen as "yet another fence" and not something for which there is clear indication that we need to adopt immediately. 
+Bottom line: I suggest keeping HMAC-MD5 as defined now. 
+(And being always very attentive to updates from the cryptanalytic front.) Hugo Taher Elgamal elgamal@netscape.com 
+Chief Scientist, Netscape Communications (T) 415 937 2898, (F) 415 428 4054 Well, I certainly agree that if we keep MD5 around as a valid choice of hash function for MAC computation, then we should stick with HMAC. 
+In that case, though, either MD5 should be removed from the "handshake hash" (or replaced with another, non-broken hash function), since it is used there without a key prefix to the input, or the "handshake hash" should be restructured as an HMAC-style MAC. 
+(I'll make another pitch here for not explicitly specifying the hash function or functions used in the "handshake hash"; if this news about MD5 had come out a year later, then the body of the spec itself would have had to be revised, instead of just the list of valid hash functions). 
+My own recommendation would be that use of MD5 simply be abandoned; after all, the new break affects not only the MAC method, but also (hash-and-)signature-based authentication, where no secret MAC key can be relied upon to make collision-finding harder. 
+A more cryptographically correct alternative might be to define cipher suites with separate choices for "MAC hash function" and "signature hash function", with MD5 being permissible for the former (assuming HMAC-style MACs) but not the latter. 
+An advantage of this approach would be that various superfast hash functions (Krawczyk's LFSR hash, Rogaway's "bucket hash") which are only useful for MACs could eventually be added as options. 
+On the other hand, the extra complexity would make cipher suite management completely unwieldy. 
+(Then again, I consider it to be already completely unwieldy, and would like to see each type of algorithm negotiated separately.) Daniel Simon Cryptographer, Microsoft Corp. dansimon@microsoft.com 
+I don't believe this is true. 
+The way the handshake hashes are used in SSL 3.0 requires that a collision exist in both MD5 and SHA1 for the same pair of message streams. 
+To construct such a collision is currently computationally infeasible. 
+Negotiating the function(s) to be used in the handshake hashes allows a roll-back attack if any of the possible hash functions are compromised. 
+I think that's a great idea. 
+This attack certainly shows MD5 to be weaker than previously thought, but it's not totally broken. 
+We should move away from MD5 as soon as reasonably possible, but I don't think we should panic and abandon existing standards without suitable replacements. 
+What are you talking about? 
+The MAC is SSL 3.0 is keyed and relies primarily on the secrecy of the key, not the collision intractability of the underlying hash function. 
+Both places where signatures are used rely on both MD5 and SHA (except for DSA signing). 
+What kind of attack do you think a hash collision could allow on the signed messages? 
+I strongly oppose splitting the cipher suite up into several seperate "fields". 
+It provides no extra level of flexibility or security and it only encourages people to mix and match algorithms in untested ways. 
+As I already stated, I believe that allowing negotiation of the algorithm used for computing the handshake hashes allows a roll-back attack. 
+The use of a single algorithm is also weaker than the paired algorithms currently used. 
+One tag to rule them all, One tag to find them; One tag | Tom Weinstein to bring them all, and in the source tree bind them. 
+| tomw@netscape.com 
+The point is that the hash has to be "possible". 
+The idea with having the functions separately negotiable is that the user is involved when researchers announce new techniques to void the collision intractibility assumption -- GUI or user-accessible configuration files must be provided so that the user can easily turn off a broken hash. 
+Alternatively, an automated revocation-list style of operation is possible. 
+This, I believe, is the approach that Dan Simon is advocating. 
+I think that this is a reasonable approach. 
+The SSLv3 approach seems to be to try to use multiple hashes to build up a more-collision-intractible hash for the handshake hashes. 
+On the face of it, this looks pretty reasonable too and avoids issues with user confusion / service calls. 
+There is a "however" side to this: I don't believe that anybody has calculated/proven the actual security of the alternating SHA/MD5 constructions (relative to the security of the base hash functions) used for generating key material. 
+If the construction were really sound, maybe it'll be of interest to researchers since it'd be a general way to build more-collision-intractible functions from less-so ones. 
+Furthermore, if there is a real need to build stronger hashes out of possibly weak ones, then why are we limiting ourselves to just MD5 and SHA? 
+To just one application of this collision-intractibility "strengthening" construction? 
+In STLP there are options to use a signature key to authenticate; see the response message, 5.2.5, in the STLP draft. 
+Like SSLv2's client authentication, but more symmetric. 
+Furthermore, the world is larger than PCT/SSL/STLP/TLA-of-the-day. 
+The PKCS standards, for example. 
+A roll-back attack is possible only if the hash function remains enabled. 
+Whether a revocation style of cryptographic primitive management to automate things is doable or manual, user intervention is used, it -is- possible to disable the use of some crypto-primitives. 
+Completely disabling a (newly found to be) weak crypto-primitive is preferable to leaving it in place. 
+-bsy Web:http://www-cse.ucsd.edu/users/bsy/ 
+USPS:Dept of Comp Sci and Eng, 0114, UC San Diego, La Jolla, CA 92093-0114 I think there are two different philosophies about how to react to a failure of one of the MAC functions. 
+The SSL 3.0 philosophy seeks to design a redundant system that can withstand a single failure but then requires a patch to regain the redundancy. 
+The STLP strawman philosophy allows a failure to compromise the system, but allows it to be fixed by a simple configuration change on the part of either party. 
+Both philosophies have merit. 
+Incidentally, the handshake hashes in the final version of the SSL spec are computed as (MD5(MD5()) + SHA(SHA())), not (MD5(SHA()) + SHA(MD5())) as in early versions. 
+We felt that not alternating algorithms provided at least the same level of collision intractability without the somewhat dubious mixing of algorithms that you seem to be concerned about. 
+The assumption then is that the algorithms are sufficiently unrelated so as to provide uncorrelated outputs. 
+Yes, I'd agree that MD5 should certainly not be used for the STLP response message. 
+It seems to depend fairly strongly on the collision intractability of the hash function. 
+I also agree with you that everyone should move away from MD5. 
+I expect that MD5 will be in very bad shape in the not too distant future. 
+Absolutely. 
+But the only way to defeat the roll-back attack is to have every installed product that uses the insecure algorithm configure it off. 
+Personally, I worry that as more and more naive users begin to rely on cryptographic software, it will become harder for us to do that. 
+One tag to rule them all, One tag to find them; One tag | Tom Weinstein to bring them all, and in the source tree bind them. 
+| tomw@netscape.com 
+I agree with Mr. Yee's point that both approaches (fixed single method with diverse algorithms, and multiple negotiated single-algorithm options) have merit. 
+But I believe that the split cipher suite method has more merit. 
+This discussion isn't about splitting it into several separate fields, it's about splitting it into two fields - MAC and everything else. 
+Despite repeated warnings about untested mixing and matching, I can't see how switching between multiple hash functions in the MAC computation can have any hidden effect on the security of the bulk cipher or key exchange or certificate management. 
+(There is of course the obvious effect - Bellovin has shown that encryption without integrity is weak). 
+If there are any ideas about how switching between two equally-strong MAC algorithms (say SHA and RIPEMD-160) could affect the security of the rest of the cipher suite, I'd like to hear them. 
+There is no reason why the two approaches couldn't be combined - some of the split-cipher-suite MAC options could be algorithm combinations, including MD5+SHA. 
+It would be nice to avoid combinatorial explosion here, but a few useful combinations could be chosen. 
+Mr. Dobbertin and Mr. Krawczyk believe that there is still some life left in MD5 as long as it's used in a HMAC-type nested structure. 
+This vindicates the merits of using this type of MAC structure, and should put to rest any thoughts of using a simpler structure to make precomputation easier. 
+Date: Thu, 09 May 1996 00:29:07 -0700 From: Tom Weinstein tomw@netscape.com 
+There are at least three ways to address algorithm roll-back attacks: 1) rely on user configuration to disable newly-found-to-be-insecure options, then remove the option in the next product release. 
+This sacrifices backward compatibility. 
+2) address it as version rollbacks are currently addressed in SSL V3 - maintain compatibility with downrev peers but make it impossible for two current peers to negotiate a downrev insecure algorithm. 
+3) allow user configuration but provide no mechanism to prevent two current peers from negotiating downrev options. 
+Hopefully name-of-tls-protocol will not go this route. 
+If it is believed that SHA is not dependable enough, but that SHA concatenated with MD5 *is*, then a natural solution is to define a new hash function consisting of the concatenation of the two (call it SHAMD5 :^), and include it as an optional hash function for the protocol (perhaps as a separate "handshake/signature authentication hash function" parameter--once again, we see the value of negotiating security parameters independently.....). 
+Implementers and administrators are then free to support SHAMD5--perhaps *only* SHAMD5--as their hash function of choice (for handshake and signature authentication, or even for general use). 
+Alternatively, the protocol could negotiate a "primary" and "secondary" hash function, so that redundant MAC constructions could continue to be redundant into the future (unlike the SSL v3.0 "redundant" construction, which now turns out to be much less redundant than it was originally thought to be). 
+I expect it would be simpler, however, just to define these combined hash functions as they become necessary. 
+(SHARIPEMD, anyone?) And it's certainly less appealing to require what amounts to a significant protocol revision every time an explicitly embedded hash function is broken. 
+Maybe I'm out of touch, but I would expect users to be more likely to toggle a configuration switch to disable a broken hash function than to install a new implementation of the next version of the protocol, whose only change from the previous version is in the pair of hash functions chosen for its "redundant" MAC construction. 
+Daniel Simon Cryptographer, Microsoft Corp. dansimon@microsoft.com 
+I would just like to be sure I'm understanding this correctly. 
+Does this mean, for example, that an MD5 digest as used in PGP to generate a key fingerprint is no longer secure? 
+Cheers, Ben. 
+As it has been already announced in this list, MD5 is broken for collisions (Hans Dobbertin has extended his own techniques used against MD4 to attack MD5 as well). 
+MD5 needs to be dropped (hope everyone already did) from any use that requires resistance to collisions by plain MD5. 
+One application that is NOT broken with Dobbertin's attack is HMAC with MD5. 
+Collisions in plain MD5 do not compromise HMAC-MD5 as the latter uses secret IVs and hides the result of the inner iterated function. 
+The question is whether the new attack has a significant potential of being developed further to break also HMAC-MD5. 
+Beyond our own assessment we have got the opinion of a few first line cryptographers that they see no way to make these techniques work against the use of MD5 in HMAC. 
+With permission of Hans Dobbertin I reproduce this note he sent to me over the weekend in response to my question of whether he sees any application of his results to break HMAC-MD5: Date: Sat, 4 May 1996 22:48:09 +0200 (MET DST) From: Hans Dobbertin Hi Hugo, I looked in your paper which you have sent me in January. 
+To answer your question I can assure you that I cannot image any way to attack MD5 as it is used in HMAC. 
+To be more precise, from the recent attack on MD5 (compress) one cannot derive any reservation against the use of MD5 in this context. 
+(Perhaps one could argue that the randomness of MD5 is not sufficiently investigated ..., but that is another question, and I personally do not see a problem here.) Best regards, Hans This does not mean in any way that HMAC-MD5 is going to be secure forever. 
+It is only to stress that the new attack is not necessarily a reason to drop MD5 from its current use in IPSEC. 
+I believe that we can keep using it until new developments will bring HMAC-MD5 closer to a break. 
+Remember this "principle" from draft-ietf-ipsec-hmac-md5-txt.00: Message authentication, as opposed to encryption, has a "transient" effect. 
+A published breaking of a message authentication scheme would lead to the replacement of that scheme, but would have no adversarial effect on information authenticated in the past. 
+This is in sharp contrast with encryption, where information encrypted today may suffer from exposure in the future if, and when, the encryption algorithm is broken. 
+Following this principle I believe we can keep enjoying the better speed of MD5 at least for some time (weeks? 
+months? 
+years? 
+who knows?) Just to stress this: there is NO known security advantage in keeping MD5 relative to going to SHA-1. 
+The only issue here is performance. 
+It is there where the trade-off seems to favor MD5 right now. 
+Having said all of this here is a short note on the theory behind HMAC-MD5. 
+In our paper we have chosen to make much stronger assumptions than needed on the underlying hash function. 
+This is motivated by the search of easy to state and well-defined assumptions together with a simple and correct analysis. 
+One of these assumptions on the hash function which we call "weakly collision resistance" requires resistance to collisions when the IV is secret. 
+In a strict sense such collisions can be found for MD5 using Dobbertin's techniques. 
+However, this is possible through extension attacks that are prevented in HMAC by the outer application of MD5. 
+Therefore, the actual function HMAC-MD5 remains secure. 
+In our coming Crypto'96 paper we will elaborate more on the analytical issues and strength of assumptions. 
+In particular, we may suggest an additional (more conservative) variant of HMAC in which one appends a key to the data before hashing (in the inner transformation). 
+However, this has to be seen as "yet another fence" and not something for which there is clear indication that we need to adopt immediately. 
+Bottom line: I suggest keeping HMAC-MD5 as defined now. 
+(And being always very attentive to updates from the cryptanalytic front.) Hugo A.L. Digital Ltd, URL: http://www.algroup.co.uk London, England. 

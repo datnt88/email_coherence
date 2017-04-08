@@ -1,0 +1,79 @@
+Hello Annotations guys, Just a small note to tell you that the latest Amaya release (5.3) includes some annotation enhancements: 1) It is now possible to annotate other annotations. 
+Previously, you could only annotate documents other than annotations. 
+2) Because an annotation is like a comment, we have been working on a mechanims that allows people to reply to comments. 
+We made a new RDF schema for replies and integrated it into Amaya. 
+You can now reply to annotations. 
+You can see all the discussion thread made from replies in the annotation window. 
+You can also annotate replies. 
+Like annotations, you can keep the replies local to your workstation or publish them to a server. 
+We're updating our annotation tutorial and will make more info available soon. 
+If you want to try it out, check the latest Amaya and see the Help file on annotations. 
+Enjoy! 
+-jose, on behalf of the Annotea team At the moment Annozilla (my Mozilla client) is confused by the RDF it's getting back from requesting a list of annotations for a page, presumably because of the changes to the schema. 
+Annozilla iterates over all RDF resources assuming them to be annotations. 
+The new RDF served up includes things like example.org:huh 
+xmlns:example.org="http://example.org/" a:Email r:resource="mailto:matthew+test@mjwilson.demon.co.uk" / which appears to be causing additional resources to be created. 
+I can hack around the problem by ignoring resources without an a:body/ property (is that right right term? 
+sorry, I'm not very good at RDF), but I don't know whether that's the right solution or just a workaround. 
+The bookmarklet servlet seems to be confused as well. 
+Any advice? 
+Matthew Wilson "Matthew Wilson" matthew@mjwilson.demon.co.uk presumably It's killed my implementation too, was it really a good idea to implement the new scema and destroy 75% of the implementations with little warning? 
+Especially the only implementations supported in real world browsers (no disrespect to Amaya, but it's lack of scripting unfortunately limits its usefulness in browsing, due to clueless web authors.) (will look at fixing mine.) Matthew - haven't you got RDF parsers available in Mozilla, can't you use them to sort it out, just work on the triples? 
+- also javascript if you've not got parsers available. 
+Jim. 
+I use the Mozilla RDF parser to collect all the results into an RDFDatasource. 
+I don't have then direct access to the triples (I think): my algorithm is to loop over all resources, and then report these as annotations based on their properties. 
+Now, I can just ignore resources which "look wrong", but I'd rather get a better understanding of the issues (as I said, I'm no RDF expert) to try and produce a client which is more robust to these kind of changes. 
+Matthew The thread schema was not supposed to affect old clients, I did test with old Amaya. 
+But obviously that was not enough. 
+We should have asked someone else to test too. 
+I have two names now on my list that we can ask next time. 
+Meanwhile we try see what is wrong and correct it as soon as possible. 
+Marja oops, that's unfortunate. 
+no need to make assumptions -- in RDF, those things that say they have type Annotation are annotations. 
+You need not assume that anything else is, unless you want to get into deduction (which is on our future horizon, and we'd be happy to talk about but we're not doing that yet.) yep. 
+This is not exactly what we had intended; a bug snuck in at the last moment. 
+The 'http://example.org/huh' property is not defined anywhere. 
+It was supposed to be another dc:creator property. 
+But despite this error, this RDF is syntactically correct. 
+No RDF parser should be too upset by it, though the '.'s in the namespace prefix might be considered a little unusual. 
+Yes, it defines another property of an annotation and the value (object) of that property is an anonymous node about which you are told three properties. 
+If you are not prepared to handle this additional node and its properties, you are free to discard them. 
+Parsing this whole thing as a traditional fixed DTD is the wrong thing to do. 
+That has always been the case for RDF. 
+I don't understand the relationship between lack of a body property and the extra property above. 
+Annotations are not required to have a body property. 
+But your client could choose to ignore annotations that do not have bodies if you wish. 
+we'll investigate that. 
+That's the bit I was missing - checking type. 
+Matthew Wilson cool. 
+Glad this looks easy. 
+I apologize that we did not think to test your client against our new server before we released it in order to catch this and warn you much earlier. 
+By way of comfort, it appears that our servlet made the same assumption about the type of the objects it would find. 
+A little bit more detail on the RDF background for those interested: There are two ways that the type can be declared in RDF/XML syntax. 
+The way the old server shipped the RDF, there was an explicit type property (element); e.g. r:RDF xmlns:r="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:a="http://www.w3.org/2000/10/annotation-ns#" xmlns:http="http://www.w3.org/1999/xx/http#" xmlns:d="http://purl.org/dc/elements/1.0/" 
+a:annotates ... This says that there is a description of a resource named "... 255548" and that resource has two types. 
+(Comment is actually a subclass of Annotation, but that is not important for this discussion). 
+The new server uses an abbreviated syntax form that says exactly the same thing to an RDF engine: r:RDF xmlns:r="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:a="http://www.w3.org/2000/10/annotation-ns#" xmlns:http="http://www.w3.org/1999/xx/http#" xmlns:d="http://purl.org/dc/elements/1.0/" 
+a:Annotation r:about="http://annotest.w3.org/annotations/annotation/982362336.255548" a:annotates ... The A:Annotation element is merely a well-defined (by the RDF syntax spec) short-hand for the pair of elements -Ralph Another issue: can anyone show me a page where there are replies (on the annotest server)? 
+I have tried to post some replies using the latest Amaya, but I never see them show up. 
+Matthew sure. 
+Here is the URI of a reply I just posted: I'll leave it as an exercise to the reader :) to follow the RDF links in that object back to the annotation then to the page that was originally annotated. 
+(Anyone care to contribute a replacement bit of perl for to generate a more user-friendly HTML presentation? 
+The current bits that annotest serves for content-type text/html is just a debugging interface.) OK, done that (I think!) is a reply with root whose context is http://www.w3.org/#xpointer(id(logo)/img[1]) and body "Works similar as Discussion function of Internet Explorer." (All at the time of writing, of course.) But I don't see the Reply thread displayed in Amaya for that annotation. 
+Am I doing something wrong? 
+I am running Amaya 5.3 on Win98. 
+I go to the W3 page, do Annotations- Load, then double click on the pencil icon to the left of the W3C logo. 
+I see the annotation, but no replies. 
+The tutorial says that I should see a thread of replies. 
+Matthew Did you try to make the window bigger? 
+It is not done automatically right now. 
+I can see them when I resize the window. 
+I'm automatically loading the annotations. 
+Maybe that's the problem: try loading again from the annotation window after you have opened it. 
+Marja ah! 
+The annotations and replies to the annotation are not queried until you do Annotations- Load within the annotation window. 
+Or you could change your Amaya preferences to always query whenever you open a new URL in the Annotations- Configure ' Autoload remote annotations' checkbox. 
+That's the problem. 
+Thanks. 
+Matthew 

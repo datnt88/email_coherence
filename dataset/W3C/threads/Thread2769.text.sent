@@ -1,0 +1,45 @@
+Having read both the diff version of rev-03, I am now confused about the Cache-control revalidation directives, and their intended interaction with the Authorization mechanism. 
+The text in 14.8 appears to allow me, as a proxy, to serve objects requiring authorization, without first validating the user's credentials, as long as the object is fresh. 
+14.9.4 seems to say that must-revalidate is not unconditional, but rather that it only requires revalidation if the object is stale. 
+It further seems to say that proxy-revalidate can be used to require shared proxies to authenticate each user. 
+So, an origin server should send both "proxy-revalidate" and "public" to force revalidation? 
+If so, I think at the very least this should be added to the list in 14.8, and that proxies ought to be required to revalidate in this case. 
+If not, I need educating. 
+Thank You, Richard L. Gray will code for chocolate Having read both and the diff version of rev-03, I am now confused about the Cache-control revalidation directives, and their intended interaction with the Authorization mechanism. 
+I have no opinions about Authorization, so you'll have to wait for someone else to discuss the "intended interaction". 
+But regarding the basic revalidation mechanism: 14.9.4 seems to say that must-revalidate is not unconditional, but rather that it only requires revalidation if the object is stale. 
+It further seems to say that proxy-revalidate can be used to require shared proxies to authenticate each user. 
+The difference between must-revalidate and proxy-revalidate is that the former applies to all caches, but the latter does not apply to non-shared caches (e.g., browser caches). 
+If you are willing to assume that a given browser cache is uniquely associated with a specific user, then you could use proxy-revalidate instead of must-revalidate (if your goal is to force re-authentication.) So, an origin server should send both "proxy-revalidate" and "public" to force revalidation? 
+If so, I think at the very least this should be added to the list in 14.8, and that proxies ought to be required to revalidate in this case. 
+If not, I need educating. 
+The intended way to force revalidation (by shared caches) is to use Cache-control: s-maxage=0, proxy-revalidate I.e., tell the shared caches that the response is immediately stale, and that shared caches are not allowed to ignore this. 
+*HOWEVER*, since this is rather verbose, and since the "s-maxage" directive was added specifically to support this case, the spec says "s-maxage directive also implies ... proxy-revalidate", so you really only need to send Cache-control: s-maxage=0 to force a shared cache to revalidate on every access. 
+It's a no-op for private caches. 
+Bottom line: I don't think this is an issue, except perhaps for "the specification is complicated and someone should write a tutorial". 
+-Jeff We intend to implment "must-revalidate", "proxy-revalidate", "max-age", and "s-maxage" the same if credentials are present; that is, _always_ revalidate, using the current credentials. 
+I believe that this is a compliant implementation of the spec. 
+-Jeff And I just noticed that 14.8 Authorization, special case (1) mentions "proxy-maxage". 
+I assume that is intended to be "proxy-revalidate"? 
+No, "proxy-maxage" was the original proposed name for "s-maxage". 
+(Roy pointed out that the relevant consideration was whether or not a cache was "shared", not whether or not it was a "proxy".) 
+This section seems to have been missed during the rewording. 
+Jim, please make sure that all instances of "proxy-maxage" have been replaced by "s-maxage", in both the HTTP/1.1 spec and in the Authentication spec. 
+Thanks -Jeff If the spec is so murky as to need a tutorial, perhaps it is not good enough to produce interoperable implementations? 
+We intend to implment "must-revalidate", "proxy-revalidate", "max-age", and "s-maxage" the same if credentials are present; that is, _always_ revalidate, using the current credentials. 
+And I just noticed that 14.8 Authorization, special case (1) mentions "proxy-maxage". 
+I assume that is intended to be "proxy-revalidate"? 
+Richard L. Gray will code for chocolate mogul@pa.dec.com on 07-14-98 01:57:23 PM Please respond to mogul@pa.dec.com 
+Subject: Re: ISSUE: revalidation Having read both and the diff version of rev-03, I am now confused about the Cache-control revalidation directives, and their intended interaction with the Authorization mechanism. 
+I have no opinions about Authorization, so you'll have to wait for someone else to discuss the "intended interaction". 
+But regarding the basic revalidation mechanism: 14.9.4 seems to say that must-revalidate is not unconditional, but rather that it only requires revalidation if the object is stale. 
+It further seems to say that proxy-revalidate can be used to require shared proxies to authenticate each user. 
+The difference between must-revalidate and proxy-revalidate is that the former applies to all caches, but the latter does not apply to non-shared caches (e.g., browser caches). 
+If you are willing to assume that a given browser cache is uniquely associated with a specific user, then you could use proxy-revalidate instead of must-revalidate (if your goal is to force re-authentication.) So, an origin server should send both "proxy-revalidate" and "public" to force revalidation? 
+If so, I think at the very least this should be added to the list in 14.8, and that proxies ought to be required to revalidate in this case. 
+If not, I need educating. 
+The intended way to force revalidation (by shared caches) is to use Cache-control: s-maxage=0, proxy-revalidate I.e., tell the shared caches that the response is immediately stale, and that shared caches are not allowed to ignore this. 
+*HOWEVER*, since this is rather verbose, and since the "s-maxage" directive was added specifically to support this case, the spec says "s-maxage directive also implies ... proxy-revalidate", so you really only need to send Cache-control: s-maxage=0 to force a shared cache to revalidate on every access. 
+It's a no-op for private caches. 
+Bottom line: I don't think this is an issue, except perhaps for "the specification is complicated and someone should write a tutorial". 
+-Jeff 

@@ -1,0 +1,26 @@
+I am implementing WebDAV server but I feel I might be hitting in a brick wall. 
+I was wondering if PROPPATCH command enforces atomicity? 
+Atleast according to the WebDAV draft it says that either all the set/remove operations pass or they all fail which means rolling back. 
+Can't I do "besteffort" vs. "atomic" in case of PROPPATCH? 
+Because in my application scenario I am trying to replace the current protocol that allows besteffort as well as atomic flexibility. 
+Any response would be appreciated. 
+Thanks, -Imran DO YOU YAHOO!? Get your free @yahoo.com 
+address at http://mail.yahoo.com 
+Painful as it may be, the operation must be atomic. 
+As a fellow server implementor, I sympathize ... I haven't implemented rollback either :-) It would be nice if a client could say "do best effort", but that doesn't exist. 
+The atomic requirement allows a client to ensure that a consistent set of changes are made. 
+IMO, if you have a closed system (your own client and server), then it is perfectly acceptable to insert a new child element in the PROPPATCH to identify best-effort. 
+For example, the request body could look like: D:propertyupdate xmlns:D="DAV:" xmlns:Z="http://www.example.com/mydav/" 
+Your server could then recognize the besteffort tag. 
+Your client would also use the tag. 
+Other clients that access the server would not include it, so your server would guarantee atomicity for them (since they expect it). 
+Cheers, -g Greg Stein, http://www.lyra.org/ 
+In http://lists.w3.org/Archives/Public/w3c-dist-auth/1998OctDec/0303.html (section 3) I talk about why WebDAV requires atomicity. 
+I also question how critical this need really is. 
+In the end, however, I suspect that atomicity really is important. 
+I can just imagine too many scenarios where not having a truly atomic PROPPATCH would leave your system in a truly horrendous state. 
+Yaron From: Greg Stein [mailto:gstein@lyra.org] Sent: Wednesday, February 17, 1999 4:21 PM Subject: Re: Must PROPPATCH operation be atomic... If the client wants best-effort semantics, it can make multiple requests. 
+|John Stracke | My opinions are my own |S/MIME &amp; HTML OK | |francis@appoint.net|==========================================| 
+|Chief Scientist |NT's lack of reliability is only surpassed| |Appoint.Net, 
+Inc. | by its lack of scalability. 
+-- John Kirch| 

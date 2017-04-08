@@ -1,0 +1,53 @@
+I think this is an irrelevant point. 
+A parser creates its own parse tree. 
+A parser that puts newlines in the parse tree (presumably as text nodes) will have them, and this will in no way affect a parser that does not put them there. 
+THe parse tree is an in-memory structure. 
+In any case, ``Jane WebMeister'' is probably a human and has no need to look inside the software at the parse tree. 
+Well, Jane WebMeister might be concerned if a) some XML applications "eat" the newlines-that-are-data between table sells, b) some dispay them and c) some report the confusing data-between-cells as an error. 
+Let's be clear here: as I understand this proposal it is the absolute opposite of Charles'. 
+Instead of removing mixed content, it must either make ALL CONTENT MIXED CONTENT or restrict all newlines in "element" content. 
+After all, a parser without a DTD doesn't know what is mixed content and what is element content. 
+As Charles pointed out, parsers will have a hard time telling the true content from the source-formatting (unless we absoutely restricted the source-formatting). 
+Paul Prescod That's correct. 
+For what it's worth, SoftQuad Panorama can display SGML tables with newlines between the tags, even if PCDATA is allowed there. 
+It isn't particularly hard to implement, as far as I can see. 
+Try making P a Panorama table and B a table cell in an HTML file... :-) Note that a parser without a DTD also can't use SHORTREF to interpret quotes. 
+Lee But should every SGML application have to implement it over and over again? 
+That means that between and within ANY ELEMENT you would have to explicitly look out for "meaningless" newlines. 
+Instead of implementing the handling in the parser (which code we expect to be used over and over again) you must implement it in the application. 
+Then you have to define in your DTD-documentation that newlines in that context are going to be interpreted as "meaningless" which means that we are shifting the documentation and education burden to application designers. 
+A DTD-less parser doesn't know or care that it is dealing with shortref. 
+It would treat '"' as "PCDATA Start" and "PCDATA End". 
+Paul Prescod An XML parser only has to know that the quotes (or brackets, or whatever) delimite data. 
+Only an SGML - XML converter needs to know that they are really short references. 
+Charles F. Goldfarb * Information Management Consulting * +1(408)867-5553 13075 Paramount Drive * Saratoga CA 95070 * USA International Standards Editor * ISO 8879 SGML * ISO/IEC 10744 HyTime Prentice-Hall Series Editor * CFG Series on Open Information Management Having finally finished reading all the back mail, I'm ready to try to jump back into the discussion. 
+The example under consideration was the table: TABLE TR TD 1 /TD TD 2 /TD TD 3 /TD TD 4 /TD /TR TR TD 1 /TD TD 2 /TD TD 3 /TD TD 4 /TD /TR /TABLE and the desire to format it, thus: Since in the DTD-less case we don't know that the table is element content, we are unable to remove the whitespace. 
+Now, we could fix this by having DTD-less processing differ from DTD-ful processing, but I agree with most of you (I expect) that this is a bad idea. 
+But, why not format the table like this: TABLE TR TD 1 /TD TD 2 /TD TD 3 /TD TD 4 /TD /TR TR TD 1 /TD TD 2 /TD TD 3 /TD TD 4 /TD /TR /TABLE This looks a little weird, but you already have to do this in netscape (at least for TD elements) because in tables leading whitespace is not ignored. 
+And if we have a further "application" convention that whitespace is ignored according to common convention, except when a stylesheet requests verbatim processing for an element. 
+I'd rather add a "verbatim" declaration to the DTD, come down to it. 
+Incompatibility with 8879 is actually not an issue here, anyway, as the entity manager is _never_ required to report RS/RE to a parser. 
+If current entity managers insist on recognizing CR and LF as record boundaries, then we should live with the incompatibility, and encourage the development of simpler entity managers that are not so "obliging". 
+The RS/RE stuff in SGML was supposed to make life easier for taggers. 
+Experience has shown that, arguments about "true content" or not, they do not work, as even SGML experts can disagree about the meaning of the rules. 
+We are in danger of making compatibility with SGML's mis-features a millstone around our necks. 
+This is correct. 
+However, XML would be required to look stupid by quoting things that are already clearly delimited (by tags), and would be permanently, and completely incomaptible with all existing SGML and pseudo-sgml (i.e. HTML) documents. 
+Using quotes to preserve the SGML newlines is like wearing glasses to fix your outdated contact-lense prescription. 
+Ignoring whitespace around markup is an idea that has otlived its usefulness. 
+Let's bury it. 
+RE delenda est. 
+-- David David Durand dgd@cs.bu.edu | david@dynamicDiagrams.com 
+Boston University Computer Science | Dynamic Diagrams I would bet that many applications already do. 
+The point is that it has to be done somewhere. 
+The application is the only one that really knows if the whitespace is significant since it is the one that read the stylesheet. 
+Personally, if I didn't write the parser, I'd rescan it's output for meaningless-as-defined-in-the-stylesheet whitespace anyway. 
+Not in your DTD. 
+It's part of the stylesheet. 
+bob Robert Streichstreich@slb.com Schlumbergervoice: 1 512 331 3318 The point of Charles' True Information spiel is that the application should never see data that has not been normalized according to SGML/XML's rules. 
+If a data character (such as a newline under the banish RS/RE proposal) occurs in element content, it should be an ERROR, and in an SGML parser's interpretation it will be. 
+So an SGML-based application (i.e. Panorama) will report an error (if it supports remapping RS/RE). 
+That's why RS/RE must either remain as it stands or must be banished from element content and replaced by a convention like this: P A new paragraph /P I didn't mean that you would put it in the DTD, but in the DTD documentation (i.e. the TEI Guidlines or the HTML Specification). 
+As I said, this just shifts the burden from the hundred of us here to the thousands out there. 
+I prefer the two other proposals that make whitespace handling consistent across XML-applications. 
+Paul Prescod 

@@ -1,0 +1,85 @@
+(moving on-list) Dave and I have been having a discussion about xmlbase test013. 
+Dave: I wonder if you shouldn't be raising these as errata on XML Base? 
+The missing path component one seems tricky too. 
+Jeremy: maybe the test cases such as number 13 that you were asking about that are basically about RFC 2396 should be non-normative. 
+[i.e. test cases that are about URI resolution (or the workings of xml:base in general), as opposed to the test cases to do with xml:base in an RDF context]. 
+I thought both of these ideas are worth bringing to other peoples attention. 
+Seems like a proposal to: - draw the relevant XML wg's attention to difficulties in interpretating xml:base with same document references, (particularly when the base is a URIref). 
+- select the xml:base test cases that: - test general URI resolution - test general xml:base behaviour and mark them as non-normative Jeremy From: Dave Beckett [mailto:dave.beckett@bristol.ac.uk] Sent: 19 March 2002 15:52 Subject: Re: XML Base Jeremy Carroll said: I wasn't particularly looking at any text, other than that bit of RFC 2396 that talked about the same document reference "" as the start of the current document. 
+I thought that the other cases in the test case were unproblematic: vis - "relpath" and "#foo" In those cases, whether they use the full base URI#frag or not is moot the only real issue is whether "" resolved against "http://example.org/dir/file#frag" is "http://example.org/dir/file#frag" or "http://example.org/dir/file" 
+I basically made it up, on the basis of the RFC 2396 text. 
+Made it up? 
+:) 4.2. 
+Same-document References A URI reference that does not contain a URI is a reference to the current document. 
+In other words, an empty URI reference within a document is interpreted as a reference to the start of that document, and a reference containing only a fragment identifier is a reference to the identified fragment of that document. 
+Traversal of such a reference should not result in an additional retrieval action. 
+However, if the URI reference occurs in a context that is always intended to result in a new request, as in the case of HTML's FORM element, then an empty URI reference represents the base URI of the current document and should be replaced by that URI when transformed into a request. 
+emphasise "start of that document" .... Yeah, seems fair enough. 
+Did we ever get a definitive answer out of Larry? 
+I wonder if you shouldn't be raising these as errata on XML Base? 
+The missing path component one seems tricky too. 
+Empty: http://www.w3.org/2001/06/xmlbase-errata Dave I think this proposal opens a deeper question: are any of the test cases normative? 
+My concern is about having multiple documents providing the same information normatively. 
+In particular, if a test case is found to conflict with specification text, which takes precedence? 
+#g Graham Klyne or just delete them. 
+Can we have a list of the ones you think we should keep and we can try to decide this Friday. 
+Brian Jeremy: Brian: Test case 007 - 013 examples of the combination of a base URI and a relative URI or same document reference, showing various different cases. 
+and the three error cases (now error001/test017 and test 15 and 16). 
+I have difficulty with deleting these, since practically these are: + significant + subject to dispute Hence, refusing to judge on this, because it is not in our competence, acts to make the meaning of RDF/XML documents that contain XML Base (in the dubious cases) doubtful. 
+The fact that they generate discussion is indicative of the need for at least guidance from the WG; even if it is not in our competence. 
+Some of these test cases are no brainers, others do commit to a position. 
+The former are not objectionable and can be retained without much problem; the latter are needed for a standard use of xml:base. 
+I am arguing a catch 22, if you want to delete these, it is because some people disagree with them, which is why we need them. 
+I am happy with deleting the ones that nobody disagrees with. 
+cf. which disagrees with some of these test cases. 
+Jeremy Please can I have a short proposal for what we should do. 
+Brian Documenting Brian's verbal suggestion. 
+We could ask the owners of the xml base rec for normative answers: i.e. a list of XML Base relativeURI EASY: "http://example.org/dir/file" 
+"../relfile" "http://example.org/dir/file" 
+"/absfile" "http://example.org/dir/file" 
+"//another.example.org/absfile" 
+GETTING HARDER: "http://example.org/dir/file" 
+"../../../relfile" "http://example.org/dir/file" 
+"" "http://example.org/dir/file" 
+"#frag" MASTER CLASS: "http://example.org" 
+"relfile" "http://example.org/dir/file#frag" 
+"relfile" "http://example.org/dir/file#frag" 
+"#foo" "http://example.org/dir/file#frag" 
+"" "mailto:Jeremy_Carroll@hp.com" "#foo" "mailto:Jeremy_Carroll@hp.com" "" "mailto:Jeremy_Carroll@hp.com" "relfile" Any such set of answers (i.e. absolute URIs) would make our test cases redundant. 
+The problem is, what if we don't like the answers for the same document references. 
+2nd problem is, what will they do? 
+ask the authors of RFC2396? 
+ask the tag? 
+These test cases appeared because an ARP user complained that ARP screwed up on one of them (the missing slash one). 
+When I dug into it, I realised I didn't know what the right answer was. 
+So as a developer without such answers I have difficulty. 
+Jeremy From: Brian McBride [mailto:bwm@hplb.hpl.hp.com] Sent: 21 March 2002 16:42 Subject: RE: XML Base Jeremy Carroll said: The only one that wasn't approved was test017/error001 and that is because I think the algorithm for resolving the URI was wrong in the proposed test017.nt 
+I think resolving base URI "mailto:Jeremy_Carroll@hp.com" with URI "relfile" will give URI "mailto:relfile" not URI "mailto:/refile" because mailto is a non-hierachical URI scheme (does not start Dave Jeremy Carroll said: snip/ Isn't there a canonical answer for this in the definition of the mailto: prefix? 
+If not, this needs flagging up for TAG or appropriate body to find an answer to (even if it's "undefined") and the resolution of this changed to match. 
+jan grant, ILRT, University of Bristol. 
+http://www.ilrt.bris.ac.uk/ "NOP" is a trivial implementation of an executable Z subset. 
+From: Dave Beckett [mailto:dave.beckett@bristol.ac.uk] Sent: 22 March 2002 10:45 Subject: Re: XML Base Jeremy Carroll said: snip/ I agree that test017 is wrong. 
+Your analysis is better than mine was. 
+However I have reverted back to it being an error. 
+(error001). 
+The history from my point of view is: + I suggested it was an error because of non-hierarchical URI + The wg asked me to reconsider + I pointed to text in RFC 2396 that supported my position + DaveB indicated implementation difficulty in distinguishing hierarchical and non-hierarchical schemes + I agreed with DaveB and suggested test017 as resolving that + Graham pointed out that RFC 2396 gives an easy syntactic distinction between hierarchical and non-hierarchical schemes (is the first : followed by /?) + I agreed with Graham and reverted to regarding this case as an error Meanwhile ... + DaveB expressed concern that we were doing something that was not our job + I expressed limited agreement + TAG discussion has started up about URIs + Brian suggested deleting the relevant test cases + I identified the test cases, and mildly opposed deleting them I think an outcome in which we do not *need* to provide test cases for URI resolution is the ideal. 
+At least some of the test cases I posted are unclear, and hence require clarification. 
+Brian's proposal may result in the clarity that we need without us stepping beyond our competence. 
+Jeremy Jan Grant said: The mailto URL scheme ftp://ftp.isi.edu/in-notes/rfc2368.txt 
+Does not mention how relative URIs are handled, however it remains a non-hierarchical URI scheme (everything after the : is opaque) and the above resolution I think is correct. 
+Dave DaveB: RFC 2396: Some URI schemes do not allow a hierarchical syntax matching the hier_part syntax, and thus cannot use relative references. 
+hence it is neither. 
+(repeating myself, sorry). 
+Jeremy Carroll said: So the answer isn't undefined for mailto: It is not an error. 
+Lets delete xml-base test error001.rdf 
+and move on. 
+Dave I think this is an error: that a relative URI cannot be resolved with respect to a mailto: URI. 
+It is not necessary for all URI within a given scheme to be restricted to the hier_part syntax, since the hierarchical properties of that syntax are only necessary when relative URI are used within a particular document. 
+Documents can only make use of relative URI when their base URI fits within the hier_part syntax. 
+It is assumed that any document which contains a relative reference will also have a base URI that obeys the syntax. 
+In other words, relative URI cannot be used within a document that has an unsuitable base URI. 
+Some URI schemes do not allow a hierarchical syntax matching the hier_part syntax, and thus cannot use relative references. 
+Noting some following discussion in the list, I fail to see what harm or difficulty is incurred by saying now that this is an error. 
+I also don't think this is really an architectural issue, and not part of what TAG is discussing. 
+If I'm wrong, and TAG subsequently say that IMO) by an erratum. 
+#g Graham Klyne 

@@ -1,0 +1,70 @@
+Is there any way to turn off the dropping of empty DIV elements? 
+I have CSS styles applied to empty DIV elements such that they do provide a purpose. 
+Charlie Hi Charlie, Adding an attribute should keep it from getting deleted, but it doesn't. 
+For example, Tidy will still drop the following: This would be a simple fix, but I'm not sure what the side effects would be. 
+Am I right in thinking that empty block elements with attributes should not be dropped? 
+Also, out of curiosity, what kind of style is useful for an empty DIV? take it easy, Charlie could you make an option that would be disabled by default? 
+This is correct. 
+we have about 500 forms that are converted from PDF and they use the style attribute that defines border-top,border-left,top,left, and width to draw lines duplicating the converted form. 
+i.e. DIV STYLE="position:absolute;top:168px;left:0px;width:729px;border-top-style:sol id;border-top-width:1px;border-top-color:#000000;" /DIV There can be hundreds of these per form. 
+Charlie Is there a way to tell Tidy, that if it doesn't recognize a tag - NOT to delete it (like asp.net user controls that aren't in the config file)? 
+David Wier Thanks for your input. 
+Bj?rn, can you weigh in on empty elements with attributes? 
+Are they prunable or no? 
+Also, I find it very curious that you can use a DIV to position objects not contained within. 
+Can you send a sample? 
+I like collect interesting specimens of markup found "in the wild". 
+thanks, Charlie It seems incorrect to prune the empty div in the following example: which gets tidied to The tidied version has a rather different meaning than the original. 
+(Tested with the Dec. 1, 2002 Tidy.) Liam Quinn Sorry, I don't understand. 
+What is that difference in meaning exactly? 
+Can you elaborate? 
+I'm not trying to be difficult, I just want to understanding what you are saying. 
+thanks, Charlie Likely the intended meaning in this case would be for the empty div to act as a separator, similar to br . 
+The couple browsers that I checked with rendered as foo bar but the tidied version becomes foobar without the separation that the author likely intended. 
+I suppose this case doesn't come up often in practice, but I thought it may be worth mentioning. 
+Liam Quinn Ok, I see what you mean. 
+Is this behavior specific to DIV or would it apply to other block level tags? 
+What about PRE, BLOCKQUOTE, CENTER? 
+Empty TD elements have meaning as placeholders. 
+However empty TDs should probably be handled the same way as empty Ps: insert a &amp;nbsp; This is my standard hand-coding practice to make tables w/ empty cells look OK. The behaviour would apply to other block-level tags, including PRE, BLOCKQUOTE, and CENTER. 
+Liam Quinn Ok, I modified CanPrune() in parser.c, 
+adding the following before 'return yes;' if (element- attributes != null) return no; (sorry, I don't have cvs diff) This seems to have done the job and it is not deleting my empty elements with attributes. 
+There doesn't seem to be any problems with this, but I don't know the code well enough to know for sure. 
+Charlie r-top-style:solid;border-top-width:1px;border-top-color:#00000 0;" /DIV It's most likely that empty non-empty non-replaced elements (br is an empty element, object is a replaced element) are used to control the presentation of the document. 
+Using elements that way is bad practise and in general I think Tidy should remove or replace them, independently of whether they have some attributes specified. 
+There are some exceptions like td , a name='...' , maybe li and dd and probably others. 
+However, removing them might cause problems as in the example Liam provided. 
+For p Tidy has a --drop-empty-paras option to control removal of empty p elements, Will be cleaned to or depending of the value given for the mentioned option. 
+Using something similar in a more general fashion, i.e., for all empty elements, but changing div ... div style=" position: absolute; top: 168px; left: 0px; width: 729px; border-top-style: solid; border-top-width: 1px; border-top-color: #000000;" ... /div to will not help Charlie (while it deals with Liam's case). 
+The most easy solution would be a new config option empty-elements: auto | keep Where 'auto' is the current behaivour and 'keep' keeps all empty elements (what about p and conflict resolution with --drop-empty-paras?). 
+The desired behaivour for 'auto' in cases like abbr title='' /abbr or div ... div /div ... /div probably needs some discussion. 
+You can't. 
+Empty p elements get dropped, empty td s should stay empty td s. Inserting &amp;nbsp;s is considered rather harmful. 
+Interesting. 
+I have never heard this before. 
+Can you elaborate? 
+What are the side effects? 
+When generating HTML from web apps (Perl/JSP), I have always found it necessary to make sure all cells have something in them, either via rowspan or by adding &amp;nbsp;. 
+If you leave them empty, you get visual "holes" through the table to the background. 
+If any styles are applied to the table, it looks weird. 
+To see an example, have a look at the table for binaries on the Tidy home page. 
+Admittedly, this is just a hack I have picked up and not based on any deeper theory. 
+curious, Charlie I was thinking along similar lines. 
+Perhaps it would be good to fold in dropping/keeping of unknown tags. 
+Not sure. 
+I'll use your comments as a guide. 
+I want to experiment with the sample file that Charlie Cox sent us to see what the visual impact is on IE6/NS6. 
+His patch is simple enough, but I think getting a deeper understanding of how styles get applied will be worthwhile. 
+I don't see how an empty div can be used to apply any style, positional or otherwise. 
+Seems like useless text. 
+But Charlie claims his docs are broken. 
+So it immediately begs the question: what is the GCD cross-browser behavior that Tidy can expect? 
+I'd like to end up with a few sample files that maybe other folks can confirm/deny my findings on other browsers. 
+My selection is fairly limited these days. 
+take it easy, Charlie P.S. FYI, Lee put in that change wrt empty paragraphs. 
+If --drop-empty-paras no, then p /p = p &amp;nbsp; /p . 
+The 'empty-elements' option would work for me as I could retain the div tags with the styles defined for them without changing the default behavior for anyone else. 
+would it be feasable to use br br when no attributes are on the div and leave as is(or use new option setting) if attributes are there(maybe just style,class or id)? 
+btw, this is not my preference for drawing lines on a web page, but rather the result of a third party utility to convert hundreds of PDFs to HTML documents. 
+one other note: my example is not nested div tags(as posted below), but rather individual div tags. 
+i.e. Charlie Cox Maybe, as I've said, this needs IMO more discussion. 

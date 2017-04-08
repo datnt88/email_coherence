@@ -1,0 +1,41 @@
+Thinking out loud... Consider: Is that an RDF document? 
+OK, after you add the namespaces... is it an RDF document? 
+Consulting our shiny new drafts... we find... which takes us to which says "An attribute ?string-value? interpreted as an RDF URI reference." 
+hmm... "interpreted as" doesn't seem to change the fact that the syntax allows any string. 
+So far, no clear evidence to rule out this document... Now to the relevant grammar actions... If there is an attribute a with a.URI == rdf:about then e.subject := uri(identifier := resolve(e, a.string-value)). 
+then back to 6.3.3 
+Grammar Action Notation to see how resolve() works... then down to 5.3 Resolving URIs "Relative URI references are resolved into RDF URI references according to the algorithm specified in XML Base [XML-BASE] (and RFC 2396)." 
+er... but that algorithm takes an ASCII string as input, and a limited form of ASCII string... it doesn't take any old unicode string. 
+So this appears to be a conforming RDF document whose abstract syntax is incompletely specified... er... no, in section 5.5 Conformance, "RDF document" is specified as something that is serialized from an RDF graph, not somethignt that matches this grammar(!). 
+By that definition, since there's no RDF URI Reference that can result from resolving "very silly ## reference", this isn't an RDF document. 
+I took an action (2003-09-12#4) to propose to relax that constraint, but now that I see how RDF document is defined, I don't think that's wise. 
+I suppose it would be sorta rude to just stop here and hit send... let's pop back to the motivating issue... ah yes, % in URIs... so the relevant test case looks more like let's look at 6.4 RDF URI References again... we can't delete the % from that para; if we did, then would turn into the URI http://example/quite%252Fordinary%252Freference which is clearly not what we want; by design, it remains I suggest this last case be put in the test suite in response to the 26Aug comment. 
+Gosh... I see more issues... control characters and such in the "escaping % in RDF URI references" thread. 
+Seems clear to me that our spec doesn't allow control characters; how would you find a unicode string U' where utf8-%%-encode(U') is a plain old ASCII absolute URI reference with optional fragid while U' has control characters in it? 
+Ew... now I see... yes, they are allowed by our current draft. 
+Ugh... time to study namespaces 1.1... 
+I'm losing energy at this point. 
+I think I'll hit send now. 
+Perhaps I'll find time/energy to pick it up again later. 
+Dan Connolly, W3C http://www.w3.org/People/Connolly/ [snip] A quick bit of feedback on this from looking at 'RDF in the wild', ie. various folks attempts to create, edit and extend FOAF files. 
+It may be feedback on the FOAF documentation and tools as much as anything, but still... 
+One thing I see quite a lot (@@stats? 
+evidence?) is text where URIs should go: instead of ... foaf:interest rdf:resource="http://www.w3.org/RDF/"/ etc I believe (again wish I had crisp evidence to cite) that naming properties 'fooHomepage' (schoolHomepage, workplaceHomepage etc) may offset such mistakes. 
+So am wondering out loud how this issue would affect tools - esp validators. 
+"That doesn't look like a URI (URL etc), are you sure you meant to put that text here?"... Dan DanC: Gosh... I see more issues... control characters and such in the "escaping % in RDF URI references" thread. 
+Seems clear to me that our spec doesn't allow control characters; how would you find a unicode string U' where utf8-%%-encode(U') is a plain old ASCII absolute URI reference with optional fragid while U' has control characters in it? 
+Ew... now I see... yes, they are allowed by our current draft. 
+Ugh... time to study namespaces 1.1... 
+I'm losing energy at this point. 
+I think I'll hit send now. 
+Perhaps I'll find time/energy to pick it up again later. 
+DanBri: So am wondering out loud how this issue would affect tools - esp validators. 
+"That doesn't look like a URI (URL etc), are you sure you meant to put that text here?". Martin Duerst said we were wrong in concepts to permit ctrl characters; and suggested that the IRI draft when it advances will prohibit space as well. 
+I am unhappy to be the first spec to prohibit space, in the proto-IRIs Peter seemed to want a forward looking statement, like in Namespaces 1.1. 
+Peter also had an aesthetic preference for the Namespaces 1.1 text, which the WG was not prepared to endorse (given Martin's neutrality). 
+The concepts document is where the main constraints on RDF URIs refs get stated - DanC may have unearthed editorial issues in the syntax doc. 
+Howabout: - change concepts text to prohibit control characters - add a documents SHOULD NOT use space, and implementations SHOULD warn on space, - add informative reference to IRI draft and its successors I'll try and get a proposal together tomorrow morning, in time for the telecon if the chairs want. 
+Jeremy * Brian McBride bwm@hplb.hpl.hp.com [2003-10-17 16:53+0100] This chair wants. 
+Yes please! 
+Dan This chair wants. 
+Brian 

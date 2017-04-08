@@ -1,0 +1,68 @@
+I think people may be getting a somewhat misleading impression of AI planning technology, its capabilities, and its limitations. 
+It's true that planners typically assume that they know how the state of the world can change and that changes are controlled by the actions in the plan. 
+That's how they decide that a certain effect can be achieved by performing operation B after operation A, or that A1 should be combined with B1, not B2, while A2 needs B2 or B3. Anything that wants to compose web services will have to engage in some reasoning of that sort. 
+People do it for example when they go to an on-line bookshop and decide to buy something by putting it in their shopping basket and then going to the checkout, etc. 
+However, plan construction is not the end of the story. 
+There's also plan execution, execution monitoring, failure recovery, and plan repair. 
+The example given earlier -- someone buys the book you were going to buy and no more are in stock -- is one that can be handled in that way. 
+The failure (you can't put the book into your basket, or you can't buy it, or it can't be delivered soon enough) is detected, and then the plan must then be repaired. 
+I am not saying all problems have been solved. 
+Far from it, and it will take research to discover how well WS composition can be handled by AI planning technology; nonetheless many of the problems have been encountered in other contexts. 
+(An example of a difficult problem: if a plan needs repair, what aspects of the existing plan should be preserved?) Here's a quick list of some other elements of planning technology that may be relevant. 
+(I mention some of the work I'm most familar with, and I know I've left out many things, for which I apologize. 
+I hope others will fill in some of the gaps.) * Partial plans and combining planning with execution. 
+(For example, the I-X project in Edinburgh has developed "process panels" that can mix execution of steps in a plan with further planning. 
+We are currently strengthening the planning side and have to deal with the issues mentioned by Jim Hendler and others. 
+Earlier, we explored execution monitoring and plan repair with O-Plan.) (See also David Wilkins's SIPE and Cypress at SRI.) * Mixed-initiative planning. 
+Here's some decisions are made by the planning software while others are made by the user or another agent. 
+(A hard problem here is a version of one Drew McDermott mentioned: how does the planner know when it should stop planning and ask another agent to do something?) * Advice (as with the SIPE) to guide the planner. 
+(It's natural to combine that with mixed-initiative planning.) * Authority, telling the planner what it can do. 
+For example, with O-Plan we can tell the planner to plan only down to a certain level; a planner could also be restricted to certain "phases" of the plan: e.g. fully planning only the initial steps. 
+(This also fits naturally with mixed-initiative planning.) * Obtaining information from external databases (perhaps ones not even known before plan execution began). 
+* Ability to handle many different constraint types (e.g. temporal, resource production and usage) and to have plug-in constraint-managers. 
+* A plan can include "goal-structure" (such as why an action was included or why action A must complete before B can begin); this can indicate what needs to me monitored during execution and also that certain partial failures have no significant impact and so may be ignored. 
+* Representation of events and even processes that are outside the control of the agent(s) executing the plan. 
+They come up during execution but some may also be described to the planner in advance. 
+I also can't help thinking again that some of the problems will really be scheduling problems. 
+A good way to combine a planner and scheduler could be very useful. 
+-- Jeff Hi, I've been thinking about this for some time and would like to get some feedback I have considered, to some extent, work on planning and how it can be applied t o Web services composition. 
+From earlier discussions over this list it is clear that tradition al classic planning techniques have to be in some way adapted to handle the diversity issues over t he Web. 
+I want to put forward the following thoughts: Various planning techniques where devised around specific problems and domains (correct me if I'm wrong): for example STRIPS planning. 
+When considering the planning required for Web services, there are issues which seem to crop up in every composition hence there is place for capturing these commonalities into s ome form of operator-like descriptions. 
+For instance consider a simple sequential service composition: Two services can be composed sequentially if the outputs/effects of one service match with the inputs/preconditions of the other. 
+In the real world, apart from checking this, some composer should also make sur e that once the message with the outputs/effects from the first service has been received then another message that includes this information is sent to the second service. 
+Hence though an initial plan that matches IOPE can be performed in some prelimi nary phase of composition, then monitoring of message passing is required to make sure that t he initial plan can actually be executed in the real world. 
+Returning to my initial point, one can say that these actions are common to mos t compositions that can occur. 
+So it would be possible to capture these into a set of operators tha t represent the actions that are available for service composition. 
+For example: if the output/effect from service A have been received then a mess age to service B can be sent Operator: sendInvocationMsg Preconditions: (and (output=input)(effect=precondition)) (some constraint here over the issue of services having both output/effects and requiring input/precond) Effect: (service A executed) Other operators can be defined in a similar way to capture other common behavio urs related to service composition. 
+Now this is just an idea and might have been explored by others, but IMHO it gi ves some standard way of composing services and gives a planner the possibility to monitor real world compositions. 
+Would really like to get feedback on this and possibly other ideas that confirm /or not the above. 
+Regards, Charlie hi Charlie, i think the constraints that you are describing are basically capturing the kind of information that is typically capturered by a "plan". 
+lets take for instance plans produced by partial order planners: in POP planning, a plan is represented by a set of action instances A representing the steps to be taken by the agent; a set of causal Links L indicating dependencies among those actions; a set of ordering constraints O defining a partial order of the actions; and a set of binding constraints B on the action parameters. 
+Your constraints output=input could be represented by a *binding* constraint. 
+It should be noted, however, that most planners do not support those constraints in their final plans, because they assume that all parameters are ground (= fully instantiated). 
+This is what makes them, in my view, rather unusable for Web service compositions, where certain pieces of information CAN not be known at planning time. 
+On the other hand, planners that do support binding constraints *can* be used for WSC quite effectively, at least as far as my preliminary experiments (toy examples) have shown. 
+In the next time, i am planning to investigate the boundaries of this approach, and if you are interested we can work together and share example scenarios etc. 
+I am using VHPOP currently (which supports partially instantiated actions / binding constraints) in plans (http://www-2.cs.cmu.edu/~lorens/vhpop.html) 
+cheers Joe "Charlie Abela" .net 
+Kopie: Gesendet von: Thema: RE: Composition as pla nning public-sws-ig-req uest@w3.org 
+26.02.2004 10:06 Hi, I've been thinking about this for some time and would like to get some feedback. 
+I have considered, to some extent, work on planning and how it can be applied to Web services composition. 
+From earlier discussions over this list it is clear that traditional classic planning techniques have to be in some way adapted to handle the diversity issues over the Web. 
+I want to put forward the following thoughts: Various planning techniques where devised around specific problems and domains (correct me if I'm wrong): for example STRIPS planning. 
+When considering the planning required for Web services, there are issues which seem to crop up in every composition hence there is place for capturing these commonalities into some form of operator-like descriptions. 
+For instance consider a simple sequential service composition: Two services can be composed sequentially if the outputs/effects of one service match with the inputs/preconditions of the other. 
+In the real world, apart from checking this, some composer should also make sure that once the message with the outputs/effects from the first service has been received then another message that includes this information is sent to the second service. 
+Hence though an initial plan that matches IOPE can be performed in some preliminary phase of composition, then monitoring of message passing is required to make sure that the initial plan can actually be executed in the real world. 
+Returning to my initial point, one can say that these actions are common to most compositions that can occur. 
+So it would be possible to capture these into a set of operators that represent the actions that are available for service composition. 
+For example: if the output/effect from service A have been received then a message to service B can be sent Operator: sendInvocationMsg Preconditions: (and (output=input)(effect=precondition)) (some constraint here over the issue of services having both output/effects and requiring input/precond) Effect: (service A executed) Other operators can be defined in a similar way to capture other common behaviours related to service composition. 
+Now this is just an idea and might have been explored by others, but IMHO it gives some standard way of composing services and gives a planner the possibility to monitor real world compositions. 
+Would really like to get feedback on this and possibly other ideas that confirm/or not the above. 
+Regards, Charlie graycol.gif ecblank.gif pic09894.gif 
+As well as simple planning of IOPE tie up, planners can potentially handle many aspects of temporal and resource constraints planning too. 
+You are correct that issues of how you execute or monitor the execution of a workflow against the predicted model of how it will execute as arrive at by the planner is a key issue. 
+A planner by itself can only make sure that suitable information is within the plan proposed to allow for rich monitoring of IOPE tie up as and other aspects. 
+We are exploring all of these aspects in our work and we are using our old web accessible planner O-Plan and its execution support/replanning framework for experiments as an initial guide to the design of the new I-Plan that will be a web services composer in the I-X framework. 
+Austin Prof. Austin Tate, Artificial Intelligence Applications Institute, School of Informatics, University of Edinburgh, Appleton Tower, Crichton Street, Edinburgh EH8 9LE, UK 

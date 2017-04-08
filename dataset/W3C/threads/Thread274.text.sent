@@ -1,0 +1,32 @@
+Dear sir, I've downloaded latest version of html-tidy to use as preprocessor in our web-based publishing system, but found out that it segfaults on some ill-formed html. 
+Particular piece of html was produced by RTF::Parser perl module ver 1.07, but I suspect that other converters from office formats would give simular results. 
+When linked with electric fence debugging library, it gives following in gdb: (gdb) run bad.html 
+Starting program: /usr/local/src/tidy24nov99/tidy bad.html Electric Fence 2.0.5 
+Copyright (C) 1987-1995 Bruce Perens. 
+Tidy (vers 24th November 1999) Parsing "bad.html" line 8 column 35 - Warning: missing /b before p line 8 column 35 - Warning: missing /i before p line 8 column 37 - Warning: i is probably intended as /i line 8 column 37 - Warning: trimming empty p Program received signal SIGSEGV, Segmentation fault. 
+0x804f26f in GetToken (lexer=0x40933f80, mode=0) at lexer.c:1195 1195 if (lexer- token- type != 
+TextNode || (!lexer- insert &amp;&amp; !lexer- inode)) (gdb) bt #0 0x804f26f in GetToken (lexer=0x40933f80, mode=0) at lexer.c:1195 #1 0x804c5a6 in ParseBody (lexer=0x40933f80, body=0x4094afc8, mode=0) at parser.c:2411 #2 0x8049f77 in ParseTag (lexer=0x40933f80, node=0x4094afc8, mode=0) at parser.c:357 #3 0x804cf45 in ParseHTML (lexer=0x40933f80, html=0x4093cfc8, mode=0) at parser.c:2908 #4 0x804d027 in ParseDocument (lexer=0x40933f80) at parser.c:2955 #5 0x805811e in main (argc=2, argv=0xbffffca4) at tidy.c:983 (gdb) Without debugging info and -lefence tidy still craches on this file, but in some obscure place inside malloc. 
+Disabling optimization doesn't help. 
+My platform is Linux x86 glibc 2.0.7 gcc 2.7.2 Piece of ill-formed html and my tidy_config.txt are attached. 
+Victor Wagnervitus@ice.ru ProgrammerOffice:7-(095)-203-50-60 Institute for Commerce Home: 7-(095)-135-46-61 Engineering http://www.ice.ru/~vitus 
+Investigation shows that sometimes after DiscardElement call lexer- token still point to the element which was just freed. 
+When then GetToken tries to access lexer- token- type at line 1195, various weird things happen. 
+Following patch seems to fix problem diff -ru tidy24nov99/lexer.c 
+tidy-fixed/lexer.c 
+--- tidy24nov99/lexer.cWed 
+Nov 24 17:49:34 1999 +++ tidy-fixed/lexer.cMon 
+Nov 29 15:01:20 1999 @@ -1189,7 +1188,7 @@ Bool isempty; AttVal *attributes; - if (lexer- pushed) + if (lexer- pushed &amp;&amp; lexer- token) /* duplicate inlines in preference to pushed text nodes when appropriate */ if (lexer- token- type != 
+TextNode || (!lexer- insert &amp;&amp; !lexer- inode)) diff -ru tidy24nov99/parser.c 
+tidy-fixed/parser.c 
+--- tidy24nov99/parser.cWed 
+Nov 24 17:49:34 1999 +++ tidy-fixed/parser.cMon 
+Nov 29 15:01:01 1999 @@ -185,6 +185,9 @@ ReportWarning(lexer, element, null, TRIM_EMPTY_ELEMENT); DiscardElement(element); +if (element == lexer- token) { + lexer- token = NULL; @@ -793,6 +796,9 @@ ReportWarning(lexer, element- parent, element, DISCARDING_UNEXPECTED); DiscardElement(element); + if (element==lexer- token) { + lexer- token = NULL; return; @@ -829,7 +835,9 @@ PopInline(lexer, node); FreeNode(node); + if (node==lexer- token) { + lexer- token=NULL; if (!(mode &amp; Preformatted)) TrimTrailingSpace(lexer, element- last); @@ -2608,6 +2616,9 @@ /* discard unexpected tags */ ReportWarning(lexer, body, node, DISCARDING_UNEXPECTED); FreeNode(node); +if (lexer- token == node) { + lexer- token = NULL; Victor Wagnervitus@ice.ru ProgrammerOffice:7-(095)-203-50-60 Institute for Commerce Home: 7-(095)-135-46-61 Engineering http://www.ice.ru/~vitus 
+FWIW, I reproduced Victor's problem (more or less) with the Mac OS version of Tidy 24 Nov 99. 
+It has the same symptoms as other bugs reported earlier - FreeNode() freeing an already freed block. 
+In Victor's case, I got 2 occurrences of the problem. 
+For completeness, here is the error report and cleaned output produced using Victor's sample bad.html and tidy_config.txt, 
+with the Mac OS version MacTidy (vers 24th November 1999) Parsing "Work:MacTidy:bug reports:bad.html" 
+line 8 column 35 - Warning: missing /b before p line 8 column 35 - Warning: missing /i before p line 8 column 37 - Warning: i is probably intended as /i line 8 column 37 - Warning: trimming empty p line 8 column 37 - Warning: discarding unexpected line 8 column 37 - Warning: inserting implicit b line 8 column 37 - Warning: trimming empty b line 8 column 41 - Warning: discarding unexpected /i line 11 column 1 - Warning: trimming empty p line 12 column 38 - Warning: missing /b before p line 13 column 1 - Warning: b is probably intended as /b line 13 column 1 - Warning: trimming empty p line 13 column 1 - Warning: discarding unexpected line 13 column 1 - Warning: discarding unexpected /b line 14 column 1 - Warning: trimming empty p "Work:MacTidy:bug reports:bad.html" 
+appears to be HTML 2.0 15 warnings/errors were found! 
+This is first par fourth par I have not tried Victor's patch as per his later EMail. 
+Regards, Terry 

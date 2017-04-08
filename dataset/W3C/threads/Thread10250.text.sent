@@ -1,0 +1,124 @@
+From: pat hayes phayes@ai.uwf.edu 
+Subject: Semantics issues (was:Re: email problems) Date: Mon, 20 Jan 2003 10:46:02 -0800 If the current version of the Semantics document is the one pointed to from the RDF Core WG home page as the LCC, then there are still lots of errors, many significant. 
+From: pat hayes phayes@ai.uwf.edu 
+Subject: Re: email problems Date: Sun, 19 Jan 2003 21:13:56 -0800 It appears to me that RDF(S) literals are now broken. 
+(I'm working from the LCC candidate at The only semantic constraints that mention rdfs:Literal are 1/ I(rdfs:Literal) is a member of IC 2/ rdfs:comment rdfs:range rdfs:Literal. 
+3/ rdfs:label rdfs:range rdfs:Literal. 
+Now in addition we have that ICEXT(I(rdfs:Literal) ) is a subset of LV. Also in datatyped interpretations, all datatype classes are subclasses ofICEXT(I rdfs:Literal)). 
+So I think that this covers your problems, except as noted below. 
+No. Now typed literals are handled somewhat better, but untyped literals are still rather strange, because the denotation of "a" is not necessarily in CEXT(I(rdfs:Literal)). 
+True, it is not necessarily in that class extension. 
+Why does that bother you? 
+There is no way in any piece of RDF syntax to assert that it (or any other particular literal) is or is not in that class, so to impose a semantic condition which cannot be expressed axiomatically would serve no purpose other than to guarantee incompleteness of any inference system. 
+Well, so what? 
+Is this any different than the situation with respect to RDF datatypes? 
+How is this any different from the situation with respect to rdf:XMLLiteral? 
+It seems to me that if you can handle rdf:XMLLiteral you should be able to handle untyped literals being in CEXT(I(rdfs:Literal)). 
+Well, we could handle them, as you put it, by insisting that ICEXT(I(rdfs:Literal)) = LV. 
+I did consider that alternative, and it would be easy to make the modification. 
+I presume you would prefer that. 
+If you want OWL to have that extra condition (eg that ICEXT(I(rdfs:Literal)) = LV, say) then OWL is free to add that as an extra condition. 
+Until RDF syntax provides some way to have literals as ubjects, however, I would recommend against it. 
+(IF RDF did have literals as subjects I would have had the class rdfs:Literal tightly defined from the very start.) Right now the situation is very unusual with respect to literals in RDF. 
+In RDFS, the following is not valid ex:john ex:foo "a" . 
+entails ex:john ex:foo :_a . 
+:_a rdf:type rdfs:Literal . 
+but any datatype entailment that includes a datatype that has the string "a" in its value space (even if the lexical-to-value mapping does not map the syntactic construct "a" to this string) the entailment follows. 
+True. 
+I guess I see a kind of sense to this situation, but perhaps I was being too finicky. 
+It would certainly be more coherent, as it were, if untyped literals were treated similarly to typed literals with a kind of built-in trivial datatype whose lexical space was literals and whose L2V mapping was identity. 
+OK, let us assume that change will be made before publication. 
+Then all plain literals and all well-formed typed literals denote something in rdfs:Literal. 
+In the LCC document, datatypes are still broken. 
+For starters, the document is inconsistent with respect to just what is a datatype; sometimes it is a member of the domain, sometimes it is a URIref. 
+I have not detected that inconsistency, can you point me at where it occurs? 
+The document uses datatype urirefs to refer to datatypes, which seems consistent to me. 
+The intent is that recognized datatypes are always members of the domain. 
+Then how do you justify The set of recognized datatypes always includes rdf:XMLLiteral in Section 3.4? 
+Er.. What kind of justification do you need? 
+rdf:XMLLiteral *is* a member of the domain, that follows from the general assumption that URIrefs always denote. 
+The quote that you want justified is supposed to be part of the definition of 'recognized', not a lemma that needs to be established. 
+I didnt say 'rdf:XMLLiteral' was a member of the domain, notice (though it is, as a matter of fact.) 
+The treatment of rdf:XMLLiteral is very suspect, for example what happens to "a"^^ex:foo if I(rdf:XMLLiteral) = I(ex:foo)? 
+If that identity holds (which would be rather extraordinary) then ex:foo would in fact be rdf:XMLLiteral, ie owl:sameIndividualAs ex:foo rdf:XMLLiteral . 
+would be true. 
+So in that case indeed, the typed literal you have written would have the same value as "a"^^rdf:XMLLiteral in that interpretation. 
+Not according to the RDF model theory. 
+In this model theory rdf:XMLLiteral is handled very differently than other datatypes. 
+The intention is that it should be handled exactly similarly (apart from the lang tags complication) . 
+But I see that there is a crack, indeed, since I do not define L2V for XML literals. 
+See below. 
+rdf:XMLLiteral is handled (in Section 3.1) by if xxx is a well-formed XML document, then IL("xxx"^^rdf:XMLLiteral) is the XML canonical form of xxx Other datatypes are (very awkwardly) handled in Section 3.4, by ... satisfies the following extra conditions on all datatypes other than the built-in datatype: For any typed literal "sss"^ddd or "sss"@ttt^^ddd, if I(ddd) is in D and 'sss' is a valid lexical form for I(ddd) then IL("sss"^^ddd) = L2V(ddd)(sss) (By the way, this appears to imply that the only lexical forms that matter are ones that start and stop with a single quote. 
+Yes, the use of those single quotes is a mistake, I will remove those. 
+And you are right, I should have said IL("sss"^^ddd) = IL("sss"@ttt^^ddd) = L2V(ddd)(sss), an editorial slip, sorry. 
+Also, this is missing the interpretation of "sss"@ttt^^ddd.) 
+So "a"^^ex:foo falls through the cracks. 
+It doesn't match the conditions in Section 3.1 because it has the wrong URI ref and it doesn't match the conditions in Section 3.4 because they don't hold for I(rdf:XMLLiteral). 
+They do if the L2V mapping of rdf:XMLLiteral is defined properly. 
+I see that there is a editorial crack here, in that I do not mention the L2V mapping when describing rdf:XMLLiteral, since the concept of a lexical-to-value mapping is not introduced until the section on datatyping. 
+This needs to be fixed, indeed, but its purely an expository point. 
+(The reason for this is the decision, taken rather late in the day, to treat XML literals as a built-in datatype rather than a syntactically distinct form of literal. 
+Unfortunately this screws up the expository structure of the document somewhat.) 
+Of course, there is no way in RDF(S) or even OWL-DL to establish such an identity, so the question only makes sense in OWL-Full. 
+I have no problems with this, myself. 
+The translation into Lbase is still broken with respect to rdf:XMLLiteral. 
+Can you be more specific? 
+TR("sss"@ttt^^rdf:XMLLiteral) = L2V(TR["sss"],TR[ddd]) which incorrectly ignores the language tag I have pointed this out at least one before in a message to w3c-rdfcore-wg Right, sorry. 
+There is at least one version in which this has been fixed, but it might have got lost in the last-minute document flurry. 
+Mia culpa. 
+The best version of the translation gives the explicit translation from Jeremy's document for each distinct type of literal, which is obviously what should have been done in the first place. 
+Pat Pat Peter F. Patel-Schneider Bell Labs Research Lucent Technologies IHMC(850)434 8903 or (650)494 3973 home 40 South Alcaniz St.(850)202 4416 office FL 32501???????????(850)291 0667 cell phayes@ai.uwf.edu http://www.coginst.uwf.edu/~phayes s.pam@ai.uwf.edu for spam From: pat hayes phayes@ai.uwf.edu 
+Subject: Re: Semantics issues Date: Tue, 21 Jan 2003 12:07:49 -0700 No. Now typed literals are handled somewhat better, but untyped literals are still rather strange, because the denotation of "a" is not necessarily in CEXT(I(rdfs:Literal)). 
+True, it is not necessarily in that class extension. 
+Why does that bother you? 
+There is no way in any piece of RDF syntax to assert that it (or any other particular literal) is or is not in that class, so to impose a semantic condition which cannot be expressed axiomatically would serve no purpose other than to guarantee incompleteness of any inference system. 
+Well, so what? 
+Is this any different than the situation with respect to RDF datatypes? 
+How is this any different from the situation with respect to rdf:XMLLiteral? 
+It seems to me that if you can handle rdf:XMLLiteral you should be able to handle untyped literals being in CEXT(I(rdfs:Literal)). 
+Not only do I prefer it - I also don't see any rationale for having it otherwise. 
+Note, however, that there are noticeable consequences of this decision. 
+In the LCC document, datatypes are still broken. 
+For starters, the document is inconsistent with respect to just what is a datatype; sometimes it is a member of the domain, sometimes it is a URIref. 
+I have not detected that inconsistency, can you point me at where it occurs? 
+The document uses datatype urirefs to refer to datatypes, which seems consistent to me. 
+The intent is that recognized datatypes are always members of the domain. 
+Then how do you justify The set of recognized datatypes always includes rdf:XMLLiteral in Section 3.4? 
+I get very uneasy when formal tokens are written down as if they stood in for their denotation. 
+What happens if there are two interpretations under consideration, for example? 
+The text of the RDF Semantics document sometimes uses tokens of the form aa:bb as if they meant URI references, e.g., ``IEXT(I(rdf:subject)'', and sometimes as if they meant elements of domain, e.g., ``the rdf:subject property''. 
+I remain confused as to just what datatypes are. 
+The treatment of rdf:XMLLiteral is very suspect, for example what happens to "a"^^ex:foo if I(rdf:XMLLiteral) = I(ex:foo)? 
+If that identity holds (which would be rather extraordinary) then ex:foo would in fact be rdf:XMLLiteral, ie owl:sameIndividualAs ex:foo rdf:XMLLiteral . 
+would be true. 
+So in that case indeed, the typed literal you have written would have the same value as "a"^^rdf:XMLLiteral in that interpretation. 
+Not according to the RDF model theory. 
+In this model theory rdf:XMLLiteral is handled very differently than other datatypes. 
+Also, this is missing the interpretation of "sss"@ttt^^ddd.) 
+So "a"^^ex:foo falls through the cracks. 
+It doesn't match the conditions in Section 3.1 because it has the wrong URI ref and it doesn't match the conditions in Section 3.4 because they don't hold for I(rdf:XMLLiteral). 
+I disagree. 
+The meaning of literals typed with rdf:XMLLiteral is defined very differently from the meaning of other typed literals. 
+Fixing this is more than an expository point. 
+This does make for a rather difficult time for the document editor. 
+However, would it not be possible to just *change* how rdf:XMLLiteral is handled to make it work more like the other datatypes? 
+The translation into Lbase is still broken with respect to rdf:XMLLiteral. 
+Can you be more specific? 
+TR("sss"@ttt^^rdf:XMLLiteral) = L2V(TR["sss"],TR[ddd]) which incorrectly ignores the language tag I have pointed this out at least one before in a message to w3c-rdfcore-wg I await a correct version of the Lbase appendix. 
+Peter F. Patel-Schneider Bell Labs Research Lucent Technologies Hmmm... this makes me think this decision should have been made at editors' discretion, rather than as a group decision, since it is ultimately an expository matter, not one that (should) affect the meaning of any RDF. (Though I realize this decision involved coordination between two documents.) Which, looking forward, leads me to suggest that if Pat/Jeremy can agree on an alternative treatment that gives clearer exposition of the intended meaning, they should be allowed discretion to do so. 
+#g Graham Klyne We are now in last call. 
+We need to have a more formal process for dealing with changes from now on. 
+I believe there are last call comments around this issue. 
+The WG must consider and agree a disposition of each comment. 
+Let's hope there are not too many for us to cope with. 
+Brian Brian-- Just to clarify, I believe you've also said that it's only comments that are "not easy" and get "escalated" by the editors that require explicit WG consideration, right? 
+I'd actually appreciate some further clarification about that. 
+The only "easy" cases you explicit mention are those where we can say, in effect, "we already do that". 
+If an editor gets a comment and thinks that can be dealt with by a simple wording change (maybe we "already say that", but the commenter doesn't think it's clear enough, or something), is that one that can also be dealt with directly (the editor directly responds "I propose to deal with that this way, is that OK?", and only if there's dispute does that get escalated), or should the editor request a commend id for those immediately? 
+Sorry to add to the overhead (if that's what I'm doing). 
+--Frank Frank Manola The MITRE Corporation 202 Burlington Road, MS A345 Bedford, MA 01730-1420 I'd like some input from those with previous experience about what works best. 
+I'm struggling from lack of experience, to figure out what principles should apply. 
+The advice I heard last week was that any comment that requires a change to the document gets reviewed by the WG. Brian Only dipping into this thread that I have not tracked. 
+I would decline such discretion. 
+Given earlier comments I had received against out former approach, I would need to check with both commentators (tbl and massimo) that they were happy with any back-tracking we did on XMLLiteral. 
+Jeremy 

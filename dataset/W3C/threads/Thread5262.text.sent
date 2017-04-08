@@ -1,0 +1,78 @@
+I have been struggling for a while to find out a generic representation of situations of which the following one is an example. 
+Seems close to the "Classes as Values" issue, but quite different. 
+Suppose I have the three following classes and instances Country : France Region : Alsace City : Strasbourg The instances Strasbourg, Alsace and France are bound by a partitive (administrative or geographical) relationship Strasbourg partOfAlsace Alsace partOf France The classes themselves are instances of a meta-class "Geographical Unit", being both Range and Domain of another hierarchical relation like "isSubdivisionOf" (whatever, something to make it distinct from the partOf relation at instance level) Region subdivisionOf Country City subdivisionOf Region It's clear that this relation is neither a subClassOf, nor a partOf relation I have three questions about it : 1. 
+What generic kind of relation is subdivisionOf? 
+What are the modeling current practices? 
+2. How to express it in SW languages? 
+3. How to express that the hierarchy defined by the partOf relation is "conformant" to, or "inherited from" the hierarchy declared by the subdivisionOf relation, without having to declare each specific restriction it entails, e.g: 
+Any City is part of some Region Any Region is part of some Country Ideas? 
+Bernard Vatant Senior Consultant Knowledge Engineering Mondeca - www.mondeca.com 
+bernard.vatant@mondeca.com 
+Hi Bernard, interesting case of overcommitment ... I don't see the need for these metaclasses. 
+A class can be the domain or range of a relation without any postulated metaclass needed. 
+We can say that Country is a subclassOf Geographical Unit. 
+For example (in OWL abstract syntax): Class(Country partial GeographicalUnit) Class(Region partial GeographicalUnit (restriction(subdivisionOf someValuesFrom Country))) Class(City partial GeographicalUnit (restriction(subdivisionOf someValuesFrom Region))) therefore ... I use "geographic part" relations, like your "subdivisionOf" for part applied to political or functional geographic objects. 
+My rationale is that political mereology has different characteristics from physical mereology, like part when applied to rocks. 
+Then, the relationship between Strasbourg and Alsace is simply an instance of the "subdivisionOf" relation. 
+See above If you refer to partial orders, you should decide on which relation creates that order, and then you can start evaluating morphisms between different orders. 
+But I don't think your example needs that . 
+Conformity in your example applies between individuals (Strasbourg, etc.), and classes (City, etc.), in the sense that asserting triples on individuals should not violate the restrictions given on the classes. 
+Why not? 
+this is the standard way to do it. 
+The problem (if any) is about *your* intended meaning of part or subdivision: what individuals are in the universe of those relations? 
+are those relations transitive?, etc. Have a good time Aldo Aldo Gangemi Research Scientist Laboratory for Applied Ontology Institute for Cognitive Sciences and Technology National Research Council (ISTC-CNR) Via Nomentana 56, 00161, Roma, Italy a.gangemi@istc.cnr.it 
+Hi Aldo Thanks for your input. 
+Comments below. 
+I've been through that path. 
+It assumes that the generic hierarchy (between classes) can be defined by restrictions put on the hierarchy used at instance level. 
+So there is no point in wanting to express this generic hierarchy by a direct relation using classes as individuals. 
+OTOH, in some contexts, modeling habits have led to different vocabularies for the generic hierarchy and instance hierarchy. 
+For example, in documentation management, documentalists can be constrained to map their folder hierarchy on a so-called "taxonomy" (hierarchy of "headings" or "categories"). 
+And it's not obvious to port the above type of modeling in this domain: - A Folder is an instance of a generic Category, itself a subclass of Folder - The Category hierarchy is defined by restrictions on the Folder-SubFolder relation ... ... This is technically correct, but quite difficult (not to say almost impossible) to explain to documentalists, very unfamiliar with the class-instance paradigm, let alone property restrictions :( There again, do we want to push what we consider is "right" modeling, or represent at best the legacy? 
+Agreed, but the distinction between administrative vs geographical mereology is an orthogonal issue. 
+Seen :)) Exactly. 
+It's all about morphisms. 
+Not necessarily restricted to partial orders, though. 
+It can be extended to any generic pattern or organization scheme using different relation types, like e.g. a publication schema organizing its different parts (Introduction, ( Chapter, Paragraph* )*, Table of Contents, Bibliography ...) using both "subdivision" and "succession" relations. 
+Indeed Standard, indeed, but a bit awkward if you have a lot of classes, like in the above example of Folders and Categories (which is actually the original use case I was struggling with). 
+Browsing literature about mereology, it seems that it often confuse, like NL does, generic relations like "Region is part of Country" or "Head is part of Body" and specific ones like "Alsace is part of France" or "My head is part of my body". 
+Not sure of what the individuals are in the generic example ... seems to me they assert relation between concepts, not unlike a "Broader-Narrower" in a thesaurus, rather than implicit restrictions on instances of implicit classes. 
+There again, we are close to the "classes as values" issue ... Bernard Bernard Vatant Senior Consultant Knowledge Engineering Mondeca - www.mondeca.com 
+bernard.vatant@mondeca.com 
+Aldo I'm happy to see you are almost as confused as I can be by documentalists' world :)) 1) documentalists maintain heading hierarchies (I assume they are a sort of "topic") Yes, "sort of". 
+They call it a "taxonomy" (sigh) or, in French "Plan de classement". 
+In a project I'm currently involved, we deal with such a taxonomy for "People" publications (challenging stuff, huge legacy, alas) in a major press group. 
+We have a heading (or category) hierarchy like : Person . 
+Public Life .. Awards . 
+Private Life .. Family .. Holidays .. Couple .. Pets For each heading, there is attached information such as - description of types (classes?) of relevant documents - types (classes?) of related knowledge base objects - naming convention (for the indexed folders) - attached keywords (in a relevant Thesaurus) So, for the taxonomy manager, headings are (sort of) (individual?) topics with attached properties, organized in a hierarchy. 
+2) documentalists manipulate folders (I assume folders are locations of books or documents) Yes. 
+Used to be (and still sometimes are) paper folders, and now electronic ones. 
+A folder can be the container of actual document files, or of some electronic proxies, e.g. URIs. 
+3) documentalists declare some relation between folders ("subFolderOf") Yes. 
+You do that any way you like in your hard disk folders. 
+But in our use case documentalists have to follow the constraints defined by the taxonomy. 
+Not only the hierarchy, but also the naming conventions etc ... and of course put the right documents in the right folders. 
+So you will get something like the following hierarchy of folders : Britney S . 
+Britney S - Public Life .. Britney S Awards etc ... 4) ???categories are defined wrt to the subFolder relation??? Tricky things begin here. 
+You can say "Britney S - Public Life" is an instance of a generic class "Folder". 
+But it's also specifically related to the generic "Public Life" heading. 
+What is the nature of that relation, that is the question. 
+Even if the taxonomy manager does not think about headings as classes, the most natural (?) way to express this relation is to consider "Public Life" as a class of which "Britney S - Public Life" is an instance ... 5) ???a category is a subClassOf Folder??? ... seems the logical conclusion of the above ... (category = heading). 
+If "Public Life" and the like are subclasses of Folder, you can describe "a posteriori" the heading hierarchy by restrictions on the subFolder relation, as clearly explained in your previous message. 
+But this will nevertheless sound strange to the taxonomy manager I am lost. 
+Maybe you could provide an excerpt of a folder set, and an excerpt of a heading hierarchy, so that our intuition gets closer to the point. 
+Hope the above makes for that. 
+I was lost for a while, too :)) As usual, I do not care much about what representation primitives should be used, until I do understand the intended meaning of the experts. 
+OK, documentalist use informal structures, but before deciding on what formal structure we can suggest, we need to know what they want to talk about, and for what purpose. 
+Well, it is in fact a recursive process. 
+Providing accurate language at the right moment generally help people to figure out better what they are about. 
+All the (pedagogic) point is to bring this language at the right point. 
+Is not it what we are about? 
+I interpret "representing at best the legacy" as a good encoding of the intended meaning/use, not as a (possibly awkward) encoding of the original structure. 
+Agreed. 
+If we are able to understand the semantics of the legacy, we can even reproduce the original format or syntax, but being aware of the underlying semantics. 
+... or propose an alternative one (simpler, more generic, more interoperable, less ambiguous ...) Give me some example to judge on awkwardness ... Imagine the above example with 10 000 + headings to manage. 
+Does it scale? 
+A mereology as an ontology of part is any theory that includes part relations in its signature, and provides axioms for that relation wrt a specified domain. 
+There is a lot of curious or fancy stuff out there, but let's try to stay focused ... Indeed :)) Ciao Bernard Bernard Vatant Senior Consultant Knowledge Engineering Mondeca - www.mondeca.com 
+bernard.vatant@mondeca.com 

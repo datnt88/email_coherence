@@ -1,0 +1,104 @@
+Friday's telecon reminded me that I had left test case A in for a reason. 
+There was more I had to say about it, and writing that message the following occurred to me. 
+Test case A says: s1 p "lit" . 
+s2 p "lit" . 
+can we conclude that value of both properties are the same. 
+Consider _:b1 rdf:type rdf:Seq . 
+_:b1 rdf:_1 "10" . 
+_:b2 rdf:type rdf:Seq . 
+_:b2 rdf:_1 "10" . 
+This would require that the first member of each sequence is the same. 
+Given that we also have a common superproperty of the rdf:_xxx properties, this essentially means that all literals which are members of any container must all have the same dataype, i.e. all literals in containers must be tidy. 
+I suggest this is incompatible with the untidy literals and a yes to test case A above. 
+The approach to untidiness suggested at the face to face was a compromise. 
+I think this example demonstrates that compromise does not work and we have to choose between tidiness or a stronger notion of untidyness. 
+Brian I agree. 
+Thus, I stand (or actually sit ;-) corrected about test A being irrelevant. 
+It is not irrelevant, but joins with B and C such that a yes answer is a vote for tidyness. 
+Which makes me wonder whether the inquiry is now a tad bit imbalanced... 'yes' to (A and B and C) or D ... hmmmmm.... Anyway, just send it and let's see what we get. 
+I retract my earlier objection. 
+Patrick My take is that global datatyping and containers of literals simply do not interoperate. 
+Containers with literal values either are untyped or locally typed. 
+I don't believe that any of the proposed global datatyping solutions (ever) work with containers. 
+Hence I think: + test case A is a choice (the group seems minded to say that the entailment holds - I disagree but not strongly). 
++ containers cannot contain globally typed literals (i.e. the literals are either self-denoting or untyped) + if test case A is true then rdf:object takes untyped literals as its object (Brian also mentioned the rdf:object problem in the telecon). 
+Jeremy This is presumably an arguable benefit of having container machinery darkened? 
+(And reification vocabulary, possibly) : ie, that bogus type inferences aren't drawn by accident. 
+jan grant, ILRT, University of Bristol. 
+http://www.ilrt.bris.ac.uk/ Goth isn't dead, it's just lying very still and sucking its cheeks in. 
+Maybe its not so bad as I first thought. 
+If we decide that the answer to test case A is yes and the answer to test case C is no, then we will need some magic in the model theory to handle rdf:object (per my recent post). 
+I guess it would mean applying the same magic to the ordinal properties. 
+Hmm, the question is which. 
+The later seems to imply, if one puts a literal in a container, then one doesn't know what it denotes. 
+Brian What is needed, and has been needed for a long time, is a new range property for containers. 
+E.g. rdfs:memberRange a rdf:Property ; rdfs:domain rdfs:Container ; rdfs:comment "Used to indicate the class(es) that the members of an instance of the container class will be members of." . 
+where the following closure rule apply IF ?x a rdfs:Container . 
+?x a ?c . 
+?c rdfs:memberRange ?r . 
+?x rdfs:member ?m . 
+THEN ?m rdf:type ?r . 
+So, if we had some container type 'foo:WidgetScores': foo:WidgetScores rdfs:subClassOf rdf:Bag . 
+foo:WidgetScores rdfs:memberRange xsd:integer . 
+then given an instance of foo:WidgetScores: _:i a foo:WidgetScores ; rdf:_1 "10" ; rdf:_2 "9288" ; rdf:_3 "821" ; rdf:_4 "4" ; which, given the above closure rule for rdfs:memberRange semantics, means that each of the literal node members of the collection denote integer values. 
+The datatyping is not associated with the property, but with the collection. 
+Of course, the above presumes (a) untidy literal semantics and (b) literals (at least implicitly) as subjects. 
+I.e. it equates to the following interpretation: _:i a foo:WidgetScores ; rdf:_1 _:a"10" ; rdf:_2 _:b"9288" ; rdf:_3 _:c"821" ; rdf:_4 _:d"4" ; _:a"10" rdf:type xsd:integer . 
+_:b"9288" rdf:type xsd:integer . 
+_:c"821" rdf:type xsd:integer . 
+_:d"4" rdf:type xsd:integer . 
+And of course, the memberRange need not be a datatype. 
+It can be any RDF class whatsoever. 
+And also, we need not introduce literals as subjects at this time in order to adopt such an approach as above. 
+The rdf:type'ing can simply be left implicit in the interpretation. 
+But, if/when literals can be subjects, it all fits right in perfectly with untidy literals and rdfs:range based datatyping. 
+Patrick On 2002-07-02 10:11, "ext Patrick Stickler" patrick.stickler@nokia.com 
+Hmmm.... actually, that's not quite right. 
+The domain really is a meta-class of which rdfs:Container is a member. 
+Anyway, I'm sure folks get the gist... Patrick BTW, I consider this example to very strongly demonstrate why we should have RDF datatyping operate in sync with the semantics of rdf:type and rdfs:range -- because the approach outlined below for typing of container members is not specific to datatyping -- even though the examples all use datatyped literals -- but relates to the general typing of container members, regardless whether they are literals, blank nodes or URIrefs. 
+Everything simply falls out of the fact that datatyping of literals is built upon rdfs:range and rdf:type semantics (which require untidy literal semantics). 
+If we had some other mechanisms, such as rdfd:dcv etc. then in every such case as this, we'd have to continually provide *two* solutions, one for datatyped values and one for all other kinds of values. 
+Blech! 
+(and that's putting it mildly ;-) Even if we don't adopt any kind of rdfs:memberRange mechanism now, it still demonstrates the economy and compatability of the untidy/rdfs:range/rdf:type approach with such solutions in the future, such as those anticipated with RDF 2.0. 
+Cheers, Patrick On 2002-07-02 10:11, "ext Patrick Stickler" patrick.stickler@nokia.com 
+?? I fail to follow your reasoning here. 
+It seems circular. 
+There are two cases to consider, right? 
+We can have (semantically) tidy literals, where each literal node labelled with the same literal denotes the same thing; or we can not. 
+Call these the ST and NST cases. 
+Test A is 'yes' for ST, 'no' for NST. 
+Now consider your container example. 
+In an ST reading, b1 and b2 have the same first element; in an NST reading, they need not. 
+Put another way: if all literals are tidy, then all literals in containers must be tidy. 
+Well, right. 
+And if all literals are not tidy, the ones in container need not be either. 
+So... what has been demonstrated, exactly? 
+I fail to see why. 
+Pat IHMC(850)434 8903 home 40 South Alcaniz St.(850)202 4416 office phayes@ai.uwf.edu 
+Pat, I found both your messages on test case A confusing. 
+I'll try and explain why, and suggest you may like to reconsider them. 
+At the f2f the suggestion we were looking at is that the denotation of a literal in a triple is a function of the predicate and the literal. 
+Thus test case A holds since in it both the predicate and the literal are the same. 
+However this suggestion is untidy in our previous terminology. 
+Brian's questions about test case A were asked in this framing, and you seem (to me at least) to have missed the point. 
+e.g. ???? not what we had at the face to face. 
+We favoured an untidy possibility in which test case A, and hence Brian's container example held. 
+Jeremy True, but in the f2f proposal it was suggested that they would because the denotation is a function of the literal and the property, i.e. s1 p _:l . 
+s2 p _:l . 
+Sure. 
+Ok, given: a rdf:_1 "10" . 
+what does the "10" denote? 
+What is in the container? 
+Brian Ah, I see. 
+Sorry, I had lost that part of the context. 
+I guess I have (since the F2F) privately given up on the 'clever' ideas like this. 
+Semantically-untidy/lexically-tidy literals seem to be more trouble than they are worth, I now think. 
+We should keep the syntax/semantics correspondence simple and go firmly one way (tidy syntax and semantics; the stake) or the other (untidy syntax) , and not shilly-shally. 
+Examples like the subPropertyOf inference and these container examples just serve to make the point that trying to be too clever is only going to cause trouble later; and since Dan C. is just as stubborn about these proposals as he is about the others, why bother? 
+Well, in the F2F idea, the answer would depend on how you datatyped 'rdf:_1', I guess. 
+But the real answer is, as you imply, that there isn't any rational way to do that since it would apply globally. 
+But in general, there isn't any way in *any* of our schemes to rationally impose datatyping on tidy literals inside containers via the container properties, since properties of containers do not bear any relation to the properties of the members. 
+For example, the stake proposal wouldn't pass on the lexical check applied to a container to any lexical check on any contained literals. 
+Pat IHMC(850)434 8903 home 40 South Alcaniz St.(850)202 4416 office phayes@ai.uwf.edu 
+I believe that is where the WG as a whole has now got to, and the arguments seem to have persuaded the likes of Drew on the rdf-logic. 
+Brian 

@@ -1,0 +1,133 @@
+The nice thing about allprop is that you get all the dead properties. 
+The bad thing about allprop is that you cannot see if a resource is versioned/version or which methods it does support. 
+How do you know you can get all the dead properties? 
+'allprop' as defined in RFC2518 seems to have to change, yet we've not clearly defined a new behaviour. 
+In the meantime, I don't believe clients can rely on getting anything back in 'allprop' except the live properties defined in RFC2518. 
+Lisa Lisa, I think that's a bit pessimistic. 
+Neither deltaV nor ACL say anything about a behavorial change in PROPFIND for dead properties. 
+I agree that better protocol over selection (exclude lists? 
+by namespace?) might be nice. 
+Julian From: w3c-dist-auth-request@w3.org [mailto:w3c-dist-auth-request@w3.org]On 
+Behalf Of Lisa Dusseault Sent: Tuesday, November 20, 2001 7:40 AM Subject: RE: [ACL] Principal Identity The nice thing about allprop is that you get all the dead properties. 
+The bad thing about allprop is that you cannot see if a resource is versioned/version or which methods it does support. 
+The definition of dead properties is not clear enough to make that proposal a basis for interoperability. 
+Since I love examples, follow me through this one: - A WebDAV client software package defines a couple dead properties, "image-height" and "image-width" as integers. 
+It sets these properties on all images it saves &amp; uses them later. 
+Obviously so far it's a dead property. 
+- Other clients start to use these. 
+Still dead, right? 
+- Custom software is added onto another WebDAV server platform to set these properties auto-magically whenever an image is uploaded. 
+The base server software is uninvolved in this process. 
+- A full WebDAV server decides to make sure that whenever these properties are set, at least they're integers. 
+Maybe it also checks they're not negative. 
+Other servers, however, still ignore these properties. 
+- Another DAV server decides that it can calculate this property on the fly and make sure it's always correct. 
+However, the calculation is expensive (Note that this scenario starts to sound like justification for NOT including properties in allprop). 
+When do these properties stop being dead and start being live? 
+Can clients rely on these properties being listed in 'allprop' or not? 
+On some servers but not on others? 
+Ugh. 
+That's why I think only a fixed list of properties can be relied upon to be in allprop. 
+Let's rely on 'propname' to actually tell us the complete list of properties, whether they're alive, dead, or somewhere in between. 
+Lisa The nice thing about allprop is that you get all the dead properties. 
+The bad thing about allprop is that you cannot see if a resource is versioned/version or which methods it does support. 
+I believe that when we revise 2518, that that the new DAV:allprop behavior should be defined to be "all live properties defined in RFC 2518 plus all dead properties". 
+Since 2518 states that it is *all* properties (both live and dead), making this direction clear now will allow clients to rely on dead+2518 properties. 
+Cheers, Geoff The nice thing about allprop is that you get all the dead properties. 
+The bad thing about allprop is that you cannot see if a resource is versioned/version or which methods it does support. 
+How do you know you can get all the dead properties? 
+'allprop' as defined in RFC2518 seems to have to change, yet we've not clearly defined a new behaviour. 
+In the meantime, I don't believe clients can rely on getting anything back in 'allprop' except the live properties defined in RFC2518. 
+Lisa From: Lisa Dusseault [mailto:lisa@xythos.com] Sent: Tuesday, November 20, 2001 7:40 AM Subject: RE: [ACL] Principal Identity The nice thing about allprop is that you get all the dead properties. 
+The bad thing about allprop is that you cannot see if a resource is versioned/version or which methods it does support. 
+Since no new behaviour is defined, I would expect servers to return all dead properties on allprop/ , yes. 
+I agree that the propfind mechanism should be enhanced. 
+Therefore our include/ proposal, which does not claim to solve all issues. 
+//Stefan I feel that interoperability means that existing clients will continue to work "as well as possible" with the new definition of ALLPROP. 
+Since ALLPROP originally meant "all properties," and the objection has been "that can be too expensive for servers," I think the compromise is to have ALLPROP mean "as many of the defined properties as the server feels it's reasonable to compute." 
+You have a very good point - existing clients will expect to see dead properties. 
+I think Geoff's suggestion (DAV live props and all dead ones) is a good guideline for servers, both because these properties are presumably cheap and because an existing client who just set a dead property is likely to be very surprised when ALLPROP doesn't return it. 
+I suggested adding "at least" because I think that gives servers the proper control over just how interoperable they want to be with old clients. 
+However, although that proposal supports existing clients better, it isn't clearly defined, as I explained in a previous email today. 
+Probably the place you and I really agree is that we'd both rather see ALLPROP go away entirely :^). 
+But I think we also agree that such a move would be too backward-incompatible. 
+It's clear new clients must not expect allprop to mean all properties, but we also agree that old clients must be able to operate. 
+However if we can't define a clear behaviour for allprop or some replacement, then perhaps we should simply discourage use of allprop in revised 2518. 
+Lisa This works fine for me if we allow for server "discretion" by saying "at least all live properties defined in RFC 2518 plus all dead properties." 
+Servers that *want* to show live properties should not be prohibited from doing so. 
+My motivation for this (other than common sense :^) is that I believe many generic clients use ALLPROP as a way of saying "show me everything I'm likely to care about." 
+Some servers will have a number of general-interest properties that are live and useful in such a list; for example, workflow servers often have live properties indicating status, assignee, and those kinds of things. 
+It would be awkward if 2518++ prohibited them from showing these in response to an ALLPROP. 
+dan The nice thing about allprop is that you get all the dead properties. 
+The bad thing about allprop is that you cannot see if a resource is versioned/version or which methods it does support. 
+Daniel Brotsky, Adobe Systems tel 408-536-4150, pager 877-704-4062 You and I seem to be going in exact opposite directions on this one, and I think it's because we have different ideas of what constitutes interoperability with respect to ALLPROP. 
+You seem to feel that interoperability means that all servers return the same properties in response to an ALLPROP. 
+And I would agree that this can only be satisfied by specifying ALLPROP as meaning a fixed set of properties, as you suggest. 
+I feel that interoperability means that existing clients will continue to work "as well as possible" with the new definition of ALLPROP. 
+Since ALLPROP originally meant "all properties," and the objection has been "that can be too expensive for servers," I think the compromise is to have ALLPROP mean "as many of the defined properties as the server feels it's reasonable to compute." 
+I think Geoff's suggestion (DAV live props and all dead ones) is a good guideline for servers, both because these properties are presumably cheap and because an existing client who just set a dead property is likely to be very surprised when ALLPROP doesn't return it. 
+I suggested adding "at least" because I think that gives servers the proper control over just how interoperable they want to be with old clients. 
+Probably the place you and I really agree is that we'd both rather see ALLPROP go away entirely :^). 
+But I think we also agree that such a move would be too backward-incompatible. 
+dan The nice thing about allprop is that you get all the dead properties. 
+The bad thing about allprop is that you cannot see if a resource is versioned/version or which methods it does support. 
+Daniel Brotsky, Adobe Systems tel 408-536-4150, pager 877-704-4062 I believe that your example shows well that it's completely up to each server which properties are live and which are dead, and that any given server implementation may allow for configuration that changes this. 
+But that doesn't mean that the notion of a "dead property" is ill-defined for a given server and time of test. 
+Nor does it mean that a requirement that servers return "at least all DAV live properties and all dead properties (i.e., all non-live properties that would give non-404 responses when queried for by name)" can't be tested on any given server at any given time. 
+It simply means that it's at the server's discretion what properties are live, and that no test can be performed unless this is properly documented for the server being tested. 
+Actually I think we should do both :^). 
+I think we should adopt Geoff's proposed semantics for ALLPROP (with my "at least" addition), and I think we should *also* deprecate the use of ALLPROP by generic clients. 
+That way ALLPROP clearly becomes (i) a "quick and dirty" way of looking at an asset that's primarily used by older generic clients and is supported in that usage only for backwards compatibility; and (ii) a shortcut used by server-specific clients who know exactly which properties the server chooses to return on ALLPROP. 
+dan Daniel Brotsky, Adobe Systems tel 408-536-4150, pager 877-704-4062 It depends if and where and how they are defined. 
+Just having a property "image-height" accepted or returned by a server does not mean anything. 
+If you define such a property, you should also define the expected behaviour, its liveliness and, etc. 
+Some servers will then implement it, while for other servers these properties are really dead. 
+So, the existence of such properties on a server will not tell a client anything about their semantics. 
+You need to introduce some other way to announce this to a client. 
+The defined way to do so, is to include these properties in the {DAV:}supported-live-property-set. 
+Then the client knows that the server gives special meaning to these properties. 
+Coming back to allprop/ : a dead "image-height" property would be reported, while a live property would not be reported. 
+A client interested in seeing "image-height" in either case, should attach a include ... /include to allprop in our proposal. 
+//Stefan From: w3c-dist-auth-request@w3.org [mailto:w3c-dist-auth-request@w3.org]On 
+Behalf Of Daniel Brotsky Sent: Thursday, November 22, 2001 1:29 AM I follow your motivation but not your conclusion. 
+Let's stick to the workflow properties (workprops) example: A generic client will survive workprops returned from an allprop, sure. 
+But will it be able to do anything with it? 
+Most likely not. 
+A workflow client will need the workprops returned from the server. 
+Now there are four possible cases: 1) the client does not use allprop but prop ...list... /prop 2) the client uses allprop and the server returns the workprops with allprop, even though they are live properties. 
+3) the client uses allprop and the server does not return the workprops, because the server does not know these properties. 
+4) the client uses allprop and the server does not return the workprops. 
+The server implements the workprops, but it does not return those on allprop. 
+1) does not need your allprop "at least" extension, 2) works as you intended, 3) is working, although the client cannot distinguish it from 4), and 4) is not working. 
+What would fix your situtation is implementing our include proposal. 
+The server would then know when to return the workprops, and a client knows that the server does not implement workprops if they are not returned. 
+//Stefan However, supported-live-property-set is not part of RFC2518. 
+Therefore, regular DAV clients cannot rely on knowing what properties are live and what properties are dead on any given server. 
+Therefore, regular DAV clients cannot rely on knowing what properties they will get back on an 'allprop' request if 'allprop' is defined as returning 2518&amp;dead properties. 
+I think it's simpler to not use allprop at all. 
+Since so few properties may be returned by allprop, and all by propname, why not just use propname &amp; then a specific query? 
+I'd want to see a rather compelling reason before inventing new syntax when existing PROPFIND syntaxes, without allprop, suffice. 
+lisa Allowing a server to return a server-defined set of live properties with an ALLPROP is fine with me. 
+I also agree that this should be coupled with a deprecation of the use of ALLPROP by generic clients. 
+This allows a server to chose how "interoperable" it wants to be with existing clients that use ALLPROP, without forcing it to do anything egregiously inefficient (the 2518 properties and dead properties are reasonable to require, because it is extremely unlikely that they will be very expensive to compute). 
+Cheers, Geoff I believe that your example shows well that it's completely up to each server which properties are live and which are dead, and that any given server implementation may allow for configuration that changes this. 
+But that doesn't mean that the notion of a "dead property" is ill-defined for a given server and time of test. 
+Nor does it mean that a requirement that servers return "at least all DAV live properties and all dead properties (i.e., all non-live properties that would give non-404 responses when queried for by name)" can't be tested on any given server at any given time. 
+It simply means that it's at the server's discretion what properties are live, and that no test can be performed unless this is properly documented for the server being tested. 
+can't Actually I think we should do both :^). 
+I think we should adopt Geoff's proposed semantics for ALLPROP (with my "at least" addition), and I think we should *also* deprecate the use of ALLPROP by generic clients. 
+That way ALLPROP clearly becomes (i) a "quick and dirty" way of looking at an asset that's primarily used by older generic clients and is supported in that usage only for backwards compatibility; and (ii) a shortcut used by server-specific clients who know exactly which properties the server chooses to return on ALLPROP. 
+dan Daniel Brotsky, Adobe Systems tel 408-536-4150, pager 877-704-4062 From: w3c-dist-auth-request@w3.org [mailto:w3c-dist-auth-request@w3.org]On 
+Behalf Of Lisa Dusseault Sent: Thursday, November 22, 2001 11:53 AM Subject: RE: [ACL] Principal Identity A "regular" client (knowing just RFC2518) will rely on allprop returning *all* properties. 
+A "new" client (aware of deltaV) will know about {DAV:}supported-live-property-set. 
+The existing RFC2518 syntax does suffice. 
+However, that was modified in deltaV and ACL. 
+We just think that the modification isn't complete without the inclusion facility. 
+The compelling reason again is: performance (one requests rather than two). 
+From: Lisa Dusseault [mailto:lisa@xythos.com] Sent: Thursday, November 22, 2001 11:53 AM Well, I don't know if this is compelling for you, but reasons for allprop are: - it's a single request. 
+Typical use case for me is PROPFIND/allprop on a collection with Depth=1. 
+- To achieve the same with 2 propname/prop requests, I'd have to make a PROPFIND/propname Depth=1, calculate the closure of all propnames for all resources in that collection. 
+Then perform a PROPFIND/prop with Depth=1 where prop/ includes the set of all property names of all resources. 
+- PROPFIND/propname is not for free. 
+To calculate the exact set of live properties of a resource is often more expensive than answering an allprop request. 
+//Stefan 

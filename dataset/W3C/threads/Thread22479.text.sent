@@ -1,0 +1,89 @@
+The discussion of NodeList being "live", and of exactly what "live" means, probably belongs in the description of this interface rather than in the functions that return an instance of it. 
+NamedNodeMap: I take it that this too is implicitly "live", in the sense that index numbers may (or may not) be unstable as the contents change. 
+(In other words, lazy implementation is OK.) Might be worth adding a caveat to that effect. 
+Typo: "derive the named which the node must be stored under". 
+Attribute: Typo, "can be contain". 
+Possible typo, "entity references will have... both text nodes and entity reference nodes"; I think "will" should be "may". 
+"Has an effective value" needs to be better defined -- the reference to "this method" (which returns null if there is no effective value) seems to be talking about getAttribute(), and should probably appear there, with a comment here that if an attribute has no value there will be no Attribute object to represent it. 
+That would also clarify the definition of "specified" a bit, by avoiding the question of whether a non-effective attribute is or isn't specified. 
+(It doesn't exist, so the question is moot.) Re Attribute getName/getValue: Perhaps the answer is that getNodeName and getNodeValue should adopt these more general names? 
+I like the idea of not multiplying methods unnecessarily, but I'm not wild about having the call explicitly reflect the interface hierarchy. 
+Element: I'm sure it's too late to change this, but I would have preferred getAttribute (as object) and getAttributeString, rather than getAttribute (as string) and getAttributeNode. 
+getAttributeNode is really getAttributeAttribute, after all... and the fact that it's the more general case also suggests it should have the more general name, so users think about it first and then decide if they can optimize to getAttributeString. 
+Re Element's tagName as an Attribute: It _could_ be, but I don't think that's the right answer from either the philosophical point of view (it means something slightly different in the document) or for efficiency (this is likely to be the single datum in the Element which is accessed most often). 
+Besides, you'd be buying trouble if any DTD ever happened to define an Attribute which used the same name! 
+Re Element.getAttributes versus Node.attributes -- I agree re single call, though I slightly prefer the getAttributes name. 
+Related question: Are there any kinds of Node _other_ than Element that have attributes? 
+The only ones I can think of are in the DTD. 
+Maybe MayHaveAttributes should be a separate interface implemented only by those types which actually need it...? 
+More stuff from the sanity-check pass (as long as I'm swapping it all into wetware anyway...) Text: Currently says that it's the non-markup content of an element, and that markup will be siblings on either side of it. 
+Two problems with that statement. 
+(1) It may be the content of other things, eg Attribute. 
+(2) It may be only one contiguous chunk of that content. 
+There may be more than one text child separated by markup: As in strong this /strong case, where the siblings are Text, Element, and Text again. 
+Current wording suggests only a single Text should be expected except during editing; not what you intended. 
+Has joinText's behavior been nailed down since the 20th? 
+Somehow, having it return an orphan Text doesn't seem to save a lot of work versus cloning the first and appending the data from the second. 
+ProcessingInstruction: You might want to make more explicit that the target re-appears as part of the data... and remind folks about the PI's syntax, eg whether or not whitespace is allowed between ? 
+and the target. 
+(I'm somewhat surprised that you offer target alone, and all-data, but _not_ data-following-the-target. It would seem appropriate, if you're going to go to the trouble of parsing out the target, to offer both results to the user.) DocumentType: Should this be self-initialized to include standard entities such as %lt;? 
+Or is it assumed that whoever creates the Document will take responsibility for setting this up correctly? 
+(The latter is more general, but since these extended classes are XML-specific...?) Might be worth pointing out once again that the DOM explicitly doesn't discuss creation of the root Document, and only operates on it once it exists, just to avoid questions about who shaves the barber. 
+Last set of thoughts for this pass: EntityReference says it is uses when entities _other_than_ those pre-defined by XML are encountered. 
+Is this really true, and if so how do the predefined ones appear -- perhaps converted into their text equivalents and rendered within Text (or CDATA, if necessary) nodes? 
+Or just left in their &amp;entity; form? 
+CDATA: this interface is-a Text. 
+That means it implements the split and join operations, and can be passed to them... which means a CDATA could be passed to Text.joinText, or vice versa. 
+The spec doesn't mention this, and probably should point out that the result of such a combination, if it works at all, would probably have to be a CDATA due to the risk of containing characters that normal Text can't. 
+There is, of course, a hazard involved in CDATA: since it can legitimately contain both  and ] characters, it's possible that during editing of the DOM we might manage to introduce ]] into its text contents. 
+This would yield bad XML when written out since that's the CDATA terminating sequence. 
+But short of testing the characters on either side of the editing point every time we modify its contents, I don't see how we can prevent this. 
+Do we want to commit to doing that check -- and if so, what do we do when we find that the user has asked us to break the document? 
+(The hazard exists both for inserts and for deletion, of course; CDATA just isn't all that robust.) Actually the DOM assumes that all characters are converted into the Unicode characters before being passed to the DOM, so the DOM never sees the character entity references. 
+This should be better described (we have a few of these little nits left!) We've actually decided for this round to dump joinText altogether due to precisely these sorts of issues - it will no doubt come back in a future Level. 
+You still have normalize which will join all the Text nodes in a subtree. 
+Lauren Actually, Text (and for that matter CData) can contain any characters whatsoever. 
+It just happens that when you *write out* a Text or CData object you need to canonicalize it, and in different ways. 
+This is not something that the current DOM has specific interfaces for. 
+This is a consequence of the fact that Text objects contain character data, not markup. 
+Only if your writeOut method is unacceptably naive. 
+The writeOut method for Text-not-CData objects should emit " " as "" and "&amp;" as "&amp;amp;", and the writeOut method for CData should emit "]] " as "]]". 
+The only thing that can "break the document" is an attempt to insert characters that aren't Chars by the XML rules; i.e. non-Unicode values. 
+John Cowanhttp://www.ccil.org/~cowancowan@ccil.org 
+You tollerday donsk? 
+N. 
+You tolkatiff scowegian? 
+Nn. 
+You spigotty anglease? 
+Nnn. 
+You phonio saxo? 
+Nnnn. 
+Clear all so! 'Tis a Jute.... (Finnegans Wake 16.5) Actually, I believe that it is Text-not-CData that needs to emit "]] " as "]]" (see [14] in the XML spec, as referenced by [43]). 
+CData needs to replace "]] " with something like "]]]] ![CDATA[ " because CDATA sections cannot nest. 
+Breaking up the section seems to be the only way to preserve the characters, since  would not be interpreted inside the CDATA section (see section 2.7). 
+Ray Whitmer ray@imall.com 
+You are right on both counts. 
+John Cowanhttp://www.ccil.org/~cowancowan@ccil.org 
+You tollerday donsk? 
+N. 
+You tolkatiff scowegian? 
+Nn. 
+You spigotty anglease? 
+Nnn. 
+You phonio saxo? 
+Nnnn. 
+Clear all so! 'Tis a Jute.... (Finnegans Wake 16.5) Converting ]] contained in CDATA into "]]]] ![CDATA[ " -- that's my current reading (which could be mistaken, obviously). 
+Annoying, but not unreasonable; by quoting the string rather than escaping the individual characters, CDATA _is_ more fragile and has to be handled accordingly. 
+Joe Kesselman / IBM Research Unless stated otherwise, all opinions are solely those of the author. 
+Yes. 
+My point was that the DOM objects CData and Text can contain any characters, since they are essentially just dressed-up wstrings: adding markup has to be done when writing XML files. 
+John Cowanhttp://www.ccil.org/~cowancowan@ccil.org 
+You tollerday donsk? 
+N. 
+You tolkatiff scowegian? 
+Nn. 
+You spigotty anglease? 
+Nnn. 
+You phonio saxo? 
+Nnnn. 
+Clear all so! 'Tis a Jute.... (Finnegans Wake 16.5) 

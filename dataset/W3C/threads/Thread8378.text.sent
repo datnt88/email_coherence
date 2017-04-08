@@ -1,0 +1,102 @@
+WebDAV Working Group Meeting San Francisco IETF, March 18 Co-Chairs: Lisa Dusseault, Jim Whitehead Notetaker: Jim Whitehead A meeting of the IETF WebDAV Working Group was held at IETF-56, held in San Francisco. 
+Approximately 25 people attended the meeting over its duration. 
+Lisa Dusseault began by going over the agenda. 
+She noted that DASL discussion was dropped since there were not enough people present to discuss the issues in depth. 
+Lisa then led a discussion of 2518bis. 
+* Discussion of locking issues in 2518bis. 
+Slide "Agreed text so far" - Discussion of the content type of the resource created by a LOCK when the content type doesn't exist. 
+One thought: pick one type. 
+Another choice: do whatever a server does when you send a PUT with no Content-Type header, and a non-empty body. 
+Rough consensus: be silent on the issue (most likely defaulting to what happens when a PUT with no Content-Type header). 
+* Discussion of the definition of a collection. 
+Should we use binding terminology in 2518bis, or keep internal member terminology. 
+Tempest in a teakettle over internal member terminology. 
+In the end, decided to keep using internal member term. 
+* Discussion of "First problem" slide. 
+What should be the behavior on a LOCK on an indirectly locked resource? 
+Should the lock remove the entire depth lock, or should it be redirected, or should it fail? 
+Rough consensus for failure, error code to be determined later. 
+* Discussion of "Second problem" slide. 
+When an If header is submitted against a depth locked resource, must a client use the lockroot URL, or is any URL in the locked tree OK? If the untagged If header's referred to resource is the same as the request URL, will this break any existing clients? 
+One approach is to better identify interoperability failures in lock token handling. 
+Need to make the text in the specification in 2518bis on the If header more clear. 
+No consensus. 
+Lisa will write a message to the mailing list summarizing both sides of the issue, and explicitly solicit feedback from Dan Brotsky, Julian Reschke, and Max Dunn on this, as well as generally from the mailing list. 
+* Discussion of "what is locked" draft. 
+Discussed effect of locks on live properties. 
+Agreement of lock affecting dead properties. 
+Also tentative agreement that a lock should affect all PROPPATCH operations on all properties, live and dead. 
+Briefly noted that locks do not prevent live properties from updating their values (e.g., getcontentlength updating after a PUT -- this is OK, even when the resource is locked). 
+* The "Last Piece" slide. 
+No disagreement. 
+Refined lock-root to "lock root URL" to avoid ambiguity over what "mapping" means. 
+* "Allprop replacement proposal." 
+Agreement in the room that the proposal listed on the slide was fine. 
+Some concern over interoperability implications of adding new XML tag into PROPFIND prop requests to ask for all dead properties. 
+* Discussion on whether there should be an additional 4xx or 5xx status code for multistatus cases. 
+Several viewpoints. 
+Aesthetic: 207 is for complete success, while a 207 can have 4xx inside it, so this is a contradiction. 
+Interoperability: clients may not know how to correctly handle a new 4xx that expresses a multistatus case, or only use the new 4xx for cases where it is OK for the client to treat the entire response as a failure. 
+Functional: some tools may not understand WebDAV, but still come into contact with 207 responses. 
+An example is an HTTP logging tool that might be trying to tally success and failure, and won't properly handle 207. 
+Rough consensus to *not* make any changes to 2518bis. 
+Keep current semantics of 207, do not add new status codes. 
+Main motivation is to not break current implementations, or add a new status code that might cause interoperability problems. 
+* Discussion of entity tags, and support level. 
+Not strong support for moving to SHOULD. 
+Roy Fielding argued that there is already strong motivation for supporting entity tags, since they provide significant caching benefits. 
+But, there is experience that many DAV servers do not support entity tags at all, and hence interoperability might benefit from language in the specification recommending, or giving a SHOULD level requirement on support of entity tags. 
+Some agreement that use of entity tags should be RECOMMENDED (defined in 2119 to be the same strength as SHOULD) on all PUTable resources. 
+Also makes sense to add an implementation note providing rationale for why entity tags are a good thing to implement. 
+Brian Korver, discussion of Quota specification. 
+Brian began with an overview of the latest draft of the quota specification. 
+Some questions on the semantics of the new properties. 
+Brian mentioned that the definitions were taken from the definition of the NSF quota system. 
+The quota properties are strictly live. 
+Quotas are defined on resources -- there is no mechanism to ask about the quota for a particular user. 
+People who volunteered to read and review the specification. 
+Jim Whitehead, a grad. 
+student of Jim's. 
+Jim stated that the specification is close to WG last call, look for this in a few months, after a few people in the WG have read and provided feedback on the quota specification. 
+Brief discussion of the ordering specification. 
+Geoff Clemm overviewed recent changes. 
+Jim asked whether there were any objections to moving this to a working group last call. 
+None surfaced. 
+Geoff Clemm then led discussion on the binding protocol. 
+Geoff began with a brief overview of the binding protocol. 
+Discussion of copy language in the binding specification. 
+No objections on the language in the specification. 
+Some discussion on Copy, Depth infinity case. 
+*** Need to add description of the behavior of Copy, Depth infinity case, since it's not currently covered in the specification. 
+Discussion of delete and bindings. 
+Will take this to the list -- raised the issue. 
+Binding specification is at a point where, if you have issues with the specification, they should be surfaced now. 
+Will work to resolve open issues soon, want to drive specification to closure in the near future. 
+Geoff then led a brief discussion of the ACL protocol. 
+Brief review of IESG feedback on the recent last call. 
+There is a new draft in preparation, and will submit this as an I-D in the near future. 
+Like binding specification, want to quickly move to closure on this. 
+*** End of Meeting *** Jim, thanks for taking notes (and for posting them that fast!). 
+Some comments: In fact, DASL status has changed little since the meeting in January. 
+I added the new issues/ideas to the draft, closed some issues and submitted a new Internet Draft in February [1]. 
+I'll try to do a review of the current spec in the next few days. 
+I think it could greatly be simplified by splitting generic terminology/definitions from the property descriptions. 
+Great. 
+The last version that was submitted is draft 06 ([2]), the "latest" version ([3]) only differs in that it explicitly states that ORDERPATCH is atomic. 
+I'll submit that as a new "last call" draft ASAP. 
+Julian [1] http://greenbytes.de/tech/webdav/draft-reschke-webdav-search-03.html [2] http://greenbytes.de/tech/webdav/draft-ietf-webdav-ordering-protocol-06.htm l [3] http://greenbytes.de/tech/webdav/draft-ietf-webdav-ordering-protocol-latest .html 
+Here are the slides, to go along with the minutes 6.ppt Sure. 
+For example, say you have the following set of resources: C1 a C2 b d e C1, C2 are collections a, b, d, e are non-collection resources C1 contains a, C2, b C2 contains d, e If a Depth infinity lock is taken out on C1, using the terminology from the meeting (really from Geoff Clemm's GULP proposal), resource C1 is directly locked, and resources a, C2, b, d, e are indirectly locked (that is, they were not the target of the LOCK request). 
+Given this terminological background, the question is, what is the behavior of "UNLOCK" (the raw meeting notes are in error -- they say LOCK, and should say UNLOCK) if applied to any of a, C2, b, d, or e? 
+The three choices discussed were: 1) remove the entire depth lock (i.e., is equivalent to an UNLOCK on C1) 2) be redirected to C1 using HTTP redirection (3xx) 3) fail (4xx) The rough consensus in the meeting was that the response should fail (choice #3). 
+- Jim From: w3c-dist-auth-request@w3.org [mailto:w3c-dist-auth-request@w3.org]On 
+Behalf Of Jim Whitehead Sent: Thursday, March 20, 2003 10:09 PM Subject: RE: Raw meeting notes from WebDAV WG meeting it's refering In theory, this makes a lot of sense (UNLOCK should be applied to the URL to which the original LOCK request was sent). 
+In practice, old clients that want to break a lock (after finding it using lock discovery) may get into trouble by that change (if it is a change), because in RFC2518, there was no cheap way to find the root of a lock. 
+Note that issue "UNLOCK_WHAT_URL" (on the issues list) says that you can use any of the URLs protected by the lock. 
+Julian If current clients depend on the "can unlock with the URL of indirectly locked resources", then I believe we can address Julian's concern with an interoperability note that states "for interoperability with older clients, a server MAY automatically redirect an UNLOCK on an indirectly locked resource to the lock root URL of that lock. 
+Note: We should also include in 2518bis the motivation for this restriction; namely, that it prevents a client from mistakenly unlocking an entire tree of resources when all it wanted to do (and all it thought it was doing) was unlocking one of the members of that tree of resources. 
+Cheers, Geoff From: w3c-dist-auth-request@w3.org [mailto:w3c-dist-auth-request@w3.org]On 
+Behalf Of Jim Whitehead Sent: Thursday, March 20, 2003 10:09 PM Subject: RE: Raw meeting notes from WebDAV WG meeting it's refering In theory, this makes a lot of sense (UNLOCK should be applied to the URL to which the original LOCK request was sent). 
+In practice, old clients that want to break a lock (after finding it using lock discovery) may get into trouble by that change (if it is a change), because in RFC2518, there was no cheap way to find the root of a lock. 
+Note that issue "UNLOCK_WHAT_URL" (on the issues list) says that you can use any of the URLs protected by the lock. 
+Julian 

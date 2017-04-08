@@ -1,0 +1,29 @@
+I have the following html: When this html is parsed by the latest JTidy (released in July 2000), I get the following warnings: Tidy (vers 8th July 2000) Parsing "InputStream" line 2 column 1 - Warning: inserting missing 'title' element line 3 column 1 - Warning: table lacks "summary" attribute line 5 column 1 - Warning: p isn't allowed in table elements line 6 column 1 - Warning: /p isn't allowed in table elements line 6 column 1 - Warning: replacing element /p by br line 6 column 1 - Warning: inserting implicit br line 7 column 2 - Warning: tr isn't allowed in body elements line 7 column 2 - Warning: inserting implicit table "InputStream" appears to be HTML 3.2 8 warnings/errors were found! 
+Here is the resulting html: The p and /p tags on lines 5 and 6 (of the original html) are replaced with two br tags. 
+Also, a table tag was inserted. 
+The first change is OK, but the second one causes problems. 
+The table tag should not be inserted. 
+Please fix this. 
+Tung -- your HTML is at fault, according to the HTML specification: 11.2.1 
+The TABLE element !ELEMENT TABLE - - (CAPTION?, (COL*|COLGROUP*), THEAD?, TFOOT?, TBODY+) Those are the only allowed child elements of TABLE. 
+Note that most TBODY was introduced after the original implementations of TABLE, so most browsers imply an TBODY if they see TABLE - TR without containing TBODY. 
+cheers, ~stuart I have the following html: When this html is parsed by the latest JTidy (released in July 2000), I get the following warnings: Tidy (vers 8th July 2000) Parsing "InputStream" line 2 column 1 - Warning: inserting missing 'title' element line 3 column 1 - Warning: table lacks "summary" attribute line 5 column 1 - Warning: p isn't allowed in table elements line 6 column 1 - Warning: /p isn't allowed in table elements line 6 column 1 - Warning: replacing element /p by br line 6 column 1 - Warning: inserting implicit br line 7 column 2 - Warning: tr isn't allowed in body elements line 7 column 2 - Warning: inserting implicit table "InputStream" appears to be HTML 3.2 8 warnings/errors were found! 
+Here is the resulting html: The p and /p tags on lines 5 and 6 (of the original html) are replaced with two br tags. 
+Also, a table tag was inserted. 
+The first change is OK, but the second one causes problems. 
+The table tag should not be inserted. 
+Please fix this. 
+The second table tag is required, because the following tr must be enclosed in a Table. 
+The first table was closed when Tidy encountered markup that implied closure. 
+I can see Stuart's point that P is not allowed in TABLE but if he is right in listing the only things allowed within a TABLE, why doesn't Tidy insert the TBODY where it is needed rather than let the browser imply it which always seems to be a dangerous thing to do? 
+Cheers, Rick Parsons dot web: http://www.parsons1998.freeserve.co.uk/ [personal] address: 18, Brighton Road, Redland, Bristol, BS6 6NT England 53 Tung -- your HTML is at fault, according to the HTML specification: 11.2.1 
+The TABLE element !ELEMENT TABLE - - (CAPTION?, (COL*|COLGROUP*), THEAD?, TFOOT?, TBODY+) Those are the only allowed child elements of TABLE. 
+Note that most TBODY was introduced after the original implementations of TABLE, so most browsers imply an TBODY if they see TABLE - TR without containing TBODY. 
+cheers, ~stuart To be precise, the *browser* isn't what implies it, the HTML 4 DTD does by the rules of SGML (just as it "implies" HTML, HEAD, and BODY elements, by saying that Start tags and End tags are both omissible and are to be inferred by the content within in them). 
+For example, running a document containing through sgmlnorm [1] will output a new document containing XML doesn't allow you to infer anything of the sort (making an XML parser a lot easier to write than an SGML parser). 
+So the XHTML 1.0 DTD is slightly different: !ELEMENT table (caption?, 
+(col*|colgroup*), thead?, tfoot?, (tbody+|tr+)) Notice how it specifies that a table could have just one tbody **OR** one tr as a direct child! 
+At any rate, you don't need to specify tbody either in HTML 4 (where it's implied), or in XHTML 1 (where it's just optional). 
+Let the author decide. 
+In either case, it shouldn't be considered "dangerous" to omit it -- by convention, even the oldest browsers ignore elements they don't understand -- they ignore tbody if it's there, and don't get upset if it isn't. 
+/Jelks [1] http://www.jclark.com/sp/ 

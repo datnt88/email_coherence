@@ -1,0 +1,29 @@
+the following gives: line 14 column 23 - Warning: missing /caption before h1 line 14 column 23 - Warning: trimming empty caption line 14 column 23 - Warning: h1 isn't allowed in table elements line 14 column 27 - Warning: plain text isn't allowed in table elements line 14 column 34 - Warning: /h1 isn't allowed in table elements line 14 column 34 - Warning: trimming empty table line 14 column 34 - Warning: discarding unexpected /h1 line 14 column 39 - Warning: /caption isn't allowed in body elements line 14 column 39 - Warning: inserting implicit table line 14 column 39 - Warning: discarding unexpected /caption Bjarne D Mathiesen mailto:mac.bjarnedm@get2net.dk 
+K?benhavn N ; Danmark ; Europa Okay, maybe I can explain it by showing the process that Tidy goes through correcting each error. 
+You started with: and presumably some other table content following it. 
+After each error I'll illustrate what Tidy does by reprinting the markup as edited, with a + to indicate where Tidy is in the parsing. 
+Just before the first error, you have: Because: and H1 is not an element of %inline;. 
+This implies closure of the caption. 
+Tidy moves unexpected content in a table to occur before the table. 
+indhold /h1 /caption indhold indhold Some internal knowledge is needed here. 
+Tidy doesn't really keep track of end tags when building its internal document tree. 
+That information is derivable directly from the structure. 
+The /h1 isn't really moved/copied. 
+Similarly for the /caption above. 
+This is a combination error. 
+It parsed the table, so it's in the document tree, but it encountered a closing tag that isn't open. 
+This appears to have implied to Tidy internally that the table has closed structurally, resulting in what it sees as a table with no children indhold indhold indhold And then it will go on to parse the rest of the table. 
+Solution: don't put H1 inside CAPTION; it can't go there. 
+But it works as intended and displayes a 'h1' table caption ??? 
+This in all of the following browsers: netscape 4.73 (mac PPC) IE 4.5 (mac) iCab iCab - furthermore - has its own html-checker and doesn't complain about this. 
+Bjarne D Mathiesen mailto:mac.bjarnedm@get2net.dk 
+K?benhavn N ; Danmark ; Europa Because the browsers are fault tolerant... to a fault. 
+"But it works!" does not change the specification. 
+And Tidy conforms to the specification. 
+If you want an H1 caption, you have to use H1 before TABLE rather than CAPTION inside TABLE. 
+iCab's HTML checker is not a DTD-driven validator, misses a lot, and in some cases report errors that are not errors. 
+But it also catches errors that a validator would not since the DTD is not the sole measure of the specification. 
+There's one way to satisfy a DTD-driven validator and allow H1 inside CAPTION. 
+That's by using CAPTION INS H1 ... /H1 /INS /CAPTION . 
+INS (and DEL) can break practically every DTD rule in a strictly DTD-compliant way, but the full specification says it's a violation to use them that way. 
+(Effectively, INS and DEL should inherit the content model of their parent, except where that model and the content model of INS and DEL are disjoint (e.g., TABLE can contain INS, but INS can't contain anything that you can put inside TABLE).) 

@@ -1,0 +1,88 @@
+From http://www.webdav.org/wg/rfcdev/issues.htm 
+: IF_AND_AUTH: "The fact that use of authentication credentials with submission of lock tokens is required should be strengthened in the document." 
+and LOCK_SEMANTICS: "At present, the WebDAV specification is not excruciatingly explicit that writing to a locked resource requires the combination of the lock token, plus an authentication principal. 
+At one point, the spec. 
+discusses an ?authorized? 
+principal, but ?authorized? is never explicitly defined." 
+I'd like to confirm that indeed authentication and the ability to use a given lock token MAY be orthogonal. 
+That is, a server can - restrict usage of the lock token to exactly the principal that was authenticated when the lock was obtained, - restrict usage to the creator as above and a group of other principals that are allowed to "break" the lock (WebDAV ACL DAV:unlock privilege, see http://greenbytes.de/tech/webdav/draft-ietf-webdav-acl-latest.html#PRIVILEGE_unlock ) or - allow anybody who knows the lock token to use it. 
+I think right now there are servers implementing each of these schemes, and there doesn't seem to be any problem with that. 
+Regards, Julian IF_AND_AUTH: This issue was raised by Geoff. 
+LOCK_SEMANTICS: This was apparently raised by the DeltaV design team. 
+Julian, your recommended solution goes counter to the solution recommended by the people who raised these issues, as far as I can tell. 
+Both these issues were raised in order to strengthen the requirement that authentication is required to use a lock token,?whereas 
+you suggest loosening that requirement altogether. 
+So, with conflicting suggestions, we need more discussion and for people to indicate which side they fall on. 
+1. Authentication is required for lock token usage but the draft is clear enough already. 
+2. Authentication is required for lock token usage but the draft needs clearer text (please suggest where, what text). 3. Authentication MAY be required for lock token usage (see text below). 
+4. Other -- please describe your position. 
+This is a call for consensus -- I'll respond separately with my own opinion. 
+For reference, here are the most salient sections of the existing -bis draft: section 6.3: "Having a lock token provides no special access rights. 
+Anyone can find out anyone else's lock token by performing lock discovery. 
+Locks MUST be enforced based upon whatever authentication mechanism is used by the server, not based on the secrecy of the token values." section 7.6 the "authorized" is re-emphasized: In order to prevent these collisions a lock token MUST be submitted by an authorized principal for all locked resources that a method may change or the method MUST fail. 
+Here's some proposed text to consider adding to section 7.6 if we lean towards option 3 above (note this would also require changing the text in the above quoted paragraphs): Servers MAY restrict usage of the lock token to exactly the authenticated principal who created the lock. 
+Servers MAY also allow other privileged authenticated principals or even unauthenticated principals to use the lock token. 
+Lisa So for the record, I lean towards option 1 (no change) because I can't recall any interoperability problems in this area. 
+Without any known interoperability problems, it seems safest to leave the spec unchanged. 
+Lisa Correct. 
+I agree with this statement in that the server has to ensure that the principal submitting the lock token indeed has the "right" to do that. 
+However I disagree that locks *must* be tied to an authenticated user. 
+That requirement IMHO simply doesn't make sense. 
+It would mean that a WebDAV server can't offer locking on resources with anonymous access. 
+Why would we want to *forbid* that? 
+Emphasis here (read previous paragraph) is not "authenticated" but "submitted". 
+I think this is what is currently being implemented; and there doesn't seem to be any reason to forbid unauthenticated usage of locks. 
+If a server chooses to do that, why should that be forbidden? 
+Generally, locking and authentication are separate concepts. 
+Of course servers *can* tie lock ownership to particular principals, but there doesn't seem to be a compelling reason to require that. 
+Maybe Geoff (who raised one of the issues) could explain? 
+Best regards, Julian As there are two open items on the issue list regarding this issue, I'd say that the current wording ?sn't 
+good enough. 
+Let's clarify either way (making sure that we don't break existing implementations). 
+Best regards, Julian I've always believed that authentication and lock token usage were orthogonal. 
+To add to Julians' example of anonymous authoring of resources involving lock tokens, I'd add the following use case. 
+Given a locked resource, R, and two principals, P1 and P2, with different access priviledges such that P1 can PUT to R, but P2 can only do a PROPPATCH to R. This scenario may arise in a content management system where resource properties are used to indicate the current state of the resource. 
+It seems clear to me from this scenario that the issues of authentication (whether by user, group or method) and lock token usage are decoupled. 
+I agree with the above proposed text, however it may lead to some interoperability issues. 
+Is there a proposed mechanism to allow clients to discover how a server handles the intersection of these design choices? 
+Cheers, Elias But how can clients discover if servers allow any authenticated user (other than the one that got the lock)? 
+Without servers advertising this toggle, it seems very unlikely that clients will use it as they cannot rely on it. 
+Unless of course the client is talking to a server by the same vendor in which case there may be other non-standard behaviors that the standard has no business describing. 
+So yeah, it might be desirable but it's not a slam dunk. 
+lisa I'm not sure we need that kind of discovery. 
+Keep in mind that we're talking of an exceptional edge case where somebody "steals" a lock that was created by somebody else. 
+We don't need to make that simple. 
+Trying and seeing the outcome should be ok. 
+Or am I missing a more regular use case? 
+Regards, Julian So far we've only considered lock "stealing" for the purpose of destroying a lock (e.g. if somebody locked a file and went on vacation). 
+If I steal somebody else's lock to use it and change the file while still leaving it under the same lock there *will* be interoperability problems because there's no way to coordinate. 
+Going from that limited UNLOCK use case to a more general content management use case, where multiple people might use the locked resource is a big step and we don't have a lot of experience (that I know of). 
+Recall that shared locks were invented for the latter case, not exclusive lock token sharing. 
+Lisa I c. I absolutely agree that using somebody else's lock token to get rid of the lock (did the other forget to unlock before leaving for the weekend?) is a completely different use case then *using* the lock token in methods other than UNLOCK (that is, in the "If" header). 
+*That* is something we may want to clarify. 
+That still leaves the use case of a public resource that supports locks. 
+I think this is allowed today, and actually is in use. 
+We should not forbid that. 
+So maybe we should close the two issues mentioned, and add a new one specifically for this question? 
+From my point of view: - There are no restrictions on who a server allows to UNLOCK using a "stolen" lock token. 
+It MAY restrict it to the "owner" of the lock, to the owner and principals holding the DAV:unlock privilege, or not restrict it at all. 
+In particular, there's no requirement that for each lock token there actually *is* an "authenticated owner" (unless you count the ACL specs's "DAV:unauthenticated"). - On the other hand, submitting the lock token in an If header (usages != UNLOCK) SHOULD be restricted to whatever the server thinks the "owner" of the lock is. 
+Does this make sense? 
+Regards, Julian Yes, I think that makes sense. 
+I began writing this note intending to suggest that we at least encourage some checking of the principal, but after further reflection, I think simply mentioning the options as you just did should be sufficient. 
+It should be clear to the reader that there are benefits to making the checks without us pushing for that. 
+J. I fully support option 3. A server should do whatever it can to ensure that the lock token is being used only by the client that created the lock, but for a server that allows unauthenticated clients to take out locks (and I believe that should be allowed), there's nothing the server can do beyond checking that the lock token corresponds to that on the locked resource. 
+Cheers, Geoff Julian wrote on 04/28/2004 02:23:52 PM: tell. 
+suggest people below). 
+find be Julian, just so I make sure there's a clear consensus, was the proposed text OK? 
+It was my sense that Geoff, Jason and Elias were more or less on board with this but I was confused by your latest reply. 
+Elias suggested explaining how clients discover how a server handles these design choices, but this mostly codifies how things already work today and we seem to have pretty successful interoperability in this area. 
+As it stands today, if the server requires authentication and the client didn't provide it, the server responds with a 403 and clients deal with that appropriately. 
+Did anybody have any alterations to suggest to this text? 
+Lisa Actually I'd make that "Servers SHOULD restrict usage of the lock token to exactly the authenticated principal who created the lock. 
+Servers MAY also allow other privileged authenticated principals or even unauthenticated principals to use the lock token." 
+(first MAY - SHOULD). 
+Which one? 
+Agreed. 
+Nothing except the one above. 
+Best regards, Julian I agree with Julian's sentiments, but either wording works for me. 

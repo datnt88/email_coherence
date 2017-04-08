@@ -1,0 +1,17 @@
+HI, has anyone encounter the following problem: I run netscape as the client browser talking to an apache web server. 
+In between them there is a proxy server sitting on the client machine. 
+The proxy serve simply do tunneling now. 
+I request the first url, e.g. http://www.cs.ualbert.ca/~wendy, 
+which is my home dir in my research acct. 
+Then I request a link on the page, which in the html page is simply pointing to a file in a subdirectory, e.g. a href="subdir/hello.html" 
+The request header received upon the second request is not what I read from the http 1.1 spec.... Received: GET http://www.cs.ualberta.ca/subdir/hello.html 
+HTTP/1.1 
+Instead of what I expected to be GET http://www.cs.ualberta.ca/~wendy/subdir/hello.html HTTP/1.1 (recall full path if thru proxy) Does anyone know why ? 
+This happens every so often. 
+Is this an apache server or netscape browser bug ??? Thanks in advance for any responses.... Wendy Sounds more like a quirk than a bug. 
+Since "~wendy" is not followed by a "/", the browser thinks it has received the page "~wendy" in the root directory. 
+That is why "subdir/hello.html" looks like it sits under the root directory, not your "~wendy" subdirectory. 
+I've seen some servers respond to the request for "~wendy" with a 301 redirecting to "~wendy/" just to make clear that you're getting the default document for that subdirectory. 
+I don't see that as a requirement, but others can correct that assumption. 
+-Rob Polansky try adding a slash '/' after ~wendy.. like: http://server/~wendy/ the browser probably doesnt realize that it is within a subdirectory. 
+This can be cause by the server not redirecting the original URL to a slash terminated on or to the actual file.. Redirect http://server/~wendy to: either 1) http://server/~wendy/ 2) http://server/~wendy/index.html 

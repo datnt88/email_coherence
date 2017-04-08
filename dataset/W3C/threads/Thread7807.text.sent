@@ -1,0 +1,33 @@
+Accidentally caught by the spam filter. 
+I've sent in a request to have Tim's email address added to the accept2 list, so hopefully this won't happen again. 
+- Jim One rule in the DTD states: I suggest that this is modified to read so that streaming clients can retrieve the status of a property before they retireve the property itself , and thereby know whether the data is valid or not. 
+In the current rule, such a client is required to read the prop data in its entirety, possibly to discover that the data is invalid only after the fact. 
+Comments? 
+Trivia: In RFC2518 Feb 1999 8.2.2 Example - PROPPATCH (1) The property is set as Z:authors but the response stat is given as Z:Authors . 
+Note the case switch. 
+(2) The responsedescription states 'Copyright Owner can not..' the property was 'Copyright-Owner'. 
+Either the response description is a canned response, in which case the hyphen is missing, or the server is doing something I don't understand! 
+Tim Hmm. 
+Is there anybody out there whose code this would break? 
+I know my client code wouldn't mind; it passes the entire entity to an XML parser and then, given a propstat element, asks the parser "OK, give me the first status element and the first prop element". 
+|John Stracke | http://www.ecal.com 
+|My opinions are my own.| |Chief Scientist |=============================================| |eCal Corp. |"What now, Brain?" "We should flee in terror.| 
+|francis@ecal.com|Yes, that would be the wisest course." 
+| The benefit is that, if the client sees the status first, and knows the operation failed, then it can avoid buffering the contents of the prop element. 
+With an existing server, the only problem would be that it would have to buffer all the time. 
+Exactly -- I can see it now, some bright spark chooses to store a hunk of video in a property ... or a long live property ... Uh...but now I'm wondering whether this actually makes sense. 
+Is there any case where the operation failed but you get a prop with an actual value in it? 
+The only cases that seem to make sense to me are those where the server manages to retrieve partial content before the error occurs. 
+Presumably these would result in error code (500 Internal Server Error). 
+Tim From: John Stracke Subject: Re: WebDAV DTD Date: Tuesday, October 12, 1999 4:32PM is valid or not. 
+In the current rule, such a client is required to read after That said, I don't find this to be a particularly compelling argument. 
+In general you'll need to parse the entire propstat block anyway just so you can find its end. 
+And, clients will need to be able to accept either ordering, since there are existing servers that send the data as prop, status, responsedescription. 
+So, I'm not sure what benefit this change gains you. 
+it? 
+Um, wait a minute, this still doesn't make sense. 
+If a server uses your recommended oredering for the propstat XML element and sends the status first, then starts streaming data out of its property store, and then detects an error ... there's no way to put that error into the response, since you've already sent the status, right? 
+Assuming the server isn't streaming the data out doesn't work either -- if the server reads the entire property out before marshalling the response, then it can detect ahead of time that there was an error, and just not send any information at all for the property, thereby avoiding the case that motivates the ordering change in propstat. 
+Uh...but now I'm wondering whether this actually makes sense. 
+Is there any case where the operation failed but you get a prop with an actual value in it? 
+- Jim 

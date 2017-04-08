@@ -1,0 +1,39 @@
+In HTTP 1.1: If the server sends Vary: Content-Language must it also send a Content-Language header ? 
+(I would think so) If the server has more than one language available, but the user agent does not send Accept-Language, need the server send Vary: Content-Language at all ? 
+If it does, what is the action of a proxy server on getting a request for that URL without an Accept-Language header ? 
+How about: URI=index.var, server preferred language is English User Agent sends Server sends Proxy Server caches - english.html 
+URI=index.var 
+Content-Language: en Content= english.html 
+Accept-Language: en english.html 
+URI=index.var 
+Content-Language: en Content= english.html 
+Vary: Accept-Language Content-Language=en Accept-Language: fr french.html 
+URI=index.var 
+Content-Language: fr Content= french.html 
+Vary: Accept-Language Content-Language=fr This way, user agents who fail to set Accept-Language will get the default, proxy caches will be used, and agents such as robots will know the language of the default document. 
+Currently (Netscape, Apache, HTTPD 1.0) the ordering of languages in Accept-Language indicates the user's desired weighting, but I believe the ordering in Accept (type) is not significant. 
+In 1.1, does the ordering have any defined significance, or should people use the qs scheme to indicate preference? 
+(As regards my earlier question about robots, I don't think Vary: Accept Language is very useful on its own (for a robot), so I will have to wait for a definition of the Alternates header). 
+Andrew Daviel andrew@vancouver-webpages.com In HTTP 1.1: If the server sends Vary: Content-Language must it also send a Content-Language header ? 
+(I would think so) This question reflects a subtle misunderstanding of the Vary mechanism, although you are certainly not the first person to have made this mistake. 
+"Vary: Content-Language" makes little sense, because (1) Fields named by "Vary" are expected to be *request* headers, not response headers. 
+The description of "Vary" was rewritten several times during the last few weeks of the drafting process, and it looks like we neglected to stress this point emphatically enough. 
+(2) Content-Language is normally a *response* header, at least for the GET method. 
+So the question makes very little sense, since the premise is wrong: servers would not normally send "Vary: Content-Language". 
+If the server has more than one language available, but the user agent does not send Accept-Language, need the server send Vary: Content-Language at all? 
+In this case, the server would *still* send "Vary: Accept-language", since any cache involved might receive future requests from other clients that do send Accept-Language. 
+If it does, what is the action of a proxy server on getting a request for that URL without an Accept-Language header? 
+If the cache sees "Vary: Accept-language" in a response and then a subsequent request for the same resource without an Accept-Language header, it must forward the request (perhaps as a conditional GET). 
+Section 14.43 says this quite explicitly: the cache MUST NOT use such a cache entry to construct a response to the new request unless all of the headers named in the cached Vary header are present in the new request Note the word "all" in that phrase. 
+-Jeff It's clear from the example later, you meant "Vary: Accept-Language". 
+And no, there is no requirement that Content-Language be provided even though the response includes "Vary: accept-language". 
+The server must send "Vary: accept-language" if and only if the response would be different if a different accept-language would be sent. 
+If it does, what is the action of a proxy server on getting a request for that URL without an Accept-Language header ? 
+"Accept-language not supplied" is a different request from "Accept-Language: en" if the response says "Vary: accept-language". 
+No, this is wrong. 
+It's much simpler than this. 
+If there's more than one language, and the response would be different if you send a different Accept-language, then the response must say "Vary: Accept-Language". 
+It's also a good idea to send Content-Language to identify the language you actually sent, but there's no requirement that you send it, that the Content-Language actually match (any of the) Accept-Languages sent, etc. 
+It is my belief that my responses are the only reasonable interpretation of what draft-ietf-http-v11-spec-06 actually says. 
+Do you disagree? 
+Larry 

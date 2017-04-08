@@ -1,0 +1,447 @@
+The SGML ERB met today, Oct 17th, and voted on several items already submitted to the SGML WG. Participating: Bosak, Clark, Maler (in part), Magliery (in part), Paoli, Sperberg-McQueen, and Sharpe. 
+Absent: Bray, DeRose, Hollander, Kimber, and Connolly. 
+All decisions were by consensus of all those participating in the call, and thus carry a majority of the membership of the ERB. 
+The text below is substantially the same as the drafts discussed by the ERB, but was edited after the meeting to reflect the ERB's decisions; the ERB has thus not seen and approved the precise wording given, and may choose to correct any editorial errors made in the revision. 
+-C. 
+M. Sperberg-McQueen B.1 What should XML's character-set rules be? 
+Should conforming XML documents be restricted to particular character sets? 
+Should conforming XML processors be required to be able to parse all conforming XML documents (13.1)? 
+It had already been agreed that: - the character repertoire of XML documents is that of ISO 10646 - conforming XML documents may be in UTF-8 or UCS-2 form - all XML processors must accept documents in UTF-8 and UCS-2 (or optionally UTF-16) form - XML processors may provide a user option which causes them to accept documents in other coded character sets (e.g. ISO 8859 or JIS 0208) or other encodings of 10646 or other coded character sets (e.g. Extended Unix Code) -- this behavior must be optional [at least in validating processors, we decided today] (i.e. the user must be able to turn it off, so that documents not in UTF-8 or UCS-2 raise errors). 
+In discussing the mechanism to be used for signaling the encoding and/or coded character set in use, the ERB decided the following. 
+[Editorial note: if the ERB decides that XML will have external text entities, then everything said below about documents will also apply to all external text entities.] 
+The character repertoire of XML documents is that of ISO 10646. 
+All XML processors are required to accept documents in the UTF-8 and UCS-2 encodings of 10646. 
+It is recognized that accepting documents in the UTF-16 variant would be desirable. 
+Documents encoded in UCS-2 must begin with the Byte Order Mark described by ISO 10646 Annex E and Unicode Appendix B (the ZERO WIDTH NO-BREAK SPACE character, U+FEFF) -- this is an encoding signature, and not (for SGML purposes) part of the document. 
+XML processors must be able to use this character to differentiate between UTF-8 and UCS-2 encoded documents. 
+XML does not explicitly sanction the use of any other encodings. 
+It is recognized, however, that many documents exist in other encodings. 
+To support processors in dealing with this situation, an XML document may contain at its beginning, before any other text, markup, PIs, or white space, an Encoding Declaration PI matching EncDecl ::= ' ?XML' S 'encoding' Eq ("'" Encoding "'")|('"' Encoding '"') S? ' ' An XML processor may choose to read Encoding Declaration PIs and accept nonstandard encodings so declared. 
+In validating processors such behavior must be at user option. 
+An XML document which lacks both the Byte Order Mark and an Encoding Declaration PI must be in the UTF-8 encoding. 
+It is an error for a document to be in an encoding other than that declared in its Encoding Declaration PI. 
+The XML specification shall include (possibly by reference to relevant IETF documentation) a list of standard declarations for the nonterminal "Encoding" in the above production, to support interoperability, including names for at least ISO-Latin-X and the JIS family. 
+B.2 Should XML require each document instance to have a DTD or not (7.1)? 
+In discussing this item, the ERB made the following decisions: 1. Well-formedness The XML spec shall define two characteristics which an XML document may possess, called "well-formedness" and "validity". 
+A well-formed document, informally, is one for which no content model checking has been done, but which can be read by an XML processor with confidence in producing a correct ESIS. 
+Questions remaining open include: (a) the specific definition of well-formedness -- it is expected to include at least least (1) a containing root element with no text outside it, (2) properly nested elements, (3) properly structured tags, and possibly other constraints on entity references, empty elements, etc. 
+(b) whether two distinct levels of well-formedness (e.g. strong and weak) are necessary (c) the nature of well-formedness when there is no DTD or a partial DTD remains open. 
+2. Required Markup Declaration (votable Y/N) XML markup declarations are divided into DTDs pointed-at by the !DOCTYPE, and internal subsets contained within the !DOCTYPE. 
+Markup declarations necessary to produce a correct parse may be contained either in the DTD or the subset. 
+XML will include a signalling method whereby instances may contain statements indicating whether the declarations in the DTD and/or the subset are necessary to produce a correct parse. 
+XML documents may contain a Required Markup Declaration PI as follows: RMDDecl ::= ' ?XML' S 'rmd' Eq ('NONE'|'INTERNAL'|'ALL') S? ' ' The RMD PI must appear after the Encoding Declaration PI, if any, and before the document type declaration itself, if any. 
+Should the RMD state that the DTD is required ('DTD' or 'ALL'), it is a reportable error if the DTD cannot be retrieved. 
+3. Interpretation of Required Markup Declaration If no RMD PI is given, then - if a document type declaration is given, an XML processor must assume that the DTD is required, and read and process both the internal subset and the external DTD; it is a reportable error if the external DTD cannot be retrieved. 
+This is as if ?XML rmd='ALL' had been specified. 
+- if no document type declaration is given, an XML processor may do as it likes. 
+For example, (a) signal an error, (b) behave as if ?XML rmd='NONE' were declared, (c) guess, on the basis of the root element's GI, and retrieve the appropriate well-known DTD if possible or act on hard-coded knowledge of the DTD (e.g. HTML). 
+If an RMD PI is given, then - for the value NONE, a validating processor may check the DTD and/or instance to verify that in fact the DTD is not necessary to the correct construction of the ESIS; it's an error if the DTD is necessary but ?XML rmd='none' is specified. 
+- for the value INTERNAL, a validating processor may check the accuracy of the RMD PI; a non-validating processor may read the internal subset and skip the external DTD. 
+If the RMD PI is correct, the non-validating processor can construct the same parse as a validating parser. 
+- for the value ALL, an XML processor must read and process the entire DTD, and construct the ESIS accordingly. 
+(The DTD may be skipped only by applications which don't construct an ESIS in any meaningful sense.) A processor may issue an informational message if in fact the DTD could have been skipped, for this instance or for all documents in using the given DTD. 
+This CANNOT be REQUIRED behaviour. 
+This is a gross hack!!! 
+I also cannot condone the clause "does not explicitly sanction". 
+Seems to me like here is another mailing list that I've wasted a lot of time on... 
+That's odd. 
+We went waaaaay out of our way to accommodate alternative character encodings. 
+Maybe when you've had a little time to consider this you can explain the problem in more detail. 
+Jon Well, I hope you won't leave, until we've all decided to stop wasting time! 
+I agree with Gavin however that this is not good behavior: The most likely transport method for XML will be HTTP or one of it's replacements. 
+HTTP _has_ proper metatdat facilities. 
+If the MIME stuff isn't good enough, we can define our own MIME header for character encodings. 
+I don't have a problem with allowing hacks to determine the character set (but we can't use character definitions we must say that the initial bytes must be read as Latin-1 characters, say, to determine the encoding. 
+We also need to talk about pad bytes, if needed for some encodings. 
+BUT these hacks must apply if the encoding is not given in metadata. 
+Metadata could be the command-line, a catalog, or the MIME header. 
+The old TEI assumption that we've got just a lump of bytes is not so common any more. 
+By having the "hack" version of the spec as the fallback, we have an easy way of handling things properly whether are users are smart: MIME headers rule! 
+or not-so-smart: "I've got a floppy disk, can you help me read the document?" 
+I hate character set issues, but I have to agree with Gavin that explicitly ignoring the main protocol of the Web is a loser, especially when it has the potential for a nice solution of the problem. 
+We can even explicitly define acceptable channels for metadata. 
+Ignoring the FEFF at the beginning should be required when the metadata is present, as should be ignoring the ?XML encoding ... hack. 
+It should be legitimitate not to add this information at all, if transmitting over a channel that can convey encoding information (like HTTP). 
+A user's save-to-disk option might well have to add on a yucky header of the sort Gavin deplores (because most filesytems lack metadata, and probably will forever). 
+Is this sort of a compromise reasonable? 
+-- David RE delenda est. 
+David Durand dgd@cs.bu.edu \ david@dynamicDiagrams.com 
+Boston University Computer Science \ Sr. Analyst --------------------------------------------\ http://dynamicDiagrams.com/ MAPA: mapping for the WWW \__________________________ I have no problem with *allowing* them, but I have a very large problem with *requiring* or *promotong* them, to the point of basically excluding anything more reasonable. 
+I think your compromise is reasonable, and I am willing to compromise. 
+I am not willing to give into the ERB deciding to *promote* a hack when more suitable mechanisms exist, *and* are widely deployed. 
+The PI hack is gross, and the wording used to describe it basically makes it the primary promoted mechanism. 
+This flies in the face of both common sense, and the current extant meta-data mechanisms. 
+Yes, but from what Aladdin's cave does this information come from when it becomes time to transmit the data? 
+Does the XML document get stored with a complete MIME header, is it maintained in some registry, is some extension to the filename used, or does the webserver autodetect, or does the webserver guess based on its own locale and OS, or what? 
+I think the most practical thing is for the XML rules to state that it is the Webserver software's task to figure out the encoding (given that most sites this can be done from locale and OS, or from configuration files on a per file or per directory basis) but allow an override for documents that use some other encoding, in the form of PIs (that keep SGML compatibility). 
+Character set should be an website administrator's task, not any business of Hiroshi Homepage (let alone Heinrich Heimblatt), as far as possible. 
+It should be the Webservers responsibility to detect an overriding PI at the head of an XML document and to generate the appropriate MIME header information for transmission. 
+So if people need to have foreign encoded documents on their site, they can readily mark them as such. 
+In other words: SGML markup for storage, Web protocols for interchange. 
+Rick Jelliffe http://www.allette.com.au/allette/ricko 
+Allette Systems http://www.allette.com.au 
+It's the webserver's business. 
+If people don't like the standard HTTP header directories, or server extension configurations, they can use the "self-detecting character hacks" (the PI). 
+Parsers, on the other hand are what we are specifying. 
+And parsers only need to say what they do given some input. 
+We can define a "metadata channel" -- additional input to the parser, determined as reasonable; we will provide two bindings: Command line option, for command-line parsers, and HTTP header policies for HTTP stream parsers. 
+Other channels will have to define how they will transmit or use meta-data, as appropriate. 
+If they don't have meta-data, they can use the hack. 
+XML is not defining server behavior, but client behavior. 
+The server will have two options: metadata, or PI. 
+We should declare that metadata is preferred over PI, if the channel provides metadata. 
+This falls out of my proposal, if that's the way the server wants to work: no metatdata in, but metadata required to go out because HTTP has the metadata channel. 
+-- David RE delenda est. 
+David Durand dgd@cs.bu.edu \ david@dynamicDiagrams.com 
+Boston University Computer Science \ Sr. Analyst --------------------------------------------\ http://dynamicDiagrams.com/ MAPA: mapping for the WWW \__________________________ Any of the above, and others possibilities too (fields in a database etc.) The very fact that you have so many options should make it obvious that this is meta-data, not data, and does not belong *in* the document. 
+I have no problem with *allowing* PI's (I personally would never use them, or write software that did), but I cannot condone *requiring* them or *promoting* them. 
+In that case, why not just use catalogs and FSI's for storage? 
+I cannot see *why* we need markup to describe meta-data that also applies to the markup describing the meta-data. 
+This seems to be to be logically inconsistant. 
+In answering a long private email to Michael Sperberg-McQueen on the topic of character encodeing and metatdata, I had a revelation as to the correct way to do this, without blowing our compatibility with the rest of the world. 
+First a few premises of my reasoning: 1: Character set declaration data must be parseable by everyone. 
+"Bad File Format" is an unacceptable error if what it _really means_ is "Character set 'Bill's Cyrillic' unknown". 
+Any character-set determining prefix to a file must be a parseable series of bytes that everyone can read. 
+2: compatibility with HTTP's transport functionality is essential. 
+We should not talke the time, or the risk, of reinventing yet another way to handle character sets. 
+So, I suggest that we have the following problems: STEP 1: determine number of bytes in a character code (bit-combination). 
+The possiblities are 1 and 2 bytes/character (UTFs count as 8-bit codes for our purposes). 
+I don't remember if '\0' avoidance is still an issue. 
+I'd prefer to that we define it as a non-issue, and look at the first 2 bytes of the input. 
+Presence of a null indicates a 2-byte character set, and its position indicates the endianity of the data, if we decide to allow this option (I'd prefer to big-endian, and lose a case). 
+(STEP 1'): Or we can use the FFFE hack, if that will have wider support. 
+STEP 2: now we have a standard MIME-header, encoded in Latin1, using the byte coding as determined in step 1 (i.e., 1-byte, big-endian, or little-endian). 
+We will define the fields that we _require_ (charset, only, I hope). 
+We will ignore, but permit, others. 
+The CRLFCRLF sequence that terminates the header will start the XML instance. 
+This header will be optional for channels (like HTTP) where the header information can be preserved, and required for all others. 
+This means any XML processor can produce the needed tagging information, and it can always be parsed. 
+If we go further, we could eliminate STEP 1, and parser the header in 8-bit mode always. 
+Then people can use their standard codebase to parse the headers, but 2-byte systems might show the header as garbage (proabably a _bad thing_). 
+-- David RE delenda est. 
+David Durand dgd@cs.bu.edu \ david@dynamicDiagrams.com 
+Boston University Computer Science \ Sr. Analyst --------------------------------------------\ http://dynamicDiagrams.com/ MAPA: mapping for the WWW \__________________________ Probably, since it is explicitly suggested by Unicode. 
+Whether you call it a hack or not depends on how you feel abut it, I think :-) Not yet. 
+We have looked at the first two bytes of the file and determined whether they are using the Unicode/10646 EFFF/FFFE option. 
+We have yet to determine (1) that the files are in XML at all and not HTML or SGML or GENCODE... (2) if they are in XML, what version of XML do they use? 
+with talk of an XML 2.0, this is important. 
+OK, I see now. 
+You are suggesting that we put a MIME header in the document in all cases. 
+I think this is an excellent suggestion. 
+Note that many existing web servers (including Apache) cope with files containing MIME headers, and may even emit those headers in response to an HTPP HEAD request. 
+Apache is said (independently) to represent over 30% of all running web servers. 
+It's always a little tricky to talk about mixing character sets within a single file. 
+However, since MIME headers are in US ASCII (or is Latin 1 allowed now?), the headers must be in the subset common to both. 
+As long a you don't include people's names, filenames, document titles or other displayable information in the MIME header in an XML file, though, I don't imagine it would be a problem. 
+James? 
+Gavin? 
+Martin? 
+At a minimum, you would need Mime-version: 1.0 If we get text/xml registered as MIME content type, it can be text/xml instead of text/x-xml, which would be good (I assume the leading x is OK!). 
+Instead of requiring the full MIME CR-LF at the end of each line (which is a pain to mantain on some platforms, e.g. Mac and Unix), I would suggest documenting a format in which * The lines are terminated by either NL or CR * Lines longer than 72 characters may be continued by starting the next line with spaces or tabs (HT) (as per RFC 822) * The header is terminated by CR LF CR LF CR CR or LF LF i.e. you must have two of the same kind. 
+You then get a header format which can easily and reliably be edited on multiple platforms -- e.g. you can upload a file from your PC to a Unix, NT or Mac server, and make a quick change in Notepad, Sam, or whatever, without trashing the file header. 
+Of course, the editor has to be able to write out the body of the file correctly! 
+(note that ftp in text mode will silently transform line endings into the format preferred on the destination platform, RS/RE rules notwithstanding; when you receive a file of format text/plain (e.g. 'cos the web server isn't set up to recognise some content type or other), the same transformation is made, which is why images don't transfer correctly if they have odd filenmes or are in new formats the server doesn't grok; it would be useful if XML were robust against such things as much as possible) Lee MIME headers are always ASCII. 
+BTW. 
+My preferred solution for local access (ie. 
+access in a filesystem) is to use attributes in catalog entries or FPI's to indicate encoding information. 
+.... this is *precisely* what my *.mim file format (suggested to HTML-WG and also out in an expired RFC) *is*. 
+Right, but the *.mim file format is different to Apache (or at least the last version I looked at) in that Apache sends the file *verbatim* and does not necessarily add missing headers... which means that the author must understand the entire set of required headers. 
+The proposal I put forth only requires headers that will be overriding those generated by the server. 
+As I noted before on this list, and also in HTML-WG, most software that will be dealing with the WWW will *already* have MIME header parsers built into them.... probably as a message stream module, so you can *reuse* that code for the local and distributed case. 
+Again, I seem to be talking to myself. 
+The headers are in US-ASCII, which is a nuisance of your file is UCS-2 (your editor would need to have MIME parsing capabilities built in), which is a boundary case, but an important one. 
+This is one reason I prefer catalog or FSI based solutions. 
+In most practical situations, this will not be an overly large concern though. 
+In the *.mim file format, the minimum you would need would be CRLF, and for non-ISO-8859-1 documents I would just reference the HTTP specs (though HTTP 1.1 is becoming more restrictive), though I could easily be convinced that strict MIME compatability be preserved. 
+The point I've tried to make before!!! 
+The PI hack is a HACK. 
+It is a header hiding under syntax that will confuse everyone, or at least cause people to assume that you could do something clever like: and we all know *that* is totally bogus. 
+Well, my suggestion is that we put a MIME header when we can't transmit the MIME header information over the channel. 
+We don't want to have to send 2 headers to be XML conformant when going over HTTP. 
+This would be essential for XML, as we don't want to force applications to maintain HTTP specific information like Content-length, et. al. 
+Well, perhaps to only a few people. 
+I think we are better off defining our own convention for "self-indetifying files", as there is none in common use. 
+If a common, robust, convention for metadata is implemented, then systems that implement it are entitled to the same slack (omission of redundant header) that we should afford HTTP. 
+Given the facts of life with multibyte encoding, and the desire that files be maximally self-revealing, we should probably use the character-length determination hack I suggested, ratehr than put 8-bit characters at the front of multibyte files. 
+This is a minor issue. 
+Implementations will implement the "all three conventions" version for a long time, as it's so easy, and implementations are so bad about linenends generally. 
+Because you can't parse the character set specification, without knowing what character set to parse in... 
+This is the most infamous of the SGML declaration's problems with automatic processing: why revisit it on XML users? 
+-- David RE delenda est. 
+I am not a number. 
+I am an undefined character. 
+David Durand dgd@cs.bu.edu \ david@dynamicDiagrams.com 
+Boston University Computer Science \ Sr. Analyst --------------------------------------------\ http://dynamicDiagrams.com/ MAPA: mapping for the WWW \__________________________ I have appended the text for the RFC. 
+This is much what I propose in the section dicussing protocols other than HTTP. 
+Nope. 
+I would prefer to always have US-ASCII headers. 
+here is the promised text.... INTERNET-DRAFT G. Nicol MIME Header Supplemented File Type EBT, Inc draft-nicol-mime-header-type-00.txt 
+Expires in 6 months October 19, 1995 MIME Header Supplemented File Type Status of this Memo This document is an Internet-Draft. 
+Internet-Drafts are working documents of the Internet Engineering Task Force (IETF), its areas, and its working groups. 
+Note that other groups may also distribute working documents as Internet-Drafts. 
+Internet-Drafts are draft documents valid for a maximum of six months and may be updated, replaced, or obsoleted by other documents at any time. 
+It is inappropriate to use Internet-Drafts as reference material or to cite them other than as ``work in progress.'' To learn the current status of any Internet-Draft, please check the ``1id-abstracts.txt'' 
+listing contained in the Internet-Drafts Shadow Directories on ftp.is.co.za (Africa), nic.nordu.net 
+(Europe), munnari.oz.au (Pacific Rim), ds.internic.net 
+(US East Coast), or ftp.isi.edu (US West Coast). 
+Abstract One of the problems encountered in serving documents over the WWW is the correct generation of the MIME fields required by the HTTP protocol, and in particular, generating the correct MIME type for body content. 
+This memo defines a file format that can be used to aid in the correct generation of such fields, and how servers should interpret the file format. 
+Use of this file format can also benefit other protocols such as FTP. 1. Introduction The HTTP protocol [1] requires a number of MIME fields to be sent to the client. 
+Some of these fields specify per-file information that cannot be easily generated by HTTP servers from the information available in the file system of the host operating system. 
+One good example is the MIME content type field, which not only specifies the content type of the message sent to the client, but also additional data such as the encoding of the character set used. 
+For example, a typical specification might look like: Content-type: text/html for HTML files that use the ISO-8859-1 encoding. 
+However, if the HTML file uses a different encoding, for example ISO-2022-JP, then the field should look like this: However, most servers cannot readily generate the extra parameter from the information in the filesystem, and in fact do not, leading to many interoperability problems. 
+As such, some method of supplementing the file system information is required. 
+This memo outlines one such method. 
+2. Current practise To date, various means have been used to supply such additional information. 
+Some of the current methods of supplying additional data to the server are: The META tag. 
+The HTML 2.0 DTD [2] specifies a META tag with an HTTP-EQUIV attribute that can be used to specify HTTP response field content. 
+To date this has not been widely adopted by servers, mainly because it requires parsing the HTML in order to get the field values. 
+This method is also flawed in that one cannot parse the HTML file without first knowing the coded character set and encoding used, so for certain field types (the Content-Type field as shown above, for example), it is either impossible to use, or redundant. 
+The ASIS file type. 
+The Apache server [2] specifies a special file type called ASIS. 
+ASIS (for as-is) files are sent directly to the client, and are expected to contain all the fields required by the HTTP protocol. 
+Specifying all fields can be somewhat cumbersome, and error-prone. 
+External file information databases. 
+Various servers implement a system where a file in the filesystem supplies information about the files being sent to clients. 
+Such files are generally used for security, and other such things, rather than aiding in HTTP MIME field generation. 
+3. The MIME Header Supplemented File Type In order to make it practical (from both an implementation, and management viewpoint) to supplement the information available to servers, this memo defines a new file type, called the MIME Header Supplemented File Type, or MIM for short. 
+It is recommended that files of this type have either a ".mime" or ".mim" extension, though this is very much affected by the requirements of the native operating system. 
+The MIM file type shares much in common with the ASIS file type, in that HTTP MIME fields appear at the top of the file. 
+Unlike the ASIS file type, the MIM file type does not require all fields to be present. 
+An example MIM file might be: Where the exact field syntax can be found in the HTTP 1.0 specification [1], with the difference that all fields are optional. 
+When an HTTP server recieves a request for a MIM file, it should generate the HTTP fields as best it can, and then parse the field definitions of the MIM file to supplement the fields it has generated. 
+If the MIM file contains a field definition for a field the server has already generated, the value of the MIM field should be used to override the value generated by the server. 
+The server should parse all the header fields of a MIM file, and in doing so, will parsed to the position in the file which contains the actual message body, which should be sent verbatim. 
+This leads to a general requirement that all MIM files contain a Content-Type field definition, as the server cannot know the correct label for the content as MIM files can be used to encapsulate many different data types. 
+For example, when the server sees a MIM file, it might generate a content header like: Content-type: text/plain but if a file like that shown earlier was requested, the server would first parse the MIME fields at the top of the file, use the field specified therein to override, or generate fields, so that the response sent to the client would contain a content type specification of: providing a simple way of correctly labelling all HTML documents sent across the WWW. 
+It is believed that the MIM file type represents a very easy way of supplementing the data a server has so that it can generate appropriate field values for content it sends out. 
+7. Limitations While the MIM type can be used to specify any MIME header, or value for a MIME header, a MIM file should not specify headers that the server can generate correctly, or which might hinder interoperability. 
+For example, Content-Length is best left to the server to generate. 
+8. Applicability to protocols other than HTTP For protocols other than HTTP, it is recommended that the MIME headers be sent along with the message body, thereby allowing client-side processing of the headers. 
+For example, if FTP is being used, the MIME headers will still provide an easy way for the content type to be correctly labelled: a client can see that the file is a MIM file, and process the headers supplied with the message body. 
+8. Security considerations Certain headers, such as WWW-Authenticate, hold information regarding security. 
+Specifying such fields in the MIM file could lead to security breaches, or interoperability problems. 
+Servers should ignore definitions of values for such fields. 
+9. References [1] T. Berners-Lee, R. T. Fielding, and H. Frystyk Nielsen. 
+"Hypertext Transfer Protocol -- HTTP/1.0." Work in Progress (draft-ietf-http-v10-spec-00.ps), 
+MIT, UC Irvine, CERN, March 1995. 
+2] T. Berners-Lee and D. Connolly, "Hypertext Markup Language - 2.0", Work in progress (draft-ietf-html-spec-05.txt), MIT/W3C, August 1995. 
+[3] The Apache HTTP server documentation at 10. Authors Address Gavin Thomas Nicol Technical Consulting Manager Electronic Book Technologies, KK 4-1-8 Kudan-minami, Chiyoda-ku, 102 Tokyo, Japan Well, the question that I have is whether the character length determination trick is a show-stopper for you. 
+I think that knowing that might help people make up their minds, assuming anyone else is even noticing this discussion. 
+I like US-ASCII myself, from a programmer's point of view, but I can see several factors that argue against it: + FFFE is already established in Unicode, so many multi-byte systems will have text-editors that can deal with the initial FFFE. 
++ Generic text-editing tools will almost certainly turn the user's view of a US-ASCII header into garbage on multibyte systems, but would not turn ISO character codes 127 into garbage. 
++ Many people will want to edit XML with generic text-editors on their systems in their native character codes. 
+Given the foregoing, the loss of elegance might pay off in a real gain in utility. 
+An XML parser could even just cast the characters read into 8 bits to use a legacy HTTP header parser. 
+So even the programmer isn't too inconvenienced. 
+Notice that with a MIME-header we also get a convenient place to specify an XML version, and anything else we might need. 
+I can agree with Gavin that catalogs are more elegant, but in some contexts they may not be more convenient. 
+And as Tim and Michael note, a header that is integral is less likely to be lost... -- David PS does anyone else have an opinion on this? 
+RE delenda est. 
+I am not a number. 
+I am an undefined character. 
+David Durand dgd@cs.bu.edu \ david@dynamicDiagrams.com 
+Boston University Computer Science \ Sr. Analyst --------------------------------------------\ http://dynamicDiagrams.com/ MAPA: mapping for the WWW \__________________________ Right, but it's not necessary for the header. 
+I can agree to using this *after* the header has been stripped off... 
+Well, given that ISO and US-ASCII share most of the same code points, it seems that this is unlikely. 
+As I noted, the only problem is for pure 16-bit encodings, which are reasonable scarce. 
+Most of which use 8 bit multibyte encodings that are ASCII compatible. 
+I could be convinced that allowing 16bit header encodings makes sense, as I don't feel *too* strongly about it. 
+However, losing MIME compatability seems a waste. 
+Yes, but note the time: some of us sleep during the period between midnight and 6am! 
+You have to wait for us to catch up with the arguments, by which time you and Gavin have normally exhausted them. 
+One thing that worries me is that any decisions taken by the XML community are likely to be valid for less than one week! 
+On 20th November the i18n community is going to discuss internationalization of MIME headers. 
+If they decide that MIME headers need extending, and we have said that they should be codes 127 then we might have egg on our faces. 
+Incidentally note the use of "codes less than 127". 
+US-ASCII does not fly over this side of the pond. 
+ISO-646:1991 might be more acceptable (this is the ASCII conformant variant rather than the 1983 version referenced by 8879). 
+If you want 8-bit code then it has to be LATIN-1 so that it is compatible with the first 255 characters of 10646. 
+I would suggest we hold off on making a decision until we know the outcome of the i18n meeting. 
+Martin Bryan PS I am a well defined character known by different numbers that have allocated by a wide range of commercial, government and social organizations! 
+Martin Bryan, The SGML Centre, Churchdown, Glos. 
+GL3 2PU, UK They will always be 7 bit clean, I believe. 
+Mechanisms exist *now* for larger coded character sets. 
+Of course :-) Yes, I think the header should be inside the document, not in a separate file, since for internet work, the CATALOG file might not even be accessible. 
+We had to deal with this for Panorama -- consider the case where the SGML is the result of a database query you just paid $.5 for. 
+You don't really want Panorama probing around in the database trying to find a file called CATALOG or catalog (it searches for both -- our nod towards the unfortunate wording of the TR which says the name of the file must be case insensitive). 
+Each probe might cost money, and in any case the resulting error messages aren't always distinguishable from text. 
+Panorama understands some processing instructions to find the DTD, style sheet, etc. and to suppress searching for the catalog. 
+Recently, we even added another processing instruction to let Panorama know a URL for the document it's viewing, to work around deficiencies in Unix Netscape. 
+Allowing a MIME-style header in XML will make all that much simpler. 
+Requiring a MIME-style header in XML files will allow them to be identified reliably, rather like a DOCTYPE line in SGML. 
+The header could also specify the XML version, for which we will be very grateful when we are working on XML 2.0. 
+I still have email messages from 1983 and earlier; they are still valid. 
+Where the meaning of headers has been changed, it has only done so in the presence of a Mime-version header. 
+There is no "implied MIME header" :-) -- if a mail message has no Mime-version, it is not MIME-compliant, and must be treated as per RFC 822. 
+In the same way, XML-Version could be required, and, if not present, the file is either taken to be XML 1.0 or plain text, at pleasure. 
+This sort of use of headers allows forwards compatibility and a great deal of interoperability with existing systems. 
+It will also be a lot easier to get acceptance in the IETF world if XML integrates with and builds on existing IETF international standards such as MIME. 
+The ISO is not the only international standards body in the world :-) Lee On Tue, 22 Oct 1996 00:18:54 -0400 David G. Durand said: It seems to me that David and Lee have put the case for internal headers fairly well. 
+And as they and Gavin have pointed out, there's a strong case for MIME compatibility; at the very least, XML should not require external metadata to be ignored. 
+(The decision as announced never did require that, but perhaps the spec should say explicitly that it's *allowed*, or even *recommended*, to use standard metadata channels like MIME where applicable, in order to avoid a repetition of the explosive misunderstandings demonstrated on this list.) 
+The proposal for in-file MIME headers strikes me as having all the problems David suggested, most significantly the incompatibility between the ASCII of the MIME header and the character set which may be used in the rest of the file. 
+This is not an issue for some coded character sets, but certainly is for others, including the canonical forms of ISO 10646. 
+I cannot conveniently, in a UCS-2 editor, generate a file part in ISO 646 and part in UCS-2. 
+The biggest drawback I see, however, is that defining XML entities as beginning with a MIME header means that no existing SGML parser can be used as is on XML documents. 
+Every parser will require either a prosthetic filter to strip the MIME header off, or a modification to make it understand and handle the MIME header as a packaging device. 
+Every one. 
+That, for me, is a show-stopper. 
+If there is an in-file header, I think it needs to be in a format SGML processors can now handle; hence the idea of using PI syntax for it. 
+I also think it needs to be in a form that users can produce using their normal tools, without jumping through hoops; that seems to mean it needs to be in the same character set it's declaring. 
+The main arguments against the PI format appear to be (a) that, in Gavin's words, "it is a hack", which I take to mean, in neutral terms, that Gavin does not approve of it, and (b) that it cannot be read successfully without external knowledge. 
+Against the first argument, no rejoinder is possible. 
+Against the second, it may be pointed out that the claim is false. 
+Gavin, and now David, have repeatedly claimed that the PI label relies on a vicious circle: you have to know what it says to read it. 
+When I first described the PI-form internal label, I took pedantic care to show that this is not true: the PI label is unambiguous for a variety of existing coded character sets (including all the ones people had suggested for XML use, plus a few more including EBCDIC). 
+Gavin and David have pointed out, correctly, that it is possible to construct a coded character set for which the PI label is not unambiguous. 
+This would involve an encoding for which some, but not all, of the characters A to Z and a to z would share positions with ASCII or EBCDIC or ISO 10646, while the rest would be rearranged so as to render it possible to misread an XML character-encoding declaration without detecting the misreading. 
+This strikes me as a low-probability development, given the importance of ASCII (er, I mean ISO 646!), but it is indubitably possible. 
+It seems to me that it's more useful to ask whether the internal PI label will be ambiguous for any character set now in reasonably wide use or likely to be developed by anyone not seeking specifically to undermine the use of internal labels. 
+Gavin has suggested that it *is* ambiguous in this way, but has not named any particular pair of encodings for which the PI label does not work successfully. 
+When he first made this claim, I went back to check the JIS X 0208, Shift-JIS, and EUC encodings, to see whether they would work with the internal PI label, as well as the ASCII, ISO 8859-*, EBCDIC, UCS-2, UCS-4, and UTF-8 encodings already examined. 
+They do. 
+As Gavin has pointed out (in support of ASCII MIME headers), *all* the major East Asian encodings will work, for the same reason: they all read and produce ISO 646 / ASCII text in forms identical to ISO 646. 
+So it seems to me that in all foreseeable practical cases, an in-file PI character set label is (a) parseable, (b) compatible with existing SGML processors, and (c) not inherently incompatible with the use of external metadata channels. 
+If the fact that it is not MIME is a show-stopper for enough of us, then we can consider other alternatives. 
+An in-file MIME header would be (a) parseable, (b) compatible with external metadata, (c) incompatible with existing SGML processors, and (d) in some cases hard or impossible to create using standard text editing tools. 
+Losing the entire notion of in-file labels would (a) expose XML processors to undetectable errors when external metadata is faulty or missing, (b) allow the user of arbitrary character encodings (implementor is responsible for getting it right, it's not our problem), (c) allow us to end this discussion before it crosses the boundary from the laughable to the intolerable. 
+-C. 
+M. Sperberg-McQueen We need to remember that most of the individuals in the world are not using SGMl software, and that the processing required to strip the header is a 3 line perl hack. 
+Anyway, since SGML has the general notion of an entity manager, the notion of an entity header on the storage object fits right into the SGML model. 
+It needs to have, at least, the same encoded character length -- as I have already argued. 
+A hack (among many other things) is something that is not dependable, or that relies on tricky relationships between differing interpretations of the same data or code. 
+(If you accept (b), as Gavin does), these two facts alone imply (a). 
+PIs are a hack, that depend on epiphenomena of current coding sets. 
+Here's a similar hack, that I take as a cononical example of the "character set hack" genre. 
+You can change the case of letters pretty portably by XOR-ing them with a space. 
+This works in EBCDIC and ASCII. 
+Against the first argument, no rejoinder is possible. 
+It was so self-evidently a hack to me that I had trouble thinking how to explain it. 
+The partial attempt above shows at least two properties that I deem undesirable, and contributory to its hack-nature. 
+Against the second, it may be pointed out that the claim is false. 
+The claim as you have repeated it is false. 
+The claim that I have made is not false (I can't speak for Gavin, but I suspect he agrees): You cannot recognize the PI, _without having a list of the magic numbers for legal PI definitions_. 
+If a user attempts to use a PI that does not exactly match one of the "the magic number formulas," then the processor may not even be able to recognize that a PI was present. 
+So the apparent _self-descriptive_ aspect of the data is _not_ there. 
+I want internal headers so I can tell what data is -- If I can't dependably tell if there's a new kind of header that I don't recognize, it's a much less useful header. 
+We should at least be able to have the equivalent of a tape "standard label". 
+Wasn't there a field in there to tell you if it was a "weird" "ASCII" coded tape? 
+Another of the factors that shows that the PI hack is a hack and not a solution is that it _looks_ extensible, but extending it for a new encoding will, in fact, break existing software so that it can't even use the header to explain the problem. 
+This is true only for all the character sets that _we precode into XML_. 
+It does not work for any new character set names. 
+The PI looks like it has a parameter, but in fact the PI, and its parameter, constitute a magic string of bytes with no internal structure. 
+This is a bit counterintuitive. 
+This is part, but not all of the objection. 
+See preceding. 
+It's a tempting item to devise, but _I_ would restrain myself. 
+And also: A reinvention of the wheel Less flexible than MIME headers Does not take advantage of the existing MIME header-parsing facilities already in every browser on the Web. 
+(I guess this is follow on to reinventing the wheel. 
+Now we'll need a new kind of axle to spin it on...) Is an unfamiliar syntax, compared to headers that everyone has been seeeing on e-mail for the last 20 years (or whatever)... Also note that it is "(a) parseable" only if the character set is one of the ones wired into your parser. 
+(d) is not true. 
+I explained how we could use the "multibyte-mode" determination trick proposed for the PI to make the header readable on all the existing systems. 
+And the header would enterable as a native sequence of characters for any one or two-byte character code. 
+These characters would be user-readable in the existing codings, though not perhaps in some weird new one (these are the only people for whom creating the header might be "hard". 
+The header would be machine-readable regardless of encoding. 
+I do not advocate losing the notion. 
+But if it gets intolerable enough, maybe we can do the right thing after all! 
+-- David RE delenda est. 
+I am not a number. 
+I am an undefined character. 
+David Durand dgd@cs.bu.edu \ david@dynamicDiagrams.com 
+Boston University Computer Science \ Sr. Analyst --------------------------------------------\ http://dynamicDiagrams.com/ MAPA: mapping for the WWW \__________________________ This depends on whether this will be a generally useful (ie. 
+widely used) feature in the future. 
+Coded character set *and* encoding. 
+It's true. 
+You have to sniff at the data, and the sniffing may not always succeed. 
+That's reason #1 for calling it a hack. 
+A more objectional one is that you will *require* people for add to their data (a header pretending to be data). 
+This may seem pedantic, but I find this *semantically* objectionable, or counterintuitive. 
+You miss one important case: the case where there is no ASCII compatability area in the lower 127 code points. 
+This will also fail in that you will be unable to parse it. 
+I forget what exactly they are, but there *are* such encodings in existance (Rick. 
+do you remember of JOHAB is one?) Another case (also of low probability) is having a file that is encoded in a manner that might confuse the sniffing logic (eg. 
+a compressed file who's header looks like the signature for UCS-2). 
+If you replace "in-file" with "in-data", this is my preferred method. 
+Meta-data should live *beside* the data, not *inside* it. 
+Let's a header a header. 
+A PI by any other name would parse as well... Clearly, Michael and David are not going to convince each other on this. 
+More generally, it seems unlikely that David/Gavin and the SGML ERB are going to convince each other on this. 
+To reiterate, the ERB feels that: o XML parsers should make an aggressive effort to use the right encoding to process text entities. 
+o To do so, they should of course use mime headers, resource forks, docman metadata, smoke signals, whatever they have o It is valuable to include a way for a document, in its own syntax and in its own encoding, to signal what that encoding is; as a reminder to the author, as self-defence against incompetent webmasters and overaggressive conversion services. 
+o we should not gratuitously put things in XML files that will make them unreadable by SGML parsers [the smokescreen about "it's the entity not the file" is just that] As for the argument as to whether picking apart the ?XML at the front of the file can be proven mathematically correct, of course not; nor will it help in the case where the processor has never heard of the encoding being used. 
+But it will work a lot of the time for a lot of standard encodings and enable otherwise-unreadable data to be read. 
+This is a good thing. 
+There is, however, one advantage to using a set of mime headers; if the processor can't read the encoding the entity is in, at least he can report, e.g. "couldn't process this because I don't know Shift-JIS". 
+But I don't think this makes up for the irritation of having to insert a header that's in a different syntax and encoding from the rest of the file. 
+Obviously, external information should be in the correct format for the external delivery vehicle. 
+Internal information should be in the syntax and encoding of the document. 
+Cheers, Tim Bray tbray@textuality.com 
+http://www.textuality.com/ 
++1-604-488-1167 Thank you David. 
+This is a point I have felt, but been unable to articulate. 
+As is explaining to people that you can do: but not I agree with the notion of keeping "in-file" labels, but simply cannot accept "in-data" labelling, or anything that pretend to be like it. 
+On Tue, 22 Oct 1996 17:57:14 -0400 Gavin Nicol said: I'm not sure what David means by 'magic numbers' here, but if he means the IETF-defined values for the MIME charset field (or, XML Encoding attribute), I don't think this is true at all. 
+Any XML processor will know what character sets (by which, for now, I mean 'coded character sets and/or encodings thereof') it can handle. 
+When it encounters one it doesn't handle, I believe it's likely to fall into a case like the following: A. The processor accepts ISO 8859, UTF-8, and UCS-2. 
+It gets a Shift-JIS entity, and says "Sorry; this entity is in a character encoding called 'Shift-JIS' which I don't handle." 
+It was able to read and parse the PI, because in Shift-JIS all the characters in ?XML encoding='Shift-JIS' ? 
+are bit-identical to ISO 8859-*. 
+B. The processor accepts EBCDIC, UTF-8, and UCS-2. 
+It gets a Shift-JIS entity, and says "Sorry; this entity is in a character encoding called 'Shift-JIS' which I don't handle." 
+It was able to read and parse the PI, because in Shift-JIS all the characters in ?XML encoding='Shift-JIS' ? 
+are bit-identical to UTF-8. 
+C. The processor accepts Shift-JIS, UTF-8, and UCS-2. 
+It gets an EBCDIC entity, and says "Sorry; this entity is in a character encoding which I don't handle. 
+(There is also a chance that the entity has been trashed, or isn't in XML.)" 
+The salient fact about the entity, which is that it's in an unknown character set or otherwise unprocessable, can be reliably detected, although the EBCDIC-encoded string 'ebcdic-cp37' cannot be deciphered. 
+N.B. David is right to point out that labels can only be read by those capable of reading them. 
+This is clearly a drawback, compared with a system in which they are always readable, even by those not capable of reading them. 
+But the key fact here seems to me very simple, and accurately conveyed: this-entity-not-readable. 
+Quick quiz: out of the members of the WG currently reading this (both of you!), how many might be able to tell their browser how to take corrective action if they knew the unreadable material was in something called 'ebcdic-cp37'? 
+How about 'JOHAB'? 
+I hope the examples above make clear why I think the limits on a processor's ability to identify the name of the encoding in use are a function NOT of the character set names precoded into XML, but of (a) the families of character sets the processor recognizes and (b) the family of character sets to which the particular entity in question actually belongs. 
+Well, I may be excessively idealistic, but I had thought "you can't change character encodings in the middle of a file" would do it for most readers, with an occasional "Because the software can't handle it" for the insistent few. 
+For those of us with jaded stylistic palates and too many technical standards under our belts, it might be necessary to have a footnote saying something like "That is, Code extension functions for the ISO 2022 code extension techniques (such as designation escape sequence, single shift and locking shift), and character-encoding labeling functions as defined above, may not be used within the body of XML entities." 
+Judging by the response of the WG as a whole, they have already decided the 'right thing' involves installing bozo filters with our names on them. 
+We haven't had a new argument in this discussion for some time, you're not persuading me, I'm not persuading you, and no one in their right mind is listening. 
+Perhaps we should call it a thread and stop. 
+Michael As you rightly noted, you'll not convince me on this: This is the thing I find to be BAD (Broken As Designed). 
+If it's a header, it should look and act like one, and should *not* be part of the data. 
+Again, let's not revisit the idiocy in META , or CODESET . 
+Well, I HAVE been listening, and although a bit impatient with the testiness on both sides from time to time, think there is a real point on both sides, and that by simply proceeding (and implicitly ignoring David and Gavin) the ERB would be making a technical as well as a strategic error. 
+In particular, I think Tim is at least misleading to say 'the smokescreen about "it's the entity not the file" is just that'. 
+David's observation that "[Since] SGML has the general notion of an entity manager, the notion of an entity header on the storage object fits right into the SGML model" seems to me to be exactly right. 
+Step back a minute and think what you expect the command line argument to a Unix-based XML tool to be -- a filename? 
+a filename or a URL? a filename or a URL or an FPI? 
+Well obviously, it's going to be, implicitly or explicitly, just as for SP-based applications already, an SGML Open entity specifier, that is, any of the above. 
+Which means that rudimentary entity access management is a necessary part of any XML application, and for entities of type OSFILE that means finding the header information on the front thereof. 
+Is that really so bad? 
+ht I'm not sure what you mean by 'corrective action', but using our toolkit engine Synex ViewPort you can integrate a notation processor, and process the data--assuming its type and extent are known and, as I recall, the notation being an external entity, but don't quote me on that ;-). 
+Inline integration of the notation (using ViewPort widgets, a general plug-in architecture) is possible. 
+You cannot however toggle the parser processing from the SGML declaration. 
+Cheers, Hasse 111 27 Stockholm Internet: haitto@synex.se 
+Sweden WWW: http://www.synex.se 
+I must be in possession of a different set of data. 
+In my book, "osfiles" have no header information, and the "storage object identifier" on the right hand side of an SGML Open TR9401 catalog is the name of a file, all bytes of which gets sent to the SGML parser. 
+So, I would expect most existing SGML systems would need to be modified to process files that are "headed" by data that are not supposed to be sent to the SGML parser. 
+paul@arbortext.com 
+(Paul Grosso) writes Sorry, I was too elliptical It would make sense to have a new type, for the sake of argument HOSFILE, which would be the default if you didn't provide a type, meaning OSFILE with prefix header to be processed and NOT set to the XML application as data. 
+The option to provide an explicit type would allow you to use OSFILE as you point out it is specified, with the additional requirement for XML that the default encoding is implied for type OSFILE (and any other type without provision for out-of-band meta information). 
+ht I would say that most, if not all parsers actually have the SO passing through an entity manager before it get's passed on to the parser. 
+Actually, it's the storage object, not the entity, and it isn't a smokescreen. 
+The parser sees *everything* in the entity, but several entities can be stored in a single storage object. 
+The storage object can contain things that aren't in any SGML entities. 
+None of this is new; FSIs are just a new formalism for something we've always had. 
+See notes 1 and 2 in clause 6.1 of ISO 8879. 
+[295:2-8] Charles F. Goldfarb * Information Management Consulting * +1(408)867-5553 13075 Paramount Drive * Saratoga CA 95070 * USA International Standards Editor * ISO 8879 SGML * ISO/IEC 10744 HyTime Prentice-Hall Series Editor * CFG Series on Open Information Management Thank you Charles. 
+This is a good clarification and is the way I understand things (the best kind of clarification is one that agrees with your position ;-)). 
+I should note that a *further* reason for both FSI's and MIME-based storage managers is that email will potentially be an important delivery mechanism for XML. 
+Both FSI's and MIME are perfectly suited for this. 
+Well, while I'm on a role, let me clarify things a bit further. 
+MIME is a storage manager. 
+FSIs are a means of identifying storage managers in an entity declaration. 
+So the two work together; they are not alternatives. 
+(Actually, the SGML Extended Facilities list two MIME-based storage managers: MIME is a "container" storage manager, like TAR, and is used for normal entity declarations. 
+MIMETYPE is used to associate notations with processing, and occurs only in external identifiers in notation declarations.) Charles F. Goldfarb * Information Management Consulting * +1(408)867-5553 13075 Paramount Drive * Saratoga CA 95070 * USA International Standards Editor * ISO 8879 SGML * ISO/IEC 10744 HyTime Prentice-Hall Series Editor * CFG Series on Open Information Management 

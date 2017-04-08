@@ -1,0 +1,156 @@
+Dave -- Tidy allows duplicate attribute names inside an element like this: It issues a warning regarding the repeated attribute but keeps the attribute in the document and outputs it in PPrint. 
+This is causing trouble when output-xml or output-xhtml is on since this is not legal xml and is being rejected by my xml parser (Xerces). 
+I propose that when outputting xml, duplicate attributes be eliminated. 
+This can be done either in pprint (PPrintAttribute) or in a clean routine called from parse. 
+Dave and others, if you let me know where you think it is most appropriate, I can code up the patches and post them to the list. 
+Gary What else should tidy do? 
+Which value should tidy keep? 
+Or should tidy remove both? 
+I think it's up to the author to decide what to do with those dups. 
+Yes, this may cause problems, but it was the author who created this problem, tidy could not fix it in an appropriate way. 
+My suggestion would be to issue an error message when converting to XHTML. 
+Bj?rn H?hrmann ^ mailto:bjoern@hoehrmann.de ^ http://www.bjoernsworld.de am Badedeich 7 ? 
+Telefon: +49(0)4667/981ASK ? 
+http://bjoern.hoehrmann.de 
+25899 Dageb?ll # PGP Pub. 
+KeyID: 0xA4357E78 # http://learn.to/quote 
++{i} ..weaving a secure, well-formed, standard compliant WWW for =everyone=.. Concerning tags with duplicated attributes, the example being td valign=top valign=top What else should tidy do? 
+Which value should tidy keep? 
+Or should tidy remove both? 
+I think it's up to the author to decide what to do with those dups. 
+Yes, this may cause problems, but it was the author who created this problem, tidy could not fix it in an appropriate way. 
+The problem here is that a lot of us use Tidy on HTML that we did not write and do not have ready access to the author of. 
+Sometimes when we *do* have access to the author, s/he snarls that it works fine in IE5 on a Win2k system so it should be good enough for anyone as is. 
+(Ok, it was Win95, but this is otherwise a real situation.) When both copies of the attribute have the *same* value, it doesn't *matter* which value Tidy keeps. 
+In other cases, it would make sense to keep the copy that browsers use. 
+I've just done a test with p align=X align=Y for each combination of left/center/right, and it appears that Netscape uses the first value Amaya uses the second value ICab uses the first value WebTk uses the second value Emacs/W3 uses the second value Maybe someone else can say what IE5 or Opera or Lynx do. 
+It's a pity there isn't a common convention, but it is precisely that which tells us there is a real problem that Tidy can help with. 
+Add drop-duplicate-attributes: (never|keep-first|keep-last|if-equal) so to preserve the behaviour you see in Netscape or ICab: drop-duplicate-attributes: keep-first or to preserve the behaviour you see in Amaya, Emacs/W3, or WebTk: drop-duplicate-attributes: keep-last or to play it safe: drop-duplicate-attributes: if-equal or to do what Tidy does now: drop-duplicate-attributes: never which would be the default. 
+From: "Richard A. O'Keefe" ok@atlas.otago.ac.nz 
+I'm curious about some of the uses people are making of tidy. 
+I use tidy on my own code, or that of co-workers, so that we can improve it. 
+I even have used it on pages on the web that are crashing my browser - I then send suggested changes to the authors. 
+But you list a new use that intrigues me- running tidy on code that you didn't write ... for what is this processed html being used? 
+Never apply a Star Trek solution to a Babylon 5 problem. 
+Larry W. Virden mailto:lvirden@cas.org 
+URL: http://www.purl.org/NET/lvirden/ 
+Even if explicitly stated to the contrary, nothing in this posting should be construed as representing my employer's opinions. 
+- - Ok, I've implemented two new options: drop-unknown-attrs: yes|no Tidy always reports unknown attributes. 
+If this option is yes, it deletes them as well (from the start- tag token, before it even gets put into the tree). 
+drop-duplicate-atts: never|keep-first|keep-last|if-equal Tidy always reports duplicated attributes. 
+(Now it reports them once, instead of once for each instance.) 
+If never: they are retained as they are now. 
+If keep-first: the first instance is kept and the others deleted. 
+If keep-last: the last instance is kept and the others deleted. 
+If if-equal: redundant instances with exactly the same value (alphabetic case and all) are deleted, others are kept. 
+Attributes are deleted from the start-tag token, before it even gets put into the tree. 
+There's still some clean-up to be done, removing dead code and improving some of the Check* functions in attrs.c. 
+At the moment, old code is surrounded by #if OLD_CHECK. 
+The heart is the new function CheckAndPruneAttributes. 
+Here is a "diff -C 5" of all the affected files. 
+*** bak/html.h 
+Thu Nov 9 15:39:07 2000 --- html.h 
+Thu Nov 9 14:44:47 2000 *** 469,478 **** --- 469,479 ---- Attribute *FindAttribute(AttVal *attval); AttVal *GetAttrByName(Node *node, char *name); void AddAttribute(Node *node, char *name, char *value); void CheckUniqueAttributes(Lexer *lexer, Node *node); void CheckAttributes(Lexer *lexer, Node *node); + void CheckAndPruneAttributes(Lexer *lexer, Node *node); Attribute *CheckAttribute(Lexer *lexer, Node *node, AttVal *attval); Bool IsUrl(char *attrname); Bool IsScript(char *attrname); /* istack.c 
+*/ *** 752,761 **** --- 753,768 ---- extern Bool WrapPhp; extern Bool FixBackslash; extern Bool IndentAttributes; extern Bool Word2000; extern Bool Emacs; /* sasdjb 01May00 GNU Emacs error output format */ + extern Bool DropUnknownAtts; + extern int DropDuplicateAtts; + #define Drop_Never 0 + #define Drop_First 1 + #define Drop_Last 2 + #define Drop_Equal 3 /* Parser methods for tags */ Parser ParseHTML; Parser ParseHead; *** bak/attrs.c 
+Thu Nov 9 15:38:58 2000 --- attrs.c 
+Thu Nov 9 15:29:50 2000 *** 329,338 **** --- 329,342 ---- return attr; + /* If you want to drop unknown attributes, DON'T try to do it here. 
++ Tidy uses this function ONLY when it wants to add an attribute + (with 'name' a known string at compile time) to a node. 
+void AddAttribute(Node *node, char *name, char *value) AttVal *av = NewAttribute(); av- delim = '"'; av- attribute = wstrdup(name); *** 417,426 **** --- 421,523 ---- hashtab[i] = null; + /* Each attribute should be known and appear at most once. 
++ Tidy doesn't know which attributes go with what element types, + so we don't detect misplaced attributes. 
+That's an obvious + enhancement. 
+If in the future, anyone wants attributes sorted, + this would be the single place to change. 
+There's one tricky + point here: Tidy builds the list of attributes *BACKWARDS*, + so to keep the first/last *source* attribute, keep the last/first + *stored* attribute instead. 
+This also explains why Tidy reports + attribute warnings back to front. 
++ void CheckAndPruneAttributes(Lexer *lexer, Node *node) { + AttVal *p; /* current attribute=value pair */ + AttVal *q; /* next attribute=value pair */ + AttVal**e; /* where to put attributes that are retained */ + AttVal *r; /* scans remainder of list (for uniqueness) */ + AttVal *s; /* next pair, for r scan */ + AttVal**h; /* for deleting duplicates */ + Bool d; /* duplicate of p found? 
+*/ + Bool unk = /* check for unknown attributes? 
+*/ + !XmlTags &amp;&amp; !(node- tag != 0 &amp;&amp; + (node- tag- versions &amp; VERS_PROPRIETARY) != 0); + e = &amp;node- attributes; + for (p = *e; p; p = q) { + q = p- next; + if (p- asp != null || p- php != null) { + /* ASP and PHP attributes are heavy magic and are not */ + /* to be checked like other attributes */ + *e = p; + e = &amp;p- next; + } else + if (p- dict == null &amp;&amp; unk) { + ReportAttrError(lexer, node, p- attribute, UNKNOWN_ATTRIBUTE); + if (DropUnknownAtts) { + FreeAttribute(p); + } else { + *e = p; + e = &amp;p- next; + } else { + /* This is an ordinary attribute=value pair that is a known */ + /* or proprietary or XML attribute; check uniqueness */ + d = no; + h = &amp;q; + for (r = q; r != null; r = s) { + s = r- next; + if (r- asp == null &amp;&amp; r- php == null + &amp;&amp; wstrcasecmp(r- attribute, p- attribute) == 0 + d = yes; + switch (DropDuplicateAtts) { + case Drop_Never: + h = &amp;r- next; + break; + case Drop_Last: /* Tidy reversed the list! 
+*/ + FreeAttribute(p); + p = r; + *h = s; + break; + case Drop_First: /* Tidy reversed the list! 
+*/ + FreeAttribute(r); + *h = s; + break; + case Drop_Equal: + if (p- value == 0 ? 
+r- value == 0 + : r- value != 0 &amp;&amp; + wstrcasecmp(p- value, r- value) == 0 + FreeAttribute(r); + *h = s; + } else { + h = &amp;r- next; + break; + } else { + h = &amp;r- next; + *h = 0; + if (d) + ReportAttrError(lexer, node, p- attribute, REPEATED_ATTRIBUTE); + *e = p; + e = &amp;p- next; + *e = 0; + #if OLDCHECK + /* CheckUniqueAttributes duplicates part of the work done by + CheckAndPruneAttributes; we don't need it any more. the same attribute name can't be used more than once in each element *** 448,465 **** --- 545,566 ---- if (attval- asp == null &amp;&amp; attval- php == null) CheckUniqueAttribute(lexer, node, attval); + #endif /* ignore unknown attributes for proprietary elements */ Attribute *CheckAttribute(Lexer *lexer, Node *node, AttVal *attval) Attribute *attribute; + #if OLDCHECK + /* This is superseded by the check in CheckAndPruneAttributes */ if (attval- asp == null &amp;&amp; attval- php == null) CheckUniqueAttribute(lexer, node, attval); + #endif if ((attribute = attval- dict) != null) /* title is vers 2.0 for A and LINK otherwise vers 4.0 */ if (attribute == attr_title &amp;&amp; *** 474,486 **** --- 575,590 ---- lexer- versions &amp;= attribute- versions; if (attribute- attrchk) attribute- attrchk(lexer, node, attval); + #if OLDCHECK + /* This is superseded by the check in CheckAndPruneAttributes */ else if (!XmlTags &amp;&amp; !(node- tag == null) &amp;&amp; attval- asp == null &amp;&amp; !(node- tag &amp;&amp; (node- tag- versions &amp; VERS_PROPRIETARY))) ReportAttrError(lexer, node, attval- attribute, UNKNOWN_ATTRIBUTE); + #endif return attribute; Bool IsBoolAttribute(AttVal *attval) *** bak/config.c 
+Thu Nov 9 15:38:58 2000 --- config.c 
+Thu Nov 9 12:08:35 2000 *** 38,47 **** --- 38,49 ---- ParseProperty ParseString; /* a string including whitespace */ ParseProperty ParseTagNames; /* a space separated list of tag names */ ParseProperty ParseCharEncoding; /* RAW, ASCII, LATIN1, UTF8 or ISO2022 */ ParseProperty ParseIndent; /* specific to the indent option */ ParseProperty ParseDocType; /* omit | auto | strict | loose | fpi */ + ParseProperty ParseDups; /* never | keep-first | keep-last | if-equal */ + /* | drop-last | drop-first */ uint spaces = 2; /* default indentation */ uint wraplen = 68; /* default wrap margin */ int CharEncoding = ASCII; int tabsize = 4; *** 91,100 **** --- 93,105 ---- Bool EncloseBlockText = no; /* if yes text in blocks is wrapped in p 's */ Bool KeepFileTimes = yes; /* if yes last modied time is preserved */ Bool Word2000 = no; /* draconian cleaning for Word2000 */ Bool TidyMark = yes; /* add meta element indicating tidied doc */ Bool Emacs = no; /* if true format error output for GNU Emacs */ + Bool DropUnknownAtts = no; /* discard non-standard attributes when true */ + int DropDuplicateAtts = /* duplicate attributes: discard Never/first */ + Drop_Never; /* last/only if equal values. 
+*/ typedef struct _lex PLex; static uint c; /* current char in input stream */ static FILE *fin; /* file pointer for input stream */ *** 182,194 **** {"new-pre-tags", {(int *)&amp;pre_tags}, ParseTagNames}, {"char-encoding", {(int *)&amp;CharEncoding}, ParseCharEncoding}, {"doctype", {(int *)&amp;doctype_str}, ParseDocType}, {"fix-backslash", {(int *)&amp;FixBackslash}, ParseBool}, {"gnu-emacs", {(int *)&amp;Emacs}, ParseBool}, /* this must be the final entry */ ! 
+{0, 0, 0} static unsigned hash(char *s) unsigned hashval; --- 187,202 ---- {"new-pre-tags", {(int *)&amp;pre_tags}, ParseTagNames}, {"char-encoding", {(int *)&amp;CharEncoding}, ParseCharEncoding}, {"doctype", {(int *)&amp;doctype_str}, ParseDocType}, {"fix-backslash", {(int *)&amp;FixBackslash}, ParseBool}, {"gnu-emacs", {(int *)&amp;Emacs}, ParseBool}, ! 
+{"drop-unknown-atts", ! 
+{(int*)&amp;DropUnknownAtts}, ParseBool}, ! 
+{"drop-duplicate-atts", ! 
+{(int*)&amp;DropDuplicateAtts}, ParseDups}, /* this must be the final entry */ ! 
+{(char*)0, {(int*)0}, 0} static unsigned hash(char *s) unsigned hashval; *** 289,329 **** return *config_text++; return EOF; ! 
+static int AdvanceChar() if (c != EOF) c = (uint)GetC(fin); return c; ! 
+static int SkipWhite() while (IsWhite((uint) c)) c = (uint)GetC(fin); return c; /* skip until end of line */ ! 
+static void SkipToEndofLine() while (c != EOF) c = (uint)GetC(fin); if (c == '\n' || c == '\r') break; skip over line continuations to start of next property ! 
+static int NextProperty() do /* skip to end of line */ while (c != '\n' &amp;&amp; c != '\r' &amp;&amp; c != EOF) --- 297,339 ---- return *config_text++; return EOF; ! 
+static int AdvanceChar(void) if (c != EOF) c = (uint)GetC(fin); return c; ! 
+static int SkipWhite(void) while (IsWhite((uint) c)) c = (uint)GetC(fin); return c; + #if 0 /* skip until end of line */ ! 
+static void SkipToEndofLine(void) while (c != EOF) c = (uint)GetC(fin); if (c == '\n' || c == '\r') break; + #endif skip over line continuations to start of next property ! 
+static int NextProperty(void) do /* skip to end of line */ while (c != '\n' &amp;&amp; c != '\r' &amp;&amp; c != EOF) *** 753,762 **** --- 763,803 ---- *location.number 
+= ISO2022; else if (wstrcasecmp(buf, "mac") == 0) *location.number 
+= MACROMAN; else ReportBadArgument(option); + NextProperty(); + void ParseDups(Location location, char *option) + char buf[64]; + int i = 0; + SkipWhite(); + while (i  62 &amp;&amp; c != EOF &amp;&amp; !IsWhite(c)) + buf[i++] = c; + AdvanceChar(); + buf[i] = '\0'; + if (wstrcasecmp(buf, "never") == 0) + *location.number 
+= Drop_Never; + else if (wstrcasecmp(buf, "keep-first") == 0 + || wstrcasecmp(buf, "drop-last") == 0) + *location.number 
+= Drop_Last; + else if (wstrcasecmp(buf, "keep-last") == 0 + || wstrcasecmp(buf, "drop-first") == 0) + *location.number 
+= Drop_First; + else if (wstrcasecmp(buf, "if-equal") == 0) + *location.number 
+= Drop_Equal; + else + ReportBadArgument(option); NextProperty(); /* slight hack to avoid changes to pprint.c 
+*/ *** bak/lexer.c 
+Thu Nov 9 15:38:58 2000 --- lexer.c 
+Thu Nov 9 15:28:54 2000 *** 955,966 **** attr = NewAttribute(); attr- delim = '"'; attr- attribute = wstrdup("xmlns"); attr- value = wstrdup(profile); attr- dict = FindAttribute(attr); ! 
+attr- next = node- attributes; ! 
+node- attributes = attr; Bool SetXHTMLDocType(Lexer *lexer, Node *root) --- 955,968 ---- attr = NewAttribute(); attr- delim = '"'; attr- attribute = wstrdup("xmlns"); attr- value = wstrdup(profile); attr- dict = FindAttribute(attr); ! 
+if (attr- dict != null) { ! 
+attr- next = node- attributes; ! 
+node- attributes = attr; Bool SetXHTMLDocType(Lexer *lexer, Node *root) *** 1833,1849 **** --- 1835,1859 ---- if (!MakeClean &amp;&amp; (lexer- token- tag == tag_nobr || lexer- token- tag == tag_wbr)) ReportWarning(lexer, null, lexer- token, PROPRIETARY_ELEMENT); + #if OLDCHECK if (lexer- token- tag- chkattrs) CheckUniqueAttributes(lexer, lexer- token); lexer- token- tag- chkattrs(lexer, lexer- token); else CheckAttributes(lexer, lexer- token); + #else + CheckAndPruneAttributes(lexer, lexer- token); + if (lexer- token- tag- chkattrs) + lexer- token- tag- chkattrs(lexer, lexer- token); + else + CheckAttributes(lexer, lexer- token); + #endif return lexer- token; /* return start tag */ case LEX_COMMENT: /* seen !-- so look for -- */ *** bak/tidy.c 
+Thu Nov 9 15:38:58 2000 --- tidy.c 
+Thu Nov 9 12:01:47 2000 *** 801,810 **** --- 801,820 ---- OnlyErrors = yes; else if (strcmp(arg, "quiet") == 0) Quiet = yes; else if (strcmp(arg, "slides") == 0) BurstSlides = yes; + else if (strncmp(arg, "drop-", 5) == 0) + switch (arg[5]) { + case 'u': DropUnknownAtts = yes; break; + case 'f': DropDuplicateAtts = Drop_First; break; + case 'l': DropDuplicateAtts = Drop_Last; break; + case 'e': /* drop-[if-]equal */ + case 'i': DropDuplicateAtts = Drop_Equal; break; + case 'n': DropDuplicateAtts = Drop_Never; break; + default : UnknownOption(stderr, 'd'); break; else if (strcmp(arg, "help") == 0 || argv[1][1] == '?'|| argv[1][1] == 'h') HelpText(stdout, prog); return 1; *** bak/Overview.htmlThu 
+Nov 9 15:43:19 2000 --- Overview.htmlThu 
+Nov 9 16:30:03 2000 *** 523,532 **** --- 523,553 ---- p I would be interested in hearing from anyone who can offer help with using JavaScript for adding dynamic effects to slides, for instance similar to those available in Microsoft PowerPoint. 
+/p + h3 Removing unknown or duplicated attributes /h3 + p Some HTML editors insert attributes that are not in any W3C + recommendation and are not widely understood. 
+Tidy has always + warned about such attributes. 
+If you provide + the code -drop-unknown /code command line option, or have + code drop-unknown-atts: yes /code in your configuration file, + Tidy will automatically turn code p dark-side=yes /code + into code p /code /p + p Some HTML editors will also insert duplicates of existing attributes. 
++ This is particularly troublesome because some Web browsers act on the + first instance, while others act on the last, so a document may look very + different in a browser other than the one the editor is part of/was + designed for. 
+Tidy has always warned about duplicate attributes. 
++ With the code -drop-(first|last|equal) /code command line option + (and the corresponding code drop-duplicate-atts /code entry in + configuration files) you can control whether duplicates are retained, + duplicates are eliminated if they are equal, + the first of them retained, or the last of them retained. 
+/p p Indenting the content of elements makes the markup easier to read. 
+Tidy can do this for all elements or just for those where it's needed. 
+The auto-indent mode has been used below to avoid *** 951,963 **** dd If set to em yes /em together with the clean option (see above), Tidy will discard font and center tags rather than ! 
+creating the corresponding style rules. 
+The default is em ! 
+no /em . 
+/dd dd If set to em yes /em , this causes Tidy to enclose any text it finds in the body element within a p element. 
+This is useful when you want to take an existing html file and use it with a --- 972,1010 ---- dd If set to em yes /em together with the clean option (see above), Tidy will discard font and center tags rather than ! 
+creating the corresponding style rules. 
+The default is em no /em . 
+/dd + dt drop-unknown-atts: em bool /em /dt + dd If set to em yes /em , Tidy will discard unknown attributes. 
++ The default is em no /em . 
++ The command line option code -drop-unknown /code is equivalent to + specifying em yes /em . 
+/dd + dt drop-duplicate-atts: em never, drop-first, keep-last, + drop-last, keep-first, /em or em if-equal /em /dt + dd Determines what Tidy does with duplicate attributes. 
++ Consider code p align=left align=right /code + Tidy will always warn about duplicates. 
+With the default, + em never /em , both copies are kept. 
+With em keep-first /em + or its synonym em drop-last /em , Tidy will keep the first + copy ( code align=left /code ) and drop any others. 
+With + em keep-last /em or its synonym em drop-first /em , + Tidy will keep the last copy ( code align=right /code ) and + drop any others. 
+With em if-equal /em , Tidy will drop + later copies that provide the same value as the first. 
++ Currently that heeds alphabetic case, so + code align=left align=left /code will be tidied to + code align=left /code , but code align="left" align="LEFT" /code + will be left unchanged. 
++ The command-line options code -drop-first /code , code -drop-last /code , + code -drop-equal /code , and code drop-never /code set this property. 
+/dd dd If set to em yes /em , this causes Tidy to enclose any text it finds in the body element within a p element. 
+This is useful when you want to take an existing html file and use it with a *** 1100,1109 **** --- 1147,1158 ---- quote-ampersand: no break-before-br: no uppercase-tags: no uppercase-attributes: no char-encoding: latin1 + drop-unknown-atts: no + drop-duplicate-atts: if-equal new-inline-tags: cfif, cfelse, math, mroot, mrow, mi, mn, mo, msqrt, mfrac, msubsup, munderover, munder, mover, mmultiscripts, msup, msub, mtext, mprescripts, mtable, mtr, mtd, mth new-blocklevel-tags: cfoutput, cfquery Initially, I ran into tidy when I was looking for a way to clean up HTML input from users of my chat site. 
+My interest in learning Perl came up parallel to the shutdown of a chat site that I used to attend once in a while, so I decided to program a replacement. 
+This other chat site (as well as many others) was using a buffer string of many closing tags to prevent rendering errors resulting from unclosed HTML tags, but this approach did not appeal to me. 
+Then I found Tidy and am using it since, the users' messages are passed to tidy and on tidy's result I do a little more processing (throwing away the HTML, HEAD, TITLE, DOCUMENT and similar tags) and then output the cleaned message. 
+So, this was my first contact to Tidy, about 1.5 years ago. 
+At work, I am using Tidy to clean up code produced by my co-workers (too many of them use Dreamweaver &amp; Co.) and, on more recent projects, to convert and ensure consistency to XHTML. 
+Often, I am told to work on HTML code by unknown authors (or authoring systems) that is virtually unreadable... then I use tidy to pretty print it and allow me to actually work on it. 
+It is a hard task to make people write good code, but tidy is a great help! 
+my $.02 sebastian Sebastian Lange Maybe the first chat site that validates as HTML 4.0 even though user input may contain HTML codes. 
+Courtesy to Dave Raggett's HTML Tidy: Tidy your documents ONLINE: The problem here is that a lot of us use Tidy on HTML that we did not write and do not have ready access to the author of. 
+Well, for one thing, the departmental web pages. 
+Their development was contracted out to a company who, for example, said that "it would be unethical to try to follow the W3C's accessibility guidelines" and "if we had been told to write HTML that conforms to the HTML spec we would have refused the job". 
+I don't know how to find words strong enough to express their refusal to countenance cleaning up their pages. 
+"Ready access" in my book includes "not having them reject, with vigorous anger, the idea that their pages could or should be improved." 
+And then the people here who *are* cleaning up the pages (the man who teaches Web use and writing knows what he is talking about) use an HTML editor that insists on generating non-standard HTML, rather pointlessly. 
+They don't have much choice, so far we've only found one editor that doesn't do that, Amaya, and it's sufficiently unreliable that they'd rather not use it. 
+Here the "author" responsible for the un-Tidyness is the company that wrote the editor, and I assure you that they are *not* interesting in our opinion that the editor should generate clean HTML unless explicitly told otherwise. 
+So it's a view-on-several-machines, edit, Tidy, view, edit, Tidy cycle, and we *can't* stop the bad stuff getting in. 
+Then there are the University web pages, especially ones generated by the Information Technology Services group. 
+They *cannot* be made to understand that setting the fonts so that they work fine on their machine but show up in 7pt type on mine is just not on. 
+In fact, if people like my patches for stripping out non-standard attributes (posted on the 9th of this month), I'll send out another patch, for clipping FONT SIZE="-x" attributes so that text is not made too small. 
+That's probably the most important thing I need from Tidy. 
+While I'm at it, something that would be rather helpful would be if there were an option for Tidy to warn about blocks that are a fixed width. 
+(Not the occasional column in a table, but where the _entire_ table is of fixed width.) It seems as if the width is _always_ chosen to suit the window size the author likes on their PC, and I very often get important text clipped off the right. 

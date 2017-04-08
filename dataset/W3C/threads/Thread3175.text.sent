@@ -1,0 +1,97 @@
+Based on our recent discussions about how the group would like to proceed, my sense is that we want to make quick progress on a standards track document. 
+In order to help this along, Chris Allen ( ChristopherA@consensus.com ) drafted the following agenda for the San Jose meeting: Monday, 9 December, 1530-1730 1530-1545 Introduction and background 1545-1615 Presentation of proposed SSL to TLS changes 1615-1645 Discussion of proposed TLS changes 1645-1725 Quick presentations on possible future work (including shared secrets, Kerberos, IPSEC key management, etc., may include others to be determined) 1725-1730 Wrapup and next steps Note: if you've sent a note about making a presentation, you don't need to resend it. 
+We're working on the details of the quick presentation section. 
+Comments welcome. 
+- Win Treese I'm just looking for some clarification. 
+- Is it the intention to move SSL 3.0 into TLS 1.0 "as is", with clarifications to the spec? 
+- Is the hour of presentation and discussion meant for clarifying the ambiguities in SSL 3.0 that Chris Allen mentioned in an earlier message, also, does this include discussion about splitting the SSL spec into separate specification documents? 
+- Does this mean that all decisions regarding draft proposals (Netscape's authority attributes, Microsoft's passphrase authentication, CyberSafe's Kerberos cipher suites, etc.) will be postponed until the next meeting of the IETF? 
+-- Matt Hur Matt Hur CyberSafe Senior Software Engineer 1605 NW Sammamish Road, Suite 310 matt.hur@cybersafe.com 
+Issaquah, WA 98027-5378 (206) 391-6000 http://www.cybersafe.com 
+Not necessarily -- a number of clarifications (but no changes to the SSL protocol) have been made in "draft-ietf-tls-protocol-00.txt" (it was submitted before the IETF cutoff deadline but is not up on ietf internet-drafts site yet) as well as a document "draft-ietf-tls-changes-00.txt" that includes what the editors (Tim and I) felt to be non-controversial changes. 
+The short outline of "tls-changes" is: 1. MAC algorithm 2. MAC contents 3. Block padding 4. Message order standardization 5. Certificate chain contents 6. 
+The no_certificate alert 7. Additional alerts 8. Seperation of Record and Handshake layers 9. Additional Record Protocol clients If these drafts are not up by today I'll be glad to send them to anyone that needs a copy if you send me a private mail (please don't send your request to the list.) 
+The focus of the discussion during that portion of the agenda will be "draft-ietf-tls-changes-00.txt" and to get a straw vote on them, howerever, I expect that this time will also include some straw votes on additional requirements. 
+If there are no requirements beyond "draft-ietf-tls-changes-00.txt", they will be integrated into "draft-ietf-tls-protocol-00.txt" which will then be put out for a last call. 
+In this case, as all of the additions were discussed during the meeting I think that TLS could be approved as an RFC more rapidly then the next meeting. 
+However, if more requirements are added, it will definately take one more more meetings longer to finalize. 
+..Christopher Allen Consensus Development Corporation.. .. ChristopherA@consensus.com 1563 Solano Avenue #355.. .. Berkeley, CA 94707-2116.. ..Home of "SSL Plus: o510/559-1500 f510/559-1505.. .. SSL 3.0 Integration Suite(tm)" http://www.consensus.com/SSLPlus/ 
+.. I strongly recommend that these be separated into 2 parts: those that force a change the current protocol (bits on the wire), and those that are clarifications of current practice. 
+In particular points 1., 2., and 6. above would make all current implementations non-conforming. 
+Do we have examples of interoperability between the proposed protocol and existing implementations? 
+Would the version number be rolled forward? 
+I suspect that those at the meeting will want to treat these proposals independently. 
+PK Philip L. Karlton karlton@netscape.com 
+Principal Curmudgeon http://www.netscape.com/people/karlton 
+Netscape Communications Corporation Everything should be made as simple as possible, but not simpler. 
+-- Albert Einstein After looking at the suggested changes, I'd categorize them as follows. 
+These entail changes to the protocol: These are just clarifications, or restructuring of the document: At this point, I'd be unhappy with any changes to the protocol, although 7 and 9 don't appear to be very damaging to existing implementations. 
+I think that any changes we make to the protocol must be looked at very closely. 
+If we are actually going to consider protocol changes at this time, or for the future, I'd also suggest a generalization of the block padding format. 
+I'd specify that blocks be padded with random data, and that that all blocks have (possibly zero-length) padding. 
+I'd also relax restriction on maximum padding length. 
+This would make it harder to perform a traffic analysis attack, but still allow implementations to forgo the padding if so desired. 
+You should only break rules of style if you can | Tom Weinstein coherently explain what you gain by so doing. 
+| tomw@netscape.com 
+It was my understanding that the TLS working group has reached consensus that we intended to standardize a new protocol based on SSL. 
+I have always taken this to mean that this would, in fact, be a new protocol, not just an IETF rubber-stamp of a Netscape protocol. 
+As such, I believe we've already decided that changing the bits on the wire is within our intent. 
+Certainly issues like standardizing the MAC have always been discussed as an obvious, simple, and reasonable step for the SSL to TLS transition Also, I believe that items 3, 4, 9, and maybe 7 also imply changes to the acceptable bits on the wire in the SSL protocol, because it's my belief that cryptographic protocols must wherever possible check to make sure that the other side is conformant, because a failure to conform may cause a security failure which would otherwise be undetected. 
+As such, I believe that a conformant TLS implementation (if the above proposals were adopted) would: - Check to make sure blocks are padded correctly - Ensure that messages arrived in the prescribed order - Not accept unknown record types or alerts. 
+In addition, I believe number 5 requires a change to the bits on the wire because it continues to be my stance that the SSL protocol as standardized requires complete certificate chains to be transmitted, regardless of actual implementation behavior or revisionist modifications to the standard document. 
+As such, I believe that to transmit partial certificate chains (as described in proposal item 5) is to be incompliant with the SSL 3.0 protocol (although you'll happily interoperate with many SSL 3.0 implementations). 
+In summary, I believe it is the charter and intent of the TLS working group to standardize a protocol which involves changes to the bits on the wire and that all the proposals above except for number 8 describe some change to the legal and compliant bits on the wire. 
+(Although some SSL implementations may be flexible enough to allow communication with TLS implementation on some items.) 
+Of course, in my role as editor I'm more than willing to describe in the standard whatever the consensus of the working group is, even if it is simply to standardize the SSL protocol (which is what the current contents of the TLS internet draft is intended to represent). 
+- Tim Tim Dierks - timd@consensus.com - www.consensus.com 
+Software Haruspex - Consensus Development Developer of SSL Plus: SSL 3.0 Integration Suite I think this is a good suggestion, except that I would specify the contents of the block data rather than using random data. 
+I don't believe that random data adds significantly to the security of the protocol, as any significant communication will be well beyond the unicity distance; thus, the verifiable plaintext of the padding won't aid attackers. 
+The benefit of using predictable data is that the peer can verify that padding is being done as expected, which allows a greater rigidity around implementations, which I believe aids security analysis. 
+If you'd like to avoid the padding data being known plaintext, you could specify it in some what that it is unknown, yet verifiable. 
+However, the protocol should be strong against known-plaintext attacks anyway, as such attacks are commonly available to attackers. 
+- Tim Tim Dierks - timd@consensus.com - www.consensus.com 
+Software Haruspex - Consensus Development Developer of SSL Plus: SSL 3.0 Integration Suite One more protocol issue ... I've never seen an explanation about why the "change cipher spec" record is necessary. 
+It seems like all that's needed is the ability to flush the handshake messages which have been queued, since I don't see any cases where the next legal handshake message isn't predictable from the current protocol state. 
+Is "change cipher spec" as a record type an artifact of some early SSL implementation, which might be removed in a "new protocol based on the SSL 3.0 specification"? 
+- Dave Minor correction (it's late); sorry ... More like: "I don't see any cases where you won't know that the next handshake message from the peer must be 'Finished', even without this 'change cipher spec' message." 
+I think there are enough proposed changes on the table to look at some of the smaller ones for the first TLS specification, and that's the focus of what Tim and Chris proposed. 
+The working group needs to consider each item to decide whether or not it goes into the first TLS spec. 
+- Win Treese The intent is to consider some small changes to SSL 3.0 that the working group believes will improve the TLS protocol. 
+The first hour is intended to cover the proposed clarifications and the "small" changes. 
+My sense is that the first TLS spec would not be separate documents, because disentangling things will take a fair bit of time. 
+Based on the discussion so far, I think that the working group is far from consensus on those changes, so I don't expect final decisions to be made in San Jose. 
+We can make decisions on the mailing list before the next meeting, however, and I hope we can make some good progress between the meetings. 
+- Win Treese On the client side when setting up a new session (rather than continuing an existing one) the handshake message before the Finished could be a ClientKeyExchange, or a CertificateVerify if the client was asked to authenticate itself. 
+However the changeCipherSpec message is there, and is an alert rather than a handshake message, in order to make better seperation between the record layer (which has to know about the change) and the handshake layer above it. 
+Theoretically you could invent a new handshake protocol, and the underlying record layer wouldn't care (and the code wouldn't have to be changed) as long as your new handshake included changeCipherSpecs at the appropriate time. 
+Eric Murray ericm@lne.com 
+ericm@motorcycle.com 
+http://www.lne.com/ericm 
+PGP keyid:E03F65E5 fingerprint:50 B0 A2 4C 7D 86 FC 03 92 E8 AC E6 7E 27 29 AF Phil and all, I will not be able to attend this meeting, but was wondering if min's. 
+will be posted as to what was discussed and conclusions and or dicisions that were decided on. 
+This would be helpful to all that are not able to attend I would think. 
+Please advise. 
+Regards, Jeffrey A. Williams DIR. 
+Internet Network Eng/SR. 
+Java Development Eng. Information Eng. 
+Group. 
+Phone :972-447-1904 E-Mail jwkckid1@ix.netcom.com 
+It's there as an explicit indicator of the change. 
+Yes, it would be possible to make it implicit, but for protocol purity reasons, we don't like implicit things, especially state changes. 
+The fact that it's a different record type instead of a handshake message is just a way of making sure that someone can't send it in the middle of a handshake record. 
+You should only break rules of style if you can | Tom Weinstein coherently explain what you gain by so doing. 
+| tomw@netscape.com 
+It's there for 2 reasons. 
+1) Hardware implementations. 
+Imagine a pipelined implementation of a TLS protocol engine (record gathering, decompression, decryption). 
+At the point that a cipher spec changes, the pipeline must be stalled/flushed so that the new ciphers and keys can be loaded (potentially in parallel) into that engine. 
+It is very convenient for there to be a simple test for the hardware to make to know to do that stall (as opposed to having to understand the semantics of the protocol). 
+2) Future extensibility. 
+Handshake protocols have been proposed (and I strongly suspect will be proposed in the future) where some of the handshake messages will have to be encrypted for security reasons. 
+Having an explicit marker makes implementations and analysis easier. 
+PK Philip L. Karltonkarlton@netscape.com Principal Curmudgeonhttp://www.netscape.com/people/karlton 
+Netscape Communications Corporation Everything should be made as simple as possible, but not simpler. 
+-- Albert Einstein I thought Netscape had already decided that "SSL 3.1" would incorporate item 1 (switch to the official IETF HMAC). 
+Considering that 1 and 2 are obvious (several sources, including the Wagner/Schneier paper, independently arrived at the same recommendations for "fixing" the SSL 3.0 record layer), I'd say that they have already been looked at closely. 
+But you are right about the need for configuration control - we should come to closure on a whole set of changes (including the other proposals, not just the 4 listed here) before publishing TLS 1.0. 
+Publishing a beautified SSL 3.0 makes the incompatible changes less urgent - there's no need to rush these out the door. 

@@ -1,0 +1,46 @@
+There were a set of people who were going to discuss this in the halls, and get back to me (and the working group) with a resolution. 
+I've never seen any resolution. 
+No one caught me in the hall. 
+People involved included Josh and Henry Sanders. 
+Please identify yourselves, and the proposed solution. 
+- Jim Gettys The consensus from our lunch meeting was that as long as proxies upgrade all requests to the proxy's highest version number, then the re-version issue could stay as it is. 
+Response version is the servers highest version, not the message version. 
+While the message version would have merit, it seems that people felt that at this point we couldnt justify changing it. 
+The only remaining fringe case which I can think of where there may be problems are with the example of the chunked post. 
+I dont think we can solve that easily. 
+I propose an edit like this in the version clauses. 
+"Proxy servers MUST upgrade all requests to the highest version supported by the proxy" According to Jim Gettys, Josh Cohen josh@early.com 
+Given the heat that this generated at Munich, I'd appreciate it if others read Josh's mail, and proposed change to close out the issue. 
+Henry, do you agree? 
+I also wonder if "Proxy servers" is correct... Should it be "Caching proxy servers", to deal with the case of a transparent firewall proxy? 
+It was also not specified as to where to put this statement; it looks to me like it belongs in section 3.1 HTTP Version. 
+- Jim Yep, I agree. 
+From: "Henry Sanders (Exchange)" henrysa@EXCHANGE.MICROSOFT.com 
+Date: Mon, 17 Nov 1997 14:37:33 -0800 Subject: RE: RE-VERSION discussion at Munich.... Strictly speaking it only has to be caching proxies servers. 
+If you're going to cache you need to upgrade the request to the highest version you support so that you can satisfy potentially higher level requests (than the one that triggered the initial server fetch) from the cache later. 
+If you're not caching, you probably should upgrade, but it won't really hurt if you don't. 
+So caching proxies MUST upgrade, non-caching proxies SHOULD (or MAY) upgrade, tunnels MUST NOT upgrade. 
+Caching (was that the agreed spelling duck ?) doesn't quite capture it. 
+The only thing I can think of, but it is horribly unweildy, is: "non-transparent proxies that operate at the HTTP layer". 
+Cheers, Ben. 
+A.L. Digital Ltd, |http://www.algroup.co.uk/Apache-SSL London, England. 
+|"Apache: TDG" http://www.ora.com/catalog/apache 
+Ok, here's a closer stab on wording, in section 3.1 HTTP version Old text: Requests with a version lower than that of the proxy/gateway's version MAY be upgraded before being forwarded; the proxy/gateway's response to that request MUST be in the same major version as the request. 
+New text: Due to interoperability problems with HTTP/1.0 proxies discovered since the publication of RFC 2068, caching proxies MUST, gateways MAY, and tunnels MUST NOT upgrade the request to the highest version they support. 
+The proxy or gateway's response to a request MUST be in the same major version as the request. 
+We can't say that if the server that the proxy speaks to is buggy and doesn't understand HTTP/1.1. 
+It may have to speak HTTP/1.0 in some situations. 
+It also doesn't make sense to say that gateways MAY upgrade as they are gateways into other protocols. 
+I can't see what we get out of this that is not already captured in RFC 2145, section 2.3: An HTTP client SHOULD send a request version equal to the highest version for which the client is at least conditionally compliant, and whose major version is no higher than the highest version supported by the server, if this is known. 
+An HTTP client MUST NOT send a version for which it is not at least conditionally compliant. 
+An HTTP client MAY send a lower request version, if it is known that the server incorrectly implements the HTTP specification, but only after the client has determined that the server is actually buggy. 
+An HTTP server SHOULD send a response version equal to the highest version for which the server is at least conditionally compliant, and whose major version is less than or equal to the one received in the request. 
+An HTTP server MUST NOT send a version for which it is not at least conditionally compliant. 
+A server MAY send a 505 (HTTP Version Not Supported) response if cannot send a response using the major version used in the client's request. 
+An HTTP server MAY send a lower response version, if it is known or suspected that the client incorrectly implements the HTTP specification, but this should not be the default, and this SHOULD NOT be done if the request version is HTTP/1.1 or greater. 
+But then again, I wasn't in Munich, so I may be mising something... Henrik Henrik Frystyk Nielsen, World Wide Web Consortium I also don't know if something new was raised in Munich, but as far as discussions on this list are concerned, I similarly feel that Section 2.3 covers the issues quite well and would be difficult to improve. 
+One thing that's missing is an explicit reference to the Via header for the case in which proxies are interposed between the browser and origin server, so that scripts can't rely on the SERVER_PROTOCOL variable, but should also examine the HTTP_VIA variable (or their server-side scripting equivalents) to assess the browser's version. 
+I'm not the appropriate one to attempt a chunk of text about that, but if someone who is, did, I suspect many implementors and providers would be appreciative. 
+Fote Foteos Macrides Worcester Foundation for Biomedical Research MACRIDES@SCI.WFBR.EDU 222 Maple Avenue, Shrewsbury, MA 01545 I don't agree ... it makes no sense to force a proxy to subject itself to the requirement that it unchunk a response, etc. Replace MUST with MAY or even SHOULD. 
+This should be a proxy implementor's design decision. 
+Dave Morris 

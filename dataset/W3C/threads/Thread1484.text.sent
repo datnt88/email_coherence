@@ -1,0 +1,68 @@
+DeltaV supports an in-place editing model for situations where the server does not support the Working Resource option, and where the client does not do all their edits on their local copy. 
+By "in-place editing" I mean that when the VCR is checked out, clients can do any number of PUT, PROPPATCH and other write operations, before finally checking in. 
+In the meantime, this work-in-progress is available for other users to see if they have permission to read the resource. 
+First question: Does anybody plan to implement DeltaV this way? 
+[I believe Subversion effectively will (correct me if I'm wrong) but in practice Subversion clients wouldn't do their write operations until just before checking in, so there would only be a small window of opportunity to see works-in-progress. 
+] Second question: Is there a way for clients to view working resources and only see the latest checked-in versions? 
+E.g. I may be uninterested in seeing "works in progress" affected by in-place editing. 
+Can I do a PROPFIND depth-1 against the latest checked-in versions in a collection, rather than the works-in-progress? 
+lisa From: Lisa Dusseault [mailto:lisa@xythos.com] DeltaV supports an in-place editing model for situations where the server does not support the Working Resource option, and where the client does not do all their edits on their local copy. 
+Note though that this is not a "package", this is just a "feature" that is used in the "workspace" packages. 
+By "in-place editing" I mean that when the VCR is checked out, clients can do any number of PUT, PROPPATCH and other write operations, before finally checking in. 
+In the meantime, this work-in-progress is available for other users to see if they have permission to read the resource. 
+First question: Does anybody plan to implement DeltaV this way? 
+We will be supporting the advanced-server-workspace package, which includes the in-place-checkout feature. 
+[I believe Subversion effectively will (correct me if I'm wrong) but in practice Subversion clients wouldn't do their write operations until just before checking in, so there would only be a small window of opportunity to see works-in-progress. 
+] No, subversion supports the advanced-client-workspace package, so it provides the working-resource feature, not the in-place-checkout feature. 
+Second question: Is there a way for clients to view working resources and only see the latest checked-in versions? 
+E.g. I may be uninterested in seeing "works in progress" affected by in-place editing. 
+Can I do a PROPFIND depth-1 against the latest checked-in versions in a collection, rather than the works-in-progress? 
+This question is really only relevant for the workspace packages, with in-place checkouts and not working resources. 
+This is because working resources are sprinkled around the URL space at the server's whim, and are not collected into a collection that you can "PROPFIND Depth:1". 
+So with working resources, the *only* kind of version-controlled resources you see in collections are checked-in ones, so you would never see "works in progress". 
+Note though, that if your server does support in-place checkouts, you can get the behavior Lisa describes by using the DAV:expand-property report. 
+In particular, you would ask to expand the DAV:checked-in and DAV:checked-out properties of the version-controlled resources. 
+Cheers, Geoff From: ietf-dav-versioning-request@w3.org [mailto:ietf-dav-versioning-request@w3.org] 
+On Behalf Of Clemm, Geoff From: Lisa Dusseault [mailto:lisa@xythos.com] By "in-place editing" I mean that when the VCR is checked out, clients can do any number of PUT, PROPPATCH and other write operations, before finally checking in. 
+In the meantime, this work-in-progress is available for other users to see if they have permission to read the resource. 
+First question: Does anybody plan to implement DeltaV this way? 
+I would strongly consider this an option, if a default GET and PROPFIND did not reference the work in progress but instead referenced the last-checked-in-version. 
+Imagine this: After checkout, GET/PROPFIND from users that don't have the resource checked out refer to the last checked in copy. 
+PUT/PROPPATCH are illegal. 
+For the user with the resource checked out, all operations apply to the checkout-in-place copy. 
+That gives you most of the functionality of the working resource model, avoids things like UPDATE/MERGE interactions with working resources, and avoids placing extra demands on the client. 
+If we weren't trying to be compatible with a 3rd party DAV + revision but not DeltaV server, I'd propose that we do it this way. 
+The 3rd party server puts the working resource in an independent namespace. 
+[Lest no one confuse us, I do work for Lisa at Xythos. 
+But she works in CA and I work in WA where it is cheaper to live. 
+We have independent opinions.] 
+From: John Hall [mailto:johnhall@evergo.net] From: Lisa Dusseault [mailto:lisa@xythos.com] By "in-place editing" I mean that when the VCR is checked out, clients can do any number of PUT, PROPPATCH and other write operations, before finally checking in. 
+In the meantime, this work-in-progress is available for other users to see if they have permission to read the resource. 
+First question: Does anybody plan to implement DeltaV this way? 
+I would strongly consider this an option, if a default GET and PROPFIND did not reference the work in progress but instead referenced the last-checked-in-version. 
+That is how working resources work. 
+The version-controlled resource URL is a copy of the state of some checked-in version (but not the last checked-in version, but rather the last version specified in an UPDATE). 
+The working resource has its own URL, and that is what the client that "checked it out" works with. 
+In-place editing is precisely for those cases where you want the all clients to see "work in progress" at that URL (to see a checked in version, you look at a URL in a different workspace). 
+Imagine this: After checkout, GET/PROPFIND from users that don't have the resource checked out refer to the last checked in copy. 
+PUT/PROPPATCH are illegal. 
+The easiest way to determine "which user has it checked out" is to give the "checked out version" its own URL. 
+And PUT/PROPPATCH are illegal (unless your server has auto-versioning turned on). 
+For the user with the resource checked out, all operations apply to the checkout-in-place copy. 
+That gives you most of the functionality of the working resource model, avoids things like UPDATE/MERGE interactions with working resources, and avoids placing extra demands on the client. 
+And how does a client indicate which checked out state it wants to access? 
+Why make a client remember two strings (the checked-out "token" and the URL), which it only needs one string (the working-resource URL). 
+(We need to support parallel checkouts, so a "the checked-out one" header does not suffice). 
+If we weren't trying to be compatible with a 3rd party DAV + revision but not DeltaV server, I'd propose that we do it this way. 
+The 3rd party server puts the working resource in an independent namespace. 
+So you actually don't propose we do it this other way? 
+Then we agree (:-). 
+Cheers, Geoff Yes. 
+I think that's what working resources are made for. 
+Anyway, how should your feature work with anonymous access? 
+Stefan Oops, I meant "view a bunch of version-controlled resources and only see latest checked-in versions". 
+I can see that's what working resources are made for, only unfortunately existing clients don't support working resources. 
+I'm trying to make our implementation work as much as possible with existing WebDAV clients and still have the desired behaviour. 
+If we didn't have to be compatible with DeltaV, it would be easy. 
+;) Why wouldn't viewing checked-in versions work with anonymous access, as long as the 'anonymous' principal is granted read privilege on the resources? 
+lisa 

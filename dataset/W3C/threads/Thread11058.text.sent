@@ -1,0 +1,89 @@
+Entity and Element Addressing 4.3 SGML Reference Types SGML HREFs use standard SGML Element and Entity addressing mechanisms. 
+If the reference type is ENTITY, then the HREF must be an entity name which references an external entity. 
+"External entity" is defined in XML 1.0, s.v. 4.2.2, which should be referred to here (some readers will become confused and wonder whether they can use this mechanism to refer to &amp;eacute;). 
+I note from XML 1.0, s.v. 2.2, that in a well formed XML document, for each entity reference, the entity name must be declared in the doctype declaration (at that point, reference might be made to 2.9, in which the concept of internal and external subsets is introduced). 
+S.v. 4.2.2, the system identifier must be a URL (should the sentence following the Validity Check following production 71 start "The SystemLiteral"?). 
+It might be worth while pointing out that in xmllink, addressing by entity means addressing by URL using entities for indirection. 
+Is ENTITIES allowed? 
+If the reference type is ELEMENT, then the HREF must be the value of a unique identifier attribute within "Unique identifier attribute" isn't language I can find in XML 1.0. 
+Is "ID value" intended? 
+What of ELEMENTS, in the plural? 
+(In other words, is this really IDREF/IDREFS?) the current document. 
+If the reference type is SGML, then the HREF must contain an entity name interpreted as with ENTITY, followed by the character "#", followed by the value of a unique identifier attribute within the document referenced by the leading entity name. 
+What happens when the system identifier for the entity already contains a #? What is the force of "leading" in "leading entity name"? 
+Regards, Terry Allen Fujitsu Software Corp. tallen@fsc.fujitsu.com 
+"In going on with these experiments, how many pretty systems do we build, which we soon find outselves obliged to destroy?" - Benjamin Franklin A Davenport Group Sponsor: http://www.ora.com/davenport/index.html I am not convinced that this is a necessary check for well-formedness. 
+Hmm, it's a pretty fundamental point. 
+If I see an undeclared reference it could have indicated anything from a single gaiji to the text of the Critique of Pure Reason; not knowing seems seems pretty evil. 
+My conception of Well-Formedness has always been along the lines of "you can build the right parse tree". 
+Now, we have partially ducked that by saying that you don't have to fetch &amp; parse external text entities; but you do have to know what the reference is pointing at. 
+What are the advantages to relaxing this restriction? 
+And if there are lots of others who agree with Gavin on this, speak up. 
+- Tim Fine. 
+My point is that even if entities are "missing", the result of a parse should be "well-formed" (ie. the tree is correct except for the missing nodes). 
+1) It allows you to use entities, even when you don't have a declaration subset or DTD. 2) It can help to reduce packet sizes in a realtime environment. 
+3) It can make it easier to generate content dynamically. 
+My ideas for entity resolution were posted long ago to this list. 
+Basically, if all else fails (ie. 
+no catalog, no declarations), then I would like to see clients looking for "foo" or "foo.xml" relative to the URL of the referring entity. 
+A little extra robustness and flexibility. 
+1) It allows you to use entities, even when you don't have a declaration subset or DTD. 2) It can help to reduce packet sizes in a realtime environment. 
+3) It can make it easier to generate content dynamically. 
+Whoa. 
+Pin (3) up on the board and ring it in red. 
+Remember all the FAQs to the HTML WG and elsewhere asking why HTML didn't have an INCLUDE and we all said "but SGML _does_, just the browsers don't implement them". 
+This is a Selling Point. 
+I'm not sure about "right" yet: doesn't well-formedness mean you can build _a_ parse tree, deduced (in the absence of a DTD) from the symmetry and nesting of the markup? 
+I'm sorry if this was thrashed to death before I came in, but it's one of those things we are going to have to be utterly unambiguous about. 
+Do you mean...? "I have to be able to resolve the address implied by the entity reference even if I don't go fetch it now" or "I have to know what kind of object this purports to be, even if I don't go sniffing at the address right now" The first means more cycles at parse time; the second means authors will have to type their links. 
+My ideas for entity resolution were posted long ago to this list. 
+Basically, if all else fails (ie. 
+no catalog, no declarations), then I would like to see clients looking for "foo" or "foo.xml" relative to the URL of the referring entity. 
+A little extra robustness and flexibility. 
+How I wish current SGML software did the same :-) ///Peter It doesn't say so, so I assume not. 
+Nor does ENTITIES seem that it would be useful in this case. 
+I think so, but the language should be changed. 
+We have also considered allowing references based on any attribute value -- this would be nice, but would need to be defined first. 
+I don't think that this matters, actually. 
+If the system identifier identifies an XML document, then it presumably can't contain a '#', or it contains a # with some fancy XML-linking query semantics, so that the IDREF is applied relative to the result of following the pointer. 
+Leading entity name seems to mean that the entity name is first in a string like: "Foo#id" With the entity declaration Did I get the example right? 
+-- David I am not a number. 
+I am an undefined character. 
+David Durand dgd@cs.bu.edu \ david@dynamicDiagrams.com 
+Boston University Computer Science \ Sr. Analyst --------------------------------------------\ http://dynamicDiagrams.com/ MAPA: mapping for the WWW \__________________________ I hope this isn't going over solved ground, but I'd like to check up about entities and the interpretation of 4.3. 
+The spec uses the word 'include' which I take to mean 'copy the entire contents of the external entity' (normally a file) 'into the space vacated after removing the &amp;...; string'. 
+The spec emphasises the use of modularity in authoring (which I strongly support). 
+Therefore a simple example would be: !DOCTYPE CML SYSTEM "cml.dtd" [ ] &amp;bib1; &amp;bib2; &amp;mol1; &amp;mol2; Assume that the files have structures like: and and are 'valid', then the whole document is a valid CML document. 
+The subsidiary files are not valid CML (they have no DOCTYPE) but they are WF and in all other respects valid. 
+They are therefore valuable reusable components (but see below). 
+This seems to be the intention of the draft. 
+However it is also possible to create a valid document as (say) ] &amp;molfrag1; where molfrag1.txt 
+contains something like: i.e. the starttag is in one file and the endtag in another. 
+Whilst this is horrible, it is the sort of thing that a mindless text processor might do when sending chunks to a mailer with size restrictions. 
+It would also be possible to have both the start and the endtags in the main document. 
+I am not an expert on NOTATION but is seems that this is required if including a foreign file, e.g. &amp;mygif; It therefore becomes difficult to say whether a document is or is not WF without looking at the entities. 
+My motivation is that such document fragments may be useful both as entities and as link-ends - 'the things the pointy bits point to' (if I have that correct). 
+In other words I might also wish to write something like: to reference the molecules. 
+However the semantics are differnt. 
+The second assumes that the application will find something with a well defined structure of _some_ sort in the files. 
+I'm still not clear how it knows precisely what that structure _is_. 
+If mol1.xml is a complete valid CML file (i.e. has a DOCTYPE statement and an accessible DTD) then I know, otherwise I have to guess. 
+I _hate_ using file suffixes, and my preference would be to include a MIME type somewhere in the LINK. 
+The nearest I can get is the HRTYPE attribute - but this isn't clear in the spec. 
+If it's allowed, I'd suggest: However, if this is allowed then the use of entities fails (since the files all must have DOCTYPEs in them). 
+So I really want to be able to omit the DOCTYPEs and use HRTYPE (or some other tool) to tell the application 'what is at the end of the pointy bit is a WF CML file and its nature is determined by its first element. 
+Just assume there is a DOCTYPE at the front' Of course I have to make sure that the context into which the file is imported is sensible, but that's my problem! 
+P. [BTW I am not a supporter of punctuation in NAMEs if it can be avoided. 
+For example, I create Java classes for most of my Elements directly from their names. 
+-XML-LINK.java is illegal, and probably has to be contracted to XMLLINK.java. 
+The (obvious?) underscore character doesn't seem to be used in XML names (?)] Peter Murray-Rust, (domestic net connection) Virtual School of Molecular Sciences, Nottingham University, UK [Peter Murray-Rust] See clause 2.1, "Logical and Physical Structure". 
+Entities must each contain an integral number of elements, comments, processing instructions, and references, possibly together with character data not contained within any element in the entity, or else they must contain non-textual data, which by definition contains no elements. 
+This would indeed be horrible, and is mercifully forbidden. 
+(It is good to have an indexed version of the specification...) The underscore character is not a legal name character in the SGML reference concrete syntax, which XML tries to use as much as possible. 
+Should _ be added as a name character? 
+The link specification does not force you to use -XML-LINK as the element name; you can use attributes to communicate that elements of your own devising have a defined XML link role. 
+-Chris Christopher R. Maden One Richmond Square DynaText SIT Technical Support Providence, RI 02906 USA Inso Corporation +1.401.421.9550 (voice) Electronic Publishing Solutions +1.401.521.2030 (facsimile) What's the difference between not seeing the entities and switching off the images on Netscape? 
+I normally run my HTML browser without illustrations for performance reasons. 
+I could equally well envisage having the option as to whether or not to resolve linked entities on my XML browser. 
+Martin Bryan, The SGML Centre, Churchdown, Glos. 
+GL3 2PU, UK 

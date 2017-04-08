@@ -1,0 +1,99 @@
+I am an implementer, not a developer, but I do have an opinion on this one. 
+For process workflow applications, it is very important to know when the resource is last changed. 
+I care less about property changes, although that event is key for backup software. 
+I would like to see both tracked. 
+As far as versioning is concerned, it will often be important to know both when Check-out occurred and when Check-in occurred, however, getlastmodified should only reflect Check-in. 
+This is because the resource has not been modified, as far as DAV is concerned, until that Check-in has occurred. 
+To keep this consistent with the three properties you listed, getlasttouched would reflect the Check-out event because the file lock was set, while getlastmodified would not. 
+On Checked-in both would be updated. 
+Matt Harris From: Lisa Dusseault [mailto:lisa@xythos.com] Sent: Wednesday, May 02, 2001 2:25 PM Subject: File creation date, version creation date, and getlastmodified WebDAV people: RFC2518 leaves it carefully open whether 'getlastmodified' changes when properties of the resource change. 
+It seems useful either way -- users might want to get the last time the content was changed, or they might want to see the last time the file was touched at all. 
+Is there some precedent? 
+Really, one might best be served by a new timestamp property, so the suite of timestamp-like properties would be - creationdate - time the content was last modified (etag changes, but etag doesn't provide a timestamp) - time the file was last touched Which one of the last two is most commonly handled by getlastmodified? 
+Implementors speak up? 
+DeltaV people: What does it mean to get the time file content was last "modified", if the file is versioned? 
+I don't see that the behaviour of getlastmodified is specified for a Version-Controlled Resource, can this be a recommendation in the spec to promote consistency? 
+For one thing, should 'getlastmodified' on the VCR change when it is checked out, or when it is checked in, or both? 
+lisa Hi, I am not sure that properties are necessarily "becoming a true part of the file", our system is a complete workflow based SCM system with build capabilities etc. WebDAV clients will be using the same repository/server as the rest of our application. 
+Some of our properties like "workflow state" for example, are not directly related to the file content. 
+We track the last modification time (in UTC) of the file content at check-in time. 
+Separately we track the last time the file had any property changed etc, this includes promoting through the workflow, changing properties, locking/unlocking, adding/removing from a collection etc. 
+One example of why we keep the "last modified" date separate is that our build system uses this to compare with timestamps of files on disk to decide if the file is out of date. 
+If the WebDAV client set the last modification time each time a property was changed then the build system would think the file on disk was "out of date" compared to the file held in version control. 
+I am in favor of Lisa's suggestion of having three timestamps. 
+Regards, Peter Raymond - MERANT Technical Architect (ADM) WWW: http://www.merant.com 
+getlastmodified re: WebDAV. 
+My vote would be changing getlastmodified when the properties change. 
+As we use properties more and more, they become a true part of the file in the user experience. 
+Trying to distinguish between the two ("I know you changed the billing number yesterday, but you didn't change the _content_ so the date still reads last week...") can be difficult. 
+Unfortunately, it's a very easy shorthand for server implementations to use the file last-modified date for getlastmodified, and for the operating systems I know that reflects the date/time of the last content modification. 
+Douglas R. Steen dsteen@ekeeper.com 
+Drag-and-Drop Web File Management -----Original Message----- [mailto:w3c-dist-auth-request@w3.org]On 
+Behalf Of Lisa Dusseault WebDAV people: RFC2518 leaves it carefully open whether 'getlastmodified' changes when properties of the resource change. 
+It seems useful either way -- users might want to get the last time the content was changed, or they might want to see the last time the file was touched at all. 
+Is there some precedent? 
+Really, one might best be served by a new timestamp property, so the suite of timestamp-like properties would be - creationdate - time the content was last modified (etag changes, but etag doesn't provide a timestamp) - time the file was last touched Which one of the last two is most commonly handled by getlastmodified? 
+Implementors speak up? 
+DeltaV people: What does it mean to get the time file content was last "modified", if the file is versioned? 
+I don't see that the behaviour of getlastmodified is specified for a Version-Controlled Resource, can this be a recommendation in the spec to promote consistency? 
+For one thing, should 'getlastmodified' on the VCR change when it is checked out, or when it is checked in, or both? 
+lisa unsubscribe getlastmodified I seem to recall that moddav does not change the last modified timestamp when properties are updated. 
+There has been discussion on this topic previously, with a weak consensus that the properties should not contribute to last modified changes. 
+I think this is the right answer. 
+I think that this is a common scenario, also found on caching proxies, that relies upon property updates not being considered a change to the resource. 
+Clearly there is some ambiguity here. 
+On the one hand, properties appear to be 'part of' a resource. 
+They appear when a resource is created, and disappear when a resource is deleted. 
+Operations on a property are via the URL of the resource. 
+However, live properties exhibit behaviour that sets them apart from the resource. 
+They can change even when a resource is versioned or locked, and (at least in a couple of implementations) changes to the resource's properties do not change the last modified timestamp of the resource. 
+When a version-controlled resource is checked-out its contents and dead properties are updated to be the same as the version identified in the DAV:checked-in property. 
+Therefore the DAV:getlastmodified timestamp clearly should be updated to reflect the changes. 
+Note that the timestamp value is the server's notion of the time the version-controlled resource was modified and not the same as the checked-in version's DAV:getlastmodified. 
+When a version-controlled resource is checked-in, its content and dead properties become those of a new version in the version history. 
+Some live properties of the version-controlled resource are updated to reflect its checked-in status. 
+In this case I argue that the DAV:getlastmodified timestamp does not change. 
+Furthermore, if you use UPDATE to update the content and dead properties of a version-controlled resource to reflect the state of a version in version history, the DAV:getlastmodified timestamp will be the time that the UPDATE method was applied and not that of the version. 
+It it were otherwise updating the version-controlled resource to an earlier version would make the last modified time go 'backwards' which would potentially screw up caching proxies and clients that rely on If-Unmodified-Since: headers etc. 
+What is your definition of touched? 
+Dead property updates? 
+Given the number of live / computed properties I assume you agree that their values do not contribute to the touched timestamp? 
+Regards, Tim Ellison Java Technology Centre, MP146 IBM UK Laboratory, Hursley Park, Winchester, UK. SO21 2JN I'm not sure Lisa was actually making that suggestion :^), but in any event I don't like the idea of requiring this kind of timestamping at all. 
+It adds detail to the abstract "DAV resource" that unnecessarily biases it towards file-system implementations (where content and properties are likely to be stored separately and modified independently). 
+I believe that the modification date property is in DAV because it's there in HTTP 1.1. 
+And its semantics are left vague exactly to allow many different implementations. 
+The move to etags in 1.1 was specifically intended to more generally answer the question "has the content of this resource changed." 
+We shouldn't now go back and try to resurrect modification dates as the way to find out about content changes. 
+Similarly, I don't think we should tie modification dates one way or the other to property changes. 
+if clients need a way of asking "has this resource changed in any way - content or properties" then we should add a "property etag" in addition to the "content etag" that now exists. 
+dan Daniel Brotsky, Adobe Systems tel 408-536-4150, pager 877-704-4062 Now that is the best suggestion I have seen yet for this issue. 
+Matt From: Adam Freeman [mailto:afreeman@lightsurf.com] 
+Sent: Thursday, May 03, 2001 12:04 PM Hello, why not have two different last modified dates, one for the content and one for the metadata? 
+- Adam I agree with Tim's position. 
+The DAV:getlastmodified property is explicitly defined to coincide with the value of the Last-Modified header, which is used to control caching of resource content (i.e. what GET returns). 
+Requiring that this date change whenever a property changes would severely harm existing HTTP clients which depend on Last-Modified for content caching. 
+This would be especially disastrous for a server that maintains a "last-accessed" property on resources, since if we stated that a property change causes a Last-Modified change, the DAV:getlastmodified would change every time a resource is accessed. 
+On the other hand, many implementations depend on the underlying "modification date" being maintained by the underlying repository (to allow multi-protocol access to that repository), and for those implementations that store some properties in the repository item that affects the modification date, the modification date on those servers will be affected by a change to those properties. 
+So I believe the current RFC-2518 language is correct and appropriate. 
+Cheers, Geoff getlastmodified I seem to recall that moddav does not change the last modified timestamp when properties are updated. 
+There has been discussion on this topic previously, with a weak consensus that the properties should not contribute to last modified changes. 
+I think this is the right answer. 
+I think that this is a common scenario, also found on caching proxies, that relies upon property updates not being considered a change to the resource. 
+Clearly there is some ambiguity here. 
+On the one hand, properties appear to be 'part of' a resource. 
+They appear when a resource is created, and disappear when a resource is deleted. 
+Operations on a property are via the URL of the resource. 
+However, live properties exhibit behaviour that sets them apart from the resource. 
+They can change even when a resource is versioned or locked, and (at least in a couple of implementations) changes to the resource's properties do not change the last modified timestamp of the resource. 
+When a version-controlled resource is checked-out its contents and dead properties are updated to be the same as the version identified in the DAV:checked-in property. 
+Therefore the DAV:getlastmodified timestamp clearly should be updated to reflect the changes. 
+Note that the timestamp value is the server's notion of the time the version-controlled resource was modified and not the same as the checked-in version's DAV:getlastmodified. 
+When a version-controlled resource is checked-in, its content and dead properties become those of a new version in the version history. 
+Some live properties of the version-controlled resource are updated to reflect its checked-in status. 
+In this case I argue that the DAV:getlastmodified timestamp does not change. 
+Furthermore, if you use UPDATE to update the content and dead properties of a version-controlled resource to reflect the state of a version in version history, the DAV:getlastmodified timestamp will be the time that the UPDATE method was applied and not that of the version. 
+It it were otherwise updating the version-controlled resource to an earlier version would make the last modified time go 'backwards' which would potentially screw up caching proxies and clients that rely on If-Unmodified-Since: headers etc. 
+What is your definition of touched? 
+Dead property updates? 
+Given the number of live / computed properties I assume you agree that their values do not contribute to the touched timestamp? 
+Regards, Tim Ellison Java Technology Centre, MP146 IBM UK Laboratory, Hursley Park, Winchester, UK. SO21 2JN 

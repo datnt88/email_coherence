@@ -1,0 +1,33 @@
+Topic: About encoding reserved characters in the query part of an URL. 
+Hi, I'm dealing with a bug report of BBedit - Barebones Software, which is an HTML editor. 
+[1] The question is that BBedit has a mechanism to automatically translate the URIs in a document when it's inside an href. 
++ For example when you have typed BBedit will convert it to + But if you have typed a href="http://www.example.org/foo?http://www.example.net/path/index.html" 
+A request /a BBedit is complaining with the message: Value of attribute "href" for element " a " is invalid; URL path needs encoding ("/foo?http: 
+%2F%2Fwww.example.net%2Fpath%2Findex.html"). 
+The RFC 2396 [2] says: 3.4. 
+Query Component The query component is a string of information to be interpreted by the resource. 
+query = *uric Within a query component, the characters ";", "/", "?", ":", "@", "&amp;", "=", "+", ",", and "$" are reserved. 
+So my question is do the slahes MUST be or not encoded in a query part of an URL? [1] http://www.barebones.com/ 
+[2] http://www.ietf.org/rfc/rfc2396.txt 
+Karl Dubost / W3C - Conformance Manager --- Be Strict To Be Cool! --- a href="http://www.example.org/foo?toto=3&amp;tata=4" 
+A request /a a href="http://www.example.org/foo?toto=3&amp;tata=4" 
+A request /a I don't see any difference between the two. 
+Is the second meant to have an &amp;amp;? 
+of an URL? 
+Well the RFC says: If the data for a URI component would conflict with the reserved purpose, then the conflicting data must be escaped before forming the URI. 
+I think that basically, if the URL works works with the server, then you're OK. - Aaron http://www.aaronsw.com/ 
+a href="http://www.example.org/foo?toto=3&amp;tata=4" 
+A request /a a href="http://www.example.org/foo?toto=3&amp;tata=4" 
+A request /a ooooopssss yes :) &amp; - &amp;amp; Karl Dubost / W3C - Conformance Manager --- Be Strict To Be Cool! --- BBedit corrects the HTML representation of the URI, but does not translate the URI itself. 
+I tend to disagree, see section 2.2 of RFC 2396: If the data for a URI component would conflict with the reserved purpose, then the conflicting data must be escaped before forming the URI. 
+Let's take some example URIs: [1] http://www.example.org/?foo=bar&amp;baz=&amp; 
+[2] http://www.example.org/?foo=bar&amp;baz=%26 
+[3] http://www.example.org/?foo=bar;baz=&amp; 
+[4] http://www.example.org/?foo=bar;baz=%26 
+The query consists of key/value pairs. 
+[1] foo = bar | baz =  |  = [2] foo = bar | baz = &amp; | [3] foo = bar | baz = &amp; | [4] foo = bar | baz = &amp; | In [1] the ampersand seperates pairs, it has three pairs. 
+In [2] there are only two pairs, the ampersand is now recognized as data, not as separator, in [3] and [4] the semicolon seperates pairs, it does not matter whether the ampersand is escaped or not. 
+Your example is a syntactically valid URI, since it matches the production rules of RFC 2396 (and RFC 2616 defining the http: URI scheme). 
+The RFC 2396 point is, since [fo] is not in the set of unsafe and reserved characters, but is not equivalent to since '?' is in one of the mentioned sets. 
+The matter is IMO ambiguity, using clearly indicates [:/] are data and have no special meaning, while does not, maybe ':' is a separator here or something. 
+The latter needs additional interpretation not outlined in RFC 2396 in order to claim equivalence to the former, however, syntactically valid are both URIs. 

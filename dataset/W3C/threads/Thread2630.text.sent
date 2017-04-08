@@ -1,0 +1,39 @@
+Hi, RFC 2616 defines a http proxy and a tunnel. 
+But I'am confused on how a http tunnel works. 
+A proxy works by taking a request from a client and connecting to the origin server indicated in the request. 
+Here the client is configured to go through the proxy. 
+How does a http tunnel work. 
+Is the initial connection similar ? 
+Does a client (browser) need to configured differently when it goes through a tunnel or is it same as the configuration required when it goes through the proxy ? 
+Are there to separate tcp connections for each request even in a tunnel ? 
+Thanks in Advance, Regards, Vinit Kumar Get Your Private, Free Email at http://www.hotmail.com 
+Actually, the client may or may not know about the proxy. 
+The difference is in the behavior of the intermediate system (proxy or tunnel). 
+A tunnel just forwards the request and the response unmodified. 
+A proxy at least adds its own identification to a Via header, and may also respond from a cache, require proxy authentication, or any number of other proxy-specific functions. 
+Scott Lawrence Director of R &amp; D lawrence@agranat.com 
+Agranat Systems, Inc. Embedded Web Technology http://www.agranat.com/ 
+The client always knows about the proxy -- that is what distinguishes a proxy from a gateway. 
+A "reverse proxy" is a gateway. 
+Some tunnels are activated by a proxy request, some are simply port forwarding TCP firewalls (either on the client side or the server side, or both), and others are gateways to other servers. 
+The important thing from HTTP's perspective is that once an intermediary becomes a tunnel, it is no longer conscious of the HTTP communication -- only of bytes being relayed from one connection to another. 
+....Roy From: Roy T. Fielding [mailto:fielding@kiwi.ICS.UCI.EDU] Sent: Tuesday, October 26, 1999 8:40 AM Subject: Re: http proxy &amp; tunnel differences ?? Actually, for better or worse, the client does not always know about the proxy. 
+Transparent proxies are quite common. 
+Again, for better or worse, mostly worse IMHO :) Those are not transparent proxies -- they are firewall gateways, even when they occur near to the client. 
+My use of "proxy" and "gateway" are defined in the HTTP spec, which does not always correspond to what some marketing departments call their products. 
+....Roy For tunnels that are activated by a proxy request, A browser has to be configured to go through the proxy.So a request from a browser to a HTTP Proxy or a HTTP tunnel(activated by a request) is one and the same. 
+What I mean is that, even if the intermediary is a HTTP tunnel, the client always talks to the tunnel thru one part of the connection and a tunnel will forward that on another connection to the ORIGIN SERVER. 
+Even the origin servers response will come to the intermediate tunnel which get forwarded to the client on the other connection. 
+These requests or the responses MAY contain some hop-by-hop header information such as Keep-Alive, Connection Header (close), Max-Forwards etc.. While a proxy can take care of them ,what will a should a HTTP tunnel do? 
+A http tunnel would'nt even look at the response or at the request(apart from looking at the URL to see where the forwarding connection should be established). 
+How does a HTTP tunnel take care of persistant connections and request pipelining? 
+Regards, Vinit Kumar Get Your Private, Free Email at http://www.hotmail.com 
+No, they aren't. 
+The terms "client", "server", "proxy", "tunnel", etc., are all regarding the ROLE of the software for a particular request/response. 
+The first request went to a proxy -- after the 200 response, it is no longer a proxy. 
+It is not an HTTP tunnel -- it is just a tunnel, period. 
+RFC 2616: tunnel An intermediary program which is acting as a blind relay between two connections. 
+Once active, a tunnel is not considered a party to the HTTP communication, though the tunnel may have been initiated by an HTTP request. 
+The tunnel ceases to exist when both ends of the relayed connections are closed. 
+By definition, it does not grok HTTP, therefore it doesn't take care of persistant connections and request pipelining. 
+....Roy 

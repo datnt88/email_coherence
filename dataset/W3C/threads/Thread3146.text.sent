@@ -1,0 +1,55 @@
+Can anyone tell me what's the fundamental difference between these two properties? 
+Al. Alistair Miles Research Associate CCLRC - Rutherford Appleton Laboratory Building R1 Room 1.60 Fermi Avenue Chilton Didcot Oxfordshire OX11 0QX United Kingdom see a message from Dan to the foaf list: I want to note a critical difference between foaf:topic and dc:subject. 
+The former realtes a document to the thing that it is about; the latter relates it to a subject code that in some other formalism is taken as standing for that thing. 
+Libby * Miles, AJ (Alistair) A.J.Miles@rl.ac.uk [2004-03-12 15:23-0000] dc:subject is a relationship between a document-like-thing and some kind of identifier for a topic/subject that the document's contents cover (could be a Literal or a Resource, in RDF-ese). 
+foaf:topic is a relationship between a Document and a thing that the document is about. 
+It is more direct than dc:subject, and allows any RDF statements to be used when identifying the thing that the document is about. 
+So, for a document about me. 
+Imagine Dewey Decimal Classification had a subject code for me, Dan Brickley... "ddc-000.1234567", 
+there would be a dc:subject property of my homepage with that as its value (perhaps shoe-horned into URI space somehow, eg. via a purl.org 
+URI). 
+By contrast, you'd see foaf:topic used in any of several ways: ...is a way of saying "such and so document has as a topic a thing that has a foaf:name "Dan Brickley" and an aimChatID of "danbri_2002". 
+So foaf:topic is both direct and flexible, but does not directly use library-style classification schemes, thesauri etc. 
+It is good for referencing things that are easily identified via RDF descriptions. 
+dc:subject always indirects via a resource that is a subject-code (or similar), whereas foaf:topic directly references the thing that the subject-code is a code for. 
+Hope this makes some kind of sense! 
+Dan * Libby Miller Libby.Miller@bristol.ac.uk [2004-03-12 15:37+0000] Ah, that was a clearer way of putting it! 
+It isn't clear from that explanation what the difference is, since unless you talk about the domain and range of foaf:topic it's hard to understand how there is any. 
+The fact that foaf:topic has a defined domain of foaf:Document and a range of rdf:Resource means that it's a bit more restricted than dc:subject which can happily live with a literal value, but there doesn't seem to be much else that can be used to pick between them (on my reading of the two sets of specifications). 
+If I was trying to define the way I see the web I would write somewhere that foaf:topic seems to me like a subProperty of dc:subject. 
+Being a believer in living language, and in language as an attempt to provide identifiers for concepts in such a way thhat we are convinced we mean the same thing, this doesn't strike me as a bad thing to do. 
+But since we are inventing RDF vocabulary creation, it is something I would treat with care - especially while we don't yet have good methods for dealing with conflicting statements, including conflicting statements about how vocaublaries are defined. 
+cheers Chaals * Charles McCathieNevile charles@w3.org [2004-03-12 11:34-0500] dc:subject relates a document to a code that stands for some thing the doc is about. 
+foaf:topic relates a document to some thing that the doc is about. 
+...the difference is w.r.t. layers of indirection: where dc:subject uses an external taxonomy, set out in advance, foaf:topic relies on any chunk of RDF that is handy for describing the thing. 
+It's an interesting stylistic and representational difference that seems really quite unfortunately hard to explain clearly... 
+They differ importantly, just as you differ from your homepage, and XML differs from library subject codes for XML. 
+With dc:subject there is a whole other world squeezed into the representation: the world of subject/topic codes. 
+With foaf:topic, the RDF itself does that work, removing subject/topic codes from the list of things the RDF needs to describe. 
+See above re this being hard to describe :( that would imply that any pair of things related by foaf:topic are also related by dc:subject. 
+This isn't so, since the values taken by dc:subject are various forms of subject code, whereas the values taken by foaf:topic are the things that those subject codes denote. 
+So declaring a subPropertyOf relation would confuse those two levels. 
+We defintely need to to allow for vocabulary evolution, it might be interesting to compare the two approaches... Dan This is off-topic but I think these days Literals are Resources (in terms of the semantics document the set of literal values LV is a subset of the set of resources IR) so a foaf:topic with a literal value is just fine as far as the range declaration is concerned. 
+Doesn't affect the more important philosphical distinction Dan is making. 
+Dave Looking at the original question from Alistair: Which of the following two options should we recommend using (?) : or and thinking about this, I get to the following: FOAF defines topic in a smarter way that Dublin Core, because it insists that the object is a resource. 
+(It also insists that the range be a Web page, which on further reflection isn't so cool because I have a lot of use cases for noting the topic of some part of a page and as far as I can tell I can't do that nicely in FOAF unless I am prepared to lump all the topics together). 
+As I understand Dan's argument, it is that Dublin Core has a particular use pattern which does things like confusing things and their names, and FOAF is meant to avoid this. 
+It seems to me that there is a lot of mileage to be made by easy mappings from existing data, and there is a lot of value in having well-specified vocabularies. 
+If we were to suggest Dublin Core, I would be concerned that we are supporting something very underspecified, in a way that might prove to be a pain in the medium term. 
+If we exclude it, we are cutting off one of the very widely-used vocabularies. 
+So it seems to me a good idea to try and find something that is better constrained than dc:subject, but which has essentially similar semantics for its core meaning. 
+I had thought that foaf:topic would fit that bill, subject to the proviso that some dc:subject information can't be shoe-horned into working as foaf:topic information. 
+But I can't envisage an instance of foaf:topic which is not legal value for dc:subject - since it will accept anything. 
+Nor can I think of an instance where the meaning of a foaf:topic would be different if it were interpreted as a dc:subject. 
+That makes it a good target in my understanding for declaring something as a subProperty. 
+Which would allow us to recommend the better-constrained foaf:topic wherever the initial data could be made to meet its constraints (perhaps by clarifying teh inital modelling, which is probably in itself beneficial), and showing some examples of how to use the very widely used (there is perhaps more dc:title and dc:creator information available, and possibly even the officially meaningless but widely claimed dc:author) dc:subject to get a head start on bringing your data with you instead of rebuilding it. 
+A few comments inserted below, because I am not sure that I have understood everything, nor that I have managed to explain myself well yet. 
+cheers Chaals dc:subject best practice uses some code, but doesn't say anything about how to set it out. 
+foaf:topic uses some code, and requires it to be of type rdf:Resource. 
+I don't see any formal refinement to that, although the practical result is that foaf:topic tends to be easier to deal with in some useful way. 
+I don't think this is hard to describe, and I think you have made a pretty good description. 
+(Although it makes me wonder why foaf: doesn't finish in # I don't think this is true. 
+dc:subject says the best practice is to use subject codes defined somehow. 
+it doesn't ever say "except those which are defined with something useful like RDF" (because it is syntax-neutral). 
+The fact that people don't often do that today in a meaningful way isn't such a big deal is it? 
+I think vocabulary evolution is one issue, but usage evolution is perhaps different - tricker and more important at the same time :-\ cheers Chaals 

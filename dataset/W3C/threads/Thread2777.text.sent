@@ -1,0 +1,47 @@
+This was discussed between Paul Leech, Dave Kristol, and myself in Friday's teleconference. 
+PROBLEM: When doing a PUT on a resource that already exists, the server can send back a 200 or a 204 response. 
+The 204 response allows the server to send back an updated etag and other entity information about the resource that has been affected by the PUT operation. 
+This allows the client to do the next PUT using the If-Match precondition to ensure that edits are not lost. 
+There were some discussion of whether the etag is the *only* piece of information that the client doesn't know (not included in the request). 
+The feeling was that in general this can not be assumed as the operation may trigger server side dependencies that the server wants to communicate back to the client. 
+When doing a PUT for *the*first*time* the resource is created on the server and a 201 response is sent back. 
+The semantics of the 201 indicates that it can include an entity body. 
+In section 9.5 (although this is in the description of POST), it is stated that If a resource has been created on the origin server, the response SHOULD be 201 (Created) and contain an entity which describes the status of the request and refers to the new resource, and a Location header (see section 14.30). 
+Hence, the server can not send information back on a newly created resource using 201 as it can when updating an existing resource using 204. 
+It was discussed whether anybody does include an entity in a 201 response as it would be a challenge for the editor to deal with the response entity (it would have to be displayed in a new window, for example). 
+Four solutions were discussed: 1) When receiving a 201 response, the client can issue a HEAD request to get the updated information. 
+However, the cost of this is one additional RTT and it may lead to race conditions if another client comes in a does a PUT between the first PUT and the follow-up HEAD request. 
+This could cause the client to apply inconsistent metainformation to its version of the entity body. 
+2) Introduce a new status code which has the semantics of 204 except that it can only be used when a resource has been created. 
+The problem here is that existing editors will not understand this code and will default to 200 which is will not indicate that a resource has been created. 
+3) Do not allow entity bodies in a 201 response and say that all information included in the response is about the newly created resource. 
+The problem here is that we don't know if anyone already sends back entity bodies in a 201 response. 
+4) Change the definition of 201 to distinguish between the case when there is an entity body and when there isn't: If the response does not contain an entity-body but includes new or updated metainformation in the form of entity-headers, then these header fields SHOULD be associated with the created requested variant. 
+If an entity body is present in the response then all entity header fields apply to that entity body. 
+Any 201 response can contain an etag indicating the current value of the entity tag for the created requested variant, see [14.19]. 
+See [14.30] for use of the Location response header field in a 201 response. 
+The consensus among us, I believe, is to propose 4). 
+Comments? 
+Henrik Henrik Frystyk Nielsen, World Wide Web Consortium a) I'm nervous about adding anything like this at this date. 
+I'd be happier with a separate RFC describing what should happen... 
+This should have been dealt with months ago. 
+b) 4) seems a gross hack to me, adding another HEAD class special case to the protocol. 
+c) I suggest (described in a separate ID) a new header that conveys the ETAG. 
+This solves the race condition. 
+To get any additional metadata that might have changed, you'd perform a HEAD right after the PUT. 
+d) you should go see if the WEBDAV folks have worried about this case; they are sloppy enough they may have missed it, but then again, they may have found it and have another fix for it... One person's opinion..., - Jim I guess that applies to many of the edits performed now - the reason is probably that nobody has implemented PUT with etag preconditions until now - if you want to play with it then you can try out my implementation using the Web Commander - a libwww sample application [1]. 
+I didn't say that it is beautiful but it provides the needed functionality without breaking existing applications. 
+If people don't care then we can dream up a new scheme altogether and don't have to be concerned about it here. 
+This solution doesn't quite work the same way and doesn't have as useful semantics (special cases etags and allows race conditions on other metainformation). 
+I have forwarded the mail to the webdav mailing list. 
+Actually the current wording of etags in 14.19 is adequate as (if?) the requested variant in a first time PUT can be said to be the "requested variant". 
+Whether that is obvious is another question - and of course it doesn't work with other metainformation: The ETag response-header field provides the current value of the entity tag for the requested variant. 
+Henrik [1] http://www.w3.org/WinCom/ Henrik Frystyk Nielsen, World Wide Web Consortium Yes. 
+Actually, I think we had the same discussion about a year ago, resulting in a substantial change to the definition of the Etag field from what it meant for RFC 2068. 
+I am still queesy about that change, but it does support the usage in 201 that Henrik suggests. 
+The contrarian in me finds it necessary to point out that this is just one of many protocol changes that require a version number bump to HTTP/1.2. 
+It is no longer the same protocol, and this is precisely why we have that second number. 
+Yep. 
+A more appropriate definition is to include the new properties of the resource in the body of the response, either as a multipart or in XML. 
+But that would require a lot more definition of the response format, which is something only WebDAV has done so far. 
+....Roy 

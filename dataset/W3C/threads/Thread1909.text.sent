@@ -1,0 +1,55 @@
+Here are some of the other issues koen had mentioned on OPTIONS; (koen, if Im missing any important ones or somehow misrepresenting what you said, let me know) 1. 
+The server may be compliant with a certain spec or extension, but that may not be available for every request. 
+My previous post suggests a solution to this. 
+[ a server should include a non-compliance header to responses from cgi's or server modules for which it cannot vouch for compliance. 
+] 2. What if you are both an origin server AND a proxy server? 
+There could be some ambiguity in this case, but I cant think of real examples. 
+In my mind, as someone who thinks like a (former) proxy implementer, I think of using OPTIONS for baseline server functionality which wouldnt be specific the role of proxy or server operation for a multifunction machine. 
+3. should chained proxies declare a non-compliance header or remove a compliance header when passing a response back which contains a compliance header from another server/proxy which this proxy doesnt understand or support. 
+4. How does unknown method tunneling affect this While the '*' URI would not typically be forwarded on, since there is no indication of who to contact as an origin server, an OPTIONS with a URI with a host might get unknowingly forwarded. 
+A possible workaround might be that if the host: header points to a the proxy itself, then the proxy must not forward the OPTIONS request onward. 
+Josh Cohen josh@microsoft.com 
+Program Manager IE - Networking Protocols The server should answer for itself when the request was for *, and should pass the request through to an active component if the request was specific to that component (/cgi-bin/foo); the fact that most of those today won't do the right thing is something we can't do anything about except structure a correct response to OPTIONS such that an existing CGI wouldn't send it so you can tell you are talking to something that doesn't understand the method. 
+It seems to me that one of the things you should get back when you send OPTIONS * to a server is exactly whether or not it will act as a proxy, an origin server, or both. 
+Sounds like something we need to add. 
+They should never remove or alter any part of the response; they should always add thier own response to it so that the requestor can see the capabilities of the chain as a whole and determine what part of the chain is the problem. 
+I don't understand the question on this last one. 
+I haven't been paying full attention to this discussion, but it seems to be getting bogged down in the same conceptual issues as we were facing back in September. 
+In particular, when the client finds something out about the server, does this apply to the server implementation the server in its role as a "Web server" or "proxy server" the CGI scripts running on the server the specific resource the CGI scripts implementing the specific resource a proxy when forwarding requests a proxy when using entires from its a cache or some combination of the above range of roles? 
+My opinion is that we are going to have continual confusion (and a complex/unwieldy and potentially useless) extension protocol if we try to pick some subset of this range of roles and define the protocol around any particular set of "roles". 
+Maybe the right approach is to focus on a resource-by-resource basis. 
+I.e., don't try too hard to define a protocol that works like OPTIONS * HTTP/1.1 Host: foo.com to find out about what options foo.com supports, because this is too broad a question to be meaningfully answered. 
+Instead, perhaps we should be happy if the client can know what options the server supports for a specific method on a specific resource (or just possibly on a specific collection of resources, such as in DRP or WEBDAV). 
+While this might introduce some inefficiency into the protocol (extra round trips, primarily) that might be a reasonable price to pay for a simple, and widely implemented, mechanism. 
+In draft-ietf-http-options-02.txt, back in September, we proposed a "Compliance" header that one could tack onto any request, so that the client could find out about the options supported for any specific request (including, if necessary, those supported by a CGI script used in processing the request). 
+However, I didn't really address the issue of "entire server" vs. "specific resource" in that I-D. 
+Similarly, in the "Mandatory" I-D (draft-frystyk-http-mandatory-00.txt), while it may have other problems, it does follow a similar model: it applies to requests/responses for specific resources, rather than to an entire "server". 
+(Again, this distinction is not really explicitly discussed in the mandatory-00 I-D.) Can someone describe a scenario where it is essential (not just a performance issue, but a correctness one) to be able to find out what options a "server" (or "proxy") supports with respect to a multiplicity of resources, rather than just with respect to a single resource (and perhaps w.r.t. a specific method on that resource?) I'll certainly grant that it adds round-trips if we insist that a client test options on a per-resource basis. 
+There might be some solace in realizing that many resources are re-accessed by the same client, and presumably a server's capabilities w.r.t. a specific resource/method pair usually don't change (and so wouldn't add extra RTTs after the first use). 
+One might also come up with relatively simple schemes to say "you asked about this resource, but my answer applies equally to this other set of resources". 
+But if the server's answer *might* be different for each individual resource, then I think it will be very hard to define a protocol that works well when the client asks about "*". 
+I.e., rather than this: request: OPTIONS "*" HTTP/1.1 host: foo.com response: HTTP/1.1 599 I have no way to answer that question generically we could have something like this: request: GET /bar.html 
+HTTP/1.1 host: foo.com Compliance: RFC6789, RFC4567 response: HTTP/1.1 200 OK Compliance: RFC6789, RFC4567 Compliance-also-applies-to: url="*";methods={GET,HEAD} leaving it up to the server (which knows better than the client) whether it makes sense to even discuss options regarding "*". 
+-Jeff For the OPTIONS method this may in fact make sense just as well as it is possible to get metainformation about a set of resources (which may or may not reside on the same origin server) using PICS labels, RDF records, URNs etc. 
+The question whether the information can be trusted is entirely up to the user and will often be a function of where it comes from, where it applies to, etc. Mandatory describes which extensions are applied to an HTTP message and how to deal with them. 
+It does explicitly not deal with metainformation - this is left to the individual extensions, or can be provided by the OPTIONS method, RDF, PICS, or any other mechanism that you can think of. 
+Metainformation about resources can not guarantee that it is sufficient or needed to access the resource but it can give a good hint of what the communicating parties can expect. 
+Henrik Henrik Frystyk Nielsen, World Wide Web Consortium Consider an encrypted encapsulation option that allows a client to wrap a request such that an intermediary can't see what resource is being requested (remember WRAPPED?). 
+If the requestor has to identify the intended resource just to see if that option is supported, then it defeats the purpose of hiding the later request. 
+Also, OPTIONS * HTTP/1.1 Host: blah will safely probe the connection peer for its HTTP-version. 
+A proxy cannot forward this message, since there is no destination URI. 
+Likewise, having both the method and the request-target be unusual prevents unforeseen side-effects on resources that stupidly assume the method is what they expect in normal requests. 
+If we had a message body for OPTIONS, and that message body included a query syntax specifying exactly what options we are looking for, then it would be more useful. 
+No, I'm not volunteering. 
+.....Roy A belated comment... As the OPTIONS response can not say whether this goes for all resources or just a subset (this would again defeat the purpose) then the client is no better of than it was before it asked using the OPTIONS method. 
+The only thing that would work would be for the client to actually use the encapsulation mechanism in a request and see whether the server barfed or not. 
+The response to the encapsulated request which if supported by the server presumably also is encrypted could safely contain a set of URIs for which this extension is supported. 
+Using RDF as a query language seems like a neat idea here. 
+Henrik Henrik Frystyk Nielsen, World Wide Web Consortium In message 3.0.5.32.19980311173541.03404710@localhost , Henrik Frystyk Nielsen It wouldn't have to -- this particular use of OPTIONS is not resource dependent. 
+It is simply asking if the connection peer is capable of unwrapping before handling the underlying request. 
+For example, the response might include a public key for use in encrypting the later request such that only that peer can unwrap it. 
+....Roy What I am saying is that there is a difference between the two statements: "I am capable of doing x" and "I will use x". 
+The former is a hint, the latter is what actually is agreed upon. 
+The classic example is news servers where on connection establishment you get a message saying "this server supports POST", but this can at any time be overruled by the posting policy on any of the news groups serviced by the server. 
+I guess the question really is whether the server is seen as the authoritative party that can act on behalf of the resources it exports, or whether it just happens to be the most specific resolver for a particular set of resources. 
+Henrik Henrik Frystyk Nielsen, World Wide Web Consortium 

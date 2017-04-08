@@ -1,0 +1,121 @@
+In a nutshell: there is no way as far as I can tell to represent _:a1 http://random.ioctl.org/#p1 
+_:a2 . 
+_:a2 http://random.ioctl.org/#p2 
+_:a1 . 
+in the current RDF serialisation. 
+In other words, while we might* have the notion that an anonymous resource has an identity wrt (the RDF graph it is a part of), there is no way to reflect that identity except in the most trivial acyclic cases. 
+And not all of those, either: an acyclic example that we can't represent is http://random.ioctl.org/#feh 
+http://random.ioctl.org/#p1 
+_:a1 . 
+http://random.ioctl.org/#yip 
+http://random.ioctl.org/#p1 
+_:a1 . 
+[Initially I had thought that that was what rdf:id was for; it turns out that it isn't] We can imagine that anounymous terms are identified 'by their content' e.g. see "more N-triples (Was RDF Statements as floating Cons Cells)" elaborating on that If an arc points to an anonymous term, then it is there 'by value' so to speak (not 'by reference'). 
+Of course one could point to constant terms and universally quantified terms used in those subgraphs, but they are 'leafs' or at the 'subgraph boundaries' so to speak. 
+Let's start with _:a1 http://random.ioctl.org/#p1 
+_:a2 . 
+_:a2 http://random.ioctl.org/#p2 
+_:a1 . 
+If you point to _:a1 via e.g. http://random.ioctl.org/#s3 
+http://random.ioctl.org/#p3 
+_:a1 . 
+you can see how Euler copes with such content C:\n3 java Euler -trace -core testjan.nt 
+testjan.nt 
+[1]CALL: http://random.ioctl.org/#s3 
+http://random.ioctl.org/#p3 
+[ http://r andom.ioctl.org/#p1 
+_:a2; http://random.ioctl.org/#p1 
+_:a2]. 
+[1]EXIT: http://random.ioctl.org/#s3 
+http://random.ioctl.org/#p3 
+[ http://r andom.ioctl.org/#p1 
+_:a2; http://random.ioctl.org/#p1 
+_:a2]. 
+# Generated with Euler 26.064 on Thu Jun 14 11:50:28 CEST 2001 # @prefix log: http://www.w3.org/2000/10/swap/log# . 
+# http://random.ioctl.org/#s3 
+http://random.ioctl.org/#p3 
+[ http://random.i octl.org/#p1 _:a2; http://random.ioctl.org/#p1 
+_:a2]. 
+@prefix log: http://www.w3.org/2000/10/swap/log# . 
+http://random.ioctl.org/#s3 
+http://random.ioctl.org/#p3 
+[ http://random.ioc tl.org/#p1 _:a2; http://random.ioctl.org/#p1 
+_:a2]. 
+# Proof found for file:/n3/testjan.nt in 1 steps (127 steps/sec) which is 1 statement (and we actually should not repeat identical descriptions @@) Let's take the second case http://random.ioctl.org/#feh 
+http://random.ioctl.org/#p1 
+_:a1 . 
+http://random.ioctl.org/#yip 
+http://random.ioctl.org/#p1 
+_:a1 . 
+That's indeed pointing to empty content (and Euler should not throw a nullpointerexception for that @@) As soon as you 'fill' it with e.g. _:a1 http://random.ioctl.org/#p1 
+"jan". 
+you get C:\n3 java Euler -trace -core testjan2.nt 
+testjan2.nt 
+[1]CALL: http://random.ioctl.org/#feh 
+http://random.ioctl.org/#p1 
+[ http:// random.ioctl.org/#p1 
+"jan"; http://random.ioctl.org/#p1 
+"jan"]. 
+[1]EXIT: http://random.ioctl.org/#feh 
+http://random.ioctl.org/#p1 
+[ http:// random.ioctl.org/#p1 
+"jan"; http://random.ioctl.org/#p1 
+"jan"]. 
+[2]CALL: http://random.ioctl.org/#yip 
+http://random.ioctl.org/#p1 
+[ http:// random.ioctl.org/#p1 
+"jan"; http://random.ioctl.org/#p1 
+"jan"]. 
+[2]EXIT: http://random.ioctl.org/#yip 
+http://random.ioctl.org/#p1 
+[ http:// random.ioctl.org/#p1 
+"jan"; http://random.ioctl.org/#p1 
+"jan"]. 
+# Generated with Euler 26.064 on Thu Jun 14 12:12:36 CEST 2001 # @prefix log: http://www.w3.org/2000/10/swap/log# . 
+# http://random.ioctl.org/#feh 
+http://random.ioctl.org/#p1 
+[ http://random. 
+ioctl.org/#p1 
+"jan"; http://random.ioctl.org/#p1 
+"jan"]. 
+# http://random.ioctl.org/#yip 
+http://random.ioctl.org/#p1 
+[ http://random. 
+ioctl.org/#p1 
+"jan"; http://random.ioctl.org/#p1 
+"jan"]. 
+@prefix log: http://www.w3.org/2000/10/swap/log# . 
+http://random.ioctl.org/#feh 
+http://random.ioctl.org/#p1 
+[ http://random.io ctl.org/#p1 "jan"; http://random.ioctl.org/#p1 
+"jan"]. 
+http://random.ioctl.org/#yip 
+http://random.ioctl.org/#p1 
+[ http://random.io ctl.org/#p1 "jan"; http://random.ioctl.org/#p1 
+"jan"]. 
+# Proof found for file:/n3/testjan2.nt in 2 steps (53 steps/sec) which is 2 statements So I think both cases are representable in RDF, no? Jos De Roo, AGFA http://www.agfa.com/w3c/jdroo/ 
+On Thursday, June 14, 2001, at 06:31 AM, I certainly hope not. 
+At least, this is not the way I use anonymous terms. 
+I imagine anonymous terms being equivalent to stating "a term with these properties" not "all terms with these properties". 
+If two people in a room call out that they're thinking of something gray... :Person1 :thinkingOf [ :color :Gray ] . 
+:Person2 :thinkingOf [ :color :Gray ] . 
+... we cannot conclude that they are both thinking of elephants, or at least of the same thing. 
+One may be thinking of the New York Times and the other of his office building. 
+I think you are smushing prematurely. 
+And the current XML still doesn't have a way to say: _:a :property _:b . 
+_:b :property _:a . 
+nor :x :property _:a . 
+:y :property _:a . 
+If anonymous nodes are part of the abstract syntax (which we seem to have implicitly agreed upon through our acceptance on N-Triples), then this is an issue. 
+[ "Aaron Swartz" ; mailto:me@aaronsw.com ; http://www.aaronsw.com/ 
+] I don't agree that anonymous nodes should be part of the abstract syntax, and would suggest to consider this issue when cleaning up the model. 
+I'm convinced that (sufficiently) uniquely generated resources serve the purpose better than "anonymous" resources (for instance, in the example above you really might want to know whether Person1 and Person2 are referring to the same unknown gray thing). 
+Explicit existentially qualified variables are IMO out of scope of our work. 
+Sergey Logically, names and top-level existentially quantified variables are effectively identical. 
+If they are not effectively identical in RDF, the difference must depend on some aspect of RDF that goes beyond the usual model theory. 
+No objection to that, but I would like to know what that aspect is so that we have some chance of capturing it in a formal semantics. 
+The issue over whether Person1 and Person2 are the same person is really not to do with anonymity as such, but with equality (identity). 
+If the language has some way to say that two different names denote the same entity, ie some way to say a = b, then this issue is relevant and needs to be got clear. 
+If it doesn't have any way to say that, however, then there really isnt any point in haggling over this matter. 
+It will make no real difference to the language, since any interpretation that satisfies a set of RDF assertions could be extended to a similar one with a unique names assumption that also satisfies it. 
+Pat Hayes IHMC(850)434 8903 home 40 South Alcaniz St.(850)202 4416 office phayes@ai.uwf.edu 

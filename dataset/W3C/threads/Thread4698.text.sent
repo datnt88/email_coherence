@@ -1,0 +1,9 @@
+This version has a new problem: it doubles up the last and first elements because $first and $last are already elements. 
+Example: So the original suggestion of { $last, $first } or { $last }{ $first } should be used. 
+--Sarah It seesm that the use-case 1.1.9.4 Q4 (may 2003) is erroneous: Thanks, Xavier, you are right. 
+Here is the version I wrote to fix this problem: results let $a := doc("http://www.bn.com/bib/bib.xml")//author 
+for $last in distinct-values($a/last), $first in distinct-values($a[last=$last]/first) order by $last, $first return result author last { $last } /last first { $first } /first /author for $b in doc("http://www.bn.com/bib.xml")/bib/book 
+where some $ba in $b/author satisfies ($ba/last = $last and $ba/first=$first) return $b/title /result /results Jonathan No, because distinct-values returns *atomic* values, that is, $last and $first are of type xs:untypedAtomic. 
+[Confidentially: I was also tricked.] 
+Xavier FRANC OK, since two smart people were tricked, I added a note to point this out. 
+Jonathan 

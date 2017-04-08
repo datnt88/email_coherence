@@ -1,0 +1,59 @@
+[freed from spam trap -rrs] Date: Wed, 14 Feb 2001 21:51:47 -0500 (EST) From: "Kevin Wiggen" wiggs@wiggenout.com 
+Message-ID: ONEOJMKKAIDAGPLOPJEDOEFGCMAA.wiggs@wiggenout.com 
+Subject: [Moderator Action] RE: OPTIONS The real question on OPTIONS is now, should a server be sending back a different OPTIONS answer per resource. 
+In other words, does a server look at the resource that has been requested and answer appropriately. 
+I am CCing the DeltaV group as I have been told this is exactly what they are proposing. 
+Thus an "intelligent" options request could look that a resource is not a directory and thus return: Allow: GET, HEAD, POST, OPTIONS, TRACE, PROPFIND, COPY, SEARCH, PROPPATCH, LOCK, UNLOCK, PUT, DELELTE, MOVE notice no MKCOL If we are going to make OPTIONS useful to all clients, 2518 should define it a MUST for a server to return an intelligent OPTIONS response, otherwise a client will never be able to depend on the information. 
+Some Apache Examples: OPTIONS on any resource (existent or not) on Apache returns a 200 with a Allow: GET, HEAD, OPTIONS, TRACE Thus one could argue that following suit, a Webdav server for any resource (existent or not) could respond: Allow: GET, HEAD, POST, OPTIONS, TRACE, PROPFIND, COPY, SEARCH, PROPPATCH, LOCK, UNLOCK, MKCOL, PUT, DELETE, MOVE Should Webdav 2518 state that a server MUST not do the above but intelligently respond to an OPTIONS request? 
+If servers are then required to respond intelligently, what does that mean? 
+Does an OPTIONS to a non-existent resource without a parent simply return: Allow: OPTIONS Kevin [mailto:w3c-dist-auth-request@w3.org]On 
+Behalf Of John Stracke 1) /foo is a directory with no contents. 
+OPTIONS to /foo returns a 200 with the appropriate headers OPTIONS to /foo/bar returns?? 200 or 404?? OPTIONS to /foo/bar/fee returns a 404 Since OPTIONS in 2068 (Side note: you want 2616, which obsoletes 2068.) states "the OPTIONS request applies only to the options that are available when communicating with that resource." 
+Thus to get a 200 response a resource must exist!!! 
+Well, let's see. 
+Consider PUT, for example; obviously, you can PUT to a resource which does not exist (in the sense that GET would return 404). 
+Therefore, it is useful for OPTIONS to be able to tell you that PUT is allowed on that resource. 
+tries stuff ...OK, let's see. 
+Running against Apache, if I do OPTIONS against a non-existent resource (in a non-existent directory), I get a 200, with the expected data. 
+GET against the same resource returns 404; SMURF against that resource returns 405. 
+To me, this seems reasonable. 
+I believe that *all* resources exist. 
+A resource is an object whose methods are HTTP methods; you can issue an HTTP method against any Request-URI in the server's namespace; the server will respond. 
+By definition, the response is the result of that object's method. 
+Therefore, there is an object named by that Request-URI. 
+Note that 2616, section 10.4.5, defines 404 as meaning, "The server has not found anything matching the Request-URI". 
+This is *not* the same as saying that the specified resource does not exist. 
+|John Stracke | http://www.ecal.com 
+|My opinions are my own.| |Chief Scientist |=============================================| |eCal Corp. |"Call me a Nervous Nellie, but I am concerned| |francis@ecal.com|about the sale of nuclear arms in my general | | |neighborhood." -- Dave Barry | The versioning draft specifies extremely case-by-case response to OPTIONS. 
+I think the OPTIONS response in DeltaV can even vary depending on the state of a resource at one point in time vs. another. 
+E.g. if a resource can be turned into a "version-controlled resource", then OPTIONS should show the VERSION-CONTROL method, to indicate that it can be converted. 
+Obviously that kind of design presupposes that OPTIONS depends on precisely what resource is named in the URL. 
+lisa 1) /foo is a directory with no contents. 
+OPTIONS to /foo returns a 200 with the appropriate headers OPTIONS to /foo/bar returns?? 200 or 404?? OPTIONS to /foo/bar/fee returns a 404 Since OPTIONS in 2068 states "the OPTIONS request applies only to the options that are available when communicating with that resource." 
+Thus to get a 200 response a resource must exist!!! 
+
+I concur -- it's pretty clear that OPTIONS in HTTP/1.1 is per-resource, unless the Request-URI is "*". 
+It's fairly typical for Web servers to have different capabilities in different parts of their namespace. 
+So do we want 2518 to say anything or leave this for HTTP/1.1? 
+It sounds to me that all the questions asked here about OPTIONS in the last two weeks are probably best left to the HTTP/1.1 spec. 
+(I just wish that spec said more.) J. [freed from spam trap -rrs] Date: Thu, 1 Mar 2001 13:53:55 -0500 (EST) From: "Kevin Wiggen" wiggs@wiggenout.com 
+Message-ID: ONEOJMKKAIDAGPLOPJEDCEMACMAA.wiggs@wiggenout.com 
+Subject: RE: OPTIONS I do not think the HTTP spec says enough, and for OPTIONS to be useful to clients, I think we need to specify what the behavior is. 
+It's useful to look at a few use cases and discuss what the server should respond. 
+Take for instance: /foo is an empty directory OPTIONS /foo Allow: GET, HEAD, POST, OPTIONS, TRACE, PROPFIND, COPY, SEARCH If the /foo is writeable add PROPPATCH, LOCK, UNLOCK OPTIONS /foo/bar Allow: OPTIONS If /foo is writeable add MKCOL, PUT, LOCK OPTIONS /foo/bar/fee Allow: OPTIONS This is one way of handling the OPTIONS, I can think of other permutations that might make sense. 
+Again for this to be truly useful information to a client, I believe we need to state what a server should respond with to a client in each case. 
+Kevin [mailto:w3c-dist-auth-request@w3.org]On 
+Behalf Of Jason Crawford 
+
+I concur -- it's pretty clear that OPTIONS in HTTP/1.1 is per-resource, unless the Request-URI is "*". 
+It's fairly typical for Web servers to have different capabilities in different parts of their namespace. 
+So do we want 2518 to say anything or leave this for HTTP/1.1? 
+It sounds to me that all the questions asked here about OPTIONS in the last two weeks are probably best left to the HTTP/1.1 spec. 
+(I just wish that spec said more.) J. I agree that rfc2616 doesn't say nearly enough about OPTIONS and Allow:. 
+I do wish it would say for example if OPTIONS should list GET on a resource that will return 404 Not Found for a GET on that URI. 
+Or not list GET. 
+Or if OPTIONS itself should return 404. 
+(As per jigsaw.) 
+That would give us a feel for the philosophy behind OPTIONS. 
+Their current philosophy seems to be to say little about OPTIONS and that's why I suggested that we do the same. 
+Anyone else have any opinions on this J. 

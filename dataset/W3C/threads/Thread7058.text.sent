@@ -1,0 +1,88 @@
+Comments on: INTERNET-DRAFT Larry Masinter draft-masinter-dated-uri-01.txt 
+March 1, 2002 Expires September 2002 "duri" and "tdb" URN namespaces based on dated URIs 1.1 Intrinsically Persistent Identifiers Many people have wondered about how to create globally unique and persistent identifiers. 
+There are a number of URI schemes and URN namespaces already registered. 
+However, many of them lack an adequate guarantee of both uniqueness and persistence. 
+We stray into murky waters here. 
+What is meant by persistence? 
+How can a persistent URI be distinguished from a non-persistent one? 
+* permanent (the identity of the resource identified is not subject to reinterpretation over time) Interesting choice of words. 
+What is an interpretation of the identity of a resource? 
+How can one tell whether the identity of a resource has been 'reinterpreted'. 
+Can we make this a little clearer. 
+Let's assume for the purposes of argument, that I did an http get on http://www.ietf.org at the first instant of the year 2000 and the first instant of the year 2001, that no error occurred and that the sequence of characters returned was not the same on the two occasions. 
+Is it true that any time invariant property of urn:duri:2001:http://www.ietf.org is also a time invariant property of urn:duri:2000:http://www.ietf.org 
+The two dates are intentionally different. 
+e.g. if the creation date of: urn:duri:2001:http://www.ietf.org is D, then is the creation date of urn:duri:2000:http://www.ietf.org also D. I don't mean logical entailment for any URI here, I'm asking specifically about http://www.ietf.org. 
+Assuming its the resource not the respresentation that urn:duri:2001:http://www.ietf.org 
+names, then, I'm trying to ask whether the two URI's urn:duri:2001:http://www.ietf.org 
+urn:duri:2000:http://www.ietf.org 
+name the same resource. 
+The relations in RDF, however, may already provide for the "thing described by" indirection. 
+For example, the example in Section 3.2.1 of [RDF] claims the model for the sentence "The students in course 6.001 are Amy, Tim and Mary" would be written in RDF/XML as rdf:RDF rdf:Description about="http://mycollege.edu/courses/6.001" 
+s:students rdf:Bag rdf:li resource="http://mycollege.edu/students/Amy"/ rdf:li resource="http://mycollege.edu/students/Tim"/ rdf:li resource="http://mycollege.edu/students/Mary"/ /rdf:Bag /s:students /rdf:Description /rdf:RDF but the resources listed are web pages (served by HTTP) and the class and students are the "things described by" those web pages. 
+This gets into more muddy water because the core of web architecture isn't very well defined. 
+Is it possible to argue that: does indeed name Mary, and what you get when you do an HTTP GET on that URL is a representation of Mary? 
+Leaving aside, however sorting out what the properties of resources are, I wouldn't write the RDF example above that way, as it is at best, likely to confuse. 
+Better would be: which inserts extra resources to 'represent' the students as different resources from their home pages. 
+Thus RDF does not need tbd; it has enough machinery to handle the indirection required. 
+Were there other applications you had in mind? 
+Brian INTERNET-DRAFT Larry Masinter draft-masinter-dated-uri-01.txt 
+March 1, 2002 Expires September 2002 "duri" and "tdb" URN namespaces based on dated URIs My intuitions say that they denote the same resource, namely the web location, but at different points in time. 
+Thus: = A web location urn:duri:2000:http://www.ietf.org 
+= The state of http://www.ietf.org at 2000-01-01T00:00:00Z urn:duri:2001:http://www.ietf.org 
+= The state of http://www.ietf.org at 2001-01-01T00:00:00Z Thus, one could say things that are time dependent about the web location named by the URL such as the owner, security settings, redirections, etc. 
+It doesn't, however, seem to achieve the intended purpose of capturing a specific resource residing at that location at a given point in time. 
+To do so, one would need a variant of the tdb: URI scheme, e.g. tla: "thing located at" and use that in conjunction with the duri: scheme. 
+E.g. = A web location, where some resource may be accessible. 
+urn:tla:http://www.ietf.org 
+= A resource located at http://www.ietf.org 
+urn:duri:2000:urn:tla:http://www.ietf.org 
+= The resource located at http://www.ietf.org at 2000-01-01T00:00:00Z urn:duri:2001:urn:tla:http://www.ietf.org 
+= The resource located at http://www.ietf.org at 2001-01-01T00:00:00Z A URL (sorry for using an obsolete, classical term ;-) is the name of a location. 
+That location is itself a resource, and some other non-location resource may reside at that location, and one may use the name of the location as an indirect alias for the name of the resource residing at the location, but the name of the location is not the same as the name of the resource accessible from that location. 
+Consider the attached RDF/N3 statements, which describe some resources, some of which are locations, some of which are resources accessible from a named location, and some of which are abstract. 
+Note especially that each location resource and non-location resource have a diffferent creator and title. 
+BTW: I don't see tdb: as being semantically distinct from duri:. 
+E.g. in the I-D it is stated: "For example, "urn:tdb:2001:http://www.ietf.org" can be used to designate the Internet Engineering Task Force organization, at least as it was described by or referenced by its home page at the first instant of 2001." 
+But the 'thing denoted by' the URL http://www.ietf.org is not the Internet Engineering Task Force organization, but a web location accessible by the HTTP protocol and thus, the above tdb: URN is semantically equivalent to the duri: URN "urn:duri:2001:http://www.ietf.org", both of which denote the state of the web location "http://www.ietf.org" at 2001-01-01T00:00:00Z. If one wishes to denote the Internet Engineering Task Force organization itself, then they should use a non-location specific URI to do so, such as a voc: URT or similar non-dereferencable name, or some anonymous resource; e.g.: [ a x:Organization ; x:name "Internet Engineering Task Force" ; x:homePage http://www.ietf.org 
+] There is no need for any tdb: URI scheme, because the 'thing denoted by' a URI is the thing denoted by the URI, nothing else. 
+A URI does not denote two things. 
+Well, aside from Star Trek technology, I don't see how you would GET a representation of Mary, per the semantics of HTTP. 
+You might GET a representation of Mary's home page, or of her CV, or of a photo of Mary, etc. but you wouldn't GET a representation of *Mary* herself. 
+To some extent, the use of the term 'representation' by HTTP is unfortunate, because in non-HTTP terms, a photo is a representation of Mary -- but in the HTTP world, there is an additional level of indirection between the non-HTTP representation of Mary (the photo) and the HTTP representation of the non-HTTP representation of Mary (the byte stream returned by GET), and these two levels of indirection often get confused such that folks think that what is returned by GET is a representation of Mary herself, rather than the actual case, which is that what is returned is a representation of the representation of Mary. 
+(ouch, my head hurts... ;-) Yup. 
+Exactly. 
+The students are not their home pages. 
+Cheers, Patrick Hi Patrick, RFC1437 [1] may help with the transfer of a representation of Mary... although I suspect that you'd continue to find it contain only a representation of a representation of Mary... and not a representation of Mary :-) Stuart Williams [1] http://www.ietf.org/rfc/rfc1437.txt 
+Date: Fri, 08 Mar 2002 11:07:23 +0200 From: Patrick Stickler patrick.stickler@nokia.com 
+Message-ID: B8AE4BED.103EF%patrick.stickler@nokia.com 
+Subject: Re: draft-masinter-dated-uri-01.txt 
+INTERNET-DRAFT Larry Masinter draft-masinter-dated-uri-01.txt 
+March 1, 2002 Expires September 2002 "duri" and "tdb" URN namespaces based on dated URIs My intuitions say that they denote the same resource, namely the web location, but at different points in time. 
+Thus: = A web location urn:duri:2000:http://www.ietf.org 
+= The state of http://www.ietf.org at 2000-01-01T00:00:00Z urn:duri:2001:http://www.ietf.org 
+= The state of http://www.ietf.org at 2001-01-01T00:00:00Z Thus, one could say things that are time dependent about the web location named by the URL such as the owner, security settings, redirections, etc. 
+It doesn't, however, seem to achieve the intended purpose of capturing a specific resource residing at that location at a given point in time. 
+To do so, one would need a variant of the tdb: URI scheme, e.g. tla: "thing located at" and use that in conjunction with the duri: scheme. 
+E.g. = A web location, where some resource may be accessible. 
+urn:tla:http://www.ietf.org 
+= A resource located at http://www.ietf.org 
+urn:duri:2000:urn:tla:http://www.ietf.org 
+= The resource located at http://www.ietf.org at 2000-01-01T00:00:00Z urn:duri:2001:urn:tla:http://www.ietf.org 
+= The resource located at http://www.ietf.org at 2001-01-01T00:00:00Z A URL (sorry for using an obsolete, classical term ;-) is the name of a location. 
+That location is itself a resource, and some other non-location resource may reside at that location, and one may use the name of the location as an indirect alias for the name of the resource residing at the location, but the name of the location is not the same as the name of the resource accessible from that location. 
+Consider the attached RDF/N3 statements, which describe some resources, some of which are locations, some of which are resources accessible from a named location, and some of which are abstract. 
+Note especially that each location resource and non-location resource have a diffferent creator and title. 
+BTW: I don't see tdb: as being semantically distinct from duri:. 
+E.g. in the I-D it is stated: "For example, "urn:tdb:2001:http://www.ietf.org" can be used to designate the Internet Engineering Task Force organization, at least as it was described by or referenced by its home page at the first instant of 2001." 
+But the 'thing denoted by' the URL http://www.ietf.org is not the Internet Engineering Task Force organization, but a web location accessible by the HTTP protocol and thus, the above tdb: URN is semantically equivalent to the duri: URN "urn:duri:2001:http://www.ietf.org", both of which denote the state of the web location "http://www.ietf.org" at 2001-01-01T00:00:00Z. If one wishes to denote the Internet Engineering Task Force organization itself, then they should use a non-location specific URI to do so, such as a voc: URT or similar non-dereferencable name, or some anonymous resource; e.g.: [ a x:Organization ; x:name "Internet Engineering Task Force" ; x:homePage http://www.ietf.org 
+] There is no need for any tdb: URI scheme, because the 'thing denoted by' a URI is the thing denoted by the URI, nothing else. 
+A URI does not denote two things. 
+Well, aside from Star Trek technology, I don't see how you would GET a representation of Mary, per the semantics of HTTP. 
+You might GET a representation of Mary's home page, or of her CV, or of a photo of Mary, etc. but you wouldn't GET a representation of *Mary* herself. 
+To some extent, the use of the term 'representation' by HTTP is unfortunate, because in non-HTTP terms, a photo is a representation of Mary -- but in the HTTP world, there is an additional level of indirection between the non-HTTP representation of Mary (the photo) and the HTTP representation of the non-HTTP representation of Mary (the byte stream returned by GET), and these two levels of indirection often get confused such that folks think that what is returned by GET is a representation of Mary herself, rather than the actual case, which is that what is returned is a representation of the representation of Mary. 
+(ouch, my head hurts... ;-) Yup. 
+Exactly. 
+The students are not their home pages. 
+Cheers, Patrick Good to see the IETF is planning ahead, though... ;-) INTERNET-DRAFT Larry Masinter draft-masinter-dated-uri-01.txt 
+March 1, 2002 Expires September 2002 "duri" and "tdb" URN namespaces based on dated URIs 

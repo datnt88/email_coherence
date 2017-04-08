@@ -1,0 +1,61 @@
+Hello everybody, Excuse me if I'm missing something obvious. 
+Suppose I have two unrelated resources A and B, version graphs VA and VB, where A belongs to VA and B belongs to VB. Now, if I derive a version C from A and B, what happens ? 
+C is inserted in both VA and VB and a new version graph VC containing C is created ? 
+Since a resource can be in multiple version graphs, does exist a kind of a default version graph for a given resource ? 
+Thanks in advance, Bruno From: "Bruno C. Muniz" muniz@inf.puc-rio.br 
+Suppose I have two unrelated resources A and B, version graphs VA and VB, where A belongs to VA and B belongs to VB. Now, if I derive a version C from A and B, what happens ? 
+C is inserted in both VA and VB and a new version graph VC containing C is created ? 
+Since a resource can be in multiple version graphs, does exist a kind of a default version graph for a given resource ? 
+Good question. 
+Although allowing a revision to be in multiple versioned resources is an explicit "nongoal" in the current WebDAV "Versioning Goals" document (nongoal #1, in fact), this doesn't fully address your question. 
+We should add a statement that "the predecessors and sucessors of any revision of a versioned resource must also be revisions of that versioned resource". 
+This is implicit in the current draft of the proposed protocol (where the predecessors and successors are specified in terms of revision-id's instead of URI's), but it would be clearer if it were explicit in the "goals" document. 
+Cheers, Geoff What I believe we have specified to date is that there are "conceptually" two graphs. 
+There is a graph that the server maintains and asserts is correct and there is a graph that is specified by the client that may be incorrect. 
+The former is created by checkin/out operations and the later using the "Merged-From" header/property. 
+My assumption is that in your example, you would checkout B and merge the changes from A to created B' which you call C. (or vice-versa). 
+The client would specify that B' is derived from A and B. The server would track this as a new revision of B. Chris Suppose I have two unrelated resources A and B, version graphs VA and VB, where A belongs to VA and B belongs to VB. Now, if I derive a version C from A and B, what happens ? 
+C is inserted in both VA and VB and a new version graph VC containing C is created ? 
+Since a resource can be in multiple version graphs, does exist a kind of a default version graph for a given resource ? 
+Good question. 
+Although allowing a revision to be in multiple versioned resources is an explicit "nongoal" in the current WebDAV "Versioning Goals" document (nongoal #1, in fact), this doesn't fully address your question. 
+We should add a statement that "the predecessors and sucessors of any revision of a versioned resource must also be revisions of that versioned resource". 
+This is implicit in the current draft of the proposed protocol (where the predecessors and successors are specified in terms of revision-id's instead of URI's), but it would be clearer if it were explicit in the "goals" document. 
+Cheers, Geoff From: Chris Kaler ckaler@microsoft.com 
+What I believe we have specified to date is that there are "conceptually" two revision graphs. 
+There is a graph that the server maintains and asserts is correct and there is a graph that is specified by the client that may be incorrect. 
+I disagree. 
+It is not an issue of correctness or incorrectness, but rather an issue of modifiable and non-modifiable predecessor relations. 
+The reason to maintain a tree of non-modifiable predecessor relations is just a recognition of the fact that many implementations of branching and delta storage make it very expensive or even impossible to move a version from one branch to another. 
+Logically, the predecessor in this tree is no more "correct" than the modifiable predecessors created by the MERGE method. 
+Cheers, Geoff I guess I think of it a little different. 
+There is an "un-modifiable" list and a "modifiable" one. 
+The first is managed by the server and represents what the server knows to be correct. 
+The second is managed by the user and could be totally wrong. 
+I think both of our points are valid and true and that we are essentially saying the same thing. 
+Cheers, Chris What I believe we have specified to date is that there are "conceptually" two revision graphs. 
+There is a graph that the server maintains and asserts is correct and there is a graph that is specified by the client that may be incorrect. 
+I disagree. 
+It is not an issue of correctness or incorrectness, but rather an issue of modifiable and non-modifiable predecessor relations. 
+The reason to maintain a tree of non-modifiable predecessor relations is just a recognition of the fact that many implementations of branching and delta storage make it very expensive or even impossible to move a version from one branch to another. 
+Logically, the predecessor in this tree is no more "correct" than the modifiable predecessors created by the MERGE method. 
+Cheers, Geoff From: Chris Kaler ckaler@microsoft.com 
+I guess I think of it a little different. 
+There is an "un-modifiable" list and a "modifiable" one. 
+The first is managed by the server and represents what the server knows to be correct. 
+The second is managed by the user and could be totally wrong. 
+Just to make sure I'm not missing something, in what sense does the server know that the unmodifiable successor arc is more "correct" than the modifiable successor arcs? 
+In either case, this is just something that the client asserts at checkin time, with no way for one to be more "correct" than the other. 
+The only difference is that one is not modifiable (to allow for some server side storage optimizations), while the rest are modifiable. 
+When the server does the merging with no intervention from the client (such as in some change-set systems), then it is true that the server "knows" that these merges are true wrt its auto-merging semantics, but that's not the case for a new revision based on a "check-in" (which is the only mechanism for creating new revisions that we are currently supporting in the protocol). 
+I think both of our points are valid and true and that we are essentially saying the same thing. 
+I don't think this point affects the protocol at all (except for the minor issue of whether the "predecessor" property contains both the modifiable and unmodifiable predecessors). 
+I believe though that it is an important point for understanding the semantics of "merging" in the protocol, because if it is a "correctness" issue, then the client has to make sure to make the umodifiable successor the "correct" one, while if it is just a server storage optimization, than the client can just arbitrarily pick which of the contributors to the merge will get the unmodifiable link. 
+Cheers, Geoff This is a good point. 
+A client modification could be wrong (because people get things wrong) but that's really not any less true of a server. 
+What is true is that a server managed link will (by definition for a correctly functioning server) be consistent in terms of the _server's_ defined invariants. 
+Correctness in the sense of user intention and meanings is not actually guaranteed for modifiable or non-modifiable predecessors. 
+right... 
+This does bring to mind one thing: for a change set system, there might well have to be more than one unmodifiable predecessor (for the same reasons that there is exactly one in a branch-based system). 
+So maybe need to examine our implicit assumption that there is exactly one (as opposed to _at least_ one) unmodifiable predecessor -- David David Durand dgd@cs.bu.edu| david@dynamicDiagrams.com 
+Boston University Computer Science | Dynamic Diagrams MAPA: mapping for the WWW 

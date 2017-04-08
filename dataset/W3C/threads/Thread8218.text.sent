@@ -1,0 +1,132 @@
+If a MOVE operation MAY fail when live properties can't be continued as live properties at the destination, what should we say about when the server can allow the MOVE and when it can't? 
+Is it entirely up to the server or should we make a recommendation? 
+Then, if the server does fail, what error code should be returned? 
+Lisa I don't quite understand the first part of the question. 
+If we say that the live properties must continue live at the destination, what more do we need to say? 
+(I.e. what situation is left ambiguous?). 
+For the second part, a 403 (Forbidden) seems right to me. 
+Cheers, Geoff If a MOVE operation MAY fail when live properties can't be continued as live properties at the destination, what should we say about when the server can allow the MOVE and when it can't? 
+Is it entirely up to the server or should we make a recommendation? 
+Then, if the server does fail, what error code should be returned? 
+Lisa It depends on the precise wording of the language. 
+One alternative is to be loose, allowing servers compliant with 2518 to still be compliant with 2518bis (with either MAY or SHOULD, I'm not sure yet): "A MOVE operation MAY fail (403 Forbidden) if the live properties of the source cannot be live properties of the destination. 
+The server MAY remove live properties that are no longer appropriate at the destination." 
+A stricter alternative: "All live properties on the source resource MUST become live properties on the destination resource with appropriate values and the same semantics. 
+If the server cannot guarantee this, it MUST fail the request with 403 Forbidden." 
+The problem with the stricter alternative is that it forbids a server from removing a live property. 
+E.g. in collection "drafts", the property "draftstatus" (in some custom namespace) can be set by clients and the server allows certain actions on the resource based on the value of this property. 
+Therefore "draftstatus" is a live property. 
+When the resource is moved to the "publish" collection, "draftstatus" is no longer appropriate as a live property at all. 
+May the server remove it? 
+Lisa as I'd prefer the stricter alternative, but I could live with the former if it said "SHOULD" instead of "MAY". 
+Cheers, Geoff It depends on the precise wording of the language. 
+One alternative is to be loose, allowing servers compliant with 2518 to still be compliant with 2518bis (with either MAY or SHOULD, I'm not sure yet): "A MOVE operation MAY fail (403 Forbidden) if the live properties of the source cannot be live properties of the destination. 
+The server MAY remove live properties that are no longer appropriate at the destination." 
+A stricter alternative: "All live properties on the source resource MUST become live properties on the destination resource with appropriate values and the same semantics. 
+If the server cannot guarantee this, it MUST fail the request with 403 Forbidden." 
+The problem with the stricter alternative is that it forbids a server from removing a live property. 
+E.g. in collection "drafts", the property "draftstatus" (in some custom namespace) can be set by clients and the server allows certain actions on the resource based on the value of this property. 
+Therefore "draftstatus" is a live property. 
+When the resource is moved to the "publish" collection, "draftstatus" is no longer appropriate as a live property at all. 
+May the server remove it? 
+Lisa as I also prefer the stricter version... although only for MOVE. 
+(The second wording doesn't mention "MOVE" explicitly.) "Clemm, Geoff" com cc: Sent by: w3c- Subject: RE: New RFC2518bis draft, COPY / MOVE of live properities dist-auth- request@w3.org 
+07/25/2002 08:58 AM I'd prefer the stricter alternative, but I could live with the former if it said "SHOULD" instead of "MAY". 
+Cheers, Geoff It depends on the precise wording of the language. 
+One alternative is to be loose, allowing servers compliant with 2518 to still be compliant with 2518bis (with either MAY or SHOULD, I'm not sure yet): "A MOVE operation MAY fail (403 Forbidden) if the live properties of the source cannot be live properties of the destination. 
+The server MAY remove live properties that are no longer appropriate at the destination." 
+A stricter alternative: "All live properties on the source resource MUST become live properties on the destination resource with appropriate values and the same semantics. 
+If the server cannot guarantee this, it MUST fail the request with 403 Forbidden." 
+The problem with the stricter alternative is that it forbids a server from removing a live property. 
+E.g. in collection "drafts", the property "draftstatus" (in some custom namespace) can be set by clients and the server allows certain actions on the resource based on the value of this property. 
+Therefore "draftstatus" is a live property. 
+When the resource is moved to the "publish" collection, "draftstatus" is no longer appropriate as a live property at all. 
+May the server remove it? 
+Lisa as Yes, good point Jason, these constraints should only apply to MOVE, and definitely not to COPY. 
+For COPY, I would like us to use the rfc-3253 semantics, i.e. that a COPY is semantically equivalent to a GET/PROPFIND followed by a PUT/PROPPATCH, where the PROPFIND/PROPPATCH is for all properties that can be PROPPATCH'ed at the destination. 
+Cheers, Geoff I also prefer the stricter version... although only for MOVE. 
+(The second wording doesn't mention "MOVE" explicitly.) "Clemm, Geoff" gclemm@rational.com 
+"Clemm, Geoff" gclemm@rational.com 
+Sent by: w3c-dist-auth-request@w3.org 07/25/2002 08:58 AM I'd prefer the stricter alternative, but I could live with the former if it said "SHOULD" instead of "MAY". 
+Cheers, Geoff -----Original Message----- It depends on the precise wording of the language. 
+One alternative is to be loose, allowing servers compliant with 2518 to still be compliant with 2518bis (with either MAY or SHOULD, I'm not sure yet): "A MOVE operation MAY fail (403 Forbidden) if the live properties of the source cannot be live properties of the destination. 
+The server MAY remove live properties that are no longer appropriate at the destination." 
+A stricter alternative: "All live properties on the source resource MUST become live properties on the destination resource with appropriate values and the same semantics. 
+If the server cannot guarantee this, it MUST fail the request with 403 Forbidden." 
+The problem with the stricter alternative is that it forbids a server from removing a live property. 
+E.g. in collection "drafts", the property "draftstatus" (in some custom namespace) can be set by clients and the server allows certain actions on the resource based on the value of this property. 
+Therefore "draftstatus" is a live property. 
+When the resource is moved to the "publish" collection, "draftstatus" is no longer appropriate as a live property at all. 
+May the server remove it? 
+Lisa as This won't work (in all cases). 
+The resource may have multiple representations (depending on request headers), but a simple sequence of GET/PROPFIND-PUT/PROPPATCH will only copy one of the representations. 
+I believe this definition will work in enough cases for the implementor to be able to extrapolate what to do in those multiple-representation cases (and I'll bet is very close to how Xythos actually does implement its cross-repository MOVE). 
+In particular, I believe we have to say something to clarify the distinction between MOVE and COPY, and that this would be a reasonable compromise between "fully defines every case" (not achievable) and "undefined" (pretty much what we have in 2518). 
+But I'm always open to replacing it with something better! 
+Cheers, Geoff This won't work (in all cases). 
+The resource may have multiple representations (depending on request headers), but a simple sequence of GET/PROPFIND-PUT/PROPPATCH will only copy one of the representations. 
+I support Geoff's proposal. 
+COPY seems like a difficult species to define, and what Geoff proposes below seem like the best definition that we are likely to come up with. 
+"Clemm, Geoff" com cc: Sent by: w3c- Subject: RE: New RFC2518bis draft, COPY / MOVE of live properities dist-auth- request@w3.org 
+07/25/2002 02:14 PM I believe this definition will work in enough cases for the implementor to be able to extrapolate what to do in those multiple-representation cases (and I'll bet is very close to how Xythos actually does implement its cross-repository MOVE). 
+In particular, I believe we have to say something to clarify the distinction between MOVE and COPY, and that this would be a reasonable compromise between "fully defines every case" (not achievable) and "undefined" (pretty much what we have in 2518). 
+But I'm always open to replacing it with something better! 
+Cheers, Geoff This won't work (in all cases). 
+The resource may have multiple representations (depending on request headers), but a simple sequence of GET/PROPFIND-PUT/PROPPATCH will only copy one of the representations. 
+Unless I hear otherwise, I'm going to mark COPY_LIVE_PROPS as resolved... Resolved: 8/1/02: COPY should do the equivalent of a GET/PROPFIND followed by PUT/PROPPATCH. - MOVE should maintain the integrity of the resource in that all live properties and behaviors should remain live and have the same semantics at the new location as at the old location. 
+If there is any doubt "same" is defined according to the resource author's concept of "this resource". 
+If you'd like this changed, just speak up. 
+:-) J. "COPY should do the equivalent of a GET/PROPFIND followed by PUT/PROPPATCH." 
+I think *if* we say something like this we should warn that this may not produce a new resource that behaves the same under variant handling (because only one of possible multiple variants would be copied). 
+Behalf Of Jason Crawford Unless I hear otherwise, I'm going to mark COPY_LIVE_PROPS as resolved... Resolved: 8/1/02: COPY should do the equivalent of a GET/PROPFIND followed by PUT/PROPPATCH. - MOVE should maintain the integrity of the resource in that all live properties and behaviors should remain live and have the same semantics at the new location as at the old location. 
+If there is any doubt "same" is defined according to the resource author's concept of "this resource". 
+If you'd like this changed, just speak up. 
+:-) J. That warning is fine with me. 
+There are a variety of ways in which the new resource could act differently, and that is one of them. 
+Cheers, Geoff "COPY should do the equivalent of a GET/PROPFIND followed by PUT/PROPPATCH." 
+I think *if* we say something like this we should warn that this may not produce a new resource that behaves the same under variant handling (because only one of possible multiple variants would be copied). 
+-----Original Message----- Behalf Of Jason Crawford Unless I hear otherwise, I'm going to mark COPY_LIVE_PROPS as resolved... Resolved: 8/1/02: COPY should do the equivalent of a GET/PROPFIND followed by PUT/PROPPATCH. - MOVE should maintain the integrity of the resource in that all live properties and behaviors should remain live and have the same semantics at the new location as at the old location. 
+If there is any doubt "same" is defined according to the resource author's concept of "this resource". 
+If you'd like this changed, just speak up. 
+:-) J. Fine with me also. 
+:-) Sorry to react so late to this; I've been on sabbatical. 
+I'm not saying I necessarily disagree, but I'm worried by the fact that this definition distinguishes between COPY and MOVE in a way that's quite different from what many other (well-implemented) specs do. 
+Consider the following: 1. 
+Many specs define MOVE as the atomic equivalent of COPY followed by DELETE. 
+Wait a minute, actually 2518 does too! 
+Wouldn't this "clarification" break this? 
+2. (Separate but related issue; don't think it's on the issue list.) 
+There is no reason to *require* COPY to create a *new* resource; in fact, that's quite a problem for servers that implement copy-on-write semantics. 
+I believe the key sentences in the current RFC are: Subsequent alterations to the destination resource will not modify the source resource. 
+Subsequent alterations to the source resource will not modify the destination resource. 
+which of course there are many ways to implement. 
+3. As others have pointed out, a single GET/PROPFIND followed by a single PUT/PROPPATCH is very unlikely to do a good copy. 
+This is exactly why we have a separate method for COPY in the first place. 
+It seems to me that the best clarification we could provide about both COPY and MOVE has to do with servers being able to say whether they own the destination resource and thus can guarantee the kinds of "property preservation" clients are hoping for. 
+That is, there seem to me to be two key cases: Case 1: Both source and destination URLs/resources are controlled by the same "server semantics/process," and thus the source server can do a COPY by associating a resource with the destination URL that behaves exactly the same as the source resource under all variant forms of GET/PROPFIND (modulo locks not being copied and the location being different). 
+In this case MOVE is, in fact, indistinguishable to WebDAV clients from a successful COPY followed by a successful DELETE. 
+(Although perhaps delta-V clients might be able to distinguish...) Case 2: The source and destination resources are controlled by the same "server semantics/process," and thus neither can do better than GET/PUT PROPFIND/PROPPATCH. 
+I don't think we should spend a lot of time trying to put requirements on what to do in Case 2, especially since there's no reason for a client to think that doing the COPY is going to produce results that are either better or more efficient than just doing the four roundtrips! 
+Instead I think we should try to clarify the requirements on Case 1 and we should add a way for servers to either say in advance or say after the fact (or both) which kind of COPY will/did happen. 
+dan the WebDAV Not only deltaV clients may be able to distinguish, but ACL clients could. 
+For example, in Xythos WFS, when a file is copied the server initializes the ACLs like a new file. 
+On the other hand when a file is moved, the server copies the ACLs intact. 
+Xythos WFS also tracks access logs on files, and when a file is moved we want to keep the access logs on it, but when it's copied we don't want to duplicate the access logs, just keep the access logs for the original. 
+Overall, the new distinction between MOVE and COPY seems more often useful than problematic. 
+Lisa Dan, I've written a long answer to your posting, but I think I'll just send a short one. 
+I tend to agree with Lisa. 
+The way we've specified it now seems like the best we're going to do right now. 
+COPY creates a new resource that is modeled on the source on a "best effort' basis whereas MOVE simply changes the URL at which we access a resource. 
+And we've chosen to suggest that COPY (by default) just do the equivalent of of GET/PUT prop FIND/PATCH. 
+I do see value in what you say at the end of your note. 
+There might be value in a COPY'ing server to state how it treated the liveness of properties it just copied. 
+Similarly it might be nice for a client to be able to point to a resource and ask a server what liveness constraints it's trying to maintain on various properties. 
+But didn't we just remove the keep-alive feature? 
+Apparently this wasn't used. 
+So I'm hesitant to spend time working on liveness management features right now. 
+Maybe later. 
+I don't think what we're currently proposing closes the door on this. 
+J. (agreed) From: w3c-dist-auth-request@w3.org [mailto:w3c-dist-auth-request@w3.org]On 
+Behalf Of Dan Brotsky Sent: Monday, August 19, 2002 11:27 PM Subject: Re: New RFC2518bis draft, COPY / MOVE of live properities Yes. 
+Yes, but that's an implementation detail. 
+Even if you implement the copy as copy-on-write, for the *client* it will be a new resource nevertheless. 

@@ -1,0 +1,268 @@
+[this is a long article because of the notes at the end on how Panorama actually fetches SGML OPEN CATALOG files, and some (by no means all) of the issues involved. 
+Lee The proposal leaves the resolution mechanism up to the application as it should. 
+No it shouldn't. 
+I want something that works. 
+In the same way. 
+Everywhere. 
+That is what we all need. 
+There is no point saying the market will produce lots of competing mechanisms and the best one will win. 
+They will all lose. 
+Either way, some means of associating catalogues or ilinksets with documents is required. 
+Clearly -- otherwise we haven't solved the problem, but only made it more complicated. 
+A way of getting from instance to catalog is needed. 
+I don't agree here. 
+Catalogs are useful without a transmission mechanism. 
+I didn't say they weren't. 
+Nor did Terry. 
+If I send you a file with !DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN" I have a feeling that your software will resolve it correctly. 
+Wrong. 
+And what if I put up on the Web an XML file using PUBLIC "-//Liam Quin//DTD b359//EN" which the draft allows. 
+How are you going to resolve = find = use the DTD? 
+If you say that's not specified, please start again. 
+On the other hand! 
+I think that a mechanism for associating catalogs with instances is useful, and important. 
+Which is what I said in my article, and all I said. 
+I raised this in the catalog group, and we agreed that it was outside of our mandate and did not bother to discuss it further. 
+Some of us felt that it was something that the ERB should add when they integrate the catalog proposal with the XML spec. 
+Then I hope the ERB sends you all back to the drawing board. 
+What is the catalog _for_? 
+It is for turning a PUBLIC ID into a SYSTEM ID. 
+That is _all_ it is for. 
+You now have to solve the problem of finding the CATALOG in the first place, or you have not solved the required problem. 
+If I say, I'd like a brandy but I don't have one, telling me, "you can get brandy by pouring it out of a brandy bottle" doesn't help me very much; it only frustrates me, because if I had a brandy bottle, I wouldn't have said I didn't have any brandy. 
+If I say, I'd like a SYSTEM ID, telling me I can get one in a CATALOG file that I don't have is similar, except I need a SYSTEM ID to get the CATALOG, whereas I need money to get the brandy (usually -- anyone willing to swap brandy for PUBLIC identifiers??) I planned to recommend a mechanism to the ERB independent from the catalog group, but could not decide between the Socat-way, with a file named "catalog" which is very convenient, but tromps on the user's filename space, If SGML users are keeping files around called catalog.soc that are not SGML OPEN catalogs, that's their problem. 
+(perhaps less if the file was named xml-cat) or with a processing instruction, which is syntactically ugly and a little inconvenient to add to each document. 
+There are no files on the web -- a URL is not a filename. 
+Now, they usually map into filenames, but given the following URL to an XML file, how do I get to the catalog? 
+hint: cgi-bin/documentation is a program, a CGI interface to a document management system doing dynamic fragmentation of SGML/XML; I cannot store CATALOG files in the database... (since they are not SGML) let's say. 
+This is a real, common example (but with a fake URL here!) I will say right now that we spent a lot of effort on this topic for SoftQuad Panorama, and didn't get it right in the 1st release. 
+It's still not perfect, but we have backward compatibility issues. 
+Let's do it right for XML. 
+What is "right"? 
+Your experience with this issue will be useful to us. 
+(1) allow links from the doc to the DTD directly (no catalog) even if there is a PUBLIC ID (Pano does this -- you'll see why in a sec) (2) allow a way of identifying a "base" URL of the current document, so that relative paths can work in links &amp; sys-ids. 
+Allow this to be prepended to the file with no other processing (it would come before the ?-XML- 
+...? header in this case, I expect) so that it can be done by a non-XML-aware proxy server or very simple CGI script. 
+Panorama 2 uses a processing instruction for this -- we didn't have it for Panorama 1, and this was a big problem, as you couldn't get bookmarks and annotations working from GET-style search queries without it. 
+(3) use the same mechanism to link style sheets to instances as you use to link documents to instances. 
+Panorama uses a separate file, "entityrc", but I now wish that the information had all beein in one place, e.g. "catalog". 
+If you use public identifiers to link to style sheets, you will need to be able to give both a PUBLIC and a SYSTEM for the DTD as in (1), but you will need the SYSTEM identifier to override the PUBLIC one in the case where you don't actually have a catalog file. 
+(4) remember that you can't do file system probes. 
+The original CATALOG spec said that the filename for catalog was case insensitive. 
+Originally, because of its Windows heritage (despite the first version ("darc") being on Unix!), Panorama looked for CATALOG on the remote server. 
+But more than half of all web servers are running Unix today, and the path parts of URLS are case sensitive. 
+We got so many support calls about this that today Panorama looks first for "catalog" and then for "CATALOG", but the failed probe does cause an obscure (to the user) error message on many systems. 
+We never implemented the TR requirement of supporting Catalog, cAtalog, and so forth, as each one would take a separate HTTP transaction... 
+This has been fixed (the TR was changed, as I recall), but it is best if you never have to look and see if a URL works or not. 
+Sometimes, a URL probe might actually cost money -- e.g.if you're paying for documents -- or might require a password, or might simply fail silently with a zero-length "document" being returned, or a document being returned saying "the URL you requested was not found; please check your spelling..."!!! (5) allow an instance to indicate that no CATALOG exists, and to give all the information in some other way. 
+Same for style sheet linkage, whether using CATALOG or ENTITYRC (I hope not) or something else. 
+This need follows from a combination of the need to support database queries and the inadvisability of trying to do something like file system probes. 
+(6) you need to be able to associate multiple style sheets with each instance (e.g. for printing), and possibly other things, such as Java programs, active table of contents definitions, metadata, collection information, location on navigational maps, and so forth. 
+Public identifiers can be used as part of this, as can processing instructions. 
+However you do it, it's essential that the same files can be viewed locally with no web server and locally or remotely using a web server, as otherwise it's imossible to test them without putting them on a web server. 
+The best way to do this is to treat all system identifiers as partial URLs, relative to the file containing them. 
+This means that if you open /users/liam/docs/barefoot/ankle1.xml and it refers to SYSTEM "walking.dtd" then an XML application ought tolook for /users/liam/docs/barefoot/walking.dtd but if exactly the same unchanged bytestream had been downloaded as then the same XML application should resolve "walking.dtd" 
+as and if it had been ftp://.... then the same procedure should be used. 
+You have to consider what to do with a URL such as: and SYSTEM "walking.dtd;version=2" 
+where presumably we should look for and not try to apply both sets of MIME parameters. 
+(the ; is a preferred alternative to using &amp; in queries, too) Sorry, I have probably written too much already. 
+All of these issues need to be solved, or you won't end up with interchangeable SGML on the Web. 
+I know. 
+I've been there. 
+I don't want to force the same solutions we used on people necessarily, but the same issues do need to be addressed. 
+Lee I think history disagrees. 
+SGML didn't choose a single resolution mechanism for either public or system identifiers. 
+Because of the first choice, we can still reasonably discuss how to use URN resolvers as Public Identifier resolvers without going back and changing the SGML spec. 
+Leaving that as a system option was a Good Idea and we are benefitting from it now. 
+Similarly, SGML did not specify a special syntax for system identifiers or a resolution mechanism for them. 
+Thanks to that "omission" we can now use URLs in XML. 
+Once again, that was a Good Decision. 
+Now it would not have hurt anything if SGML had *suggested* a resolution mechanism for each of them, as long as there was an "out" that would allow XML to be created and to ignore posix file names and FPI catalogs (or whatever else SGML would have standardized). 
+Progress has not stopped. 
+Things still change. 
+I think it would be a huge mistake to exclusively require a single mechanism that "works in the same way everwhere", for always. 
+In fact, I think it would be an impediment to development *right now*. 
+When I use XML on my intranet, I should be able to use whatever mechanism I want to find the catalog, and I should be able to skip the catalog altogether if I feel like it. 
+Suggesting a resolution mechanism would be fine, even a good idea, in my opinion. 
+Exclusively mandating one would be a big mistake. 
+I don't care if non-Internet uses of XML don't have to include any way of doing http (for example) -- I do care if two http-based XML systems can't share the same files because they have incompatible rules for looking up FPIs and mapping to SYSTEM IDs. 
+At this point, it is worth bringing in some history. 
+XML 1.0 November Draft not only did not have a specification for catalogs, it explicitly prohibitted public identifier lookup by not allowing any place for public identifiers in the ssyntax. 
+As far as I was and am, concerned, the provision of that syntax is *sufficient* for a high quality, useful standard. 
+If vendors implement public identifiers in incompatible ways, then you can always use system identifiers on the Web, and public identifiers on your internal systems. 
+You can even have your httpd map public identifiers to system identifiers. 
+If the web market demands public identifiers, they can go through the same process the SGML community did, to standardize them: *as long as the XML syntax allows it*. 
+Which it didn't before. 
+That is really all I wanted fixed. 
+I've made the analogy before that public identifiers are addressing processing instructions. 
+Every parser must read them, but they need not use them in the same way. 
+If you want 100% reliability, then you can either standardize explicitly (as people sometimes standardize processing instructions, within a department, organization, or across the whole SGML community), or you can avoid them (and use system identifiers) or use them internally and map to system identifiers externally (using httpd, or Perl or whatever). 
+To argue that a feature is useless if everyone cannot use it in the same way is to argue that processing instructions or formal system identifiers or new URL schemes or alternate text encodings or even DTDs... are useless. 
+Sometimes you put hooks into a spec for *private use* and hope that enough people will find it useful in private to try to standardize it publically. 
+If we want to standardize it publically now, we can, but we should not try to force our solution on everybody, because this is, in my opinion, one of the points in the spec that we should explicitly leave open to experimentation. 
+To sum up: I think it would be nice and useful if we could send catalogs over the web in a reliable way, as Panorama does. 
+But I think it is crucial that I be allowed to use them on my computer, or in my organization in the way I want to, without violating the XML specification. 
+Paul Prescod Yes. 
+But Lee has a very valid point: proof. 
+There is a middle way. 
+No implementations of XML exist. 
+HTML/HTTP got a leg up by the presence of libWWW. 
+Sure, not too many browser vendors would use libWWW now, but it did show how it could be done, and that it could be done. 
+While the specification should not be a blueprint for implementation, a reference implementation can be. 
+This is the course I think the consortium members should consider. 
+Further, the work should begin now BEFORE there are several implementations claiming hegemony by colonization. 
+This has become a very hot topic in VRML now, and unfortunately, as VRML is in the 2.0 stage, it is harder to establish a common practice. 
+There are also very difficult problems with the 3D animation and rendering features that will delay acceptance of any proposed reference implementation submitted by a vendor. 
+If we have learned nothing else, surely we now understand the persuasiveness of "running code". 
+It tests 1.0. 
+Those tests point the way to 2.0. 
+And so it goes. 
+Len Bullard Lockheed Martin I agree that reference implementations are good, Len. 
+I don't agree that they should be used in order to avoid standardizing some things. 
+If we can agree on an appropriate default resolution mechanism, then we should just do so and put it in the spec. 
+On the other hand, if our resolution mechanism is so complex that there is a chance that vendors would balk at implementing it, then that's where a reference implementation would make sense. 
+But maybe at that point, we've already made a mistake in making the mechanism complex. 
+Paul Prescod It is not to avoid standardizing it. 
+It is to avoid standardizing something for which perfectly good alternatives can and will be proposed and from quarters outside the working group, the consortium, perhaps even the SGML community. 
+It is also to focus effort on an implementation that cn be widely shared quickly just as most of us use SGMLS and SP. 
+It is also to avoid a long and very rough debate in which the only proof would be running code anyway. 
+If the editors are to stick to their schedules, then a reference implementation effort may require a different approach than that used to manage this list. 
+If the consortium were to sanction that, then it would be possible to have several groups propose a design for an RI from which the best of breed can be chosen. 
+They may not balk; they may not be interested. 
+Paul, everyone knew how to design HTML in the eighties. 
+Many understood what was required for HTTP. 
+NO ONE WAS INTERESTED. 
+Durand had it right when he said, "Berners-Lee said, let links break". 
+Sometimes the quick way is to just build it and field it. 
+It gets mindshare: it creates market: it makes substandard applications dominant. 
+Netscape and IE don't break HTML because they are *greedy blue meanies*; they break it because they have to in order to make progress. 
+This is what is about to happen: several vendors see XML as an opportunity to get products they already had in development to market under a single banner. 
+There are those who think Panorama, HyBrowse, etc. represent viable implementations. 
+They may, but there are not references to test. 
+There are also different ways to build these just as there are better ways to build browsers than libWWW. 
+If we do not wish a ground war to break out, a single implementation such as libWWW exemplified, is a good way to measure these implementations. 
+If such an effort is begun soon, it will be possible to work out the technical difficulties of the XML spec before we get a lot further down the road. 
+Remember, SGML Open and other organizations have an interest here. 
+An RI doesn't mean, "this is the only way to do it"; it means, here is a library one MIGHT use and by which SOME tests can be conducted. 
+It is also a way to meet the criticism that we have specified things that can't or won't be adopted because no resolution mechanism was provided. 
+So, provide one, but leave some wiggle room for development. 
+len Hello all, I have been following the discussion of XML catalogs *very* close. 
+I'm going to start this e-mail with something that many of you may not agree with: Catalogs are *not* sufficient for manipulation and transmission of XML (or SGML) documents. 
+Let me regress,... 
+Once upon a not-to-distant-past, I designed and wrote a simple SGML repository for a client. 
+They had to have something quick and nothing in the industry really met their needs for the cost they would have to spend on buying one. 
+So, I set out to build a repository. 
+I had some simple design constraints stemming from decisions on "standards" for their authoring environment: 1. 
+Every entity had a unique name across all documents. 
+2. Every public identifier is unique across all documents. 
+3. Every entity name starts with a "owner" code. 
+4. After the owner code, a code that identifies the entity use is required. 
+For example, if the owner was 'CSI' and the entity was a passage of legal text, its use code was 'LNG' for 'language'. 
+Thus, the entity would be named 'CSI.LNG.Something'. 
+In addition, we were moving from a file-base authoring environment and the authors needed to be able to organize entities much like they had organized files. 
+Thus, we needed a virtual directory structure that enforced unique entity names across all entities in the repositories. 
+I created a simple object model that had a flat namespace for maintaining the constraints outlined above and had other organizational constructs for presenting a usable interface to a user. 
+Note: This company has 11,000 "entities" for 100 documents. 
+Now, once the repository was built, I had to import the data. 
+Well, I thought: "Easy, I have an SGML Open catalog that has all of them defined." 
+Wrong. 
+It doesn't work. 
+First, everything with a public identifier can't be imported because there is no entity name defined. 
+From SGML, this really doesn't matter. 
+That is, I can have two entities x and y that have the same public identifier. 
+In this model--environment constraint--that would be wrong (illegal). 
+We needed these constraints to maximize reuse and allow the ability for questions to be asked like: Who uses this entity? 
+Now, what does this have to do with catalogs? 
+I my mind (sometimes a scary place), if SGML Open catalogs can't do the above, it begs the question of *why* it is not complete. 
+The answer--again, in my mind--is that they are single-purpose. 
+Resolve this entity to something. 
+We have a greater issue in XML of solving the fundamental problem that our documents exist as a collection of distinct information types with relationships (a hypertext relationship!), not single "files" or streams that can cascade resolution schemes for finding the rest of the pieces. 
+Lets look at the simple case: If my document is self-contained, does an XML processor "know" that it doesn't need a catalog? 
+Maybe. 
+...more complex: If I have a document which refers to an entity x, which has two possible choices (configurations), what do I have to do to configure this? 
+If we keep expanding such questions, we can see that additional constructs would have to be put in place to handle different problems such as databases. 
+We we have done is designed to the specific case when our problem is much more broad. 
+We need to step back and see how we can orchestrate a broad solution that is, to some extent, future proof (extendible). 
+In my thinking for this client I mentioned, we have already discussed the idea of "meta-documents". 
+Documents that describe all the components necessary and all the variations (if possible) such that an application can load this meta-document. 
+The essential idea is this: The XML (SGML) document is at the same "class" or "level" as the other information components--style-sheets, graphics, transformations, etc. 
+It is a very important component in the system, but not very useful in a practical way without the other components. 
+Thus, it is *not* the starting point. 
+The collective information about all the components necessary to handle, process, identify, etc. this document--the meta-document--is the first-class construct. 
+The meta-document is the starting point. 
+From this, I'm going to make some observations: 1. 
+It is possible to define a known document type to encode such a meta-document. 
+This is not necessary but it would seem unlikely to developed "yet-another-document-information-encoding" (YADIE). 
+2. The meta-document and its components could be encoded in one stream such that a request is made for the meta document "stream" and all information is shipped to the application. 
+This does *not* require that all components are packed into this stream. 
+It only requires that they be identified. 
+Anyone familiar with the concept of JAR files can see where this is coming from. 
+3. For simple documents one-time documents, packing everything into a stream is very useful. 
+The meta-document in this case may be very small--only a few bytes. 
+4. The need for "catalog location", "style-sheet location", etc. standards goes away and gets replaced with a uniform mechanism for describing component locations and relationships. 
+I have attached a very simple DTD for such a meta-document. 
+I wrote this very quickly and it *doesn't* contain all the ideas that I have about this subject but I wanted something concrete. 
+R. Alexander Milowski http://www.copsol.com/ 
+alex@copsol.com 
+Copernican Solutions Incorporated (612) 379 - 3608 !-- Note: More relationships could be specified in this DTD such as different "views" via different style-sheets. 
+-- !ELEMENT Header - - (Version) -- Identifies the archive and version -- !ATTLIST Document -- whatever needed to link to the appropriate component -- !ELEMENT Component - O EMPTY -- Defines a component necessary for this document to be processed. 
+-- !ATTLIST Component -- type is a fixed set of "known" names that applications are expected to recognize -- type (stylesheet|catalog) #IMPLIED -- other is for transmitting other components specific to an application other CDATA #IMPLIED -- whatever else is necessary to locate the component -- I think Lee has made some very important points. 
+A catalog is basically a packing list, and if it doesn't exist, or you can't find it, life get's difficult. 
+I wonder if the MIME-SGML work can't be put to good effect here? 
+The problem is basically the same, and Don Stinchfield's proposal could be made protocol independent. 
+Fine. 
+This is roughyl equivalent to the 2 MIME-SGML solutions, where one focused on the catalog as the meta-document, and the other focused on MIME structures. 
+A meta-document is just a packing list, as is a catalog. 
+Catalogs should only be used to identify peices in a given document, not for the basis for name resolution. 
+We already have MIME and catalogs. 
+Sounds like MIME to me.... Sure, instead of pulling the catalog in after accessing the instance, you pull in the instance after accessing the catalog. 
+Some people on this list know that I have little love for the SO catalog syntax, but that seems sufficient to me. 
+In the simple case, yes. 
+The meta-document could also describe relationships or alternate renderings. 
+For example, there might be a set of style-sheets that could be applied depending on the user. 
+There might be one for large-type, one for regular presentation, and so on. 
+Thus, instead of a packing list that says, "here's all the stuff, go!", you can specify alternatives and relationships that more complex browser systems can utilize. 
+What I am really interested in from XML is the ability to layer intelligent frameworks over the standard that can load semantics from the server (currently, Java code). 
+Thus, just being able to specify the "packing list" isn't sufficient. 
+Here's a wish list for the meta-document: 1. Specify multiple styles with semantics about who should use them and when they should be used. 
+2. Specify client-side transformations and associate with operation "classes" such as "Create me a summary". 
+3. Specify inter-document relationships. 
+4. Specify target documents (notice the plural). 
+3. Specify client-side workflow or "sequence of events" that can utilize (1), (2), (3), and (4). 
+I really think we need to think about layer standards. 
+XML is the document encoding standard. 
+We may want to think about and "XML Super-BOS" or "XML-Mime-packing", etc. ancillary standard. 
+Note: Maybe I'm confused on the structure of the XML standard. 
+If I implement XML, do I have to implement everything we decide on in respect to the major components such as the XML document encoding, XHL, etc. 
+For example, if someone has an XML parser/data-model toolkit but doesn't support the hyper-linking layer, are they XML compliant? 
+If they add hyper-linking, are they then XHL compliant? 
+I'm confused. 
+I'm really like componentized architectures where I can pick and choose the technologies and standards I must adhere to. 
+HyTime people: Can the BOS do this or this beyond what BOS was intended for? 
+Could be. 
+Can MIME accomplish the above? 
+I always thought of MIME as a way of encoding in one data stream multiple parts and encodings. 
+I didn't think there was a way to express the relationships between things. 
+Yes. 
+Yes. 
+Yes. 
+Except, as below, I don't like the SO catalogs syntax either. 
+...but I'll support it if I *have* to. 
+Its not sufficient for more complex constructs. 
+It seems to me that we have two choices: 1. Accept an SO-catalog-like solution and fragment the resolution, location, and organization of other components that don't fit into the "catalog" concept of resolution into ancillary standards/constructs. 2. Find a generalized solution to these problems that is uniform and will allow us to capitalize on *infrastructure*. 
+(1) does work, has some existing products that support *some* of the constructs, and is sufficient for displaying documents. 
+(2) is required, in my opinion, for being able to go beyond displaying documents. 
+It also doesn't exist. 
+...this all relates back to those tunnels under Chicago... R. Alexander Milowski http://www.copsol.com/ 
+alex@copsol.com 
+Copernican Solutions Incorporated (612) 379 - 3608 This is one reason we suggested a SEMANTICS entry in SO catalog: you could bring across the document, and also know the various semantic processors that could be applied to it. 
+OK. I agree that SO catalogs would be somewhat stretched by this. 
+I think we might then go off and define the "packing list" and "meta-document" seperately. 
+For simple cases, SO catalogs would be good enough, and for everything else, meta-documents. 
+Perhaps the WG shoudl produce a spec for both? 
+Yes. 
+I'd be happy with this. 
+This is what I am calling "layered" standards. 
+R. Alexander Milowski http://www.copsol.com/ 
+alex@copsol.com 
+Copernican Solutions Incorporated (612) 379 - 3608 

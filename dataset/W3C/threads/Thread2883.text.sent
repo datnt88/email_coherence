@@ -1,0 +1,32 @@
+Should a Connection: close header be allowed on a 100-continue response? 
+If so what does it mean? 
+Does it mean the connection is closed after the 100-continue response is sent and the body must be sent on a new connection (seems very wrong) or that the body is sent and the connection is closed after the final response, and if so, shouldn't that final response have a Connection: close header? 
+14.10 Connection HTTP/1.1 defines the "close" connection option for the sender to signal that the connection will be closed after completion of the response. 
+For example, Connection: close in either the request or the response header fields indicates that the connection SHOULD NOT be considered `persistent' (section 8.1) after the current request/response is complete. 
+HTTP/1.1 applications that do not support persistent connections MUST include the "close" connection option in every message. 
+I think the "every message" is incorrect. 
+In trying to come up with alternative wording I now question if it makes any sense to send it on a 101 response? 
+Alternate wording would be either: "every message except 100 continue responses" or "every message except 1XX responses". 
+But I think that might be too broad. 
+If you don't agree with the above, then I think the following needs to be considered: 8.1.2 
+Overall Operation Persistent connections provide a mechanism by which a client and a server can signal the close of a TCP connection. 
+This signaling takes place using the Connection header field (section 14.10). 
+Once a close has been signaled, the client MUST NOT send any more requests on that connection. 
+Should this be "send any more requests" or "begin any more requests though it may complete in process ones such as sending a body after receiving a 100-continue response" ? 
+Thanks. 
+Howard Does it matter? 
+Does there exist a realistic situation in which a server would send Connection: close and require a consistent, interoperable behavior on the part of the client? 
+No? Then it doesn't need to be specified. 
+....Roy I came at it from another spot. 
+While trying to work around an IE bug: we found our server implementation could do better at sending "Connection: close" when it knew it was going to close the connection and not just relying on clients to cope well with dropped connections. 
+In trying to get it right, we weren't sure if we should send it on 100-continue responses. 
+Someone here read: HTTP/1.1 applications that do not support persistent connections MUST include the "close" connection option in every message. 
+and thought we needed to send it (a 100-continue response is a message so we MUST include it). 
+It didn't make sense to me, thought it could break things, and wanted to check what was right. 
+We won't send close on 100-continue responses. 
+Howard Oh, I didn't realize you were asking about something that is already specified incorrectly in the spec. 
+That is definitely an error in section 14.10 of RFC 2616. 
+It should say An HTTP/1.1 client that does not support persistent connections MUST include the "close" connection option in every request message. 
+An HTTP/1.1 server that does not support persistent connections MUST include the "close" connection option in every response message that does not have a 1xx (informational) status code. 
+since, as you say, it doesn't make any sense to send it on a 1xx message. 
+....Roy 

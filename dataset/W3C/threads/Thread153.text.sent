@@ -1,0 +1,11 @@
+I just discovered that tidy26jun99 doesn't seem to recognize the "http-equiv" attribute value of the meta element. 
+Did I miss something or what? 
+TIA Rossano Basile. 
+tidy2jul99 seems to have the same bug; I found out that in "IsValidAttrName" (file lexer.c) the character '-' contained in the string "http-equiv" makes this procedure return no and consequently the error message (Warning: meta unrecognized attribute value "http-equiv") is generated. 
+Rossano Basile. 
+Mea culpa. 
+I fixed this locally but didn't submit the changes to Dave. 
+FYI, the modification simply consisted of adding the following line to lexer.c:InitMap 
+MapStr("-_", extended); And modifying the conditional in lexer.c:isValidAttrName 
+to: if( (map &amp; lowercase) || (map &amp; uppercase) || (map &amp; digit) || (map &amp; extended)) continue; Craig Of course you also need to add #define extended 128 in the /* lexer char types */ section in html.h. 
+Ross. 

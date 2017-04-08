@@ -1,0 +1,89 @@
+Efficiency brings in all sorts of tradeoffs. 
+One can make a protocol use a few fewer bytes on the wire by using a binary encoding, but this has the expense of requiring significant additional programmer time to develop debugging and testing suites since "telnet" doesn't work any more. 
+I know that you can use TELNET to test a server by simulating a client, by a human typing or pasting the client parts of a textual protocol. 
+But how can you use TELNET to test a client by simulating a server? 
+This would certainly be very useful, and perhaps this is common knowledge which I have not acquired? 
+Jacob Palme jpalme@dsv.su.se (Stockholm University and KTH) for more info see URL: http://www.dsv.su.se/~jpalme Efficiency brings in all sorts of tradeoffs. 
+One can make a protocol use a few fewer bytes on the wire by using a binary encoding, but this has the expense of requiring significant additional programmer time to develop debugging and testing suites since "telnet" doesn't work any more. 
+You have to use some glueware. 
+In particular, a program that would do the trick would monitor two ports and forwards packets between the two. 
+I've never seen such a program, but it should be possible to write it very quickly in perl or most other languages. 
+Tony Hansen tony@att.com 
+# pseudo code follows. 
+anyone care to finish it? 
+$port_telnet = $ARGV[1];# telnet to this port $port_client = $ARGV[2];# may need root to accept connections here accept connection on ports $port_telnet and $port_client while (select($port_telnet | $port_client, 0, 0, 0)) if ($port_telnet has input) $buf = sysread($port_telnet); ... check for errors, EOF, etc. syswrite($port_client, $buf, length $buf); if ($port_client has input) $buf = sysread($port_client); ... check for errors, EOF, etc. syswrite($port_telnet, $buf, length $buf); try WRS's 'sock' program or Hobbits "netcat". 
+Both will give an equivalent server function. 
+You can bind on a port and when a connectoin comes in, ie from a browser, the i/o will be on stdin/stdout for you to manually enter. 
+From: Jacob Palme [mailto:jpalme@dsv.su.se] Sent: Sunday, February 14, 1999 9:15 AM Subject: Use of TELNET for testing protocols Efficiency brings in all sorts of tradeoffs. 
+One can make a protocol use a few fewer bytes on the wire by using a binary encoding, but this has the expense of requiring significant additional programmer time to develop debugging and testing suites since "telnet" doesn't work any more. 
+I've dealt with both binary (straight-forward marshalling onto the wire, nothing baroque like PER) and text protocols, and have not found a particular advantage to either in terms of debugging. 
+To me, use of telnet is hardly a compelling argument one way or the other. 
+Putting a breakpoint on the stubs on either end in a debugger, and dumping the data structures, has often been easier than having to scratch my head about syntax being correct (and the generation and parsing thereof) in a text based protocol. 
+Not having the same class of parsing bugs in binary implementations helps muchly on their side of the equasion. 
+Note that binary protocols must be well engineered when it comes to extensions, or they get into trouble in the long term. 
+There are similar problems with text protocols: a good example is HTTP, where there is about 4 different ways to figure out if a message is complete (some of which require fondling every byte fondly as it goes by). 
+I find worrying about one or the other pretty close to a religious debate, not amenable to rational discussion, and only an issue when either: o latency requirements force a tight encoding o The protocol parameters are a significant fraction of the payload, and bandwidth becomes an issue. 
+So this is/should be an engineering decision, examined in the light of the application. 
+And as far as I'm concerned, all this is another argument for modularity in any protocol stack, so that argument marshalling is one of the modules that can be traded off on a per application basis. 
+- Jim Gettys Jim Gettys said this: Just a minor nit, your observation is probably correct when you are actually writing an implementation of the protocol from scratch. 
+I think when most of us speak about 'debugging' a server by simply telnetting to the port is after its been built and we are debugging particular applications that are using that protocol. 
+Or also in the case where we do not have debugging access to the server or client (proprietary binaries). 
+Also, from a past sysadmin's point of view, you're never gauranteed to have the libraries needed to parse a binary protocol on any given client. 
+Telnet is everywhere.... -MM Sorry, hard to resist when your particular religion gets tweaked... ;-) Michael Mealling| Vote Libertarian! 
+| www.rwhois.net/michael 
+Sr. Research Engineer | www.ga.lp.org/gwinnett | ICQ#: 14198821 Network Solutions| www.lp.org | michaelm@netsol.com Jim Gettys said this: Text protocols and telnet debugging have a lower entry cost, but much higher curve as things get compicated. 
+Binary protocols tend to have higher up-front costs (building a bit more infrastructure up front), but lower difficultly curves, as the complexity of the protocol goes up. 
+I think it might be somewhat valuable to wrap a draft boilerplate around that last paragraph and send it out as an informational RFC. 
+IMHO, as soon as complex data types and marshalling come into play, the low cost aspects of a text based protocol go out the window. 
+But that's just the test that I personally use. 
+I stand by my opinion that it is six of one, half a dozen of the other; what is most appropriate depends on your application. 
+One size does not fit all needs. 
+Exactly.... -MM Michael Mealling| Vote Libertarian! 
+| www.rwhois.net/michael 
+Sr. Research Engineer | www.ga.lp.org/gwinnett | ICQ#: 14198821 Network Solutions| www.lp.org | michaelm@netsol.com 
+As I said; religious argument... Then again, I've been involved in several binary protocols, one of which has had literally thousands of applications written for it (the X Window System protocol). 
+On the systems that support it, the client libraries are either there from the vendor, or can be built from source (your preference). 
+Another debugging tool useful at times for X has been a pseudo-server, which dumps the protocol traffic in both directions; this is particularly useful when looking at performance issues. 
+This has also allowed looking at both client and server as black boxes, without poking inside, and eases finger pointing in binary only situations. 
+Text protocols and telnet debugging have a lower entry cost, but much higher curve as things get compicated. 
+Binary protocols tend to have higher up-front costs (building a bit more infrastructure up front), but lower difficultly curves, as the complexity of the protocol goes up. 
+I stand by my opinion that it is six of one, half a dozen of the other; what is most appropriate depends on your application. 
+One size does not fit all needs. 
+- Jim agree. 
+I think we are not typical of the folks who debug. 
+I suspect that, by far, the most common debugging case (in volume) is sysadmin and network people using sniffers or telnet. 
+Text based protocols are helpful to telnet and to someone reading a simple network trace. 
+While sniffers have protocol modules to decipher non-text protocols for easy reading, not everyone has access to a sniffer or sniffer program with the latest protocol modules. 
+One thing that I think text based does for a protocol is to greatly increase its chances of quick adoption. 
+Maybe people hacked together working implementations of web servers (for better or worse) by simply examining another working web server with telnet having never looked at the spec. 
+As an admin in the past, it was easy for me to hack up a perl script to do http for quick fixes and administrative announcements, which helped me learn alot. 
+When it came to SNMP (which I was also responsible for) I had such a hard time figuring out what was going on because the books were too theoretical for my practical mind, the tools were limited, and I couldnt easily hack my own in perl. 
+www.rwhois.net/michael 
+Sr. Research Engineer | www.ga.lp.org/gwinnett | ICQ#: 14198821 Network Solutions| www.lp.org | michaelm@netsol.com 
+definitely an insightful statement. 
+However, has IMAP or POP had the same problems because its text? 
+Or, is it just HTTP's loose syntax of optional and ignored stuff that has cause so much pain? 
+I havent noticed the same terrible cries in the IMAP/POP world, but then again, maybe I dont spend enough time in that world to notice. 
+Chris ? 
+POP is very simple, so it's a huge win that it's text. 
+IMAP is a more interesting case as it has a number of complex datastructures which use a simple S-expression style syntax. 
+I don't know of any significant problems that have been caused by these being text encoded. 
+There are certain traditions which can make text protocols painful as they get complicated. 
+For example, some people misinterpret the "be liberal in what you accept" principle as meaning "accept illegal protocol". 
+Thankfully most of the IMAP server implementors didn't make this mistake so the IMAP protocol is one of the most syntacticly interoperable text protocols. 
+It does become harder to precisely specify a text protocol as it becomes more complex. 
+But this may be a good thing as it makes an out-of-control protocol designer suffer in a way that ASN.1 doesn't. 
+I have a definite preference for text protocols. 
+I've found them much easier to write code for and maintain in practice than binary protocols. 
+A key advantage text protocols have is that when there's an interoperability problem, it is easy to prove to the customer who is at fault since you can show them the actual protocol. 
+Sometimes the customer even identifies who is at fault themselves. 
+Furthermore, a text protocol trace looks the same regardless of who generates it. 
+Binary protocol debugging info appears in whatever format was the implementor's whim if it's available at all. 
+However, the relative advantages and disadvantages between text and binary protocol encodings are negligible compared to other protocol design issues. 
+Protocol simplicity and avoiding rarely-used features are _far_ more important. 
+I'd much rather implement and maintain a simple well-designed binary protocol (e.g., Secure Shell 2) than a complex text protocol (e.g., HTTP 1.1). 
+I should also point out the option of a hybrid encoding. 
+Use a simple binary structure with fixed-length ASCII character strings for protocol keywords. 
+You get all the advantages of binary encoding, and a protocol dump is at least partially useful. 
+Secure Shell 2 has a different interesting hybrid characteristic -- it uses length-counted text strings for extensibility-oriented feature lists. 
+- Chris 

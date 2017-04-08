@@ -1,0 +1,73 @@
+AFAICT this is fairly solid and adresses all the issues that can be adressed for a maintenance update. 
+IOW, I think we can release this as the 0.6.1 update very soon now. 
+Mainly I'd like to see RPMs of the Validator and of OpenSP before release, but depending on how soon that can happen we could just release Validator and add links to the RPMs as they become available. 
+"You gonna take advice from somebody who slapped DEE BARNES?!" -- eminem I have a set of RPMs of Validator 0.6.0 and OpenSP 1.5 for Red Hat 8, as well as all their requirements that are not available in RH8 at http://cachalot.ods.org/ . 
+I think they're in pretty good shape, though there are a couple of tiny changes in 0.6.1 that affect the validator RPM. 
+Anyway, I'd appreciate if people could test them somewhat before release. 
+Also, I don't know what's the optimal way of distributing the RPMs, since they're not limited to just validator. 
+Here's the list of packages one has to grab from my site to get a working validator: docbook-dtds (needed by new opensp/jade) openjade (needed by new opensp, IIRC there will be 1.3.2 final today) opensp perl-CGI perl-Config-General perl-Set-IntSpan perl-Text-Iconv w3c-validator w3c-validator-libs I'm fine with just linking to my site for RPM downloads for now, or moving them somewhere else, provided that "somewhere else" hosts a apt-rpm interface to the files (I can work on that, it doesn't require anything special from the server side, I can generate the indexes locally and upload 'em). 
+\/ille Skytt? 
+ville.skytta at iki.fi I'll try to set them up on the throwaway box (the old Bugzilla) tonight some time (after midnight GMT, probably). 
+If you're happy to host them, what say you we just add a link to some suitable place on cachalot.ods.org so we can freeze and tag 0.6.1? 
+Eventually I'd like to see this hosted at w3.org somewhere, but pointing elsewhere for convenience while we figure out this whole packaging and releases thing seems the smart way to do it. 
+We've gotten to a point where a human-readable, human-editable text format forstructured data has become a complex nightmare where somebody can safely say "As many threads on xml-dev have shown, text-based processing of XML is hazardous at best" and be perfectly valid in saying it. 
+-- Tom Bradford Thanks. 
+Fine with me. 
+There's only one concern about cachalot.ods.org; 
+I don't have direct access to it so I can't guarantee the uptime. 
+It has been pretty stable, though. 
+\/ille Skytt? 
+ville.skytta at iki.fi Ok, validator-0_6_1-release has been tagged and tarballs are at http://validator.w3.org:8001/validator-0_6_1.tar.gz and http://validator.w3.org:8001/sgml-lib-0_6_1.tar.gz . 
+I'll bug Olivier about updating :80 when I catch him on IRC next (you've been warned Olivier! 
+;D). 
+Next step is to merge validator-0_6_0-branch onto HEAD and then I'll begin to merge in my local changes... ...those being the beginnings of a templateified version! 
+:-) Among other things, that means HEAD is off-limits until I finish the merge! 
+The validator-0_6_0-branch is open if there is anything that is appropriate for a 0.6.2 release (just don't committ to the 0_6_1-*release* tag!). 
+Another consequence is that HEAD is about to get real borken for a while! 
+If anyone wants a stable baseline to work from I recommend getting validator-0_6_1-release and working from that. 
+Of course we are the good guys! 
+We define what is good and evil. 
+All other definitions are wrong, and possibly the product of a deranged imagination. 
+-- Stephen Harris RPMs rolled as well, and uploading to http://cachalot.ods.org/ right now. 
+Terje, some last-minute CSS changes made fonts in 0.6.1 look ugly on RH8, Galeon/Mozilla, Konqueror and Opera. 
+I don't have time to investigate at the moment, so attached is a couple of screenshots. 
+Note in particular the monospace font in buttons. 
+moz-old.png is from 0.6.0, and looks fine here. 
+\/ille Skytt? 
+ville.skytta at iki.fi Cool! 
+Thanks for doing this Ville! 
+Very much appreciated! 
+The "ugly" fonts are intentional; though perhaps not too well considered. 
+In an attempt to deal with the squished fonts in Konq I tried to set an explicit font that I know is available on Linux but not normally found on Windows or Mac OS ("Luxi Sans"). 
+I'm not particularly happy with the result, but if it will cure the Konq issue I can live with it. 
+OTOH, it's beginning to look like we should just dispense with the fonts alltogether and set generic families ("sans-serif") instead. 
+I'm useless at typography -- as I may have mentioned :-) -- so this half-assed attempt is probably worse then useless. 
+The monospaced font in the buttons is intentional. 
+I want that to stand out since the button is the "action" on the page and it otherwise tends to disappear in the body of the page. 
+Interviewer: "In what language do you write your algorithms?" Abigail: English. 
+Interviewer: "What would you do if, say, Telnet didn't work?" 
+Abigail: Look at the error message. 
+Ok, HEAD is merged and my template code just landed. 
+Yay! :-) This means HEAD is now horribly broken and will be for quite a clip until the template code stabilizes. 
+But it is now open for commits if anyone has anything they want in there. 
+I have to admit that I'm hoping the current situation with regard to XML Namespaces and W3C XML Schemas is a giant practical joke, but I see no signs of pranksters coming forward with a gleeful smile to announce that they were just kidding. 
+-- Simon St.Laurent And the Template code now passes all the text cases on /dev/tests/ so it's more or less feature-complete compared to the stable branch, but still needs massive stabilization work and the i18n framework is still AWOL. 
+However, to get complete i18n it's not enough to use the current template code. 
+We have at least 3 distinct areas that need to be i18n-ized. 
+The current template code takes care of the basics for the first, normal output, and the two remaining are fatal error messages (which contain hard-coded messages and markup) and onsgmls output. 
+The latter is still wide-open; there are several ways we could achieve it with no clear deciding factor as yet, and is a massive amount of work. 
+So I'm going to leave this off for a while. 
+The fatal error handling will probably need real exception handling and a gettext-ish i18n framework. 
+This will also be usable for the i18n of the normal output, which is why I've left that unfinished for now. 
+For this I have some more or less specific plans, but I need to look closer at the alternatives (which i18n library) before they gel completely so I'll get back to the specifics later. 
+All in all this needs to bake a while before I'm ready to continue. 
+So... ...Next up is an overhaul of the configuration files and related code. 
+This will break HEAD in a similar manner as the Template code, but will give us a more consolidated and uniform configuration, strip out a goodly bit of hard-coded messages, enable some new features, and make it easier to add new document types++ to the Validator. 
+Using Ville's Config::General code, I'm working on one unified config file that specifies, for each known document type (e.g. HTML 4.01 Transitional), the allowed Content-Types, the URI for the "Valid Foo" image, the FPI, whether it should be parsed as XML or SGML, etc. 
+This will obsolete several of the config files that are basically lookup tables and consolidate them into one single file (which is basically a complex datastructure). 
+It will also require some supporting code in "check" to provide reverse mappings (e.g. from FPI to "pretty name" etc.), but it should result in a net cleanup of the affected code and can cleanly be moved into a module and hidden behind OO magic when we get around to m12n the code. 
+Details left out for brevity; if anyone wants to play, ping me and I'll write up something more specific on what I'm planning. 
+Of course we are the good guys! 
+We define what is good and evil. 
+All other definitions are wrong, and possibly the product of a deranged imagination. 
+-- Stephen Harris 

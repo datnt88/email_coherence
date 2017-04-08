@@ -1,0 +1,49 @@
+204 No Content The server has fulfilled the request but there is no new information to send back. 
+If the client is a user agent, it should not change its document view from that which caused the request to be generated. 
+This response is primarily intended to allow input for scripts or other actions to take place without causing a change to the user agent's active document view. 
+The response may include new metainformation in the form of entity headers, which should apply to the document currently in the user agent's active view. 
+What is a UA expected to do with form fields in this circumstance? 
+If a script is to take input and leave the form in view, it would be useful to clear the form fields without changing the document. 
+This would: (1) give a visual indication that something has happened; and (2) allow repeated entries (i.e., data entry) to the same form without reloading or input type="reset" -ing. 
+If there are no objections, I'd like to see this: 204 No Content The server has fulfilled the request but there is no new information to send back. 
+If the client is a user agent, it should __display the document as it was originally received (resetting form fields but not otherwise changing the document view)__. 
+This response is primarily intended to allow input for scripts or other actions to take place without __loading a new document into__ the user agent's active view. 
+The response may include new metainformation in the form of entity headers, which should apply to the document currently in the user agent's active view. 
+Marc Hedlund hedlund@best.com 
+Well, this isn't what 204 was originally for. 
+If I remember the mailing list archives correctly (I read them a couple months ago), it was added a couple years ago so that imagemaps could tell the client not to do anything when a an 'unused' portion of the map was clicked. 
+In order to work properly, this response code must be interpreted by the client as causing *absolutely* no change to the document window. 
+It should act as if you had clicked on a part of the document where absolutely nothing exists. 
+This is how Netscape and Mosaic both handle it, and it is rather useful - I use it in imagemaps all the time. 
+To do what you wish to accomplish, within the current spec, simply send a response that redirects the client to the page they came from (i.e. 301 or 302). 
+Ideally, the client would then send a request message, get a 304 Not Modified back from the server, and would redisplay the document "as it was originally received". 
+Consider this an objection (of course, I guess it doesn't really count, since I'm nobody important). 
+Besides, the HTTP/1.0 draft is suposed to represent current practice, and your redefninition does not conform. 
+Now, for HTTP/1.1, 
+I see no reason why a new respose code, along the lines of "205 Reset Document" couldn't be added, which would have no content, but would instruct the UA to refresh the document internally, clearing any user-modified portions. 
+--/ Alexei Kosut akosut@nueva.pvt.k12.ca.us /--------/ Lefler on IRC ----------------------------/ http://www.nueva.pvt.k12.ca.us/~akosut/ 
+The viewpoints expressed above are entirely false, and in no way represent Alexei Kosut nor any other person or entity. 
+/-------------- Well, I said "if there are no objections," not "if there are no objections from important people." ;) Your imagemap example makes sense, as do your comments about "current practice" -- I had thought there was some variation between clients, but I can't find an example of the behavior I described, so the suggestion is withdrawn for 1.0. 
+I'd be happy with this. 
+I could see this response being useful for applets (i.e., Java) as well. 
+Marc Hedlund hedlund@best.com 
+In article v02120d01ac6176031973@[204.156.156.16] hedlund@best.com 
+(Marc This would be really useful for Chat. 
+Some implementations use one window that submits the users input and returns 204. 
+A second window displays the result. 
+It would be nice to have a way to clear the form element after submitting. 
+:lou Lou Montulli http://www.mcom.com/people/montulli/ 
+Netscape Communications Corp. 
+I have a real concern about automatic resetting of fields. 
+Such behavior presumes that repeated input will be different rather than a small change from the last input. 
+In general, clicking a reset button isn't that big a deal considering all the mouse manipulation required to position oneself for the next input. 
+And then, in addition to reset, should the form reposition itself to the beginning? 
+Killing the user's ability for one last confirmation could also be frustrating. 
+There are some applications (e.g., Lou's example of CHAT) where immediate recycle is known to be desireable to the application implementor and perhaps also to the user. 
+This is not a behavior which should be triggered as a side effect of other useful bahaviors (like staying on the same document). 
+When and if it occurs it should be explicitly requested. 
+I would suggest a new input type for 'SUBMIT&amp;RESET' then the application implementor can offer an appropriate button and even a choice for the user. 
+This would apply without respect to whether the application also provided a confirmation page. 
+Dave Morris (PS. 
+For some applications, like chat, and for error feedback from many others, it would be very useful to have a response which said that the output page now arriving should REPLACE the current page. 
+CHAT would use this to provide a scrolling dialog window without filling the user's history cache and data base interactive applications could provide a much more effective error feedback as well as applications which might perform actions such as filling in a customer name and address while leaving the screen about the same.) 

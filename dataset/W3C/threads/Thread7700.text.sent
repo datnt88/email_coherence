@@ -1,0 +1,22 @@
+It occurred to me when looking at the MKCOL entity request body that what we really need is a way of batching up a bunch of methods and getting a multistatus and multi-mime part response. 
+The MKCOL is just a special case of wanting to do a bunch of commands in a single round trip, perhaps as an atomic operation. 
+I suggest we add a BATCH command to HTTP/WebDAV that has an entity request body consisting of an XML document where each element is a WebDAV method, its attributes are the method headers, and its content is the entity request body if any. 
+The mutlistatus response could be extended to include and entity request body element for each returned status if any. 
+This would be generally useful, would reduce communication round trips, and would eliminated the need to specify anything special for MKCOL (which hasn't been specified yet). 
+It would also provide a simple transaction mechanism if the BATCH method was atomic. 
+Vendors could advertise canned BATCH commands that provide higher-level functions in much the same way we are experimenting with user-defined property sets. 
+Any thoughts? 
+I believe this won't buy you anything over HTTP/1.1 connection pipelining. 
+You'll still transfer just as much information, and you'll still use a single TCP connection. 
+About the only thing that this could do would provide for the potential for atomicity. 
+IMO, that isn't enough of a win to compare to this additional complexity. 
+Cheers, -g Greg Stein, http://www.lyra.org/ 
+From: Greg Stein gstein@lyra.org 
+I believe this won't buy you anything over HTTP/1.1 connection pipelining. 
+You'll still transfer just as much information, and you'll still use a single TCP connection. 
+About the only thing that this could do would provide for the potential for atomicity. 
+IMO, that isn't enough of a win to compare to this additional complexity. 
+At various times, I've heard the reason given for having an additional header or an additional method that just does the work of a couple of simpler methods as "it avoids a round trip to the server, and my users care deeply about avoiding round trips". 
+If I can just invoke "HTTP-1.1 pipelining", and make those suggestions go away, then I'm happy. 
+If it doesn't make the suggestions go away, but the BATCH method does, then I'm in favor of BATCH. 
+Cheers, Geoff 

@@ -1,0 +1,43 @@
+The following is a refinement to the original proposal (alternative 1) which clarifies the distinction between contextual literals and non-contextual literals (i.e. traditional M&amp;S literals and datatyped literals) which I think would be reasonable still for the WG to consider. 
+Please see the end for the motivations for still making such a proposal after todays telecon. 
+Changes: 1. 
+The datatype rdf:XMLLiteral is discarded, or at least moved to an appendix as optional/useful. 
+2. The attribute+value rdf:parseType="Literal" is strictly syntactic, indicating a plain literal which is serialized in the RDF/XML instance as XML. 
+I.e. a literal constituting text with markup. 
+3. The attribute rdf:datatype can co-occur with rdf:parseType="Literal". 4. If no rdf:datatype is specified along with rdf:parseType="Literal", this creates a contextual literal, such that any xml:lang, xml:base, namespaces, etc. in scope for the literal contribute to its interpretation, and via canonicalization and lang tag, are reflected in the graph. 
+5. The presence of rdf:datatype, with or without rdf:parseType="Literal" creates a non-contextual typed literal, where any xml:lang, xml:base, namespaces, etc. in scope for the literal are irrelevant to its interpretation and not reflected in the graph. 
+Thus, given a context of all of the following: 1. rdf:Description rdf:about="#x" 2. rdf:Description rdf:about="#x" 3. rdf:Description rdf:about="#x" ex:foo="bar"/ generate the same triple: #x ex:foo "bar"@fi . 
+All of the following: 4. rdf:Description rdf:about="#x" 5. rdf:Description rdf:about="#x" 6. rdf:Description rdf:about="#x" ex:foo="xhtml:bbar/xhtml:b"/ generate the same triple: #x ex:foo " xhtml:b xmlns:xhtml="..." bar /xhtml:b "@fi . 
+Both of the following: 7. rdf:Description rdf:about="#x" 8. rdf:Description rdf:about="#x" generate the same triple: #x ex:foo "bar"^^ex:blargh . 
+And both of the following: 9. rdf:Description rdf:about="#x" ex:foo rdf:datatype="&amp;ex;blargh" rdf:parseType="Literal" xhtml:b bar /xhtml:b /ex:foo 10. rdf:Description rdf:about="#x" ex:foo rdf:datatype="&amp;ex;blargh" xhtml:bbar/xhtml:b /ex:foo generate the same triple: #x ex:foo " xhtml:b bar /xhtml:b "^^ex:blargh . 
+** Note: if a non-contextual XML fragment does not itself specify all relevant namespace declarations locally, they are not taken from the surrounding RDF/XML context. 
+They may, by design, be provided by the context into which the fragment is inserted. 
+The XML fragment is a 'true' fragment, not a fragment extracted out of the context of an XML instance. 
+The changes to the specs required for this are (IMO) quite minimal. 
+1. 
+The RDF/XML syntax must be modified to allow co-occurrance of rdf:datatype and rdf:parseType="Literal". 2. The mapping from RDF/XML must be finessed slightly, but there are no new operations involved, only a change in when they are applied. 
+No changes are required to the graph syntax, N-Triples, or the MT (though Pat needs to confirm the latter, the MT may in fact require a few minor tweaks to the wording). 
+Such a solution draws a clear distinction between the use of XML for textual markup versus the use of XML for data markup, and allows different users to choose the optimal type of literal, contextual or non-contextual, as they see fit. 
+It is clear in the abstract graph which is which. 
+Equivalences between contextual and non-contextual literals can be addressed separately from the RDF specs, as appropriate. 
+The motivation for promoting this slight change is the realization that in the long and arduous processs of getting to where we are now with datatyping, it was overlooked that use of RDF datatyping with complex types would be greatly facilitated by the ability to serialize complex typed literals as XML in RDF/XML. 
+It is true that the present solution does not prohibit the use of complex types. 
+But it does, though, require any complex type other than rdf:XMLLiteral to be fully escaped in the RDF/XML. 
+This new approach allows the expression of statements such as: etc... Anyway, I think the WG should at least consider it. 
+In the interests of both the I18N concerns as well as tighter synergy between RDF and XML Schema. 
+At the very least, we might consider the allowance of an explicit rdf:datatype specification for XML literals, leaving rdf:XMLLiteral as a default if unspecified, even if nothing else is changed. 
+Regards, Patrick Seems like a good refinement My parser is not happy with the inner quotes :-( Any escaping? 
+Jos De Roo, AGFA http://www.agfa.com/w3c/jdroo/ 
+Er. Yeah. 
+Sorry. 
+Should be escaped. 
+How does N-Triples/N3 handle escaping double quotes. 
+\" ? 
+"" ? 
+Surely not &amp;dquot; or the like. 
+Patrick [removed I18N IG] N3 and N-Triples use \ for escaping. 
+See http://www.w3.org/DesignIssues/Notation3.html#String. 
+This would give: #x ex:foo " xhtml:b xmlns:xhtml=\"...\" bar /xhtml:b "@fi . 
+Regards, Martin. 
+Thanks Martin. 
+Patrick 

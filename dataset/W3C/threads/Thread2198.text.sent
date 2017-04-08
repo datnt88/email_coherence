@@ -1,0 +1,19 @@
+The way I read section 8.2 (message transmission requirements) is: IF ((client is 1.1) AND (NOT connection:close)) then I MUST send status 100 or an error. 
+Will clients get confused receiving 100 even if connection:close? 
+Do I *really* have to send a Date header? 
+(Well, according to 14.19 I do, but that is for caching, and as far as I can tell, only terminal stupidity - in the form of a cache-control directive - will cause a 100 response to be cached). 
+And, (once again) what is the rationale for the 100 response? 
+It seems unnecessary and wasteful; what am I missing here? 
+Thank You, Richard L. Gray rlgray@raleigh.ibm.com: 
+The connection:close conjunct does not come into it. 
+It is IF (client is 1.1) then .... but only for responses to certain methods. 
+In the text of 14.10: |HTTP/1.1 defines the "close" connection option for the sender to signal |that the connection will be closed after completion of the response. 
+`completion of the response' does not mean completion of the 100 response, but completion of the entire HTTP/1.1 response, possibly consisting of a 100 followed by something else. 
+A 100 response is an `interim response' only. 
+Not if they are correctly implemented 1.1 clients. 
+Yes, but not in the preliminary 100 response part. 
+The spec wants you to send: -begin- 100 Continue 200 OK Date: Tue, 15 Nov 1994 08:12:31 GMT -end-- and the whole thing should be seen as a single HTTP response. 
+I notice that the spec is not very clear on this, there should probably be more explanatory text in 10.1. 
+I never heard a rationale that convinced me we needed it. 
+Koen. 
+I,am not sure what took place on my computer,but who ever or what ever(help) that was, Thank You ,Thank you,&amp; Thank You 

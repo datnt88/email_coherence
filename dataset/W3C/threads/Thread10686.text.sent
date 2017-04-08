@@ -1,0 +1,56 @@
+On another list, it has been claimed that the current RDF MT editors draft has non-monotonic datatyping. 
+If this is the case then it should be fixed. 
+I will try and review this claim before the telecon today, I suggest others might like to as well. 
+The claim is that when foo is not a supported datatype then foo rdf:type rdfs:Datatype . is inconsistent, and hence entails everything. 
+Thus, supporting an additional datatype foo, negates previously valid entailments, and hence causes a datatyped system to layer non-monotonically on top of a datatyped system. 
+I personally find this a credible critique that should be taken seriously. 
+We may need to leave open any semantics issues affected :( The (cryptic) examples given in concern the minimal datatype system consisting of only rdf:XMLLiteral, and so xsd:int plays the role of foo above. 
+I note that this comment is based on the shadow space draft rather than Pat's master copy - we may hope that magic has happened. 
+Jeremy Hmm, yes, it seems problematic. 
+In particular, it seems to violate: General monotonicity lemma. 
+Suppose that S, S' are sets of RDF graphs with every member of S a subset of some member of S'. Suppose that Y indicates a semantic extension of X, S X-entails E, and S and E satisfy any syntactic restrictions of Y. Then S' Y-entails E. In particular, if D' is a datatype map and D a subset of D' then if S D-entails E it also S D'-entails E, provided that S and E both recognize all the datatype urirefs in the domain of D'. -- http://www.w3.org/2001/sw/RDFCore/TR/WD-rdf-mt-20030117/#dtype_interp 
+There is also some wording nearby about entailments of inconsistent Imposing a syntactic constraint on a D-interpretation allowing x rdf:type rdfs:Datatype . 
+only if I(x) in D might help, since that would render the antcedent of Peter's first entailment syntactically invalid. 
+1/ xsd:int rdf:type rdfs:Datatype . 
+{ rdf:XMLLiteral,XMLLiteral }-entails rdf:XMLLiteral xsd:string rdf:type . 
+2/ xsd:int rdf:type rdfs:Datatype . 
+DOES NOT { rdf:XMLLiteral,XMLLiteral , rdf:int,int }-entail xsd:string rdf:XMLLiteral rdf:type . 
+-- http://lists.w3.org/Archives/Public/www-webont-wg/2003May/0276.html 
+But there's still a question of such statements in non datatyped interpretations. 
+I think that's not a problem because there's no constraint there that: x rdf:type rdfs:Datatype . is false in all such interpretations, so the first entailment would not hold. 
+#g Graham Klyne PGP: 0FAA 69FF C083 000B A2E9 A131 01B9 1C7A DBCA CB5E Can someone decode the cryptic problem statement and show where the dumb entailment comes from. 
+I haven't spotted it yet, but looking through the semantics spec I noticed: rdfD 4 ddd rdf:type rdfs:Datatype . 
+eee rdf:type rdfs:Datatype . 
+entails ddd rdfs:subClassOf eee . 
+Seems to me that implies that the values spaces of xsd:string and xsd:decimal are identical. 
+I presume I'm missing something. 
+Brian Of the issues this afternoon only pfps-09 seems related; the fix for pfps-09 seems to have introduced this new problem. 
+I suspect changes like the following might work: define a datatype interpretation with any partial function from the URIs in the vocabulary to the set of all L2V mappings; a datatype interpretation that supports a URI uu as datatype dd is one that always maps uu to dd; (essentially have an existential quantifcation over the datatypes) this would then be monotonic. 
+Jeremy Here's the problem text: A D-interpretation which also satisfies the following condition is called an interpretation which is datatyped with respect to D: if I(aaa) is in ICEXT(I(rdfs:Datatype)) then aaa, I(aaa) is in D This condition recognizes membership in the class rdfs:Datatype as a sufficient condition for being a datatype, providing a simple form of 'declaration' for a datatype in RDFS. 
+Thus, a graph which entails a triple of the form ex:somedatatype rdf:type rdfs:Datatype . 
+can be understood as asserting that "ex:somedatatype" denotes a datatype which is mapped from this URIref by the datatype map of any satisfying interpretation. 
+Such an assertion does not in itself provide the information necessary to check that a graph actually satisfies the other semantic conditions, however. 
+We will say that such a datatype URIref is recognized by the graph. 
+The semantic conditions for rdfs-interpretations require the built-in datatype URIref 'rdf:XMLLiteral' to be recognized. 
+I suspect occams razor can be applied liberally. 
+Here is the entailment proof: xsd:int rdf:type rdf:Datatype . is true in no { rdf:XMLLiteral, XMLLiteral } interpretations thus by reduction ad absurdum xsd:int rdf:type rdf:Datatype . 
+{ rdf:XMLLiteral, XMLLiteral }-entails nonsense nonsense nonsense . 
+Jeremy Suggest: s/sufficient/necessary/ and consequential changes would do. 
+Jeremy Why? 
+Brian I presume you mean I am sending this to both lists in order to facilitate communication. 
+Yes. 
+I have (just) discovered this trail (thanks, guys, for not CCing me with any of these messages) and there is indeed a bug. 
+There are two fixes, the short fix and the longer one. 
+The short fix is simply to correct an editorial slip-up in section 3.5 (vocabulary entailment); the first line reads: S rdf-entails E (S rdfs-entails E, S D-entails E) when every rdf-interpretation (every rdfs-interpretation, every interpretation datatyped with respect to D) which satisfies every member of S also satisfies E. this SHOULD BE S rdf-entails E (S rdfs-entails E, S D-entails E) when every rdf-interpretation (every rdfs-interpretation, every D-interpretation) which satisfies every member of S also satisfies E. That is, the condition on rdfs:Datatype is not included in the entailment truth conditions. 
+(This is why that particular condition (on rdfs:Datatype) was isolated from the rest in the current account, BTW. 
+The distinction between D-interpretations (no reference to rdfs:Datatype) and interpretations "datatyped with respect to D" was made in order to remove this problem from the older formulation.) HOWEVER....reading the email trails that this message has produced has made me realize that even with this fix, the intentions of this section are not sufficiently clear, and that I was trying to be too cute/clever by making this distinction, so I have rewritten the section so as to remove it. 
+This is the longer fix, now incorporated into Summary. 
+(1) The definition of D-interpretation now contains the 'necessary' half of the rdfs:Datatype condition. 
+(Omitting that was clearly a mistake, in retrospect, as it was an unnecessary change to the old design and would have violated some of the test cases.) 
+This means that various assertions about datatypes being in rdfs:Datatype are indeed true in all satisfying D-interpretations (eg if you interpret with respect to XSD, then xsd:integer rdf:type rdfs:Datatype . is always true) as you would expect; but the reverse is not the case, ie it is not the case that if you interpret this not with respect to XSD, then that assertion must be false (it might be, but might also not be; it depends on the interpretation.) (2) I have abandoned the term 'datatyped with respect to' and the associated semantic condition - the other half - since I think that to give this idea such an appealing name is probably more likely to be misleading than useful. 
+(3) As a replacement, I have rewritten the text which described the idea of using rdfs:Datatype to 'declare' a datatype. 
+This was intended to convey an intuition which is useful but may be been the root cause of the trouble, so I have presented this differently, in terms of a 'natural' transition from rdfs- to D-interpretations. 
+Comments are welcome on this new text, which uses "MAY". 
+(see http://www.coginst.uwf.edu/~phayes/RDF_Semantics_Editors.html#lcc22l1 ) That was not the intention; I hope that the corrections make things clearer. 
+The master copy (dated May 18) now has the corrections noted above, which I think fix the problem, though maybe not by magic. 
+Pat IHMC(850)434 8903 or (650)494 3973 home 40 South Alcaniz St.(850)202 4416 office FL 32501???????????(850)291 0667 cell phayes@ai.uwf.edu http://www.coginst.uwf.edu/~phayes s.pam@ai.uwf.edu for spam 

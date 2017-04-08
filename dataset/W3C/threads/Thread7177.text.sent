@@ -1,0 +1,86 @@
+Hello Bjoern, I have copied the URI list, because this is a topic of mutual concern. 
+Issue http://www.w3.org/International/iri-edit#idnuri-02 is about whether to use %-escaping or punycode to map the domain name part of an IRI to an URI. 
+This was discussed at the IETF in San Francisco, and the general tendency there seemed to be towards using punycode. 
+The hostname production rule in RFC 2396 (as updated by RFC 2732) does not allow %-escaping, using %-escaping for URI conversion is thus not an option, so why was this at all subject to discussion? 
+Because of a lot of reasons: - Some user agents actually allow it (try using IE with http://www.w%33.org) - The 'U' in URI stands (among else) for 'uniform', and so it is very natural to use the same convention everywhere. 
+- IRIs are defined in many specs (XML, XLink, XML Schema,...) without the exception for domain names, so there is code out there that produces (or will produce, once it receives IDNs) %-escapes. 
+- URIs are (or were, Roy said he would change that) not limited to DNS host names after the //: this field is (was) more general. 
+Obviously, forcing other mechanisms outside DNS to use punycode would be impossible. 
+The above change is crucial, but I'm still not sure that betting URIs on using only DNS forever is a good idea. 
+- There are other fields in an URI/IRI which cannot be identified by generic URI/IRI software as being host names; these have to use %-escapes anyway. 
+- I wrote http://www.ietf.org/internet-drafts/draft-ietf-idn-uri-03.txt for the IDN WG. 
+This formally proposes an update to the URI spec. 
+- The implementation experience I have with Amaya/libwww suggests that it is much easier and more natural to use %hh, at least internally. 
+Amaya doesn't know about punycode, it uses %hh throughout to talk to lower layers. 
+Libwww unescapes back, at a point it knows it has a domain name, and then applies punycode. 
+See e=text/x-cvsweb-markup for the actual code. 
+In other words, the URI/IRI code doesn't need to know about punycode, only the DNS-specific code needs to know. 
+The reasons I know against using %-escapes are: - http proxies won't understand URIs with %-escapes in the host name part. 
+(Note that this in not a problem for the Host: field, which could be defined just to match, and only needs to be treated by the server that does IDNs, so it's not a general update problem. 
+Obviously it's also not a problem for direct access, because one way or the other, user agents have to understand IDNs if they want to support them.) - As you mention, syntax restrictions, although it is a long principle in URI software design that you shouldn't check more than necessary, to allow for extensibility. 
+Given the long list of pros, now that I have written this up, I'm actually surprised that I made the change. 
+In the long run, I'm sure we would be much better of with using %-escapes in domain names. 
+Regards, Martin. 
+Issue http://www.w3.org/International/iri-edit#idnuri-02 is about whether to use %-escaping or punycode to map the domain name part of an IRI to an URI. 
+This was discussed at the IETF in San Francisco, and the general tendency there seemed to be towards using punycode. 
+The hostname production rule in RFC 2396 (as updated by RFC 2732) does not allow %-escaping, using %-escaping for URI conversion is thus not an option, so why was this at all subject to discussion? 
+These are reasons to change RFC 2396 in a way that allows %-escapes in the hostname component (and probably other components). 
+Has this been considered and refused? 
+The only reason to create %-escapes in the hostname part when converting IRIs to URIs is simplicity and simplicity is bad when it breaks in conforming implementations. 
+Even though I wrote software that does not handle %-escapes in the hostname component (but rather fails to parse the URI or keeps the escape sequence) and I know a lot of code that neither supports it (many PHP scripts, for example), I would support to change the production rule in RFC 2396bis, e.g. this is a very good reason to do so. 
+Various W3C Recommendations require conforming applications or recommend to generate invalid URIs (as error recovery from invalid URIs, oh well...) Not that all implementations implement these recommendations or requirements (not even the W3C MarkUp Validator does), but there is indeed a lot of code out there that does, so we have an interoperability problem here. 
+If RFC 2396bis does not change the hostname production rule (and probably others), should there be errata for HTML4, XML, etc. to deal with internationalized domain names? 
+Errata or not, should existing applications be updated to avoid %-escapes in the hostname part? 
+I implemented what HTML4 recommends for invalid URIs in HTML Tidy, it currently "correctly" changes to Should Tidy try to keep the hostname part unchanged, should it use punycode or should Tidy continue to create invalid URI references? 
+Tidy gives a warning if an %URI; attribute value contains invalid characters, should Tidy give an additional warning if the hostname component contains invalid/non-ascii characters? 
+Should Tidy give a specific warning if the hostname component contains %-escapes? 
+As we are here, should Tidy NFC-normalize the %URI; attribute value before escaping it (IRI draft) or should it keep it as-is (HTML 4.01)? 
+* A lot of existing software does not handle %-escapes in hostnames, it breaks existing conforming software * Spam filters might consider messages containing them as spam, since up to now invalid %-escapes in the hostname were used only by spam messages to hide the real link destination * punycode can safely be transcoded to Unicode; what domain name refers http://bj%F6rn/ to? 
+IRI conversion could generate such a URI if the %F6 is an artifact from URI= IRI conversion and if you expect implementers to handle %-escapes, you need to define how, punycode already solved this issue. 
+* if you have no idea what %C3%B6 could mean, what looks worse, %-escapes or punycode? 
+Ok, %-escapes might win here... Well, I am pro a change to RFC 2396bis and I agree that the benefits outweight reasons against such a change, and iff RFC 2396bis changes the production rule(s), the IRI specification could use %-escapes rather than punycode. 
+I am uncertain whether it should, punycode is more reliable while %-escapes is consistent with existing defined error recovery behaivour. 
+So, again, why not change RFC 2396bis? 
+Yes, it has been considered and refused. 
+The IETF developed IDNA in order to avoid the need for operating system infrastructure to be updated en masse prior to deployment of i18n domains. 
+URI processors are part of that infrastructure and the rationale for not changing them is the same as that provided for not globally changing the implementations of BIND. 
+IRIs have to be processed by applications that accept the burden of full Unicode processing already. 
+URIs do not. 
+Adding punycode interpretation to the processing of URIs or gethostbyname simply will not happen because that technology is already deployed. 
+Thus, in order to make deployment possible, punycode processing moves up a layer and URIs are specified such that it becomes easier for the IRI processor to determine where it is needed. 
+Schemes that use DNS within components other than authority will have to provide their own percent-encoding-to-punycode processing, but that's no big deal because there are no such schemes deployed that actually use the domain name for DNS access (they simply use it for identification, which does not require punycode). 
+....Roy If I'm following correctly, that's documented at... Has anybody got an example to show how this works? 
+I'm trying to collecte examples/tests, if only to keep all this stuff straight in my own mind. 
+Dan Connolly, W3C http://www.w3.org/People/Connolly/ Yes. 
+URI processors are clearly part of infrastructure. 
+But the decision for IDNA wasn't that everything else should use punycode blindly. 
+The various issues have to be reconsidered at each level. 
+In general, URI processors are quite a bit closer to actual user-oriented applications than DNS calls. 
+I think we should be very careful about initial deployment (for which I agree) and longer-term deployment, for which I have to disagree. 
+For example servers that actually work, see For each bullet, the first link uses the actual IDN (internationalized domain name), the second link is the mangled punycode equivalent. 
+Unless you have a *very* new browser or a special IDN plugin, only the second ones will work. 
+If you want to test out how some actual IDN converts to punycode, I suggest looking at http://josefsson.org/idn.php. 
+Just enter your IDN (or copy/paste), and you get the punycode back. 
+For actual code, see my recent commits to libwww (on the IDN branch), e.g. http://dev.w3.org/cvsweb/libwww/Library/src/HTDNS.c 
+This actually compiles and works on my machine (Win2000), but hasn't been tested further than that. 
+This is based on idnkit by JPNIC (where I gave a talk 1.5 weeks ago, see slides above). 
+Please note that while I agree with Roy that there is an initial deployment problem, when anybody actually gets to implement IDNs, it makes sense to implement them (i.e. do the IDN- punycode conversion) as low as possible. 
+In libwww, I did that just before the call to 'gethostbyname'. 
+The main other thing I had to add was the Host: header. 
+But defining the Host: header to be %-escaped, or even to be in UTF-8, would not cause any deployment problems that I know of (this stuff is new, we just have to tell people what to do). 
+The main issue that Roy's approach makes easier are proxies. 
+We have to assume that clients who want to use IDNs have to update in some way, and we also can assume that servers serving IDNs can be asked to do some upgrade. 
+Proxies are in the middle, and expecting them to upgrade soon is difficult. 
+Another datapoint showing that actual implementations will tend to go as low as possible in the stack is idnkit itself. 
+It actually allows to patch binaries, if the software is e.g. written according to the posix locale model. 
+So I expect that in languages such as python and perl, which are getting better and better at their character encoding model, the equivalent of 'gethostbyname' will accept IDNs. 
+Initially, that will be implemented by using an outside idn library, but later, it will be using the idn code provided by the OS. 
+Another case that it worth considering is domain names in other positions that 'authority'. 
+Roy said: Schemes that use DNS within components other than authority will have to provide their own percent-encoding-to-punycode processing, but that's no big deal because there are no such schemes deployed that actually use the domain name for DNS access (they simply use it for identification, which does not require punycode). 
+I'm not sure I understand that. 
+A simple HTTP URI, such as the one sent to the W3C validator, can contain a domain name. 
+People trying to validate URIs with IDNs won't want to do a punycode conversion in their head. 
+So the validator will have to be upgraded to accept things such as o.ac.jp. 
+Regards, Martin. 
+There is another one at http://www.imc.org/idna/ , which uses completely different code. 
+--Paul Hoffman, Director --Internet Mail Consortium 

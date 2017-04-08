@@ -1,0 +1,72 @@
+Mike, Thanks a lot for the reply. 
+My point is really that DOM nodes may contain nodes from different implementors, correct? 
+So, I might take an existing DOM structure and insert my special MyGraphicNode in there, which is an object which supports the Node interface but possibly in a very different way. 
+Also, if an implementation supports previous/next pointers or an "index in parent" value, how can the insert method on Node actually do this, without knowing the precise implementation of the Node being inserted and the nodes it already contains? 
+In my implementation, I don't assume anything other than the basic Node interface when working with the nodes (only the DOMFactory has that kind of access), so providing an implementation specific method isn't an option. 
+Perhaps there should be a statement in the DOM spec about whether or not nodes from different implementations can be mixed. 
+This brings up a related point. 
+In COM, interfaces are identified by GUIDs. 
+Are there plans to release a Microsoft COM IDL file which people can use for implementations? 
+Otherwise, it will be much harder for C++ applications to work with nodes from different implementations. 
+I'd be willing to help with this effort since I have a fairly complete IDL file already. 
+I totally agree with your point on interoperability being the primary aim. 
+I've been working on creating DOM objects from XML (using James' XMLPARSE source) and from SGML (using SP). 
+Although the interfaces are very different, the resulting tree is the same! 
+It's also amazing how much you can do with the document with a simple VBScript program in a web page. 
+I've been formatting King Lear into frames/links/etc... Regards, Alfie. 
+From: mcc@arbortext.com 
+Subject: Re: Question about getNextSibling/getPreviou For example, one implementation might use a tree of multiply-linked lists; another might use an array of arrays. 
+However one navigates the native data structures, we want convenient, standardized DOM methods to work. 
+So one implementation of getNextSibling might navigate via a Next pointer, another might increment an array index; either would be efficient in that implementation, but specifying too much implementation detail does not help achieve the goals of the DOM. 
+Is that clearer? 
+One more point (that may or may not be a digression): The DOM's primary goal is to promote INTEROPERABILITY, not efficiency. 
+Assuming, for example, that both Microsoft and Netscape support the DOM someday in their browsers, the idea is that one can write a script, JavaBean, etc. that works with both. 
+It may be that some approach is far more efficient in implementation one than another, and the vendor is free to steer the DOM programmer toward the more efficient approach on their particular implementation (and of course the other vendor could steer the DOM programmer toward a different approach). 
+Yet we'll consider the DOM a success if the script/Bean/control WORKS on both even if it works BETTER on one or the other. 
+David, It sounds like we are coming from the same angle, except I'm not sure there is a major problem at the moment. 
+It's buried in the spec. 
+but it does say under the description of getParentNode: "Note: because in ECMAScript get/set method pairs are surfaced as properties, Parent would conflict with the pre-defined Parent property, so we use 'ParentNode' ..." Is this an oversight or remnant of an earlier draft? 
+I took it to mean that there should be a parent property which can be queried or set. 
+If there isn't supposed to be a parent property, how can insertBefore work? 
+This seems to be the only major obstacle when mixing nodes using different implementations. 
+I suppose with my original post I just wanted to check that this is what's intended, in which case the performance hit on getNextSibling is acceptable (as someone pointed out, the documentation can warn against it). 
+Alfie. 
+From: david.peterson@iname.com 
+Subject: Re: Question about getNextSibling/getPre Hi Alfie, This is something I raised a while back, and currently, the answer is no that is, the current dom interfaces don't have enough methods for this to be possible. 
+Eg there is no setParent() method for a Node, so you can't genericly set the parent - you have to cast to an internal, proprietry class to do that. 
+I'm in favour of being able to do that - for one thing, as an implementor, you could take bits and pieces from different sources and put them together easily for display or modification. 
+Also, with XML, there is no single standard set of tags, so nothing like the HTML Level2 could be accomplished. 
+You could, however, have extensions of Node, etc for a specific implementation, and the application builder could easily plug them into his/her own implementation. 
+This is exacly it. 
+This sort of thing could be done on the (server-side?/client-side) 
+script side, too, with the actual implementation of the inserted nodes being completely unknown. 
+Perhaps there should be an EditorNode interface that is used by the nodes internally. 
+Only a couple of methods would be needed (eg setParent()) and they shouldn't be used outside the implementation of the Node itself. 
+David This question keeps coming up, but I don't really understand the scenario: You're writing an application and exposing the DOM as its API; how will you get nodes from different implementors in YOUR application? 
+Forgive me if I'm missing something obvious here ... I'd be glad to write such a statement, but again it would help to understand a plausible scenario that we're forbidding. 
+I suspect that you could use mix nodes from COM or CORBA compliant implementations, but that would be leveraging the capabilities that those programming architectures bring to the table. 
+Random thought: Are we confusing people by calling DOM an "object model", so that people assume it has the kind of cross-application, cross-language, (and possibly cross-machine) referencing capabilities of COM/DCOM and CORBA? 
+Maybe this DOES need clarification ... Obviously, we plan to let Microsoft and OMG do their thing, and we'll do ours; they should complement each other, but have very minimal overlap. 
+Even more random thought: I *hope* no one expects us to be coming up with a meta-object model that will subsume both and make them inter-operable ... well, we were GOING to do that, but we thought we'd take on the task of bringing peace to the Middle East first ;~) Microsoft says they will release a COM IDL translation of the CORBA IDL DOM spec as a "W3C Note" shortly after the DOM is finalized. 
+Others who want to translate the DOM IDL to the language of their choice (Perl? 
+Scheme? 
+Tcl?) can do likewise. 
+Mike Champion In JAVA, this would be trivial (in fact, even in C++). 
+For example, I have DOM implementation that read DynaText books, and use SAXDOM to pull in an XML document I want to transclude into the ebook. 
+Here we'd have 2 different implementations with two very different sets of performance characteristics. 
+This is also the *exact* scenario I was talking about with identity: 1) I have a C++ implementation of DOM that exposes DynaBase documents. 
+2) I use SAXDOM (via a C++ to Java gateway) to read an XML document in. 
+If I then transclude either of these into the other (using native methods in JAVA, and a C++ -- JAVA gateway), checking for identity with language specific mechanisms is unreliable. 
+OK, I think I understand the scenarios now: A DOM client application --- via COM, CORBA, direct calls into different DLLs, or via some other RPC mechanism -- manipulates documents defined by different implementations of the DOM API. 
+One issue is "What should the DOM spec say about the limitations here?". 
+I'd be inclined to say something to the effect that the programmer should remember that the various objects are just chararacterized by a common INTERFACE, not a common STRUCTURE, so there is no reason to believe that they can be intermingled in a single document. 
+Actually, in Provo we agreed -- after about 4 hours of discussion -- that the elements of multiple documents can't be intermingled EVEN WITHIN A SINGLE IMPLEMENTATION. 
+Thus, to copy a subtree from one document to another, it will have to be cloned, Node by Node, copying values from the source to the target objects. 
+Another issue would be "What should the DOM WG do to make this easier?" 
+I'm at a bit of a loss to suggest much that could go into Level 1. 
+Maybe CORBA or COM would help the cause here, but this would be outside the scope of the DOM. 
+Also, maybe a DOM-friendly "repository" API (in Level 2 or 3) would help, e.g., we could define a "copySubtree" method that would copy Nodes from one implementation to another. 
+I had conceived of this as "read from a repository to an application" or "write from an application back to a repository", but maybe in the general case we're just copying from one DOM implementation to another. 
+Are there other such operations we should be thinking about? 
+Alfie, this takes us back to square 1 with your question; do you have something to suggest that would make your life easier? 
+Mike Champion 

@@ -1,0 +1,49 @@
+contextNode parameters: I would have expected EntityReference to have appeared in the list of acceptible context node types since it plays an equivalent role to Text or CDataSection. 
+Maybe it would be clearer if the prohibited node types were enumerated and why they were inappropriate. 
+The following are reiterations of issues previously raised. 
+I still believe they are legitimate and have not been adequately addressed publically. 
+XPathResult reuse: I believe that the attempt to enable XPathResult reuse does not provide a significant benefit and has several significant negative consequences. 
+Having XPathResult implementations being mutable (which would be required for reuse) means that you cannot trust any XPathResult that has been publically exposed or passed as an argument to remain constant. 
+This would require defensive copying of XPathResults in many uses offsetting any benefit from minimizing XPathResult creation. 
+Having XPathResult reusable requires (or at least strongly encourages) that there only be one implementation class for the XPathResult interface in an implementation. 
+Without the requirement for reuse, then an implementation could create distinct implementations for XPathResult corresponding to different result types. 
+For example: public class StringXPathResult implements XPathResult private string result; public StringXPathResult(String result) { this.result = result; } public short getResultType() { return XPathResult.STRING_TYPE; } public double getNumberValue() { throw new XPathException(TYPE_ERR); } public String getStringValue() { return result; } public boolean getBooleanValue() { throw new XPathException(TYPE_ERR); } public Node getSingleNodeValue() { throw new XPathException(TYPE_ERR); } public Node getSetIterator(boolean ordered) { throw new XPathException(TYPE_ERR); } public Node getSetSnapshot(boolean ordered) { throw new XPathException(TYPE_ERR); } public class NumberXPathResult implements XPathResult... public class BooleanXPathResult implements XPathResult... public class SingleNodeXPathResult implements XPathResult... If an implementation did this, then discovering if the passed XPathResult set was potentially reusable could offset the cost of creating an appropriate XPathResult. 
+If passing a result parameter to evaluate compels the implementation to reuse or throw an exception, then the implementation would be effectively barred from creating type specific implementations of XPathResult. 
+Two step query: That the result set should be ordered or that a snapshot should be taken is not communicated in the evaluate call, but on a subsequent call on the XPathResult. 
+This prevents either requires the implementation to defer completely executing the query until the second call (with the possibly of an interim document mutation) or forcing the implementation to do an ordered snapshot at the initial evaluation call. 
+One possible resolution would be to remove the NODE_SET_TYPE and replace it with the four possible permutations: ORDERED_NODE_SNAPSHOT_TYPE, UNORDERED_NODE_SNAPSHOT_TYPE, ORDERED_NODE_ITERATOR_TYPE, UNORDERED_NODE_ITERATOR_TYPE. 
+That would allow the implementation to optionally schedule the execution of the query at the time of the evaluate call. 
+One possibility (but not a requirement) after doing this is that the methods from XPathSetSnapshot and XPathSetIterator could be merged into XPathResult. 
+A resulting XPathResult interface might look like: public interface XPathResult const unsigned short ANY_TYPE = 0; const unsigned short NUMBER_TYPE = 1; const unsigned short STRING_TYPE = 2; const unsigned short BOOLEAN_TYPE = 3; const unsigned short SINGLE_NODE_SNAPSHOT_TYPE = 4; const unsigned short ORDERED_NODE_SNAPSHOT_TYPE = 5; const unsigned short UNORDERED_NODE_SNAPSHOT_TYPE = 6; const unsigned short ORDERED_NODE_ITERATOR_TYPE = 7; const unsigned short UNORDERED_NODE_ITERATOR_TYPE = 8; readonly attribute unsigned short resultType; readonly attribute double numberValue; // raises(XPathException) on retrieval readonly attribute DOMString stringValue; // raises(XPathException) on retrieval readonly attribute boolean booleanValue; // raises(XPathException) on retrieval Node next(); // raises(XPathException) if type is not // [UN]ORDERED_ITERATOR_TYPE // raises(DOMException) if document has // mutated Node item(in unsigned long index); // raises(XPathException) if not // [UN]ORDERED_SNAPSHOT_TYPE // or SINGLE_NODE_SNAPSHOT_TYPE readonly attribute unsigned long length; // raises(XPathException) if not // [UN]ORDERED_SNAPSHOT_TYPE // or SINGLE_NODE_SNAPSHOT_TYPE (This example merges the SINGLE_NODE_TYPE as a special case of a SNAPSHOT_TYPE, XPathResult.item(0) would be the equivalent of the previous XPathResult.singleNodeValue) 
+XPathSetIterator and XPathSetSnapshot would be eliminated. 
+Actually EntityReferences doesn't exist in the XPath data model, so I think it's puposly left out. 
+However the entityreferences children are inlined (and merged with andjecent textnodes) so _they_ still exist in the tree. 
+The EntityReference it self doesn't exist though. 
+This is exactly how TransforMiiX is designed (the XSLT/XPath engine used in mozilla). 
+We have one common interface similar to XPathResult and separate implementations for each result type. 
+What we have had to do (Peter van der Beken has made a preliminary implementation of DOM XPath) is to have a wrapper that holds an internal object which can be of any result type. 
+However this defeats the entire purpose of reuse it's only the wrapper that gets reused, the internal object is dropped and recreated on every evaulation. 
+One way to help this situation without dropping support for reuseing of XPathResult objects would be to allow the implementations to return a new XPathResult if it is not able to reuse the supplied XPathResult. 
+OTOH this might create interopability problems. is not communicated in the evaluate call, but on a subsequent call on the XPathResult. 
+This prevents either requires the call (with the possibly of an interim document mutation) or forcing the implementation to do an ordered snapshot at the initial it with the call. 
+I think that this sounds like a really good idea. 
+We are just about to make our XPath engine to produce sorted nodeset instead of unsorted ones, since much time can be saved if the nodeset is sorted during evaluation rather then after. 
+This save would be totally lost if we are not told if the nodeset is to be sorted until after evaluation. 
+methods from [snip] While I don't like the getSetIterator or getSetSnapshot functions either, I don't think putting it all in the same interface is ideal either. 
+I propose that XPathSetSnapshot and XPathSetIterator iterator inherit XPathResult: interface XPathSetIterator : XPathResult { Node nextNode() raises(DOMException); interface XPathSetSnapshot : XPathResult { Node item(in unsigned long index); readonly attribute unsigned long length; On a separate issue, I think that XPathSetIterator need some way to detect if it still is valid without causing an exception to to be thrown. 
+I propose that an isStillValid() function is added to the iterator. 
+The function returns a boolean indicating if the nodeset is still valid. 
+The function returns false if a call to nextNode() would throw an INVALID_STATE_ERR exception. 
+The function does not indicate if a subsequent call to nextNode() would return a non-null value or not. 
+/ Jonas Sicking think The Entity References are normalized out (as are CDATASections) of the XPath data model, but they may be represented as distinct nodes in a DOM. 
+If I have a fragment like: and entity references and CDATASections are not normalized, then I don't have a single node that corresponds to Description/text(), so DOM XPath allows any of child nodes of Description to represent the entire XPath text node. 
+However, Entity Reference's were not listed in the list of acceptible context nodes, so if you passed descriptionElement.firstChild as the context node, the query would execute if entity references were expanded, but fail if they were preserved. 
+in object I've just got to think that the true performance benefit of explicit XPathResult recycling is either negligible or imaginary. 
+If you have a preliminary implementation, we could look at starting the test suite. 
+Is it accessible from ECMAScript in your experiemental build. 
+make The ORDERED / UNORDERED were about preserving document order in a query since fabricating a document order in a datastore that doesn't have a structural order (like a query against a database) might be expensive or multiple threads could be querying the tree and the first found might not be the first in document order. 
+I had mentioned in an earlier post but forgotten that a sort parameter (along the lines of xsl:sort) in an XPathExpression would be greatly desired. 
+If such a sort parameter were added, then UNORDERED would skip evaluation of the sort clause. 
+I propose There seemed to be a design philosophy to avoid interface coersion, hence the putting all the result types in one monolythic XPathResult set. 
+If avoiding interface casting was not a design goal, then the appropriate approach is to put all type specific functions into distinct interfaces, like : interface XPathResult readonly attribute short type; interface XPathResultNumber : XPathResult readonly attribute double numberValue; interface XPathResultString : XPathResult readonly attribute DOMString stringValue; interface XPathResultBoolean : XPathResult readonly attribute boolean booleanValue; readonly attribute boolean valid; It seems like an interface coercion has to be cheap compared to an XPath evaluation, so the desire to have one big interface may be misguided. 
+propose nextNode() I'd agree on that, though probably a "valid" boolean attribute on XPathSetIterator would be better than a method. 

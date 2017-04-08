@@ -1,0 +1,169 @@
+Hello, A question regarding requirements of the XML Signatures spec, specifically enveloped signatures and XPath requirement. 
+The spec reads (chapter 10): "Signature, Enveloped The signature is over the XML content that contains the signature as an element. 
+The content provides the root XML document element. 
+Obviously, enveloped signatures must take care not to include their own value in the calculation of the SignatureValue." 
+The interop requirements doc reads: "Feature: Enveloped Signature MUST requires: XPath selector that drops SignatureValue" I remember there was some talk about this at the FTF meeting in San Jose. 
+It was discussed that it could be possible to detect this particular XPath expression without implementing the entire XPath support. 
+Has anyone worked out a (standard?) XPath expression for excluding the Signature or SignatureValue element? 
+Petteri Petteri Stenius Petteri.Stenius@remtec.fi 
+Remtec Systems, Ltd. Office +358-9-5259240 At the very least, serialize() needs access to the namespace prefix. 
+I still don't understand. 
+In an XPath transform, the inputs are essentially a resource and an XPath expression. 
+The resource is parsed into an XML document, the XPath context initialize, and the XPath is evaluated. 
+Now you have an XML document and a node list (temporarily treating other return types as degenerate), which is simply a list of pointers into the XML document. 
+Evaluation of the XPath doesn't (can't) provide any more information than is already available in the document instance. 
+In fact the opposite may be true, since the XML document may contain more information than is exposed in the XPath data model. 
+Also, I think that serialization is the one thing that you would not expect an XPath engine to provide (unlike parsing). 
+I do not expect an XPath engine to provide parsing. 
+Microsoft's doesn't, as an example. 
+Likewise, my XML processor may indeed provide a serialization feature. 
+Microsoft's does, for example. 
+I'm not able to use the existing functionality that may be provided by a processor because a specific implementation strategy has been prescribed - the serialize() function. 
+Now, I don't believe the Microsoft serializer IS quite adequate because your constraints are too severe - but that's a separate potential issue. 
+As I indicated previously, I would not expect an XPath implementation to be optimized for returning the huge strings that could result from the serialize() function. 
+And as I indicated previously, the necessity/danger of user intervention on the serialized string has not been justified. 
+Even the necessity of a two-step process of serializing and then converting to UTF-8 gives me pause for thought - it looks like I might need two separate serialize() functionalities to obtain maximum performance. 
+I still don't understand this argument either. 
+If the serialize function can be called automatically for nodesets as you prescribe, this would seem to indicate that there is not a necessity to expose it to the user in all cases. 
+If you are not using the prescribed XPath extension mechanism in all cases, how does this contribute to maintaining "the property that dsig is an application of XPath"? 
+The output of the XPath processor is not the end result of the transform in all cases. 
+Doing more or less back-end work is a pretty abstract distinction. 
+I feel that it is already an appropriate application of XPath to locate nodes in an XML document. 
+Going beyond this to serializing within the XPath expression itself doesn't contribute to the impression that dsig is an XPath application. 
+In fact, my gut feeling is that it is abuse because it appears to short-circuit the primary XPath return type of nodeset. 
+The redundancy argument still applies. 
+I can call the serialize() function, or not, with the same result. 
+Without some use cases justifying the need for the long form, the short form looks perfectly adquate to me. 
+Note that there is no standard mechanism defined by XPath to "call" extension functions outside of the XPath expression. 
+The XSLT spec carefully uses descriptions like "the resulting object is converted to a string _as_if_ by a call to the string function" (emph added.) 
+A similar approach would be appropriate in describing XPath transforms. 
+I don't see a concrete problem that serialize() solves. 
+I do see some concrete reasons not to have it - performance, implementation flexibility, eliminating redundancy, simplified syntax. 
+-----Original Message----- From: John Boyer [mailto:jboyer@PureEdge.com] Sent: Thursday, March 23, 2000 4:15 PM Donald-LDE008; TAMURA Kent; Christopher R. Maden; Jonathan Marsh; Ed Simon Subject: RE: Enveloped signatures and XPath Attached and Pasted below is the HTML for a new version of the XPath transform for your consideration. 
+If you are on the cc line, it is because you expressed a special interest and/or have provided constructive and very helpful feedback on the XPath transform in the recent past. 
+Although I'm sure it's not the final draft, I am excited by the possibility that we as a group may be close to a sufficient and easy to understand and implement version of the XPath transform, so I am asking you to please take some time to review the new specification as it is a very important part of meeting our partial XML document signing requirement. 
+Thanks, John Boyer Software Development Manager PureEdge Solutions, Inc. (formerly UWI.Com) jboyer@PureEdge.com 
+Executive overview In accordance with group feedback, the following issues have been addressed 1) The parse() function and $input variable binding has been eliminated. 
+Instead the root of the input XML document is provided as the context node of the initial evaluation context. 
+Certain assumptions about what information the parser must retain have been expressed, but all of these assumptions seem to be necessary to support other functionality of XPath. 
+Specifically, I assume that the QName of an element, attribute or namespace node can be created using the information available in the parse tree of any processor that is bundled with an XPath engine. 
+2) Exact order is eliminated; lex order on input is eliminated; lex order of attribute and namespace nodes in the output has been specified in accordance with group feedback. 
+3) The namespace declarations are initialized to those available to the XPath element containing the Xpath expression, as is done in XPointer. 
+automatically applied to the XPath transform result, so a) it will almost never need to be called explicitly, and b) XPath transform expressions need not start with a function call, which seemed to be the source of some concern. 
+6) The output encoding has been standardized to UTF-8. 
+There does not appear to be a better option. 
+7) Someone mentioned a problem with namespace nodes. 
+There was something that we were not addressing, but I did not understand the comment. 
+If you are reading, and it was your comment, could you please reiterate and elaborate. 
+dl dt Identifier: /dt dd http://www.w3.org/TR/1999/REC-xpath-19991116 /dd /dl p The a href="#ref-XPath" XPath /a transform output is the result of applying an XPath expression to an input string. 
+The XPath expression appears in a parameter element named code XPath /code . 
+The input string is equivalent to the result of dereferencing the URI attribute of the code Reference /code element containing the XPath transform, then, in sequence, applying all transforms that appear before the XPath transform in the code Reference /code element's code Transforms /code . 
+/p p The primary purpose of this transform is to ensure that only specifically defined changes to the input XML document are permitted after the this is the omission of an enveloped signature's code SignatureValue /code element. 
+/p h4 6.6.3.1 Evaluation Context Initialization /h4 p The XPath transform establishes the following evaluation context for the XPath expression given in the code XPath /code parameter element: /p ul li A b context node /b , initialized to the input XML document's root node. 
+/LI li A b context position /b , initialized to 1. /LI li A b context size /b , initialized to 1. /LI li A b library of functions /b equal to the function set defined in a href="#ref-XPath" XPath /a plus the function a href="#function-serialize" serialize() /a . 
+/li li A set of variable bindings. 
+No means for initializing these is defined. 
+Thus, the set of variable bindings used when evaluating the XPath expression is empty, and use of a variable reference in the XPath expression results in an error. 
+/li li The set of namespace declarations in scope for the XPath expression. 
+/li /ul h4 6.6.3.2 Parsing Requirements for XPath Evaluation /h4 p An XML processor is used to read the input XML document and produce a parse tree capable of being used as the initial context node for the XPath evaluation, as described in the previous section. 
+If the input is not a well-formed XML document, then the XPath transform must throw an exception. 
+/p p Validating and non-validating XML processors only behave in the same way (e.g. with respect to attribute value normalization and entity reference definition) until an external reference is encountered. 
+If the XPath transform implementation uses a non-validating processor, and it encounters an external reference in the input document, then an exception must be thrown to indicate that the necessary algorithm is unavailable (The XPath transform cannot simply generate incorrect output since many applications distinguish an unverifiable signature from an invalid signature). 
+/p p As a result of reading the input with an XML processor, linefeeds are normalized, attribute values are normalized, CDATA sections are replaced by their functions defined by the XPath specification plus the serialize() function defined below. 
+For most XPath transforms, serialize() need not be called explicitly since it is called automatically if the expression result is a node-set. 
+However, serialization must be represented as an XPath function since it requires access to the internal representation of a node-set (see parsing requirements). 
+/p p b serialize /b ( i node-set /i ) /a /p p This function converts a node-set into a string by generating the representative text for each node in the node-set. 
+The nodes of a node-set are processed in ascending order of the nodes' b document order /b positions except for attribute and code &amp;amp;quot; /code , and all illegal characters for UTF-8 encoding with hexadecimal character references (e.g. code &amp;amp;#x0D; /code ). 
+/li li b Text Nodes- /b the string value, except all ampersands are replaced by code &amp;amp;amp; /code , all open angle brackets () are replaced by code  /code , and all illegal characters for UTF-8 encoding with hexadecimal character references (e.g. code &amp;amp;#x0D; /code ). 
+/li li b Processing Instruction Nodes- /b an open angle bracket, a question mark, the PI target name of the node, a space, the string value, the question mark, and a close angle bracket. 
+/li li b Comment Nodes- /b the open comment sequence (!--), the string value of the node, and the close comment sequence (-- ). 
+/li /ul Output /h4 p The result of the XPath expression is a string, boolean, number, or signature S1 is Hi Jonathan, [mailto:w3c-ietf-xmldsig-request@w3.org]On 
+Behalf Of Jonathan Marsh Donald-LDE008; TAMURA Kent; Christopher R. Maden; Ed Simon At the very least, serialize() needs access to the namespace prefix. 
+I still don't understand. 
+In an XPath transform, the inputs are essentially a resource and an XPath expression. 
+The resource is parsed into an XML document, the XPath context initialize, and the XPath is evaluated. 
+Now you have an XML document and a node list (temporarily treating other return types as degenerate), which is simply a list of pointers into the XML document. 
+Evaluation of the XPath doesn't (can't) provide any more information than is already available in the document instance. 
+In fact the opposite may be true, since the XML document may contain more information than is exposed in the XPath data model. 
+Right. 
+The exact point I'm trying to make is that information needed for serialization (specifically, the namespace prefix) is not publically available. 
+However, we can deduce from the XPath specification that the required information (e.g. namespace prefix) is available privately to the XPath evaluator. 
+It must be available since otherwise the XPath evaluator would be unable to do anything with the initial namespace declarations created during evaluation context initialization. 
+Since the required information is available internally, AND certain existing XPath function must be able to access that information, we can deduce that the information is available to XPath functions. 
+Hence, since serialize() is defined as an XPath function, it must be able to access namespace prefixes and document order positions, whether or not they are in the public data model exposed to XPath expression authors. 
+I do not expect an XPath engine to provide parsing. 
+Microsoft's doesn't, as an example. 
+john Microsoft has an XPath engine. 
+Firstly, tell me where it is so I can look at it. 
+Is it open source? 
+Second, regardless of whether it provides a parser in the concrete sense, it must be coupled with a parser in the abstract sense. 
+You must initialize the evaluation context, you must provide a context node, position and size, the context node, position and size together form a node-set, and the XPath evaluator must be able to derive from that node-set the namespace prefixes and the document order positions. 
+Regardless of where you got the processor, you have had to create enough data structure SOMEHOW to support the described operations. 
+/john Likewise, my XML processor may indeed provide a serialization feature. 
+Microsoft's does, for example. 
+I'm not able to use the existing functionality that may be provided by a processor because a specific implementation strategy has been prescribed - the serialize() function. 
+Now, I don't believe the Microsoft serializer IS quite adequate because your constraints are too severe - but that's a separate potential issue. 
+john If your serialization function were adequate, then I wonder why you can't call it from your serialize() implementation? 
+As to its adequacy, if the tool doesn't work, then don't use it. 
+You can only reuse code in a new application if it fits the application. 
+However, the serialization described in the spec is QUITE easy to implement, so I cannot fathom why it would be a 'potential issue'. 
+As I indicated previously, I would not expect an XPath implementation to be optimized for returning the huge strings that could result from the serialize() function. 
+And as I indicated previously, the necessity/danger of user intervention on the serialized string has not been justified. 
+Even the necessity of a two-step process of serializing and then converting to UTF-8 gives me pause for thought - it looks like I might need two separate serialize() functionalities to obtain maximum performance. 
+The need for serialize() has been justified on several levels. 
+Firstly, there is no security threat in allowing user intervention on the serialized node-set. 
+For you to argue otherwise would require that you explain why it is significantly different from writing a different XPath expression. 
+The XPath expression is signed, so its modification of the input follows a well-known behavior that we can prove is the correct behavior leading to the given message digest. 
+Secondly, I've justified it from the specification standpoint. 
+By defining the behavior as a function library addition to XPath, the result of the DSig WG's work can continue to be viewed as an application of XPath, not as an extension of XPath. 
+Thirdly, I've justified it on technical grounds. 
+There is information required for serialization that is not available in the public information but which MUST be available to the implementations of certain XPath functions. 
+Please have another look at how XPath handles the namespace declarations in the evaluation context. 
+If I have misread something, please let me know, but I did ask for clarification on this point, and noone (including James Clark) has refuted this point yet. 
+As for two serializations, that's not happening. 
+The first act is a 'serialization' of the node-set. 
+The second action is a character transcoding to UTF-8. 
+My original assumption was that implementations would not lose track of the input document's encoding. 
+This was based on the fact that I specified a parse() that would do this. 
+You specifically along with others wanted to get rid of the parse(). 
+The natural result is that I can no longer claim that the input document stays in the same encoding. 
+Since I also lose the BOM, UTF-8 is the only viable alternative. 
+serialize(), however, cannot output UTF-8 because it is an XPath function, which must output a string. 
+The details of what that means are specific to the XPath implementation itself. 
+Transcoding to UTF-8 is not an action that fits within XPath. 
+I still don't understand this argument either. 
+If the serialize function can be called automatically for nodesets as you prescribe, this would seem to indicate that there is not a necessity to expose it to the user in all cases. 
+If you are not using the prescribed XPath extension mechanism in all cases, how does this contribute to maintaining "the property that dsig is an application of XPath"? 
+The output of the XPath processor is not the end result of the transform in all cases. 
+Doing more or less back-end work is a pretty abstract distinction. 
+I feel that it is already an appropriate application of XPath to locate nodes in an XML document. 
+Going beyond this to serializing within the XPath expression itself doesn't contribute to the impression that dsig is an XPath application. 
+In fact, my gut feeling is that it is abuse because it appears to short-circuit the primary XPath return type of nodeset. 
+john The specification very clearly points out that the XPath can return a node-set. 
+However, to run a digest algorithm, we need a string. 
+/john The redundancy argument still applies. 
+I can call the serialize() function, or not, with the same result. 
+Without some use cases justifying the need for the long form, the short form looks perfectly adquate to me. 
+Note that there is no standard mechanism defined by XPath to "call" extension functions outside of the XPath expression. 
+The XSLT spec carefully uses descriptions like "the resulting object is converted to a string _as_if_ by a call to the string function" (emph added.) 
+A similar approach would be appropriate in describing XPath transforms. 
+I don't see a concrete problem that serialize() solves. 
+I do see some concrete reasons not to have it - performance, implementation flexibility, eliminating redundancy, simplified syntax. 
+john Sure, as long as you can guarantee that the moment we yank serialize, we aren't going to have half a dozen different people writing in to say that "my-favorite-XPath-engine doesn't have access to namespace prefixes" or "my-favorite-XPath-engine makes it really inefficient to do document order". 
+Also, I do like the idea of being able to tweak the data in certain ways once it has been serialized. 
+One could wrap a root element around a list of elements, one could prepend some simple material to make the result of the transform more usable to certain software. 
+in XPointer. 
+applied to the XPath transform result, so a) it will almost never need to be called explicitly, and b) XPath transform expressions need not start with a function call, which seemed to be the source of some concern. 
+6) The output encoding has been standardized to UTF-8. 
+There does not appears in a omission of an enveloped signature's code SignatureValue /code element. 
+/p h4 6.6.3.1 Evaluation Context Initialization /h4 p The XPath transform establishes the following evaluation context for the XPath expression given in the code XPath /code parameter element: /p ul li A b context node /b , initialized to the input XML document's root node. 
+/LI li A b context position /b , initialized to 1. /LI li A b context size /b , initialized to 1. /LI li A b library of functions /b equal to the function set defined in a href="#ref-XPath" XPath /a plus the function a href="#function-serialize" serialize() /a . 
+/li li A set of variable bindings. 
+No means for initializing these is defined. 
+Thus, the set of variable bindings used when evaluating the XPath expression is empty, and use of a variable reference in the XPath expression results in an error. 
+/li li The set of namespace declarations in scope for the XPath expression. 
+/li /ul h4 6.6.3.2 Parsing Requirements for XPath Evaluation /h4 p An XML processor is used to read the input XML document and produce a parse tree capable of being used as the initial context node for the XPath evaluation, as described in the previous section. 
+If the input is not a well-formed XML document, then the XPath transform must throw an exception. 
+/p p Validating and non-validating XML processors only behave in the same way (e.g. with respect to attribute value normalization and entity reference definition) until an external reference is encountered. 
+If the XPath transform implementation uses a non-validating processor, and it encounters an external reference in the input document, then an exception must be thrown to indicate that the necessary algorithm is unavailable (The XPath transform cannot simply generate incorrect output since many applications distinguish an unverifiable signature from an invalid signature). 
+/p p As a result of reading the input with an XML processor, linefeeds are normalized, attribute values are normalized, CDATA sections are replaced by their attribute and code &amp;amp;quot; /code , and all number, or signature S1 is 

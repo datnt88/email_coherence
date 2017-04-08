@@ -1,0 +1,196 @@
+The version of the requirements document that I distributed today tried to consolidate the two earlier requirements papers without changing their content. 
+Some changes will need to be made before the new document is ready to be submitted as an Internet Draft. 
+The requirements are inconsistent with the current specification on many points, and these need to be resolved. 
+In addition, the requirements document takes positions on many issues that have turned out to be controversial. 
+The group needs to come to some consensus on these issues. 
+Since our schedule calls for the requirements document to be submitted as an Internet Draft by the end of February, I hope that we will be able to discuss and resolve many of these questions by Monday, February 24. 
+Whatever issues have been resolved by then can be reflected in the requirements paper that gets submitted. 
+Requirements not satisfied by the specification: 1. Attributes. 
+The current specification says almost nothing explicitly about attributes, although it is possible to deduce a lot about how attributes would be manipulated from the discussion of links. 
+I believe that all the requirements about attributes are satisfied except one: "Via HTTP, it should be possible to ... query ... arbitrary attributes ..." We need to decide whether we want to define a query syntax. 
+If not, we need to decide whether we want to support a weaker requirement, for example that the model of attributes we define should be capable of supporting some query mechanism. 
+2. Locks. 
+"It should be possible to take out a lock on multiple resources in the same action." 
+3. Locks. 
+"It should be possible to assign a lock to a single person or to multiple persons with a single action." 4. Locks. 
+The requirements call for support of read locks, which are not in the specification. 
+5. Notification of Intent to Edit. 
+"It should be possible to notify the HTTP server that a resource is about to be edited by a given person." 
+This requirement is stated independent of versioning, implying that it should be possible to give this notification even for non-versioned resources. 
+However, the specification supports notification of intent to edit only in the context of versioning. 
+6. Retrieval of unprocessed source for editing. 
+Support for this requirement was accidentally dropped from the specification. 
+7. Partial Write. 
+"After editing a resource, it should be possible via HTTP to write only the changes to the resource, rather than retransmitting the entire resource." 
+Not mentioned in the specification. 
+Does it need to be, or is it adequately supported by HTTP already? 
+8. List URL Hierarchy Level. 
+Support for this requirement was accidentally dropped from the specification. 
+9. Versioning - navigation. 
+The requirements state that from any version, it should be possible to find the root. 
+It should be possible to navigate to the predecessor. 
+10. 
+Versioning. 
+For any URL, it should be possible to find out whether its resource is a version in some version tree. 
+It should be possible to find out what versioned object (version handle) it belongs to. 
+11. 
+Version - tracking. 
+"A way for the server to ensure that the user operating on a resource is the same one who reserved it." 
+Functionality in the specification that is not in the requirements: 1. Destroy 2. Undelete 3. CopyHead 4. MoveHead 3. Schema Methods (discovery mechanism) 4. Diff/Merge 5. ServerMerge 6. UnVersion The following controversial issues need to be resolved: 1. 
+The requirements (as well as the charter) say that we are extending HTTP. 
+Discussions at Irvine made it clear that there is no consensus on this in the group. 
+2. Locking. 
+The requirements say that it should be possible to lock subsections of a resource. 
+The specification does allow this. 
+But at Irvine it appeared that there was not consensus on this point. 
+3. Copy, Move / Rename. 
+Discussions at Irvine made it clear that there is controversy about the desired semantics of these operations, especially for complex resources like collections, versioned resources, and resources with attributes. 
+The requirements are vague and don't address the hard questions. 
+Do we want to leave them that way? 
+4. Versioning General Principles need to be revisited. 
+- It is not clear that the specification obeys the "Stableness of Versions" principle. 
+If a user requested to overwrite an existing version rather than create a new one, there is nothing to prevent that, and nothing to prevent the server from complying. 
+Should there be? - "Separation of resource retrieval and concurrency control" is supported by the Request-Lock, Request-Intent, and Request-Working-Loc parameters to the CheckOut method and the discovery mechanism. 
+This is all embroiled in the controversy over how much latitude we want to give servers, how simple we want to make things for clients, whether we want to rely on the discovery mechanism, etc. 5. Versioning - uncheckout. 
+Neither in the requirements nor in the specification. 
+Is it needed? 
+Name:Judith A. Slein E-Mail:slein@wrc.xerox.com 
+MailStop:128-29E ***Fabio - The definition of locking here conflicts with the one that was used in the versioning requirements paper. 
+More in a separate mail note. 
+Since what follows reflect a personal opinion, which Judy wasn't agreeing enough to put in the official draft document, I am putting it in a personal mail to the whole list. 
+My personal view (which was contained in the versioning requirement paper) is that we should work so that, whatever versioning policy will be suggested or enforced here, it does not *impose* locks. 
+There are many lock-free versioning policies that could be accomodated through HTTP (for instance, just to mention personally interesting items, VTML-like markup languages). 
+So in the general principles I believe we should allow that the request and the granting of a lock are not uniformly implemented in systems. 
+In the versioning requirements, it is explicitly said that while an UNLOCKED entity is surely available to everybody requesting it, LOCKED entities may and may not be available (usually NOT) to everyone who is not the author. 
+Another way to put it down is to say that it is always possible for the user who has LOCKed an entity to PUT it, while other users may or may not depending on the locking policies. 
+In implementations where a locking mechanism is not enforced, methods should be available for managing multiple checkins. 
+This came from the description of the editing cycle which was supposed to happen in most situation and that had four steps: * a resource is RESERVEd (I inform you I'd like to modify that resource, if I may). 
+Servers tracking sessions use this information. 
+* a resource is LOCKed (I'd like to start modifying that resource if I may). 
+Servers implementing locking will refuse further LOCK and PUT requests for that resource unless coming from the owner of the lock. 
+* a resource is GOTTEN (may I have that resource, please?): a write-only lock on the resource will not prevent any user from GETting the resource. 
+Read-write locks will prevent anyone but the owner of the lock to access it. 
+* a resource is PUT (here is the new version of the resource). 
+The owner of the lock is guaranteed to be allowed to PUT the resource or not. 
+All others may or may not depending on the locking policies of the server. 
+* a resource is UNLOCKed: (I am finished with this resource, thanks). 
+All users requesting this resource can now have it. 
+LOCKs are also available again. 
+* a resource is RELEASEd: (I inform you I have no intention of further modifying this resource). 
+The server can now safely close a modifying session on that resource for that user. 
+The idea is that every one of these steps is optional, but, depending on the pedantry of the server, they may have an effect on the possibility to PUT the resource. 
+So a lazy server will treat RESERVE, LOCK, UNLOCK and RELEASE as NOOPs and always return a success response codes, while strict ones could prevent optimistic policies (e.g. it'd accept a PUT for an unlocked resource, but won't accept a PUT for a locked one except by the owner of the lock) and those even stricter could simply refuse any PUT which has not been preceeded by a LOCK. 
+If we state the locking issues in a positive manner ("only users owning the lock can PUT the resource"), we are imposing a strict locking policy in the standard, and make life hard for lock-free systems. 
+By stating it in a negative way ("the owner of a lock is guaranteed to be able to PUT the resource, and all users can LOCK an unlocked entity"), we guarantee a level of common functionality both for locking servers and unlocking servers. 
+Furthermore, has it has frequently been said in the group, LOCKs are a deviation from the statelessness of HTTP, thereby introducing all sorts of issues such as expiry of states, removal of states, that a careful phrasing could avoid. 
+Furthermore, I believe we could avoid creating a precedent for state support in HTTP which could be too heavy a burden to carry. 
+***Fabio - The definition of locking here conflicts with the one that was used in the versioning requirements paper. 
+More in a separate mail note. 
+I presented this position at the Cambridge meeting, and it was not significantly attacked, although the issue of interoperability lurks in the background here. 
+I think that the focus should be on making clients able to work with servers _easily_. 
+So things like locking should be defined so that a client can always do the same things, and be informed by the server if those are inappropriate. 
+For instance, declare to edit could return an error: conflicting lock, without requiring special locking logic on the client end. 
+This is the same as curently happens with PUT -- you can do it, but you may not succeed. 
+Or it could return a "LOCK REQUIRED" message. 
+I think wide deployment of Web authoring tools means that we need to define a simple client protocol that can work across all servers, even if the servers have to do some small extra work. 
+And to me it means that the definitions of lock methods should all _allow_ NOP-like implementations if that is sensible, so that clients can use a single simple protocol. 
+And similarly, a client that just blindly performs all these operations can still work with servers that don't care about them. 
+Exactly. 
+Certainly there are a lot of people in the collaborative work community trying to get _rid_ of the notion of explicit locks, as they can impede collaboration. 
+Managing collaboration is very different from managing document changes in a large organization, but both should be satisfied by the work of this group. 
+This is really the key point... Right. 
+We may need to support these anyway, but allowing non-locking means that some (many) implementations need not face these issues unless they need to. 
+-- David David Durand dgd@cs.bu.edu \ david@dynamicDiagrams.com 
+Boston University Computer Science \ Sr. Analyst --------------------------------------------\ http://dynamicDiagrams.com/ MAPA: mapping for the WWW \__________________________ I understand what you are trying to do by making LOCK a loose interpretation and allowing "lazy" servers to respond as desired. 
+Unfortunately, by permitting *any* response (for instance, returning a success code on a lock when you are a lazy server and didn't really lock it) will cause great heartache in interoperability land. 
+I feel we need to do two things ( back on my soap box from Irvine): 1. provide for interoperability 2. provide a launching platform for the future. 
+Neither is served if we do not have a strict and *expected* result from LOCK. 
+If you have a lazy server and I specify "LOCK" that resource, I expect the server to return a failure code because the resource is NOT LOCKED. 
+As a design team we pulled back from the soft LOCK model that was first proposed because nobody could count on it for anything. 
+In our next design meeting I'll make sure that your comments here are gone over completely so that we can verify that "non-locking versioning systems" are represented in the design. 
+But we must also allow "check-out versioning systems" and "lock versioning system" to be represented as well. 
+-src Steve Carter Novell GroupWare CTO srcarter@novell.com 
+801-228-5175 Fabio Vitali fabio@cs.unibo.it 
+02/10/97 04:16PM ***Fabio - The definition of locking here conflicts with the one that was used in the versioning requirements paper. 
+More in a separate mail note. 
+Since what follows reflect a personal opinion, which Judy wasn't agreeing enough to put in the official draft document, I am putting it in a personal mail to the whole list. 
+My personal view (which was contained in the versioning requirement paper) is that we should work so that, whatever versioning policy will be suggested or enforced here, it does not *impose* locks. 
+There are many lock-free versioning policies that could be accomodated through HTTP (for instance, just to mention personally interesting items, VTML-like markup languages). 
+So in the general principles I believe we should allow that the request and the granting of a lock are not uniformly implemented in systems. 
+In the versioning requirements, it is explicitly said that while an UNLOCKED entity is surely available to everybody requesting it, LOCKED entities may and may not be available (usually NOT) to everyone who is not the author. 
+Another way to put it down is to say that it is always possible for the user who has LOCKed an entity to PUT it, while other users may or may not depending on the locking policies. 
+In implementations where a locking mechanism is not enforced, methods should be available for managing multiple checkins. 
+This came from the description of the editing cycle which was supposed to happen in most situation and that had four steps: * a resource is RESERVEd (I inform you I'd like to modify that resource, if I may). 
+Servers tracking sessions use this information. 
+* a resource is LOCKed (I'd like to start modifying that resource if I may). 
+Servers implementing locking will refuse further LOCK and PUT requests for that resource unless coming from the owner of the lock. 
+* a resource is GOTTEN (may I have that resource, please?): a write-only lock on the resource will not prevent any user from GETting the resource. 
+Read-write locks will prevent anyone but the owner of the lock to access it. 
+* a resource is PUT (here is the new version of the resource). 
+The owner of the lock is guaranteed to be allowed to PUT the resource or not. 
+All others may or may not depending on the locking policies of the server. 
+* a resource is UNLOCKed: (I am finished with this resource, thanks). 
+All users requesting this resource can now have it. 
+LOCKs are also available again. 
+* a resource is RELEASEd: (I inform you I have no intention of further modifying this resource). 
+The server can now safely close a modifying session on that resource for that user. 
+The idea is that every one of these steps is optional, but, depending on the pedantry of the server, they may have an effect on the possibility to PUT the resource. 
+So a lazy server will treat RESERVE, LOCK, UNLOCK and RELEASE as NOOPs and always return a success response codes, while strict ones could prevent optimistic policies (e.g. it'd accept a PUT for an unlocked resource, but won't accept a PUT for a locked one except by the owner of the lock) and those even stricter could simply refuse any PUT which has not been preceeded by a LOCK. 
+If we state the locking issues in a positive manner ("only users owning the lock can PUT the resource"), we are imposing a strict locking policy in the standard, and make life hard for lock-free systems. 
+By stating it in a negative way ("the owner of a lock is guaranteed to be able to PUT the resource, and all users can LOCK an unlocked entity"), we guarantee a level of common functionality both for locking servers and unlocking servers. 
+Furthermore, has it has frequently been said in the group, LOCKs are a deviation from the statelessness of HTTP, thereby introducing all sorts of issues such as expiry of states, removal of states, that a careful phrasing could avoid. 
+Furthermore, I believe we could avoid creating a precedent for state support in HTTP which could be too heavy a burden to carry. 
+Well, ok. 
+As long as the non-locking policy can be handled as well, I'm fine with what you say. 
+I'm not sure though if by "design meeting" you refer to something internal to Novell, or to something WebDAV. 
+Maybe "requirements" and "design" were mixed again in the document, and we were already suggesting solutions instead of needs. 
+This is a subtle issue, where requirements end and design starts. 
+Nonetheless, design-wise, I wonder. 
+Having a fixed editing cycle (RESERVE, LOCK, GET, PUT, UNLOCK, RELEASE) with optional non-operative methods could allow simple clients to work in all situations, while requiring reliable behaviour in "strong" methods (RESERVE and LOCK either perform strongly, or return an error) would imply a somewhat more complex client behaviour, too, since it would have to provide management of all the situations that could arise, depending on the kind of server I am dealing with. 
+This is clearly a design trade-off, which I would like explored. 
+You say you have already discussed it and preferred a more complex client-server protocol to unreliable methods. 
+I trust you, but would like you to spend a few more words on your conclusions. 
+Thanks Fabio The requirements are inconsistent with the current specification on many points, and these need to be resolved. 
+In addition, the requirements document takes positions on many issues that have turned out to be controversial. 
+The group needs to come to some consensus on these issues. 
+The current specification is irrelevant to the requirements. 
+The requirements state what the goals are, we will figure out how to get there later. 
+Though I do agree that there needs to be some very serious consensus seeking, especially on the issue of versioning. 
+1. Attributes. 
+The current specification says almost nothing explicitly about attributes, although it is possible to deduce a lot about how attributes would be manipulated from the discussion of links. 
+I believe that all the requirements about attributes are satisfied except one: "Via HTTP, it should be possible to ... query ... arbitrary attributes ..." We need to decide whether we want to define a query syntax. 
+If not, we need to decide whether we want to support a weaker requirement, for example that the model of attributes we define should be capable of supporting some query mechanism. 
+A good requirements spec should only say that it must be possible to query attributes, not how to do it. 
+BTW, the current draft does include attribute querying, please review the LinkSearch method. 
+As for the rest of your points, I believe I have addressed all of them in my response to the requirements draft. 
+Yaron This relates to the discussion on locking but more generally on a suite of issues we're struggling with. 
+I think I said this once but I don't think I typed it yet. 
+Short terminology (not definitions, just 'please keep them separate') server: Where the docs are. 
+client: The software that talks to the server. 
+user: The person running the client. 
+customer: Whoever bought the server &amp; clients. 
+policy: What the customer wants the server to enforce. 
+The problem is that servers embody policies, e.g.: - Documents must be locked before they can be edited. 
+- An update of a document must include certain meta-data that says why the document was edited. 
+The _customer_ wants the _server_ to enforce the _policy_ on the _user_, but we would like this to be possible without the _client_ having to know about all possible policies. 
+Whether locking is required is a policy. 
+Should a careful client have to know about all possible locking policies? 
+The policy might be enforced per-document or per-server area, so policy is not easily determinable in advance, anyway. 
+If we identify the edit life-cycle of documents, we should allow the server to ask the client to ask the user for information that the server's policy might require at each point in the life cycle. 
+Since this is WEBDAV and not just DAV, we could define that interaction as "the server gives the client a form that the user is expected to fill in", since the web includes forms. 
+Larry On the subject of query, I do not believe that the LinkSearch method provides any support for searching for documents based on attribute values, which is what this requirement is about. 
+It looks to me as though LinkSearch lets you search for attributes based on the properties of links. 
+So you can use it to find out whether a given resource has an author attribute, or to locate the author attribute of a given resource. 
+But you cannot use LinkSearch to formulate a query like, find me all the resources with author = "Shakespeare". 
+(On the broader issue of whether the requirements should be altered in light of the spec, I absolutely agree with you that in an ideal world this should never happen. 
+But in reality, it often does. 
+And sometimes rightly so. 
+We sometimes get a better understanding of a problem area as we work the details, and realize that the requirements were mistaken. 
+I think this is certainly happening in some areas of WebDAV.) --Judy Name:Judith A. Slein E-Mail:slein@wrc.xerox.com 
+MailStop:128-29E Comments interleaved: Fabio Vitali fabio@CS.UniBO.IT 
+02/11/97 05:07PM The "design meeting" consisted of two week-long meetings among the authors to prepare the specification that was presented. 
+In no way was it internal to Novell or any other vendor. 
+Several at the Irvine meeting would remind you here that there are versioning systems which do not use LOCK and UNLOCK, etc but rely on other methods of conflict resolution. 
+Because of the many models that are supported in the industry we have not beeen able to convince ourselves that there is a universal versioning/editing cycle that will allow "all clients" to interoperate. 
+I'm off-site right now and will elaborate on my conclusions at a later date. 
+-src 

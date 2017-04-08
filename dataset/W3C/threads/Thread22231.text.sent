@@ -1,0 +1,38 @@
+Thought it is pretty obvious to us, index.html 
+should make it clear that the test suite currently only tests XML and SVG implementations of DOM L1 Core. 
+That when you are running the ECMAScript tests in IE, you are testing the MSXML2 component (or Adobe SVG if you select svg_alltests.html) and when you are running the ECMAScript tests in Mozilla, you are testing their XML parser. 
+Later revisions will add tests for DOM L1 conformance for HTML implementations. 
+Good point, I'll add it. 
+By DOM L1 HTML, do you mean a second release of the DOM L1 Core test suite with additional tests that are compatible with HTML implementations? 
+Those additional tests will also be compatible with XML and SVG implementations. 
+To test best of my knowledge, there isn't a W3C rec for DOM L1 HTML. 
+I obviosly mean a second release with additional tests for HTML, not a separate one. 
+It should also be noted that MSXML 3.0 ships with IE 6. 
+Is this scenario covered? 
+Thought it is pretty obvious to us, index.html 
+should make it clear that the test suite currently only tests XML and SVG implementations of DOM L1 Core. 
+That when you are running the ECMAScript tests in IE, you are testing the MSXML2 component (or Adobe SVG if you select svg_alltests.html) and when you are running the ECMAScript tests in Mozilla, you are testing their XML parser. 
+Later revisions will add tests for DOM L1 conformance for HTML implementations. 
+| From: Jason Brittsan [mailto:jasonbri@microsoft.com] | It should also be noted that MSXML 3.0 ships with IE 6. 
+Is | this scenario covered? 
+Good point, but what really concerns me is MSXML 4.0; to use it's features, one must use a version specific ProgId: var myDomObject = new ActiveXObject("Msxml2.DOMDocument.4.0"); 
+The use of a version independent ProgId calls MSXML3.0 or lower depending what's in the machine: var myDomObject = new ActiveXObject("Msxml2.DOMDocument"); 
+Does the TS handle this? 
+BTW, although L1 does not define a standard way to create document objects, IE doesn't even follow the "good practice" of "createFoo" factory methods. 
+I hope IE will support this as below, instead of using company_ name_Bla to load a document: document.implementation.createDocument('','',null) 
+[1] http://www.w3.org/TR/REC-DOM-Level-1/level-one-core.html#ID-249F15BA 
+Kindest regards, Manos No reference to particular implementations in given, only that the TS tests XML and SVG implementations of DOM Leel 1. /Dimitris I'm sorry, I should have been more specific. 
+That was more of an implementation note. 
+It's something to consider for the test cases to insure an accurate test environment. 
+No reference to particular implementations in given, only that the TS tests XML and SVG implementations of DOM Leel 1. /Dimitris One way to solve this since we ship test files and not a framework to generate correct files is in the transform; we could consider writing one transform for each known implementation, or write a loding mechanism for each implementation which JsUnit uses to load the tests (which do not then need to be written for each known implementation). 
+If this is a good idea, proposals are more than welcome. 
+/Dimitris Currently, DOMTestCase.js sniffs the browser to detect the appropriate DOM implementation. 
+If it sniffs Mozilla, it will try to use its DOM. 
+If it sniffs IE, then it will try to create the MSXML parser using new ActiveXObject("MSXML2.DOMDocument"). 
+If the media type is SVG, then it will use Adobe's SVG control. 
+The failure of the test suite to run on Mac OS X IE is due to the browser sniffing IE, but trying a Windows specific mechanism of getting an XML parser. 
+A smarter DOMTestCase.js would be sniffing if IE is running on a Mac and finding the right way to load an XML document (how to do that I haven't found). 
+So there are a couple of ways to run the test suite for non-default IE XML parsers: A) Manually change the new ActiveXObject() statement in DOMTestSuite.js. 
+B) Change the registry so that MSXML2.DOMDocument points to MSXML4. 
+If you could suggest what DOMTestSuite.js could "sniff" to determine that MSXML4 is the appropriate parser to test, we might consider adding more smarts. 
+But as it stands, DOMTestSuite.js considers that there is only one loader per combination of browser and media type and the loader for IE and "text/xml" is whatever is registered for MSXML2.DOMDocument. 

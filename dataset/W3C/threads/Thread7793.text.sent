@@ -1,0 +1,51 @@
+How can a WebDAV server support MKCOL if the repository the server is built upon assigns names to newly created collections (as opposed to allowing clients to specify the name)? 
+Put another way, how can a client create a collection on a WebDAV server using MKCOL if the collection that gets created must be assigned a URI by the server? 
+For example, suppose that each collection is assigned an ID that is unique to the database that underlies the WebDAV server and this ID is used to identify the collection in a URI (e.g., collection, it must issue a MKCOL request to server essentially controls the namespace, not the client, the client can't know what to send for NEW_NAME. 
+Am I missing some important piece of information here? 
+I assume that document management systems might be likely to encounter this kind of problem. 
+If so, has anyone dealt with it? 
+Although it doesn't seem to be explicitly forbidden, I am assuming that it is inappropriate for the server to ignore the name in the request-URI and respond with a Location header that identifies the name assigned by the server. 
+Though this seems like a possible solution, it seems contrary to the intent expressed in the spec. 
+Or am I wrong in this assumption? 
+Brian Stiles It can't. 
+MKCOL is defined as creating the collection specified by the Request-URI. 
+If your server doesn't do that, it it isn't MKCOL :-) Is it possible for you to create (internally) the server-specified collection and then somehow link/alias the Request-URI to point to the new collection? 
+If you have a custom client, then you can define a method such as "STARBASE-MKCOL" which is modelled after MKCOL, but returns a Location header with the true URI. 
+Another alternative is to return the "next-collection-name" as a property of the parent collection; this has transactional problems, though (e.g. what happens if two clients request the property and then use it in MKCOL?) Cheers, -g Greg Stein, http://www.lyra.org/ 
+Thanks for the quick response. 
+It's problematic because we are trying to make use of a legacy repository that has some inconsistencies with the WebDAV model and we are trying not to modify the repository code. 
+In particular, if you use the repository-assigned ID's of the objects in the repository for the URI, then you can have proper URI's for each object, but you can't create new collections with MKCOL for the aforementioned reason. 
+If you use the user-assigned name of each object in the repository, you can't have proper URI's for each object in the repository because there can be multiple objects in one collection that have the same name. 
+After thinking about your suggestion, it appears we have two choices. 
+We could use the user-assigned names of collections in the MKCOL request-URI and also assign the new collection a URI based on the repository-assigned ID's. 
+Or, perhaps a better approach would be to consider it a flaw in the repository that two objects in the same collection can have the same name and just disallow access via WebDAV to all but one of the objects with the same name. 
+That is problematic indeed in our case. 
+I think I'd rather bend my product to work with the protocol than extend the protocol to work with my product. 
+Thanks again. 
+Brian Stiles I agree with you that this is a problem for all document management systems. 
+I believe it is the most fundamental mismatch between the WebDAV operational model and the way document management systems work. 
+It affects not only MKCOL, but all methods that result in the creation of new resources (COPY, MKREF, PUT, MKRESOURCE). 
+It's also wound up with the requirement that WebDAV resource names reflect the collection hierarchy, which the server-generated names in document management systems generally do not do. 
+Document Management Systems will probably be forced to do aliasing between client names and server names, no matter how costly and annoying that turns out to be. 
+--Judy Judith A. Slein Xerox Corporation jslein@crt.xerox.com 
+(716)422-5169 800 Phillips Road 105/50C Webster, NY 14580 This is an old and well known issue that many people mistakenly think is solved. 
+The server is completely free to return to a PUT or MKCOL with a 200 O.k. and throw on a location header which points to the "real name" of the new resource while throwing away the client's proposed name. 
+In practice no server I'm aware of does this and no client I'm aware of could properly handle this. 
+If memory serves this issue is already on the WebDAV open issues list. 
+Personally I think we should just adopt current practice which says that you must either accept the name or reject the request but that is just my $0.02. 
+Yaron Make the $0.04 (i.e. 
+I agree with Yaron). 
+Cheers, Geoff yg The server is completely free to return to a PUT or MKCOL with a yg 200 O.k. and throw on a location header which points to the "real yg name" of the new resource while throwing away the client's yg proposed name. 
+I don't think that's so. 
+(Nit #1 is that "201 Created" is the response for a new resource.) 
+More importantly, RFC-2068 has specific language about this situation for PUT (the following compares PUT to POST): In contrast, the URI in a PUT request identifies the entity enclosed with the request -- the user agent knows what URI is intended and the server MUST NOT attempt to apply the request to some other resource. 
+If the server desires that the request be applied to a different URI, it MUST send a 301 (Moved Permanently) response; the user agent MAY then make its own decision regarding whether or not to redirect the request. 
+I agree that a precise reading of the RFC-2518 definition of MKCOL allows a 201 response with a LOCATION: header, but one certainly has the impression from RFC-2518 that "MKCOL is just like PUT, but there is no enclosed entity comprising the contents of the new resource". 
+If it is the intent that MKCOL differ from PUT is this fairly significant respect, I suggest that appropriate clarifying language be added, but I don't particularly see why such a difference should exist. 
+The RFC-2068 specified behavior for PUT could be used to solve the problem of server-generated collection names if applied to MKCOL. 
+When issuing the LOCATION: header, the server could secretly keep a record (with a timeout) of the fact that it had been sent. 
+A couple hundred milliseconds later, the redirected request comes in with the same credentials and succeeds. 
+If no redirected request comes within some timeout, the collection name could be harvested. 
+bill@carpenter.ORG 
+(WJCarpenter) PGP bill@bubblegum.net 
+0x91865119 38 95 1B 69 C9 C6 3D 25 73 46 32 04 69 D6 ED F3 I like it. 

@@ -1,0 +1,72 @@
+Hello all, i know in HTMLTidy you can set your config file to recognize unknown tags by specifying those tags. 
+Is there a similar option in JTidy? 
+I couldn't find one, but such an option would be great. 
+thanks, ryan Michael -- The config file is the same config file in both HTML Tidy and JTidy. 
+If you're not using the command line, you can set the config file in JTidy with Tidy.setConfigurationFromFile(String filename). 
+Gary Thanks...one more question Is there a method I can call from Tidy that takes the actual tag as the argument? 
+Here's the situation: i'm using JTidy in my own Java app to clean a file. 
+JTidy finds a tag it doesn't recognize and gives me an error. 
+So, I get the unknown tag from that error and attempt to let JTidy know that it SHOULD recognize this tag. 
+I guess what I'm saying is, I want to make sure I find this easiest, most elegent way to handle this. 
+thanks, ryan Michael -- You have a few ways to go. 
+Since JTidy is open source, you can hack up the source yourself to automatically do something with unrecognized tags. 
+This may even be a feature request for HTML Tidy, which you can check on the SourceForge site. 
+Or, you can have a look at what TagTable.java does for defineInlineTag defineBlockTag defineEmptyTag definePreTag and create the Dict object and install it in the TagTable yourself. 
+You'll somehow need to decide what kind of tag the unrecognized tag is. 
+Gary Sounds good...thanks. 
+Hello, I also want to add new tags for tidy, especially JTidy. 
+Maybe it's not a good question. 
+What's the difference among "empty-tags", "inline-tags", "blocklevel-tags" and "pre-tags"? 
+(What i want to do is just to add some tags, currently i think these tags are not uncommon. 
+Maybe i am wrong.) 
+I appreciate any kind of help. 
+Thanks. 
+Chunbo empty-tags: hr, br, etc. inline-tags: font, b, i, etc. blocklevel-tags: p, table, blockquote, etc. pre-tags: um... pre ;) Ignacio Vazquez-Abrams ignacio@openservices.net *Which* tags are "not uncommon"? 
+Tidy knows about all the tags that are legal in any official version of HTML, plus a few that are not. 
+Any tag it doesn't know about is probably "quite uncommon". 
+empty-tags are tags that must have no content. 
+meta , img , things like that. 
+inline-tags may occur in running text (e.g., as the body of a p ) and have running text as their content. 
+Things like span , em , strong , a . 
+Note that since HTML 4 came out nobody has needed to define new inline tags for formatting reasons; span class="your tag" will do the job. 
+blocklevel-tags mark vertical divisions of a document. 
+They may NOT occur in running text. 
+They may occur in block context, and have block content. 
+They include div , center , blockquote . 
+p is sort of anomalous. 
+It is like a block element in that it may occur in block context, but it does not have block content, it only allows running text. 
+I don't think there is any way you can define your own p -like elements. 
+Note that since HTML 4 came out nobody has needed to define new body tags for formatting reasons; div class="your tag" will do the job. 
+pre-tags Are like p , but preserve line breaks and allow fewer things. 
+The tags that are allowed in running text but not in pre are img , big , small , sub , sup , and font . 
+The only thing like this in HTML is pre itself. 
+Note that since HTML 4 came out nobody has needed to define new pre tags for formatting reasons; pre class="your tag" will do the job. 
+The main reason for letting you define new tags in these classes is to let you cope with an assortment of proprietary extensions, make of which appear to have been excreted rather than designed. 
+Hi, Gary I want to add one tag as using "defineInlineTag" method in TagTable. 
+If I do this by adding one line of "defaultTagTable.install(new 
+Dict("tagname", (short)448, 0x140010, ParserImpl.getParseBlock(), null));" just after "defaultTagTable = new TagTable();" inside the "getDefaultTagTable" method of TagTable.java, after this is done, how can i compile this TagTable.java to make it work for my application which use JTidy as "Tidy tidy = new Tidy();...tidy.parse(...);". 
+thanks. 
+Chunbo I didn't try that method, sorry. 
+I used the config file and it worked like a charm. 
+Hi, Michael thanks for reply. 
+Just now, you said you are using "config" to add tags. 
+It is in tidy written not by java, is it? 
+Because i didn't find "config" in JTidy yet. 
+Chunbo This is what I did (using JTidy). 
+After finding out what tags I needed to add (dynamically), I wrote a file called "J:/config.txt" and did the following: tidy.setConfigurationFromFile("J:/config.txt"); document = tidy.parseDOM(this.url.openStream(), this.outputStream); 
+The config file was simply one line: new-inline-tags: noindex Where "noindex" was the tag I wanted JTidy to accept. 
+Hope that helps, Ryan Since everyone is talking about jtidy here. 
+Has anyone used jtidy and passed the html to be validated a string parameter instead of a file or url like in the example below? 
+Thanks, Tim This is what I did (using JTidy). 
+After finding out what tags I needed to add (dynamically), I wrote a file called "J:/config.txt" and did the following: tidy.setConfigurationFromFile("J:/config.txt"); document = tidy.parseDOM(this.url.openStream(), this.outputStream); 
+The config file was simply one line: new-inline-tags: noindex Where "noindex" was the tag I wanted JTidy to accept. 
+Hope that helps, Ryan never tried that...I don't see why that wouldn't work...but you still have to pass an InputStream, right? 
+Hi, Michael Thanks for your help on "config.txt". 
+It's good solution. 
+When i run tidy to clean some html, i got one error indicating that a missing ' ' for end of tag ". 
+But " a " is already included in TagTable.java. 
+Because of this error, the output as clean result is a zero-length file. 
+But i want the output file not to be a zero-content file. 
+Is there any solution to avoid this? 
+Tidy is supposed to overcome this case, is it? 
+chunbo 

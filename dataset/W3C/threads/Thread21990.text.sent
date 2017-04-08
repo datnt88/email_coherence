@@ -1,0 +1,97 @@
+That was quick :) Thanks to anyone who helped out in clearing the request, I'm now setting up the details. 
+I'll add all who were added by Curt earlier on the DOM Conformance project, except if anyone strongly disagrees. 
+Also, I'll give myself, Mary and Curt administrative rights. 
+I'll be the one who takes questions and tests to the DOM WG for clarification, but I'd like to have more people aboard since we all can contribute to this. 
+If anyone else feels like being a member of the DOM Conformance moderator group, please say so. 
+How har would it be to get all tests submitted to the www-dom-ts-submission@w3.org to appear in the domconftest project? 
+Something the W3C system team could look into? 
+/Dimitris Sure, I'll help -- I should have the rest of the fundamental and extended tests ready by tomorrow. 
+After the core tests work, we'll have to add metadata info -- but I think I can write a transform to put our original work into the rdf framework -- is this what we want to do? 
+How do we envision the metadata info being used? 
+Can we write a transform that will allow it to be displayed in a web browser, or will we have to transform off-line and make a html version available? 
+--Mary up project, Something I guess we should spend some time on what the CVS should look like since it is impossible to undo changes without leaving a trace. 
+We could put all submissions into a submissions module with subprojects for the contributors submissions submissions/nist submissions/nist/dom1 submissions/microsoft submissions/carnold The files in this module would be a verbatim copy of what was submitted and would not be modified. 
+For the active project: domconftest tests java org w3c dom testing ecmascript adapters junit The structure below tests would mimic the organization used by NIST in their submission below the tests project. 
+For example, domconftest/test/dom1/fundamental/attribute/attributeName.xml, etc. domconftest/java/org/w3c/dom/testing would only contain the interface and abstract class definitions. 
+Actual tests would be in the same namespace but generated in the build/java/org/w3c/dom/testing. 
+domconftest would contain an ANT build file and the transforms. 
+domconftest/adapters could contain source for adapters, code that allows domconftest.jar 
+to run in a specific test harness like JUnit. 
+Probably need to get an official decision about w3c package names we can use. 
+I've been temporarily using org.w3c.dom.testing. 
+If the described structure seems appropriate, then it would be beneficial if you could import your tests into the submissions/nist and domconftest/tests directories. 
+Not quite sure what you are starting from. 
+I thought the test matrix was almost a manual affair. 
+Since building a test matrix would require crawling all the available tests, I think generating it is part of the build process. 
+You could capture the entire matrix in RDF by appending descriptions of the tests to the subjects.rdf 
+file and using a browser side transform. 
+However that seems overkill at this time and generating an HTML test matrix as part of the build seems reasonable. 
+I did spend some time writing an Ant build file, but was running into a problem with either Ant or Xalan using the wrong base for resolving external entity references causing schema generation to fail. 
+Not impossible, but difficult, tedious, and highly undesirable. 
+;) Where do you envison documentation would go? 
+(Schema documentation, test framework documentation, etc.) Also, this seems somewhat Java-centric. 
+Perhaps adapters/ should be inside the java/ directory, and then other languages would have a directory parallel to that? 
+Where do you expect things like the Python and ECMAScript components to go? 
+I'd at least expect the ECMAScript tests to be part of this repository since it plays an important role in the W3C specifications for the DOM. 
+-Fred Fred L. Drake, Jr. fdrake at acm.org PythonLabs at Digital Creations My primary interest in getting the SourceForge project going was getting the tests, transforms and supporting resources in a common CVS, so we could automate the transform/compile/run cycle and collaborate on fixing either the tests or the transforms. 
+The initial hurdles for test correctness are schema/DTD validity and whether the generated code successfully compiles. 
+If the tests and the transforms are all in one CVS, then it should be fairly simple to automate the process and iteratively fix problems. 
+Having the tests and transforms in distinct locations definitely complicates matters, especially since both are evolving. 
+I would think that most of these would be generated, like the schemas and the generated source code, and would not appear in the CVS. 
+I did have ecmascript is my tree, but it was less noticable since it didn't have, and didn't need, the deep hierarchy that the java node did. 
+I guess it should have been capitalized differently. 
+I would expect eventually there would be CLR, Python, and other siblings to the java and ecmascript directories. 
+Will probably have a better idea on what it needed to adapt the generic tests to specific frameworks once we have built the generic tests. 
+I was trying to represent these by the adapters project. 
+However, wouldn't actually try to create that part of the tree until we had something to put in there. 
+since [mb] Absolutely! 
+I agree that components for a particular binding should be closely linked, and of course, documentation needs a prominent home - somewhere close to the top. 
+--Mary I'm not sure how the documentation could be generated, but we can add it at an appropriate time if needed. 
+OK, I see it now; no need to capitalize it differently. 
+I should have been less hasty. 
+Sounds good; these don't actually need to be added until there is content for them. 
+Agreed. 
+We just need a basic idea of where they should go. 
+It's not entirely clear to me that there must be both "generic" and "framework-based" tests. 
+For Python, it's certainly not clear that we need both, since PyUnit became part of Python's standard library as of Python 2.1 (released last April); it can simply be supplied for older versions of Python, or we can recommend that it be installed first, with a link to the PyUnit site. 
+-Fred Fred L. Drake, Jr. fdrake at acm.org PythonLabs at Digital Creations [mb] During a previous interation of the xml-ized dom tests, we had metadata info with each test, so these are already defined on a per test basis. 
+It should be straightforward to transform them into the rdf tagset, and merge the metadata with the updated xml (according to Curt's schema) definitions. 
+So, I should look at subjects.rdf for this??? subjects.rdf 
+(probably the last one as subjects.xml) 
+should give you standard URI's for a good subset of the spec. 
+However, it would be a manual process of searching for an appropriate text string and then finding the nearby URI. 
+That could get very annoying if you have to do it often. 
+I was thinking it might be possible to build a stylesheet that would transform this to HTML and to have a script that would copy the URI to the clipboard when you clicked it. 
+That way you could find the appropriate section in the HTML, click the URI and then paste into the test. 
+Might be good to see examples of what your current metadata looks like. 
+[mb] Not sure I am following this conversation. 
+What do you want to have automatically generated? 
+Almost anything that we have written transform for. 
+The full ANT build process for DOM Level 1 would do something like: Download DOM.zip from the W3C site Unzip DOM.zip Unzip xml-sources.zip 
+Patch wd-dom.xml to add missing xmlns:xlink attribute Apply dom-to-xsd.xsl to generate schema Fixup _xmlns in schema Apply dom-to-dtd.xsl to generate DTD (doesn't exist right now) Apply extract.xsl to generate interface definitions Apply subjects.xsl 
+to generate RDF descriptions of potential test subjects Apply test-to-java.xsl 
+to all known tests to generate Java code Compile all generated Java code Build .jar 
+file Build documentation The same process should also be repeatable for DOM Level 2, 3 and so on. 
+I got as far as "Apply dom-to-xsd.xsl" 
+before running into the Xalan or Ant bug that I described. 
+The generated list isn't exhaustive and you can definitely identify other passages by an XPointer syntax. 
+The generated list just provides a list of systematically generated URI's for the most obvious targets. 
+The other thread was regarding pulling the tests together into a particular test suite. 
+There are a couple of things that we need to decide on here -- if we suppose that we have a list of test purposes, with links to xml-ized tests, and we know where the transformation resides, it should be straightforward to generate a test suite. 
+I haven't used Ant, so I'm not sure that I could help with this approach -- but I would think that this could be accomplished in any number of ways. 
+Deciding whether a particular test is blessed to appear in a suite is a editoral judgement. 
+However, to qualify for consideration, a test should be schema/DTD valid, the generated code should compile successfully, and the results of benchmark processors against the test should be available. 
+Even if a test was decided to be a "bad" test, you should still be able to run it. 
+It just wouldn't run as part of a specific suite. 
+It's probably fairly important that we decide whether we want to support just the Junit framework for Java, or do we want something more generic in addition to the framework. 
+Can anyone think of any java implementations that will not run under the Junit framework? 
+If not, I'm happy enough to go with it. 
+In the current generated Java code, I've abstracted all the test framework dependency into the DOMTestFramework interface that is passed as an argument to the runTest method. 
+The generated code has no dependency on any JUnit classes, however the DOMTestFramework methods bear a resemblence to methods in JUnit's TestCase. 
+To run within JUnit, you would need an standard adapter class that would implement DOMTestFramework and call the runTest method of the generated class. 
+A similar process would be needed for any other arbitrary test framework. 
+The Batik project, for example, would want to run on an internal Apache test framework. 
+They would create their own adapter class, but they could use the same .jar 
+file as a JUnit based test. 
+As far as ECMAScript goes, couldn't we get folks who have those implementations to propose a framework? 
+I can spend some time on it -- but probably not until next week. 

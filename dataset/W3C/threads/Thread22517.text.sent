@@ -1,0 +1,218 @@
+The naive implementation of WRONG_DOCUMENT_ERR has a bit of trouble cloning an entire Document tree, because (of course) if it just clones the original document's children they remain bound to that document and can't be assigned to the new one. 
+I can special-case this to make it work. 
+But this is the sharp point of the multiple-document question, which Level 1 explicitly doesn't address... so there's something to be said for the lazy solution of disabling Document.cloneNode(), at least until Level 2 resolves some of those outstanding questions. 
+Any opinions on whether this cheat is justifiable or not? 
+Joe Kesselman / IBM Research Unless stated otherwise, all opinions are solely those of the author. 
+I would hate to see cloneNode disabled for Level 1. 
+Perhaps there is something to be said for changing the cloneNode interface to: Node cloneNode(boolean deep, Document targetDoc); I would rather see this done before Level 1 goes REC. Don Same here. 
+A better alternative would be to put this on Document rather than Node: Node cloneNode(Node original, boolean deep) This would have a couple of advantages: 1. it would keep _all_ the node-creation methods on Document 2. it would not have to be modified or extended when new node types are added. 
+3. there are no problems when the original node's document and the target document use totally different implementation classes. 
+Stephen R. Savitzky Chief Software Scientist, Ricoh Silicon Valley, Inc., steve@rsv.ricoh.com 
+California Research Center home: steve@starport.com 
+URL: http://www.starport.com/people/steve/ 
+All nice and dandy except for the weird look code: Document doc = node.getOwnerDocument(); 
+doc.cloneNode(node, doc); doc.cloneNode(node, null); // assuming null implies same doc doc.cloneNode(node, someOtherDoc); It just does not look as natural as: Node newNode = oldNode.cloneNode(true, 
+null); // for same doc Node newNode = oldNode.cloneNode(true, 
+someOtherDoc); Don On second thought, it should be called something different, like createCopy. 
+newDoc.createCopy(node, 
+false); // for a shallow copy newDoc.createCopy(node, 
+true); // for a deep copy We should keep the existing Node method cloneNode, with no added document parameter. 
+That way if you want to add a duplicate node to the same document you use cloneNode; if you want to creat a copy in another document you use createCopy. 
+newParent.appendChild(newParent.getOwnerDocument().copyNode(oldNode, true)); (as opposed to: newParent.appendChild(oldNode.cloneNode(true, newParent.getOwnerDocument())); 
+under the other proposal.) 
+My way looks more natural if you're doing a mixture of node copying and node creation. 
+You get the owner document once and perform a series of create operations. 
+Something like this is really essential if you're in a system (like the one I'm building) which permits different DOM implementations for different documents. 
+Stephen R. Savitzky Chief Software Scientist, Ricoh Silicon Valley, Inc., steve@rsv.ricoh.com 
+California Research Center home: steve@starport.com 
+URL: http://www.starport.com/people/steve/ 
+I have no problem with this proposal particularly because it shifts the responsibility of copying to the destination document. 
+It feels right. 
+Don Park Docuverse Note that I'm not proposing to disable cloneNode() for anything except the Document object. 
+All the others are fine, since they can leave the new nodes in the context of the old ownerDocument. 
+Joe Kesselman / IBM Research Unless stated otherwise, all opinions are solely those of the author. 
+So Document.createCopy() would become the "xeno-copy" routine we've discussed in the past, which copies a DOM node "by content" rather than cloning the actual object? 
+Sounds like a good answer to me; whatever we call it, that functionality is eventually going to be desired... and since it has to act as a factory (since you're specifying target document), making it one of Document's methods sounds reasonable. 
+Normal cloneNode() would continue to be defined on Node itself. 
+We'd still have to decide whether Document.cloneNode() should be reinterpreted as "Create a new document and createCopy() of the old document's contents" or simply be disabled. 
+Joe Kesselman / IBM Research Unless stated otherwise, all opinions are solely those of the author. 
+Right. 
+I would think that Document.cloneNode should be reinterpreted as you suggest -- having createCopy makes it very easy to describe the desired functionality. 
+Stephen R. Savitzky Chief Software Scientist, Ricoh Silicon Valley, Inc., steve@rsv.ricoh.com 
+California Research Center home: steve@starport.com 
+URL: http://www.starport.com/people/steve/ 
+I would prefer a method at the doc level, but one which has the option of either cloning if the document is incompatible or transforming it if the documents are compatible. 
+Only the retured node and not the original would be usable after the operation. 
+I would call this transferNode(node) // always a deep transfer. 
+Actually, given my current model's shared underlying data model, I can clone faster than I can mutate the original reference to have new ownerDocuments, since clones share the original data. 
+I only prefer this other approach to allow other implementations to efficiently transfer documents between compatible implementations. 
+If no one else wants it, fine. 
+I didn't hear opinions whether document.cloneNode(deep) should clone the document itself or raise an exception. 
+This is quite different from both cloneNode or transferNode on a child, because it creates a new ownerDocument rather than confining to or transferring between existing ownerDocument's. 
+I think we need something like cloneNode to work at the document level. 
+Ray Whitmer I think there might be a very nice solution here somewhere. 
+How does this look? 
+We just add Document.transferNode(Node node) as Ray suggested and have the user use Node.cloneNode() with it if he is cloning over to a new document. 
+Node originalNode; // this node is in the tree structure (parentNode != null) Document destinationDoc; destinationDoc.transferNode(originalNode.cloneNode(false)); // transfer a shallow clone destinationDoc.transferNode(originalNode.cloneNode(true)); // transfer a deep clone destinationDoc.transferNode(originalNode); 
+// transfer the original node Comments? 
+Don Park Docuverse Don (and all), The problem with transferNode below is that it assumes that the destination node can change the ownerDocument for the node, which currently isn't possible between implementations. 
+As for Document.createCopy, this seems distinctly non-OO. 
+Wouldn't it require the document to test what kind of node it was copying and then have some very node-specific operation for each (or have I missed something here)? 
+I'd like to revisit cloneNode(bool deep, Document newDoc). 
+I still haven't seen any counter arguments for this approach. 
+Stephen Savitzky started the suggestion to put cloneNode in Document with the following advantages: The node creation methods would still be on document. 
+Granted, the node would then have to transfer some data, something like: Element::cloneNode(deep, targetDoc) targetDoc.createElement(tagName); 
+// Transfer attributes if ( deep ) // clone children But this would actually be very neat, being able to clone attributes and so on, with each class handling its own cloning. 
+I don't see what would have to be modified for new node types. 
+I don't see a problem with the above approach either. 
+To summarise, we are only going to get small changes into Level 1 at this stage (if that). 
+Unless there are serious problems with the simple change proposed, why not go with it? 
+Alfie. 
+Alfie, Yeah, I realized my forgetfulness right after posting it. 
+This basically forces transferNode implementation to always move by copying the content. 
+However, your suggestion also forces cloning. 
+The question is, are there any way to do this without cloning? 
+Just change the definition of insertChild/appendChild? Don Don, I'm not sure I understand this debate about cloning or transferring. 
+As I see it, the current spec doesn't say anything about transferring nodes without cloning, so presumably it can be left to implementations. 
+The reason I wanted a targetDoc on cloneNode is so that we can mix implementations. 
+So if I do an appendChild from one implementation to another, it can use cloneNode to get a clean copy in its own implementation. 
+I now see that it can also be used to transfer nodes between documents too. 
+For example (in pseudo code): Node Element::appendChild(Node newChild) // Check implementation NodeInternal customNode=newChild.QueryInterface(INodeInternal); if ( (customNode == NULL) || (newChild.ownerDocument 
+!= ownerDocument) ) // Not my implementation/document customNode=newChild.cloneNode(TRUE, ownerDocument); // Add to my children m_children.push_back(customNode); 
+// Here's where we use the custom interface customNode.parentNode=this; 
+Does this make any sense at all in Java? 
+Without a lot more work (ie. 
+Level 2), I don't think we can get a transferNode which works between implementations/documents. However, if cloneNode is given a targetDoc parameter, implementations can decide whether to clone or not, and have a clear mechanism for doing so. 
+A performance boost might be to say that if the newChild is the same implementation, has a different ownerDocument but doesn't have a parent (perhaps after a removeChild), the custom interface could be used to modify the ownerDocument and the parentNode, and thus avoid cloning. 
+This raises a question. 
+What happens to ownerDocument and parentNode after removeChild? 
+Alfie. the In cases where the "transfer" requires creating new objects (ie, when copying content between implementations), this doubles the heap churn. 
+I'd suggest instead that there be a Move option as well as Copy (or rename Copy and make this a boolean parameter), which could then recognize same-class as a special case and optimize appropriately. 
+Joe Kesselman / IBM Research Unless stated otherwise, all opinions are solely those of the author. 
+The various node types probably would take responsibility for copying their local data anyway. 
+If you start copying a tree, _someone_ is going to have to dispatch to the appropriate factory methods based on the DOM type of the source node. 
+That dispatch is going to want to loop back through the Document's factories to obtain the new nodes, in case the DOM's user has subclassed a node type and subclassed Document to override the factory to produce that modified node. 
+So there's something to be said for making the "produce our version of one of these" mechanism live in Document; it is a factory, albeit of a build-to-order flavor. 
+Level 1 declared that multiple documents weren't supported, so all of this is probably going to be deferred to Level 2. Which is fair... but which probably means Document.cloneNode() should be _explicitly_ undefined in Level 1. Joe Kesselman / IBM Research Unless stated otherwise, all opinions are solely those of the author. 
+The point is that an implementation which is transferring a node of an implementation it recognizes can do whatever it wants beyond the public APIs to change ownerDocument. 
+It is only immutable through current public APIs. 
+But I will clone in any case, because that is more efficient in my implementation. 
+Ray Whitmer ray@imall.com 
+I agree. 
+I do not think that the appendChild method of element should automatically clone. 
+Probably. 
+I strongly disagree. 
+This is far worse than simply adding transferNode. 
+cloneNode should always clone the node. 
+The type of complex behavior you describe should never be a part of cloneNode, i.e. sometimes it clones and sometimes it returns the original. 
+If you want transferNode, then call it that. 
+ownerDocument is a read-only attribute that always points to the document that created it (or perhaps in the future, that it was transferred to). 
+When a child is removed from the parent, the parentNode attribute becomes null. 
+Was this what you were asking? 
+Ray Whitmer ray@imall.com 
+I don't really understand what the problem is. 
+Document.cloneNode with a shallow copy would just be another Document identical to this one but without children. 
+For a deep copy, do a shallow copy and then traverse the tree below this Document. 
+For each Node, invoke the proper createXXX factory method on the new Document and copy all the (IDL) attributes: then insert it into place in the new tree. 
+Am I missing something? 
+John Cowanhttp://www.ccil.org/~cowancowan@ccil.org 
+You tollerday donsk? 
+N. 
+You tolkatiff scowegian? 
+Nn. 
+You spigotty anglease? 
+Nnn. 
+You phonio saxo? 
+Nnnn. 
+Clear all so! 'Tis a Jute.... (Finnegans Wake 16.5) I think we are digging too deep for Level 1. 
+Before we hit the gas pipe (wrecked REC), I think we should wrap this up ASAP with minimum change to the existing spec. 
+Let us avoid stray into other issues. 
+Should Document.cloneNode() work in Level 1? 
+I say, YES! 
+If the naive implementation has problem then it is not fully Level 1 compliant. 
+Don Park Docuverse This would be a totally different operation. 
+It _would_ be useful, however, since you could use it to relocate a node without having to worry about whether you're moving it between documents. 
+Actually what I would find more useful is the flip-side of this: copy the node if it is type-incompatible or already part of an existing complete document, but simply transfer it if it belongs to a DocumentFragment. 
+The motivation for this is that sometimes you are constructing a document out of nodes that result from a traversal of an existing document (which you don't want to modify), but sometimes you are creating nodes on the fly. 
+It's desirable not to have to know the difference. 
+I agree, but it's probably necessary to make it clear that that's what's happening. 
+Note that with document.createCopy it is possible to specify explicitly what deep-copying a document means (shallow-copy the Document node, then recursively createCopy all of the children) Stephen R. Savitzky Chief Software Scientist, Ricoh Silicon Valley, Inc., steve@rsv.ricoh.com 
+California Research Center home: steve@starport.com 
+URL: http://www.starport.com/people/steve/ 
+Yes. 
+The problem with the various createXXX factory methods is that they may not copy all the information associated with a node (e.g. if the node is really an instance of some locally-defined subclass with additional attributes). 
+Stephen R. Savitzky Chief Software Scientist, Ricoh Silicon Valley, Inc., steve@rsv.ricoh.com 
+California Research Center home: steve@starport.com 
+URL: http://www.starport.com/people/steve/ 
+John Cowan asks: There's more. 
+The problem is that some of the Node's might be instances of some (possibly local) _subclass_ and may contain information which cannot be correctly copied by any of the public createXXX methods. 
+That's a significant amount of additional code which in Level 1 would exist _only_ to support Document.cloneNode(). 
+It could be argued that, given Level 1's decision not to handle the more general uses of this logic, implementing it for this one specific case is less reasonable than declining to support cloning of Documents would be. 
+I think it would be a tragic mistake if it was not possible to copy a document, or to copy a node from one document to another, using Level 1. 
+That's the kind of omission that would seriously impact the credibility of the specification (not to mention its usefullness). 
+Stephen R. Savitzky Chief Software Scientist, Ricoh Silicon Valley, Inc., steve@rsv.ricoh.com 
+California Research Center home: steve@starport.com 
+URL: http://www.starport.com/people/steve/ 
+Should Document.cloneNode() work in Level 1? 
+I say, YES! 
+I'm happy either way; Level 2's going to need this code anyway... If the answer is "yes", I think it's worth adding a comment in the spec to remind the reader that cloning a Document does require special processing, to readjust ownerDocument if nothing else. 
+Fine with me. 
+BTW, did you know we are carrying on this 'conversation' on the public www-dom mailing list? 
+I didn't realize this until after my last message. 
+I hope I didn't give out anything confidential. 
+Don It is reasonable to expect that cloneNode will copy _everything_ that it is meaningful to copy I have no such expectations. 
+(and it is certainly possible to ensure this for any particular implementation). 
+Indeed. 
+"*One* can't, perhaps, but *two* can." -- Humpty Dumpty But at any rate, four (the authors of the DOM Core PR) did not. 
+The PR says only: # Returns a duplicate of the node, i.e., serves as a generic copy # constructor for Nodes. 
+The duplicate node has # no parent (parentNode returns null.). 
+# Cloning an Element copies all attributes and their values, # including those generated by the XML processor to # represent defaulted attributes, but this method does not # copy any text it contains unless it is a deep clone, since # the text is contained in a child Text node. 
+Cloning any # other type of node simply returns a copy of this node. 
+On the other hand, it is clearly impossible to do this with the createXXX methods -- that's why cloneNode exists in the first place. 
+I believe cloneNode to be a convenience method. 
+Everything it does can be done with: switch (this.nodeType) 
+{ case ELEMENT_NODE: new = this.ownerDocument.createElement(...) new.setAttributes(this.getAttributes) break case TEXT_NODE: new = this.ownerDocument.createText(...) etc. etc. John Cowanhttp://www.ccil.org/~cowancowan@ccil.org 
+You tollerday donsk? 
+N. 
+You tolkatiff scowegian? 
+Nn. 
+You spigotty anglease? 
+Nnn. 
+You phonio saxo? 
+Nnnn. 
+Clear all so! 'Tis a Jute.... (Finnegans Wake 16.5) John Cowan asks: No, you've accurately described what has to be done in order to deep-clone a Document. 
+"For each Node, invoke the proper createXXX factory method on the new Document and copy all the (IDL) attributes: then insert it into place in the new tree" That's a significant amount of additional code which in Level 1 would exist _only_ to support Document.cloneNode(). 
+It could be argued that, given Level 1's decision not to handle the more general uses of this logic, implementing it for this one specific case is less reasonable than declining to support cloning of Documents would be. 
+Joe Kesselman / IBM Research Unless stated otherwise, all opinions are solely those of the author. 
+Should Document.cloneNode() work in Level 1? 
+I say, YES! 
+I'm happy either way; Level 2's going to need this code anyway... If the answer is "yes", I think it's worth adding a comment in the spec to remind the reader that cloning a Document does require special processing, to readjust ownerDocument if nothing else. 
+Joe Kesselman / IBM Research Unless stated otherwise, all opinions are solely those of the author. 
+It is reasonable to expect that cloneNode will copy _everything_ that it is meaningful to copy My point is that the specification does not preclude such an interpretation. 
+This makes no mention one way or another of any private information, nor should it. 
+I think that in many implementations of the DOM there _will_ be implementation-specific information in a Node, and in that case cloneNode _should_ be expected to copy it. 
+In some implementations this will not be the case. 
+In fact, it's not even the case for the public interfaces, since there are attributes of, say, HTMLDocument and HTMLElement that are not accessible from the result of createElement without type-casting. 
+Stephen R. Savitzky Chief Software Scientist, Ricoh Silicon Valley, Inc., steve@rsv.ricoh.com 
+California Research Center home: steve@starport.com 
+URL: http://www.starport.com/people/steve/ 
+True. 
+I wouldn't expect it to do so, however. 
+I concede the case of HTMLDocument, as the attributes referrer, fileSize, file*Date, domain, URL, and cookie are not present in Document. 
+However, I believe there are no IDL attributes of HTMLElement or its subclasses that are not essentially convenience methods. 
+John Cowanhttp://www.ccil.org/~cowancowan@ccil.org 
+You tollerday donsk? 
+N. 
+You tolkatiff scowegian? 
+Nn. 
+You spigotty anglease? 
+Nnn. 
+You phonio saxo? 
+Nnnn. 
+Clear all so! 'Tis a Jute.... (Finnegans Wake 16.5) I _think_ we've been sticking to public topics... 
+I don't want to post general questions of "what's the intended reading of the PR" into the IG mailing list, both because I don't want to tie up the IG's time with things that have a known answer smile , and because I figure that if I'm confused other folks may also want to see the answer. 
+If that causes more trouble than it solves, let me know... Joe Kesselman / IBM Research Unless stated otherwise, all opinions are solely those of the author. 
+Ray, I haven't read the (many) other thoughts on this in my mailbox this morning. 
+I just want to point out that I wasn't suggesting that cloneNode should modify the parentNode and ownerDocument to avoid cloning, but that appendChild could do this as an alternative to calling cloneNode, in certain circumstances. 
+Alfie. 
+From: Ray Whitmer Sent: 09 September 1998 17:11 Subject: Re: Should Document.cloneNode() work in Level 1? 

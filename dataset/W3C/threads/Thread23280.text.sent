@@ -1,0 +1,35 @@
+Hello, thanks to the help I received I figured out my readonly question, but now I'm having a little difficulty with the Attr node. 
+The documentation on Attr says that on setting the value attribute of Attr, a Text node has to be created. 
+Do I have to update the value attribute and create a Text node with the same contents as the value attribute ? 
+Thanks, Mark Hellegers Don't confuse IDL attributes with implementation fields. 
+An IDL attribute is just a value you can read or set. 
+Where it's stored is a completely separate issue, and is up to the implementation. 
+The DOM API says that the Attr node's value is always equal to the concatenation of the values of its Text descendents, and that when you set this node's value that's taken as a request to replace those descendents with a single Text node containing the new value. 
+I don't think we actually said whether it will be a new Text node, or whether one of the existing Text children of the Attr (if any) will be reused by having the new value assigned to it. 
+I believe either is acceptable. 
+So setting this value changes the Attr's children, and changes the Attr's node value because that value is derived from the children. 
+Whether this involves changing a value field inside the Attr is an implementation issue. 
+Some implementations may want to cache the Attr's node value rather than doing the concatenation each time it's called for. 
+An implementation which does so must deal with updating that cache when the Attr's children are changed, either by manipulating them directly or by setting the Attr node's value... but that's all invisible to the DOM user. 
+Joe Kesselman / IBM Research I'm sorry, but I can't find where it is stated that the Attr node's value is constructed that way. 
+Now I read it again, I can see that the value is not primarily the value of nodeValue, but it is not made really clear what it is. 
+Thanks, Mark Hellegers In a previous message, you mentioned that you are implementing the DOM specification. 
+The first question you have to ask yourself is why. 
+Is there a specific reason that one of the existing implementations is not appropriate or could not be customized to fit your application? 
+If not, then the easiest path is to adopt one of the many existing implementations. 
+If there is a clear reason that you must do your own implementation, then you can learn a lot by referencing the existing implementations. 
+Many are open-source and you can benefit from the experience of the many users of those implementations. 
+I'd download a couple to have as ready references whenever you have an implementation issue. 
+When after looking at the existing references and the recommendation and things still are unclear, then ask here. 
+The DOM recommendation is totally about outward appearances, not implementation details. 
+All it says is that setting .nodeValue, 
+.value and manipulating the childNodes should all appear to do the same thing. 
+However nothing forces you to create a child node until someone asks for one. 
+If you are doing an implementation, you may benefit from the DOM test suite work (http://www.w3.org/DOM/Test) or earlier work done with testing of C++ implementations at http://xmlconf.sourceforge.net 
+From: Mark Hellegers [mailto:M.H.Hellegers@stud.tue.nl] 
+Sent: Thursday, February 14, 2002 2:06 PM Subject: Re: Attr nodes think we actually said whether it will be a new Text node, one of the existing Text children of the Attr (if any) will by having the new value assigned to it. 
+I believe either is How would he know if an implementation was correct? 
+Well then the outward appearance to me is that the description of the Attr node's children is vague. 
+Perhaps if I understood XML well it might make sense but I don't and after looking over the section on Attribute Types in the XML spec: http://www.w3.org/TR/2000/REC-xml-20001006#attdecls, nothing really jumps out at me. 
+It would be nice if you could spice up the description of structurual requirements for Attr. 
+Mike 

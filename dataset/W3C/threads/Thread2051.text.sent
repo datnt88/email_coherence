@@ -1,0 +1,55 @@
+I'm sure nobody is surprised to hear me say that I believe the treatment of cannonicalization of objects in draft 01 of the spec still needs some work. 
+Under the new spec, a server is compliant if it serves up ASCII plaintext as having, say CRs as line delimiters. 
+A client, however, is compliant if it recognizes only CRLFs as line delimiters (recognizing CRs is recommended for tolerance but not required.) 
+So different implementations may both be compilant with the spec but not interoperate properly. 
+I hope we can agree that is not OK. Mind you, I don't even know what exactly the current spec is saying. 
+If we are effectively requiring all implementations to understand all non-canonical forms that exist, I think we need to enumerate exactly what they are. 
+Other than line breaks, I have no idea what non-canonical representations clients (and servers, for that matter) must understand. 
+In the interest not of philosophical purity (as Phil H-B might say, screw philosophical purity) but making something clear and reasonable, I'd suggest something like the following phrasing: Conversion to canonical form: Internet media types [cite 1590] are registered in a canonical form. 
+In general, Object-Bodies transferred via HTTP must be represented in the appropriate canonical form prior to the application of Content-Encoding and/or Content-Transfer-Encoding, if any, and transmission. 
+Object-Bodies with a Content-Type of text/*, however, may represent line breaks not only in the canonical form of CRLF, but also as CR or LF alone, used consistently within an Object-Body. 
+Conforming implementations *must* accept any of these three byte sequences as representing a single line break in text/* Object-Bodies. 
+RATIONALE: A handful of different local representations of textual files exists in current practice. 
+Conversion to canonical form can pose a significant performance loss, while understanding different line break representations is not an inordinate burden, nor an excessive requirement beyond current practice. 
+Part of the question is whether it's implicit that all text/* types are ASCII-based and that CR and LF are the appropriate interpretations of octets 0D and 0A. 
+The newest draft of MIME calls for such, as does section A.2 in the current HTTP draft, so I stuck to that path. 
+I'm not thrilled about requiring implementations to accept different line break sequences, but we kind of have to either: 1. Require all implementations to canonicalize 2. Require all implementations to understand certain specific non-canonical forms (and say exactly what they are) 3. Require some kind of negotiation process by which servers and clients can indicate what variations each can understand We seem to mostly have consensus that 1) is a potentially too expensive. 
+I think 3) is more complexity than we particularly want to endure right now [it would lead to something like "Accept-Encoding: unix-linebreaks" or maybe "Content-Transfer-Encoding: 8bit-sloppy-eol".] 
+That leaves 2), which is probably what will come closest to satisfying folks. 
+- Marc Marc VanHeyningen URL:http://www.cs.indiana.edu/hyplan/mvanheyn.html As long as we're going to redefine the Internet media types to be "as registered for MIME with some exceptions", I think we might as well handle the character set issue as well as the EOL convention one. 
+That is: object types in HTTP denote the corresponding Internet Media Type as defined in RFC 1521 and are registered via the procedure outlined in RFC 1590. 
+However, HTTP makes two modifications to the interpretation of "text/*" media types: a) the default character set (if no charset parameter is supplied) is ISO-8859-1, not US-ASCII. 
+b) no requirement is placed that documents which *could* be interpreted as US-ASCII must be labelled such. 
+(This was a MIME requirement, but shouldn't be for HTTP). 
+c) the end of line convention depends on the character set. 
+In particular, while US-ASCII requires 'CR LF' as a character set, the end of line in ISO-8859-1 may consist of a single CR a single LF a combined CR LF and recievers must be prepared to determine the end of line convention used in the text/ type. 
+d) character sets such as UNICODE (where the data is represented as a sequence of pairs of octets representing the hex coding of the data) are allowed. 
+(This is apparently not true in the latest MIME draft). 
+e) character sets must be registered for use within HTTP; in addition to the current information that is included in the character set registration by IANA, the registration must describe the end of line convention for the character set, and include information about how to map the character set definition into other character sets or icons. 
+The HTTP standard should define use of character sets US-ASCII and ISO-8859-1, at the least, and probably could include descriptions of UNICODE-1-1 (two octets per character), UNICODE-1-1-UTF-8 and UNICODE-1-1-UTF-7 as per RFC1641 and RFC1642. 
+I'm happier with a definition that defines how clients are supposed to *interpret* the data than one that speaks of 'canonicalization' or 'conversion', or where it is somehow the transport (HTTP) that is messing up. 
+I like both proposals, and will endeavor to fit both within the next draft. 
+I think it is reasonable to include both how HTTP interprets media types and what procedure is needed to transform HTTP objects to conformant MIME objects. 
+Thanks for the detailed explanations, ......Roy Fielding ICS Grad Student, University of California, Irvine USA I was just on the verge of finishing up a paper explaining the issues, and proposing use of UTF etc. 
+I will still send this out as it's relevant for browser writers, and HTML authors. 
+Just to clarify, in Larry's proposal, the Accept-charset is not required because we can do the same thing via: However, how do we handle text/sgml, text/plaintext etc? Can they be handled the same way, or do we still need Accept-charset. 
+I will be sending out my text tommorrow. 
+They do seem rather intertwined. 
+I, of course, have an absurdly naive hope that, because the MIME folks have not yet set this issue into even RFC-level stone let alone STD-level stone, it might be possible for MIME and HTTP to doe it the same way. 
+As I read the MIME spec, it says that US-ASCII text "should" be labeled as US-ASCII and not some superset like ISO-8859-1 (and, in general, meta-data should be specify the lowest common denominator possible for understanding.) I guess I don't really see the advantage of changing the default in this fashion, though I don't see it as a big problem either. 
+I just worry that a nontrivial subset of people think that allowing 8859-1 addresses cross-linguistic use, which of course it doesn't except for a few languages in a small part of the world. 
+Environments where US-ASCII can be displayed but 8859-1 cannot are still plentiful; I'm using one right now, and run it under Lynx all the time (and have 8859-1 characters quietly converted to graphical gibberish, which is not ideal behavior.) Hmmm... I guess I don't see the connection. 
+Is broadening the acceptable representations for EOL in 8859-1 significantly less radical, more in line with current practice, or in some other meaningful way preferable to just doing it for US-ASCII? 
+[ some stuff I mostly agree with deleted ] I think it's the same thing by different terms; as long as the specification is clear and not guesswork-oriented. 
+Marc VanHeyningen URL:http://www.cs.indiana.edu/hyplan/mvanheyn.html Yep. 
+Yep. 
+All text/* types use the charset parameter. 
+SGML would likely be application/sgml, and its character set is defined in one of the declarations, though it could also have a charset paramenter if that's how they define the media type. 
+......Roy Fielding ICS Grad Student, University of California, Irvine USA Accept-charset could be included as a possible shorthand for multiplexing acceptable charset parameters for ALL types that have a 'charset' parameter, but I think it is only worthwhile if the client accepts multiple charsets and multiple types that take a charset parameter. 
+I'm not sure it's worth the complexity of the model, or whether we want a more general way of multiplexing parameters for the types that are named by accept clauses, and I don't think it belongs in the standard without at least a little implementation experience. 
+I would like to see it in there, but II will leave the reasoning until I send out my paperr. 
+The last sentence I can agree with. 
+Hence I will not push strongly for Accept-charset: until it actually appears to be needed. 
+Until then, the charset parameter will suffice. 
+I'm *very* glad that content parsing is now a function of the character encoding system. 
+This will simplify many things. 

@@ -1,0 +1,167 @@
+Hello All, I've been thinking about Section 3.2.1: 
+Reference Validation and am not quite convinced that there is a real security reason for canonicalizing SignedInfo for Reference Validation. 
+It is obvious to me that we need to canonicalize SignedInfo for Signature Validation to work properly, but is it really necessary for Reference Validation? 
+Couldn't the canonicalization step be moved to the Signature Validation step at a performance savings to those applications who are only going to be relying on Reference Validation? 
+(People shouldn't do this, but I reckon that they will). 
+It seems to me that the only benefit that canonicalization has for Reference Validation is to enable the XML to be parsed easily (?) - and I'm not sure this is really necessary anyhow; Any permissible syntactic changes that are removed during canonicalization wouldn't affect signature validity anyhow, and an attacker wanting to break Reference validation could do it by changing element content. 
+Is there something that I am missing here? 
+Kind Regards, Blake Dournaee Toolkit Applications Engineer RSA Security "The only thing I know is that I know nothing" - Socrates Hi Blake, You're right, for Canonical XML there isn't much of a reason. 
+*But* since other canonicalizations can be used, in order to satisfy the "see what you sign" (and its sister maxims) you should reference validate (see) what was signed (canonical form.) An area where this might be important is where a canonicalization algorithm rewrote URIs. 
+Even something as innocuous as absolutizing relative URIs (which was a point of debate with respect to namespaces) could change what it is your signing. 
+Canonical XML doesn't make any such changes, and one could optimize appropriately, but since the specification is generally written from an algorithm independent point of view it includes that processing/warning. 
+Joseph Reagle Jr. http://www.w3.org/People/Reagle/ W3C Policy Analyst mailto:reagle@w3.org 
+IETF/W3C XML-Signature Co-Chair http://www.w3.org/Signature W3C XML Encryption Chair http://www.w3.org/Encryption/2001/ Joesph, Thank you for your explanation. 
+It is helping me tremendously! 
+On a related note, it seems like encoding transforms (such as Base64 or compression or anything that significantly permutes the input data) would violate the "See what you sign" rule. 
+Are there any encoding transforms that are of use that *do not* violate this in a significant way? 
+It seems like transformations that removed syntactic elements would be O.K. (like formatting tags, fonts, etc), but anything that makes it hard for a person to discern (at a later time) that *this* is the document that was signed would be a problem. 
+Am I on the right track here? 
+Kind Regards, Blake Dournaee Toolkit Applications Engineer RSA Security "The only thing I know is that I know nothing" - Socrates Hi Blake, You're right, for Canonical XML there isn't much of a reason. 
+*But* since other canonicalizations can be used, in order to satisfy the "see what you sign" (and its sister maxims) you should reference validate (see) what was signed (canonical form.) An area where this might be important is where a canonicalization algorithm rewrote URIs. 
+Even something as innocuous as absolutizing relative URIs (which was a point of debate with respect to namespaces) could change what it is your signing. 
+Canonical XML doesn't make any such changes, and one could optimize appropriately, but since the specification is generally written from an algorithm independent point of view it includes that processing/warning. 
+Joseph Reagle Jr. http://www.w3.org/People/Reagle/ W3C Policy Analyst mailto:reagle@w3.org 
+IETF/W3C XML-Signature Co-Chair http://www.w3.org/Signature W3C XML Encryption Chair http://www.w3.org/Encryption/2001/ Hi Blake, On a related note, it seems like encoding transforms (such as Base64 or compression or anything that significantly permutes the input data) would violate the "See what you sign" rule. 
+A transforms such as base64, compression, etc. do not violate "What you 'see' is what you sign?", provided that the transformation algorithms follow well-documented public standards. 
+For example, when you sign the binary of a jpeg image, are you signing what you see? 
+No you're signing highly compressed (possibly lossy) data that corresponds to a bitmap image via a well-known public algorithm, so we accept it. 
+By comparison, signing a base-64 encoding of a jpeg is peanuts. 
+Cheers, John Boyer Senior Product Architect, Software Development Internet Commerce System (ICS) Team PureEdge Solutions Inc. Trusted Digital Relationships v: 250-708-8047 f: 250-708-8010 1-888-517-2675 http://www.PureEdge.com 
+http://www.pureedge.com/ 
+Hi Blake, You're right, for Canonical XML there isn't much of a reason. 
+*But* since other canonicalizations can be used, in order to satisfy the "see what you sign" (and its sister maxims) you should reference validate (see) what was signed (canonical form.) An area where this might be important is where a canonicalization algorithm rewrote URIs. 
+Even something as innocuous as absolutizing relative URIs (which was a point of debate with respect to namespaces) could change what it is your signing. 
+Canonical XML doesn't make any such changes, and one could optimize appropriately, but since the specification is generally written from an algorithm independent point of view it includes that processing/warning. 
+Joseph Reagle Jr. http://www.w3.org/People/Reagle/ W3C Policy Analyst mailto:reagle@w3.org 
+IETF/W3C XML-Signature Co-Chair http://www.w3.org/Signature W3C XML Encryption Chair http://www.w3.org/Encryption/2001/ John, Thank you for your further clarification. 
+I am inferring (from your example below) that well-defined transformation algorithms don't violate the "what you see is what you sign" rule simply because their behavior is open and known? 
+Is this correct? 
+How do we draw the "line in the sand" for transformation algorithms that preserve the wysiwys (What you see is what you sign) property. 
+For example, it is easy to argue for pervasive transformation algorithms like Base64 Encoding or ZIP compression, but what about lesser known algorithms. 
+What if someone decides to compress something with ARC? 
+What about a proprietary compression or encoding scheme with a closed source? 
+It's clear to me that an XSLT transform that deletes all element content in an XML Document would clearly violate wysiwys, but is there really a good way to measure this property? 
+In a strict sense, Base-64 encoding seems to violate wysiwys: For example, in a courtroom if someone asks to see the document that was signed and a Base-64 encoded blob is shown to the signer, it will be difficult for that person to say: "Yes this is the document that I signed", because in reality they saw something completely different when the signature operation happened. 
+I'm guessing that all of this was hashed out some time ago and I probably came a little late for this discussion. 
+Any thoughts or pointers to previous discussion on this would be most helpful. 
+Kind Regards, Blake Dournaee Toolkit Applications Engineer RSA Security "The only thing I know is that I know nothing" - Socrates Hi Blake, On a related note, it seems like encoding transforms (such as Base64 or compression or anything that significantly permutes the input data) would violate the "See what you sign" rule. 
+A transforms such as base64, compression, etc. do not violate "What you 'see' is what you sign?", provided that the transformation algorithms follow well-documented public standards. 
+For example, when you sign the binary of a jpeg image, are you signing what you see? 
+No you're signing highly compressed (possibly lossy) data that corresponds to a bitmap image via a well-known public algorithm, so we accept it. 
+By comparison, signing a base-64 encoding of a jpeg is peanuts. 
+Cheers, John Boyer Senior Product Architect, Software Development Internet Commerce System (ICS) Team PureEdge Solutions Inc. Trusted Digital Relationships v: 250-708-8047 f: 250-708-8010 1-888-517-2675 http://www.PureEdge.com 
+http://www.pureedge.com/ 
+-----Original Message----- Hi Blake, You're right, for Canonical XML there isn't much of a reason. 
+*But* since other canonicalizations can be used, in order to satisfy the "see what you sign" (and its sister maxims) you should reference validate (see) what was signed (canonical form.) An area where this might be important is where a canonicalization algorithm rewrote URIs. 
+Even something as innocuous as absolutizing relative URIs (which was a point of debate with respect to namespaces) could change what it is your signing. 
+Canonical XML doesn't make any such changes, and one could optimize appropriately, but since the specification is generally written from an algorithm independent point of view it includes that processing/warning. 
+Joseph Reagle Jr. http://www.w3.org/People/Reagle/ W3C Policy Analyst mailto:reagle@w3.org 
+IETF/W3C XML-Signature Co-Chair http://www.w3.org/Signature W3C XML Encryption Chair http://www.w3.org/Encryption/2001/ Blake, I would tend to define a well defined transformation could be defined as a 'stateless' transformation, that is the output is a function of the given input and nothing else (which is not in the function definition itself). 
+It should therefor be unalterable during the time , as there are no additions which are beyond the immediate control of the transformation , such as a memory someone else may change (e.g. dereferencing a URL). 
+Ilan Zohar Hewlett Packard John, Thank you for your further clarification. 
+I am inferring (from your example below) that well-defined transformation algorithms don't violate the "what you see is what you sign" rule simply because their behavior is open and known? 
+Is this correct? 
+How do we draw the "line in the sand" for transformation algorithms that preserve the wysiwys (What you see is what you sign) property. 
+For example, it is easy to argue for pervasive transformation algorithms like Base64 Encoding or ZIP compression, but what about lesser known algorithms. 
+What if someone decides to compress something with ARC? 
+What about a proprietary compression or encoding scheme with a closed source? 
+It's clear to me that an XSLT transform that deletes all element content in an XML Document would clearly violate wysiwys, but is there really a good way to measure this property? 
+In a strict sense, Base-64 encoding seems to violate wysiwys: For example, in a courtroom if someone asks to see the document that was signed and a Base-64 encoded blob is shown to the signer, it will be difficult for that person to say: "Yes this is the document that I signed", because in reality they saw something completely different when the signature operation happened. 
+I'm guessing that all of this was hashed out some time ago and I probably came a little late for this discussion. 
+Any thoughts or pointers to previous discussion on this would be most helpful. 
+Kind Regards, Blake Dournaee Toolkit Applications Engineer RSA Security "The only thing I know is that I know nothing" - Socrates -----Original Message----- Hi Blake, On a related note, it seems like encoding transforms (such as Base64 or compression or anything that significantly permutes the input data) would violate the "See what you sign" rule. 
+A transforms such as base64, compression, etc. do not violate "What you 'see' is what you sign?", provided that the transformation algorithms follow well-documented public standards. 
+For example, when you sign the binary of a jpeg image, are you signing what you see? 
+No you're signing highly compressed (possibly lossy) data that corresponds to a bitmap image via a well-known public algorithm, so we accept it. 
+By comparison, signing a base-64 encoding of a jpeg is peanuts. 
+Cheers, John Boyer Senior Product Architect, Software Development Internet Commerce System (ICS) Team PureEdge Solutions Inc. Trusted Digital Relationships v: 250-708-8047 f: 250-708-8010 1-888-517-2675 http://www.PureEdge.com 
+http://www.pureedge.com/ 
+-----Original Message----- Hi Blake, You're right, for Canonical XML there isn't much of a reason. 
+*But* since other canonicalizations can be used, in order to satisfy the "see what you sign" (and its sister maxims) you should reference validate (see) what was signed (canonical form.) An area where this might be important is where a canonicalization algorithm rewrote URIs. 
+Even something as innocuous as absolutizing relative URIs (which was a point of debate with respect to namespaces) could change what it is your signing. 
+Canonical XML doesn't make any such changes, and one could optimize appropriately, but since the specification is generally written from an algorithm independent point of view it includes that processing/warning. 
+Joseph Reagle Jr. http://www.w3.org/People/Reagle/ W3C Policy Analyst mailto:reagle@w3.org 
+IETF/W3C XML-Signature Co-Chair http://www.w3.org/Signature W3C XML Encryption Chair http://www.w3.org/Encryption/2001/ 
+These are good questions actually and in the past this was part of our discussions/debate regarding the transforms [1] in 1999 and something John called "Document Closure." 
+From that argument I don't think we ever extracted a ringingly crisp and clear consensus, but fortunately in the ensuing year of work on the spec I think we've ended up with a clear position none-the-less: "When transforms are applied the signer is not signing the native (original) document but the resulting (transformed) document. 
+(See Only What is Signed is Secure (section 8.1).)"[2] 
+[1] http://lists.w3.org/Archives/Public/w3c-ietf-xmldsig/1999OctDec/0372.html [2] I believe originally folks had three understandings of how transforms worked: 1. 
+One is signing the resulting document. 
+2. One is signing a relationship between the source document, the transforms, and the resulting set of possible documents -- akin to John's document closure. 
+3. One is signing the original document even given arbitrary transforms. 
+Option 1 is supported by the spec; option 2 is a different way of thinking of the same thing but with some inferences an application might make (at its own peril) about the relationship between the source and original document: if the transforms are "safe" the application *might* make some inferences about their relationship -- but that's outside the scope of this spec and it can be dangerous. 
+Option 3 can be a common mistake but is wrong. 
+To illustrate these options via a few examples: A. SOURCE ENCODED Reference URI="source.base64" ... 1. 
+One is signing the decoding of the base64 encoded source. 
+(Correct!) 2. One is signing a class of documents that result from applying a base64 decode to the source file. 
+(One-to-one mapping, and the result set only includes one document and is similar to option 1). 3. One is signing the base64 document. 
+(Wrong) B. SOURCE ENCODED Reference URI="source.xml" ... 1. 
+One is signing the encoding of the xml document. 
+(Correct!) 2. One is signing a class of documents that result from applying a base64 encode to the xml file. 
+(One-to-one mapping, and the result set only includes one document and is similar to option 1). 3. One is signing the source.xml . 
+(Wrong, and dangerous because since the application/user is obligated to see what it signs, it's seeing the base64 version. 
+Folks make this same mistake [3] with encryption, thinking that if one signs encrypted data, one is signing the source data and they also confuse the issue by lumping in implicit signature semantics. 
+The correct response is you only are signing the plain form when you use a decryption transform to make it the final result![4]) 
+[3] http://lists.w3.org/Archives/Public/xml-encryption/2001Jul/0010.html [4] http://www.w3.org/TR/xmlenc-decrypt C. SOURCE TRANSFORMED WITH XPATH Reference URI="source.xml" ... Transform Algorithm="http://www.w3.org/TR/1999/REC-xpath-19991116" -select-everything-but-user-entry-data-fields- 1. 
+One is signing the transformed xml document. 
+(Correct! 
+Changes to the user entry elements that are no longer in the resulting document aren't signed obviously.) 2. One is signing the resulting document and its relationship (via transforms) to the source document. 
+So, if the transforms are well specified, standardized, and understood while the application signed (and should "see") the resulting document, it might also continue to "see" the original document in the context of that relationship. 
+So for instance, consider a multi-party work flow in which a document is canonicalized every time some processing and signature validation occurs. 
+However, the processors don't want to pass on the canonical form because it is ugly for their purposes. 
+Since the relationship between the original document and its resulting canonical form is well understood, they might validate the signature over the canonical form, but continue to process the original. 
+They may wish to do the same thing with the form example above. 
+3. One is signing the source.xml . 
+(Wrong, again.) Joseph Reagle Jr. http://www.w3.org/People/Reagle/ W3C Policy Analyst mailto:reagle@w3.org 
+IETF/W3C XML-Signature Co-Chair http://www.w3.org/Signature W3C XML Encryption Chair http://www.w3.org/Encryption/2001/ Joesph, Thank you very much for this information. 
+As an aside, there is one other thing that puzzled me regarding XML dsig. 
+In one of the examples that you used below, you mentioned Base64 as an encoding transform. 
+This sort of encoding transform would have a great deal of utility in producing enveloping signatures over binary data, yet XML Dsig doesn't explicitly mention Base64 as an encoding transform (see are to be handled are laid out, and Base64 is pervasive in other parts of the recommendation (for encoding key values, for example), but I can't see where Base64 is specified as a viable encoding Transform. 
+Perhaps I am overlooking the obvious or does Base64 encoding go without saying? 
+Kind Regards, Blake Dournaee Toolkit Applications Engineer RSA Security "The only thing I know is that I know nothing" - Socrates previous These are good questions actually and in the past this was part of our discussions/debate regarding the transforms [1] in 1999 and something John called "Document Closure." 
+From that argument I don't think we ever extracted a ringingly crisp and clear consensus, but fortunately in the ensuing year of work on the spec I think we've ended up with a clear position none-the-less: "When transforms are applied the signer is not signing the native (original) document but the resulting (transformed) document. 
+(See Only What is Signed is Secure (section 8.1).)"[2] 
+[1] [2] I believe originally folks had three understandings of how transforms worked: 1. 
+One is signing the resulting document. 
+2. One is signing a relationship between the source document, the transforms, and the resulting set of possible documents -- akin to John's document closure. 
+3. One is signing the original document even given arbitrary transforms. 
+Option 1 is supported by the spec; option 2 is a different way of thinking of the same thing but with some inferences an application might make (at its own peril) about the relationship between the source and original document: if the transforms are "safe" the application *might* make some inferences about their relationship -- but that's outside the scope of this spec and it can be dangerous. 
+Option 3 can be a common mistake but is wrong. 
+To illustrate these options via a few examples: A. SOURCE ENCODED Reference URI="source.base64" ... 1. 
+One is signing the decoding of the base64 encoded source. 
+(Correct!) 2. One is signing a class of documents that result from applying a base64 decode to the source file. 
+(One-to-one mapping, and the result set only includes one document and is similar to option 1). 3. One is signing the base64 document. 
+(Wrong) B. SOURCE ENCODED Reference URI="source.xml" ... 1. 
+One is signing the encoding of the xml document. 
+(Correct!) 2. One is signing a class of documents that result from applying a base64 encode to the xml file. 
+(One-to-one mapping, and the result set only includes one document and is similar to option 1). 3. One is signing the source.xml . 
+(Wrong, and dangerous because since the application/user is obligated to see what it signs, it's seeing the base64 version. 
+Folks make this same mistake [3] with encryption, thinking that if one signs encrypted data, one is signing the source data and they also confuse the issue by lumping in implicit signature semantics. 
+The correct response is you only are signing the plain form when you use a decryption transform to make it the final result![4]) 
+[3] http://lists.w3.org/Archives/Public/xml-encryption/2001Jul/0010.html [4] http://www.w3.org/TR/xmlenc-decrypt C. SOURCE TRANSFORMED WITH XPATH Reference URI="source.xml" ... Transform Algorithm="http://www.w3.org/TR/1999/REC-xpath-19991116" -select-everything-but-user-entry-data-fields- 1. 
+One is signing the transformed xml document. 
+(Correct! 
+Changes to the user entry elements that are no longer in the resulting document aren't signed obviously.) 2. One is signing the resulting document and its relationship (via transforms) to the source document. 
+So, if the transforms are well specified, standardized, and understood while the application signed (and should "see") the resulting document, it might also continue to "see" the original document in the context of that relationship. 
+So for instance, consider a multi-party work flow in which a document is canonicalized every time some processing and signature validation occurs. 
+However, the processors don't want to pass on the canonical form because it is ugly for their purposes. 
+Since the relationship between the original document and its resulting canonical form is well understood, they might validate the signature over the canonical form, but continue to process the original. 
+They may wish to do the same thing with the form example above. 
+3. One is signing the source.xml . 
+(Wrong, again.) Joseph Reagle Jr. http://www.w3.org/People/Reagle/ W3C Policy Analyst mailto:reagle@w3.org 
+IETF/W3C XML-Signature Co-Chair http://www.w3.org/Signature W3C XML Encryption Chair http://www.w3.org/Encryption/2001/ 
+What do you mean "does Base64 encoding go without saying"? 
+If you want to use a base64 ENcode in the Transform pipeline, why? 
+Donald From: "Dournaee, Blake" bdournaee@rsasecurity.com 
+Message-ID: E7B6CB80230AD31185AD0008C7EBC4D2DAEF01@exrsa01.rsa.com 
+Date: Fri, 6 Jul 2001 19:24:24 -0700 Note, it's a more verbose restatment (with examples) of what is already said in the spec: Some applications might operate over the original or intermediary data but should be extremely careful about potential weaknesses introduced between the original and transformed data. 
+This is a trust decision about the character and meaning of the transforms that an application needs to make with caution. 
+Consider a canonicalization algorithm that normalizes character case (lower to upper) or character composition ('e and accent' to 'accented-e'). 
+An adversary could introduce changes that are normalized and consequently inconsequential to signature validity but material to a DOM processor. 
+For instance, by changing the case of a character one might influence the result of an XPath selection. 
+A serious risk is introduced if that change is normalized for signature validation but the processor operates over the original data and returns a different result than intended. 
+That's a mistake. 
+&amp;disg;#base64 is a decode transform, there's no URI yet for an encode algorithm as there isn't much use for such a thing besides examples! 
+smile/ If there was an base64-encode URI, it would be different than the one I gave. 
+Joseph Reagle Jr. http://www.w3.org/People/Reagle/ W3C Policy Analyst mailto:reagle@w3.org 
+IETF/W3C XML-Signature Co-Chair http://www.w3.org/Signature W3C XML Encryption Chair http://www.w3.org/Encryption/2001/ 

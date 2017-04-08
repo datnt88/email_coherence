@@ -1,0 +1,117 @@
+HI, next topic (looks like after I'm done with all my questions we could write a book called "DeltaV for Dummies - A virtual reality dialogue" :o)), anyway. 
+Situation: WS /DEV | -------------------+ | VCC1 /repo/vcc/1 | | +-------+ +---+DAV:bline-cntrl-col| +--------+ | | VH1 | +-------------------+ | VCR1 | | +-------+ |DAV:checked-in +------+ +--------+ | | V1 +-----+ +-------------------+ | | CIN V2-+---+---+ | | | | |DAV:version-history+--+ | +--------+ | +---+- V2 +--+ | +-------------------+ | | | | BLH /repo/blh/1 | -+ | | |DAV:version-set +--+-+ | +--+ BL /repo/blh/1/v1 | -+ | | +-----+ BL /repo/blh/1/v2 | ---+-+ The Worksapce precise /DEV is under BASELINE-CONTROL. 
+V2 of VCR1 is captured in V2 of the VCC1 (Baseline /repo/blh/1/v2). 
+Now a new workspace /CONS is created and put under BASELINE-CONTROL that way: MKWORKSPACE /CONS BASELINE-CONTROL /src HTTP/1.1 Host: www.webdav.org 
+Content-Length: xxxx (see DeltaV 12.6.1) Well what happens to /CONS is explained in 12.6.1 of DeltaV. 
+But take a look at VCR1. 
+Am I right that the copy of VCR1 in /CONS (VCR2) points to V2 of VCR1 in VH1 to? 
+Or is there a new VH for VCR2 and there is no connection between VCR1 and VCR2. 
+My understanding would be that VCR1 and VCR2 sharing the same VH. (At least this is what suits me and my application best) BAckground: I have a software project under development. 
+The Sourcetree is originally located in workspace /DEV. 
+/DEV is under baseline-control. 
+At some time in future I will close development and set up a consolidation codeline. 
+This consolidation codeline is placed into workspace /CONS using the reference to a baseline of /DEV to populate it with the then closed development codeline. 
+As far as I understand this /DEV and /CONS are VCC's on their own and have distinct baseline-histories. 
+What I want to achieve is, that the changes applied to my sources via the VCR's in /CONS should be a branch/fork of the version-tree/history of the corresponding VCR in /DEV. 
+Regards, Daniel I appreciate you taking time to raise these questions. 
+They're far from 'dummy' questions, too. 
+I'd encourage you to contribute to the FAQ (http://www.webdav.org/deltav/faq) 
+all that you have learned that you felt was not well described by the specification. 
+I'm confused by this diagram, what are the arrows that are going from the baseline(s) to the version(s)? 
+You did not give then a property name so I cannot guess what they are. 
+Maybe you are thinking of the DAV:baseline-collection? 
+In which case this is not in the version history as you depict. 
+Furthermore, I don't see what the relationship is between /DEV and VCR1? 
+So let's assume that VCR1 is called /DEV/foo I'm confused. 
+Perhaps you can restate the problem, answering my questions above, and I'll try again. 
+One way to do this is to create the consolidation workspace and bring it under baseline control. 
+Then create /DEV, /DEV1, etc as required and bring them under baseline control specifying an existing baseline of /DAV in the body of the reuest (as you showed above). 
+This will initialize the /DAV workspace to contain version-controlled members whose DAV:checked-in versions and relative names are as captured in the baseline of /CONS. 
+Regards, Tim Yes, VCR2 would have the same DAV:checked-in version and the same DAV:version-history as VCR1. 
+You are using this feature exactly the way it was intended to be used. 
+Cheers, Geoff HI, next topic (looks like after I'm done with all my questions we could write a book called "DeltaV for Dummies - A virtual reality dialogue" :o)), anyway. 
+Situation: | WS /DEV | -------------------+ | VCC1 /repo/vcc/1 | | | +-------+ +---+DAV:bline-cntrl-col| | +--------+ | | VH1 | +-------------------+ | | VCR1 | | +-------+ |DAV:checked-in +------+ | +--------+ | | V1 +-----+ +-------------------+ | | | CIN V2-+---+---+ | | | | |DAV:version-history+--+ | | +--------+ | +---+- V2 +--+ | +-------------------+ | | | | | BLH /repo/blh/1 | -+ | | | |DAV:version-set +--+-+ | | +--+ BL /repo/blh/1/v1 | -+ | | +-----+ BL /repo/blh/1/v2 | ---+-+ The Worksapce precise /DEV is under BASELINE-CONTROL. 
+V2 of VCR1 is captured in V2 of the VCC1 (Baseline /repo/blh/1/v2). 
+Now a new workspace /CONS is created and put under BASELINE-CONTROL that way: MKWORKSPACE /CONS BASELINE-CONTROL /src HTTP/1.1 Host: www.webdav.org 
+Content-Length: xxxx (see DeltaV 12.6.1) Well what happens to /CONS is explained in 12.6.1 of DeltaV. 
+But take a look at VCR1. 
+Am I right that the copy of VCR1 in /CONS (VCR2) points to V2 of VCR1 in VH1 to? 
+Or is there a new VH for VCR2 and there is no connection between VCR1 and VCR2. 
+My understanding would be that VCR1 and VCR2 sharing the same VH. (At least this is what suits me and my application best) BAckground: I have a software project under development. 
+The Sourcetree is originally located in workspace /DEV. 
+/DEV is under baseline-control. 
+At some time in future I will close development and set up a consolidation codeline. 
+This consolidation codeline is placed into workspace /CONS using the reference to a baseline of /DEV to populate it with the then closed development codeline. 
+As far as I understand this /DEV and /CONS are VCC's on their own and have distinct baseline-histories. 
+What I want to achieve is, that the changes applied to my sources via the VCR's in /CONS should be a branch/fork of the version-tree/history of the corresponding VCR in /DEV. 
+Regards, Daniel Some more questions about baselines and subbaselines. 
+Sorry, if there are already answers for this question in the archive, but search is not available, so I failed to find them. 
+Assume that I have some project /project1 (version-controlled-collection) placed under baseline control. 
+I have some baseline with subbaselines. 
+Subbaseline refer to some components in the project - some collections which are members of the /project1 collection. 
+Now I want to place project in my workspace. 
+I create directory /ws/my/project1 and place it under version control, right? 
+But what how subbaselines will be handled? 
+The expected behavior is that subbaselines will be extracted to the correspondent subdirectories of /ws/my/project1 which will be placed under baseline control? 
+But I didn't find confirmation in the specification. 
+Also specification doesn't require that baseline-controlled-collection of the subbaseline is member of baseline-controlled-collection of the super-baseline. 
+In this case I will not be able to create collections for subbaselines when I place /ws/my/project under baseline control. 
+So while behavior explained in the previous section seems to be natural and obvious, I afraid that it is not what intended for subbaselines by specification. 
+Unfortunately there is almost nothing in specification about subbaselines, except brief explanation of subbaseline property. 
+Now when I am going to prepare new baseline, I will have to explicitly setup subbaselines property for this baseline. 
+Why the is no notion of "subconfiguration". 
+It seems to very convenient and natural: I have version-controlled-collection /project1, I have component /project1/gui, project1/db and project1/core. 
+I place them under baseline control and declare that configuration of /project1 has three subconfigurations. 
+Now when I checkin this configuration and produce new baseline for /project1, this baseline will automatically be assigned subbaseline property, referred to the checkedIn baselines selected by subconfigurations. 
+Does it make sense? 
+And one more question about baselines: it is said in specification that "the root collection of a configuration is unconstrained with respect to its relationship to the root collection of its components". 
+First of all, the notion "root collection of configuration", been introduced in the first abstract of section 12 (Baseline feature), is never more used. 
+So it is not clear what is it and how it can be used. 
+BASELINE-CONTROL method creates new configuration and either create new baseline bounded with specified version-controlled collection either initialize specified version-control-collection with existed baseline. 
+This version-controlled-collection is stored in DAV:baseline-controlled-collection/ of the configuration. 
+It is "root collection of configuration"? 
+If so, how it is possible that components of this collection are not members of this collections? 
+From: Konstantin Knizhnik [mailto:KKnizhnik@togetherlab.com] 
+Assume that I have some project /project1 (version-controlled-collection) placed under baseline control. 
+I have some baseline with subbaselines. 
+Subbaseline refer to some components in the project - some collections which are members of the /project1 collection. 
+Now I want to place project in my workspace. 
+I create directory /ws/my/project1 and place it under version control, right? 
+Actually, you create directory /ws/my/project1 by using the BASELINE-CONTROL method, specifying the baseline from /project1 that you want to initialize /ws/my/project1 with. 
+But what how subbaselines will be handled? 
+The expected behavior is that subbaselines will be extracted to the correspondent subdirectories of /ws/my/project1 which will be placed under baseline control? 
+But I didn't find confirmation in the specification. 
+See the recent thread on "baselines &amp; namespaces" (starting last week). 
+Also specification doesn't require that baseline-controlled-collection of the subbaseline is member of baseline-controlled-collection of the super-baseline. 
+That is correct. 
+In this case I will not be able to create collections for subbaselines when I place /ws/my/project under baseline control. 
+If the subbaselines are not under /ws/my/project1, they must be independent projects, e.g. project2 and project3. 
+You would therefore have to initialize your workspace with those other projects as well, by using additional BASELINE-CONTROL requests (i.e. creating /ws/my/project2 and /ws/my/project3). 
+It obviously is easier if all the sub-projects are nested under a common "namespace", because then a single BASELINE-CONTROL request is sufficient. 
+So while behavior explained in the previous section seems to be natural and obvious, I afraid that it is not what intended for subbaselines by specification. 
+Unfortunately there is almost nothing in specification about subbaselines, except brief explanation of subbaseline property. 
+We need to add this kind of info to the FAQ. 
+Hopefully this thread provides the material we will need for this. 
+Now when I am going to prepare new baseline, I will have to explicitly setup subbaselines property for this baseline. 
+Why the is no notion of "subconfiguration". 
+It seems to very convenient and natural: I have version-controlled-collection /project1, I have component /project1/gui, project1/db and project1/core. 
+I place them under baseline control and declare that configuration of /project1 has three subconfigurations. 
+Now when I checkin this configuration and produce new baseline for /project1, this baseline will automatically be assigned subbaseline property, referred to the checkedIn baselines selected by subconfigurations. 
+Does it make sense? 
+Yes, I think that is exactly right. 
+Until now, there were only a few folks interested in advanced baselining functionality, so we just ended up defined the basic machinery and left the elaboration for a future draft (there are some interesting issues that arise when that kind of machinery is defined). 
+But now that we have several folks interested in sub-baselining, we should go ahead and iterate on some semantics, and get it posted to the deltav web site. 
+And one more question about baselines: it is said in specification that "the root collection of a configuration is unconstrained with respect to its relationship to the root collection of its components". 
+First of all, the notion "root collection of configuration", been introduced in the first abstract of section 12 (Baseline feature), is never more used. 
+So it is not clear what is it and how it can be used. 
+The concept of a "root collection" appears is explicitly used in a variety of the method postconditions in the baseline feature (just search for the string "root" in the protocol text). 
+BASELINE-CONTROL method creates new configuration to be precise, it creates a new version-controlled configuration. 
+and either create new baseline bounded with specified version-controlled collection either initialize specified version-control-collection with existed baseline. 
+It does not need to be a version-controlled collection ... whether or not a collection is under version-control or baseline-control are two orthogonal issues (it can be neither, either, or both). 
+This version-controlled-collection is stored in DAV:baseline-controlled-collection/ of the configuration. 
+More precisely, the location of the baseline-controlled collection is stored in the DAV:baseline-controlled-collection property of the version-controlled configuration. 
+It is "root collection of configuration"? 
+More precisely, it is the root collection of the configuration whose state is being tracked by the version-controlled configuration. 
+If so, how it is possible that components of this collection are not members of this collections? 
+A version-controlled configuration is not itself a configuration (it's not even a collection), but rather is a mechanism for tracking the history of a configuration (in particular, the configuration whose root is identified by the DAV:baseline-controlled-collection property of the version-controlled configuration). 
+Cheers, Geoff 

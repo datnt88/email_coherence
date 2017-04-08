@@ -1,0 +1,117 @@
+Hi, Given Scott Lawrence's mention of upcoming drafts updating RFC 2616 and 2617 I thought I should raise this issue again for consideration. 
+I previuously raised it in April 2003. 
+Background: RFC 2617 does not mention which character set should be used when generating the authentication credentials. 
+This has led to a situation where (at the very least) various clients have made different design choices, which have resulted in some interoperability problems. 
+When I implemented Unicode support for authentication in Opera I chose UTF-8 as the encoding for the credential inputdata, based, among other reasons, on the recommendations of BCP 18/RFC 2277. 
+We have received a couple of reports about problems caused by this. 
+New information: Limited testing indicates that MSIE uses the character set selected in the View- Encoding menu when encoding Basic Authentication credentials. 
+As the intention was only to get an idea about what kind of character sets where used, Mozilla/Netscape and other clients were not tested. 
+If correct, this means that MSIE users can authenticate correctly as long as the server is using the same character set as they do, but as soon as the server is using a different character set they have to manually change not a character set expert) many of the Asian, Eastern European and Middle East nationalities have more than one character set to choose from, which means that even within a single nation you could run into problems. 
+Other items: From Paul Leach (my summary+extra info) Basic Authentication's username and password attributes are defined as "*TEXT", Digest Authentication's username parameter is an qouted string (essentially *TEXT) and passwd has no real definition, but probably *TEXT or *OCTET. 
+RFC 2616 does say that if a *TEXT word contains non-iso-8859-1 characters they should be represented using the RFC 2047 rules (e.g =?charset?Q?text?= ). 
+I have, however, never seen the RFC 2047 QP syntax used by a HTTP client or server, and we could encounter problems regarding the Digest processing of passwords (Which charset is used? 
+The same as in the username? 
+Which encoding? 
+Q or B? And what about precalculated A1 values?) From Alexey Melnikov (my summary) RFC 2831 (Digest as SASL) introduced a charset attribute and complex rules to handle the situation. 
+What can be done? 
+Shortrange: At the very least I think that the updated RFC 2617 draft should address the issue. 
+Personally, I would prefer a permanent solution (one character set, or a negotiation method), but given the current implementation of clients and servers I suspect we may have to make do with something that effectively says "The client and server must be configured to use the same character set. 
+How the configured character set is agreed upon is not defined by this specification". 
+Longrange: A permanent solution (beside leaving the sitation as it is) can take several forms: 1) Updating the current methods by doing either of these: A) Define a standard character set to be used. 
+B) Define a negotiation method, either client only, or client select from server's list. 
+E.g. The client adds a charset attribute in the challenge response. 
+Problem: How to solve backwards compatibility? 
+2) Define new internationalized authentication methods, at least for digest. 
+All of these will require that both servers and clients are updated with new functionality, which will cause transition problems. 
+Personally, of course, I'd prefer that UTF-8 is endorsed as the character set. 
+Sincerely, Yngve N. Pettersen Opera Software ASA http://www.opera.com/ 
+There's an important distinction here - the character set is not the same as the encoding. 
+This mail is in the character set 'iso-8859-1'; it specifies a particular set of glyphs. 
+The encoding is how you represent that character set with bits. 
+So 2617 already has a specified (if clunky and unevenly supported) solution for Basic. 
+I don't see sufficient reason to change it, since the worst thing about 2047 rules is that they are not human-friendly, but this is not for humans anyway. 
+But 2617 is mute on the encoding of the inputs to the A1 hash values, and if the same characters are hashed using different encodings in the client and the server, then the hash (very very probably) will not match, so I believe a case can be made that Digest is underspecified. 
+Agreed. 
+I think that the character set isn't important - only the encoding; they both already (presumably) share the secret, they just have to agree on a common representation of it. 
+Actually, I think this choice would be backward-compatible for those cases that have been working, and incompatible only with those that previously would have had interoperability problems anyway (passwords that had values outside the ASCII range). 
+Scott Lawrence "Yngve N. Pettersen (Developer Opera Software ASA)" I concur with this analysis. 
+I also would strongly prefer the specification of UTF-8 encoding for the purposes of calculating H(A1). 
+/a In keeping with Jims' admonition to get text this week, I propose the following edit for 2616++ to clarify the Digest password encoding issue; immediately following the ABNF for passwd in 3.2.2.2, add: The passwd value SHOULD be encoded using UTF-8 [ref] for input to the hash. 
+The encoding of the passwd value was not specified by [RFC 2616], so for backward compatibility, servers MAY also calculate the A1 value using any convention used prior to this specification. 
+So that section would read: 3.2.2.2 A1 If the "algorithm" directive's value is "MD5" or is unspecified, then A1 is: A1 = unq(username-value) ":" unq(realm-value) ":" passwd where passwd =  user's password The passwd value SHOULD be encoded using UTF-8 [ref] for input to the hash. 
+The encoding of the passwd value was not specified by [RFC 2616], so for backward compatibility, servers MAY also calculate the A1 value using any convention used prior to this specification. 
+If the "algorithm" directive's value is "MD5-sess", then A1 is calculated only once - on the first request by the client following receipt of a WWW-Authenticate challenge from the server. 
+It uses the server nonce from that challenge, and the first client nonce value to construct A1 as follows: A1 = H( unq(username-value) ":" unq(realm-value) ":" passwd ) ":" unq(nonce-value) ":" unq(cnonce-value) This creates a 'session key' for the authentication of subsequent requests and responses which is different for each "authentication session", thus limiting the amount of material hashed with any one key. 
+(Note: see further discussion of the authentication session in section 3.3.) 
+Because the server need only use the hash of the user credentials in order to create the A1 value, this construction could be used in conjunction with a third party authentication service so that the web server would not need the actual password value. 
+The specification of such a protocol is beyond the scope of this specification. 
+Scott Lawrence On Wed, 26 Nov 2003 12:09:08 -0500, Scott Lawrence scott-http@skrb.org 
+RFC 2616 or FRC 2617? 
+I think this will resolve the situation about passwords in digest authentication. 
+Should similar language be added about the digest username as well? 
+Or should the RFC 2047 encoding be required for the username? 
+Sincerely, Yngve N. Pettersen Opera Software ASA http://www.opera.com/ 
+On Tue, 25 Nov 2003 22:31:34 -0500, Scott Lawrence scott-http@skrb.org 
+I may be wrong, but as I mentioned, I've never seen a HTTP server or client use the RFC 2047 encoding, which leads me to believe it's never been implemented. 
+If so, there is no implemented means of telling the server which character set and encoding is used for the username and password. 
+And AFAICT that is the present situation. 
+The server and client must *also* agree about the binary representation (character set and encoding) of the username, as the username is used as an index into the password database. 
+About Basic authentication: If RFC 2047 encoding is to be used preparing the username and password attributes (if they are not using the iso-8859-1 character set) before creating the "basic-credentials" attribute, I think RFC 2617 should require it, even if it is supposed to follow from the defintion of *TEXT in sec. 
+2.2 of RFC 2616. 
+Using RFC 2047 encoding does require that the server is able to map the characters to its own local representation, and require more processing of the credentials. 
+As mentioned earlier, my position is that I'd rather require UTF-8 character set and encoding of the input (username and password) to the credential generation. 
+Sincerely, Yngve N. Pettersen Opera Software ASA http://www.opera.com/ 
+The difference is that the username is also passed in clear, so the encoding used on the wire for that attribute can be used (as is the case for all the other inputs to the hash). 
+Perhaps we need a sentence to make that explicit? 
+Scott Lawrence On Wed, 26 Nov 2003 13:57:15 -0500, Scott Lawrence scott-http@skrb.org 
+But will the binary representation of the username in the authentication header match the binary representation in the server's database? 
+The configuration procedure can be done through webforms, which may or may not have character sets defined, or through a Telnet/SSH connection to the server, just to mention two possibilities. 
+And there is no way to tell the client which character set and encodings were used during the registration process. 
+An example: The Norwegian spelling of my middle name contains the letter "?" (ae, 0xE6). 
+In iso-8859-1 and iso-8859-15 the binary representation is the same, but in UTF-8 it has a different representation and will not exist in most other character sets. 
+Depending on the servers' registration procedures, I may be able to register a username containing that character, even if the server does not know the character set, but unless the registration process and the actual login somehow results in the same binary representation I will probably not be able to log in. 
+I might luck out with my special character, but I suspect that situation will be much worse in languages like Japanese and Chinese that appears to be using several coexisiting character sets. 
+It is not necessariely the case that two different computers are using the same default character set. 
+Perhaps we need a sentence to make that explicit? 
+I think a clear specification is needed, and I also think we need to define the input values of both authentications methods such that the process is unambiguous. 
+That means that either the client must be able to tell the server which character set and encoding it is using (RFC 2047 or a charset attribute), or the character set and encoding have to be fixed by the protocol. 
+Sincerely, Yngve N. Pettersen Opera Software ASA http://www.opera.com/ 
+I don't think I understand your example. 
+If my server gets a user="foo" and 'foo' does not appear in my database of valid users, then authentication has failed. 
+The username value is already covered by the existing rule for TEXT: rfc2617, sec 3.2.2: username = "username" "=" username-value username-value = quoted-string rfc2616, sec 2.2: quoted-string = ( " *(qdtext | quoted-pair ) " ) qdtext = any TEXT except " so the username has to be done using the clunky existing mechanism. 
+Scott Lawrence In this case, Unicode is the character set, and UTF-8 is the encoding. 
+But your earlier comments reminded me of something: it can be more complicated than that. 
+For example, let's consider a username like "?ke". 
+If you simply specify UTF-8 as the encoding, you can still run into problems. 
+If the client represents the initial character as U+00C5, but the server has it stored as U+0041 U+030A (both valid unicode representations of "?"), then you'll end up hashing differently. 
+The same, of course, applies to passwords. 
+Fortunately, Unicode also defines normalization techniques that allow one to ensure a consisitant representation; see annex 15 (http://www.unicode.org/reports/tr15/). 
+I think it's pretty clear that, for the purposes of calculating authentication, we'll want to use one of the compatibility normalizations (KC or KD). 
+I beleive that KD requires less processing, so I would tend to favor it over KC. 
+So, in the spirit of sending text: The passwd value SHOULD be normalized according to Unicode Normalization Form KD [ref], and encoded using UTF-8 [ref] for input to the hash. 
+(Note that characters in the range of U+0000 to U+007F are left unaffected by Unicode normalization.) Presumably, the same text (with a tweak or two) can be used to specify username handling. 
+/a On Wed, 26 Nov 2003 15:23:17 -0500, Scott Lawrence scott-http@skrb.org 
+I'm not a character set expert, so I don't have any Japanese or Chinese examples handy, but I know that Japanese systems are using several different character sets. 
+But let us use an extreme (and unrealistic) example: Let's assume that the client is using US-ASCII as the default character set, while the server is using EBCDIC. 
+The username "foo" and the associated password is entered on the console of the machine. 
+This means that the username and password are represented to the server using EBCDIC character codes, not US-ASCII. 
+When the client is creating the credentials it will be using US-ASCII as the character set, instead of EBCDIC. 
+The binary representation (in C-style hex) of "foo" in US-ASCII is 0x66 0x6F 0x6F , while it is 0x86 0x96 0x96 in EBCDIC. 
+Unless the server explicitly converts the recieved username from US-ASCII to EBCDIC (or the other way for the EBCDIC version) before using it, the server will not be able to get a match, despite the fact that the user entered "foo" when registering and when autenticating. 
+That was phase 1; now for phase 2: Replace "US-ASCII" with one of the Japanese character sets e.g. Shift-JIS, "EBCDIC" with one of the other japanese character sets, e.g. EUC-JP, use a Japanese username and repeat the above procedure. 
+My point is that you cannot guarantee that all steps of the authentication process, including the registration process, on both the client and server side results in the *same* binary representation of a national character, unless the specification clearly specifies which binary representation is going to be used. 
+And in an international environment like HTTP is used in, the best binary representation of a string of national characters is the 8 bit encoding of Unicode, UTF-8. 
+The username value is already covered by the existing rule for TEXT: AFAICT (from a quick look) Apache 2.0 is not able to parse a RFC 2047 encoded parameter (Oh, and BTW: the RFC 2047 encoding does not have a very good syntax for parameters, e.g. name==?a?Q?value?= , it is not without reason that it's been updated by RFC 2231). 
+AFAIK nobody are using the RFC 2047 encoding, especially not for authentication. 
+Feel free to correct me if I am wrong. 
+Assuming that UTF-8 is not mandated for Basic username and password and Digest username, I would recommend that RFC 2231 encoding is recommended for the Digest username, instead of RFC 2047, as 2231 is better suited for encoding parameters, and that it is clearly stated in the RFC. 
+However, the problem about which binary representation is used in calculations MUST also be addressed (should the encoded or the decoded version of the credentials be used, and should they be converted to a common character set, if possible?). 
+Not mandating UTF-8 will just move the problem around. 
+Come to think of it: Perhaps the *TEXT rule in RFC 2616 sec 2.2 should be updated to mandate UTF-8 instead of iso-8859-1? 
+But that is probably too big a change to do at this time. 
+Sincerely, Yngve N. Pettersen Opera Software ASA http://www.opera.com/ 
+On Wed, 26 Nov 2003 15:02:41 -0600, Adam Roach adam@dynamicsoft.com 
+That was indeed a point I had not considered. 
+Regarding Normalization Form KC versus KD I think that one thing that should be considered before one of them is selected is that the IDNA RFCs (3454, 3490, 3491, 3492) are already using KC. Implementationwise, I would prefer to use a single normalization form in the network related code. 
+Of course, the actual code overhead depends on how much code is needed to implement the different normalizations, and whether or not other parts of the code also needs the other forms. 
+Sincerely, Yngve N. Pettersen Opera Software ASA http://www.opera.com/ 

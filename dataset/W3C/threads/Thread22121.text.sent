@@ -1,0 +1,70 @@
+Below you can find an XPath API as we've been implementing it on top of our database Xhive. 
+We believe that and XPath API as part of DOM makes sense, it takes way too long before the Query WG has a spec available. 
+This API is supposed to get the discussion started. 
+(and nothing more !, feedback is appreciated) When we've created this api we've made the following assumptions: - the interfaces should be simple and straight forward - it doesn't make too much sense to offer a complete API for parsed XPath queries although this is possible - it should cover the complete XPath implementation - every query object has an authority object which organizes authority on queries. 
+We've created it to serve our repository but it might easily be skipped - our product is a Java product so the API's are in java which is alright for discussion purposes. 
+- XPath queries should support the context supported by Xpath (the context node, a set of variable bindings, a set of namespace declarations) Method names etc should of course be changed and a clear module (something like org.w3c.dom.xpath) should be created. 
+Dom core should add an hasFeature. 
+Have fun, Jeroen Jeroen van Rotterdam The Connection Factory jeroen@tcf.nl 
+XPath Query factory public interface XPathQueryImpl{ XPathQuery createXPathQuery( String unparsedQuery, String description ); Main Query interface public interface XPathQuery { /* set the unparsed query */ public void setQuery( String unparsedQuery ); /* get the unparsed query */ public String getQuery() throws XhiveException; /* execute the query against a reference node */ public XPathResultIf execute( Node referenceNode ) throws XhiveException; /* Description of this query*/ public void setDescription( String description ); public String getDescription(); /* variable binding list */ public VariableBindingListIf getVariableBindingList(); /* namespace declaration */ public NamespaceDeclarationListIf getNamespaceDeclarationList(); public Date getLastModified(); public String toString(); public XhiveAuthorityIf getAuthority(); result interface public interface XPathResultIf { public static final short NODESET = 1; public static final short BOOLEAN = 2; public static final short STRING = 3; public static final short NUMBER = 4; public short getType() throws XPathException; public boolean getBooleanVal() throws XPathException; public XPathNodeSetIf getNodeSetVal() throws XPathException; public double getNumberVal() throws XPathException; public String getStringVal() throws XPathException; node set if public interface XPathNodeSetIf { public Node getFirst() throws XPathException; public Node getNext() throws XPathException; public int getSize() throws XPathException; variable binding list public interface VariableBindingListIf { public VariableBindingIf createVariableBinding( String name, XPathNodeSetIf value ) throws XhiveException; public VariableBindingIf createVariableBinding( String name, String value ) throws XhiveException; public VariableBindingIf createVariableBinding( String name, boolean value ) throws XhiveException; public VariableBindingIf createVariableBinding( String name, Double value ) throws XhiveException; public void addVariableBinding(VariableBindingIf variableBinding) throws XhiveException; public boolean removeVariableBinding(VariableBindingIf variableBinding ) throws XhiveException; public VariableBindingIteratorIf getVariableBindings(); public int size(); variable binding public interface VariableBindingIf { public String getName(); public XPathResultIf getBinding(); namespace declaration list public interface NamespaceDeclarationListIf { public NamespaceDeclarationIf createNamespaceDeclaration( String prefix, String namespaceURI ) throws XhiveException; public void addNamespaceDeclaration(NamespaceDeclarationIf nsDeclaration) throws XhiveException; public boolean removeNamespaceDeclaration(NamespaceDeclarationIf declaration ) throws XhiveException; public NamespaceDeclarationIteratorIf getNamespaceDeclarations(); public int size(); namespace declaration interator interface public interface NamespaceDeclarationIteratorIf { public boolean hasNext(); public NamespaceDeclarationIf next () throws XhiveException; public boolean hasPrevious(); public NamespaceDeclarationIf previous () throws XhiveException; namespace declaration interface public interface NamespaceDeclarationIf { public String getPrefix(); public String getNamespaceURI(); XhiveAuthority interface unix style authority model public interface XhiveAuthorityIf { static short READ_ACCESS = 0; static short WRITE_ACCESS = 1; static short READ_EXECUTE_ACCESS = 2; static short WRITE_EXECUTE_ACCESS = 3; static short NO_ACCESS = 4; public void setOwnerAuthority( short authority ) throws XhiveException; public void setGroupAuthority( short authority ) throws XhiveException; public void setOtherAuthority( short authority ) throws XhiveException; public void setAuthority( short ownerAuthority, short groupAuthority, short otherAuthority ) throws XhiveException; public void setOwner( XhiveUserIf owner ); public void setGroup( XhiveGroupIf group ) throws XhiveException; public XhiveUserIf getOwner(); public XhiveGroupIf getGroup(); public boolean isExecutable(); public boolean isWritable(); public boolean isReadable(); By the way we've added support for document collections where documents are what we call "Bastard Nodes" of a collection. 
+(Bastard Node: document.getParent 
+== null while collection.getChild delivers a Document). 
+This enables you to query over collections while not braking the core Dom and XPath interfaces. 
+Cool. 
+This isn't so far from my thoughts, and much closer than having methods directly on the Node object. 
+What might you add if it was a "complete API"? 
+Interfaces for the structure so that tools could manipulate it? 
+Should this include function extensions? 
+(I would think yes). 
+skipped Yeah, I would think this should belong to a full query API. for I think Java is fine. 
+But we should make sure a C++ API of some sort is defined before we freeze, IMHO. 
+context node, Why org.w3c.dom.xpath and not org.w3c.xpath?? (as per my previous mails). 
+I don't think this object can be multi-threaded without locking, is that correct? 
+Might it be better to have a simpler XPath object to which a XPathContext is handed in? 
+I don't understand the "If" postfix in the names. 
+I assume it has some significance? 
+-scott Scott Boag wrote, Whoa! 
+Is this in scope for this list? 
+I didn't think we were discussing an XPath API, I thought we were discussing a DOM API for XPath queries? 
+Not that I'm against an XPath API as such (we've got a Java specific one of our own), but for any such thing to have any chance of a W3C seal of approval, it *must* take the same tack as the DOM: ie. it must be language *independent*. 
+Cheers, Miles Miles Sabin Cromwell Media Internet Systems Architect 5/6 Glenthorne Mews msabin@cromwellmedia.com http://www.cromwellmedia.com/ 
+Yep, that's what I meant. 
+you're right, I have to dig into that. 
+Actually what I meant here is that the example is to start the discussion, I'm in favor of a language independent setup. 
+Currently we have implemented it on top of DOM, although it was a poor mans choice. 
+I think it should be an integral part of DOM. 
+Remember this is our implementation which was an example. 
+We use a standard where our interfaces have a suffix If, which obviously is different from the w3c convention. 
+Jeroen Jeroen van Rotterdam The Connection Factory jeroen@tcf.nl 
+We believe that and XPath API as part of DOM makes sense, it takes way too long before the Query WG has a spec available. 
+This API is supposed to get the discussion started. 
+(and nothing more !, feedback is appreciated) big snip. 
+Not sure I like the seperation of namespace from xpath string. 
+What would be the call for something like //rdf:name/item[@mine:attrib="x"] Would it involve setting the namespace first, then executing the call? 
+Regards DaveP Miles Sabin msabin@cromwellmedia.co.uk wrote on 05/03/2000 01:34 PM: Actually, yes, it is in scope. 
+I was just looking at the original announcement for this list, and Miles note came to mind. 
+From the announcement: Another possible outcome would be that this group design the complete API, and submit it to W3C as a Note, without any formal linkage to the DOM WG. (see http://lists.w3.org/Archives/Member/w3c-xsl-wg/2000Apr/0060.html, for those with Member access). 
+Though the announcement does state it as a list for "investigating a W3C-DOM-based API for XPath", I think the above opens the door for exploration into a XPath API that addresses more than just DOM users. 
+In the XSLT WG, in our explorations for a standard extensions interface, there has been some talk of some minimal interfaces for Nodes, lists, and trees, that do not use the DOM interfaces. 
+While I'm not necessarily advocating this approach, it is a thought that an XPath API could exist that doesn't take DOM nodes as arguments, which would open the door to using XPath with other tree structures besides the DOM (since the DOM has become so hard and expensive to implement). 
+I'm not trying to start trouble, only stating that we should be open to various possibilities. 
+Certainly, one would hope that an XPath API for DOM or otherwise, should be compatible with XSLT extensions. 
+Personally, I would hope this become a requirement for this work. 
+-scott Scott Boag wrote, Fair enough: Mike pointed this out to me just after I posted that message. 
+That said, it would be nice if we could come up with an XPath query module for the DOM in time for Level 3. Given that a full blown, well architected, language independent XPath API probably won't be forthcoming in time, it might be worth focussing on something a bit more modest, at least initially. 
+Cheers, Miles Miles Sabin Cromwell Media Internet Systems Architect 5/6 Glenthorne Mews msabin@cromwellmedia.com http://www.cromwellmedia.com/ 
+Defining a lightweight DOM of DOM Level 2 core is in the scope of the DOM WG/IG/Public. 
+Even if there is a need for a "core of the core", I think that this is outside the scope of this mailing list. 
+Proposals are always welcome on the DOM public mailing list but don't expect anything for DOM Level 3. Our list of issues for DOM Level 3 is already full. 
+This is unfortunate but the DOM WG can't address all requests. 
+Our goals for DOM Level 3 are defined in the requirements document : As usual, comments on our requirements are always welcome. 
+Philippe Philippe Le Hegaret - http://www.w3.org/People/LeHegaret/ World Wide Web Consortium (W3C), DOM Activity Lead Personal view? 
+I don't give a shit whats behind it. 
+I want an xpath interface to a document. 
+Be it in a database, in memory in dom, or written on carbon paper with a blunt knife. 
+But thats just a users view :) Sorry. 
+If I'm talking small, fast, perhaps an in-memory document is OK. 
+If I'm talking huge, then a db would be 'best'. 
+DOM is only useful in that it provides the standard api to a well formed (maybe valid) document. 
+No more, no less. 
+Regards, DaveP 

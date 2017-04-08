@@ -1,0 +1,53 @@
+I just noticed that the method NodeIterator getAttributes(); has been left in the 980416 spec, even though Attributes are not Nodes anymore. 
+Andrew n marshall student - artist - programmer "Everyone a mentor, Everyone a pupil" My understanding is that Attributes are still Nodes. 
+Don Park I just noticed that the method NodeIterator getAttributes(); has been left in the 980416 spec, even though Attributes are not Nodes anymore. 
+Andrew n marshall student - artist - programmer "Everyone a mentor, Everyone a pupil" If that is the intent, then Attribute doesn't derive Node in the IDL definition. 
+Although the concept of Attributes as Nodes never made sense to me. 
+Attributes are do not need any particular order, and shouldn't be able to have children. 
+That said, I also notice the NodeType ATTRIBUTE, was also left in, so maybe that was the intent. 
+Andrew n marshall student - artist - programmer "Everyone a mentor, Everyone a pupil" Don Park My understanding is that Attributes are still Nodes. 
+Don Park -----Original Message----- I just noticed that the method NodeIterator getAttributes(); has been left in the 980416 spec, even though Attributes are not Nodes anymore. 
+Andrew n marshall student - artist - programmer "Everyone a mentor, Everyone a pupil" Andrew, Somebody on the list mentioned that Attributes are Nodes because WG wanted NodeIterator to access the attributes. 
+Frankly, that reason does not jive. 
+Current design looks like something that reflects the 'internal' design of existing browser DOM implementation. 
+The real problem I see is that decisions are made secretly and we only see the result of the decisions. 
+We can argue about the faults in the design but we can not argue about the faults in the reasons behind the design because they are secret. 
+I really do not want to start another thread of heated discussion about something we can not do anything about so I beg every reader to resist responding unless it is in defense of W3C practices. 
+Regards, Don Park The idea behind Attributes having children was to have something to keep the attribute value in. 
+Attribute values can contain entity references in XML, so they can't be simple strings. 
+What else would you suggest? 
+You're right that attributes don't have a particular order, although I've heard complaints about that from various people. 
+Lauren That makes sense. 
+The only complaint I have is with regard to the burden that places on DOM users who have no need for references to the entities. 
+My guess is that covers the majority of DOM users. 
+For example, here is a chunk out of my code. 
+This is from the March spec, so it is slightly out of date: switch( node.getNodeType() ) { case Node.ELEMENT: elem = (Element) node; // Determine if this is a recognized XLink if( (atts = elem.attributes()) 
+!= null &amp;&amp; (att = atts.getAttribute( 
+"xml:link" )) != null &amp;&amp; "simple".equals( 
+((Text) att.getValue()).getData() ) ) { if( (att = atts.getAttribute( 
+"href" )) != null ) { href = ((Text) att.getValue()).getData(); 
+actuate = show = null; if( (att = atts.getAttribute( 
+"actuate" )) != null ) actuate = ((Text) att.getValue()).getData(); 
+if( (att = atts.getAttribute( 
+"show" )) != null ) show = ((Text) att.getValue()).getData(); 
+if( ( actuate == null || actuate.equals( 
+"user" ) ) &amp;&amp; ( show == null || show.equals( 
+"replace" ) ) ) { block = new CSSBlock(); domRef.append( 
+block ); build( (Element) node, block, href ); // Recurse } else if( actuate.equals( 
+"auto" ) ) { // Need to test for embedded images } else { You can see that this can get really excessive. 
+For that purpose, I would like to recommend the following convience method be added to either Element or AttributeList: wstring getAttributeValue( wstring name ); If the attribute exists, then the the wstring returned would be the value of the attribute with all entities expanded. 
+If it doesn't exist, either explicitly or implicitly, then the method should return null. 
+Andrew n marshall ??student - artist - programmer ???? http://www.media-electronica.com/anm-bin/anm 
+??????"Everyone a mentor, Everyone a pupil" I agree with Andrew: In many cases, the XML parsers will have expanded the entity references during parsing - that will be true in SAX parsers (at least at SAX level 1). 
+It is not clear to me how parser writers should be treating Entity References. 
+Are they used as mere variables in which case, we should maintain them in nodes so that application writers can change their values and have the DOM represent the current value, or are they more like a classical preparser convenience, substituted before building the DOM. 
+Note: the internals of the SAX parsers I have seen expand the references as they see them - this is not the way the DOM hierarcy works. 
+How do people anticipate that application writers will treat Entities? 
+It is very important to understand the assumptions being made with the complexity added for Attribute values. 
+-MA the that guess out of ~-~-~-~-~-~-~-~-~-~-~-~-~-~-WEBEASY-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~ Michael Amstermamster@webeasy.com 
+I'm a bit mystified; we agreed to this very idea a month ago, but I can't find it in the spec! 
+Perhaps lost in a version snafu .... but I'll see that it's fixed! 
+Mike Champion Actually, SAX is a little more complicated -- the application has two options for each external entity reference: 1) ask the parser to resolve it; or 2) provide an alternative resolution (including possibly an empty stream). 
+More generally, entity references should be invisible to production processes (such as those targeted by SAX), but they will, of course, matter to authoring tools. 
+All the best, David David Megginson ak117@freenet.carleton.ca 
+Microstar Software Ltd. dmeggins@microstar.com 

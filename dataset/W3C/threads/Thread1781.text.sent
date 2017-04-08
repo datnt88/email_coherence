@@ -1,0 +1,79 @@
+Suppose I wanted to capture that adding a resource to version control was part of an activity. 
+It seems to me that this could be reflected by making the VERSION-CONTROL method create a VCR whose DAV:checked-in version included that activity in its DAV:activity-set property value. 
+It looks like the spec allows but does not require servers to do this (for example) if the VERSION-CONTROL request includes a DAV:activity-set element, or if the request-URL for VERSION-CONTROL is the member of a workspace with a nonempty DAV:current-activity-set property value. 
+Is this interpretation correct? 
+Thanks, Roy That is correct. 
+It probably would be very reasonable to define both of these behaviors as being required in the next rev of the protocol. 
+Cheers, Geoff Suppose I wanted to capture that adding a resource to version control was part of an activity. 
+It seems to me that this could be reflected by making the VERSION-CONTROL method create a VCR whose DAV:checked-in version included that activity in its DAV:activity-set property value. 
+It looks like the spec allows but does not require servers to do this (for example) if the VERSION-CONTROL request includes a DAV:activity-set element, or if the request-URL for VERSION-CONTROL is the member of a workspace with a nonempty DAV:current-activity-set property value. 
+Is this interpretation correct? 
+Thanks, Roy Hi, section 5.4 currently doesn't say anything about the relation between the locate-by-history report and the Depth header (which defaults to "0" as per definition of REPORT method). 
+Clearly, the report only makes sense for depth = 1. 
+So what would we expect for other values? 
+0: empty multistatus response? 
+infinity: forbidden? 
+Regards, Julian [1] http://greenbytes.de/tech/webdav/draft-ietf-deltav-versioning-20.1.htm#_Toc524830576 version-history feature 5.9 Additional VERSION-CONTROL Semantics Additional Postconditions: (DAV:new-version-history): If the request created a new version history, the request MUST have allocated a new server-defined URL for that version history that MUST NOT have previously identified any other resource, and MUST NOT ever identify a resource other than this version history. 
+does this means copying a version history resource (of course with a new server created unique URL)? 
+copy method directly is not allowed. 
+has the new version history the same version controlled resource the the older one? 
+thanx jens GMX - Die Kommunikationsplattform im Internet. 
+Actually, the report clearly makes the most sense for depth=0 (perhaps that's what you meant to type?). 
+One instance where a non-zero depth parameter would make sense for this report was if you had a collection of workspaces (i.e. each internal member of the collection is a workspace). 
+You could do a Depth:1 locate-by-history report, in order to find out where a given version history is in each of those workspaces. 
+Cheers, Geoff Hi, section 5.4 currently doesn't say anything about the relation between the locate-by-history report and the Depth header (which defaults to "0" as per definition of REPORT method). 
+Clearly, the report only makes sense for depth = 1. 
+So what would we expect for other values? 
+0: empty multistatus response? 
+infinity: forbidden? 
+Regards, Julian [1] http://greenbytes.de/tech/webdav/draft-ietf-deltav-versioning-20.1.htm#_Toc 524830576 You managed to confuse me :-) It the request URI is the parent collection, and the scope is the member of this collection, only depth = 1 seems to make sense. 
+Depth 0's scope would be just the parent collection, correct? 
+The locate-by-history report logically runs against the entire configuration rooted at the request-URL. 
+So in that sense, it is a "depth:infinity" operation. 
+But that isn't how REPORT is defined. 
+REPORT is defined as "being run separately against every resource that satisfies the depth parameter". 
+Depth:1 says to "run the request against the resource identified by the request-URL, and then again on each of the internal members of the request-URL." 
+But that is never what you want, because you only want the REPORT run once against the configuration identified by the request-URL. 
+And that one case where I said that Depth:1 might make sense was just wrong. 
+You still run Depth:0 (i.e. just run the REPORT once), and the REPORT will find all VCR's that match that version history in any of the workspaces. 
+Cheers, Geoff You managed to confuse me :-) It the request URI is the parent collection, and the scope is the member of this collection, only depth = 1 seems to make sense. 
+Depth 0's scope would be just the parent collection, correct? 
+From: Jens Grote [mailto:Grote.Jens@gmx.de] 
+version-history feature 5.9 Additional VERSION-CONTROL Semantics Additional Postconditions: (DAV:new-version-history): If the request created a new version history, the request MUST have allocated a new server-defined URL for that version history that MUST NOT have previously identified any other resource, and MUST NOT ever identify a resource other than this version history. 
+does this means copying a version history resource (of course with a new server created unique URL)? 
+copy method directly is not allowed. 
+No, this Postcondition would apply to a VERSION-CONTROL request (when the section is "Additional XXX Semantics", it means additional semantics for an XXX request. 
+has the new version history the same version controlled resource the the older one? 
+A version history does not really "have" a version-controlled resource, i.e. it is the other way round: a version-controlled resource has a version history. 
+Since a version-controlled resource can only refer to a single version history, a given version-controlled resource could not refer to both an old and a newer version history. 
+Cheers, Geoff I see. 
+So: depth = 0: the REPORT affects just the request URI, but as the report itself is defined to have "colllection member scope", this will return all direct members of the collection at the request URI having matching version histories? 
+depth = 1: also includes collections that are members of the collection at the request URI. 
+Julian From: Julian Reschke [mailto:julian.reschke@greenbytes.de] So: depth = 0: the REPORT affects just the request URI, but as the report itself is defined to have "colllection member scope", this will return all direct members of the collection at the request URI having matching version histories? 
+No, the REPORT affects (is applied to) the configuration rooted at a URL which includes *all* members of the collection identified by that URL not just "direct" (what RFC 2518 calls "internal") members. 
+depth = 1: also includes collections that are members of the collection at the request URI. 
+Yes, if by "includes", you mean "repeats the REPORT on". 
+The Depth:0 report "includes" (in the sense of "looks at") all members of the collection, but it only runs the report once. 
+Cheers, Geoff Hi. 
+I have updated our proposal for specifying the expected version URI (upon CHECKIN) to properly refer to RFC3253 (deltaV). 
+At this point we think the protocol extension works well (and have implemented it in SAP Portals' Enterprise Portal WebDAV implementation). 
+We would be interested to head from other implementors, - whether they feel it solves a real-world problem (we certainly think so), and - whether somebody is planning to adopt it (in which case we'd be interested in doing interop testing). 
+The plan is to submit the new draft after the IETF meetings are finished (and then later to submit it as informational or experimental RFC). 
+Julian [1] http://greenbytes.de/tech/webdav/draft-reschke-deltav-compute-checkin-uri-latest.html 
+Hi, two questions regarding the DAV:expand-property REPORT [1]: 1) Scoping (depth header) According to section 3.6 (definition of REPORT method), the depth header will work just as for PROPFIND (depth 0: only request-URI, depth 1: request-URI + internal members, depth infinity: request-URI + all children)? 
+2) expanding properties that do not contain DAV:href elements Is this an error condition, or should the REPORT just return the non-expanded property value? 
+3) expanding non-live properties Is the server required to expand dead properties which contain DAV:href child elements as well? 
+Julian [1] http://greenbytes.de/tech/webdav/draft-ietf-deltav-versioning-20.1.htm#_Toc524830544 
+Hi, is a VHR supposed to support the DAV:version-tree report? 
+Section 3.7 is silent on this... Julian From: Julian Reschke [mailto:julian.reschke@greenbytes.de] two questions regarding the DAV:expand-property REPORT [1]: 1) Scoping (depth header) According to section 3.6 (definition of REPORT method), the depth header will work just as for PROPFIND (depth 0: only request-URI, depth 1: request-URI + internal members, depth infinity: request-URI + all children)? 
+Yes, the report will be run (separately) on each of the resources that satisfy the Depth header, and the results will be returned in a multistatus response. 
+2) expanding properties that do not contain DAV:href elements Is this an error condition, or should the REPORT just return the non-expanded property value? 
+Just return the non-expanded property value. 
+3) expanding non-live properties Is the server required to expand dead properties which contain DAV:href child elements as well? 
+The report makes no distinction between live and dead properties, so yes, it needs to expand those as well. 
+Cheers, Geoff OK, assuming I have a dead property like: plain text on the resource http://server/abc How does it expand? 
+Like this? 
+plain text Yup. 
+Cheers, Geoff OK, assuming I have a dead property like: plain text on the resource http://server/abc How does it expand? 
+Like this? 
+plain text 

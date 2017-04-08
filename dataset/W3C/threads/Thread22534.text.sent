@@ -1,0 +1,119 @@
+A question for you guys. 
+Say that I want to access a sizable XML document (2-5 Mb for example) and show some parts of it. 
+If the file is on my machine there is no problem, I parse it and access it through DOM. 
+Now, what if the document is on some far distant server on the Internet I would like to be able to use DOM as well but I'm not in the mood of downloading the whole file so I design a CORBA DOM interface and access it through that. 
+Do you think that it might work ? 
+I suspect that it wouldn't work very well as every time that I need to access an element or apply some operations I have to send a CORBA message and wait for an answer before I can proceed. 
+Maybe a better solution would be to have a smart XML cache, something that would use heuristic methods to forecast which data the user is going to require and forward it before the actual request take place. 
+Basically: - the server keeps on sending stuff down the wire, sending first the elements that seem more likey to be needed (say those who are nearby the latest required element). 
+- the client caches whatever it receives, when a request for an element is made it looks in the cache first if it's not there send a request to the server - whenever the server receive a request it updates its policy I guess that assuring cache coherence in case of multiple write accesses to the same document would be a big problem but for read-only access it should not be impossible to implement. 
+What do you think ? 
+This seems a quite common and general problem to me, I suppose that you might have already encountered and thought about it. 
+A related question, is there any proposal for a protocol between a DOM implementation and an underlying datastore ? 
+I read that Docuverse is going to port its DOM framework on Pse Pro, it would be nice if it could be ported also on other databases (non necessarily object oriented). 
+What about having a simple standard interface to support this kind of communication (of which the cached interface might be just a special case) ? 
+Thanks in advance for your advice. 
+Pasqualino "Titto" Assini The Data Archive - University of Essex, UK Smart XML cache does sound like the way to go. 
+Of course the API it would present to the application would in turn be a DOM, plus whatever methods are required to control the cache behavior. 
+As far as I can tell, the back-end API -- the protocol between the cache and a document server -- is currently left as an exercise for the reader. 
+One can argue about whether or not it should simply be a networked version of the DOM interfaces. 
+Joe Kesselman / IBM Research Unless stated otherwise, all opinions are solely those of the author. 
+You don't design a CORBA interface, you compile it withthe stub-compiler, because the ORB ought to have one for every language that it supports... :) It ought to work. 
+That is one of the reasons why CORBA exists! 
+:) wrt the efficiency, that will have to be tested. 
+Of course you will need some interfaces to control concurrent access to the DOM API, but that is planned for level 2, if I'm not mistaken. 
+CORBA defines such a protocol (both a general one called GIOP anda specific internet-protocol version called IIOP). 
+You just need the IDL interfaces, and they are included in the DOM distribution. 
+My C++ implementation of DOM can be used both with and without CORBA (but is not complete yet): It is designed to be used with CORBA, but only tested with omniORB: It is LGPL'ed and is written to be used with the Berlin project: Cheers val it = ("?NOQ of the Sun", "Johnny Andersen", ["anoq@vip.cybercity.dk", 
+"anoq@berlin-consortium.org"], "http://users.cybercity.dk/~ccc25861/") 
+: cyberspacename * meatspacename * email list * homepage URL As you implemented a CORBA DOM implementation you are probably the best person to ask. 
+Did you try to access a sizable XML document across the Internet and, for example, print it ? 
+It would be interesting to know how would that compare with: - zipping the document on the server - dowloading it on the client - reparsing and printing it I'm sorry but I don't understand, IIOP is an inter-ORB protocol, used to carry CORBA calls. 
+What has it to do with a DOM to DB interface ? 
+What I was thinking was some kind of "minimal DOM interface" on which the whole DOM could be implemented. 
+A DB vendor should support only this minimal set, so making porting DOM to a range to DBs easier. 
+Does it make any sense ? 
+Thanks Pasqualino "Titto" Assini The Data Archive - University of Essex, UK There is a group of us who very much want to define a standard here for what might be called a "Repository Object Model" based on the DOM. 
+It is not on the priority list for Level 2. Yes, but very slowly ... the DOM is defined on objects that are assumed to be efficient to access one at a time; there is no way to do a "bulk load" or "bulk save" of a DOM subtree. 
+[snip] Seems reasonable to me. 
+If your architecture allows some server-side processing to keep the full parsed document on the server and intelligently query and selectively pull pieces down to the client, that might work better. 
+Again, a subset of the DOM WG is very interested in this problem; with luck we can get Level 2 out of the way quickly and address this. 
+Sorry if this is not soon enough to help you much, but please keep in touch to make sure we understand your requirements, suggestions, etc. Mike Champion Could you tell me a little more about that ? 
+Are you aware of any existing implementation of an XML cache ? 
+I can't believe that I'm the only one to have stumbled on this problem. 
+Thanks Pasqualino "Titto" Assini The Data Archive - University of Essex, UK Pasqualino, Why not just chop up your large XML documents physically or use a query processor to return only the needed fragments? 
+I don't know about you but I find that CORBA is like a great looking girl with terrible personality. 
+A wonderfully packaged bundle of nightmare. 
+Don Park Docuverse Exactly, it would be DOM on both the client and the server side (the cache mechanism will access XML on the server through DOM and will present the result as DOM at the client). 
+The internal protocol between the cache's server and client side naturally could not be DOM itself. 
+I see it as a kind of feedback mechanism with: - a connection through which the server side cache continuously sends to the client the XML elements that it forecasts the client is going to ask for - a feedback call that the client side will use to correct the server side guessing by explicitly requiring the elements that it can not find in the local cache The main problem is to figure out the heuristic that the server is going to use to forecast client behaviour. 
+Should we use some kind of self adaptive genetic algorithm ? 
+It might be the case, we start from the principle that the bottleneck is in the network, not in the processing time (otherwise a cache would not be needed in the first place) so some computing intensive but powerful algorithm could be the correct choice. 
+BTW this cache could be used not only to access far distant XML files but also XML Databases and dynamically built (and possibly infinite length) XML. 
+It sounds as an interesting programming exercise, anyone interested in working on it ? 
+Regards. 
+Pasqualino "Titto" Assini The Data Archive - University of Essex, UK Actually there are people on this list who have far more complete DOMimplementations than mine and people who knows DOM much better than me, but thanks for your confidence ;) You mean though the DOM API? 
+Nope. 
+The implementation is not eventested yet, and I don't have access to make such a setup by myself. 
+However we were discussing to do network tests with CORBA in the Berlin-project later on. 
+Sorry, no idea... 
+I guess I just misunderstood what you meat. 
+IIOP can send CORBA callsacross a network from an interface (DOM) client to an implementation (possibly a DB). 
+So there's a protcol... Yup, now I understand it completely different - but I don't know aboutthis. 
+That is for the DOM workgroup to decide I guess. 
+Cheers val it = ("?NOQ of the Sun", "Johnny Andersen", ["anoq@vip.cybercity.dk", 
+"anoq@berlin-consortium.org"], "http://users.cybercity.dk/~ccc25861/") 
+: cyberspacename * meatspacename * email list * homepage URL better. 
+The problem has been on some people's minds for quite a while... 
+One reason it hasn't received more attention is the previous history of SGML file *distribution*. 
+In the pre-Web days, SGML files were generally distributed on CD-ROM along with the browser. 
+When the Web came along, absent a widely-available Web browser that could read SGML, publishers took to "down-translating" SGML files to HTML. 
+The main attempt to introduce an SGML Web browser, SoftQuad (now Interleaf's) Panorama, met with only limited success. 
+So the problems associated with serving SGML over the Web haven't received the attention that's required. 
+The XML effort was in fact organized by Jon Bosak, who has a lot of experience with Web publishing, "to enable generic SGML to be served, received, and processed on the Web in the way that is now possible with HTML." 
+The XML effort focused, though, on simplifying SGML syntax in order to promote tool creation. 
+The problem that you're raising has been outside the scope of the XML effort. 
+There are several issues involved in addressing it though. 
+First, note the implication in the phrase (from the abstract to the specification) "in the way that is now possible with HTML." 
+That's another way of saying users should be able to access XML documents through Web browsers using HTTP. 
+Any general solution has to start from there. 
+Second, sending less than an entire document raises the problem of supplying context for the "fragment". 
+Context is essential for proper rendering, for example of numbered list items, sections or chapters. 
+Context could be specified using XLink/XPointer syntax; a standard message format for returning this information to the browser along with the fragment itself would need to be specified though. 
+Of course, the problems associated with returning XML document "fragments" apply not only to caching, but to querying and to XLink/XPointer operations as well. 
+Fujitsu Laboratories has just demonstrated (at the GCA conference in Tokyo last week) the latest version of its "HyBrick" browser, integrated with an XLink/XPointer engine. 
+The XLink/XPointer operations are currently available only on local files. 
+Addressing the issues of XML "fragment" retrieval is a critical next step to making XML content available on the Web. 
+Ralph E. Ferris Fujitsu Software Corporation Actually I was not thinking of it as a way of distributing XML data to a browser, the reason being that in that case you normally have to download the whole page anyway so a cache would make no sense. 
+Naturally it would make a lot of sense if the user were navigating on a huge quantity of (possibly dynamically generated) information. 
+If so you would definitly want to download only the parts he/she actually requires to see. 
+This is interesting. 
+Could you please provide some details about how it could work I would say that the problem of dealing with incomplete XML trees should be deal within the cache itself. 
+The whole point in having a cache is actually in hiding the fact that we dont' have a complete tree so that the client can still 'see' a plain, complete, DOM tree. 
+Thanks for your feedback. 
+Pasqualino "Titto" Assini The Data Archive - University of Essex, UK browser, page Circular problem. 
+If no means of "intelligent chunking" is supported by the server, you have to download the whole page. 
+requires Exactly. 
+If you've got a 50 MB aircraft maintenance manual, you can't dump the whole thing on the client. 
+And typically, it's for these kinds of documents that SGML markup has been used. 
+Various vertical industries have large numbers of these documents and are now trying to "XMLify" them. 
+But as I said in my first message, just adjusting the syntax doesn't solve the problem. 
+could work The current XPointer Working Draft defines a spanning location term: 3.4 Spanning Location Term The span keyword locates a sub-resource starting at the beginning of the data selected by its first argument and continuing through to the end of the data selected by its second argument. 
+Both arguments are interpreted relative to the location source for the spanning location term itself; the second argument does not use the first argument as its location source. 
+The context of the "fragment" could be made available to the client by including the "span" information in the message (header) returned by the server, with the fragment itself in the message body. 
+be deal dont' DOM What the client sees is what can be sent and received using HTTP. 
+The problem is whether the existing HTTP protocol is sufficient, or whether WebDAV-style extensions are needed. 
+Of course, if they are, then a whole different venue - an IETF working group - is needed for this discussion. 
+Ralph E. Ferris Fujitsu Software Corporation Catching up on some mail ... Keep in mind that the _real_ problem is accessing the data which is exposed by DOM, not accessing DOM itself. 
+So it shouldn't be a requirement to have RPC calls going over the Internet that match what DOM uses; as folk have noted, locking and concurrency weren't exactly design considerations. 
+I've encouraged folk to think in terms of shipping XML around, and reparsing as needed (perhaps into DOM). 
+That means using what some have called "coarse grain" messaging. 
+(Which is what many of us were trying to create with CORBA; but that's another story!) It's reasonable to have an HTTP request fetch part of a document, and let various web caches handle it, or let servers return the relevant fragment info by computing it dynamically. 
+Then familiar APIs (like DOM) can be used to navigate. 
+Another way to put this: networks do better at bulk data transfer (e.g. XML documents) than at low latency operations (like calling a procedure), and designs should accomodate that reality. 
+Some of those document repository efforts (e.g. http://www.aiim.org/dma/) are worth looking at. 
+- Dave Right, and I'd include WebDAV along with DMA. 
+I think the DOM WG *should*, maybe in Level 3, be looking at extending the DOM API to support "zero-latency" (buzzword du jour!) interaction with repositories, lazy loading, etc. 
+But for now, we've got pretty much the same tools as the HTML people have (HTTP, etc.) to work with XML over the Web. 
+We can do better someday, but this will suffice for now, and it's all the DOM can handle for now. 
+Mike 

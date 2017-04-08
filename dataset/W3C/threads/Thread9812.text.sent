@@ -1,0 +1,17 @@
+This closes action: 2002-02-26#12 DaveB Propose n-triples changes to represent the new form of rdf literals. 
+in F2F minutes http://www.w3.org/2001/sw/RDFCore/20020225-f2f/ 
+During the F2F I was actioned to come up with a syntax to support the structured literal form we agreed. 
+I discussed this with Dan Connolly what we could do and we agreed something like the following was sufficient: xml(" b foo /b ") XML content, no language xml(" b foo /b ", "en") XML content, language given "en" "chat" Unicode string, no language "chat"-en Unicode string, language given as "en" Features: * Makes all existing literals legal * Provides only one way to encoded the literal-structures and so in that sense is canonical. 
+In order to try this out, I've implemented the above in my N-Triples parser, and it works just fine. 
+Issues: 1. "chat"-en might not be good enough if languages can contain whitespace or other things (I need to check the RFCs) Solution if this is needed: "chat"-"en" 2. Want one way to describe all literal structures: Solution: literal(unicode string value, unicode string language, boolean isXML) and define the abbreviated forms in terms of that 3. I assume "chat" != "chat"-"" (need to check language RFCs) Solution if this is needed: Restrict the language string to always 1+ chars I'm propose to change the N-Triples specification to have this notation unless specific problems are raised with it. 
+Dave Jeremy Carroll said: Can't be (a) since the "" content is just a sequence of characters. 
+Oh, that's interesting. 
+I had been assuming that it was well-balanced xml. 
+No, that's why I posted the proposed new productions to make it quite clear: langString ::= '"' string '"' ('-' language) xmlString ::= 'xml' langString and in the existing grammar at http://www.w3.org/TR/rdf-testcases/#string string ::= character* with escapes as defined in section Strings Legal - yes, this changed NTriples doesn't care. 
+However: the NTriples that are generated from RDF/XML will *not* generate such a literal. 
+If we went with xmlString ::= 'xml"' xmlExclusiveC14Nstring '"' ('-' language) xmlExclusiveC14Nstring ::= as defined by http://www.w3.org/TR/xml-exc-c14n then there would be further requirements That's fine. 
+If that's the case then: b) legal but different from xml(" b foo /b ") (and not representable in RDF/XML?) looks like the attractive answer to my question. 
+It is an answer from my current defn :) Dave I'm happy with this. 
+The 'xml' is more mnemonic than '1'. 
+Should we consider the '-' separator as superfluous? 
+Patrick 

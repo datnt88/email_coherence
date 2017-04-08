@@ -1,0 +1,12 @@
+The question, up front, is should a PUT request to a lock-null resource also validate the lock-null resource's parent collection against the If header? 
+The background to the question- The PUT request involves writing to the uri's parent collection, so, in mod_dav, it always validates both the uri and the uri's parent for null resources. 
+Thus, if /foo is a locked or lock-null resource, while / is not locked, should the following request fail? 
+PUT /foo HTTP/1.1 If: ( opaquelocktoken:...... ) The If header doesn't specify any uri's, so both /foo and / are validated against the lock token. 
+If /foo is a lock-null resource, and / has not been locked, I assume this request generates a 412 Precondition failed. 
+A successfully request specifies a uri- PUT /foo HTTP/1.1 If: /foo ( opaquelocktoken:...... ) This seems consistent with the spec, but a little unintuitive. 
+I don't know of any locknull-aware mainstream clients, so I suppose this is new ground. 
+Is this indeed the spirit of 2518? 
+Thanks for any input, Keith Keith Wannamaker IBM HTTP Server Development RTP NC, USA I would argue that the lock-null resource IS a resource... 
+When overwriting any other resource, you do not need to check the parent for its locks through IF headers (as its name consistency will not change). 
+Therefore I think you don't need to check the parent as you are overwriting a known resource. 
+This is at least how Xythos handles this situation... Kevin that's how I understand it also, and it's how PyDav does it. 

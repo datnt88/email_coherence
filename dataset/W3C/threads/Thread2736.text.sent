@@ -1,0 +1,106 @@
+Clarification is needed on what error is to be returned if a Proxy times out looking up a hostname. 
+The spec is silent on what is a very common failure. 
+My current opinion is that returning 504 Gateway Timout is correct, but that clarification to the spec is in order. 
+But other options include introducting other error codes, or less likely, some other existing error code. 
+Before we charge off on a detailed discussion of what to do when a proxy times out on a DNS translation, we might want to consider whether is error is part of a larger class. 
+For example, what if the proxy has no route to the server? 
+(i.e., it gets a "host unreachable" error). 
+This may also be a transient error (cf. the paper in USITS '97 on the observed routing instability in the Internet). 
+Is this the same as a "504 Gateway Timeout"? 
+I'm not sure whether there are any other errors in this class. 
+But if these are the only two that we can think of, perhaps the proper name for the error is 504 Temporarily Unable to Forward Request with an entity body that explains the reason in more detail. 
+I.e., the relevant question is not "was this a timeout or not?" but "is the error (probably) transient or is it permanent?" 
+If people think that these cases are actually different enough to warrant separate error codes, then I think we ought to add a "No route to next-hop server" code if we add a "DNS timeout" code. 
+-Jeff Clarification is needed on what error is to be returned if a Proxy times out looking up a hostname. 
+The spec is silent on what is a very common failure. 
+My current opinion is that returning 504 Gateway Timout is correct, but that clarification to the spec is in order. 
+But other options include introducting other error codes, or less likely, some other existing error code. 
+Other opinions? 
+- Jim Gettys View: Browse HTML Browse Raw Text From: jg@pa.dec.com (Jim Gettys) Date: Mon, 27 Apr 1998 07:27:49 -0700 phadnis@netscape.com 
+frystyk@w3.org, 
+masinter@parc.xerox.com 
+Subject: Re: proxies and gethostbyname [RESEND] Yup. 
+I'm surprised the spec isn't clear on this point as well, given how common this problem is.... 
+We need to clarify this for draft standard, in my opinion. 
+This is at least an editorial problem that must get fixed. 
+My initial reaction is also that it should be a 500 class error. 
+The closest code currently defined is 504 Gateway Timeout. 
+Even there, clarification is really needed. 
+Do you have any problems with me taking the discussion to the working group mailing list for resolution? 
+- Jim Sender: luotonen@netscape.com 
+(Ari Luotonen) From: Ari Luotonen luotonen@netscape.com 
+Date: Fri, 24 Apr 1998 20:33:00 -0700 jg@pa.dec.com 
+Subject: Re: proxies and gethostbyname [RESEND] [Resending with JG's e-mail corrected.] 
+Eric, I'm Cc'ing Jim Gettys of W3C re: "should there be an HTTP status code for proxy failure to DNS resolve". 
+Jim, Please see below. 
+--Thanks!! -- Cheers, Ari -- Our UNIX proxy returns 500. 
+It shouldn't be 404 because I think HTTP status codes refer to objects within servers, not the existence or non-existence of servers themselves. 
+Since the proxy is not the originator of the data, it cannot definitively determine the existence or non-existence of a server (or an object within a server) -- in a case where it fails to connect to one (regardless of whether the reason is DNS, server down, or midstream proxy down). 
+Only an origin server can say something like "404 Not found" or "410 Gone". 
+It shouldn't be 400 because the request format itself was ok. 
+I further think that it shouldn't be any 4xx class status code (client's request bad), since the problem may be a temporary DNS problem, or a problem on the proxy itself. 
+I would therefore continue to vote that 500 (or some other 5xx class status code) is the correct code for this case. 
+This all sounds very reasonable. 
+I guess I'm just a little surprised that the HTTP spec itself does not specify the error number to use in this case. 
+We seem to be doing the right thing: i.e. we are passing the absolute URL to the proxy, and asking the proxy to retrieve that object. 
+Is the omission of the error number for this case a "bug" in the HTTP spec? 
+Yup. 
+I'm surprised the spec isn't clear on this point as well, given how common this problem is.... 
+We need to clarify this for draft standard, in my opinion. 
+This is at least an editorial problem that must get fixed. 
+My initial reaction is also that it should be a 500 class error. 
+The closest code currently defined is 504 Gateway Timeout. 
+Even there, clarification is really needed. 
+Do you have any problems with me taking the discussion to the working group mailing list for resolution? 
+- Jim View: Browse HTML Browse Raw Text Sender: luotonen@netscape.com 
+(Ari Luotonen) From: Ari Luotonen luotonen@netscape.com 
+Date: Fri, 24 Apr 1998 20:33:00 -0700 jg@pa.dec.com 
+Subject: Re: proxies and gethostbyname [RESEND] [Resending with JG's e-mail corrected.] 
+Eric, I'm Cc'ing Jim Gettys of W3C re: "should there be an HTTP status code for proxy failure to DNS resolve". 
+Jim, Please see below. 
+--Thanks!! -- Cheers, Ari -- Our UNIX proxy returns 500. 
+It shouldn't be 404 because I think HTTP status codes refer to objects within servers, not the existence or non-existence of servers themselves. 
+Since the proxy is not the originator of the data, it cannot definitively determine the existence or non-existence of a server (or an object within a server) -- in a case where it fails to connect to one (regardless of whether the reason is DNS, server down, or midstream proxy down). 
+Only an origin server can say something like "404 Not found" or "410 Gone". 
+It shouldn't be 400 because the request format itself was ok. 
+I further think that it shouldn't be any 4xx class status code (client's request bad), since the problem may be a temporary DNS problem, or a problem on the proxy itself. 
+I would therefore continue to vote that 500 (or some other 5xx class status code) is the correct code for this case. 
+This all sounds very reasonable. 
+I guess I'm just a little surprised that the HTTP spec itself does not specify the error number to use in this case. 
+We seem to be doing the right thing: i.e. we are passing the absolute URL to the proxy, and asking the proxy to retrieve that object. 
+Is the omission of the error number for this case a "bug" in the HTTP spec? 
+I agree that it is a 5xx error, but I believe that overloading an existing error is wrong. 
+It is important to give the network support infrastructure more information as well as allowing the browser the chance to provide a decent message to the user. 
+504 Gateway Timeout ... means the gateway timed out waiting for the resource itself 5xx Gateway DNS Timeout ... means that the gateway timed out waiting for a response from the DNS 5xy Gateway DNS Unknown ... means that the DNS provide a definate response that the host name is unknown 5xz Gateway Request Refused ... means that the gateway's attempt to connect the remote server was refused Considering this issue and looking overthe 5xx errors, I notice what to me is a glaring oversight .... no clear differentiation between errors reported by server and errors reported by a proxy about its attempt to contact a server. 
+This makes intelligent problem determination more difficult. 
+Dave Morris As I tried to say, there are more errors than just a timeout between the proxy and the down stream server and they need to be differentiated. 
+Dave Ditto. 
+504 is sufficient, but we might do better. 
+The general question in deciding on a response code is whether the "here's what you should do next" semantics are equivalent to an existing response code, and whether the "next" thing can be accomplished automatically or only by some real person looking at the error response message. 
+In my opinion, a failure to resolve a DNS name is equivalent to a failure to connect to the resolved IP address -- the reason being that both are components of the resource resolution process. 
+A more general status code would therefore be a new "5aa Unable to Resolve URI", with the explanation of why being included in the response message. 
+This is different from 404 Not Found since it does not imply an authoritative response. 
+Likewise, we would gain nothing from further differentiation of all possible resolution failure causes into separate error codes, since there is nothing whatsoever that the client can do "next" aside from display the cause or try a different proxy (i.e., all of those failures are equivalent). 
+....Roy I disagree ... there is a large difference between not being able to resolve a name and not being able to connect to an IP address. 
+The first order problem resolution for the DNS failure will in may cases be the user checking the URL they typed for correctness. 
+Failure to connect to the resolved IP address is also different from connection refused in terms of recovery strategy. 
+All of those distinctions are useful for further problem determination by human analysists. 
+And even when the automated portion of a client can't distinguish, the ability to collect failure statistics with distinct failure reasons may be helpful. 
+Dave Morris rom the point of view of the proxy, yes. 
+From the user's perspective, both indicate a failure of the proxy to map the identifier to a service. 
+Whether that failure was due to a down IP interface or a bad DNS entry or a nonexistant DNS entry or a very slow DNS gateway may be useful for further diagnostics (and the proxy is certainly capable of recording those facts), but none of these can be used by the user agent to automatically handle the failure in a distinguishable manner, nor is it the user agent's responsibility to track the performance characteristics if the proxy's external network environment. 
+Even if such a thing were desirable for a given proxy, the design principles of simplicity and separation of concerns suggest that it be transmitted separately from the main protocol stream (e.g., via SNMP monitoring). 
+....Roy No, one is a failure to map to the service, the second is a failure of the service. 
+Failure to map is often under the user's control or in the case of some UAs which try multiple URLs, the UA's control. 
+Dave I think there is one situation that 504 doesn't cover and that is if the proxy doesn't *want* to proxy a certain URI, maybe because it can't (firewall etc.) or because it is not within it's trust domain etc. 
+What are existing proxies doing in this situation? 
+Adding this would clarify the situation a lot: 418 Not Proxying The server is not willing to proxy or gateway the Request-URI. 
+No indication is given of whether the condition is temporary or permanent. 
+The client MAY repeat the request using either a different proxy or no proxy at all. 
+The 504 (Gateway Timeout) status code SHOULD be used if the server can not serve the request due to upstream errors. 
+Henrik Henrik Frystyk Nielsen, World Wide Web Consortium I continue to disagree ... there is a distinct difference from the perspective of recovery whether the DNS consulted by proxy is unable to resolve the host name or whether the host fails to respond. 
+Hiding all failures under a single code does nothing for usability or perceived reliability. 
+Why bother .... there is a whole lot less an end user will be able to do with this distinction over a simple not authorized response than over a mistyped host name in a URL ... the suggested 418 may be useful to know but on a priority scale less important to know than better granularity on conditions covered by 504. 
+Dave Morris David W. Morris: I agree with David that these two errors are different and should have different codes. 
+To inject some current practice into this debate: I just tested two different proxy servers and both return a 500 with an explanatory response body when the URL does not have a DNS entry. 
+Koen. 

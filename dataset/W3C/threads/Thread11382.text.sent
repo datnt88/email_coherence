@@ -1,0 +1,195 @@
+From: bosak@atlantic-83.Eng.Sun.COM (Jon Bosak) |  Yes, allow PUBLIC: Kimber, DeRose, Sperberg-McQueen, Maler, Hollander |  No, no PUBLIC ID: Paoli, Sharpe, Magliery, Clark, Bray, Bosak | |  So in this draft, no public IDs. 
+It should be voted that *every person* |  on the No side would change their vote to Yes if there was an agreed-on |  resolution mechanism for PUBLIC identifiers. 
+It should be noted that all the NO votes were "no, not ready for this particular draft, we need to agree on a resolution mechanism before we can include public identifiers." 
+There is general agreement that XML will have public identifiers, but there has to be general agreement on a resolution mechanism before it shows up in the spec. 
+XML 1.0 has a long way to go before it achieves "recommended" status. 
+This feature just isn't cooked yet. 
+Here is a quick rewrite of the XML catalog proposal with the extras removed. 
+I don't know if this helps cook it or just adds too many chefs, but it provides something concrete and as simple as seems possible. 
+paul --------- Section 4.2.2 "External Entities" in Working Draft 14-Nov-96 [68] [[unchanged]] [69'] ExternalID := 'PUBLIC' S PublicID ( S SystemLiteral )? 
+| 'SYSTEM' (S SystemLiteral)? 
+[70] [[unchanged]] [70a] PublicID := RestrictedLiteral [70b] RestrictedLiteral := '"' RestrictedLiteralChars '"' | "'" RestrictedLiteralChars "'" [70c] RestrictedLiteralChars := (Letter | Digit | S | SpecialChars)* [70d] SpecialChars := ['()+,-./:=?] [71] [[unchanged]] The PublicID is called the entity's public identifier. 
+The SystemLiteral that may follow the entity's public identifier and the SystemLiteral that may follow the SYSTEM keyword are called the entity's system identifier. 
+When an XML processor encounters an external entity defined by a public identifier, the processor determines the associated system identifier from a supplemental XML catalog (see 4.3.1). 
+If the XML processor cannot successfully use or resolve the public identifer, and a system identifier follows the public identifier, the XML processor shall behave as if the system identifier was the only identifier supplied. 
+If the XML processor cannot successfully use or resolve the public identifier, and a system identifier does not follow the public identifier, the XML processor shall behave as if a system identifier could not be resolved. 
+The system identifier is a URL, which may be used to retrieve... [[continues as in XML WD 1.0]]. 
+4.3.1 
+XML Catalog Specification [C1] XMLCatalog := S? ( ( catComment | catEntry ) ( S ( catComment | catEntry ) )* )? 
+[C2] catComment := '--*' ... '*--' [C3] catEntry := catPublic | catOtherEntry [C4] catPublic := 'PUBLIC' S PublicID S SystemLiteral [C8] catOtherEntry := catKeyword ( S SystemLiteral )+ [C9] catKeyword := [^S"'./\  
+] [^S./\  ]* An example of several catalog entries follows: PUBLIC "ISO 8879:1986//ENTITIES Added Latin 1//EN" "iso-lat1.gml" 
+PUBLIC "-//ACME//DTD Report//EN" "http://www.acme.com/dtds/report.dtd" 
+The PublicID is the public identifier (see also production 70a) of the entity or notation. 
+A catPublic entry maps a PublicID into a SystemLiteral used to locate the entity (see production 70). 
+Because public identifiers are used as "match indices" into catalogs, an "interpreted" value is defined that is used in the matching process. 
+The public identifiers from the ExternalID production as well as the PublicID from the catPublic catalog entries undergo this interpretation prior to any matching being attempted. 
+This interpretation consists of removing the surrounding quotes, deleting all leading and trailing white space, and replacing all embedded sequences of occurrences of white space (see production 1) with a single space (#x0020) character. 
+When the interpreted value of the public identifier of an ExternalID (production 69) exactly matches the interpreted value of the public identifier of a PUBLIC type catalog entry, that catalog entry associates its right hand side (SystemLiteral) with the given entity or notation. 
+The first such exact match terminates the catalog lookup process. 
+All catOtherEntry entries have no effect prescribed by this XML specification, though individual implementations may recognize and operate on any or all of them. 
+Last Wednesday, I posted a simplified rewrite of the XML catalog proposal. 
+In private email, Jon asked where does the processor find the XML catalog? 
+In response to my answer, Jon suggested I post it to the WG, so here is a slightly excerpted version of my answer. 
+----- Begin Included Message ----- From: paul@arbortext.com 
+(Paul Grosso) From: bosak@atlantic-83.Eng.Sun.COM (Jon Bosak) Where does the processor find the XML catalog? 
+I don't seem to see this as an issue that is necessarily tied to either having PUBLIC in XML or to using a Catalog for PUBLIC ids. 
+So my answer is to say that's a separate question. 
+But, I gather from your question that you don't see it that way. 
+So my answer is to ask you another question: how will the processor find the style sheet? 
+If we can solve this problem, surely we can figure out how to point to a catalog. 
+For example invent a PI such as James suggested for the stylesheet: | So allow the processing instructions. 
+When we start downloading a DSSSL stylesheet from the server, I think that this is probably the method we'll try first. 
+Of all the alternatives, I like James Clark's last suggestion best for initial experimentation: ?XML-stylesheet type="text/dsssl" href="foo.dsl"? 
+So why not something like: Note that the MIME type "sgml-open-catalog" is *already* registered, and the XML catalog would be a valid subset. 
+Or, we could use a subtype such as type="sgml-open-catalog/xml-catalog" or you could register type="xml-catalog" or whatever. 
+----- End Included Message ----- From: bosak@atlantic-83.Eng.Sun.COM (Jon Bosak) Where does the processor find the XML catalog? 
+I'm slightly puzzled that you don't seem to see it that way. 
+Finding a stylesheet is going to be pretty damn critical, and we need to make sure it's a 100% robust mechanism. 
+Surely that's back to front? 
+You must find the catalog first, then you can point to everything else. 
+Or does this imply that catalogs are for references to DTDs and entity files only, and that refs to other resources such as catalogs, are not going to be done this way? 
+?XML-stylesheet type="text/dsssl" href="foo.dsl"? 
+?XML-catalog type="sgml-open-catalog" href="foo.soc"? 
+Looks OK, but how soon is this going to gell? 
+///Peter The basic reason that we do not yet have public identifiers in XML is because we have not agreed on a default resolution mechanism. 
+Paul Grosso has posted two messages that, taken together, propose a such a mechanism. 
+Could those who claim to be interested in seeing public identifiers implemented in XML please comment on Paul's proposal? 
+Jon On Fri, 28 Mar 1997 18:40:55 -0500 Jon Bosak said: I think it's close to the Right Thing and thank Paul for his draftsmanship. 
+Having a rule for catalogs that says all XML processors have to recognize PUBLIC entries and may skip the rest seems to me very close to the &amp;mntdv;, so I think we should build it in and declare victory. 
+About finding the catalog, I favor a slightly different solution: 1 first, check for a local catalog (location and method of specifying location are part of software installation, outside scope of XML -- but XML processors should always allow for a local catalog) 2 if the local catalog doesn't exist or doesn't have a matching entry, then check the default catalog, which is a the catalog named inside the document in an appropriate element or PI or whatever, if the document uses an architectural form or DTD known to the processor b the catalog found by looking at the relative url "./catalog" That is, provide a meaningful default even in the absence of a specific instruction, just as RFC 1738 does (or at least the Fielding draft does) in the case of Base URLs, and furthermore use basically the same rules as RFC 1738: if there's specific instruction in the document, then follow it. 
+If not, use the location of the object itself, and look 'nearby'. 
+The fact that Panorama works this way I regard as a clue that (a) it works, and (b) it will be familiar to many potential early adopters. 
+I think having a standard way to find catalogs is critical to interoperability of XML processors, so I do want to specify it, though Paul is correct that it is in some sense independent of using catalogs. 
+-CMSMcQ (Oh, yes, for those who were puzzled, there's an implicit declaration of before this text starts.) 
+I am unwilling to specify any default resolution mechanism for PUBLIC identifiers. 
+This should be at the discretion of the user agent. 
+(And by resolution I mean what Peter does, figuring out the indirection and obtaining the item.) One can say that a catalogue is the publisher's advice on how to resolve his PIs, but the client should not be restricted to that method. 
+(After all, the catalogue will grow outdated and its mappings will begin to fail, in time.) Regards, Terry [I have not had time to read Paul's proposal due to hardware problems; apologies if I'm just making noise.] 
+From w3c-sgml-wg-request@w3.org Fri Mar 28 15:41:43 1997 Received: from www19.w3.org (www19.w3.org [18.29.0.19]) by sub.sonic.net 
+(8.8.5/8.7.3) with SMTP id PAA07500 for tallen@sonic.net ; Fri, 28 Mar 1997 15:41:42 -0800 Received: by www19.w3.org (8.6.12/8.6.12) id SAA22679; Fri, 28 Mar 1997 18:40:55 -0500 Resent-Date: Fri, 28 Mar 1997 18:40:55 -0500 Resent-Message-Id: 199703282340.SAA22679@www19.w3.org Date: Fri, 28 Mar 1997 15:40:09 -0800 From: bosak@atlantic-83.Eng.Sun.COM (Jon Bosak) Message-Id: 199703282340.PAA01889@boethius.eng.sun.com 
+In-reply-to: 9703281539.AA10080@atiaus.arbortext.com 
+(paul@arbortext.com) 
+Subject: Re: public/catalog [was: Re: ERB Decisions of March 26th] X-List-URL: http://www.w3.org/pub/WWW/Archives/Public/w3c-sgml-wg/ X-See-Also: http://www.w3.org/pub/WWW/MarkUp/SGML/Activity Resent-From: w3c-sgml-wg@w3.org 
+X-Mailing-List: w3c-sgml-wg@w3.org 
+archive/latest/3831 X-Loop: w3c-sgml-wg@w3.org 
+Sender: w3c-sgml-wg-request@w3.org Resent-Sender: w3c-sgml-wg-request@w3.org Precedence: list Status: R The basic reason that we do not yet have public identifiers in XML is because we have not agreed on a default resolution mechanism. 
+Paul Grosso has posted two messages that, taken together, propose a such a mechanism. 
+Could those who claim to be interested in seeing public identifiers implemented in XML please comment on Paul's proposal? 
+Jon Default means "at the discretion of the user agent, as long as they support at least *this*." 
+There is no dichtomy between default and freedom. 
+If we meant that the client should be restricted, we would not use the word "default", we would use the word "exclusive." 
+Paul Prescod Let me say it another way. 
+User agents should not be required to support catalogues *or any other mechanism specified by XML* to resolve public identifiers. 
+There should be *no default assumed* by publishers. 
+That's hard to swallow, and most of this group is choking on it; ask yourselves whether you need a specified default mechanism to find a copy of Moby Dick; ask yourselves whether, had Melville's publisher specified a default mechanism (e.g., writing to the publisher's address), you should have to follow it today. 
+Regards, Terry From w3c-sgml-wg-request@w3.org Sat Mar 29 14:48:42 1997 Received: from www19.w3.org (www19.w3.org [18.29.0.19]) by sub.sonic.net 
+(8.8.5/8.7.3) with SMTP id OAA15790 for tallen@sonic.net ; Sat, 29 Mar 1997 14:48:41 -0800 Received: by www19.w3.org (8.6.12/8.6.12) id RAA27522; Sat, 29 Mar 1997 17:44:24 -0500 Resent-Date: Sat, 29 Mar 1997 17:44:24 -0500 Resent-Message-Id: 199703292244.RAA27522@www19.w3.org Message-ID: 333D9AC5.5A80@csclub.uwaterloo.ca 
+Date: Sat, 29 Mar 1997 17:42:13 -0500 From: Paul Prescod papresco@calum.csclub.uwaterloo.ca 
+X-Mailer: Mozilla 4.0b2 (Win95; I) MIME-Version: 1.0 Subject: Re: public/catalog [was: Re: ERB Decisions of March 26th] X-Priority: 3 (Normal) References: 199703292133.NAA16289@bolt.sonic.net 
+Content-Transfer-Encoding: 7bit X-List-URL: http://www.w3.org/pub/WWW/Archives/Public/w3c-sgml-wg/ X-See-Also: http://www.w3.org/pub/WWW/MarkUp/SGML/Activity Resent-From: w3c-sgml-wg@w3.org 
+X-Mailing-List: w3c-sgml-wg@w3.org 
+archive/latest/3839 X-Loop: w3c-sgml-wg@w3.org 
+Sender: w3c-sgml-wg-request@w3.org Resent-Sender: w3c-sgml-wg-request@w3.org Precedence: list Status: R Default means "at the discretion of the user agent, as long as they support at least *this*." 
+There is no dichtomy between default and freedom. 
+If we meant that the client should be restricted, we would not use the word "default", we would use the word "exclusive." 
+Paul Prescod When I ask myself the question, this is the answer: In the example cited ("Moby Dick"), there is a well-proven system in place, and both publishers and readers/buyers do indeed "follow it today." 
+It has two essential components: they are called the "title page" and the "bibliography". 
+The edition of Moby Dick contains a "title page", which contains both an ISBN number (a unique identifier for the edition) and the bibliographical information neecssary to uniquely identify the work -- title, author, publisher, editor, date of publication, place of publication, etc. 
+The title page is used by authors/editors to construct a bibliography, a mechanism users can employ to find "Moby Dick" at the library, the bookstore, or the online bookseller. 
+S. [I really don't want to replay all the URN discussions; the URN-WG archive should be somewhere at bunyip.com, and the current drafts are at ftp://ds.internic.net/internet-drafts/ 
+under filenames beginning draft-ietf-urn ] The original edition had no ISBN. 
+But yes, given a reference to Moby Dick you can find it *by any means you find useful*. 
+If you go to your local bookseller and ask for a copy, he is not required by antient custom to write a letter to the address of the original publisher as it was at the time of publication, or even to have on hand the quill pen, penny stamp, and original address he would have used to order a copy when the book was first published. 
+The catalogue mechanism can be recommended as a means user agents might want to employ to determine what URL the publisher intends his PI to resolve to *at the time of publication*. 
+User agents will have to have some way of storing such hints, just as they will have to have some way of storing update information for catalogues. 
+But mandating support for catalogues (rather than recommending support for them as sets of URN hints) doesn't ensure that PIs can be resolved indefinately. 
+NOTHING CAN DO THAT. 
+Don't make a special case for PIs in the Internet world. 
+Regards, Terry "Strait is the gate, and narrow is the way." - 3 Nephi 14:14 This is similar to what I had in mind. 
+There are enough bookstores in existence that I can walk into pretty much any one of them and buy a copy of M. Dick, and the author/title is enough because it's unique (I don't _need_ the ISBN of a specific edition [read: URL] unless I actually _want_ that specific edition and no other -- which some people might). 
+When FPI resolvers are as ubiquitous as bookstores, my XML/SGML app will just hit the nearest one with an FPI and say "gimme" (and $0.02 cyberbucks will transfer ownership :-) If it's a rare FPI, say an early copy of Docbook :-) then the resolver might say "I can't do this, try down the street at Harry's Rare Resolver, and failing that, try the Public Owner's own site". 
+This last will get a horse-laugh from the DNS or whatever because HaL and O'Reilly may not may to Davenport... The point is that the data structure (the FPI) already exists, and people want to use it, even as a placeholder. 
+Even if it's a year before any widespread resolving mechanisms are in use, I see no reason to prevent its use, and if the current network only resolves URLs then we should document that use of URLs in sysids is mandatory for the moment. 
+A happy Hale-Bopp to you all. 
+///Peter Sam Hunting responds: I agree. 
+Technology advances. 
+When there was no ISBN, the "specified default mechanism" of title page and bibliography sufficed to locate the work. 
+I agree. 
+One can look for "that book with the whale on the cover" if one likes. 
+That has nothing to do with whether or not there is a *default* mechanism. 
+No indeed -- the publisher who made a "hard coded" street address the default mechanism for users to find the titles on his list wouldn't stay in business long! 
+Fortunately, the title page provides the means for *others* (authors, copyeditors, bibliographers, librarians) to enable users find the publisher's titles. 
+The title page/bibliography default mechanism for finding books is not mandated for users. 
+It is not mandated for publishers either -- except in that they have found it makes good business sense. 
+(Note please that I don't have a hidden technical agenda here of being pro- or anti-catalog or PI or whatever: I just don't advocate misreading history as a technique for making sound engineering decisions in the present day.) 
+As far as "NOTHING CAN DO THAT" -- in principle, this is correct; when the universe dies the heat death, PIs won't work. 
+However, the title-page/bibliography default mechanism has been working for some centuries -- the publishing industry, and certainly scholarship, wouldn't work without it. 
+FROM A BUSINESS PERSPECTIVE, it's been a terrific success. 
+So, from an engineering perspective, wouldn't it make sense to ask what's right about it, and do that? 
+![ %if-flame-inclined [ The only thing I know about PIs is that they're deprecated ih SGML ;-) ]] "Remove not the ancient landmark." 
+- Proverbs 22:28 Bon soiree! 
+Sam Terry, although I think PUBLIC is an unnecessary feature in XML, bloating a language already much larger than it should have been, even I don't buy this argument. 
+XML can be revised long before 50 years are up. 
+If it turns out that by some horrible mistake, PUBLIC is incorporated, and later we want to use URNs, and then discover that (perhaps) you can't put a URN in a PUBLIC Id because it uses characters not allowed in a minimum public literal, or for whatever other reason, we will have to change XML. 
+But if that was all, they could simply put the URLs in the documents, using a CGI-script transformation if necessary. 
+And on the Web, if mechanisms change, why, you are _still_ the publisher, and you can change your catalog, or replace it with a frobnitz, and what's the problem? 
+So if nothing can do it, let's not worry about it. 
+The question then becomes, what's a good compromise. 
+As far as I am concerned, SYSTEM with URLs is a good compromise. Lee [Peter Flynn:] Here's the problem. 
+Most users who have expressed an opinion (this includes myself) want public identifiers. 
+But most implementors who have expressed an opinion won't have anything to do with them until a behavior is specified. 
+Given this division, I vote with the implementors, because an imperfect system that's implemented always beats a perfect system that isn't. 
+Jon A neat demonstration of multiple references: "3 Nephi 14:14" and "Matthew 7:14 (KJV)" are two different formal identifiers for the same string. 
+Jon That's perfectly understandable, and I have no problem with it. 
+What I can't work out is why no-one's prepared even to propose a behaviour: it doesn't even have to be compulsory (pace Terry). 
+Nothing ever stopped implementors jumping the gun and making up their own behaviours in the past: what's holding them back now? 
+///Peter Unfortunately they're not quite the same text, although the Mormon text is taken from the KJV. 
+The editorial process changed some of the wording and some of the punctuation. 
+I don't want a ref to 3 Nephi 14:14 to point me at Matt. 7:14 any more than I want the reverse. 
+This quotation just happens to be the same in both. 
+Something similar applies if you try to locate the quotation "...his Laodamia / it comes..." ///Peter Paul Grosso *has* proposed a behavior. 
+If the WG would accept the fact that we're not going anywhere without a default behavior and get to work on the one that's been proposed, we might start making some progress on this. 
+Jon For the record, I would like to say that I think we can get along with SYSTEM, though I wouldn't mind having PUBLIC. 
+I think my reasoning on this is much in line with Lee's. 
+Agreed. 
+A name by any other name is still a name, and an address by any other form of address is still an address. 
+You never have to follow a default mechanism if you have a better mechanism. 
+That is why it is a default mechanism and not an exclusive mechanism. 
+I would rather that Melville had given the publisher's address than nothing at all. 
+If I was in enough trouble to need it, it might be a better clue to where the data currently exists than nothing at all. 
+Similarly, providing a catalog provides you with a starting point that is at least as robust as a URL, and if you know a better way to find the public identifier, you are encouraged to use it. 
+Michael's current proposed spec (which is newer than your message) is quite explicit about this: "XML processors may implement any mechanism they choose for resolving public identifiers (i.e. finding a URL for some physical copy of the object named). 
+At user option, however, they must also support the mechanism described in this section." 
+So your analogies of forcing booksellers to write letters to the publisher of Moby Dick are inaccurate. 
+Rather book authors are forced to include the publisher's address in the front of the book in *case* the bookseller has no better way of getting in touch with them. 
+I think you will agree that requiring a snail mail address in the front of a book is not an onerous task, nor is requiring a base, primitive, system identifier lookup mechanism within XML. 
+The advantage of requiring the address to be in the catalog rather than in the document is that you don't have to change the document when files move around the web. 
+Paul Prescod Actually catalogs are more stable than URLs. 
+Because a catalog is likely to identify a large number of documents from a single URL it is probably less likely to change its location than the individual URLs are. 
+Its length can also vary over time to make it more extensive. 
+This is particularly important where catalogs are used to indicate sets of related documents, where the catalog can also be a guide to the set of currently available documents on a subject. 
+The bookshop analogy is, in fact, not the most valid one. 
+A much more valid one is that of the Librarian wanting to correctly locate a book like Moby Dick. 
+You don't catalog such books by giving them an absolute address like "the third shelf of the fourth stack" as this changes too frequently. 
+You simply classify books by category and then list them in alphabetical order in that category. 
+In terms of what we are proposing you would used one catalog per category, and a public identifier to provide a sortable list of unique names for the book e.g. "-//library1234//TEXT Melville/Moby Dick//EN". 
+You need public identifiers to overcome the location shifts so prevelant in modern nucleated systems. 
+Without public identifiers, and catalogs to intepret them, you cannot create any valid WWW document set with a realistic lifespan of more than 2-3 years as that is the average lifespan of the underlying system, and a new system typically means a revised file structure. 
+With public identifiers, and an ever expanding set of resolution methods, you can envisage this mechanism being expanded to 20-30 years (but not beyond, because by then no-one will be using those arcane DOS-based URL file paths to locate things beyond about 2010: we will all be using URNs and other forms of public identifiers, such as EAN bar codes and numeric references). 
+Martin Bryan, The SGML Centre, Churchdown, Glos. 
+GL3 2PU, UK In a nutshell, thanks. 
+I'll shut up now :-) ///Peter But this is a case where the implementors are insisting on offering an _unneeded_ solution (we have SYSTEM available to supplement PUBLIC when and as needed), that is not especially _wanted_. 
+Now that seems counterproductive to me. 
+It's the well known case of software people telling the users that they're wrong about their needs. 
+A well-implemented system that doesn't do what you want is not so useful. 
+Neither is not having a system at all, because someone doesn't have the same definition of "work" as you do. 
+I'll be posting a more coherent, integrated statement in a bit, but thisd just made me jump. 
+I've been on both sides of that, but in this case, the implementors are just wrong. 
+I can't avoid being that blunt, I'm afraid. 
+--- David David Durand dgd@cs.bu.edu \ david@dynamicDiagrams.com 
+Boston University Computer Science \ Sr. Analyst --------------------------------------------\ http://dynamicDiagrams.com/ MAPA: mapping for the WWW \__________________________ I disagree with the assertion that we *need* PUBLIC. 
+You can accomplish the same thing using aliasing of SYSTEM ID's. 
+There is no requirement that a URL be a file path. 
+You don't always own the server of the resources you are referring to. 
+You may also want the name of the object to be independent of any particular server. 
+Paul Prescod 

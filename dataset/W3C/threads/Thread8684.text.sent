@@ -1,0 +1,264 @@
+Is there any point in the current draft which would need to be changed to make allowances for someone to define a "manually verifiable" signature technique in this connection? 
+It may be out of scope, and it won't be completely ready in time for the final recommendation, but it consists of the following: 1 A new value for SignatureMethod "manuallySignedDigest". 
+This value for SignatureMethod implies that the SignatureValue itself consists of the base 64 encoding of the message digest and is not signed. 
+This method's main parameter is a reference to a SignatureProperty containing the manual signature. 
+It might also accept a parameter giving the data type of the manual signature. 
+2 The manual signature itself, in a SignatureProperty. 
+This manual signature should contain a voice recording, transcribed signature, or the like which is performed by the user (signed with handwriting or spoken) and in which the user him/herself records the message digest. 
+This technique is not automatically verifiable, so it may not be in scope for this group. 
+However, it is a way of performing a general electronic signature using mainly pieces from the current XMLDSIG specification. 
+The software verification of such a document will perform a digest verification, but then a human will have to verify the actual signature. 
+Tom Gindin I hope not. 
+The intent of the design is to permit externally defined signature techniques and not become a repository for all signature profiles. 
+If I was designing this application, my initial though would've been to place this data in KeyInfo: "KeyInfo is an optional element that enables the recipient(s) to obtain the key(s) needed to validate the signature." 
+"Additional information items concerning the generation of the signature(s) can be placed in a SignatureProperty element." 
+My own distinction between these two things is that KeyInfo is the information necessary to procedurally generate/confirm the SignatureValue octets and any of its metadata (like a signed cert); SignatureProperties is other data relevant to application/trust decisions about the assuredness/trustworthiness of that SignatureValue. 
+If others agree, we could try to make this clearer... Joseph Reagle Jr. W3C Policy Analyst mailto:reagle@w3.org 
+IETF/W3C XML-Signature Co-Chair http://www.w3.org/People/Reagle/ 
+The reason I have the manual signature in a SignatureProperty, rather than KeyInfo, is that SignatureProperty tends to be data associated both with the signer and with the signed document or the circumstances of its signing, while KeyInfo is typically data associated with the signer which is in no way specific to the document. 
+This signature technique does not have any cryptographic key at all, even though it is a variation on XML signatures. 
+It also cannot be verified fully by any automated technique. 
+Tom Gindin "Joseph M. Reagle Jr." reagle@w3.org 
+on 06/05/2000 04:55:16 PM Subject: Re: Manually Signed Digest as an XML signature type changed signature I hope not. 
+The intent of the design is to permit externally defined signature techniques and not become a repository for all signature profiles. 
+the manual and If I was designing this application, my initial though would've been to place this data in KeyInfo: "KeyInfo is an optional element that enables the recipient(s) to obtain the key(s) needed to validate the signature." 
+"Additional information items concerning the generation of the signature(s) can be placed in a SignatureProperty element." 
+My own distinction between these two things is that KeyInfo is the information necessary to procedurally generate/confirm the SignatureValue octets and any of its metadata (like a signed cert); SignatureProperties is other data relevant to application/trust decisions about the assuredness/trustworthiness of that SignatureValue. 
+If others agree, we could try to make this clearer... Joseph Reagle Jr. W3C Policy Analyst mailto:reagle@w3.org 
+IETF/W3C XML-Signature Co-Chair http://www.w3.org/People/Reagle/ Joseph and Tom: Sorry, but I strongly believe that this manually signed digest signature type is a huge mistake for this working group to even consider. 
+The focus of the working group and its charter from inception has been digital signature in the cryptographic context. 
+Adding this "interpretation" of signature opens to door to all kinds of random definitions and it seriously dilutes the work we've done so far. 
+--Barbara Fox changed signature I hope not. 
+The intent of the design is to permit externally defined signature techniques and not become a repository for all signature profiles. 
+value the method's manual the the spoken) and If I was designing this application, my initial though would've been to place this data in KeyInfo: "KeyInfo is an optional element that enables the recipient(s) to obtain the key(s) needed to validate the signature." 
+"Additional information items concerning the generation of the signature(s) can be placed in a SignatureProperty element." 
+My own distinction between these two things is that KeyInfo is the information necessary to procedurally generate/confirm the SignatureValue octets and any of its metadata (like a signed cert); SignatureProperties is other data relevant to application/trust decisions about the assuredness/trustworthiness of that SignatureValue. 
+If others agree, we could try to make this clearer... Joseph Reagle Jr. W3C Policy Analyst mailto:reagle@w3.org 
+IETF/W3C XML-Signature Co-Chair http://www.w3.org/People/Reagle/ Joseph: I disagree. 
+We've defined KeyInfo (in just about every conceivable form!) to mean "hints" to a verifier about where to find evidence that he is using the correct key. 
+There is NO ambiguity here: the result of interpreting KeyInfo can only be the use of a particular key by the verifier in a cryptographic operation. 
+SignatureProperties, on the other hand, are miscellaneous input to some higher-order verification policy, sent along with a signature by its producer. 
+--Barb Joseph and Tom: Sorry, but I strongly believe that this manually signed digest signature type is a huge mistake for this working group to even consider. 
+The focus of the working group and its charter from inception has been digital signature in the cryptographic context. 
+Adding this "interpretation" of signature opens to door to all kinds of random definitions and it seriously dilutes the work we've done so far. 
+--Barbara Fox 
+
+Barb, Rest assured, this work is out of scope. 
+smile However, I'm trying to use the question to push us to more cleanly define the meaning of KeyInfo and SignatureProperties, which are rather fuzzy. 
+Joseph Reagle Jr. W3C Policy Analyst mailto:reagle@w3.org 
+IETF/W3C XML-Signature Co-Chair http://www.w3.org/People/Reagle/ to mean "hints" to a verifier about where to find evidence that he is using the correct key. 
+There is NO ambiguity here: the result of interpreting KeyInfo can only be the use of a particular key by the verifier in a cryptographic operation. 
+I understood KeyInfo to be the information related to generating the SignatureValue. 
+Consequently if someone defined a non-cryptographic method, KeyInfo should carry the hints appropriate to validating SignatureValue using that method. 
+Your definition is appropriate as well (particularly given it's called KeyInfo) in that KeyInfo only holds information related to generating the SignatureValue via a cryptographic algorithm. 
+I just want to be clear which it is and what the implication of your definition: A. Non cryptographic electronic signatures should place their "validating" information in SiggnatureProperties, or B. Non cryptographic electronic signatures can not use XML Signature syntax what-so-ever. 
+(Specifying this would be difficult as we would then have to enumerate all the algorithms that may be used, or all those that may not, and it's difficult to enforce.) Joseph Reagle Jr. W3C Policy Analyst mailto:reagle@w3.org 
+IETF/W3C XML-Signature Co-Chair http://www.w3.org/People/Reagle/ Joseph: Your definition of KeyInfo is information related to the generation of the signature. 
+Mine is that KeyInfo is information required by the verifier of a signature. 
+There are several forms, like KeyName, that illustrate that it's not intended to be used in the generation of a signature. 
+Also, in your choice between: "A. 
+Non cryptographic electronic signatures should place their "validating" information in SignatureProperties, or B. Non cryptographic electronic signatures can not use XML Signature syntax what-so-ever. 
+(Specifying this would be difficult as we would then have to enumerate all the algorithms that may be used, or all those that may not, and it's difficult to enforce.)" 
+I believe we should clearly state that compliance with this standard requires that a cryptographic signature MUST be generated (or verified.) 
+If the producer of a cryptographically signed XML document wishes to add an electronic signature, it should be included as a SignatureProperty. 
+--Barb Does your last statement mean that you believe that a separate standard should later be produced for non-digital electronic signatures of XML documents, or that you believe that the existence of such signatures should not be encouraged? 
+If a separate standard is produced, it should borrow a very large fraction of the syntax from this standard. 
+I would not object to wording like "no signature object is in compliance with this version of the standard unless it contains a SignatureValue which may be verified by purely cryptographic means", as long as "this version" is present. 
+Tom Gindin "Barb Fox" bfox@Exchange.Microsoft.com on 06/05/2000 08:13:29 PM Subject: RE: Manually Signed Digest as an XML signature type Joseph: Your definition of KeyInfo is information related to the generation of the signature. 
+Mine is that KeyInfo is information required by the verifier of a signature.? There are several forms, like KeyName, that illustrate that it's not intended to be used in the generation of a signature. 
+Also, in your choice between: "A. 
+Non cryptographic electronic signatures should place their "validating" information in SignatureProperties, or B. Non cryptographic electronic signatures can not use XML Signature syntax what-so-ever. 
+(Specifying this would be difficult as we would then have to enumerate all the algorithms that may be used, or all those that may not, and it's difficult to enforce.)" 
+I believe we should clearly state that compliance with this standard requires that a cryptographic signature MUST be generated (or verified.) 
+If the producer of a cryptographically signed XML document wishes to add an electronic signature, it should be included as a SignatureProperty. 
+--Barb I've been musing over this thread. 
+If someone were to define a SignatureMethod where the authenticating value was a video of the signer reading the digest or some such, then I don't think that should go in SignatureProperties or in KeyInfo. 
+It seems to me that in such a case the video is that authenticating value and should just go in SignatureValue. 
+If the logistics of the signing operation make that inconvenient, you could have a varient SignatureMethod which says that the SignatureValue is a URL to the video data. 
+I don't see any necessity to put the base64 digest in the SignatureValue but if you wanted to you could put it there and have a compound object as SignatureValue with both the digest and the video or pointer to the video. 
+Anyway, using SignatureValue seems to me like the most natural interpretation of the draft for this out-of-scope case. 
+Thanks, Donald ------- Forwarded Messages From: tgindin@us.ibm.com 
+Message-ID: 852568F0.008137BD.00@D51MTA04.pok.ibm.com 
+Date: Wed, 31 May 2000 19:31:24 -0400 Subject: Manually Signed Digest as an XML signature type Is there any point in the current draft which would need to be changed to make allowances for someone to define a "manually verifiable" signature technique in this connection? 
+It may be out of scope, and it won't be completely ready in time for the final recommendation, but it consists of the following: 1 A new value for SignatureMethod "manuallySignedDigest". 
+This value for SignatureMethod implies that the SignatureValue itself consists of the base 64 encoding of the message digest and is not signed. 
+This method's main parameter is a reference to a SignatureProperty containing the manual signature. 
+It might also accept a parameter giving the data type of the manual signature. 
+2 The manual signature itself, in a SignatureProperty. 
+This manual signature should contain a voice recording, transcribed signature, or the like which is performed by the user (signed with handwriting or spoken) and in which the user him/herself records the message digest. 
+This technique is not automatically verifiable, so it may not be in scope for this group. 
+However, it is a way of performing a general electronic signature using mainly pieces from the current XMLDSIG specification. 
+The software verification of such a document will perform a digest verification, but then a human will have to verify the actual signature. 
+Tom Gindin ------- Message 2 Message-Id: 3.0.5.32.20000605192821.00be6520@localhost 
+Date: Mon, 05 Jun 2000 19:28:21 -0400 From: "Joseph M. Reagle Jr." reagle@w3.org 
+Subject: RE: Manually Signed Digest as an XML signature type to mean "hints" to a verifier about where to find evidence that he is using the correct key. 
+There is NO ambiguity here: the result of interpreting KeyInfo can only be the use of a particular key by the verifier in a cryptographic operation. 
+I understood KeyInfo to be the information related to generating the SignatureValue. 
+Consequently if someone defined a non-cryptographic method, KeyInfo should carry the hints appropriate to validating SignatureValue using that method. 
+Your definition is appropriate as well (particularly given it's called KeyInfo) in that KeyInfo only holds information related to generating the SignatureValue via a cryptographic algorithm. 
+I just want to be clear which it is and what the implication of your definition: A. Non cryptographic electronic signatures should place their "validating" information in SiggnatureProperties, or B. Non cryptographic electronic signatures can not use XML Signature syntax what-so-ever. 
+(Specifying this would be difficult as we would then have to enumerate all the algorithms that may be used, or all those that may not, and it's difficult to enforce.) Joseph Reagle Jr. W3C Policy Analyst mailto:reagle@w3.org 
+IETF/W3C XML-Signature Co-Chair http://www.w3.org/People/Reagle/ ------- Message 3 Date: Mon, 5 Jun 2000 17:13:29 -0700 Message-ID: 96BABA22ECEAEA45B53D08D63E1B567826F162@DF-SPIKE.platinum.corp.microsoft 
+.com 
+From: "Barb Fox" bfox@Exchange.Microsoft.com 
+Subject: RE: Manually Signed Digest as an XML signature type Joseph: Your definition of KeyInfo is information related to the generation of the signature.=20 
+Mine is that KeyInfo is information required by the verifier of a signature. 
+There are several forms, like KeyName, that illustrate that it's not intended to be used in the generation of a signature.=20 
+Also, in your choice between:=20 "A. 
+Non cryptographic electronic signatures should place their "validating" information in SignatureProperties, or B. Non cryptographic electronic signatures can not use XML Signature syntax what-so-ever. 
+(Specifying this would be difficult as we would then have to enumerate all the algorithms that may be used, or all those that may not, and it's difficult to enforce.)" 
+I believe we should clearly state that compliance with this standard requires that a cryptographic signature MUST be generated (or verified.) 
+If the producer of a cryptographically signed XML document wishes to add an electronic signature, it should be included as a SignatureProperty. 
+=20 --Barb ------- End of Forwarded Messages My reason for putting the fields where I did was that for cryptographically partially verifiable signatures the cryptographically verifiable component would go in SignatureValue, and the manual one would go elsewhere (SignatureProperty is just convenient). 
+Your suggestion of a compound value would be better if it produced compatible syntax for SignatureValue between this variant and the normal one. 
+Of course, little about this feature has been sufficiently thought out to go into a standard yet, so it should not and will not hold up the adoption of the current draft. 
+I think that this feature may well be within the scope of the mission statement, however, although it cannot go into the first version of the standard. 
+Most of the mission statement talks about "signature" of Web resources rather than "digital signature". 
+The charter as a whole does deal specifically with "digital signature", and would need to be amended if this were considered for the second version. 
+On the other hand, does anyone know of any previous method for a general electronic signature of a digital document? 
+My own preliminary set of definitions follows, for anyone interested: Signature - the personalization by the signer of a characteristic of an object. 
+Signature of a digital object - the personalization by the signer of the digest of the object. 
+Digital signature - the cryptographic signature of the digest of the object. 
+Tom Gindin "Donald E. Eastlake 3rd" dee3@torque.pothole.com 
+@w3.org on 06/08/2000 04:29:59 PM Sent by: w3c-ietf-xmldsig-request@w3.org 
+Subject: RE: Manually Signed Digest as an XML signature type I've been musing over this thread. 
+If someone were to define a SignatureMethod where the authenticating value was a video of the signer reading the digest or some such, then I don't think that should go in SignatureProperties or in KeyInfo. 
+It seems to me that in such a case the video is that authenticating value and should just go in SignatureValue. 
+If the logistics of the signing operation make that inconvenient, you could have a varient SignatureMethod which says that the SignatureValue is a URL to the video data. 
+I don't see any necessity to put the base64 digest in the SignatureValue but if you wanted to you could put it there and have a compound object as SignatureValue with both the digest and the video or pointer to the video. 
+Anyway, using SignatureValue seems to me like the most natural interpretation of the draft for this out-of-scope case. 
+Thanks, Donald ------- Forwarded Messages From: tgindin@us.ibm.com 
+Message-ID: 852568F0.008137BD.00@D51MTA04.pok.ibm.com 
+Date: Wed, 31 May 2000 19:31:24 -0400 Subject: Manually Signed Digest as an XML signature type Is there any point in the current draft which would need to be changed to make allowances for someone to define a "manually verifiable" signature technique in this connection? 
+It may be out of scope, and it won't be completely ready in time for the final recommendation, but it consists of the following: 1 A new value for SignatureMethod "manuallySignedDigest". 
+This value for SignatureMethod implies that the SignatureValue itself consists of the base 64 encoding of the message digest and is not signed. 
+This method's main parameter is a reference to a SignatureProperty containing the manual signature. 
+It might also accept a parameter giving the data type of the manual signature. 
+2 The manual signature itself, in a SignatureProperty. 
+This manual signature should contain a voice recording, transcribed signature, or the like which is performed by the user (signed with handwriting or spoken) and in which the user him/herself records the message digest. 
+This technique is not automatically verifiable, so it may not be in scope for this group. 
+However, it is a way of performing a general electronic signature using mainly pieces from the current XMLDSIG specification. 
+The software verification of such a document will perform a digest verification, but then a human will have to verify the actual signature. 
+Tom Gindin ------- Message 2 Message-Id: 3.0.5.32.20000605192821.00be6520@localhost 
+Date: Mon, 05 Jun 2000 19:28:21 -0400 From: "Joseph M. Reagle Jr." reagle@w3.org 
+Subject: RE: Manually Signed Digest as an XML signature type form!) to mean "hints" to a verifier about where to find evidence that he is using the correct key. 
+There is NO ambiguity here: the result of interpreting KeyInfo can only be the use of a particular key by the verifier in a cryptographic operation. 
+I understood KeyInfo to be the information related to generating the SignatureValue. 
+Consequently if someone defined a non-cryptographic method, KeyInfo should carry the hints appropriate to validating SignatureValue using that method. 
+Your definition is appropriate as well (particularly given it's called KeyInfo) in that KeyInfo only holds information related to generating the SignatureValue via a cryptographic algorithm. 
+I just want to be clear which it is and what the implication of your definition: A. Non cryptographic electronic signatures should place their "validating" information in SiggnatureProperties, or B. Non cryptographic electronic signatures can not use XML Signature syntax what-so-ever. 
+(Specifying this would be difficult as we would then have to enumerate all the algorithms that may be used, or all those that may not, and it's difficult to enforce.) Joseph Reagle Jr. W3C Policy Analyst mailto:reagle@w3.org 
+IETF/W3C XML-Signature Co-Chair http://www.w3.org/People/Reagle/ ------- Message 3 Date: Mon, 5 Jun 2000 17:13:29 -0700 Message-ID: 96BABA22ECEAEA45B53D08D63E1B567826F162@DF-SPIKE.platinum.corp.microsoft 
+.com 
+From: "Barb Fox" bfox@Exchange.Microsoft.com 
+Subject: RE: Manually Signed Digest as an XML signature type Joseph: Your definition of KeyInfo is information related to the generation of the signature.=20 
+Mine is that KeyInfo is information required by the verifier of a signature. 
+There are several forms, like KeyName, that illustrate that it's not intended to be used in the generation of a signature.=20 
+Also, in your choice between:=20 "A. 
+Non cryptographic electronic signatures should place their "validating" information in SignatureProperties, or B. Non cryptographic electronic signatures can not use XML Signature syntax what-so-ever. 
+(Specifying this would be difficult as we would then have to enumerate all the algorithms that may be used, or all those that may not, and it's difficult to enforce.)" 
+I believe we should clearly state that compliance with this standard requires that a cryptographic signature MUST be generated (or verified.) 
+If the producer of a cryptographically signed XML document wishes to add an electronic signature, it should be included as a SignatureProperty. 
+=20 --Barb ------- End of Forwarded Messages All, I would slightly modify Barb's statement but to my knowledge the restatement would not have any effect whatsoever on any Electronic Signature scheme I have seen to date. 
+The problem I have with electronic signatures is that a biometric alone cannot provide a cryptographically strong (i.e. immune to attack) binding of the signature to the specific document. 
+I have seen many, many biometric schemes that claim to construct such a binding but on examination every single one that I have seen to date either relies for comms security on the cryptographic key alone or is subject to relatively unsophisticated attack once the algorithm is known. 
+The only technique I have seen thus far that is promissing in this area is to use a biometric technique to gate access to the public key My very strong predjudice is that should sufficient motivation exist that a proof may be constructed to this effect. 
+If we define 1) a cryptographic system to be one in which there is an asymetry in the complexity of computing a function and its inverse. 
+2) a biometric system appropriately My guess is that it is possible to construct a proof that any system in which there is an asymetric work function associated with the creation and verification of a signature validating the document falls into this category. 
+That is just my opinion, I could be wrong. 
+Phill Does your last statement mean that you believe that a separate standard should later be produced for non-digital electronic signatures of XML documents, or that you believe that the existence of such signatures should not be encouraged? 
+If a separate standard is produced, it should borrow a very large fraction of the syntax from this standard. 
+I would not object to wording like "no signature object is in compliance with this version of the standard unless it contains a SignatureValue which may be verified by purely cryptographic means", as long as "this version" is present. 
+Tom Gindin "Barb Fox" bfox@Exchange.Microsoft.com on 06/05/2000 08:13:29 PM Joseph: Your definition of KeyInfo is information related to the generation of the signature. 
+Mine is that KeyInfo is information required by the verifier of a signature.? There are several forms, like KeyName, that illustrate that it's not intended to be used in the generation of a signature. 
+Also, in your choice between: "A. 
+Non cryptographic electronic signatures should place their "validating" information in SignatureProperties, or B. Non cryptographic electronic signatures can not use XML Signature syntax what-so-ever. 
+(Specifying this would be difficult as we would then have to enumerate all the algorithms that may be used, or all those that may not, and it's difficult to enforce.)" 
+I believe we should clearly state that compliance with this standard requires that a cryptographic signature MUST be generated (or verified.) 
+If the producer of a cryptographically signed XML document wishes to add an electronic signature, it should be included as a SignatureProperty. 
+--Barb Electronic signatures are not restricted to biometrics. 
+In particular, a sound recording of an individual speaking a simple form of words including a recital of a specific document's digest would be feasible, would be an electronic signature, and would be properly bound to the document's digest in such a way as to constitute a signature of the document. 
+Similar methods involving handwriting may also be feasible. 
+The difficulty in these schemes is not that they are not valid signatures, but that the last step in validating the signature is not cryptographic and may not be readily automatable. 
+My suggestion was not intended primarily for biometrics, as like many others I have not yet been convinced of the usefulness of biometrics for the execution of signatures as distinct from access control (including access control for key storage). 
+Tom Gindin Philip Hallam-Baker pbaker@verisign.com on 06/09/2000 04:34:47 PM Subject: RE: Manually Signed Digest as an XML signature type All, I would slightly modify Barb's statement but to my knowledge the restatement would not have any effect whatsoever on any Electronic Signature scheme I have seen to date. 
+The problem I have with electronic signatures is that a biometric alone cannot provide a cryptographically strong (i.e. immune to attack) binding of the signature to the specific document. 
+I have seen many, many biometric schemes that claim to construct such a binding but on examination every single one that I have seen to date either relies for comms security on the cryptographic key alone or is subject to relatively unsophisticated attack once the algorithm is known. 
+The only technique I have seen thus far that is promissing in this area is to use a biometric technique to gate access to the public key My very strong predjudice is that should sufficient motivation exist that a proof may be constructed to this effect. 
+If we define 1) a cryptographic system to be one in which there is an asymetry in the complexity of computing a function and its inverse. 
+2) a biometric system appropriately My guess is that it is possible to construct a proof that any system in which there is an asymetric work function associated with the creation and verification of a signature validating the document falls into this category. 
+That is just my opinion, I could be wrong. 
+Phill Does your last statement mean that you believe that a separate standard should later be produced for non-digital electronic signatures of XML documents, or that you believe that the existence of such signatures should not be encouraged? 
+If a separate standard is produced, it should borrow a very large fraction of the syntax from this standard. 
+I would not object to wording like "no signature object is in compliance with this version of the standard unless it contains a SignatureValue which may be verified by purely cryptographic means", as long as "this version" is present. 
+Tom Gindin "Barb Fox" bfox@Exchange.Microsoft.com on 06/05/2000 08:13:29 PM Joseph: Your definition of KeyInfo is information related to the generation of the signature. 
+Mine is that KeyInfo is information required by the verifier of a signature.? There are several forms, like KeyName, that illustrate that it's not intended to be used in the generation of a signature. 
+Also, in your choice between: "A. 
+Non cryptographic electronic signatures should place their "validating" information in SignatureProperties, or B. Non cryptographic electronic signatures can not use XML Signature syntax what-so-ever. 
+(Specifying this would be difficult as we would then have to enumerate all the algorithms that may be used, or all those that may not, and it's difficult to enforce.)" 
+I believe we should clearly state that compliance with this standard requires that a cryptographic signature MUST be generated (or verified.) 
+If the producer of a cryptographically signed XML document wishes to add an electronic signature, it should be included as a SignatureProperty. 
+--Barb These are both biometric mechanisms. 
+If I have a recording of a persons voice saying each of the hex digits I can reasonably expect to created a sufficiently good forgery of that person saying any document digest. 
+If I have one sample of handwriting I can produce forgeries. 
+I don't even need a computer to do this. 
+Thus I reject your assertion that their is a strong binding to the document. 
+If there is no strong binding to the document I don't see why the XML Dig Sig mechanism or indeed any binding mechanism has interest. 
+Phill Electronic signatures are not restricted to biometrics. 
+In particular, a sound recording of an individual speaking a simple form of words including a recital of a specific document's digest would be feasible, would be an electronic signature, and would be properly bound to the document's digest in such a way as to constitute a signature of the document. 
+Similar methods involving handwriting may also be feasible. 
+The difficulty in these schemes is not that they are not valid signatures, but that the last step in validating the signature is not cryptographic and may not be readily automatable. 
+My suggestion was not intended primarily for biometrics, as like many others I have not yet been convinced of the usefulness of biometrics for the execution of signatures as distinct from access control (including access control for key storage). 
+Tom Gindin Philip Hallam-Baker pbaker@verisign.com on 06/09/2000 04:34:47 PM All, I would slightly modify Barb's statement but to my knowledge the restatement would not have any effect whatsoever on any Electronic Signature scheme I have seen to date. 
+The problem I have with electronic signatures is that a biometric alone cannot provide a cryptographically strong (i.e. immune to attack) binding of the signature to the specific document. 
+I have seen many, many biometric schemes that claim to construct such a binding but on examination every single one that I have seen to date either relies for comms security on the cryptographic key alone or is subject to relatively unsophisticated attack once the algorithm is known. 
+The only technique I have seen thus far that is promissing in this area is to use a biometric technique to gate access to the public key My very strong predjudice is that should sufficient motivation exist that a proof may be constructed to this effect. 
+If we define 1) a cryptographic system to be one in which there is an asymetry in the complexity of computing a function and its inverse. 
+2) a biometric system appropriately My guess is that it is possible to construct a proof that any system in which there is an asymetric work function associated with the creation and verification of a signature validating the document falls into this category. 
+That is just my opinion, I could be wrong. 
+Phill -----Original Message----- Does your last statement mean that you believe that a separate standard should later be produced for non-digital electronic signatures of XML documents, or that you believe that the existence of such signatures should not be encouraged? 
+If a separate standard is produced, it should borrow a very large fraction of the syntax from this standard. 
+I would not object to wording like "no signature object is in compliance with this version of the standard unless it contains a SignatureValue which may be verified by purely cryptographic means", as long as "this version" is present. 
+Tom Gindin "Barb Fox" bfox@Exchange.Microsoft.com on 06/05/2000 08:13:29 PM Joseph: Your definition of KeyInfo is information related to the generation of the signature. 
+Mine is that KeyInfo is information required by the verifier of a signature.? There are several forms, like KeyName, that illustrate that it's not intended to be used in the generation of a signature. 
+Also, in your choice between: "A. 
+Non cryptographic electronic signatures should place their "validating" information in SignatureProperties, or B. Non cryptographic electronic signatures can not use XML Signature syntax what-so-ever. 
+(Specifying this would be difficult as we would then have to enumerate all the algorithms that may be used, or all those that may not, and it's difficult to enforce.)" 
+I believe we should clearly state that compliance with this standard requires that a cryptographic signature MUST be generated (or verified.) 
+If the producer of a cryptographically signed XML document wishes to add an electronic signature, it should be included as a SignatureProperty. 
+--Barb First, your last statement that if there is no strong binding to the document no electronic signature mechanism is useful is valid and, I hope, not even controversial. 
+If great ease of forgery (much easier than that for conventional signatures, for example) can be demonstrated for a signature technique it is good for nothing at all. 
+I ordinarily understand the term "biometric mechanisms" to refer to measurements of non-voluntary characteristics (including voice prints) rather than to speech recordings or handwriting, and I think most people do as well. 
+The essential question about the mechanisms suggested here is "how easy and undetectable is a forgery in this case"? 
+Your statement that "if I have even one sample of handwriting I can produce forgeries" is true to some extent, but if taken as an absolute it would render any handwritten signature on a document (probably on a handwritten document, but certainly on a typed one) completely untrustworthy. 
+However, such signatures are routinely accepted for many purposes. 
+Tom Gindin Philip Hallam-Baker pbaker@verisign.com on 06/09/2000 06:08:33 PM reagle@w3.org 
+, w3c-ietf-xmldsig@w3.org Subject: RE: Manually Signed Digest as an XML signature type These are both biometric mechanisms. 
+If I have a recording of a persons voice saying each of the hex digits I can reasonably expect to created a sufficiently good forgery of that person saying any document digest. 
+If I have one sample of handwriting I can produce forgeries. 
+I don't even need a computer to do this. 
+Thus I reject your assertion that their is a strong binding to the document. 
+If there is no strong binding to the document I don't see why the XML Dig Sig mechanism or indeed any binding mechanism has interest. 
+Phill Electronic signatures are not restricted to biometrics. 
+In particular, a sound recording of an individual speaking a simple form of words including a recital of a specific document's digest would be feasible, would be an electronic signature, and would be properly bound to the document's digest in such a way as to constitute a signature of the document. 
+Similar methods involving handwriting may also be feasible. 
+The difficulty in these schemes is not that they are not valid signatures, but that the last step in validating the signature is not cryptographic and may not be readily automatable. 
+My suggestion was not intended primarily for biometrics, as like many others I have not yet been convinced of the usefulness of biometrics for the execution of signatures as distinct from access control (including access control for key storage). 
+Tom Gindin Philip Hallam-Baker pbaker@verisign.com on 06/09/2000 04:34:47 PM All, I would slightly modify Barb's statement but to my knowledge the restatement would not have any effect whatsoever on any Electronic Signature scheme I have seen to date. 
+The problem I have with electronic signatures is that a biometric alone cannot provide a cryptographically strong (i.e. immune to attack) binding of the signature to the specific document. 
+I have seen many, many biometric schemes that claim to construct such a binding but on examination every single one that I have seen to date either relies for comms security on the cryptographic key alone or is subject to relatively unsophisticated attack once the algorithm is known. 
+The only technique I have seen thus far that is promissing in this area is to use a biometric technique to gate access to the public key My very strong predjudice is that should sufficient motivation exist that a proof may be constructed to this effect. 
+If we define 1) a cryptographic system to be one in which there is an asymetry in the complexity of computing a function and its inverse. 
+2) a biometric system appropriately My guess is that it is possible to construct a proof that any system in which there is an asymetric work function associated with the creation and verification of a signature validating the document falls into this category. 
+That is just my opinion, I could be wrong. 
+Phill (snip) Such signatures are accepted, but not on the basis of there being a strong binding. 
+Otherwise, making your mark in the form of an X wouldn't be allowed. 
+-Ekr This is key. 
+I don't distinguish between biometrics and 'voluntary' signals such as Voice prints etc. because as I see it people are looking at the biometric quality for the security. 
+I agree that there is much use of insecure authentication proceedures in paper transactions. 
+These insecurities are in gerneral acceptable because there are other controls that mitigate risks (relationships, physical presence etc.) and until now there has been no better way. 
+I utterly reject the notion that e-commerce should start from the position that current levels of fraud and theft are acceptable. 
+That type of thinking leads to systems like the AMPS cellular billing scheme, a system so insecure that the UK police and courts refuse to spend taxpayer monies deterring clonning fraud that the operators could easily have prevented. 
+So far the way of integrating biometrics and public key cryptography that works best is to use a biometric to gate access to the private key. 
+This particular scheme is ecceptionally strong and does not require any special support in XML DigSig. 
+Phill 

@@ -1,0 +1,76 @@
+I thought I'd send some comments in now that it's last call. 
+Briefly, what I saw (I focussed on the core) looks good -- addresses many (but not all) of the issues I had with the level 1 work, and I'm glad to see that things went along smoothly even in my absence! 
+:-) Of particular note: * The system and public IDs are really for the "document type's external subset", not for the "document type", as it's now written. 
+DTDs often consist of many components, each with their own identifiers. 
+As written, those IDs could refer to one of dozens of identifiers -- not useful. 
+I'd like to see DomImplementation and DocumentType describe this correctly (a small editorial change). 
+* I can't see how I'd write a chunk of code that'll know it can use Level 2 features ... e.g. it's portable and needs to work with both L1 and L2. I'd like to see a "DOM" feature (for DOMImplementation) be defined, which would report on which level is supported. 
+* It's confusing to have feature definitions scattered all over the spec. 
+I'd like to see them collected in one table at one place, so their overall scope is more readily understood. 
+* I still don't see why there's no solution for getting access to a system default DOM implementation, at least for Java. 
+I'm posting an implementation in a followup post. 
+I'd like to see something like this in the org.w3c.dom 
+Java package. 
+Thanks for the good work! - Dave LookI like the report format, but I still feel like I need the table of contents to have clickable links to let me get to each of the documented classes. 
+This structure (sans such TOC support) is relatively hard to navigate. 
+1.1.7Namespaces 
+... it may be useful to note that the DOM has adopted an 'early binding' model of namespace URIs to elements. 
+With early binding, the URIs are permanently bound to elements as they get created. 
+Late binding is more like what one would get by moving text around in a text editor -- the URI bindings are context-dependant. 
+(So there are significant ramifications...) Also, I'm glad to see the simplification of having the namespace support be in the core interfaces versus being separate. 
+Life is much easier that way! 
+1.2General re compatibility ... I don't see how I can write a chunk of code that'll know to act differently if it's using DOM Level 2 or DOM Level 1. SUGGESTION: have a DOMImplementation 'feature". 
+"DOM" would have values "1.0" (for DOM L1) or "2.0" (L2). 
+1.2DOMException ... ambiguous re whether the other numeric codes are reserved to W3C or not. 
+They should be. 
+Similar comment for "Node" ... nobody except W3C should be defining new numeric codes for "nodeType". 
+1.2DomImplementation ... createDocumentType() seems to have no accomodation for an internal subset. 
+I'd suggest at least correcting the text; it's not the "document type system identifier" (or public ID), but the "external subset system identifier" (or public identifier). 
+Also, having the "feature" identifiers scattered throughout the document is suboptimal. 
+At least list the features from each chapter up at the front of the chapter, in a table to visually highlight them. 
+1.2Document ... refers to "invalid" characters. 
+"Illegal" would be more correct (with reference under DOMException to XML, HTML, and related specs for what that means). 
+Of course the INVALID_CHARACTER_ERR name is grandfathered... 1.2Document.importNode 
+... 
+I'm rather uncomfortable with that name "import" since that implies the same object is in use (e.g. if I import something from Canada). 
+"copy" is the appropriate word, and is even used in the documentation more than once. 
+"import" suggests the wrong thing. 
+1.3DocumentType ... as above on DomImplementation, the text should say the IDs are for the "document type's external subset", 7Traversal ... 
+I'm still not a fan of this stuff, but at least it's optional. 
+(Seems like it should integrate with the view mechanism in some places, but doesn't -- oops.) App CJava Binding ... I ** REALLY ** think it'd be useful to define a standard way to get access to a DOM implementation, so that only parser connectivity really needs to be left to nonstandard APIs. 
+There doesn't seem to be a "feature" identifier for the range facility ... I sure hope that doesn't mean it's part of the DOM L2 core!! (I suggest "Range" to identify that optional module.) - Dave I didn't see any response to my earlier query re events; should I expect one? 
+Here are some further observations about the event portion of the specification -- based in part on the task of trying to understand the spec well enough to implement it !! - Dave 6.2It appears that there's no way to guarantee that an ancestor will get an event -- both capturing and bubbling permit other nodes to interfere with event reporting. 
+This seems ungood in general; there ought to be _one_ mechanism whereby event reporting isn't subject to interference. 
+6.3.1I'm 
+curious in general why EventListener.handleEvent() is defined to handle _all_ events rather than having separate interfaces that directly handle the different sorts of events (a MouseEventListener, MutationEventListener, etc). 
+That's how Swing does this stuff, and it's generally handy to have such "pre-dispatched" frameworks -- it can be faster, too! 
+6.2.2Event capture ... the text is unclear what preventCapture() achieves. 
+The third para says that if you call it, no further targets lower in the tree will get events, which seemingly includes both the "deliver to target" phase (which is elsewhere said to be "guaranteed") and event bubbling. 
+It makes sense to me to see the preventCapture() method only have effect during the capture phase. 
+If so, its description in 6.2.2 needs updating (no further targets will capture). 
+6.6.4DOMSubtreeModified ... insufficiently specified. 
+What event batching is supposed to be performed? 
+In what sense may it be used "instead of the more specific events"? 
+And for that matter, which "more specific events"? 
+I couldn't make any sense of this description at all. 
+And there was the hint that it's another one of those really expensive events (like DOMNode**Document) noted below ... 6.6.4DOMNodeRemovedFromDocument ... seems horrendously expensive. 
+After delivering an DomNodeRemoved event, that node and all of its descendants (!!!) get one of these. 
+Must this really be done? 
+It'll increase the cost to support the mutation events substantially. 
+6.6.4DOMNodeInsertedIntoDocument ... correspondingly expensive. 
+GeneralThere's no way for applications to define their own events and thus use the event mechanism for any purpose except those that are built in. 
+I'd like to see such a standard, perhaps part of the basic "Events" mechanism. 
+In the same way that DOM events all have "DOM" prefixes, perhaps they could have a "USER." 
+prefix. 
+And it'd be desirable for such user events to have a way to include information ... maybe a UserEvent interface could have an Object parameter set in its initUserEvent() method, which has application defined semantics. 
+MutationEvents in 6.6.4 ... consider a Document, with one Element. 
+That Element has an Attr object which has one child, a Text node. 
+Now let's say that text node gets modified. 
+What events will fire? 
+In the Attribute's tree - DOMCharacterDataModified, delivered to the text node - DOMSubtreeModified, delivered to the attribute In the Element's tree - DOMAttrModified, delivered to the element - DOMSubtreeModified, delivered to the element Within each tree, bubbling and capturing apply. 
+Q: Is that right? 
+A:... SUGGESTION: The text should make clear that a document isn't the only example given of the "top of a subtree". 
+DocumentFragments and Attributes, plus disconnected elements, are other common cases. 
+The events listed are correct, and bubbling and capturing do apply. 
+So the spec isn't too bad ;-) "Subtree" refers to any subtree within the document; if there were a restriction we would detail what it is. 
+Lauren 

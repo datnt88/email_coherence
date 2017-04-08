@@ -1,0 +1,48 @@
+(By the way, I have not yet succeeded in getting myself subscribed to this list, so please cc replies to me for the moment.) Generally, I think the draft of Nov 28 is very good. 
+Rather egregiously missing is a reference to transmitting network objects in canonical form. 
+Section 3.2 should mention this; a reference to the canonical encoding model in Appendix G of RFC 1521 (specifically step 2) probably should suffice. 
+The only place this is hinted at is in the tolerance section of the appendices on tolerance of broken implementations, but the spec should explicitly say what the proper behavior is, just in case any servers every actually do that. 
+:-) As near as I can tell, the spec constrains all header values to be US-ASCII, meaning nothing that is not US-ASCII may be contained in them. 
+We might consider permitting non-US-ASCII information in at least some headers, probably using RFC 1522's model. 
+In section 7.5, I don't understand the BNF for the CTE header. 
+CTE's don't have subtypes or parameters. 
+Chuck Shotton said: As a solution, I'd like to propose an additional response-header for the 503 error response that specifies a time at which the client may expect the server to be able to handle requests again. 
+This time should be relative to the Date: header sent by the client. 
+I propose that this time be specified as a delta from this date in terms of hours, minutes, and seconds until availability. 
+The client should not attempt to resend its request before this delta period of time has elapsed. 
+Regarding busy server errors, a "Retry-After:" field might be reasonable, but I would prefer to just make it an HTTP-date rather than inventing something new for clients to have to parse. 
+If we were going to use relative dates, there are plenty of other places (like Expires:) where they make as much sense. 
+A pointer to an alternative address also seems like a sensible way to handle timeouts. 
+With regard to comment number 2, the encoding of object-body parts, there is a non-trivial ambiguity in RFC 1630 regarding the encoding of spaces as "+", and where this is allowed. 
+For WWW clients that encode object-bodies using the URL-encoding scheme, behavior is inconsistent. 
+Some clients encode specials in the object-body text using %xx hex encodings exclusively. 
+Others use %xx encodings for all specials except space, and encode spaces as "+". 
+I disagree strongly with this interpretation. 
+A + in search terms represents a keyword separator, and has nothing to do with a space, which is (of course) represented as %20. 
+The fact that some WWW clients choose to have a space be the device by which the user communicates keyword separations to the client is irrelevant; it could just as well be a tab, or a comma, or clicking in a different box. 
+(The fact that some WWW clients don't allow any way for a keyword to contain a space reflects a lack of flexibility.) Marc VanHeyningen URL:http://www.cs.indiana.edu/hyplan/mvanheyn.html The specified behavior will be "no canonical encoding of the object-body is required before network transfer via HTTP, though gateways may need to perform such canonical encoding before forwarding a message via a different protocol. 
+However, servers may wish to perform such encoding (i.e. to compensate for unusual document structures), and may do so at their discretion." 
+I must not be understanding what you're saying correctly. 
+Why is canonical encoding unnecessary? 
+Do you really mean that any server, on any architecture, can (for example) transmit text files using whatever its local system convention for line breaks might happen to be (CR, LF, CRLF, whatever) without standardizing it? 
+How can we be passing local forms around between different machines and expect it to work reliably? 
+Issues such as end of line interpretation have been a sore point between HTTP clients and servers for a long time, because stdio on Unix only accomodates LF line ends, Macs store text files with CR for EOL, and Windows uses CR/LF. 
+It has taken over a year for the general community of clients and servers to become tolerant of all the line end variations. 
+An explicit statement in the standard about tolerant EOL representations would be good. 
+IMHO, it should state that CR, LF, and CRLF should all be interpreted equally as EOL when used as line ends. 
+This avoids any problems with machine dependent EOL symbols, and fairly represents the current practice. 
+(It also avoids forcing clients and especially servers to do line-by-line translations of EOL for all outgoing response information, which is a BIG performance hit.) Yes, I know that pretty much all existing servers run under UNIX... 
+This is a fallacy and should not in any way, shape, or form be allowed to color the HTTP standard. 
+There are FAR more CPUs hooked to the Internet running Windows and Mac O/S than Unix, and there's a huge number of servers on these platforms as well. 
+(I know this wasn't the intent of your entire statement, but I couldn't resist hopping on a stump for a minute.) 
+As you say, the standard needs clarification on the point of line ends and the de facto Unix implementation is not sufficient. 
+Chuck Shotton \ Assistant Director, Academic Computing \ "Shut up and eat your U. of Texas Health Science Center Houston \ vegetables!!!" cshotton@oac.hsc.uth.tmc.edu (713) 794-5650 \ Sounds reasonable to me. 
+......Roy Fielding ICS Grad Student, University of California, Irvine USA I object. 
+So far, CRLF and LF have been understood as linebreaks. 
+In other words, LF is a linebreak, with possibly a preceding CR. 
+This is fine, even when used intermixed. 
+If we change this in the proposed fashion, you will have ambiguity if these are inconsistently used; imagine a situation when you have a file that begins with LF: ...CRLF Blaa: foobarCR CR LF This won't be ambiguous if you force the use of CRs and LFs to be consistent, but I think it's better to allow LFs and CRLFs intermixed, rather than allow CRs, LFs and CRLFs, but only one of them at a time. 
+-- Cheers, Ari -- We are only talking about the object-body here -- the spec already requires that headers be CRLF terminated (with LF-only tolerated). 
+The suggestion up above is for clients to look for line breaks in the object-body (i.e. when displaying text/plain) according to a perl regular expression like: if ( /\r?\n?/ ) { print "\n"; } (i.e. match CRLF, CR, or LF (but not LFCR) and treat it as a newline). 
+In other words if ((c = getc(IN)) == LF) putc('\n'); elsif (c = CR) if ((c2 = getc(IN)) == LF) putc('\n'); else putc('\n'); putc(c2); else output(c); (well, okay, so I've ignored EOF, but you get the drift). 
+......Roy Fielding ICS Grad Student, University of California, Irvine USA 

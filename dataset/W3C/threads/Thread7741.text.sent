@@ -1,0 +1,47 @@
+Sorry to ask such probably stupid questions to a large group BUT, I would like some clarifications on some parts of the spec 1) Properties. 
+On page 10 it reads: "The property namespace is flat; that is, no hierarchy of properties is explicitly recognized ... it is not possible to define the same property twice on a singe resource ... " The spec then goes on to give lots of examples with hierarchical properties. 
+I assume from this that the examples on PROPFIND works as follows: Is stored in the webdav server as property name R:bigbox with a value of R:BoxType Box type A /R:BoxType Is this correct??? 
+It seems to be correct especially when you have examples like which obviously violates the rules on page 10 unless the entire Z:Author structure is stored as the value for Z:authors Assuming everything I have said is true (the only way I made sense of the spec and its examples) then how should a webdav server respond to PROPFIND when the property name is Should it try to be intelligent and respond with or do the simple The simple way also means that if K:Foo and K:Foo/Bar are defined, propfind will return instead of the XML you would expect. 
+I see the reasoning behind this if everything I wrote is true. 
+If it is, maybe the spec should be changed to either give more concrete Property examples up front, or remove so many hierarchical properties from the rest of the examples. 
+2) I see a lot of discussion on COPY and MOVE and how they should work. 
+No one (as far as I have read) has mentioned the fact that both do state "If a resource exists at the destination and the Overwrite header is "T" then prior to performing the copy the server MUST perform a DELETE with "Depth: infinity" on the destination resource. 
+I can't think of any system (or utility) I have used that does this. 
+Most would overwrite the file if it already existed but not destroy any other files which might have been there. 
+Thus COPY foo-- TO foo-- -text.htm - list.htm 
+Gives the directory foo with simply text.htm in it instead of what I expected which is foo with BOTH list.htm and text.htm 
+I looked in the FAQ and old emails for answers and couldn't find this mentioned... Thanks for any help, Kevin My comments are below, in ejw tags: - Jim 1) Properties. 
+On page 10 it reads: "The property namespace is flat; that is, no hierarchy of properties is explicitly recognized ... it is not possible to define the same property twice on a singe resource ... " The spec then goes on to give lots of examples with hierarchical properties. 
+I assume from this that the examples on PROPFIND works as follows: A property has a name and a value. 
+The space of *names* is flat, but the value of properties can be arbitrary XML, and hence as you and the spec. 
+point out, non-flat. 
+Your intuition is correct that it might very well be possible to have a non-flat property namespace, with hierarchy in a property name indicating XML sub-elements. 
+We did investigate this kind of capability, and ultimately decided against it. 
+Some of the rationale is captured in: Is stored in the webdav server as property name R:bigbox with a value of Is this correct??? Actually, the value is: That is, the value does explicitly include the R:bigbox and /R:bigbox tags. 
+This is because we adopt a convention of having the outermost XML element of a property be the name of the property itself. 
+It seems to be correct especially when you have examples like which obviously violates the rules on page 10 unless the entire Z:Author structure is stored as the value for Z:authors In this case, the value of the property is: That is, there is one property, named Z:authors , with two sub-elements. 
+Assuming everything I have said is true (the only way I made sense of the spec and its examples) then how should a webdav server respond to PROPFIND when the property name is Should it try to be intelligent and respond with or do the simple The simple way also means that if K:Foo and K:Foo/Bar are defined, propfind will return instead of the XML you would expect. 
+I see the reasoning behind this if everything I wrote is true. 
+If it is, maybe the spec should be changed to either give more concrete Property examples up front, or remove so many hierarchical properties from the rest of the examples. 
+If the property K:Foo is defined, its value will be returned by a PROPFIND. 
+If the property K:Foo/Bar is defined, its value (that is, the value of property named "K:Foo/Bar") will be returned. 
+Since there is no hierarchy in DAV properties, the value of K:Foo is independent of the value of K:Foo/Bar. 
+2) I see a lot of discussion on COPY and MOVE and how they should work. 
+No one (as far as I have read) has mentioned the fact that both do state "If a resource exists at the destination and the Overwrite header is "T" then prior to performing the copy the server MUST perform a DELETE with "Depth: infinity" on the destination resource. 
+I can't think of any system (or utility) I have used that does this. 
+Most would overwrite the file if it already existed but not destroy any other files which might have been there. 
+Thus COPY foo-- TO foo-- -text.htm - list.htm 
+Gives the directory foo with simply text.htm in it instead of what I expected which is foo with BOTH list.htm and text.htm 
+I looked in the FAQ and old emails for answers and couldn't find this mentioned... 
+The rationale here was to make sure that the copy and move for Depth 0 had the same semantics as a copy/move for Depth infinity. 
+Since a user will not typically be interacting directly with the protocol, and since mechanisms exist to do other semantics if desired, a client could expose other semantics to their users via its user interface. 
+- Jim I do not believe that the specification is clear on this. 
+Specifically, mod_dav stores the value as "\n R:BoxType Box Type A /R:BoxType\n". 
+The name is part of the find/patch request, rather than part of the value. 
+A corollary is that mod_dav does not store any attributes that are associated with the name element. 
+On a separate note: I believe I have detailed this appropriately on the mod_dav home page (http://www.webdav.org/mod_dav/), but if somebody goes to read it and finds it isn't clear enough, then please let me know. 
+I've been trying to capture things that could be called "implementation defined"; the only other imp-defined item, so far, is the href format in a response element. 
+thx -g Greg Stein, http://www.lyra.org/ 
+I'd like to suggest that the example for section 8.8.6 be altered slightly so that the source and destination are not both index.html. 
+This will make things a bit more explicit. 
+J. 

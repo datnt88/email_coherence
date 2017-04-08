@@ -1,0 +1,105 @@
+In so far as I am aware Catapult will just pass the information through. 
+I am sure the Apache folks on this list will let us know what Apache does. 
+Anyone know the Netscape story? 
+As for caching, we need to differentiate between two different parts of this process. 
+The first part is the request for an action, the second part is the action itself. 
+Sending a COPY request does not cause a copy to occur. 
+It only requests that a copy occur. 
+It is up to the request handler to make the actual GETs and PUTs, or logical equivalent. 
+If files are being copies across servers then the GETs and PUTs will take care of the caches. 
+If the copy happens on a single server then we have a typical cache problem. 
+What happens if you copy a file on a server? 
+The cache contains bad information, that is what happens. 
+Using methods does not solve this problem as copy allows for multiple simultaneous requests. 
+Are we going to have caches parse the response messages to see which files were actually copied and then dump their corresponding cache entries? 
+We are dancing around a problem that a lot of people are aware of - Server Push. 
+However that is a whole other problem and I do not believe this is the right forum for it. 
+My conclusion is that the cache consistency problem is inherent to the current cache infrastructure and that using methods does not solve this problem. 
+One final note, using methods or using POST w/mime types are absolutely semantically equivalent. 
+So any problem you bring up with POST w/mime types will also exist with methods. 
+Yaron I'm interested in receiving feedback from the group on whether they feel having distributed authoring and versioning functionality is best performed via a POST (with many new content types), which is descreibed in the current spec., or whether it would be better to have this functionality implemented as many new methods, with parameters in headers, and mostly blank entity types. 
+The primary constraint, I think, is how various proxy &amp; security gateway services might deal with POST-with-new-entity-body vs. a new method. 
+A survey ("what's actually implemented?") 
+would be useful, since otherwise we're left with speculation. 
+A secondary issue (which doesn't actually affect the choice) is the question of cache invalidation, e.g., after copy(a, b), any cache entries for B should be invalidated even if are otherwise fresh, if we're going to require sequential transparency of information delivered through the same set of proxies. 
+E.g., if you do copy(a, b) and then ask for b, then YOU see the version you copied even if others who use a different cache might be updated later. 
+This is already an issue for POST, PUT and DELETE, but http-wg didn't (yet) create any mechanism for doing this. 
+Larry In message c=US%a=_%p=msft%l=RED-44-MSG-961029200115Z-1264@INET-03-IMC.itg.mic 
+Methods are semantically equivalient to POST w/mime types iff the spec says they are. 
+That's the beauty of new methods: they can have new semantics. 
+I don't have any strong intuitions, but I think it's possible new methods could usefully address some caching issues. 
+I'd have to see a spec. 
+Dan I think that is great idea but is this the group to propose it? 
+We should raise flags with other groups but I think we need to keep the RFC tightly focused on distributed authoring and versioning. 
+Yaron I was thinking more of a return header from ANY request that identified a set of other URLs whose cache entries should be marked stale. 
+So, if you POST a new entry to you might get back a return header that it updated: or (even) This puts the computational burden on the update method rather than retrieval, and is predicated on an assumption that reads happen far more frequently than writes. 
+Larry I have discussed this off line with Roy and frankly I think this is a religious issue. 
+Roy and I have fundamentally different visions of what HTTP should become. 
+As with the attributes discussion, I do not believe this issue can resolved on this list in anything like a reasonable amount of time. 
+This is another issue that should be dealt with at the November conference. 
+I realize that pushing stuff off to November sounds like whimping out but I have seen these discussions roll on in e-mail and they take forever and rarely resolve themselves. 
+It is only when you get people in a room that you can get any kind of resolution. 
+These issues are too fundamental to be argued out on an e-mail list. 
+Yaron From:Roy T. Fielding [SMTP:fielding@liege.ICS.UCI.EDU] Sent:Saturday, November 02, 1996 3:53 AM Subject:Re: POST vs. separate methods The issue is change control: once you define the semantics of a new method, there's little or no way to change it or update it. 
+Adding new methods is currently (intentionally) difficult. 
+PEP might make it easier, but I'll believe in PEP when I see more progress on it. 
+On the other hand, there's a well defined mechanism for defining, modifying, agreeing on, registering new media types. 
+So "POST with new media type" isn't equivalent to "new method" in the important dimension of "what happens if we get it wrong". 
+I'll disagree with Larry and Yaron on this one -- there is a giant difference between using media types to define the intended action and using methods to define the intended action. 
+a) access control is based on methods, not media types. 
+It is true that you could change all WWW software and HTTP semantics such that you could do access control via media types, but there had better be a damn good reason for it [I haven't seen any yet]. 
+b) the HTTP interface is designed to be capable of being the interface to a general object store, where the method really is an OO method to be applied to an object. 
+For a variety of reasons, it is better to have separate names for separate semantics, rather than a single name for all method calls and having the object determine the semantics by some case-based switch on one of the parameters. 
+I'll also disagree with Larry on the notion of media types being any easier to change than methods. 
+Anybody ever try to change application/x-www-form-urlencoded (the media type used by default in WWW form-based entry)? 
+That was an incredibly poor design decision, known from the start, and yet we still can't get rid of it. 
+I personally would rather have the definition of standard methods go through the RFC process; non-standard methods don't have to go through any process. 
+As an implementer, it is easier (and better) to add support for a new method to the Apache server than it is to add access control by media type. 
+If you get it wrong, just change the method name. 
+.....Roy Yaron, # I have discussed this off line with Roy and frankly I think this is a # religious issue. 
+Roy and I have fundamentally different visions of what # HTTP should become. 
+I think your characterization of this as a 'religious' issue is insulting, and the idea that a discussion at the November conference might resolve something about the future of HTTP is presumptuous. 
+I've yet to see anything here that constitutes a 'religious' argument. 
+I've tried to raise in a constructive manner the concerns about representations of metadata and document attributes in network protocols and in HTTP that I've seen, and raised the points in a way that I'd hoped was constructive. 
+Are you just frustrated by the considerations we've raised? 
+Who is Del Jensen, and why should we hand over the editing of the draft to him/her? 
+Regards, Larry Actually the server people and the client people love the POST idea because it is fully backwards compatible with everything out there. 
+By implementing the new functions through POST we can take any currently existing server and client and have it work with the system. 
+Yaron From:Roy T. Fielding [SMTP:fielding@liege.ics.uci.edu] 
+Sent:Tuesday, November 05, 1996 8:30 PM Subject:Re: POST vs. separate methods Jim summarized ... In a nutshell, Roy and Yaron differ in their model of a web server. 
+Roy sees a web server as a collection of objects, with methods defined on them, a la object-oriented programming. 
+Yaron sees a web server as a collection of agents (computational entities), of which some serve documents, while others perform activities like "copy" or "server diff." 
+In fact, there may be many agents capable of performing an activity, and a single agent may be capable of handling more than one type of activity. 
+Ummmm, not quite. 
+My view (and my experience) is that HTTP is an interface mechanism between clients and servers. 
+Any reduction of that interface based on the assumed needs of one particular implementation of an HTTP server is just plain wrong -- wrong because it limits the possible implementations of whatever it is you want to accomplish. 
+JigSaw and Apache are two very different ways of implementing a server, but both ways have their advantages. 
+(JigSaw is OO-based and Apache is handler-based). 
+Likewise, a Hyper-G server's view of what a "directory" may be is substantially different from that of the NCSA or CERN servers. 
+Nevertheless, everything that you might want to do in the way of distributed authoring can be done in such a way that the implementation is independent of the interface, unless you make the mistake of assuming things about the implementation when you design the interface. 
+HTTP includes methods (that define actions) and resources (that define the point of the server's namespace) and parameters (request headers) and data (entity headers and body). 
+What the server does with those things is defined by the semantics of the method and acknowledged by the server's response (including Vary, if necessary). 
+How the server does it is none of HTTP's business. 
+The advantages of the Object Oriented view stem from the fixed set of methods: this fixed set is understood better by existing Web technology (e.g., caches), and can be used to implement a simple access control scheme (method x user -- ACL). 
+Not at all!!!! Feature X can be triggered by any media type that is defined to perform that action. 
+So copy would initially be performed through application/copy. 
+There is nothing stopping application/foobar from also doing copy. 
+In addition all the mime types we are defining are versioned. 
+So if you don't like application/copy as we have defined it, no problem, just change the version number in the mime file and implement anything you want. 
+There are no restrictions. 
+We may even want to create a header to indicate the version of the enclosed mime file so you can negotiate on that as well. 
+That is a much more powerful form of negotiation then we currently have with methods. 
+Thus you can negotiate any kind of copy you want. 
+Including querying the server to see if it supports application/foobar. 
+It is generic, negotiable, and brain dead easy to implement. 
+In addition we need to differentiate between requesting an action and performing an action. 
+When you make a copy request nothing actually happens. 
+What you have done is requested that the server take certain actions on your behalf. 
+Conceptually the copy doesn't occur until the server goes out and performs a bunch of GETs and PUTs. 
+A COPY method is meaningless without its content body. 
+Unlike GET or HEAD where all the information about the request is in the header, for operations like COPY, MOVE, and RENAME, the entity-body contains the critical data. 
+Originally we were going to sidestep this problem by introducing a billion new headers which would allow us to put all the information about a COPY in the header but we understand that this wasn't a good idea. 
+Thus introducing a bunch of new methods buys you nothing. 
+The real action is in the content type. 
+Yaron From:Daniel W. Connolly [SMTP:connolly@beach.w3.org] Sent:Tuesday, November 05, 1996 8:59 PM Subject:Re: POST vs. separate methods I understand that it is possible to ignore that and to do everything under a single method and to encapsulate the semantics of the request within the message body. 
+The reason we don't do that is [...] it also frees the media type from having any semantics other than "this is the format of what is contained within the body." 

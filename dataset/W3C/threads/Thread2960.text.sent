@@ -1,0 +1,21 @@
+(I'm not on the mailing list, please Cc me!) In section 8.1.2, you can read the following: Once a close has been signaled, the client MUST NOT send any more requests on that connection. 
+Is it just me, or that "MUST NOT" would forbid pipelining? 
+A pipelining client MAY send more requests, but they will be ignored by the server and it should be prepared to that possibility (section 8.1.2.2 mentions that a client MUST be prepared to the server closing the connection before it handled them all). 
+Thanks! 
+Pierre Phaneuf Mad Scientist, NITI R&amp;D Once a close has been signaled, the client MUST NOT send any more requests on that connection. 
+This is not meant to prevent pipelining. 
+In this context, you should interpret the above RFC wording as "once the close signal has been received by the client, the client MUST NOT send any more requests on that connection." as opposed to your current interpretation of "once the close signal has been sent by the server, the client ..." HTH, Alex. HTTP performance - Web Polygraph benchmark www.measurement-factory.com | HTTP compliance+ - Co-Advisor test suite all of the above - PolyBox appliance Once a close has been signaled, the client MUST NOT send any more requests on that connection. 
+I know that this is the spirit of the document, but maybe it should be clarified in the errata. 
+I also suspect that it could be fine sending more requests to the server in a simplistic client implementation, since they will be harmlessly ignored by the server, but on the other hand, this requires being ready to re-send those requests, so while you're at it, better do it right. 
+Thank you! 
+Pierre Phaneuf Mad Scientist, NITI R&amp;D Once a close has been signaled, the client MUST NOT send any more requests on that connection. 
+It doesn't forbid it, but it makes some additional work for the client: 8.1.2.2 Pipelining [...] Clients MUST also be prepared to resend their requests if the server closes the connection before sending all of the corresponding responses. 
+Scott Lawrence Actively seeking work [ lawrence@world.std.com is deprecated ] Once a close has been signaled, the client MUST NOT send any more requests on that connection. 
+Perhaps. 
+Although if we get that picky, the errata will get longer than the RFC itself :-). 
+Depends on your definition of "fine", I guess. 
+The client will be wasting bandwidth and other resources. 
+The server HTTP stack is indeed likely to see no "extra" requests after the TCP connection is closed (which usually happens right after the final server response is sent). 
+However, asynchronous I/Os, half-closed TCP connections, SSL/TLS wrappers, and other real-world complications make the situation less predictable. 
+As for re-sending pipelined requests, we already have a MUST for that: Clients MUST also be prepared to resend their requests if the server closes the connection before sending all of the corresponding responses. 
+Alex. HTTP performance - Web Polygraph benchmark www.measurement-factory.com | HTTP compliance+ - Co-Advisor test suite all of the above - PolyBox appliance 
