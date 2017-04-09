@@ -1,46 +1,46 @@
-Hi Dan, Here's the test case. 
-And the traceback: $ cwm --rdf /tmp/test.rdf 
-rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" 
-xmlns:log="http://www.w3.org/2000/10/swap/log#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:t="http://norman.walsh.name/knows/taxonomy#" 
-rdf:Description rdf:about="Traceback (most recent call last): File "/projects/w3c/swap/cwm.py", line 833, in ? 
-doCommand() File "/projects/w3c/swap/cwm.py", line 760, in doCommand _store.dumpNested(workingContext, 
-_outSink) File "/share/projects/w3c/swap/llyn.py", line 1651, in dumpNested pp. dumpNested() File "/share/projects/w3c/swap/pretty.py", line 377, in dumpNested self.dumpFormulaContents(context, self.sink, sorting=1) File "/share/projects/w3c/swap/pretty.py", line 406, in dumpFormulaContents self._dumpSubject(currentSubject, context, sink, sorting, statements) File "/share/projects/w3c/swap/pretty.py", line 468, in _dumpSubject self.dumpStatement(sink, s.quad, sorting) File "/share/projects/w3c/swap/pretty.py", line 478, in dumpStatement self._outputStatement(sink, triple) # Do 1-loops simply File "/share/projects/w3c/swap/pretty.py", line 198, in _outputStatement sink.makeStatement(self.extern(quad)) File "/share/projects/w3c/swap/toXML.py", line 194, in makeStatement [(RDF_NS_URI+" about", subjn),], self.prefixes) 
-File "/share/projects/w3c/swap/toXML.py", line 426, in startElement ln, at2 = self.figurePrefix(n, 
-attrs, prefixes) File "/share/projects/w3c/swap/toXML.py", line 413, in figurePrefix xmldata(self._wr, 
-v, self.attrEsc) 
-File "/share/projects/w3c/swap/toXML.py", line 469, in xmldata write(str[i:]) File "/usr/lib/python2.3/codecs.py", 
-line 178, in write data, consumed = self.encode(object, 
-self.errors) 
-UnicodeDecodeError: 'ascii' codec can't decode byte 0xc3 in position 59: ordinal not in range(128) 
-Be seeing you, norm 
-Norman Walsh ndw@nwalsh.com | Two starving men cannot be twice as 
-ten times as vicious as one.--George 
-Bernard Shaw 
-Tim, thread starts with 
-- http://lists.w3.org/Archives/Public/www-archive/2004Jan/att-0128/test.rdf 
-Ah... this is an IRI-related bug. 
-Looking at the cwm code, it seem to be all over the map re IRIs: 
-wierd... from sax2rdf.py: uri = (ns + ln).encode('utf-8') the question is what sink.newSymbol() takes... bummer; RDFSink.py doesn't say what newSymbol() takes. 
-hmm... notation3.py 
-takes the output from uripath.join() and gives it to newSymbol... maybe that's a clue... no, uripath is silent on IRIs. 
-Tim? 
-Did you say N3 is I18N-happy? 
-In working that out, did you decide whether newSymbol() takes IRIs or URIs? 
-Dan Connolly, W3C http://www.w3.org/People/Connolly/ 
-/ Dan Connolly connolly@w3.org was heard to say: 
-| Hi Dan, | | Here's the test case. 
-How? The character in question isn't in a URI, is it? 
-(Where &amp;#233; is actually the UTF-8 representation of an acute-accented lowercase "e") Be seeing you, norm 
-Norman Walsh ndw@nwalsh.com | There is always some accident in the 
-expressions or deeds. 
-The memorable thought, the happy expression, the admirable deed are only partly yours.--Henry 
-David Thoreau 
-I think the bug is triggered by... rdf:Description rdf:about="http://norman.walsh.name/knows/taxonomy#PersonName;GideAndr 
-C3 A9 " 
-Dan Connolly, W3C http://www.w3.org/People/Connolly/ 
-I think I fixed this bug by reversing a decision that various methods only take python strings; they now take ustrings. 
-But the ustrings need to be xxlified before getting passed to urllib.urlopen(). 
-Hmm... should store.load() 
-take a ustring or an xxlified URI? probably a ustring. 
-So I'm not closing this bug until that's cleared up, or until a new bug about those problems is added. 
-Dan Connolly, W3C http://www.w3.org/People/Connolly/ 
+<s> Hi Dan, Here's the test case.  </s>
+<s> And the traceback: $ cwm --rdf /tmp/test.rdf  </s>
+<s> rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/"  </s>
+<s> xmlns:log="http://www.w3.org/2000/10/swap/log#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:t="http://norman.walsh.name/knows/taxonomy#"  </s>
+<s> rdf:Description rdf:about="Traceback (most recent call last): File "/projects/w3c/swap/cwm.py", line 833, in ?  </s>
+<s> doCommand() File "/projects/w3c/swap/cwm.py", line 760, in doCommand _store.dumpNested(workingContext,  </s>
+<s> _outSink) File "/share/projects/w3c/swap/llyn.py", line 1651, in dumpNested pp. dumpNested() File "/share/projects/w3c/swap/pretty.py", line 377, in dumpNested self.dumpFormulaContents(context, self.sink, sorting=1) File "/share/projects/w3c/swap/pretty.py", line 406, in dumpFormulaContents self._dumpSubject(currentSubject, context, sink, sorting, statements) File "/share/projects/w3c/swap/pretty.py", line 468, in _dumpSubject self.dumpStatement(sink, s.quad, sorting) File "/share/projects/w3c/swap/pretty.py", line 478, in dumpStatement self._outputStatement(sink, triple) # Do 1-loops simply File "/share/projects/w3c/swap/pretty.py", line 198, in _outputStatement sink.makeStatement(self.extern(quad)) File "/share/projects/w3c/swap/toXML.py", line 194, in makeStatement [(RDF_NS_URI+" about", subjn),], self.prefixes)  </s>
+<s> File "/share/projects/w3c/swap/toXML.py", line 426, in startElement ln, at2 = self.figurePrefix(n,  </s>
+<s> attrs, prefixes) File "/share/projects/w3c/swap/toXML.py", line 413, in figurePrefix xmldata(self._wr,  </s>
+<s> v, self.attrEsc)  </s>
+<s> File "/share/projects/w3c/swap/toXML.py", line 469, in xmldata write(str[i:]) File "/usr/lib/python2.3/codecs.py",  </s>
+<s> line 178, in write data, consumed = self.encode(object,  </s>
+<s> self.errors)  </s>
+<s> UnicodeDecodeError: 'ascii' codec can't decode byte 0xc3 in position 59: ordinal not in range(128)  </s>
+<s> Be seeing you, norm  </s>
+<s> Norman Walsh ndw@nwalsh.com | Two starving men cannot be twice as  </s>
+<s> ten times as vicious as one.--George  </s>
+<s> Bernard Shaw  </s>
+<s> Tim, thread starts with  </s>
+<s> - http://lists.w3.org/Archives/Public/www-archive/2004Jan/att-0128/test.rdf  </s>
+<s> Ah... this is an IRI-related bug.  </s>
+<s> Looking at the cwm code, it seem to be all over the map re IRIs:  </s>
+<s> wierd... from sax2rdf.py: uri = (ns + ln).encode('utf-8') the question is what sink.newSymbol() takes... bummer; RDFSink.py doesn't say what newSymbol() takes.  </s>
+<s> hmm... notation3.py  </s>
+<s> takes the output from uripath.join() and gives it to newSymbol... maybe that's a clue... no, uripath is silent on IRIs.  </s>
+<s> Tim?  </s>
+<s> Did you say N3 is I18N-happy?  </s>
+<s> In working that out, did you decide whether newSymbol() takes IRIs or URIs?  </s>
+<s> Dan Connolly, W3C http://www.w3.org/People/Connolly/  </s>
+<s> / Dan Connolly connolly@w3.org was heard to say:  </s>
+<s> | Hi Dan, | | Here's the test case.  </s>
+<s> How? The character in question isn't in a URI, is it?  </s>
+<s> (Where &amp;#233; is actually the UTF-8 representation of an acute-accented lowercase "e") Be seeing you, norm  </s>
+<s> Norman Walsh ndw@nwalsh.com | There is always some accident in the  </s>
+<s> expressions or deeds.  </s>
+<s> The memorable thought, the happy expression, the admirable deed are only partly yours.--Henry  </s>
+<s> David Thoreau  </s>
+<s> I think the bug is triggered by... rdf:Description rdf:about="http://norman.walsh.name/knows/taxonomy#PersonName;GideAndr  </s>
+<s> C3 A9 "  </s>
+<s> Dan Connolly, W3C http://www.w3.org/People/Connolly/  </s>
+<s> I think I fixed this bug by reversing a decision that various methods only take python strings; they now take ustrings.  </s>
+<s> But the ustrings need to be xxlified before getting passed to urllib.urlopen().  </s>
+<s> Hmm... should store.load()  </s>
+<s> take a ustring or an xxlified URI? probably a ustring.  </s>
+<s> So I'm not closing this bug until that's cleared up, or until a new bug about those problems is added.  </s>
+<s> Dan Connolly, W3C http://www.w3.org/People/Connolly/  </s>

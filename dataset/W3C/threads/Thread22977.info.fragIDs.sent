@@ -1,39 +1,39 @@
-As a complement to DOM XPath allowing you to determine a NodeSet from an XPath expression, it seems like it might be useful to provide a mechanism to determine a XPath expression from a node. 
-Of course, there can be multiple equivalent XPath expressions that select one Node and any manufactured XPath expression may be invalidated by changes in the DOM. 
-The returned XPath would not have 
-the consistency needed to fulfill the role of the key() method under consideration in DOM L3 Core. 
-Though it would be left up to the individual implementor to choose the algorithm to build the XPath, I would assume most paths would be constructed by walking back up the parent nodes to the reference 
-node using position values when there is a need to disambigate. 
-If the reference node was the document, then the implementation might use an id() specifier if it encountered an element with an 
-ID-type attribute. 
-So you would get XPath's like: relative to another node @name relative to document /foo/bar[2]/greeting/hello/city[2]/@name id('IAH')/Airline[3] Since you might want to have a similar functionality for each query language, it would probably be best to keep it within the XPathEvaluator interface in the DOM 3 XPath spec. 
-Something like: interface XPathEvaluator { public XPathExpression generateXPath(Node node, Node referencenode); Except in the cases where the node was an entity reference, CDATA section or another part of what XPath considers one text node, the following test should hold (the result set syntax is only conceptual): XPathExpression xpath = xpatheval.generateXPath(node,referencenode); 
-ResultSet result = xpath.evaluateAsNodeSet(referencenode); 
-assertEquals(1,result.getLength()); 
-assertSame(node,result.first()); Of course, how this would behave if node was a CDATASection or EntityReference inside a XPath text() node would need to be defined. 
-Effective use would also require XPathExpression to have attributes to retrieve the string representation of the XPath query and the Namespace Resolver object or string. 
-I was originally thinking that generateXPath could return a string, however it is uncertain that the reference node or a supplied namespace resolver would have sufficient namespace bindings, it was just easier to have it return a fully constructed XPathExpression object. 
-I still favor using a string for the namespace resolver function, however if it must be an object, then it would be very helpful (especially for the usage scenario I have in mind for this) that it have the equivalent of toString() and parse(), so that you could generate an XPath expression from an arbitrary node, get a string representations of both the XPath expression and the prefix/URI bindings, and place those strings in an XML message to keep a remote DOM implementation in synch. 
-to 
-I agree with the observation that most XPath implementations should probably come with XPath generator utilities. 
-But it may be unclear whether it really should be a DOM API as opposed to a 
-utility running on top of the DOM APIs. 
-Unlike XPath, where we have all the incrementality/invalidation concerns, this might want to be a run-it-once-and-get-a-string operation. 
-to 
-Testability would be awful, and portability would be bad if folk make assumptions about the quality of the XPath generated (eg, how likely it is to be broken by trivial document mutation -- city[2] is likely to be a lot stronger than the more generic "fifth child", for example, even if both were valid when they were calculated). 
-If you really want to allow that variability in the generated paths, I'd consider that a good reason _not_ to adopt it into the DOM. 
-That way, you could independently select/configure the implementation(s) which generated 
-paths that met your application's needs. 
-If the behavior isn't standardized, that's often a hint that the API shouldn't be either. 
-Half a contract is generally just enough to hang yourself with. 
-Joe Kesselman / IBM Research 
-You'll need both a string and some representation of namespace prefix/uri mapping. 
-Hence, the reason the method returned an XPathExpression, not a String. 
-If the node is in a out of process implementation, then it could be really expensive to walk the tree to generate the XPath. 
-You would always have the identity that if you evalute the XPath you should get the same node back. 
-That symmetry could actually help the testability of the XPath evaluatation since you could run through all the nodes of a document, generate the XPath query and then evaluate the query and test for identity. 
-Unfortunately, you can not build a durable XPath expression without having some concept of the nature of the document and what are significant and insignificant changes. 
-Definitely, all that you could ever promise was that the XPath identified the node at the moment of creation. 
-It would be possible to define a specific algorithm for generating the XPath's that would result in identical XPath's from different implementations. 
-If it doesn't make the cut as something that goes into the DOM XPath interfaces, it should be used as a use case check. 
-That is, does the rest of DOM XPath enable generation of XPath's. 
+<s> As a complement to DOM XPath allowing you to determine a NodeSet from an XPath expression, it seems like it might be useful to provide a mechanism to determine a XPath expression from a node.  </s>
+<s> Of course, there can be multiple equivalent XPath expressions that select one Node and any manufactured XPath expression may be invalidated by changes in the DOM.  </s>
+<s> The returned XPath would not have  </s>
+<s> the consistency needed to fulfill the role of the key() method under consideration in DOM L3 Core.  </s>
+<s> Though it would be left up to the individual implementor to choose the algorithm to build the XPath, I would assume most paths would be constructed by walking back up the parent nodes to the reference  </s>
+<s> node using position values when there is a need to disambigate.  </s>
+<s> If the reference node was the document, then the implementation might use an id() specifier if it encountered an element with an  </s>
+<s> ID-type attribute.  </s>
+<s> So you would get XPath's like: relative to another node @name relative to document /foo/bar[2]/greeting/hello/city[2]/@name id('IAH')/Airline[3] Since you might want to have a similar functionality for each query language, it would probably be best to keep it within the XPathEvaluator interface in the DOM 3 XPath spec.  </s>
+<s> Something like: interface XPathEvaluator { public XPathExpression generateXPath(Node node, Node referencenode); Except in the cases where the node was an entity reference, CDATA section or another part of what XPath considers one text node, the following test should hold (the result set syntax is only conceptual): XPathExpression xpath = xpatheval.generateXPath(node,referencenode);  </s>
+<s> ResultSet result = xpath.evaluateAsNodeSet(referencenode);  </s>
+<s> assertEquals(1,result.getLength());  </s>
+<s> assertSame(node,result.first()); Of course, how this would behave if node was a CDATASection or EntityReference inside a XPath text() node would need to be defined.  </s>
+<s> Effective use would also require XPathExpression to have attributes to retrieve the string representation of the XPath query and the Namespace Resolver object or string.  </s>
+<s> I was originally thinking that generateXPath could return a string, however it is uncertain that the reference node or a supplied namespace resolver would have sufficient namespace bindings, it was just easier to have it return a fully constructed XPathExpression object.  </s>
+<s> I still favor using a string for the namespace resolver function, however if it must be an object, then it would be very helpful (especially for the usage scenario I have in mind for this) that it have the equivalent of toString() and parse(), so that you could generate an XPath expression from an arbitrary node, get a string representations of both the XPath expression and the prefix/URI bindings, and place those strings in an XML message to keep a remote DOM implementation in synch.  </s>
+<s> to  </s>
+<s> I agree with the observation that most XPath implementations should probably come with XPath generator utilities.  </s>
+<s> But it may be unclear whether it really should be a DOM API as opposed to a  </s>
+<s> utility running on top of the DOM APIs.  </s>
+<s> Unlike XPath, where we have all the incrementality/invalidation concerns, this might want to be a run-it-once-and-get-a-string operation.  </s>
+<s> to  </s>
+<s> Testability would be awful, and portability would be bad if folk make assumptions about the quality of the XPath generated (eg, how likely it is to be broken by trivial document mutation -- city[2] is likely to be a lot stronger than the more generic "fifth child", for example, even if both were valid when they were calculated).  </s>
+<s> If you really want to allow that variability in the generated paths, I'd consider that a good reason _not_ to adopt it into the DOM.  </s>
+<s> That way, you could independently select/configure the implementation(s) which generated  </s>
+<s> paths that met your application's needs.  </s>
+<s> If the behavior isn't standardized, that's often a hint that the API shouldn't be either.  </s>
+<s> Half a contract is generally just enough to hang yourself with.  </s>
+<s> Joe Kesselman / IBM Research  </s>
+<s> You'll need both a string and some representation of namespace prefix/uri mapping.  </s>
+<s> Hence, the reason the method returned an XPathExpression, not a String.  </s>
+<s> If the node is in a out of process implementation, then it could be really expensive to walk the tree to generate the XPath.  </s>
+<s> You would always have the identity that if you evalute the XPath you should get the same node back.  </s>
+<s> That symmetry could actually help the testability of the XPath evaluatation since you could run through all the nodes of a document, generate the XPath query and then evaluate the query and test for identity.  </s>
+<s> Unfortunately, you can not build a durable XPath expression without having some concept of the nature of the document and what are significant and insignificant changes.  </s>
+<s> Definitely, all that you could ever promise was that the XPath identified the node at the moment of creation.  </s>
+<s> It would be possible to define a specific algorithm for generating the XPath's that would result in identical XPath's from different implementations.  </s>
+<s> If it doesn't make the cut as something that goes into the DOM XPath interfaces, it should be used as a use case check.  </s>
+<s> That is, does the rest of DOM XPath enable generation of XPath's.  </s>

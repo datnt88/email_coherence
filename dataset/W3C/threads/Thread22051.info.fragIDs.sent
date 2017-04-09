@@ -1,23 +1,23 @@
-Several XPath tests (for example, XPathExpression_evaluate_NOT_SUPPORTED_ERR) used the string literal "dummy" as a namespace resolver. 
-I believe all of these tests expected an exception for other reasons and the type mismatch would have satisified the expectation of an exception. 
-If Mozilla actually takes a string literal as an namespace resolver, we should add a test that asserts that an implementation specific exception be thrown. 
-Most if not all load statements were missing willBeModified attributes. 
-The DTD can't distinguish between the inner class load method definition element and the framework load statement element, so willBeModified is optional in the DTD. 
-However, it is required for the framework load statement element in the schema. 
-Conformance_Expressions used a lot of append statements to add items to a list of statements. 
-These were change per the previous message. 
-The reason Mozilla doesn't throw an exception when a string is passed as a namespace resolver is that the argument is still not used, so the string goes through the JS-to-C++ layer and gets converted to the appropriate type, but since it's not used, no exception is ever thrown. 
-This is of course not the intent in Mozilla, and the fact that we don't throw an exception is just a shortcoming in Mozilla's current support for DOM XPath. 
-jst 
-I used a dummy resolver and expression string in XPathExpression.evaluate to get the test createExpression interface="XPathEvaluator" obj='xpEvaluator' var='xpathExpression' expression='//foo' resolver='nullNSResolver' / createEntityReference var="contextNode" obj="doc" evaluate interface="XPathExpression" obj='xpathExpression' expression='dummy' resolver='dummy' var='result' contextNode='contextNode' type='0' result='nullResult'/ to validate in the ML since interface XPathExpression { DOMObject evaluate(in Node contextNode, in unsigned short type, in DOMObject result) raises(XPathException, DOMException); 
-has no resolver or expression although the dom3.dtd has resolver and expression as required !ATTLIST evaluate id ID #IMPLIED obj CDATA #REQUIRED var CDATA #REQUIRED expression CDATA #REQUIRED contextNode CDATA #REQUIRED resolver CDATA #REQUIRED type CDATA #REQUIRED result CDATA #REQUIRED interface (XPathEvaluator|XPathExpression) #REQUIRED The generated ecmascript code did not contain the dummy string 
-xpEvaluator = createXPathEvaluator(doc); xpathExpression = xpEvaluator.createExpression("//foo",nullNSResolver); 
-contextNode = doc.createEntityReference("entityname"); 
-var success = false; try { result = xpathExpression.evaluate(contextNode,0,nullResult); 
-catch(ex) { success = (ex.code 
-== 9); assertTrue("throw_NOT_SUPPORTED_ERR",success); The real issue is the requirement in the DTD that evaluate interface="XPathExpression"/ have expression and resolver attributes. 
-/bc 
-The element definition is generated from the first occurance of the method name and assumes that the argument list is compatible. 
-Attempting to resolve the differences in the transform way too complicated. 
-In previous cases where the was a conflict, the standard generation was suppressed and a hand-crafted definition was provided. 
-I've logged the last issue as bug 443 and have committed changes to dom-to-schema and dom-to-dtd to make resolver and expression optional and have removed those attributes on calls to XPathExpression.evaluate. 
+<s> Several XPath tests (for example, XPathExpression_evaluate_NOT_SUPPORTED_ERR) used the string literal "dummy" as a namespace resolver.  </s>
+<s> I believe all of these tests expected an exception for other reasons and the type mismatch would have satisified the expectation of an exception.  </s>
+<s> If Mozilla actually takes a string literal as an namespace resolver, we should add a test that asserts that an implementation specific exception be thrown.  </s>
+<s> Most if not all load statements were missing willBeModified attributes.  </s>
+<s> The DTD can't distinguish between the inner class load method definition element and the framework load statement element, so willBeModified is optional in the DTD.  </s>
+<s> However, it is required for the framework load statement element in the schema.  </s>
+<s> Conformance_Expressions used a lot of append statements to add items to a list of statements.  </s>
+<s> These were change per the previous message.  </s>
+<s> The reason Mozilla doesn't throw an exception when a string is passed as a namespace resolver is that the argument is still not used, so the string goes through the JS-to-C++ layer and gets converted to the appropriate type, but since it's not used, no exception is ever thrown.  </s>
+<s> This is of course not the intent in Mozilla, and the fact that we don't throw an exception is just a shortcoming in Mozilla's current support for DOM XPath.  </s>
+<s> jst  </s>
+<s> I used a dummy resolver and expression string in XPathExpression.evaluate to get the test createExpression interface="XPathEvaluator" obj='xpEvaluator' var='xpathExpression' expression='//foo' resolver='nullNSResolver' / createEntityReference var="contextNode" obj="doc" evaluate interface="XPathExpression" obj='xpathExpression' expression='dummy' resolver='dummy' var='result' contextNode='contextNode' type='0' result='nullResult'/ to validate in the ML since interface XPathExpression { DOMObject evaluate(in Node contextNode, in unsigned short type, in DOMObject result) raises(XPathException, DOMException);  </s>
+<s> has no resolver or expression although the dom3.dtd has resolver and expression as required !ATTLIST evaluate id ID #IMPLIED obj CDATA #REQUIRED var CDATA #REQUIRED expression CDATA #REQUIRED contextNode CDATA #REQUIRED resolver CDATA #REQUIRED type CDATA #REQUIRED result CDATA #REQUIRED interface (XPathEvaluator|XPathExpression) #REQUIRED The generated ecmascript code did not contain the dummy string  </s>
+<s> xpEvaluator = createXPathEvaluator(doc); xpathExpression = xpEvaluator.createExpression("//foo",nullNSResolver);  </s>
+<s> contextNode = doc.createEntityReference("entityname");  </s>
+<s> var success = false; try { result = xpathExpression.evaluate(contextNode,0,nullResult);  </s>
+<s> catch(ex) { success = (ex.code  </s>
+<s> == 9); assertTrue("throw_NOT_SUPPORTED_ERR",success); The real issue is the requirement in the DTD that evaluate interface="XPathExpression"/ have expression and resolver attributes.  </s>
+<s> /bc  </s>
+<s> The element definition is generated from the first occurance of the method name and assumes that the argument list is compatible.  </s>
+<s> Attempting to resolve the differences in the transform way too complicated.  </s>
+<s> In previous cases where the was a conflict, the standard generation was suppressed and a hand-crafted definition was provided.  </s>
+<s> I've logged the last issue as bug 443 and have committed changes to dom-to-schema and dom-to-dtd to make resolver and expression optional and have removed those attributes on calls to XPathExpression.evaluate.  </s>

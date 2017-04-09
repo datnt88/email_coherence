@@ -1,42 +1,42 @@
-Yaron Goland: 
-On 100 being hop by hop, I would also throw in the following scenario from DAV land: A client executes a COPY on a container with a large number of members. 
-The user agent will want to be able to provide update information on how the copy is progressing rather than just sitting there for a few minutes while the procedure is underway. 
-100 continue responses are perfect for this scenario. 
-Koen: 
-Sorry, but 100 continue is _not_ perfect for this scenario. 
-There 
-is a message by Jeff in the archives which explains why. 
-Basically, a proxy which is multiplexing requests from multiple clients over a single upstream connection would have no idea to which client a 100 continue would have to be forwarded. 
-You're presumably referring to my mail on "head of line blocking", which is a separate issue. 
-In particular, there I said "proxies 
-should not multiplex requests from multiple clients" because of the H-O-L blocking problem, which can greatly limit performance. 
-But in any case, your concern is misplaced; a 100 response is no different from any other kind of response. 
-I.e., if a proxy *were* multiplexing requests from multiple clients (which it shouldn't, but suppose it did), then it would certainly have to match up responses with requests. 
-This is just as true for 200 responses as it is for 100 responses. 
-The rule for HTTP persistent connections is that responses cannot be reordered. 
-That is, until the server sends the response for request N, it cannot send the response for request N+1 (or any request N+x, for x 
-= 1). 
-Another way of looking at this is that for a given transport 
-connection, although more than one request or response may be pipelined, they cannot be parallelized. 
-The "100" status code complicates this, because it allows the sender to send more than one response for a request. 
-Fine; just change the rule to say until the server sends the LAST response for request N, it cannot send ANY response for request N+1 (or any request N+x, for x  = 1). 
-Simple, foolproof, and not in any way a change from current practice (given that some people have apparently implement 100 already). 
-1.1 does not offer an end-to-end event notification service, nor can 100 be easily `fixed' to produce such a service. 
-Adding such a service is out of scope for this WG I think. 
-IF DAV needs something, I suggest that you either document Netscape server push and use that, or spec a mechanism in which the client makes occasional status requests. 
-HTTP/1.1 already includes "100 (Continue)", and (as our "Summary of STATUS100 issue" makes clear) there is exactly one problem that this status code actually solves: allowing the client to defer transmission of the request body until the server has indicated a willingness to accept it. 
-The working group consensus seems to be that this is a useful feature (and I'm on the "reluctantly agree" side of this myself). 
-On the other hand, I think everyone agrees that the current text in RFC2068 is misleading and perhaps wrong. 
-The scope of our current effort is to "fix the bugs in RFC2068", not to re-argue the basic design features. 
--Jeff 
-Jeffrey Mogul: 
-No, think I was referring to 1xx Clarification, which was written a few weeks ago). 
-Anyway, I think I interpreted Yaron's message wrong. 
-I thought he was arguing the case copy request 200 OK response to copy request 100 response about progress=50% 100 response about progress=100% in which the progress events are sent *after* the OK response which ends the transaction. 
-But I guess that what he actually had in mind was copy request 100 response about progress=50% 100 response about progress=100% 200 OK response to copy request And this latter case would indeed work through a multiplexing proxy (though the code would have to be 101 or something, with semantics slightly different from 100). 
-So I believe I was wrong, and that Yaron has a valid case for keeping the 1xx codes. 
-Sorry for all the confusion. 
-Koen. 
-101 is already being used, but yes it would definitely have to be a new 1xx code. 
-Extensibility is meant to be used. 
-.....Roy 
+<s> Yaron Goland:  </s>
+<s> On 100 being hop by hop, I would also throw in the following scenario from DAV land: A client executes a COPY on a container with a large number of members.  </s>
+<s> The user agent will want to be able to provide update information on how the copy is progressing rather than just sitting there for a few minutes while the procedure is underway.  </s>
+<s> 100 continue responses are perfect for this scenario.  </s>
+<s> Koen:  </s>
+<s> Sorry, but 100 continue is _not_ perfect for this scenario.  </s>
+<s> There  </s>
+<s> is a message by Jeff in the archives which explains why.  </s>
+<s> Basically, a proxy which is multiplexing requests from multiple clients over a single upstream connection would have no idea to which client a 100 continue would have to be forwarded.  </s>
+<s> You're presumably referring to my mail on "head of line blocking", which is a separate issue.  </s>
+<s> In particular, there I said "proxies  </s>
+<s> should not multiplex requests from multiple clients" because of the H-O-L blocking problem, which can greatly limit performance.  </s>
+<s> But in any case, your concern is misplaced; a 100 response is no different from any other kind of response.  </s>
+<s> I.e., if a proxy *were* multiplexing requests from multiple clients (which it shouldn't, but suppose it did), then it would certainly have to match up responses with requests.  </s>
+<s> This is just as true for 200 responses as it is for 100 responses.  </s>
+<s> The rule for HTTP persistent connections is that responses cannot be reordered.  </s>
+<s> That is, until the server sends the response for request N, it cannot send the response for request N+1 (or any request N+x, for x  </s>
+<s> = 1).  </s>
+<s> Another way of looking at this is that for a given transport  </s>
+<s> connection, although more than one request or response may be pipelined, they cannot be parallelized.  </s>
+<s> The "100" status code complicates this, because it allows the sender to send more than one response for a request.  </s>
+<s> Fine; just change the rule to say until the server sends the LAST response for request N, it cannot send ANY response for request N+1 (or any request N+x, for x  = 1).  </s>
+<s> Simple, foolproof, and not in any way a change from current practice (given that some people have apparently implement 100 already).  </s>
+<s> 1.1 does not offer an end-to-end event notification service, nor can 100 be easily `fixed' to produce such a service.  </s>
+<s> Adding such a service is out of scope for this WG I think.  </s>
+<s> IF DAV needs something, I suggest that you either document Netscape server push and use that, or spec a mechanism in which the client makes occasional status requests.  </s>
+<s> HTTP/1.1 already includes "100 (Continue)", and (as our "Summary of STATUS100 issue" makes clear) there is exactly one problem that this status code actually solves: allowing the client to defer transmission of the request body until the server has indicated a willingness to accept it.  </s>
+<s> The working group consensus seems to be that this is a useful feature (and I'm on the "reluctantly agree" side of this myself).  </s>
+<s> On the other hand, I think everyone agrees that the current text in RFC2068 is misleading and perhaps wrong.  </s>
+<s> The scope of our current effort is to "fix the bugs in RFC2068", not to re-argue the basic design features.  </s>
+<s> -Jeff  </s>
+<s> Jeffrey Mogul:  </s>
+<s> No, think I was referring to 1xx Clarification, which was written a few weeks ago).  </s>
+<s> Anyway, I think I interpreted Yaron's message wrong.  </s>
+<s> I thought he was arguing the case copy request 200 OK response to copy request 100 response about progress=50% 100 response about progress=100% in which the progress events are sent *after* the OK response which ends the transaction.  </s>
+<s> But I guess that what he actually had in mind was copy request 100 response about progress=50% 100 response about progress=100% 200 OK response to copy request And this latter case would indeed work through a multiplexing proxy (though the code would have to be 101 or something, with semantics slightly different from 100).  </s>
+<s> So I believe I was wrong, and that Yaron has a valid case for keeping the 1xx codes.  </s>
+<s> Sorry for all the confusion.  </s>
+<s> Koen.  </s>
+<s> 101 is already being used, but yes it would definitely have to be a new 1xx code.  </s>
+<s> Extensibility is meant to be used.  </s>
+<s> .....Roy  </s>

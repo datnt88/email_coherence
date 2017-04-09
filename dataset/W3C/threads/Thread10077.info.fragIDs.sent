@@ -1,136 +1,136 @@
-From: Brian McBride bwm@hplb.hpl.hp.com Subject: Fwd: pfps-08 last call comment on typed literals Date: Thu, 20 Mar 2003 19:41:32 +0000 
-Date: Thu, 20 Mar 2003 18:56:18 +0000 From: Brian McBride bwm@hplb.hpl.hp.com Subject: pfps-08 last call comment on typed literals Peter, You made a last call comment "Comment on Last Call Working Draft of RDF Semantics document concerning typed literals" captured in After due consideration, the RDFCore WG has resolved [[RDFCore do not accept this comment. 
-The semantics are as intended. 
-The text has been clarified to make this clearer.]] 
-Please reply to this email, copying www-rdf-comments@w3.org indicating whether this decision is acceptable. 
-Brian McBride 
-I do not view this reponse as acceptable because it does not point to the clarification text. 
-There may also remain outstanding action items related to this issue (namely pointing to Pat's message(s)). 
-Please reply to this email, copying www-rdf-comments@w3.org indicating whether this decision is acceptable. 
-Brian McBride 
-I also do not view this response as acceptable for technical reasons: 1/ From http://www.w3.org/TR/2003/WD-rdf-mt-20030123/ 
-In an RDFS interpretation I (see section 3.3) I(rdf:XMLLiteral) in ICEXT(I(rdfs:Datatype)) In a D-interpretation, for any D (see Section 3.4) ICEXT(I(rdfs:Datatype)) = D Therefore, in any D-interpretation, for any D, there must be a member of D that is a standard datatype corresponding to rdf:XMLLiteral. 
-This means that any set of datatypes includes a datatype for rdf:XMLLiteral, and this datatype has a L2V mapping that takes lexical forms (in the form of strings *without* language tags) to resources. 
-Any specification of D-interpretations must include this mapping. 
-This superfluous mapping cannot be accessed from RDF, but can in OWL, for example by rdf:XMLLiteral owl:sameIndividualAs ex:foo . 
-ex:bar ex:baz "55"^^ex:foo . 
-I do not view this as an acceptable situation, if only for semantic cleanliness reasons. 
-This situation is not improved in the current editor's draft. 
-2/ Even if this issue were to be solved, I believe that OWL should have the following sort of entailment hold: rdf:XMLLiteral owl:sameIndividualAs ex:foo . 
-_:x owl:sameIndividualAs "..."@en^^rdf:XMLLiteral . 
-_:y owl:sameIndividualAs "..."@en^^ex:foo . 
-entails _:x owl:sameIndividualAs _:y . 
-(This entailment holds for every URI reference except rdf:XMLLiteral.) 
-However, there is no way for OWL to do this, because typed literals that include ex:foo are interpreted by the rules for non-built-in datatypes and there is no way to specify a non-built-in datatype that works the same way as rdf:XMLLiteral. 
-I do not view this as an acceptable situation. 
-Peter, could you articulate *why* you do not view it as acceptable? 
-It seems to me to be inevitable that the built-in datatype will differ from other datatypes since it has a unique relationship to lang tags in the syntax. 
-As you say, there is no way to specify a non-built-in datatype that works the same way as the built-in datatype. 
-That is why we built it in, because it needed to be treated specially. 
-The consequence for OWL is merely that OWL is required to 
-respect the unique status of the built-in RDF datatype, which does 
-not seem to me to be a severely onerous requirement on either OWL 
-users or the OWL spec. 
-Allowing the entailment you describe would make the semantic picture somewhat more uniform, but it would also complicate the implementation in many ways. 
-At present, an engine can take the presence of the datatype label "rdf:XMLLiteral" as a direct syntactic flag which indicates the need to parse lang tags in a particular way, without requiring any inference to be done. 
-Since this treatment of lang tags is essentially a syntactic matter concerned with XML, to require all engines to indulge in open-ended OWL reasoning in order to check whether or not to proceed with a syntactic operation seems counterproductive to me. 
-One option would be to say that in a D-interpretation (not a simple 
-RDF interpretation) , rdf:XMLLiteral should be a 'fully-fledged' datatype, so that the inference you describe above would hold. 
-It would mean that ex:foo would be obliged to handle lang tags in the 
-same way that rdf:XMLLiteral does, note, so that implementations 
-would be obliged to check that any user-defined datatype was *not* equal to rdf:XMLLiteral before treating lang tags appropriately. 
-Let me know if that would be acceptable, and if so then I will put it to the WG as a suggested change. 
-I do not think it will affect any documents other than the semantics, and has no real impact on RDF reasoning as such, so would be an easy change to make. 
-Pat 
-IHMC(850)434 8903 or (650)494 3973 home 40 South Alcaniz St.(850)202 4416 office FL 32501???????????(850)291 0667 cell phayes@ai.uwf.edu http://www.coginst.uwf.edu/~phayes s.pam@ai.uwf.edu for spam 
-From: pat hayes phayes@ai.uwf.edu 
-Subject: Re: pfps-08 last call comment on typed literals Date: Thu, 3 Apr 2003 14:48:40 -0500 
-From: Brian McBride bwm@hplb.hpl.hp.com Subject: Fwd: pfps-08 last call comment on typed literals Date: Thu, 20 Mar 2003 19:41:32 +0000 
-I do not view this reponse as acceptable because it does not point to the clarification text. 
-There may also remain outstanding action items related to this issue (namely pointing to Pat's message(s)). 
-Please reply to this email, copying www-rdf-comments@w3.org indicating whether this decision is acceptable. 
-Brian McBride 
-Isn't my discussion above sufficent? 
-The current treatment of rdf:XMLLiteral requires an extra, useless datatype. 
-This is going to be an endless source of confusion. 
-This, at least, has to be fixed. 
-The basic idea of treating rdf:XMLLiteral as a datatype means that there are two different kinds of datatypes - I(rdf:XMLLiteral) and all the other datatypes. 
-The two different kinds of datatypes work completely differently, but there is no way of distinguishing between them. 
-I disagree. 
-Every formalism built on RDF, including OWL, will have to have special cases for rdf:XMLLiteral. 
-This would provide some sort of improvement, but I don't think that this is the right way to go. 
-I think that the best way to go would be to remove rdf:XMLLiteral entirely. 
-It is a bastard amalgam of syntax and semantics that provides far greater pain than benefit. 
-If, however, it is not possible to remove rdf:XMLLiteral, then why not separate its syntactic and semantic components? 
-Simply make it be the case 
-that the processing of rdf:XMLLiteral in the RDF/XML does all the non-standard stuff in the translation to triples (much like rdf:nodeid does). 
-So the translation of 
-[some text] into a triple would be something like subject predicate "[some other text]"^^rdf:XMLDocument . 
-where [some other text] included all the junk involved with rdf:XMLLiteral, 
-including the language tag stuff. 
-This would allow rdf:XMLDocument to be a standard datatype. 
-You could even use rdf:XMLLiteral instead of rdf:XMLDocument if you really needed to, but I wouldn't recommend it. 
-peter 
-Jeremy, see end of message. 
-From: Brian McBride bwm@hplb.hpl.hp.com Subject: Fwd: pfps-08 last call comment on typed literals Date: Thu, 20 Mar 2003 19:41:32 +0000 
-I do not view this reponse as acceptable because it does not point to the clarification text. 
-There may also remain outstanding action items related to this issue (namely pointing to Pat's message(s)). 
-Please reply to this email, copying www-rdf-comments@w3.org indicating whether this decision is acceptable. 
-Brian McBride 
-It will have to handle this piece of RDF according to the spec, but I don't see why you consider this piece to be a 'special' case, it's just one of the cases. 
-Yes, RDF treats XML literals in a special way, but it always has done. 
-Time was when we had a special 'XML bit' included in every literal, if you recall. 
-It might be the best that we can do at this stage. 
-We have already decided that all XML literals in the RDF graph are considered to be canonicalized, so that the datatype is kind of trivial except for the treatment of the lang tags. 
-I do not, myself, understand the reason for this lang tags business, but I gather that for some people this is is a VERY big issue, so we are unlikely to change it at this stage. 
-Yeh, well, the world isn't perfect. 
-Whatareyagonnado? 
-We have done except for the lang tag business. 
-Jeremy is the one to ask. 
-Jeremy, can we do this?? 
-Note that this would then mean that we could GET RID OF LANG TAGS IN THE GRAPH ALTOGETHER. 
-Just thought I'd mention it in passing. 
-Pat 
-IHMC(850)434 8903 or (650)494 3973 home 40 South Alcaniz St.(850)202 4416 office FL 32501???????????(850)291 0667 cell phayes@ai.uwf.edu http://www.coginst.uwf.edu/~phayes s.pam@ai.uwf.edu for spam 
-From: pat hayes phayes@ai.uwf.edu 
-Subject: Re: pfps-08 last call comment on typed literals Date: Thu, 3 Apr 2003 17:42:12 -0600 
-Complain! Maybe even object. 
-So finish the job! 
-:-) 
-peter 
-This is a very nice idea. 
-Brian can I have two minutes at the telecon to see what we do about it procedurally. 
-Jeremy 
-I think I will try to echo what I hear Peter suggest, since Patrick seems to be (1) following this thread (2) of the opinion that there is not a proposal that changes rdf:XMLLiteral to be a normal rather than a special datatype. 
-So: We have not been contemplating changing either: 1) the rdf:parseType="Literal" syntax 2) the representation of this, as a canonical XML doc, in the domain of discourse We have changed the treatment so that: most of the syntactic transformation of from (1) to (2) is done in Syntax and not in rdf:XMLLiteral mapping rules. 
-We could go the whole hog, and make the mapping rules of rdf:XMLLiteral the identity. 
-Leaving (2) fixed we have that the syntax document not only has to canonicalise the literal content, but also it converts it into an XML document as currently specified in concepts. 
-This would change test cases: e.g. rdfs:comment rdf:parseType="Literal" 
-b Bold /b /rdfs:comment 
-would correspond to n-triples _:a rdfs:comment 
-rdf-wrapper xml:lang=\"en\" b Bold /b /rdf-wrapper "^^rdf:XMLLiteral . 
-or something like that (I don't swear I've canonicalized correctly). 
-Whether or not we include a redundant @en in the literal is immaterial. 
-We may well then have rdf:XMLLiteral as a subdatatype of xsd:string i.e. it is completely well-behaved and may or may not have synonyms and we don't care, and language tags never participate in l2v mappings. 
-We could even ditch them all together from typed literals. 
-Jeremy 
-FWIW, I don't think our earlier attempt to treat XML literals within the framework of other datatypes really worked out, and I think this would be a cleaner, simpler way to go. 
-And, as Pat notes in another message: 
-Jeremy is the one to ask. 
-Jeremy, can we do this?? 
-Note that this would 
-then mean that we could GET RID OF LANG TAGS IN THE GRAPH ALTOGETHER. 
-Just thought I'd mention it in passing. 
-It's an unfortunately large change at this stage, possibly involving changes to abstract syntax, semantics, syntax and N-triples documents. 
-But I think it would be a usefully cleaner design. 
-I don't think we really have an option to remove XML literals. 
-#g Graham Klyne PGP: 0FAA 69FF C083 000B A2E9 A131 01B9 1C7A DBCA CB5E 
-I'm broadly supportive of this approach. 
-What I think may be controversial here is the explicit incorporation of rdf-wrapper into the abstract syntax. 
-It's purpose seems to be to capture the language information for this form of literal. 
-(I have some thoughts, but I think to raise them now would muddy the important debate.) 
-If we go this route, I would favour removing language tags from all typed literals in the abstract syntax. 
-#g 
-b Bold /b /rdfs:comment 
-rdf-wrapper xml:lang=\"en\" b Bold /b /rdf-wrapper "^^rdf:XMLLiteral . 
-Graham Klyne PGP: 0FAA 69FF C083 000B A2E9 A131 01B9 1C7A DBCA CB5E 
+<s> From: Brian McBride bwm@hplb.hpl.hp.com Subject: Fwd: pfps-08 last call comment on typed literals Date: Thu, 20 Mar 2003 19:41:32 +0000  </s>
+<s> Date: Thu, 20 Mar 2003 18:56:18 +0000 From: Brian McBride bwm@hplb.hpl.hp.com Subject: pfps-08 last call comment on typed literals Peter, You made a last call comment "Comment on Last Call Working Draft of RDF Semantics document concerning typed literals" captured in After due consideration, the RDFCore WG has resolved [[RDFCore do not accept this comment.  </s>
+<s> The semantics are as intended.  </s>
+<s> The text has been clarified to make this clearer.]]  </s>
+<s> Please reply to this email, copying www-rdf-comments@w3.org indicating whether this decision is acceptable.  </s>
+<s> Brian McBride  </s>
+<s> I do not view this reponse as acceptable because it does not point to the clarification text.  </s>
+<s> There may also remain outstanding action items related to this issue (namely pointing to Pat's message(s)).  </s>
+<s> Please reply to this email, copying www-rdf-comments@w3.org indicating whether this decision is acceptable.  </s>
+<s> Brian McBride  </s>
+<s> I also do not view this response as acceptable for technical reasons: 1/ From http://www.w3.org/TR/2003/WD-rdf-mt-20030123/  </s>
+<s> In an RDFS interpretation I (see section 3.3) I(rdf:XMLLiteral) in ICEXT(I(rdfs:Datatype)) In a D-interpretation, for any D (see Section 3.4) ICEXT(I(rdfs:Datatype)) = D Therefore, in any D-interpretation, for any D, there must be a member of D that is a standard datatype corresponding to rdf:XMLLiteral.  </s>
+<s> This means that any set of datatypes includes a datatype for rdf:XMLLiteral, and this datatype has a L2V mapping that takes lexical forms (in the form of strings *without* language tags) to resources.  </s>
+<s> Any specification of D-interpretations must include this mapping.  </s>
+<s> This superfluous mapping cannot be accessed from RDF, but can in OWL, for example by rdf:XMLLiteral owl:sameIndividualAs ex:foo .  </s>
+<s> ex:bar ex:baz "55"^^ex:foo .  </s>
+<s> I do not view this as an acceptable situation, if only for semantic cleanliness reasons.  </s>
+<s> This situation is not improved in the current editor's draft.  </s>
+<s> 2/ Even if this issue were to be solved, I believe that OWL should have the following sort of entailment hold: rdf:XMLLiteral owl:sameIndividualAs ex:foo .  </s>
+<s> _:x owl:sameIndividualAs "..."@en^^rdf:XMLLiteral .  </s>
+<s> _:y owl:sameIndividualAs "..."@en^^ex:foo .  </s>
+<s> entails _:x owl:sameIndividualAs _:y .  </s>
+<s> (This entailment holds for every URI reference except rdf:XMLLiteral.)  </s>
+<s> However, there is no way for OWL to do this, because typed literals that include ex:foo are interpreted by the rules for non-built-in datatypes and there is no way to specify a non-built-in datatype that works the same way as rdf:XMLLiteral.  </s>
+<s> I do not view this as an acceptable situation.  </s>
+<s> Peter, could you articulate *why* you do not view it as acceptable?  </s>
+<s> It seems to me to be inevitable that the built-in datatype will differ from other datatypes since it has a unique relationship to lang tags in the syntax.  </s>
+<s> As you say, there is no way to specify a non-built-in datatype that works the same way as the built-in datatype.  </s>
+<s> That is why we built it in, because it needed to be treated specially.  </s>
+<s> The consequence for OWL is merely that OWL is required to  </s>
+<s> respect the unique status of the built-in RDF datatype, which does  </s>
+<s> not seem to me to be a severely onerous requirement on either OWL  </s>
+<s> users or the OWL spec.  </s>
+<s> Allowing the entailment you describe would make the semantic picture somewhat more uniform, but it would also complicate the implementation in many ways.  </s>
+<s> At present, an engine can take the presence of the datatype label "rdf:XMLLiteral" as a direct syntactic flag which indicates the need to parse lang tags in a particular way, without requiring any inference to be done.  </s>
+<s> Since this treatment of lang tags is essentially a syntactic matter concerned with XML, to require all engines to indulge in open-ended OWL reasoning in order to check whether or not to proceed with a syntactic operation seems counterproductive to me.  </s>
+<s> One option would be to say that in a D-interpretation (not a simple  </s>
+<s> RDF interpretation) , rdf:XMLLiteral should be a 'fully-fledged' datatype, so that the inference you describe above would hold.  </s>
+<s> It would mean that ex:foo would be obliged to handle lang tags in the  </s>
+<s> same way that rdf:XMLLiteral does, note, so that implementations  </s>
+<s> would be obliged to check that any user-defined datatype was *not* equal to rdf:XMLLiteral before treating lang tags appropriately.  </s>
+<s> Let me know if that would be acceptable, and if so then I will put it to the WG as a suggested change.  </s>
+<s> I do not think it will affect any documents other than the semantics, and has no real impact on RDF reasoning as such, so would be an easy change to make.  </s>
+<s> Pat  </s>
+<s> IHMC(850)434 8903 or (650)494 3973 home 40 South Alcaniz St.(850)202 4416 office FL 32501???????????(850)291 0667 cell phayes@ai.uwf.edu http://www.coginst.uwf.edu/~phayes s.pam@ai.uwf.edu for spam  </s>
+<s> From: pat hayes phayes@ai.uwf.edu  </s>
+<s> Subject: Re: pfps-08 last call comment on typed literals Date: Thu, 3 Apr 2003 14:48:40 -0500  </s>
+<s> From: Brian McBride bwm@hplb.hpl.hp.com Subject: Fwd: pfps-08 last call comment on typed literals Date: Thu, 20 Mar 2003 19:41:32 +0000  </s>
+<s> I do not view this reponse as acceptable because it does not point to the clarification text.  </s>
+<s> There may also remain outstanding action items related to this issue (namely pointing to Pat's message(s)).  </s>
+<s> Please reply to this email, copying www-rdf-comments@w3.org indicating whether this decision is acceptable.  </s>
+<s> Brian McBride  </s>
+<s> Isn't my discussion above sufficent?  </s>
+<s> The current treatment of rdf:XMLLiteral requires an extra, useless datatype.  </s>
+<s> This is going to be an endless source of confusion.  </s>
+<s> This, at least, has to be fixed.  </s>
+<s> The basic idea of treating rdf:XMLLiteral as a datatype means that there are two different kinds of datatypes - I(rdf:XMLLiteral) and all the other datatypes.  </s>
+<s> The two different kinds of datatypes work completely differently, but there is no way of distinguishing between them.  </s>
+<s> I disagree.  </s>
+<s> Every formalism built on RDF, including OWL, will have to have special cases for rdf:XMLLiteral.  </s>
+<s> This would provide some sort of improvement, but I don't think that this is the right way to go.  </s>
+<s> I think that the best way to go would be to remove rdf:XMLLiteral entirely.  </s>
+<s> It is a bastard amalgam of syntax and semantics that provides far greater pain than benefit.  </s>
+<s> If, however, it is not possible to remove rdf:XMLLiteral, then why not separate its syntactic and semantic components?  </s>
+<s> Simply make it be the case  </s>
+<s> that the processing of rdf:XMLLiteral in the RDF/XML does all the non-standard stuff in the translation to triples (much like rdf:nodeid does).  </s>
+<s> So the translation of  </s>
+<s> [some text] into a triple would be something like subject predicate "[some other text]"^^rdf:XMLDocument .  </s>
+<s> where [some other text] included all the junk involved with rdf:XMLLiteral,  </s>
+<s> including the language tag stuff.  </s>
+<s> This would allow rdf:XMLDocument to be a standard datatype.  </s>
+<s> You could even use rdf:XMLLiteral instead of rdf:XMLDocument if you really needed to, but I wouldn't recommend it.  </s>
+<s> peter  </s>
+<s> Jeremy, see end of message.  </s>
+<s> From: Brian McBride bwm@hplb.hpl.hp.com Subject: Fwd: pfps-08 last call comment on typed literals Date: Thu, 20 Mar 2003 19:41:32 +0000  </s>
+<s> I do not view this reponse as acceptable because it does not point to the clarification text.  </s>
+<s> There may also remain outstanding action items related to this issue (namely pointing to Pat's message(s)).  </s>
+<s> Please reply to this email, copying www-rdf-comments@w3.org indicating whether this decision is acceptable.  </s>
+<s> Brian McBride  </s>
+<s> It will have to handle this piece of RDF according to the spec, but I don't see why you consider this piece to be a 'special' case, it's just one of the cases.  </s>
+<s> Yes, RDF treats XML literals in a special way, but it always has done.  </s>
+<s> Time was when we had a special 'XML bit' included in every literal, if you recall.  </s>
+<s> It might be the best that we can do at this stage.  </s>
+<s> We have already decided that all XML literals in the RDF graph are considered to be canonicalized, so that the datatype is kind of trivial except for the treatment of the lang tags.  </s>
+<s> I do not, myself, understand the reason for this lang tags business, but I gather that for some people this is is a VERY big issue, so we are unlikely to change it at this stage.  </s>
+<s> Yeh, well, the world isn't perfect.  </s>
+<s> Whatareyagonnado?  </s>
+<s> We have done except for the lang tag business.  </s>
+<s> Jeremy is the one to ask.  </s>
+<s> Jeremy, can we do this??  </s>
+<s> Note that this would then mean that we could GET RID OF LANG TAGS IN THE GRAPH ALTOGETHER.  </s>
+<s> Just thought I'd mention it in passing.  </s>
+<s> Pat  </s>
+<s> IHMC(850)434 8903 or (650)494 3973 home 40 South Alcaniz St.(850)202 4416 office FL 32501???????????(850)291 0667 cell phayes@ai.uwf.edu http://www.coginst.uwf.edu/~phayes s.pam@ai.uwf.edu for spam  </s>
+<s> From: pat hayes phayes@ai.uwf.edu  </s>
+<s> Subject: Re: pfps-08 last call comment on typed literals Date: Thu, 3 Apr 2003 17:42:12 -0600  </s>
+<s> Complain! Maybe even object.  </s>
+<s> So finish the job!  </s>
+<s> :-)  </s>
+<s> peter  </s>
+<s> This is a very nice idea.  </s>
+<s> Brian can I have two minutes at the telecon to see what we do about it procedurally.  </s>
+<s> Jeremy  </s>
+<s> I think I will try to echo what I hear Peter suggest, since Patrick seems to be (1) following this thread (2) of the opinion that there is not a proposal that changes rdf:XMLLiteral to be a normal rather than a special datatype.  </s>
+<s> So: We have not been contemplating changing either: 1) the rdf:parseType="Literal" syntax 2) the representation of this, as a canonical XML doc, in the domain of discourse We have changed the treatment so that: most of the syntactic transformation of from (1) to (2) is done in Syntax and not in rdf:XMLLiteral mapping rules.  </s>
+<s> We could go the whole hog, and make the mapping rules of rdf:XMLLiteral the identity.  </s>
+<s> Leaving (2) fixed we have that the syntax document not only has to canonicalise the literal content, but also it converts it into an XML document as currently specified in concepts.  </s>
+<s> This would change test cases: e.g. rdfs:comment rdf:parseType="Literal"  </s>
+<s> b Bold /b /rdfs:comment  </s>
+<s> would correspond to n-triples _:a rdfs:comment  </s>
+<s> rdf-wrapper xml:lang=\"en\" b Bold /b /rdf-wrapper "^^rdf:XMLLiteral .  </s>
+<s> or something like that (I don't swear I've canonicalized correctly).  </s>
+<s> Whether or not we include a redundant @en in the literal is immaterial.  </s>
+<s> We may well then have rdf:XMLLiteral as a subdatatype of xsd:string i.e. it is completely well-behaved and may or may not have synonyms and we don't care, and language tags never participate in l2v mappings.  </s>
+<s> We could even ditch them all together from typed literals.  </s>
+<s> Jeremy  </s>
+<s> FWIW, I don't think our earlier attempt to treat XML literals within the framework of other datatypes really worked out, and I think this would be a cleaner, simpler way to go.  </s>
+<s> And, as Pat notes in another message:  </s>
+<s> Jeremy is the one to ask.  </s>
+<s> Jeremy, can we do this??  </s>
+<s> Note that this would  </s>
+<s> then mean that we could GET RID OF LANG TAGS IN THE GRAPH ALTOGETHER.  </s>
+<s> Just thought I'd mention it in passing.  </s>
+<s> It's an unfortunately large change at this stage, possibly involving changes to abstract syntax, semantics, syntax and N-triples documents.  </s>
+<s> But I think it would be a usefully cleaner design.  </s>
+<s> I don't think we really have an option to remove XML literals.  </s>
+<s> #g Graham Klyne PGP: 0FAA 69FF C083 000B A2E9 A131 01B9 1C7A DBCA CB5E  </s>
+<s> I'm broadly supportive of this approach.  </s>
+<s> What I think may be controversial here is the explicit incorporation of rdf-wrapper into the abstract syntax.  </s>
+<s> It's purpose seems to be to capture the language information for this form of literal.  </s>
+<s> (I have some thoughts, but I think to raise them now would muddy the important debate.)  </s>
+<s> If we go this route, I would favour removing language tags from all typed literals in the abstract syntax.  </s>
+<s> #g  </s>
+<s> b Bold /b /rdfs:comment  </s>
+<s> rdf-wrapper xml:lang=\"en\" b Bold /b /rdf-wrapper "^^rdf:XMLLiteral .  </s>
+<s> Graham Klyne PGP: 0FAA 69FF C083 000B A2E9 A131 01B9 1C7A DBCA CB5E  </s>

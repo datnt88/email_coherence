@@ -1,187 +1,187 @@
-So any new XPath methods would actually live on something like a NodeXPath interface rather than Node itself 
-This would make me a little happier. 
-Not by much if it had to be implemented by Node, instead of passing the methods a Node context. 
-In any case, the mere number of methods on an interface isn't a particularly interesting software design metric. 
-I respectfully disagree. 
-Number of methods indicates the surface area of an interface, and is some indicator of the complexity of the object. 
-I agree it is only one metric, and must be used with number of interfaces needed, depth of inheritance, number of arguments needed, and dependencies between interfaces. 
-In any case, the real metric is the pain coming from users. 
-Allowing a DOM implementation to _optionally_ implement XPath itself opens up the possiblity for _significant_ optimizations over what can be achieved via the exisiting public API. 
-Just because I have a method that is passed a node, doesn't mean I can't cast to node to a given implementation, and be optimized, but otherwise throw an exception if the given implementation isn't supported. 
-On the other hand, you may have some implementations that can do queries from only the public interfaces. 
-I do know of many environments that use multiple DOM implementations, so I don't think a generic XPath query is such a bad thing to have. 
-I don't think optimization is an argument at all. 
-Remember, Microsoft and Netscape and IBM aren't the only implementers of the DOM interfaces. 
-An application developer may implement the interfaces over his or her application structure, so that it can be generically manipulated by processes that work on a DOM. 
-It should be relatively easy to implement a DOM, but it's getting harder with each rev of the DOM spec. 
-DOM is not an application, it's a set of interfaces. 
-The DOM package should do what it's name implies: be a Document Object Model, and it should not be a Query interface, or a Stylesheet interface, an event interface, etc. -scott 
-So whose implementation will you cast to to get hold of those optimized query hooks? 
-Yours, obviously. 
-Right, using my optimizations. 
-But what about ours? 
-Jonathan and Mikes?; Suns? 
-etc. etc. 
-In the case of my XPath implementation, I would support these via the public DOM interfaces (yes, it would be slower). 
-Other implementations may throw an error. 
-And do you expect me to support _your_ implementation 
-No, not if you don't support generic DOMs. 
-Adding an XPath query API to the DOM allows optimized XPath queries to be _portable_. 
-I don't think having a method on the Node object vs. having a method on an XPath object that takes a node as a context makes one smidgen of difference in terms of optimization or portability. 
-On the contrary, the method with context is more portable. 
-According to your argument, anything that is ever optimized must be a method on the DOM. 
--scott 
-Delegating queries to DOM implementations allows them to be resolved using internal information which is simply not available via the public API. 
-Well, I may be bowing to your superior intellect. 
-Here's an argument for your side: void foo(Node n1, Node n2) NodeIterator n1i = ((XPath)n1).locate("name/address", 
-...); // uses your implementation NodeIterator n2i = ((XPath)n2).locate("name/address", 
-...); // uses my implementation i.e. in this case, the method didn't know or care which implementation it was using. 
-Using an external implementations would make this harder, as you would have to match the Node implemenation to the XPath implementation. 
-Ugh. 
-I'm not trying to be argumentative for the fun of it. 
-I really think the DOM as a monster set of foundation classes is a mistake. 
-But, yes, I guess there are tradeoffs. 
-You could have something like: DOMImplementation impl = node.getOwnerDocument().getImplementation(); // Make up a "getFeature" function that would return an interface. 
-ExpressionFactory factory = (ExpressionFactory )impl.getFeature 
-("http://www.w3.org/TR/xpath", null); if(null != factory ) Expression expr= factory.create("name/address"); 
-NodeIterator n1i = expr.execute(node, 
-exprContext); Which is way ugly. 
-As compared to: DOMImplementation impl = node.getOwnerDocument().getImplementation(); if(impl .hasFeature("http://www.w3.org/TR/xpath", null)) NodeIterator n1i = ((Expression)node).findNodes("name/address", 
-exprContext); I guess I could live with this (i.e. the second one). 
-I suppose an XPath implementation could do something like: Expression expr = new XPathImpl(node, "name/address"); NodeIterator n1i = expr.findNodes("name/address", 
-exprContext); ...which would allow looser coupling with the DOM implementation, and allow compatibility with DOM1 implementations. 
--scott 
-I've certainly learned a lot from the first few days of discussions here, although I can imagine that it's a bit overwhelming for some! 
-Let's consider the "requirements" for an XPath API, or perhaps a family of APIs. 
-Here's my attempt at a first cut; I offer these mostly as a way of focussing and structuring the discussion so that we don't go off into too many directions at once. 
-1. It must be DOM-compatible, i.e., use DOM concepts rather than invent any 
-new infrastructure (such as Nodes, lists, iterators, etc.) unless absolutely necessary. 
-2. It must be language neutral and vendor neutral. 
-As much as we all like [insert favorite language or system here], it's important to have as much consistency as possible across "language bindings". 
-3. It must allow XPath expressions to define some subset of an XML document, stream, or database and provide a way of iterating over or otherwise processing that subset. 
-4. It must not require all DOM implementers to support this functionality. 
-5. It should provide some level of compatability or migration path for users of existing XPath extensions to the DOM (e.g., those of Microsoft and Oracle). 
-For example, we could imagine holding our noses and suggesting a Node::selectNodes() interface as a minimal, but compatible and convenient, interface as well as a much more powerful and flexible XpathQuery or whatever interface. 
-6. It may extend the DOM Node interface, or it may add one or more new interfaces to the DOM, or it may be quite tangential to the DOM. 
-7. ??? help me out here! 
-This list (which we can discuss, refine, etc.) doesn't restrict the space of possible outcomes very much, I'll admit, but should make clear what we all agree on and what we may choose to "agree to disagree" on. 
-For example, I can see two "flavors" of an XPath API, one that is built INTO the DOM (for vendors such as us who have deeply imbedded XPath implementations that we need to expose an API to) and one that is built ON TOP OF the DOM (for vendors who want to make their XPath implementation available to any DOM implementation). 
-So long as they share everything that they CAN share, I see no problem in an W3C Note or DOM spec that allows either or both. 
-Comments, thoughts, flames, suggestions??? 
-We need to say more here ... help me with some wording about XPath variables, functions, etc. 
-It should support the context supported by the XPath spec 
-Instead of providing a migration part, it would make more sense to get "support by the industry" for a new and clean interface. 
-8. it must have a fair change to be adopted quickly by the DOM-WG, which means it should stick to the DOM as much as possible 9. It should offer the ability to optimize queries within a specific implementation and/or environment. 
-Regards, Jeroen Jeroen van Rotterdam The Connection Factory jeroen@tcf.nl 
-any 
-DOM only has Java and IDL? 
-Are we looking to go beyond this? 
-(I don't see how we can). 
-Hmm... if we are defining this in terms of the DOM, then only Node as a context makes sense. 
-A stream or database may hide behind Node, but I don't think we know about that. 
-So I'm not sure about "stream, or database". 
-functionality. 
--0. I don't think we should let existing proprietary extensions to the DOM mold the design. 
-If it easily fits, then fine. 
-I don't think this is a requirement... it's too fuzzy. 
-Rather, this is an open issue to the requirements. 
-7. Match Patterns? 
-Though they are XSLT and not XPath, they are very useful. 
-A weak +1 from me. 
-We could probably live without it, though I suspect most XPath engines will support match patterns. 
-Could be another optional interface? 
-8. Extensions? 
-type, not just the five XPath types. 
-Also, this may open a Pandora's Box regarding extension bindings. 
-Would it be better to save this for a later date? 
-9. Something that takes a node and produces a XPath or XPointer? 
-10. XPointer? 
-I think this is well enough defined that it is in scope. 
-I think this means a function that returns a Range object. 
-Probably some nasty issues. 
-11. 
-Non-node expressions? 
-"2+2", "child::foo='blah'", etc. 12. 
-I assume variables environment support. 
-Should be explicitly listed as a requirement. 
-13. 
-I assume namespace environment support. 
-Should be explicitly listed as a requirement. 
-Open issue: Compiled XPath object? 
-or always specify via strings? 
-Or both? 
-Undecided from me. 
-(If a Compiled XPath object, then thread safety without required locking becomes a requirement). 
-Open issue: Is this explicitly XPath, or is it simply an expression API that is oriented towards XPath. 
-I guess +0 for me on it being an Expression API, that can return in the least a NodeIterator. 
-But I am somewhat undecided. 
-Open Issue: Database API support? 
-(for instance, authorization functions). 
--1 from me. 
-I think this is out of scope. 
-Open Issue: Multiple Document support (i.e. pass a NodeList instead of a Node as the context). 
-Undecided from me. 
-Is the idea to release this as part of DOM3, or as a separate note? 
-(This may have been talked about somewhere else that I am not aware of). 
--scott "Michael Champion" G-USA.com cc: (bcc: Scott Boag/CAM/Lotus) Sent by: Subject: Pulling together some threads ... www-dom-xpath-request@w3 .org 
-05/03/2000 04:14 PM I've certainly learned a lot from the first few days of discussions here, although I can imagine that it's a bit overwhelming for some! 
-Let's consider the "requirements" for an XPath API, or perhaps a family of APIs. 
-Here's my attempt at a first cut; I offer these mostly as a way of focussing and structuring the discussion so that we don't go off into too many directions at once. 1. 
-It must be DOM-compatible, i.e., use DOM concepts rather than invent any new infrastructure (such as Nodes, lists, iterators, etc.) unless absolutely necessary. 
-2. It must be language neutral and vendor neutral. 
-As much as we all like [insert favorite language or system here], it's important to have as much consistency as possible across "language bindings". 
-3. It must allow XPath expressions to define some subset of an XML document, stream, or database and provide a way of iterating over or otherwise processing that subset. 
-4. It must not require all DOM implementers to support this functionality. 5. It should provide some level of compatability or migration path for users of existing XPath extensions to the DOM (e.g., those of Microsoft and Oracle). 
-For example, we could imagine holding our noses and suggesting a Node::selectNodes() interface as a minimal, but compatible and convenient, interface as well as a much more powerful and flexible XpathQuery or whatever interface. 
-6. 
-It may extend the DOM Node interface, or it may add one or more new interfaces to the DOM, or it may be quite tangential to the DOM. 7. ??? help me out here! 
-This list (which we can discuss, refine, etc.) doesn't restrict the space of possible outcomes very much, I'll admit, but should make clear what we all agree on and what we may choose to "agree to disagree" on. 
-For example, I can see two "flavors" of an XPath API, one that is built INTO the DOM (for vendors such as us who have deeply imbedded XPath implementations that we need to expose an API to) and one that is built ON TOP OF the DOM (for vendors who want to make their XPath implementation available to any DOM implementation). 
-So long as they share everything that they CAN share, I see no problem in an W3C Note or DOM spec that allows either or both. 
-Comments, thoughts, flames, suggestions??? 
-DOM level 1 and 2 have Java, IDL and ECMAScript bindings, which seems to have proved pretty satisfactory. 
-Francis. 
-smallComment DOM level 1 and 2 have Java, IDL and ECMAScript bindings, which seems to have proved satisfactory. 
-/smallComment Francis. 
-I would tighten the wording like this: 3. It must define the evaluation context for an XPath expression. 
-In XPath, the context consists of a context node, context position, context size, variable bindings, function library, and namespace declarations. 
-How each of these map to this API must be clearly defined. 
-For example, when I call selectNodes what namespace declarations are part of the evaluation context? 
-4. It must allow XPath expressions to define Infoset subsets regardless of the underlying DOM implementation (e.g., stream, DB, etc.) and it must be possible to iterate over these subsets using standard DOM mechanisms (e.g., NodeList, NodeIterator, etc.). 
-FWIW, in terms of #3, I think the hardest thing to get right are the variable bindings. 
-As far as namespaces go, I think it's completely acceptable to use the DOM's namespace declarations when evaluating XPath expressions in this situation. 
-I agree with Scott that in certain environments (like XSLT), where XPath expressions live in other documents than those being queried, the namespace prefixes are only meaningful within the document where the expression lives. 
-However, when applying an XPath expression to a DOM node, there is no other document in play, so the in-scope namespaces for the given node seems reasonable. 
--aaron -aaron 
-:1. It must be DOM-compatible Yes. 
-:2. 
-It must be language neutral and vendor neutral. 
-This is must if it is going to have any standing in the w3c. 
-:3. 
-It must allow XPath expressions to define some subset of an XML : document, stream, or database. 
-Hmm. 
-Why streams and DB backends? 
-XPath is a language for addressing into an XML document, which it considers as a tree of nodes. 
-The second purpose of XPath is as a pattern matching language primarily for enabling XSLT. 
-It is not in the first instance a query language, though it can be used as such. 
-XPath is fully document-centric. 
-Whatever data/storage model lies behind the logical document view is an implementation issue, and not of the API proper. 
-The API must only manipulate XML trees, in essence a DOM. 
-:4. 
-It must not require all DOM implementers to support this :functionality. 
-Yes. 
-It should be an optional package, although I think a *lot* of people are going to want to implement this, compared to say the CSSOM and views, since it's incredibly useful. 
-So it's worth spending time getting it right (or just arguing about it : ). 
-Given that the smart money says the w3c query language is going to take roughly a year, and they seem to have plans for beefing up XPath, perhaps what we need for the next year or so is a minimal DOM *addressing* API that supports in some fashion an extensions hook (a la SAX) for implementers who have specialised or advanced needs. 
-I think we should agree on the nature of the beast, before deciding where it should be packaged wrt to the DOM. 
-:5. 
-It should provide some level of compatability or migration path : for users of existing XPath extensions to the DOM (e.g., those of : Microsoft and Oracle). 
-For example, we could imagine holding our : noses and suggesting a Node::selectNodes() interface as a minimal, : but compatible and convenient, interface as well as a much more : powerful and flexible XpathQuery or whatever interface. 
-Only if it's convenient/fundamental by consensus. 
-I don't believe the API should be driven toward current extensions prima facie. 
-:6. 
-It may extend the DOM Node interface, or it may add one or more : new interfaces to the DOM, or it may be quite tangential to the DOM. 
-:7. ??? help me out here! 
-Maybe that's enough for a first go. 
-I really don't want to be stuck with a Rube Goldberg XPath API. 
--Bill 
+<s> So any new XPath methods would actually live on something like a NodeXPath interface rather than Node itself  </s>
+<s> This would make me a little happier.  </s>
+<s> Not by much if it had to be implemented by Node, instead of passing the methods a Node context.  </s>
+<s> In any case, the mere number of methods on an interface isn't a particularly interesting software design metric.  </s>
+<s> I respectfully disagree.  </s>
+<s> Number of methods indicates the surface area of an interface, and is some indicator of the complexity of the object.  </s>
+<s> I agree it is only one metric, and must be used with number of interfaces needed, depth of inheritance, number of arguments needed, and dependencies between interfaces.  </s>
+<s> In any case, the real metric is the pain coming from users.  </s>
+<s> Allowing a DOM implementation to _optionally_ implement XPath itself opens up the possiblity for _significant_ optimizations over what can be achieved via the exisiting public API.  </s>
+<s> Just because I have a method that is passed a node, doesn't mean I can't cast to node to a given implementation, and be optimized, but otherwise throw an exception if the given implementation isn't supported.  </s>
+<s> On the other hand, you may have some implementations that can do queries from only the public interfaces.  </s>
+<s> I do know of many environments that use multiple DOM implementations, so I don't think a generic XPath query is such a bad thing to have.  </s>
+<s> I don't think optimization is an argument at all.  </s>
+<s> Remember, Microsoft and Netscape and IBM aren't the only implementers of the DOM interfaces.  </s>
+<s> An application developer may implement the interfaces over his or her application structure, so that it can be generically manipulated by processes that work on a DOM.  </s>
+<s> It should be relatively easy to implement a DOM, but it's getting harder with each rev of the DOM spec.  </s>
+<s> DOM is not an application, it's a set of interfaces.  </s>
+<s> The DOM package should do what it's name implies: be a Document Object Model, and it should not be a Query interface, or a Stylesheet interface, an event interface, etc. -scott  </s>
+<s> So whose implementation will you cast to to get hold of those optimized query hooks?  </s>
+<s> Yours, obviously.  </s>
+<s> Right, using my optimizations.  </s>
+<s> But what about ours?  </s>
+<s> Jonathan and Mikes?; Suns?  </s>
+<s> etc. etc.  </s>
+<s> In the case of my XPath implementation, I would support these via the public DOM interfaces (yes, it would be slower).  </s>
+<s> Other implementations may throw an error.  </s>
+<s> And do you expect me to support _your_ implementation  </s>
+<s> No, not if you don't support generic DOMs.  </s>
+<s> Adding an XPath query API to the DOM allows optimized XPath queries to be _portable_.  </s>
+<s> I don't think having a method on the Node object vs. having a method on an XPath object that takes a node as a context makes one smidgen of difference in terms of optimization or portability.  </s>
+<s> On the contrary, the method with context is more portable.  </s>
+<s> According to your argument, anything that is ever optimized must be a method on the DOM.  </s>
+<s> -scott  </s>
+<s> Delegating queries to DOM implementations allows them to be resolved using internal information which is simply not available via the public API.  </s>
+<s> Well, I may be bowing to your superior intellect.  </s>
+<s> Here's an argument for your side: void foo(Node n1, Node n2) NodeIterator n1i = ((XPath)n1).locate("name/address",  </s>
+<s> ...); // uses your implementation NodeIterator n2i = ((XPath)n2).locate("name/address",  </s>
+<s> ...); // uses my implementation i.e. in this case, the method didn't know or care which implementation it was using.  </s>
+<s> Using an external implementations would make this harder, as you would have to match the Node implemenation to the XPath implementation.  </s>
+<s> Ugh.  </s>
+<s> I'm not trying to be argumentative for the fun of it.  </s>
+<s> I really think the DOM as a monster set of foundation classes is a mistake.  </s>
+<s> But, yes, I guess there are tradeoffs.  </s>
+<s> You could have something like: DOMImplementation impl = node.getOwnerDocument().getImplementation(); // Make up a "getFeature" function that would return an interface.  </s>
+<s> ExpressionFactory factory = (ExpressionFactory )impl.getFeature  </s>
+<s> ("http://www.w3.org/TR/xpath", null); if(null != factory ) Expression expr= factory.create("name/address");  </s>
+<s> NodeIterator n1i = expr.execute(node,  </s>
+<s> exprContext); Which is way ugly.  </s>
+<s> As compared to: DOMImplementation impl = node.getOwnerDocument().getImplementation(); if(impl .hasFeature("http://www.w3.org/TR/xpath", null)) NodeIterator n1i = ((Expression)node).findNodes("name/address",  </s>
+<s> exprContext); I guess I could live with this (i.e. the second one).  </s>
+<s> I suppose an XPath implementation could do something like: Expression expr = new XPathImpl(node, "name/address"); NodeIterator n1i = expr.findNodes("name/address",  </s>
+<s> exprContext); ...which would allow looser coupling with the DOM implementation, and allow compatibility with DOM1 implementations.  </s>
+<s> -scott  </s>
+<s> I've certainly learned a lot from the first few days of discussions here, although I can imagine that it's a bit overwhelming for some!  </s>
+<s> Let's consider the "requirements" for an XPath API, or perhaps a family of APIs.  </s>
+<s> Here's my attempt at a first cut; I offer these mostly as a way of focussing and structuring the discussion so that we don't go off into too many directions at once.  </s>
+<s> 1. It must be DOM-compatible, i.e., use DOM concepts rather than invent any  </s>
+<s> new infrastructure (such as Nodes, lists, iterators, etc.) unless absolutely necessary.  </s>
+<s> 2. It must be language neutral and vendor neutral.  </s>
+<s> As much as we all like [insert favorite language or system here], it's important to have as much consistency as possible across "language bindings".  </s>
+<s> 3. It must allow XPath expressions to define some subset of an XML document, stream, or database and provide a way of iterating over or otherwise processing that subset.  </s>
+<s> 4. It must not require all DOM implementers to support this functionality.  </s>
+<s> 5. It should provide some level of compatability or migration path for users of existing XPath extensions to the DOM (e.g., those of Microsoft and Oracle).  </s>
+<s> For example, we could imagine holding our noses and suggesting a Node::selectNodes() interface as a minimal, but compatible and convenient, interface as well as a much more powerful and flexible XpathQuery or whatever interface.  </s>
+<s> 6. It may extend the DOM Node interface, or it may add one or more new interfaces to the DOM, or it may be quite tangential to the DOM.  </s>
+<s> 7. ??? help me out here!  </s>
+<s> This list (which we can discuss, refine, etc.) doesn't restrict the space of possible outcomes very much, I'll admit, but should make clear what we all agree on and what we may choose to "agree to disagree" on.  </s>
+<s> For example, I can see two "flavors" of an XPath API, one that is built INTO the DOM (for vendors such as us who have deeply imbedded XPath implementations that we need to expose an API to) and one that is built ON TOP OF the DOM (for vendors who want to make their XPath implementation available to any DOM implementation).  </s>
+<s> So long as they share everything that they CAN share, I see no problem in an W3C Note or DOM spec that allows either or both.  </s>
+<s> Comments, thoughts, flames, suggestions???  </s>
+<s> We need to say more here ... help me with some wording about XPath variables, functions, etc.  </s>
+<s> It should support the context supported by the XPath spec  </s>
+<s> Instead of providing a migration part, it would make more sense to get "support by the industry" for a new and clean interface.  </s>
+<s> 8. it must have a fair change to be adopted quickly by the DOM-WG, which means it should stick to the DOM as much as possible 9. It should offer the ability to optimize queries within a specific implementation and/or environment.  </s>
+<s> Regards, Jeroen Jeroen van Rotterdam The Connection Factory jeroen@tcf.nl  </s>
+<s> any  </s>
+<s> DOM only has Java and IDL?  </s>
+<s> Are we looking to go beyond this?  </s>
+<s> (I don't see how we can).  </s>
+<s> Hmm... if we are defining this in terms of the DOM, then only Node as a context makes sense.  </s>
+<s> A stream or database may hide behind Node, but I don't think we know about that.  </s>
+<s> So I'm not sure about "stream, or database".  </s>
+<s> functionality.  </s>
+<s> -0. I don't think we should let existing proprietary extensions to the DOM mold the design.  </s>
+<s> If it easily fits, then fine.  </s>
+<s> I don't think this is a requirement... it's too fuzzy.  </s>
+<s> Rather, this is an open issue to the requirements.  </s>
+<s> 7. Match Patterns?  </s>
+<s> Though they are XSLT and not XPath, they are very useful.  </s>
+<s> A weak +1 from me.  </s>
+<s> We could probably live without it, though I suspect most XPath engines will support match patterns.  </s>
+<s> Could be another optional interface?  </s>
+<s> 8. Extensions?  </s>
+<s> type, not just the five XPath types.  </s>
+<s> Also, this may open a Pandora's Box regarding extension bindings.  </s>
+<s> Would it be better to save this for a later date?  </s>
+<s> 9. Something that takes a node and produces a XPath or XPointer?  </s>
+<s> 10. XPointer?  </s>
+<s> I think this is well enough defined that it is in scope.  </s>
+<s> I think this means a function that returns a Range object.  </s>
+<s> Probably some nasty issues.  </s>
+<s> 11.  </s>
+<s> Non-node expressions?  </s>
+<s> "2+2", "child::foo='blah'", etc. 12.  </s>
+<s> I assume variables environment support.  </s>
+<s> Should be explicitly listed as a requirement.  </s>
+<s> 13.  </s>
+<s> I assume namespace environment support.  </s>
+<s> Should be explicitly listed as a requirement.  </s>
+<s> Open issue: Compiled XPath object?  </s>
+<s> or always specify via strings?  </s>
+<s> Or both?  </s>
+<s> Undecided from me.  </s>
+<s> (If a Compiled XPath object, then thread safety without required locking becomes a requirement).  </s>
+<s> Open issue: Is this explicitly XPath, or is it simply an expression API that is oriented towards XPath.  </s>
+<s> I guess +0 for me on it being an Expression API, that can return in the least a NodeIterator.  </s>
+<s> But I am somewhat undecided.  </s>
+<s> Open Issue: Database API support?  </s>
+<s> (for instance, authorization functions).  </s>
+<s> -1 from me.  </s>
+<s> I think this is out of scope.  </s>
+<s> Open Issue: Multiple Document support (i.e. pass a NodeList instead of a Node as the context).  </s>
+<s> Undecided from me.  </s>
+<s> Is the idea to release this as part of DOM3, or as a separate note?  </s>
+<s> (This may have been talked about somewhere else that I am not aware of).  </s>
+<s> -scott "Michael Champion" G-USA.com cc: (bcc: Scott Boag/CAM/Lotus) Sent by: Subject: Pulling together some threads ... www-dom-xpath-request@w3 .org  </s>
+<s> 05/03/2000 04:14 PM I've certainly learned a lot from the first few days of discussions here, although I can imagine that it's a bit overwhelming for some!  </s>
+<s> Let's consider the "requirements" for an XPath API, or perhaps a family of APIs.  </s>
+<s> Here's my attempt at a first cut; I offer these mostly as a way of focussing and structuring the discussion so that we don't go off into too many directions at once. 1.  </s>
+<s> It must be DOM-compatible, i.e., use DOM concepts rather than invent any new infrastructure (such as Nodes, lists, iterators, etc.) unless absolutely necessary.  </s>
+<s> 2. It must be language neutral and vendor neutral.  </s>
+<s> As much as we all like [insert favorite language or system here], it's important to have as much consistency as possible across "language bindings".  </s>
+<s> 3. It must allow XPath expressions to define some subset of an XML document, stream, or database and provide a way of iterating over or otherwise processing that subset.  </s>
+<s> 4. It must not require all DOM implementers to support this functionality. 5. It should provide some level of compatability or migration path for users of existing XPath extensions to the DOM (e.g., those of Microsoft and Oracle).  </s>
+<s> For example, we could imagine holding our noses and suggesting a Node::selectNodes() interface as a minimal, but compatible and convenient, interface as well as a much more powerful and flexible XpathQuery or whatever interface.  </s>
+<s> 6.  </s>
+<s> It may extend the DOM Node interface, or it may add one or more new interfaces to the DOM, or it may be quite tangential to the DOM. 7. ??? help me out here!  </s>
+<s> This list (which we can discuss, refine, etc.) doesn't restrict the space of possible outcomes very much, I'll admit, but should make clear what we all agree on and what we may choose to "agree to disagree" on.  </s>
+<s> For example, I can see two "flavors" of an XPath API, one that is built INTO the DOM (for vendors such as us who have deeply imbedded XPath implementations that we need to expose an API to) and one that is built ON TOP OF the DOM (for vendors who want to make their XPath implementation available to any DOM implementation).  </s>
+<s> So long as they share everything that they CAN share, I see no problem in an W3C Note or DOM spec that allows either or both.  </s>
+<s> Comments, thoughts, flames, suggestions???  </s>
+<s> DOM level 1 and 2 have Java, IDL and ECMAScript bindings, which seems to have proved pretty satisfactory.  </s>
+<s> Francis.  </s>
+<s> smallComment DOM level 1 and 2 have Java, IDL and ECMAScript bindings, which seems to have proved satisfactory.  </s>
+<s> /smallComment Francis.  </s>
+<s> I would tighten the wording like this: 3. It must define the evaluation context for an XPath expression.  </s>
+<s> In XPath, the context consists of a context node, context position, context size, variable bindings, function library, and namespace declarations.  </s>
+<s> How each of these map to this API must be clearly defined.  </s>
+<s> For example, when I call selectNodes what namespace declarations are part of the evaluation context?  </s>
+<s> 4. It must allow XPath expressions to define Infoset subsets regardless of the underlying DOM implementation (e.g., stream, DB, etc.) and it must be possible to iterate over these subsets using standard DOM mechanisms (e.g., NodeList, NodeIterator, etc.).  </s>
+<s> FWIW, in terms of #3, I think the hardest thing to get right are the variable bindings.  </s>
+<s> As far as namespaces go, I think it's completely acceptable to use the DOM's namespace declarations when evaluating XPath expressions in this situation.  </s>
+<s> I agree with Scott that in certain environments (like XSLT), where XPath expressions live in other documents than those being queried, the namespace prefixes are only meaningful within the document where the expression lives.  </s>
+<s> However, when applying an XPath expression to a DOM node, there is no other document in play, so the in-scope namespaces for the given node seems reasonable.  </s>
+<s> -aaron -aaron  </s>
+<s> :1. It must be DOM-compatible Yes.  </s>
+<s> :2.  </s>
+<s> It must be language neutral and vendor neutral.  </s>
+<s> This is must if it is going to have any standing in the w3c.  </s>
+<s> :3.  </s>
+<s> It must allow XPath expressions to define some subset of an XML : document, stream, or database.  </s>
+<s> Hmm.  </s>
+<s> Why streams and DB backends?  </s>
+<s> XPath is a language for addressing into an XML document, which it considers as a tree of nodes.  </s>
+<s> The second purpose of XPath is as a pattern matching language primarily for enabling XSLT.  </s>
+<s> It is not in the first instance a query language, though it can be used as such.  </s>
+<s> XPath is fully document-centric.  </s>
+<s> Whatever data/storage model lies behind the logical document view is an implementation issue, and not of the API proper.  </s>
+<s> The API must only manipulate XML trees, in essence a DOM.  </s>
+<s> :4.  </s>
+<s> It must not require all DOM implementers to support this :functionality.  </s>
+<s> Yes.  </s>
+<s> It should be an optional package, although I think a *lot* of people are going to want to implement this, compared to say the CSSOM and views, since it's incredibly useful.  </s>
+<s> So it's worth spending time getting it right (or just arguing about it : ).  </s>
+<s> Given that the smart money says the w3c query language is going to take roughly a year, and they seem to have plans for beefing up XPath, perhaps what we need for the next year or so is a minimal DOM *addressing* API that supports in some fashion an extensions hook (a la SAX) for implementers who have specialised or advanced needs.  </s>
+<s> I think we should agree on the nature of the beast, before deciding where it should be packaged wrt to the DOM.  </s>
+<s> :5.  </s>
+<s> It should provide some level of compatability or migration path : for users of existing XPath extensions to the DOM (e.g., those of : Microsoft and Oracle).  </s>
+<s> For example, we could imagine holding our : noses and suggesting a Node::selectNodes() interface as a minimal, : but compatible and convenient, interface as well as a much more : powerful and flexible XpathQuery or whatever interface.  </s>
+<s> Only if it's convenient/fundamental by consensus.  </s>
+<s> I don't believe the API should be driven toward current extensions prima facie.  </s>
+<s> :6.  </s>
+<s> It may extend the DOM Node interface, or it may add one or more : new interfaces to the DOM, or it may be quite tangential to the DOM.  </s>
+<s> :7. ??? help me out here!  </s>
+<s> Maybe that's enough for a first go.  </s>
+<s> I really don't want to be stuck with a Rube Goldberg XPath API.  </s>
+<s> -Bill  </s>

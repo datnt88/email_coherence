@@ -1,76 +1,76 @@
-Phil, I dont see any underlying formal problem with introducing additional authentication protocols into an SSL application's framework of security protocols. 
-When DH was introduced into std SSL mechanisms, it prevented ISO NR, as does any other method of arranging a shared secret, such as passwords or code books. 
-There mere fact that an authentication service does not provide ISO NR is not sufficient to deny its use in, or in support of, SSL goals. 
-Not everyone wants ISO NR; sometimes, they definitely don't want it, eg PFS service. 
-Authenticated DH and KEA, and other shared secret approaches, when used in a secure manner, precludes use of a court to resolve dispute about the contents of an encrypted/integral channel, without particpation of both parties. 
-One parties decides to hold out, the court is powerless; if the parties do agree, they must compromise their long term keys to the court. 
-This is no good for Internet countries where courts are weak, and politically controlled. 
-The weak get trodden on, usually, this means, as they have no automatic means of recourse to an independent arbitrator. 
-This makes DH and similar schemes useless for cost-effective and fair commerce. 
-But, SSL's modern role is not restircted to commerce applications! 
-However, Netsacpe and Microsoft seemed already to have thought that through, surely! 
-I would disgaree that its necessary to modify SSL standard (in TLS) to accomplish the goal which Barb has established. 
-I see SSL's integrity channel as something which should simply always be there on any TCP frame henceforth. 
-A server side RSA key is simple to manage, and key management costs are marginal. 
-The wonder of RSA math means only one side needs keying and substantial improvement in default end-end channel integrity is provided, always. 
-To now add authentication exchanges to implement authentication services which are not standarized by SSL (exploiting whichever cipherSuite) should not require a change to SSL per se. 
-Any numer of intermediate layers of protocol exchnage can be layered within the SSL-integrity-protected frames, to implement whatever the parties agree. 
-They can use the default scalable authentication service provided by SSL which is application and stack and netweork and vendor and platform indepedent, else use their own proprietary design, as per NT's proprietary challenge-response mechanism on the web. 
-Exploiting SSL basic integrity channel is simply a matter of organizing winsock hooks, not fighting over standards to win market share wars or level playing fields in infrastructure deployment battles.The 
-means of agreeing the capabilities can be certs, or ISAKMP, or port assignment. 
-Netscape &amp; Microsoft jointly provided the world with a configurable comms stack via winsock which is network, and protocol independent. 
-The number of "subnetwork convergence protocols" which can be layered behing the service access point is arbitary. 
-SSL integrity can come by default atached to any TCP provider; between the application and SSL can come Microsofts secret key scheme which can deny application the rights to use SSL native authentication and/or encryption, should the vendor wish. 
-I can no reason to change the standard; rather, such innovations should be encouraged, though architected to minise thier introduction on the deploying infastructure, and use the flexiblities of the configurable stack technology. 
-That is, after all why Microsoft introduced its winsock service-based, highly configurable, comms stack technology with SSL support! 
-So, yes I agree with the right (and need) to introduce additional authnetication services into the Internet stack at layer 4 and 5. No I dont agree every (valid) service option should be lumbered in with SSL, as neither should it be lumbered in with IPSEC or ISAKMP. 
-Monolithic systems fail, as do monolithic standards. 
-If there exists an archictectural manner of providing the feature, then the standard offering has no reason to change, might be the rule. 
-This very much looks like case of forcing a change to the deployed standard to simply ensure a different incompatible standard exists. 
-The usual reason is marketing, and market share wars. 
-Peter. 
-From: Phil Karlton Subject: [Fwd: Shared Key Authentication for the TLS Protocol-- an Alternative] Here are two recent messages to the IETF Transport Layer Security Working Group. 
-I expect that many on this list may be interested in that discussion (which should take place on that list, ietf-tls@w3.org ). 
-That group is considering using SSL 3.0 as the basis for the TLS effort. 
-Note that shared secret authentication would have very different security implications, including any possible ISO non-repudiation characteristics of an established connection. 
-PK Philip L. Karltonkarlton@netscape.com Principal Curmudgeonhttp://home.netscape.com/people/karlton 
-Netscape Communications Everything should be made as simple as possible, but not simpler. 
--- Albert Einstein 
-Similarly, public-key-based client authentication does not have to be in SSL/TLS either, since it could easily be layered on top of it. 
-An advantage of incorporating it into the protocol is, as Peter points out, interoperability. 
-Exactly the same argument applies in the case of shared-key-based authentication; a single, non-proprietary shared-key-based authentication standard embedded in TLS (which is what our proposal provides) allows independent client-builders and server-builders to implement shared-key authentication interoperably. 
-There is another justification for this incorporation in the case of shared-key authentication that does not apply in the case of public-key authentication: if for any reason the channel used is not strongly encrypted, and the shared key being used for authentication is guessable (as is often the case for user-remembered passwords), then any fully layered solution will be vulnerable to brute-force offline attacks. 
-Incorporating the authentication protocol into TLS allows a special exception to be made for the authentication data, strongly protecting it even if the normal traffic is not strongly encrypted. 
-Daniel Simon Cryptographer, Microsoft Corp. dansimon@microsoft.com 
-Dan, SSL embodies two peer-entity authentication mechanisms todate, which exploit the properties of the ciphers classes (RSA and DH) upon which they depend. 
-Both require that they are part of SSL's handshake. 
-By design, **NO** SSL data is encrypted or explicitly integrity protected prior to the completion of SSL handshake. 
-One cannot expect a trusted site to export sensitive data via an single level (or multi level!) encryption device until the peer-entity authentication has completed. 
-Peer entity authentication (w/ client auth and RSA) can establish the complete access control policy for the channel (by exchanging each sides labels), and therefore client authentication must occur proir to any user-data exchange. 
-Complete SSL public key authentication must occur within the handshake, or SSL's flexiblity to support mandatory access control is weakened/eliminated. 
-The service seeks to implement I.3.2.2.1 of the TNI to TCSEC, while recognising that - with TCP transports - the connection has already been established to some degree prioir to SSL being engaged, and is consuming resources. 
-So SSL implements TNI connection control, loosely. 
-Any alternative *SSL* authentication service must be performable within the handshake, and not require encryption.The only real reason to invest in a new mechanism is because a some new interesting class of cipher exists which needs some help in the handshake messages so as to expoit its authentication properties. 
-(SSL multicast authentication I believe will be a case in point, one day) For example, if I used a TYPE I algoirhtm which matched RSA properties, I would not expect to change SSL except to introduce a new cipherSuite. 
-If I used Type II KEA which is related to DH, I would not expect to change SSL; rather, Id just introduce a new cipherSuite. 
-If we use Elliptic, Curves, again there is nothing new in any of these algoirhtms which changes SSL. 
-I dont believe TLS should allow any encryption, other than via public key exchange, during the handshake. 
-Should TLS services (with more advanced handshaking) allow for selective "sub-stream" encryption, to support various access control policies within the user-data stream. 
-I.E. the socket service will arrange shared access to data of type 1, not not control access to type 2, by agreeing multiple MEKs and security contexts? 
-Im not so arrogant as to deny the general utility of such a sub-stream access control enforcement policy. 
-However, the architectural difference between this and what SSL was designed to do is so large that I would not introduce such facilities on the basis of enabling an additional authenticaiton procedure which demand such capabilities of the data stream, because of its vulnerabilities. 
-SSL protects the socket - or service access point. 
-The SSL protodol should not conventionally be knowing what sensitivity of various user data is present through the channel. 
-It is designed to simply agree the security services TSAP to TSAP, and then apply the relevant mechanisms stupidly (but safely). 
-The application is in control of the security context, and its reasons for any change, for privacy reasons. 
-Why cannot we merely register a cipherSuite whose semantics are: do strong encrytion for the first n bytes of user data; having performed a handshake. 
-The server must then authenticate the n bytes of shared-secret authentication from the user-stream, and perform a new handshake if it accepts the access control policy. 
-The server may choose to require client authentication, and mandatory access control estbalishment upon completeion of the first handshake, if thats its policy. 
-Peter. 
-From Dan: Similarly, public-key-based client authentication does not have to be in SSL/TLS either, since it could easily be layered on top of it. 
-An advantage of incorporating it into the protocol is, as Peter points out, interoperability. 
-Exactly the same argument applies in the case of shared-key-based authentication; a single, non-proprietary shared-key-based authentication standard embedded in TLS (which is what our proposal provides) allows independent client-builders and server-builders to implement shared-key authentication interoperably. 
-There is another justification for this incorporation in the case of shared-key authentication that does not apply in the case of public-key authentication: if for any reason the channel used is not strongly encrypted, and the shared key being used for authentication is guessable (as is often the case for user-remembered passwords), then any fully layered solution will be vulnerable to brute-force offline attacks. 
-Incorporating the authentication protocol into TLS allows a special exception to be made for the authentication data, strongly protecting it even if the normal traffic is not strongly encrypted. 
-Daniel Simon Cryptographer, Microsoft Corp. dansimon@microsoft.com 
-unsubscribe 
+<s> Phil, I dont see any underlying formal problem with introducing additional authentication protocols into an SSL application's framework of security protocols.  </s>
+<s> When DH was introduced into std SSL mechanisms, it prevented ISO NR, as does any other method of arranging a shared secret, such as passwords or code books.  </s>
+<s> There mere fact that an authentication service does not provide ISO NR is not sufficient to deny its use in, or in support of, SSL goals.  </s>
+<s> Not everyone wants ISO NR; sometimes, they definitely don't want it, eg PFS service.  </s>
+<s> Authenticated DH and KEA, and other shared secret approaches, when used in a secure manner, precludes use of a court to resolve dispute about the contents of an encrypted/integral channel, without particpation of both parties.  </s>
+<s> One parties decides to hold out, the court is powerless; if the parties do agree, they must compromise their long term keys to the court.  </s>
+<s> This is no good for Internet countries where courts are weak, and politically controlled.  </s>
+<s> The weak get trodden on, usually, this means, as they have no automatic means of recourse to an independent arbitrator.  </s>
+<s> This makes DH and similar schemes useless for cost-effective and fair commerce.  </s>
+<s> But, SSL's modern role is not restircted to commerce applications!  </s>
+<s> However, Netsacpe and Microsoft seemed already to have thought that through, surely!  </s>
+<s> I would disgaree that its necessary to modify SSL standard (in TLS) to accomplish the goal which Barb has established.  </s>
+<s> I see SSL's integrity channel as something which should simply always be there on any TCP frame henceforth.  </s>
+<s> A server side RSA key is simple to manage, and key management costs are marginal.  </s>
+<s> The wonder of RSA math means only one side needs keying and substantial improvement in default end-end channel integrity is provided, always.  </s>
+<s> To now add authentication exchanges to implement authentication services which are not standarized by SSL (exploiting whichever cipherSuite) should not require a change to SSL per se.  </s>
+<s> Any numer of intermediate layers of protocol exchnage can be layered within the SSL-integrity-protected frames, to implement whatever the parties agree.  </s>
+<s> They can use the default scalable authentication service provided by SSL which is application and stack and netweork and vendor and platform indepedent, else use their own proprietary design, as per NT's proprietary challenge-response mechanism on the web.  </s>
+<s> Exploiting SSL basic integrity channel is simply a matter of organizing winsock hooks, not fighting over standards to win market share wars or level playing fields in infrastructure deployment battles.The  </s>
+<s> means of agreeing the capabilities can be certs, or ISAKMP, or port assignment.  </s>
+<s> Netscape &amp; Microsoft jointly provided the world with a configurable comms stack via winsock which is network, and protocol independent.  </s>
+<s> The number of "subnetwork convergence protocols" which can be layered behing the service access point is arbitary.  </s>
+<s> SSL integrity can come by default atached to any TCP provider; between the application and SSL can come Microsofts secret key scheme which can deny application the rights to use SSL native authentication and/or encryption, should the vendor wish.  </s>
+<s> I can no reason to change the standard; rather, such innovations should be encouraged, though architected to minise thier introduction on the deploying infastructure, and use the flexiblities of the configurable stack technology.  </s>
+<s> That is, after all why Microsoft introduced its winsock service-based, highly configurable, comms stack technology with SSL support!  </s>
+<s> So, yes I agree with the right (and need) to introduce additional authnetication services into the Internet stack at layer 4 and 5. No I dont agree every (valid) service option should be lumbered in with SSL, as neither should it be lumbered in with IPSEC or ISAKMP.  </s>
+<s> Monolithic systems fail, as do monolithic standards.  </s>
+<s> If there exists an archictectural manner of providing the feature, then the standard offering has no reason to change, might be the rule.  </s>
+<s> This very much looks like case of forcing a change to the deployed standard to simply ensure a different incompatible standard exists.  </s>
+<s> The usual reason is marketing, and market share wars.  </s>
+<s> Peter.  </s>
+<s> From: Phil Karlton Subject: [Fwd: Shared Key Authentication for the TLS Protocol-- an Alternative] Here are two recent messages to the IETF Transport Layer Security Working Group.  </s>
+<s> I expect that many on this list may be interested in that discussion (which should take place on that list, ietf-tls@w3.org ).  </s>
+<s> That group is considering using SSL 3.0 as the basis for the TLS effort.  </s>
+<s> Note that shared secret authentication would have very different security implications, including any possible ISO non-repudiation characteristics of an established connection.  </s>
+<s> PK Philip L. Karltonkarlton@netscape.com Principal Curmudgeonhttp://home.netscape.com/people/karlton  </s>
+<s> Netscape Communications Everything should be made as simple as possible, but not simpler.  </s>
+<s> -- Albert Einstein  </s>
+<s> Similarly, public-key-based client authentication does not have to be in SSL/TLS either, since it could easily be layered on top of it.  </s>
+<s> An advantage of incorporating it into the protocol is, as Peter points out, interoperability.  </s>
+<s> Exactly the same argument applies in the case of shared-key-based authentication; a single, non-proprietary shared-key-based authentication standard embedded in TLS (which is what our proposal provides) allows independent client-builders and server-builders to implement shared-key authentication interoperably.  </s>
+<s> There is another justification for this incorporation in the case of shared-key authentication that does not apply in the case of public-key authentication: if for any reason the channel used is not strongly encrypted, and the shared key being used for authentication is guessable (as is often the case for user-remembered passwords), then any fully layered solution will be vulnerable to brute-force offline attacks.  </s>
+<s> Incorporating the authentication protocol into TLS allows a special exception to be made for the authentication data, strongly protecting it even if the normal traffic is not strongly encrypted.  </s>
+<s> Daniel Simon Cryptographer, Microsoft Corp. dansimon@microsoft.com  </s>
+<s> Dan, SSL embodies two peer-entity authentication mechanisms todate, which exploit the properties of the ciphers classes (RSA and DH) upon which they depend.  </s>
+<s> Both require that they are part of SSL's handshake.  </s>
+<s> By design, **NO** SSL data is encrypted or explicitly integrity protected prior to the completion of SSL handshake.  </s>
+<s> One cannot expect a trusted site to export sensitive data via an single level (or multi level!) encryption device until the peer-entity authentication has completed.  </s>
+<s> Peer entity authentication (w/ client auth and RSA) can establish the complete access control policy for the channel (by exchanging each sides labels), and therefore client authentication must occur proir to any user-data exchange.  </s>
+<s> Complete SSL public key authentication must occur within the handshake, or SSL's flexiblity to support mandatory access control is weakened/eliminated.  </s>
+<s> The service seeks to implement I.3.2.2.1 of the TNI to TCSEC, while recognising that - with TCP transports - the connection has already been established to some degree prioir to SSL being engaged, and is consuming resources.  </s>
+<s> So SSL implements TNI connection control, loosely.  </s>
+<s> Any alternative *SSL* authentication service must be performable within the handshake, and not require encryption.The only real reason to invest in a new mechanism is because a some new interesting class of cipher exists which needs some help in the handshake messages so as to expoit its authentication properties.  </s>
+<s> (SSL multicast authentication I believe will be a case in point, one day) For example, if I used a TYPE I algoirhtm which matched RSA properties, I would not expect to change SSL except to introduce a new cipherSuite.  </s>
+<s> If I used Type II KEA which is related to DH, I would not expect to change SSL; rather, Id just introduce a new cipherSuite.  </s>
+<s> If we use Elliptic, Curves, again there is nothing new in any of these algoirhtms which changes SSL.  </s>
+<s> I dont believe TLS should allow any encryption, other than via public key exchange, during the handshake.  </s>
+<s> Should TLS services (with more advanced handshaking) allow for selective "sub-stream" encryption, to support various access control policies within the user-data stream.  </s>
+<s> I.E. the socket service will arrange shared access to data of type 1, not not control access to type 2, by agreeing multiple MEKs and security contexts?  </s>
+<s> Im not so arrogant as to deny the general utility of such a sub-stream access control enforcement policy.  </s>
+<s> However, the architectural difference between this and what SSL was designed to do is so large that I would not introduce such facilities on the basis of enabling an additional authenticaiton procedure which demand such capabilities of the data stream, because of its vulnerabilities.  </s>
+<s> SSL protects the socket - or service access point.  </s>
+<s> The SSL protodol should not conventionally be knowing what sensitivity of various user data is present through the channel.  </s>
+<s> It is designed to simply agree the security services TSAP to TSAP, and then apply the relevant mechanisms stupidly (but safely).  </s>
+<s> The application is in control of the security context, and its reasons for any change, for privacy reasons.  </s>
+<s> Why cannot we merely register a cipherSuite whose semantics are: do strong encrytion for the first n bytes of user data; having performed a handshake.  </s>
+<s> The server must then authenticate the n bytes of shared-secret authentication from the user-stream, and perform a new handshake if it accepts the access control policy.  </s>
+<s> The server may choose to require client authentication, and mandatory access control estbalishment upon completeion of the first handshake, if thats its policy.  </s>
+<s> Peter.  </s>
+<s> From Dan: Similarly, public-key-based client authentication does not have to be in SSL/TLS either, since it could easily be layered on top of it.  </s>
+<s> An advantage of incorporating it into the protocol is, as Peter points out, interoperability.  </s>
+<s> Exactly the same argument applies in the case of shared-key-based authentication; a single, non-proprietary shared-key-based authentication standard embedded in TLS (which is what our proposal provides) allows independent client-builders and server-builders to implement shared-key authentication interoperably.  </s>
+<s> There is another justification for this incorporation in the case of shared-key authentication that does not apply in the case of public-key authentication: if for any reason the channel used is not strongly encrypted, and the shared key being used for authentication is guessable (as is often the case for user-remembered passwords), then any fully layered solution will be vulnerable to brute-force offline attacks.  </s>
+<s> Incorporating the authentication protocol into TLS allows a special exception to be made for the authentication data, strongly protecting it even if the normal traffic is not strongly encrypted.  </s>
+<s> Daniel Simon Cryptographer, Microsoft Corp. dansimon@microsoft.com  </s>
+<s> unsubscribe  </s>

@@ -1,75 +1,75 @@
-I noticed in the XML WD that there is no allowance for zenkaku spaces etc. in markup. 
-This should be fixed. 
-On Fri, 8 Nov 1996 00:24:37 -0500 Gavin Nicol said: 
-Thanks; it will be. 
-All the characters identified by Unicode as having the property of being white space will be defined as part of XML's non-terminal S, and thus will be treated as separators within markup; we just haven't got around to transcribing the relevant character codes into the non-terminal yet. 
-I had been thinking that all such separators except NBSP should also be subject to XML's white-space normalization rules (reduction of any span of white-space characters to a single SPACE -- i.e. U+0020 -- unless white-space preservation is turned on), but I am now wondering if that is the right behavior. 
-I have no experience using these variant kinds of spaces. 
-Presumably these are distinct from SPACE because they have some desirable property (such as marking 'word' 
-boundaries not otherwise detectable by software) and I'm not sure reducing them to SPACE is the correct behavior. 
-I18nists, speak up now. 
-Reduce them all or not? 
-In favor: it's simple behavior, it is easily understood, and all white space is treated the same. 
-Against: well, I don't know whether there is any argument against, that's what I am asking: *is* there an argument against? 
-Is the distinction between SPACE, half-width space, en-space, em-space, double-width space, zenkaku space, etc., to be preserved in a way that the distinction between SPACE and TAB is not preserved? 
-Should some white space characters be leveled and others 
-not? 
-We were not planning to level NBSP, since one common use for it is to try to prevent such white-space normalization in specific cases; should other 10646 white-space characters also be exempt? 
-Which? 
--C. M. Sperberg-McQueen 
-I'm not sure about the "its easily understood" statement. 
-0646 row 20 has a group of 12 "spaces", two of which are em-quad and en-quad and the rest are named as spaces, including something known as a punctuation space. 
-I suspect that if we don't treat em-quad and en-quad as spaces, but treat the rest of them as such we will be OK but I'm not convinced. 
-Personally I think of space of a defined width as being different from a separator, and what we are talking about here is the use of spaces as separators in markup rather 
-than separators in data. 
-I can't really see people entering four-per-em-spaces in an attribute value, though I can see them trying to enter a zenkaku space in a Japanese attribute value 
-Martin Bryan. 
-Martin Bryan, The SGML Centre, Churchdown, Glos. 
-GL3 2PU, UK 
-My quick re-reading of the WD doesn't answer the following for me: Is white space normalization done "before" or "after" entity expansion. 
-In other words, if a text entity starts, ends, or consists of white space characters, does white space normalization occur (1) for consecutive whitespace within the entity replacement text and/or (2) for the concatenation of the whitespace preceding the entity ref and the whitespace at the beginning of the replacement text? 
-Likewise, if a character reference is to a whitespace character (other than NBSP or any other for which ws normalization is defined not to occur anyway), does ws normalization occur wrt all the replacement texts? 
-Special spaces are, among other things, a rather old-fashioned typographic technique for inserting a "known" amount of space in a location. 
-The advantage of em-space and en-space (and thin and the like) is that, if your composition device allows it, these can be both clearly specified and font variable. 
-(I.E., My em-space in 36 point Bodini bold not just a generic 12-pt em.) ASCII (currently) makes a distinction between "whitespace" (spaces and tabs) and special characters that happen to resolve to a space on display. 
-Some of these are measured amounts of space (en, em, thin, digit, .. ). 
-Some of these are behaviors, such as "hard-space" or "non breaking space". 
-There hasn't been a problem because SGML tools do not treat &amp;emsp; as a space, and wouldn't even CONSIDER compressing "&amp;emsp;&amp;emsp;&amp;emsp;&amp;emsp;" into "&amp;emsp;" although " " is compressed to " ". 
-General thoughts: 1) At least as used in the past, an author intends for special spaces never to go away or be replaced by a "space". 
-2) How relevant is any of this to screen display? 
-How relevant is any of this to Unicode now? 
-3) If all spaces translate to "space", then who cares? 
-If the special spaces are individual characters (a la Unicode) then they are not "spaces" at all. 
-Are there any "spaces" that are not characters? 
-(I'm floundering here; these spaces have tied my tongue, but I know what I mean. 
-Can anyone rescue here?) --Debbie Lapeyre 
-6010 Executive Blvd. 
-Suite 608 E-mail: dlapeyre@mulberrytech.com 
-Rockville, MD USA 20852 
-In markup, I think that if something looks like whitespace, it should act like whitespace and be treated as a SEPCHAR. 
-However, I don't think using mad typographical spaces 
-it is good markup practise that should be encouraged, so I would be equally happy if just SP and full-width space are treated as SEPCHARs, with a recommendation that the other kinds of spaces be allowed as SEPCHARs in the guise of error-recovery only. 
-What about NBSP? 
-It is tough, but I don't really think it should be exempt: it looks like a space, and it should act like one. 
-This means that languages that use NBSP in words will have to use something else, but there are plenty of things like '-.\'~' for them to use, just like we have to now when we want to construct an identifier from several words: to make it not a SEPCHAR could make markup visually confusing. 
-In data, I think if someone uses a space character other than the standard ISO 10646 whitespace, they should be free to expect it to be passed to the application as is, otherwise why would they be using it? 
-So I think in ESIS data: (TAB SP LF CR)+ = SP The other kinds of spaces, including the full-width (zenkaku) space, should be left up to the application to deal with. 
-Actually, I am not even really keen on reducing TABs; I would be happy with just (SP LF CR)+ = SP The reduction should be done as a notional post-parse stage, so that 'X' TAB LF ' !--zzz--! ' SP SP LF LF 'X' becomes 'X' SP 'X'. 
-I think this allows more SGML compatability than doing it as a preprocess on the entities, or whatever. 
-Rick Jelliffe Allette Systems 
-I'm pretty spacey after a day of standards meetings, but I second what I think I hear Debbie saying here. 
-There is "whitespace" which composition systems, as well as SGML processors, have traditionally thrown away. 
-Then there is space which is special and which I don't want any system to mess with. 
-To Debbie's list I add the spaces that are part of the rhetoric of mathematics, such as the one before the "dx" in an integral. 
-And what about italic correction? 
-That's space that sometimes the user adds, but that may also be added by a good composition system like TeX. 
-I've always been uneasy about SGML's handling of space, which seems overly fussy from certain programming perspectives but unnecessary and downright confusing from a user-interface perspective. 
-(Sitting through a couple of hours of discussions about the character-coding parts of the SGML Declaration is good for reinforcing the suspicion that we work hard at making things hard for ourselves. 
-Hearing some notable parser writers' comments on their sufferings tends to reinforce that suspicion.) A lot of screen displays certainly aren't good enough to reproduce the old typographers' use of space, but I don't think the issue will go away. 
-The mathematicians continue to use TeX because of its capabilities for typographic expression, in spite of the rise of WYSIWYG systems. 
-After a few years of MacTacky, we've seen a return to concern for well-designed fonts. 
-I suspect that concern for spacing will return, too, as display technology improves. 
-Jim Mason Dr. James D. Mason (ISO/IEC JTC1/SC18/WG8 Convenor) Lockheed Martin Energy Systems Information Management Services SGML Systems Development 1060 Commerce Park, M.S. 6480 Oak Ridge, TN 37831-6480 U.S.A. Facsimile: +1 423 574-0004 Network: masonjd@ornl.gov 
-The problem I've seen much more often is zenkaku spaces in a DTD... 
-I think Rick's statement is something we should all note. 
-This is the right approach: clean and obvious. 
+<s> I noticed in the XML WD that there is no allowance for zenkaku spaces etc. in markup.  </s>
+<s> This should be fixed.  </s>
+<s> On Fri, 8 Nov 1996 00:24:37 -0500 Gavin Nicol said:  </s>
+<s> Thanks; it will be.  </s>
+<s> All the characters identified by Unicode as having the property of being white space will be defined as part of XML's non-terminal S, and thus will be treated as separators within markup; we just haven't got around to transcribing the relevant character codes into the non-terminal yet.  </s>
+<s> I had been thinking that all such separators except NBSP should also be subject to XML's white-space normalization rules (reduction of any span of white-space characters to a single SPACE -- i.e. U+0020 -- unless white-space preservation is turned on), but I am now wondering if that is the right behavior.  </s>
+<s> I have no experience using these variant kinds of spaces.  </s>
+<s> Presumably these are distinct from SPACE because they have some desirable property (such as marking 'word'  </s>
+<s> boundaries not otherwise detectable by software) and I'm not sure reducing them to SPACE is the correct behavior.  </s>
+<s> I18nists, speak up now.  </s>
+<s> Reduce them all or not?  </s>
+<s> In favor: it's simple behavior, it is easily understood, and all white space is treated the same.  </s>
+<s> Against: well, I don't know whether there is any argument against, that's what I am asking: *is* there an argument against?  </s>
+<s> Is the distinction between SPACE, half-width space, en-space, em-space, double-width space, zenkaku space, etc., to be preserved in a way that the distinction between SPACE and TAB is not preserved?  </s>
+<s> Should some white space characters be leveled and others  </s>
+<s> not?  </s>
+<s> We were not planning to level NBSP, since one common use for it is to try to prevent such white-space normalization in specific cases; should other 10646 white-space characters also be exempt?  </s>
+<s> Which?  </s>
+<s> -C. M. Sperberg-McQueen  </s>
+<s> I'm not sure about the "its easily understood" statement.  </s>
+<s> 0646 row 20 has a group of 12 "spaces", two of which are em-quad and en-quad and the rest are named as spaces, including something known as a punctuation space.  </s>
+<s> I suspect that if we don't treat em-quad and en-quad as spaces, but treat the rest of them as such we will be OK but I'm not convinced.  </s>
+<s> Personally I think of space of a defined width as being different from a separator, and what we are talking about here is the use of spaces as separators in markup rather  </s>
+<s> than separators in data.  </s>
+<s> I can't really see people entering four-per-em-spaces in an attribute value, though I can see them trying to enter a zenkaku space in a Japanese attribute value  </s>
+<s> Martin Bryan.  </s>
+<s> Martin Bryan, The SGML Centre, Churchdown, Glos.  </s>
+<s> GL3 2PU, UK  </s>
+<s> My quick re-reading of the WD doesn't answer the following for me: Is white space normalization done "before" or "after" entity expansion.  </s>
+<s> In other words, if a text entity starts, ends, or consists of white space characters, does white space normalization occur (1) for consecutive whitespace within the entity replacement text and/or (2) for the concatenation of the whitespace preceding the entity ref and the whitespace at the beginning of the replacement text?  </s>
+<s> Likewise, if a character reference is to a whitespace character (other than NBSP or any other for which ws normalization is defined not to occur anyway), does ws normalization occur wrt all the replacement texts?  </s>
+<s> Special spaces are, among other things, a rather old-fashioned typographic technique for inserting a "known" amount of space in a location.  </s>
+<s> The advantage of em-space and en-space (and thin and the like) is that, if your composition device allows it, these can be both clearly specified and font variable.  </s>
+<s> (I.E., My em-space in 36 point Bodini bold not just a generic 12-pt em.) ASCII (currently) makes a distinction between "whitespace" (spaces and tabs) and special characters that happen to resolve to a space on display.  </s>
+<s> Some of these are measured amounts of space (en, em, thin, digit, .. ).  </s>
+<s> Some of these are behaviors, such as "hard-space" or "non breaking space".  </s>
+<s> There hasn't been a problem because SGML tools do not treat &amp;emsp; as a space, and wouldn't even CONSIDER compressing "&amp;emsp;&amp;emsp;&amp;emsp;&amp;emsp;" into "&amp;emsp;" although " " is compressed to " ".  </s>
+<s> General thoughts: 1) At least as used in the past, an author intends for special spaces never to go away or be replaced by a "space".  </s>
+<s> 2) How relevant is any of this to screen display?  </s>
+<s> How relevant is any of this to Unicode now?  </s>
+<s> 3) If all spaces translate to "space", then who cares?  </s>
+<s> If the special spaces are individual characters (a la Unicode) then they are not "spaces" at all.  </s>
+<s> Are there any "spaces" that are not characters?  </s>
+<s> (I'm floundering here; these spaces have tied my tongue, but I know what I mean.  </s>
+<s> Can anyone rescue here?) --Debbie Lapeyre  </s>
+<s> 6010 Executive Blvd.  </s>
+<s> Suite 608 E-mail: dlapeyre@mulberrytech.com  </s>
+<s> Rockville, MD USA 20852  </s>
+<s> In markup, I think that if something looks like whitespace, it should act like whitespace and be treated as a SEPCHAR.  </s>
+<s> However, I don't think using mad typographical spaces  </s>
+<s> it is good markup practise that should be encouraged, so I would be equally happy if just SP and full-width space are treated as SEPCHARs, with a recommendation that the other kinds of spaces be allowed as SEPCHARs in the guise of error-recovery only.  </s>
+<s> What about NBSP?  </s>
+<s> It is tough, but I don't really think it should be exempt: it looks like a space, and it should act like one.  </s>
+<s> This means that languages that use NBSP in words will have to use something else, but there are plenty of things like '-.\'~' for them to use, just like we have to now when we want to construct an identifier from several words: to make it not a SEPCHAR could make markup visually confusing.  </s>
+<s> In data, I think if someone uses a space character other than the standard ISO 10646 whitespace, they should be free to expect it to be passed to the application as is, otherwise why would they be using it?  </s>
+<s> So I think in ESIS data: (TAB SP LF CR)+ = SP The other kinds of spaces, including the full-width (zenkaku) space, should be left up to the application to deal with.  </s>
+<s> Actually, I am not even really keen on reducing TABs; I would be happy with just (SP LF CR)+ = SP The reduction should be done as a notional post-parse stage, so that 'X' TAB LF ' !--zzz--! ' SP SP LF LF 'X' becomes 'X' SP 'X'.  </s>
+<s> I think this allows more SGML compatability than doing it as a preprocess on the entities, or whatever.  </s>
+<s> Rick Jelliffe Allette Systems  </s>
+<s> I'm pretty spacey after a day of standards meetings, but I second what I think I hear Debbie saying here.  </s>
+<s> There is "whitespace" which composition systems, as well as SGML processors, have traditionally thrown away.  </s>
+<s> Then there is space which is special and which I don't want any system to mess with.  </s>
+<s> To Debbie's list I add the spaces that are part of the rhetoric of mathematics, such as the one before the "dx" in an integral.  </s>
+<s> And what about italic correction?  </s>
+<s> That's space that sometimes the user adds, but that may also be added by a good composition system like TeX.  </s>
+<s> I've always been uneasy about SGML's handling of space, which seems overly fussy from certain programming perspectives but unnecessary and downright confusing from a user-interface perspective.  </s>
+<s> (Sitting through a couple of hours of discussions about the character-coding parts of the SGML Declaration is good for reinforcing the suspicion that we work hard at making things hard for ourselves.  </s>
+<s> Hearing some notable parser writers' comments on their sufferings tends to reinforce that suspicion.) A lot of screen displays certainly aren't good enough to reproduce the old typographers' use of space, but I don't think the issue will go away.  </s>
+<s> The mathematicians continue to use TeX because of its capabilities for typographic expression, in spite of the rise of WYSIWYG systems.  </s>
+<s> After a few years of MacTacky, we've seen a return to concern for well-designed fonts.  </s>
+<s> I suspect that concern for spacing will return, too, as display technology improves.  </s>
+<s> Jim Mason Dr. James D. Mason (ISO/IEC JTC1/SC18/WG8 Convenor) Lockheed Martin Energy Systems Information Management Services SGML Systems Development 1060 Commerce Park, M.S. 6480 Oak Ridge, TN 37831-6480 U.S.A. Facsimile: +1 423 574-0004 Network: masonjd@ornl.gov  </s>
+<s> The problem I've seen much more often is zenkaku spaces in a DTD...  </s>
+<s> I think Rick's statement is something we should all note.  </s>
+<s> This is the right approach: clean and obvious.  </s>

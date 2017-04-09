@@ -1,42 +1,42 @@
-06/20/2000 11:57 AM Brad Taylor@NEON Brad Taylor@NEON Brad Taylor@NEON 06/20/2000 11:57 AM 06/20/2000 11:57 AM We are having a debate on browser behaviour and are trying to find what the official spec says. 
-What we see is that browsers (ie5.0 and netscape) when "POST"ing to our server construct a content-length and then append a 0d0a to the end. 
-This 0d0a is not contained in the content length. 
-Is this according to "SPEC"? 
-If so would someone be so kind as to point it out (I am somewhat new to reading these specs). 
-Is this only going to occur for POSTed data or will it also occur for other requests (GET, PUT, etc.)....your consideration in advance is appreciated. 
-See RFC 2616 ( http://www.innosoft.com/rfc/rfc2616.html#sec-4.1 ) Quoting: Request (section 5) and Response (section 6) messages use the generic message format of RFC 822 [9] for transferring entities (the payload of the message). 
-Both types of message consist of a start-line, zero or more header fields (also known as "headers"), an empty line (i.e., a line with nothing preceding the CRLF) indicating the end of the header fields, and possibly a message-body. 
-generic-message = start-line *(message-header CRLF) CRLF [ message-body ] The CRLF that separates the headers from the body is not part of either. 
-Since it is not part of the body, it is not included in the content length. 
-Scott Lawrence Director of R &amp; D lawrence@agranat.com 
-Agranat Systems Embedded Web Technology http://www.agranat.com/ 
-Fred Bohle@NEON 06/20/2000 12:51 PM Scott, 
-No, not the CRLF between the headers and the body. 
-We are asking about a CRLF that follows the body. 
-It does not seem to be in the 1.0 spec, and the 1.1 spec seems to specifically prohibit it. 
-And yet, IE5 and Netscape both will 
-send a CRLF after the body for Content-type: application/x-www-url-encoded. 
-What do other web servers do to handle this CRLF? 
-We find that if we decide to close the connection with the end of the response we generate, (Connection: close) and THEN the CRLF arrives from the client, the TCP layer will generate a Reset packet. 
-This causes (IE5 at least) the client to fail processing the response we just sent. 
-So the application stops, dead in the water. 
-Fred Bohle "Scott Lawrence" lawrence@agranat.com on 06/20/2000 12:36:45 PM Subject: RE: CRLF on POST requests, where/how specified (repost from prior bad subject line) See RFC 2616 ( http://www.innosoft.com/rfc/rfc2616.html#sec-4.1 ) Quoting: Request (section 5) and Response (section 6) messages use the generic message format of RFC 822 [9] for transferring entities (the payload of the message). 
-Both types of message consist of a start-line, zero or more header fields (also known as "headers"), an empty line (i.e., a line with nothing preceding the CRLF) indicating the end of the header fields, and possibly a message-body. 
-generic-message = start-line *(message-header CRLF) CRLF [ message-body ] The CRLF that separates the headers from the body is not part of either. 
-Since it is not part of the body, it is not included in the content length. 
-Scott Lawrence Director of R &amp; D lawrence@agranat.com 
-Agranat Systems Embedded Web Technology http://www.agranat.com/ 
-IIRC, early in HTTP/1.1 development there were servers that balked if they received the message body associated with POST but the body didn't end with a CRLF. 
-Or maybe it was that some clients erroneously sent CRLF after every POST body. 
-Either way, RFC 2616 added the following words (Sect. 
-4.1): In the interest of robustness, servers SHOULD ignore any empty line(s) received where a Request-Line is expected. 
-In other words, if the server is reading the protocol stream at the beginning of a message and receives a CRLF first, it should ignore the CRLF. 
-The idea was that if there were pipelined requests, or multiple requests on a persistent connection, the server should eat the extra CRLFs. 
-Dave Kristol 
-The spec clearly disallows this extra CRLF, i.e. it's a bug in those browsers. 
-However, there is an easy workaround which many people use: when reading the request line, ignore all whitespace (or empty lines) until you hit the actual request line. 
-This is a little tricky, but not much. 
-Basically you need to do a shutdown on the socket, i.e. only close for sends; then you keep reading from the socket (and just discard the data) until either you get an EOF (in which case the client did the close), or until some timeout (a few seconds) in case the client doesn't close the connection. 
-Note that this problem is a general problem (i.e. not limited to the extra CRLF), because you can get the same effect when a client pipelines requests. 
-Cheers, Ronald P.S. take a look at the Apache source: read_request_line() in http_protocol.c for the first problem, and lingering_close() in http_main.c 
-for the second - the comments are enlightening. 
+<s> 06/20/2000 11:57 AM Brad Taylor@NEON Brad Taylor@NEON Brad Taylor@NEON 06/20/2000 11:57 AM 06/20/2000 11:57 AM We are having a debate on browser behaviour and are trying to find what the official spec says.  </s>
+<s> What we see is that browsers (ie5.0 and netscape) when "POST"ing to our server construct a content-length and then append a 0d0a to the end.  </s>
+<s> This 0d0a is not contained in the content length.  </s>
+<s> Is this according to "SPEC"?  </s>
+<s> If so would someone be so kind as to point it out (I am somewhat new to reading these specs).  </s>
+<s> Is this only going to occur for POSTed data or will it also occur for other requests (GET, PUT, etc.)....your consideration in advance is appreciated.  </s>
+<s> See RFC 2616 ( http://www.innosoft.com/rfc/rfc2616.html#sec-4.1 ) Quoting: Request (section 5) and Response (section 6) messages use the generic message format of RFC 822 [9] for transferring entities (the payload of the message).  </s>
+<s> Both types of message consist of a start-line, zero or more header fields (also known as "headers"), an empty line (i.e., a line with nothing preceding the CRLF) indicating the end of the header fields, and possibly a message-body.  </s>
+<s> generic-message = start-line *(message-header CRLF) CRLF [ message-body ] The CRLF that separates the headers from the body is not part of either.  </s>
+<s> Since it is not part of the body, it is not included in the content length.  </s>
+<s> Scott Lawrence Director of R &amp; D lawrence@agranat.com  </s>
+<s> Agranat Systems Embedded Web Technology http://www.agranat.com/  </s>
+<s> Fred Bohle@NEON 06/20/2000 12:51 PM Scott,  </s>
+<s> No, not the CRLF between the headers and the body.  </s>
+<s> We are asking about a CRLF that follows the body.  </s>
+<s> It does not seem to be in the 1.0 spec, and the 1.1 spec seems to specifically prohibit it.  </s>
+<s> And yet, IE5 and Netscape both will  </s>
+<s> send a CRLF after the body for Content-type: application/x-www-url-encoded.  </s>
+<s> What do other web servers do to handle this CRLF?  </s>
+<s> We find that if we decide to close the connection with the end of the response we generate, (Connection: close) and THEN the CRLF arrives from the client, the TCP layer will generate a Reset packet.  </s>
+<s> This causes (IE5 at least) the client to fail processing the response we just sent.  </s>
+<s> So the application stops, dead in the water.  </s>
+<s> Fred Bohle "Scott Lawrence" lawrence@agranat.com on 06/20/2000 12:36:45 PM Subject: RE: CRLF on POST requests, where/how specified (repost from prior bad subject line) See RFC 2616 ( http://www.innosoft.com/rfc/rfc2616.html#sec-4.1 ) Quoting: Request (section 5) and Response (section 6) messages use the generic message format of RFC 822 [9] for transferring entities (the payload of the message).  </s>
+<s> Both types of message consist of a start-line, zero or more header fields (also known as "headers"), an empty line (i.e., a line with nothing preceding the CRLF) indicating the end of the header fields, and possibly a message-body.  </s>
+<s> generic-message = start-line *(message-header CRLF) CRLF [ message-body ] The CRLF that separates the headers from the body is not part of either.  </s>
+<s> Since it is not part of the body, it is not included in the content length.  </s>
+<s> Scott Lawrence Director of R &amp; D lawrence@agranat.com  </s>
+<s> Agranat Systems Embedded Web Technology http://www.agranat.com/  </s>
+<s> IIRC, early in HTTP/1.1 development there were servers that balked if they received the message body associated with POST but the body didn't end with a CRLF.  </s>
+<s> Or maybe it was that some clients erroneously sent CRLF after every POST body.  </s>
+<s> Either way, RFC 2616 added the following words (Sect.  </s>
+<s> 4.1): In the interest of robustness, servers SHOULD ignore any empty line(s) received where a Request-Line is expected.  </s>
+<s> In other words, if the server is reading the protocol stream at the beginning of a message and receives a CRLF first, it should ignore the CRLF.  </s>
+<s> The idea was that if there were pipelined requests, or multiple requests on a persistent connection, the server should eat the extra CRLFs.  </s>
+<s> Dave Kristol  </s>
+<s> The spec clearly disallows this extra CRLF, i.e. it's a bug in those browsers.  </s>
+<s> However, there is an easy workaround which many people use: when reading the request line, ignore all whitespace (or empty lines) until you hit the actual request line.  </s>
+<s> This is a little tricky, but not much.  </s>
+<s> Basically you need to do a shutdown on the socket, i.e. only close for sends; then you keep reading from the socket (and just discard the data) until either you get an EOF (in which case the client did the close), or until some timeout (a few seconds) in case the client doesn't close the connection.  </s>
+<s> Note that this problem is a general problem (i.e. not limited to the extra CRLF), because you can get the same effect when a client pipelines requests.  </s>
+<s> Cheers, Ronald P.S. take a look at the Apache source: read_request_line() in http_protocol.c for the first problem, and lingering_close() in http_main.c  </s>
+<s> for the second - the comments are enlightening.  </s>

@@ -1,197 +1,197 @@
-Delta-V Design Group Meeting IETF San Diego 9:00 am - 3:00 pm Wednesday 14 December 2000 Attendees: Jim Amsden (IBM Raleigh) Geoff Clemm (Rational Software) Tim Ellison (IBM UK) Mark Hale (Interwoven) James Hunt (Universit?t 
-Karlsruhe / FZI) Eric Sedlar (Oracle) [Note: section references are based on draft-ietf-deltav-versioning-10.9] Discussion of core behaviour of LOCKing an auto-versioned resource followed by PUTs, PROPPATCHes and UNLOCK. 
-Agreed that the proposed behaviour of PUT 
-to a LOCKed auto-versioned resource should be to checkout the resource and 
-update its contents without checking it back in. 
-Subsequent PUTs and PROPPATCHes would update the same (mutable) working resource. 
-Thw working resource would be checked in when the resource was UNLOCKed. 
-Discussed ways of working with client side workspaces. 
-One model is that clients acquire locks across all resources that they want 
-to update, sends updates, then releases all the locks. 
-This is inherently 
-pessimistic, and isn't going to scale to updating large numbers of resources. 
-Another model is to use GET and PROPFIND to copy resources over to the 
-client machine. 
-Clearly clients must be stateful to maintain the resources 
-and any subsequent changes to the resources made by the client. 
-(Clients 
-may check with the server to ensure that the changes are still 
-non-conflicting by considering the current server state.) 
-When time comes 
-to make changes on the server the client checks out the versions, issues 
-PUT and PROPPATCH to update the working resource on the server and CHECKIN 
-the working resource. 
-Note that working resources are required since there 
-is no single method for setting properties and content simultaneously. 
-Some servers may have a batch capability to atomically check in numerous resources atomically. 
-In both models for client side workspaces, servers are required to provise working resources, however, in server side workspaces clients simply use workspaces. 
-It was noted that we now have multiple ways of checking out a resource, LOCK+autoversion, CHECKOUT a version controlled resource, &amp; CHECKOUT a version. 
-Mutable versions can be suppurted by allowing clients that have a lock on a version resource to update the contents and properties in place. 
-Advantage of this LOCK/UNLOCK behaviour is that dav level two clients can now create new versions without needing new methods (they still require a versioning client to VERSION-CONTROL to resource initially) and without all intermediate states of their PUTs and PROPPATCHes being recorded in version history. 
-Should clarify in the spec. 
-that 'Overwrite : T' means update in place 
-(thereby ignoring the RFC2518 semantics that call for an initial DELETE of 
-the destination). 
-Remove the 'Overwrite: update' option. 
-Should require that the error response for new methods contains an XML body as defined in the spec. 
-(for advanced error reporting) unless it has been otherwise negotiated (via header(s) to be defined). 
-For existing methods we probably have to adopt the existing error conditions (and advanced error reporting may have to opt-in). 
-Agenda item: should consider moving SET-TARGET out of core. 
-Discussion of versioned resource vs. a version controlled resource (vcr) and why we need to distinguish between resources that can be modified and resources that cannot be modified in a LOCK-PUT-UNLOCK sequence (excepting mutable versions). 
-This is a candidate for the delta-v book of why. 
-Suggested that we specify that allprop requests do not return any delta-v properties -- rejected since it does not solve the allprop problem. 
-Discussed checking out in the context of a baseline. 
-Create a baseline resource, can then checkout a resource specifying a baseline in the CHECKOUT body (i.e., the baseline 'contains' a working resource/collection). 
-All the members MUST be checked in before the baseline can be checked in. 
-Add a DAV:checked-out property to return the working resources in the baseline. 
-Consider introducing a DAV:sub-baseline property? 
-Geoff will write up the semantics of checkig out against a baseline and post it to the list for general comments. 
-Discussed versionig whole respositories -- a single baseline is created that represents the entire state of all resources. 
-The state of the repository is captured in the baseline history. 
-Suggested that there be no branching in core, no labels in core, but that 
-there should be a version history available in core. 
-Should separate the 'label' option from the client managed workspace option. 
-I becomes its own option. 
-How about a header to get the latest version in an activity? 
-Suggest a REPORT against a version history to ask for the latest verswion 
-in a given activity, the response includes a version URL (noted that you can issue depth requests if the target is a collection). 
-Post conditions may be better expressed as (inverse) pre-conditions in some cases. 
-In any case should add extended status error tags to postconditions to allow the server to illustrate that the post condition could not be met. 
-6.1.1 Grammar href+ becomes href* 6.11 DAV:activity-must-exist/ precondition should be added. 
-Discussion of labels and baselines. 
-Discussion of defining a DAV:is-branch property on an activity to advise a client whether the activity represents a branch or change set. 
-The property would have no impact on the server behaviour. 
-Alternative suggestion was to define a DAV:is-change-set property that would require the server to enfore there was only one version per history per activity. 
-Howevr, it was noted that this would require a means for setting the property when the activity is created (defining a body to initialize properties during MKACTIVITY?) 
-James H. agreed to write up his semantics differences between a chane set and a branch (both being sets of resources) and why it would be useful for servers to distinguish them. 
-James to post this to the list. 
-Should check through the protocol document and identify which live properties should be protected by a write lock. 
-Set the agenda for the delta-v working group meeting. 
-Meeting closed at 3:00pm. 
-As one of the guys using activities :-), I'm fine with adding the DAV:is-change-set property, and extending the request body. 
-Sounds great. 
-Cheers, -g Greg Stein, http://www.lyra.org/ 
-A third model: the client does a CHECKOUT to get a working resource, then does a bunch of PUT/PROPPATCH to that working resource. 
-When the client is done, it does a CHECKIN. 
-[ this contrasts to your model #2 where the client doesn't checkout until they are done with a bunch of local changes. 
-] 
-About bloody time. 
-Please. 
-Without labels, the only thing that SET-TARGET could do is point at a specific version, rather than "floating" with the latest. 
-(hmm. 
-how would you reset the target to floating?) [ and I don't want to implement SET-TARGET :-) ] 
-Um. Why? 
-At the moment, I'm not seeing a need for these in Subversion. 
-I'd like to understand the need for these in the core. 
-[ I think the core should only be enough to support straight-line versioning, and enough to support down-level clients. 
-] 
-Yah, I saw this just a couple nights ago. 
-I couldn't figure out why the two concepts were mixed into the same section. 
-Couldn't you do this with a property report, fetching the DAV:activity-set for each version resource identified by DAV:version-set of the version history resource? 
-[ although this form would give you all the activities associated with a version history ] Hmm. 
-Something closer would be a property report fetching an activity's version-set, then their checkin-date. 
-The client could then sort them. 
-But yah... another report is possible, too :-) Cheers, -g Greg Stein, http://www.lyra.org/ 
-The reason why "core" versioning servers, e.g. document management servers, need a way to list existing versions (what I think is meant by "version history") is because you need a way to tell the client what the URLs for previous versions are. 
-The URLs are not calculable by clietns. 
-The format can be as dead simple as a list of URLs, though. 
-Is there any way that getting a list of revision URLs for a versioned resource can work the same way as DAV clients currently browse directory contents? 
-At least, the XML format can be similar: Hmm, this really argues for using PROPFIND since the client can say what 
-props they want for the version. 
-Perhaps instead of using attributes in the body of PROPFIND request (I never really understood where they would go) there could just be an XML element to tell the server whether the client wanted version detail or not: PROPFIND thisresource lisa 
-From: ietf-dav-versioning-request@w3.org [mailto:ietf-dav-versioning-request@w3.org]On 
-Behalf Of Greg Stein Sent: Friday, December 15, 2000 3:13 PM Subject: Re: Minutes Delta-V breakout meeting 14-Dec-00 
-From: "Lisa Dusseault" lisa@xythos.com 
-The reason why "core" versioning servers, e.g. document management servers, need a way to list existing versions (what I think is meant by "version history") is because you need a way to tell the client what the URLs for previous versions are. 
-The URLs are not calculable by clietns. 
-I don't think Greg was questioning the need to have a way of getting a list of existing versions. 
-I think he was just saying that he doesn't need anything more than the DAV:version-tree report (i.e. doesn't need the version history to actually be a resource). 
-The format can be as dead simple as a list of URLs, though. 
-Is there any way that getting a list of revision URLs for a versioned resource can work the same way as DAV clients currently browse directory contents? 
-Yes, the DAV:version-tree report lets you say what properties you want to see. 
-If you support version history resources, you can use the DAV:property report (which returns an extended PROPFIND-like response). 
-Cheers, Geoff 
-Correct. Version histories do not add anything to our system at this point. 
-We will support the version-tree, though. 
-That said: I *do* know how/what a version history resource would be within our system, and could provide the functionality; it is simply that the client doesn't need it at this time. 
-[ and, in fact, I don't see its purpose in general. 
-if you could somehow browse and acquire an HREF to a history, then you'd have a resource that tells you a bunch of version resources. 
-But that doesn't tell you anything about the version-controlled resources (e.g. they're layout/structure, how they were made visible to users). 
-So basically, you have an unstructured index to some data, but without a way to properly structure it. 
-Seems a bit pointless :-) ] 
-How is a property report useful? 
-There is the mapping problem back to the version-controlled resources (VCR). 
-Hmm. 
-I guess "detached" version histories aren't useful. 
-When they are still hooked in via a VCR, then it handy because you can link from a VCR to a history to versions within a property report. 
-Oh, whoops. 
-I think that I will have version histories. 
-I forgot that I was planning to do prop reports just like that for some functionality (specifically, to call up a change log with users, times, comments). 
-hehe... call me clueless :-) Cheers, -g Greg Stein, http://www.lyra.org/ 
-Greg, Glad to see we're hitting some our your issues. 
-A third model: the client does a CHECKOUT to get a working resource, then does a bunch of PUT/PROPPATCH to that working resource. 
-When the client is done, it does a CHECKIN. 
-jra This was the model Tim was referring to, he just left out the checkout. 
-The checkout can be done either when the client gets the resource to indicate an intent to change and/or reserve the resource, or when ready to do the updates on the server. 
-The protocol can support either policy. 
-/jra 
-that 
-Um. Why? 
-At the moment, I'm not seeing a need for these in Subversion. 
-I'd like to understand the need for these in the core. 
-jra The purpose of the version history resource is just to provide a place to get information about the versioned resource, and to provide a resource the server can iterate over in a report/list. 
-This is in case there are no version-controlled resources on a version and it becomes "lost". 
-/jra Couldn't you do this with a property report, fetching the DAV:activity-set for each version resource identified by DAV:version-set of the version history resource? 
-jra We could, but this is likely to be a common operation, especially just before merging an activity into a a workspace. 
-/jra 
-Hmm, this really argues for using PROPFIND since the client can say what props they want for the version. 
-Perhaps instead of using attributes in the body of PROPFIND request (I never really understood where they would go) there could just be an XML element to tell the server whether the client wanted version detail or not: PROPFIND thisresource jra Lisa, here's what we were planning: This is more compatible with 2518. 
-I'm afraid I'm a little confused, perhaps it's just the indenting. 
-Is the versions tag supposed to be inside each the property name tags, or parallel to them? 
-I'd suggest one only needs one versions tag per PROPFIND body, because it's pretty nonsensical to ask for one property over 5 versions, and a different property over 50 versions, all in one request. 
-the client is more likely to make separate requests. 
-Another suggestion is to reuse the "range" syntax and logic (e.g. byte-range headers). 
-This allows a "last-n" selection, as well as "m through n" or "first n". 
-Then we don't need to define custom syntax or logic to pick which versions to show. 
-The basic idea, I think, is sound. 
-lisa [mailto:ietf-dav-versioning-request@w3.org]On 
-Behalf Of Jim Amsden Hmm, this really argues for using PROPFIND since the client can say what props they want for the version. 
-Perhaps instead of using attributes in the body of PROPFIND request (I never really understood where they would go) there could just be an XML element to tell the server whether the client wanted version detail or not: PROPFIND thisresource jra Lisa, here's what we were planning: This is more compatible with 2518. 
-At the recent IETF meeting, JimA proposed that we use PROPFIND instead of REPORT to obtain information from the server that requires arguments to qualify what kind of information is required. 
-Although an appealing thought, after mulling this over, I don't see how we could do this in a way that is compatible with PROPFIND but does not violate the property value DTD's. 
-Jim's recent post describing a request of this kind doesn't really work: If you indent this consistently, it becomes: which seems to be a request for creator-displayname, checkin-date, and a repeated request for a property named "D:versions" (I'm assuming that all elements should have been prefixed by "D:"). 
-Based on his original indentation, JimA probably meant: But now we've violated the DTD's for D:checkin-date and 
-D:creator-displayname (which are supposed to be either empty or dates and strings, respectively, to display to the user). 
-Currently, I think the avoidance of DTD ambiguity is worth the introduction of a new method (i.e. REPORT). 
-Cheers, Geoff From: "Lisa Dusseault" lisa@xythos.com 
-Date: Sun, 17 Dec 2000 16:33:44 -0800 I'm afraid I'm a little confused, perhaps it's just the indenting. 
-Is the versions tag supposed to be inside each the property name tags, or parallel to them? 
-I'd suggest one only needs one versions tag per PROPFIND body, because it's pretty nonsensical to ask for one property over 5 versions, and a different property over 50 versions, all in one request. 
-the client is more likely to make separate requests. 
-Another suggestion is to reuse the "range" syntax and logic (e.g. byte-range headers). 
-This allows a "last-n" selection, as well as "m through n" or "first n". 
-Then we don't need to define custom syntax or logic to pick which versions to show. 
-The basic idea, I think, is sound. 
-lisa [mailto:ietf-dav-versioning-request@w3.org]On 
-Behalf Of Jim Amsden Hmm, this really argues for using PROPFIND since the client can say what props they want for the version. 
-Perhaps instead of using attributes in the body of PROPFIND request (I never really understood where they would go) there could just be an XML element to tell the server whether the client wanted version detail or not: PROPFIND thisresource jra Lisa, here's what we were planning: This is more compatible with 2518. 
-I find that using PROPFIND rather than REPORT is a big bogus. 
-I'm not necessarily asking for properties. 
-I'm asking for information from the server. 
-Is a compare-report a set of *properties* ?? Not in my mind. 
-For Subversion, I'm also going to be using a custom report. 
-The client will send to the server a representation of the client state. 
-The server will return a report saying something to the effect of, "that tree is out of date; that file is an older version, but is equivalent to the latest; those files are fine; etc" That isn't a PROPFIND :-) Cheers, -g 
-Greg Stein, http://www.lyra.org/ 
-id=""iraun1.ira.0096901:001218.111203"@ira.uka.de" 
-This is just another nice example for a problem that can elegantly be solved with the DTD change for properties that James and I recently suggested (see With this change, you could think of something like the following: Instead of requiring that a DAV:property-versions element follows each DAV:property-name element, one could -- following Lisa's suggestion -- define the DTD to allow only one DAV:property-versions element as the last (or, alternatively, the first) element within the DAV:prop element. 
-Or, if you like overkill, write a DTD that either allows a single DAV:property-versions element as the first element within a DAV:prop element or a DAV:property-versions element after each D:property-name element. 
-BTW., the "show-last-five" is subject to be replaced by something seriously specified, right? 
-If RFC2518 had introduced a D:property-name as in the above example, the new D:property-versions element just could be ignored by servers that do not know this element without breaking compatibility. 
-Maybe it is really time to fix this in RFC2518 rather than introducing yet another workaround? 
-Bye, Juergen 
-There are other XML structural possibilities which will work though: The meaning of this would be defined to be: show me these listed properties, for the last five versions [1], for every resource in the scope of this PROPFIND request (we may want to allow servers to limit this kind of request to depth 0 but that's easy). 
-Since DAV servers MUST ignore elements they don't understand [2], this ought to work on any server. 
-Even if not, since the client will only send this kind of request to a server which it knows to support versioning (from the OPTIONS response), this won't mess up any server at all. 
-method. 
-I just wanted to counter the logic that this can't be done in a way that is completely compatible with PROPFIND -- Lisa [1] Syntax I used here for "last five" borrowed from RFC2068, section 14.36.1 "o The final 500 bytes (byte offsets 9500-9999, inclusive): bytes=-500" [2] RFC2518, section 14 "All DAV compliant resources MUST ignore any unknown XML element and all its children encountered while processing a DAV method that uses XML as its command language." 
+<s> Delta-V Design Group Meeting IETF San Diego 9:00 am - 3:00 pm Wednesday 14 December 2000 Attendees: Jim Amsden (IBM Raleigh) Geoff Clemm (Rational Software) Tim Ellison (IBM UK) Mark Hale (Interwoven) James Hunt (Universit?t  </s>
+<s> Karlsruhe / FZI) Eric Sedlar (Oracle) [Note: section references are based on draft-ietf-deltav-versioning-10.9] Discussion of core behaviour of LOCKing an auto-versioned resource followed by PUTs, PROPPATCHes and UNLOCK.  </s>
+<s> Agreed that the proposed behaviour of PUT  </s>
+<s> to a LOCKed auto-versioned resource should be to checkout the resource and  </s>
+<s> update its contents without checking it back in.  </s>
+<s> Subsequent PUTs and PROPPATCHes would update the same (mutable) working resource.  </s>
+<s> Thw working resource would be checked in when the resource was UNLOCKed.  </s>
+<s> Discussed ways of working with client side workspaces.  </s>
+<s> One model is that clients acquire locks across all resources that they want  </s>
+<s> to update, sends updates, then releases all the locks.  </s>
+<s> This is inherently  </s>
+<s> pessimistic, and isn't going to scale to updating large numbers of resources.  </s>
+<s> Another model is to use GET and PROPFIND to copy resources over to the  </s>
+<s> client machine.  </s>
+<s> Clearly clients must be stateful to maintain the resources  </s>
+<s> and any subsequent changes to the resources made by the client.  </s>
+<s> (Clients  </s>
+<s> may check with the server to ensure that the changes are still  </s>
+<s> non-conflicting by considering the current server state.)  </s>
+<s> When time comes  </s>
+<s> to make changes on the server the client checks out the versions, issues  </s>
+<s> PUT and PROPPATCH to update the working resource on the server and CHECKIN  </s>
+<s> the working resource.  </s>
+<s> Note that working resources are required since there  </s>
+<s> is no single method for setting properties and content simultaneously.  </s>
+<s> Some servers may have a batch capability to atomically check in numerous resources atomically.  </s>
+<s> In both models for client side workspaces, servers are required to provise working resources, however, in server side workspaces clients simply use workspaces.  </s>
+<s> It was noted that we now have multiple ways of checking out a resource, LOCK+autoversion, CHECKOUT a version controlled resource, &amp; CHECKOUT a version.  </s>
+<s> Mutable versions can be suppurted by allowing clients that have a lock on a version resource to update the contents and properties in place.  </s>
+<s> Advantage of this LOCK/UNLOCK behaviour is that dav level two clients can now create new versions without needing new methods (they still require a versioning client to VERSION-CONTROL to resource initially) and without all intermediate states of their PUTs and PROPPATCHes being recorded in version history.  </s>
+<s> Should clarify in the spec.  </s>
+<s> that 'Overwrite : T' means update in place  </s>
+<s> (thereby ignoring the RFC2518 semantics that call for an initial DELETE of  </s>
+<s> the destination).  </s>
+<s> Remove the 'Overwrite: update' option.  </s>
+<s> Should require that the error response for new methods contains an XML body as defined in the spec.  </s>
+<s> (for advanced error reporting) unless it has been otherwise negotiated (via header(s) to be defined).  </s>
+<s> For existing methods we probably have to adopt the existing error conditions (and advanced error reporting may have to opt-in).  </s>
+<s> Agenda item: should consider moving SET-TARGET out of core.  </s>
+<s> Discussion of versioned resource vs. a version controlled resource (vcr) and why we need to distinguish between resources that can be modified and resources that cannot be modified in a LOCK-PUT-UNLOCK sequence (excepting mutable versions).  </s>
+<s> This is a candidate for the delta-v book of why.  </s>
+<s> Suggested that we specify that allprop requests do not return any delta-v properties -- rejected since it does not solve the allprop problem.  </s>
+<s> Discussed checking out in the context of a baseline.  </s>
+<s> Create a baseline resource, can then checkout a resource specifying a baseline in the CHECKOUT body (i.e., the baseline 'contains' a working resource/collection).  </s>
+<s> All the members MUST be checked in before the baseline can be checked in.  </s>
+<s> Add a DAV:checked-out property to return the working resources in the baseline.  </s>
+<s> Consider introducing a DAV:sub-baseline property?  </s>
+<s> Geoff will write up the semantics of checkig out against a baseline and post it to the list for general comments.  </s>
+<s> Discussed versionig whole respositories -- a single baseline is created that represents the entire state of all resources.  </s>
+<s> The state of the repository is captured in the baseline history.  </s>
+<s> Suggested that there be no branching in core, no labels in core, but that  </s>
+<s> there should be a version history available in core.  </s>
+<s> Should separate the 'label' option from the client managed workspace option.  </s>
+<s> I becomes its own option.  </s>
+<s> How about a header to get the latest version in an activity?  </s>
+<s> Suggest a REPORT against a version history to ask for the latest verswion  </s>
+<s> in a given activity, the response includes a version URL (noted that you can issue depth requests if the target is a collection).  </s>
+<s> Post conditions may be better expressed as (inverse) pre-conditions in some cases.  </s>
+<s> In any case should add extended status error tags to postconditions to allow the server to illustrate that the post condition could not be met.  </s>
+<s> 6.1.1 Grammar href+ becomes href* 6.11 DAV:activity-must-exist/ precondition should be added.  </s>
+<s> Discussion of labels and baselines.  </s>
+<s> Discussion of defining a DAV:is-branch property on an activity to advise a client whether the activity represents a branch or change set.  </s>
+<s> The property would have no impact on the server behaviour.  </s>
+<s> Alternative suggestion was to define a DAV:is-change-set property that would require the server to enfore there was only one version per history per activity.  </s>
+<s> Howevr, it was noted that this would require a means for setting the property when the activity is created (defining a body to initialize properties during MKACTIVITY?)  </s>
+<s> James H. agreed to write up his semantics differences between a chane set and a branch (both being sets of resources) and why it would be useful for servers to distinguish them.  </s>
+<s> James to post this to the list.  </s>
+<s> Should check through the protocol document and identify which live properties should be protected by a write lock.  </s>
+<s> Set the agenda for the delta-v working group meeting.  </s>
+<s> Meeting closed at 3:00pm.  </s>
+<s> As one of the guys using activities :-), I'm fine with adding the DAV:is-change-set property, and extending the request body.  </s>
+<s> Sounds great.  </s>
+<s> Cheers, -g Greg Stein, http://www.lyra.org/  </s>
+<s> A third model: the client does a CHECKOUT to get a working resource, then does a bunch of PUT/PROPPATCH to that working resource.  </s>
+<s> When the client is done, it does a CHECKIN.  </s>
+<s> [ this contrasts to your model #2 where the client doesn't checkout until they are done with a bunch of local changes.  </s>
+<s> ]  </s>
+<s> About bloody time.  </s>
+<s> Please.  </s>
+<s> Without labels, the only thing that SET-TARGET could do is point at a specific version, rather than "floating" with the latest.  </s>
+<s> (hmm.  </s>
+<s> how would you reset the target to floating?) [ and I don't want to implement SET-TARGET :-) ]  </s>
+<s> Um. Why?  </s>
+<s> At the moment, I'm not seeing a need for these in Subversion.  </s>
+<s> I'd like to understand the need for these in the core.  </s>
+<s> [ I think the core should only be enough to support straight-line versioning, and enough to support down-level clients.  </s>
+<s> ]  </s>
+<s> Yah, I saw this just a couple nights ago.  </s>
+<s> I couldn't figure out why the two concepts were mixed into the same section.  </s>
+<s> Couldn't you do this with a property report, fetching the DAV:activity-set for each version resource identified by DAV:version-set of the version history resource?  </s>
+<s> [ although this form would give you all the activities associated with a version history ] Hmm.  </s>
+<s> Something closer would be a property report fetching an activity's version-set, then their checkin-date.  </s>
+<s> The client could then sort them.  </s>
+<s> But yah... another report is possible, too :-) Cheers, -g Greg Stein, http://www.lyra.org/  </s>
+<s> The reason why "core" versioning servers, e.g. document management servers, need a way to list existing versions (what I think is meant by "version history") is because you need a way to tell the client what the URLs for previous versions are.  </s>
+<s> The URLs are not calculable by clietns.  </s>
+<s> The format can be as dead simple as a list of URLs, though.  </s>
+<s> Is there any way that getting a list of revision URLs for a versioned resource can work the same way as DAV clients currently browse directory contents?  </s>
+<s> At least, the XML format can be similar: Hmm, this really argues for using PROPFIND since the client can say what  </s>
+<s> props they want for the version.  </s>
+<s> Perhaps instead of using attributes in the body of PROPFIND request (I never really understood where they would go) there could just be an XML element to tell the server whether the client wanted version detail or not: PROPFIND thisresource lisa  </s>
+<s> From: ietf-dav-versioning-request@w3.org [mailto:ietf-dav-versioning-request@w3.org]On  </s>
+<s> Behalf Of Greg Stein Sent: Friday, December 15, 2000 3:13 PM Subject: Re: Minutes Delta-V breakout meeting 14-Dec-00  </s>
+<s> From: "Lisa Dusseault" lisa@xythos.com  </s>
+<s> The reason why "core" versioning servers, e.g. document management servers, need a way to list existing versions (what I think is meant by "version history") is because you need a way to tell the client what the URLs for previous versions are.  </s>
+<s> The URLs are not calculable by clietns.  </s>
+<s> I don't think Greg was questioning the need to have a way of getting a list of existing versions.  </s>
+<s> I think he was just saying that he doesn't need anything more than the DAV:version-tree report (i.e. doesn't need the version history to actually be a resource).  </s>
+<s> The format can be as dead simple as a list of URLs, though.  </s>
+<s> Is there any way that getting a list of revision URLs for a versioned resource can work the same way as DAV clients currently browse directory contents?  </s>
+<s> Yes, the DAV:version-tree report lets you say what properties you want to see.  </s>
+<s> If you support version history resources, you can use the DAV:property report (which returns an extended PROPFIND-like response).  </s>
+<s> Cheers, Geoff  </s>
+<s> Correct. Version histories do not add anything to our system at this point.  </s>
+<s> We will support the version-tree, though.  </s>
+<s> That said: I *do* know how/what a version history resource would be within our system, and could provide the functionality; it is simply that the client doesn't need it at this time.  </s>
+<s> [ and, in fact, I don't see its purpose in general.  </s>
+<s> if you could somehow browse and acquire an HREF to a history, then you'd have a resource that tells you a bunch of version resources.  </s>
+<s> But that doesn't tell you anything about the version-controlled resources (e.g. they're layout/structure, how they were made visible to users).  </s>
+<s> So basically, you have an unstructured index to some data, but without a way to properly structure it.  </s>
+<s> Seems a bit pointless :-) ]  </s>
+<s> How is a property report useful?  </s>
+<s> There is the mapping problem back to the version-controlled resources (VCR).  </s>
+<s> Hmm.  </s>
+<s> I guess "detached" version histories aren't useful.  </s>
+<s> When they are still hooked in via a VCR, then it handy because you can link from a VCR to a history to versions within a property report.  </s>
+<s> Oh, whoops.  </s>
+<s> I think that I will have version histories.  </s>
+<s> I forgot that I was planning to do prop reports just like that for some functionality (specifically, to call up a change log with users, times, comments).  </s>
+<s> hehe... call me clueless :-) Cheers, -g Greg Stein, http://www.lyra.org/  </s>
+<s> Greg, Glad to see we're hitting some our your issues.  </s>
+<s> A third model: the client does a CHECKOUT to get a working resource, then does a bunch of PUT/PROPPATCH to that working resource.  </s>
+<s> When the client is done, it does a CHECKIN.  </s>
+<s> jra This was the model Tim was referring to, he just left out the checkout.  </s>
+<s> The checkout can be done either when the client gets the resource to indicate an intent to change and/or reserve the resource, or when ready to do the updates on the server.  </s>
+<s> The protocol can support either policy.  </s>
+<s> /jra  </s>
+<s> that  </s>
+<s> Um. Why?  </s>
+<s> At the moment, I'm not seeing a need for these in Subversion.  </s>
+<s> I'd like to understand the need for these in the core.  </s>
+<s> jra The purpose of the version history resource is just to provide a place to get information about the versioned resource, and to provide a resource the server can iterate over in a report/list.  </s>
+<s> This is in case there are no version-controlled resources on a version and it becomes "lost".  </s>
+<s> /jra Couldn't you do this with a property report, fetching the DAV:activity-set for each version resource identified by DAV:version-set of the version history resource?  </s>
+<s> jra We could, but this is likely to be a common operation, especially just before merging an activity into a a workspace.  </s>
+<s> /jra  </s>
+<s> Hmm, this really argues for using PROPFIND since the client can say what props they want for the version.  </s>
+<s> Perhaps instead of using attributes in the body of PROPFIND request (I never really understood where they would go) there could just be an XML element to tell the server whether the client wanted version detail or not: PROPFIND thisresource jra Lisa, here's what we were planning: This is more compatible with 2518.  </s>
+<s> I'm afraid I'm a little confused, perhaps it's just the indenting.  </s>
+<s> Is the versions tag supposed to be inside each the property name tags, or parallel to them?  </s>
+<s> I'd suggest one only needs one versions tag per PROPFIND body, because it's pretty nonsensical to ask for one property over 5 versions, and a different property over 50 versions, all in one request.  </s>
+<s> the client is more likely to make separate requests.  </s>
+<s> Another suggestion is to reuse the "range" syntax and logic (e.g. byte-range headers).  </s>
+<s> This allows a "last-n" selection, as well as "m through n" or "first n".  </s>
+<s> Then we don't need to define custom syntax or logic to pick which versions to show.  </s>
+<s> The basic idea, I think, is sound.  </s>
+<s> lisa [mailto:ietf-dav-versioning-request@w3.org]On  </s>
+<s> Behalf Of Jim Amsden Hmm, this really argues for using PROPFIND since the client can say what props they want for the version.  </s>
+<s> Perhaps instead of using attributes in the body of PROPFIND request (I never really understood where they would go) there could just be an XML element to tell the server whether the client wanted version detail or not: PROPFIND thisresource jra Lisa, here's what we were planning: This is more compatible with 2518.  </s>
+<s> At the recent IETF meeting, JimA proposed that we use PROPFIND instead of REPORT to obtain information from the server that requires arguments to qualify what kind of information is required.  </s>
+<s> Although an appealing thought, after mulling this over, I don't see how we could do this in a way that is compatible with PROPFIND but does not violate the property value DTD's.  </s>
+<s> Jim's recent post describing a request of this kind doesn't really work: If you indent this consistently, it becomes: which seems to be a request for creator-displayname, checkin-date, and a repeated request for a property named "D:versions" (I'm assuming that all elements should have been prefixed by "D:").  </s>
+<s> Based on his original indentation, JimA probably meant: But now we've violated the DTD's for D:checkin-date and  </s>
+<s> D:creator-displayname (which are supposed to be either empty or dates and strings, respectively, to display to the user).  </s>
+<s> Currently, I think the avoidance of DTD ambiguity is worth the introduction of a new method (i.e. REPORT).  </s>
+<s> Cheers, Geoff From: "Lisa Dusseault" lisa@xythos.com  </s>
+<s> Date: Sun, 17 Dec 2000 16:33:44 -0800 I'm afraid I'm a little confused, perhaps it's just the indenting.  </s>
+<s> Is the versions tag supposed to be inside each the property name tags, or parallel to them?  </s>
+<s> I'd suggest one only needs one versions tag per PROPFIND body, because it's pretty nonsensical to ask for one property over 5 versions, and a different property over 50 versions, all in one request.  </s>
+<s> the client is more likely to make separate requests.  </s>
+<s> Another suggestion is to reuse the "range" syntax and logic (e.g. byte-range headers).  </s>
+<s> This allows a "last-n" selection, as well as "m through n" or "first n".  </s>
+<s> Then we don't need to define custom syntax or logic to pick which versions to show.  </s>
+<s> The basic idea, I think, is sound.  </s>
+<s> lisa [mailto:ietf-dav-versioning-request@w3.org]On  </s>
+<s> Behalf Of Jim Amsden Hmm, this really argues for using PROPFIND since the client can say what props they want for the version.  </s>
+<s> Perhaps instead of using attributes in the body of PROPFIND request (I never really understood where they would go) there could just be an XML element to tell the server whether the client wanted version detail or not: PROPFIND thisresource jra Lisa, here's what we were planning: This is more compatible with 2518.  </s>
+<s> I find that using PROPFIND rather than REPORT is a big bogus.  </s>
+<s> I'm not necessarily asking for properties.  </s>
+<s> I'm asking for information from the server.  </s>
+<s> Is a compare-report a set of *properties* ?? Not in my mind.  </s>
+<s> For Subversion, I'm also going to be using a custom report.  </s>
+<s> The client will send to the server a representation of the client state.  </s>
+<s> The server will return a report saying something to the effect of, "that tree is out of date; that file is an older version, but is equivalent to the latest; those files are fine; etc" That isn't a PROPFIND :-) Cheers, -g  </s>
+<s> Greg Stein, http://www.lyra.org/  </s>
+<s> id=""iraun1.ira.0096901:001218.111203"@ira.uka.de"  </s>
+<s> This is just another nice example for a problem that can elegantly be solved with the DTD change for properties that James and I recently suggested (see With this change, you could think of something like the following: Instead of requiring that a DAV:property-versions element follows each DAV:property-name element, one could -- following Lisa's suggestion -- define the DTD to allow only one DAV:property-versions element as the last (or, alternatively, the first) element within the DAV:prop element.  </s>
+<s> Or, if you like overkill, write a DTD that either allows a single DAV:property-versions element as the first element within a DAV:prop element or a DAV:property-versions element after each D:property-name element.  </s>
+<s> BTW., the "show-last-five" is subject to be replaced by something seriously specified, right?  </s>
+<s> If RFC2518 had introduced a D:property-name as in the above example, the new D:property-versions element just could be ignored by servers that do not know this element without breaking compatibility.  </s>
+<s> Maybe it is really time to fix this in RFC2518 rather than introducing yet another workaround?  </s>
+<s> Bye, Juergen  </s>
+<s> There are other XML structural possibilities which will work though: The meaning of this would be defined to be: show me these listed properties, for the last five versions [1], for every resource in the scope of this PROPFIND request (we may want to allow servers to limit this kind of request to depth 0 but that's easy).  </s>
+<s> Since DAV servers MUST ignore elements they don't understand [2], this ought to work on any server.  </s>
+<s> Even if not, since the client will only send this kind of request to a server which it knows to support versioning (from the OPTIONS response), this won't mess up any server at all.  </s>
+<s> method.  </s>
+<s> I just wanted to counter the logic that this can't be done in a way that is completely compatible with PROPFIND -- Lisa [1] Syntax I used here for "last five" borrowed from RFC2068, section 14.36.1 "o The final 500 bytes (byte offsets 9500-9999, inclusive): bytes=-500" [2] RFC2518, section 14 "All DAV compliant resources MUST ignore any unknown XML element and all its children encountered while processing a DAV method that uses XML as its command language."  </s>

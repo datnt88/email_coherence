@@ -1,68 +1,68 @@
-Hi there, I'm confounded by the interaction between namespaces and default attributes, where these default attributes have prefixes. 
-I've been hunting the DOM lvl 2 recommendation for information on this, and so far I've not been able to find a lot on this. 
-First the story as far as I understand it: Default attributes are declared in the DTD (often in the internal subset). 
-DTDs are not namespace aware (I realize XML schema are, but I'm not focusing on these for now). 
-You can use prefixes in the DTD however, so you could create the prefixed default attribute myprefix:foo. 
-In the document, there may be a namespace declaration associating 'myprefix' with some namespace URI. 
-The default attribute with this prefix can then appear for some element node in the scope of that declaration and will then be put in that namespace. 
-If a default attribute with 'myprefix' appeared outside the scope of any declaration associating this prefix with a namespace URI, this is an error. 
-The problem: We have some prefixed default argument like: 'myprefix:foo'. 
-Let's say this applies to all 'bar' elements. 
-Now we create such an element. 
-What happens? 
-Is this an error, as 'myprefix' has no meaning in the context of that element yet? 
-What if we did a 'removeAttributeNS' or 'removeNamedItemNS' on some existing document, however? 
-The default attribute would appear, but would it take on a namespaceURI if the prefix was known in the scope? 
-That would introduce a whole lot of namespace scoping rules into the DOM spec which it doesn't need for anything else, as normally namespace URIs are explicitly associated with elements and attributes, so that doesn't seem right. 
-Now to the DOM and some of the clues I found: The 'createElement' method says this: In addition, if there are known attributes with default values, Attr nodes representing them are automatically created and attached to the element. 
-No explanation of what would happen if such an attribute had a namespace prefix, though. 
-'createElementNS' does not give any further information. 
-The 'prefix' attribute of the Node interface seems to confirm the philosophy of the DOM; the prefixes aren't the real namespaces (as the namespace spec already says), and no scoping rules are necessary, as namespaceURIs are always associated with Nodes anyway, and those don't change if you change the prefix. 
-'removeNamedItemNS' Removes a node specified by local name and namespace URI. 
-A removed attribute may be known to have a default value when this map contains the attributes attached to an element, as returned by the attributes attribute of the Node interface. 
-If so, an attribute immediately appears containing the default value as well as the corresponding namespace URI, local name, and prefix when applicable. 'corresponding', to what? 
-Corresponding as defined in the DTD or schema, or taking the same namespace URI, local name, and prefix as already defined on the attribute just removed? 
-Will an attribute in a namespace never have a default value in a DTD at all, or is it dependent on prefix and localName in the DTD or perhaps just on localName? 
-If the prefix of the default attribute plays a role on whether something happens, that would pull in a lot of namespace scoping rules, which I presume the DOM doesn't want to do. 
-The same questions apply to 'removeAttributeNS': Removes an attribute by local name and namespace URI. 
-If the removed attribute has a default value it is immediately replaced. 
-The replacing attribute has the same namespace URI and local name, as well as the original prefix. 
-The original prefix of the attribute just removed, or a prefix defined by the DTD? 
-Again, if the DTD just defines the name of the default attribute, would it apply here? 
-You could say that since DTDs don't define default attributes in namespaces at all, they can never appear when creating an Element or when removing existing attributes that are in a namespace. 
-A prefixed default attribute would just get the prefix in the nodeName, just like createAttribute() would do if you fed it 'foo:bar' for the name (would it do that?). 
-Of course that would be somewhat inconsistent with the scenario without DOM that I sketched above, but it seems like a reasonable solution. 
-Is that the real story? 
-Thanks, Martijn 
-This is an XML processing question more than a DOM question. 
-In brief, DTDs do not support namespaces nor vice versa. 
-DTDs are not namespace-aware. 
-Period. 
-They match on the full qualified name. 
-If you're using DTDs to set up your default attributes, a default for attribute foo:bar is applied to all attributes with exactly that name, and only those attributes, no matter what namespace foo: is bound to. 
-If you don't like that answer, find a processor that supports the XML Schema language and rewrite your document type description into that format rather than using the old DTD syntax. 
-Defaults set in the XML Schema are applied on a namespace-aware basis, matching the localname and namespace URI rather than the qname. 
-Joe Kesselman / IBM Research 
-It is a DOM question in the sense that DOM has a very vague description of what default attributes do. 
-Do they come with namespaces or not? 
-Are both possible? 
-Is it left open to which kind of schema language you use? 
-I think it should be clarified what is going on. 
-But the problem is that the DOM doesn't *know* about prefix/namespace bindings (and scoping rules) at all as far as I can determine. 
-So does this mean a new attribute is created with the name 'foo:bar' which is not in any namespace, if no attribute can be found that has name bar and prefix foo? 
-Or should the DOM know about prefix/namespaceURI bindings all of a sudden in order to support DTDs? 
-And I'm not entirely sure how this argument works now: Note also that changing the prefix of an attribute that is known to have a default value, does not make a new attribute with the default value and the original prefix appear, since the namespaceURI and localName do not change. 
-But you'd say in this case this *should* happen, as there is no namespaceURI for a DTD-defined default value, and the argument 'since the namespaceURI and localName do not change' cannot apply, as the default value doesn't care about namespaces. 
-Or would this attribute node be like it was created using the old DOM level 1 API? 
-And what about this? 
-removeNamedItemNS Removes a node specified by local name and namespace URI. 
-A removed attribute may be known to have a default value when this map contains the attributes attached to an element, as returned by the attributes attribute of the Node interface. 
-If so, an attribute immediately appears containing the default value as well as the corresponding namespace URI, local name, and prefix when applicable. Presumably DTD defined attributes would then never appear under these circumstances, then, but only when removeNamedItem? 
-Or would a new node indeed occur here, but what namespace URI would it have? 
-The namespace URI may not be 'applicable' and I'm not sure what it is corresponding to.. In what I read about DTDs and namespaces it seems to indicate a sort of textual replacement and the prefix getting the namespace URI from prefix definition scope. 
-It's okay if the DOM says something else, of course, but I'd like to figure out *what* it says first. 
-I'm trying to implement the DOM spec as well as I can, and this seems to mean also supporting DTDs, right? 
-Or am I to understand that the DOM spec does not specify what happens with default values that are defined in DTDs at all? 
-Is 'foo:bar' just taken as a name and is the prefix not recognized? 
-Anyway, a small paragraph in the DOM recommendation about these issues would've helped a lot; right now it seems to assume we'll use a namespace aware way to define default attributes. 
-Regards, Martijn 
+<s> Hi there, I'm confounded by the interaction between namespaces and default attributes, where these default attributes have prefixes.  </s>
+<s> I've been hunting the DOM lvl 2 recommendation for information on this, and so far I've not been able to find a lot on this.  </s>
+<s> First the story as far as I understand it: Default attributes are declared in the DTD (often in the internal subset).  </s>
+<s> DTDs are not namespace aware (I realize XML schema are, but I'm not focusing on these for now).  </s>
+<s> You can use prefixes in the DTD however, so you could create the prefixed default attribute myprefix:foo.  </s>
+<s> In the document, there may be a namespace declaration associating 'myprefix' with some namespace URI.  </s>
+<s> The default attribute with this prefix can then appear for some element node in the scope of that declaration and will then be put in that namespace.  </s>
+<s> If a default attribute with 'myprefix' appeared outside the scope of any declaration associating this prefix with a namespace URI, this is an error.  </s>
+<s> The problem: We have some prefixed default argument like: 'myprefix:foo'.  </s>
+<s> Let's say this applies to all 'bar' elements.  </s>
+<s> Now we create such an element.  </s>
+<s> What happens?  </s>
+<s> Is this an error, as 'myprefix' has no meaning in the context of that element yet?  </s>
+<s> What if we did a 'removeAttributeNS' or 'removeNamedItemNS' on some existing document, however?  </s>
+<s> The default attribute would appear, but would it take on a namespaceURI if the prefix was known in the scope?  </s>
+<s> That would introduce a whole lot of namespace scoping rules into the DOM spec which it doesn't need for anything else, as normally namespace URIs are explicitly associated with elements and attributes, so that doesn't seem right.  </s>
+<s> Now to the DOM and some of the clues I found: The 'createElement' method says this: In addition, if there are known attributes with default values, Attr nodes representing them are automatically created and attached to the element.  </s>
+<s> No explanation of what would happen if such an attribute had a namespace prefix, though.  </s>
+<s> 'createElementNS' does not give any further information.  </s>
+<s> The 'prefix' attribute of the Node interface seems to confirm the philosophy of the DOM; the prefixes aren't the real namespaces (as the namespace spec already says), and no scoping rules are necessary, as namespaceURIs are always associated with Nodes anyway, and those don't change if you change the prefix.  </s>
+<s> 'removeNamedItemNS' Removes a node specified by local name and namespace URI.  </s>
+<s> A removed attribute may be known to have a default value when this map contains the attributes attached to an element, as returned by the attributes attribute of the Node interface.  </s>
+<s> If so, an attribute immediately appears containing the default value as well as the corresponding namespace URI, local name, and prefix when applicable. 'corresponding', to what?  </s>
+<s> Corresponding as defined in the DTD or schema, or taking the same namespace URI, local name, and prefix as already defined on the attribute just removed?  </s>
+<s> Will an attribute in a namespace never have a default value in a DTD at all, or is it dependent on prefix and localName in the DTD or perhaps just on localName?  </s>
+<s> If the prefix of the default attribute plays a role on whether something happens, that would pull in a lot of namespace scoping rules, which I presume the DOM doesn't want to do.  </s>
+<s> The same questions apply to 'removeAttributeNS': Removes an attribute by local name and namespace URI.  </s>
+<s> If the removed attribute has a default value it is immediately replaced.  </s>
+<s> The replacing attribute has the same namespace URI and local name, as well as the original prefix.  </s>
+<s> The original prefix of the attribute just removed, or a prefix defined by the DTD?  </s>
+<s> Again, if the DTD just defines the name of the default attribute, would it apply here?  </s>
+<s> You could say that since DTDs don't define default attributes in namespaces at all, they can never appear when creating an Element or when removing existing attributes that are in a namespace.  </s>
+<s> A prefixed default attribute would just get the prefix in the nodeName, just like createAttribute() would do if you fed it 'foo:bar' for the name (would it do that?).  </s>
+<s> Of course that would be somewhat inconsistent with the scenario without DOM that I sketched above, but it seems like a reasonable solution.  </s>
+<s> Is that the real story?  </s>
+<s> Thanks, Martijn  </s>
+<s> This is an XML processing question more than a DOM question.  </s>
+<s> In brief, DTDs do not support namespaces nor vice versa.  </s>
+<s> DTDs are not namespace-aware.  </s>
+<s> Period.  </s>
+<s> They match on the full qualified name.  </s>
+<s> If you're using DTDs to set up your default attributes, a default for attribute foo:bar is applied to all attributes with exactly that name, and only those attributes, no matter what namespace foo: is bound to.  </s>
+<s> If you don't like that answer, find a processor that supports the XML Schema language and rewrite your document type description into that format rather than using the old DTD syntax.  </s>
+<s> Defaults set in the XML Schema are applied on a namespace-aware basis, matching the localname and namespace URI rather than the qname.  </s>
+<s> Joe Kesselman / IBM Research  </s>
+<s> It is a DOM question in the sense that DOM has a very vague description of what default attributes do.  </s>
+<s> Do they come with namespaces or not?  </s>
+<s> Are both possible?  </s>
+<s> Is it left open to which kind of schema language you use?  </s>
+<s> I think it should be clarified what is going on.  </s>
+<s> But the problem is that the DOM doesn't *know* about prefix/namespace bindings (and scoping rules) at all as far as I can determine.  </s>
+<s> So does this mean a new attribute is created with the name 'foo:bar' which is not in any namespace, if no attribute can be found that has name bar and prefix foo?  </s>
+<s> Or should the DOM know about prefix/namespaceURI bindings all of a sudden in order to support DTDs?  </s>
+<s> And I'm not entirely sure how this argument works now: Note also that changing the prefix of an attribute that is known to have a default value, does not make a new attribute with the default value and the original prefix appear, since the namespaceURI and localName do not change.  </s>
+<s> But you'd say in this case this *should* happen, as there is no namespaceURI for a DTD-defined default value, and the argument 'since the namespaceURI and localName do not change' cannot apply, as the default value doesn't care about namespaces.  </s>
+<s> Or would this attribute node be like it was created using the old DOM level 1 API?  </s>
+<s> And what about this?  </s>
+<s> removeNamedItemNS Removes a node specified by local name and namespace URI.  </s>
+<s> A removed attribute may be known to have a default value when this map contains the attributes attached to an element, as returned by the attributes attribute of the Node interface.  </s>
+<s> If so, an attribute immediately appears containing the default value as well as the corresponding namespace URI, local name, and prefix when applicable. Presumably DTD defined attributes would then never appear under these circumstances, then, but only when removeNamedItem?  </s>
+<s> Or would a new node indeed occur here, but what namespace URI would it have?  </s>
+<s> The namespace URI may not be 'applicable' and I'm not sure what it is corresponding to.. In what I read about DTDs and namespaces it seems to indicate a sort of textual replacement and the prefix getting the namespace URI from prefix definition scope.  </s>
+<s> It's okay if the DOM says something else, of course, but I'd like to figure out *what* it says first.  </s>
+<s> I'm trying to implement the DOM spec as well as I can, and this seems to mean also supporting DTDs, right?  </s>
+<s> Or am I to understand that the DOM spec does not specify what happens with default values that are defined in DTDs at all?  </s>
+<s> Is 'foo:bar' just taken as a name and is the prefix not recognized?  </s>
+<s> Anyway, a small paragraph in the DOM recommendation about these issues would've helped a lot; right now it seems to assume we'll use a namespace aware way to define default attributes.  </s>
+<s> Regards, Martijn  </s>

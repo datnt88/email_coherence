@@ -1,95 +1,95 @@
-I have already covered these questions ad-nauseum. 
-1) HTTP has *always* used a default charset value of ISO-8859-1. 
-All implementations to the contrary had KNOWN failure conditions and did not work as intended except within locally controlled environments. 
-2) The HTTP version defines the communication capability of the immediately adjacent client or server -- it NEVER indicates that 
-feature capabilities of the user agent. 
-3) None of the issues you have raised involve a technical problem with the HTTP/1.1 protocol -- they are POLITICAL problems that are an artifact of historical reality, a reality which the IETF is not capable of changing. 
-4) Labelling the charset with its real value if it is different than 
-iso-8859-1 *always* works, both in old an new practice, because any user agent incapable of handling a charset value is also incapable of handling a charset other than iso-8859-1. 
-The only time problems occur is when iso-8859-1 data is labelled as such and then delivered to an older client. 
-5) Whether or not a client is capable of understanding the charset parameter is NOT a function of the protocol version -- ALL HTTP/1.0 clients MUST understand charset, even if HTTP/1.0 is not a "standard", 
-because that is part of the HTTP/1.0 definition (see RFC 1945). 
-I see no point in continuing this discussion unless you can demonstrate a real problem that needs to be solved and can be solved within the constraints of HTTP/1.1. 
-...Roy T. Fielding Department of Information &amp; Computer Science (fielding@ics.uci.edu) 
-Demonstration of a real problem following... Suppose we have a server that delivers a page with On the other side of a connection we'll probably (50-60% in my logs) have Netscape 2.0 on Windows CEE. 
-CEE is Central &amp; Eastern Europe version, Latin 2 fonts come with OS. Netscape 2.0 can switch code page when it receives charset parameter (so I've been told). 
-Everything should work, but it doesn't. 
-Why? 
-Because Latin 2 does *not* mean the same for ISO and Microsoft. 
-Microsoft delivers their systems with something they sometimes call CP1250 and sometimes Latin 2. That code page has all of the ISO 8859-2 characters, but some of them are at different positions. 
-Positions from 128 to 159 are filled with something, but that's not the problem. 
-The problem is that they swapped two 32-character blocks. 
-They wanted to have copyright (or trademark, I don't recall any more) sign at the same position as in Latin 1. 
-I couldn't find any charset with 1250 in its name in IANA registry, but there is iso-8859-2-windows-latin-2, and I suppose that's the name of the code page, since nothing else fits. 
-I don't use PCs (except as text terminals for Unix) and I'm not 100% sure, but I think that Netscape can't recognize that in charset parameter and it would show the page with default charset, which is ISO 8859-1. 
-Wrong, again. 
-note Netscape 3.0 beta has a workaround for this, with lots of bugs at this stage. 
-Bug reports filled and delivered. 
-But this is just one browser. 
-/note The typical server here will send a page with CP1250 (without charset), the page would inform the user that he should manually switch to Latin 2 encoding, and offer 2 or 3 links for other encodings (those pages would again be sent without charset parameter). 
-I hacked my server a bit, wrote several CGI programs and it's a little smarter than others. 
-It can convert HTML pages to 5 different code pages or 3 different ASCII approximations on the fly. 
-I'll probably add some more output representations. 
-I think Macs use the 6th code page for Latin 2 and two more approximations would be handy. 
-The conversion is automatic if browser sends Accept-charset header. 
-Lynx 2.5 is the only one at the moment. 
-Other browsers will receive some kind of menu. 
-Too many code pages are in use (ISO 646 has a fair amount of users) and browsers are currently incapable to deal with them. 
-Servers (or proxies) could. 
-Not with labeling Content-type, because it would only pass the potato to the browser. 
-Servers could convert, but they MUST know which code page user on the other side has installed. 
-HTTP 1.1 spec says that absence of Accept-charset means that any charset is acceptable and almost all browsers don't bother to send it. 
-I'd like to change that to something like this: No Accept-charset -- HTTP 1.1 agent is capable of representing ISO 8859-1 only. 
-Accept-charset: * -- Any charset is acceptable. 
-I doubt that this will be true for browsers, but it would be useful for robots. 
-If the agent can use charsets other than ISO 8859-1, then it MUST, MUST and MUST send Accept-charset header with those charsets listed. 
-Life is a sexually transmitted disease. 
-dave@fly.cc.fer.hr dave@zemris.fer.hr 
-Ditto with DynaWeb, except that DynaWeb it supports far, more encodings. 
-As it is, with Japanese, you have to make some arbitrary decision based soley on things like User-Agent for deciding what to send to the client, and what the client is sending to you. 
-I agree with this sentiment 100%. 
-Unless browsers start sending information to servers, it is impossible to add multilingual intelligence to them, and have them work all the time. 
-This isn't true. 
-I was recently writing a chat CGI program and tried labelling something as ISO-2022-JP. 
-It caused the otherwise Japanese display capable browser client (MSIE 3.0b1) to choke. 
-It refused to display the charset labelled file, instead attempting to download to a file. 
-If I *didn't* label it I was fine. 
-The issue of charset labelling breaking browsers cannot be neatly shoved off that way. 
-It breaks non-latin1 1.0 browsers just as badly as latin1 1.0 browsers. 
-If it is unacceptable to mandate charset labelling becasue it breaks latin1 browsers - it is equally unacceptable to break non-latin 1 browsers. 
-I am trying to figure out why charset being a MUST for 1.1 is even an issue at all. 
-Let's see if I have this right. 
-Case 1) A client *issues* a 1.1 request to a 1.0 server. 
-The server chokes on the 1.1 level and returns a 400 error. 
-Ok. No problem the client can now try to back off to 1.0 - which won't be labelled with a charset most likely. 
-Case 2) A client issues a 1.1 request to a 1.1 server. 
-It gets a charset *always*. 
-No problem - since there *ARE* no HTTP/1.1 browsers in existence today there is no compatiblity issue. 
-Case 3) A client issues a 1.0 request to a 1.1 server Server serves up as a 1.0 server without charset labelling (same as today's servers). 
-No problem. 
-Case 4) A client issues a 1.1 request to a 1.1 server. 
-It gets a 1.1 responese including charset *always*. 
-No problem. 
-Since there are no 1.1 browsers today, you can mandate charset safely as far as browsers are concerned. 
-Ok. All of these cases work ok. 
-So the problem has got to be when you stick a proxy in the line. 
-How does mandating charsets break proxies? 
-I don't see it. 
-Benjamin Franz 
-Reading this over I realized I had failed to insert a necessary logical step here. 
-The discussion after this point assumed that we were simply going to live with the fact that under rare circumstances a 1.1 response was going to be passed to a 1.0 client and break it (presumably through a proxy). 
-Since labelling non-ISO-8859-1 charsets in the Content-Type is *proven* to break at least some 1.0 browsers, making charset a MUST for non-ISO8859-1 charsets is an incompatible change from 1.0. 
-If this is going to be inserted into 1.1 - there is no reason at all other than local bias not to make it a MUST for *ALL* charsets including ISO-8859-1. 
-Otherwise the MUST language for non-ISO-8859-1 charsets should be abandoned as being a political (it doesn't break MY browser) rather than a technical (it doesn't break ANY browser) statement. 
-If charset is going to be inserted in a *compatible* way - it will have to be done via its own header (Charset: ISO-8859-1). 
-I wasn't here for the debates on that - so if someone knows why that was rejected, please pipe up with a summary. 
-Benjamin Franz 
-One case is when a 1.1 proxy receives a document from a 1.0 server, and it is unlabelled. 
-The proxy stores the document in its cache, and on a later request from a 1.1 client, has to do something about the charset. 
-If charset labelling is mandatory the proxy has to guess, which is not going to work. 
-So if charset labelling is mandatory in 1.1, either the proxy has to have some way of indicating the content has an unknown charset, or (ugh) it would have to revert to 1.0 protocol so that it could legally send an unlabelled response. 
-Shel 
-Reverting to 1.0 may not be pretty - but it has the tremendous virtue of *working*. 
-It seems the right thing to do in any case. 
-Attempting to 'upgrade' a response from 1.0 to 1.1 seems questionable practice at best and promises to break things. 
-Benjamin Franz 
+<s> I have already covered these questions ad-nauseum.  </s>
+<s> 1) HTTP has *always* used a default charset value of ISO-8859-1.  </s>
+<s> All implementations to the contrary had KNOWN failure conditions and did not work as intended except within locally controlled environments.  </s>
+<s> 2) The HTTP version defines the communication capability of the immediately adjacent client or server -- it NEVER indicates that  </s>
+<s> feature capabilities of the user agent.  </s>
+<s> 3) None of the issues you have raised involve a technical problem with the HTTP/1.1 protocol -- they are POLITICAL problems that are an artifact of historical reality, a reality which the IETF is not capable of changing.  </s>
+<s> 4) Labelling the charset with its real value if it is different than  </s>
+<s> iso-8859-1 *always* works, both in old an new practice, because any user agent incapable of handling a charset value is also incapable of handling a charset other than iso-8859-1.  </s>
+<s> The only time problems occur is when iso-8859-1 data is labelled as such and then delivered to an older client.  </s>
+<s> 5) Whether or not a client is capable of understanding the charset parameter is NOT a function of the protocol version -- ALL HTTP/1.0 clients MUST understand charset, even if HTTP/1.0 is not a "standard",  </s>
+<s> because that is part of the HTTP/1.0 definition (see RFC 1945).  </s>
+<s> I see no point in continuing this discussion unless you can demonstrate a real problem that needs to be solved and can be solved within the constraints of HTTP/1.1.  </s>
+<s> ...Roy T. Fielding Department of Information &amp; Computer Science (fielding@ics.uci.edu)  </s>
+<s> Demonstration of a real problem following... Suppose we have a server that delivers a page with On the other side of a connection we'll probably (50-60% in my logs) have Netscape 2.0 on Windows CEE.  </s>
+<s> CEE is Central &amp; Eastern Europe version, Latin 2 fonts come with OS. Netscape 2.0 can switch code page when it receives charset parameter (so I've been told).  </s>
+<s> Everything should work, but it doesn't.  </s>
+<s> Why?  </s>
+<s> Because Latin 2 does *not* mean the same for ISO and Microsoft.  </s>
+<s> Microsoft delivers their systems with something they sometimes call CP1250 and sometimes Latin 2. That code page has all of the ISO 8859-2 characters, but some of them are at different positions.  </s>
+<s> Positions from 128 to 159 are filled with something, but that's not the problem.  </s>
+<s> The problem is that they swapped two 32-character blocks.  </s>
+<s> They wanted to have copyright (or trademark, I don't recall any more) sign at the same position as in Latin 1.  </s>
+<s> I couldn't find any charset with 1250 in its name in IANA registry, but there is iso-8859-2-windows-latin-2, and I suppose that's the name of the code page, since nothing else fits.  </s>
+<s> I don't use PCs (except as text terminals for Unix) and I'm not 100% sure, but I think that Netscape can't recognize that in charset parameter and it would show the page with default charset, which is ISO 8859-1.  </s>
+<s> Wrong, again.  </s>
+<s> note Netscape 3.0 beta has a workaround for this, with lots of bugs at this stage.  </s>
+<s> Bug reports filled and delivered.  </s>
+<s> But this is just one browser.  </s>
+<s> /note The typical server here will send a page with CP1250 (without charset), the page would inform the user that he should manually switch to Latin 2 encoding, and offer 2 or 3 links for other encodings (those pages would again be sent without charset parameter).  </s>
+<s> I hacked my server a bit, wrote several CGI programs and it's a little smarter than others.  </s>
+<s> It can convert HTML pages to 5 different code pages or 3 different ASCII approximations on the fly.  </s>
+<s> I'll probably add some more output representations.  </s>
+<s> I think Macs use the 6th code page for Latin 2 and two more approximations would be handy.  </s>
+<s> The conversion is automatic if browser sends Accept-charset header.  </s>
+<s> Lynx 2.5 is the only one at the moment.  </s>
+<s> Other browsers will receive some kind of menu.  </s>
+<s> Too many code pages are in use (ISO 646 has a fair amount of users) and browsers are currently incapable to deal with them.  </s>
+<s> Servers (or proxies) could.  </s>
+<s> Not with labeling Content-type, because it would only pass the potato to the browser.  </s>
+<s> Servers could convert, but they MUST know which code page user on the other side has installed.  </s>
+<s> HTTP 1.1 spec says that absence of Accept-charset means that any charset is acceptable and almost all browsers don't bother to send it.  </s>
+<s> I'd like to change that to something like this: No Accept-charset -- HTTP 1.1 agent is capable of representing ISO 8859-1 only.  </s>
+<s> Accept-charset: * -- Any charset is acceptable.  </s>
+<s> I doubt that this will be true for browsers, but it would be useful for robots.  </s>
+<s> If the agent can use charsets other than ISO 8859-1, then it MUST, MUST and MUST send Accept-charset header with those charsets listed.  </s>
+<s> Life is a sexually transmitted disease.  </s>
+<s> dave@fly.cc.fer.hr dave@zemris.fer.hr  </s>
+<s> Ditto with DynaWeb, except that DynaWeb it supports far, more encodings.  </s>
+<s> As it is, with Japanese, you have to make some arbitrary decision based soley on things like User-Agent for deciding what to send to the client, and what the client is sending to you.  </s>
+<s> I agree with this sentiment 100%.  </s>
+<s> Unless browsers start sending information to servers, it is impossible to add multilingual intelligence to them, and have them work all the time.  </s>
+<s> This isn't true.  </s>
+<s> I was recently writing a chat CGI program and tried labelling something as ISO-2022-JP.  </s>
+<s> It caused the otherwise Japanese display capable browser client (MSIE 3.0b1) to choke.  </s>
+<s> It refused to display the charset labelled file, instead attempting to download to a file.  </s>
+<s> If I *didn't* label it I was fine.  </s>
+<s> The issue of charset labelling breaking browsers cannot be neatly shoved off that way.  </s>
+<s> It breaks non-latin1 1.0 browsers just as badly as latin1 1.0 browsers.  </s>
+<s> If it is unacceptable to mandate charset labelling becasue it breaks latin1 browsers - it is equally unacceptable to break non-latin 1 browsers.  </s>
+<s> I am trying to figure out why charset being a MUST for 1.1 is even an issue at all.  </s>
+<s> Let's see if I have this right.  </s>
+<s> Case 1) A client *issues* a 1.1 request to a 1.0 server.  </s>
+<s> The server chokes on the 1.1 level and returns a 400 error.  </s>
+<s> Ok. No problem the client can now try to back off to 1.0 - which won't be labelled with a charset most likely.  </s>
+<s> Case 2) A client issues a 1.1 request to a 1.1 server.  </s>
+<s> It gets a charset *always*.  </s>
+<s> No problem - since there *ARE* no HTTP/1.1 browsers in existence today there is no compatiblity issue.  </s>
+<s> Case 3) A client issues a 1.0 request to a 1.1 server Server serves up as a 1.0 server without charset labelling (same as today's servers).  </s>
+<s> No problem.  </s>
+<s> Case 4) A client issues a 1.1 request to a 1.1 server.  </s>
+<s> It gets a 1.1 responese including charset *always*.  </s>
+<s> No problem.  </s>
+<s> Since there are no 1.1 browsers today, you can mandate charset safely as far as browsers are concerned.  </s>
+<s> Ok. All of these cases work ok.  </s>
+<s> So the problem has got to be when you stick a proxy in the line.  </s>
+<s> How does mandating charsets break proxies?  </s>
+<s> I don't see it.  </s>
+<s> Benjamin Franz  </s>
+<s> Reading this over I realized I had failed to insert a necessary logical step here.  </s>
+<s> The discussion after this point assumed that we were simply going to live with the fact that under rare circumstances a 1.1 response was going to be passed to a 1.0 client and break it (presumably through a proxy).  </s>
+<s> Since labelling non-ISO-8859-1 charsets in the Content-Type is *proven* to break at least some 1.0 browsers, making charset a MUST for non-ISO8859-1 charsets is an incompatible change from 1.0.  </s>
+<s> If this is going to be inserted into 1.1 - there is no reason at all other than local bias not to make it a MUST for *ALL* charsets including ISO-8859-1.  </s>
+<s> Otherwise the MUST language for non-ISO-8859-1 charsets should be abandoned as being a political (it doesn't break MY browser) rather than a technical (it doesn't break ANY browser) statement.  </s>
+<s> If charset is going to be inserted in a *compatible* way - it will have to be done via its own header (Charset: ISO-8859-1).  </s>
+<s> I wasn't here for the debates on that - so if someone knows why that was rejected, please pipe up with a summary.  </s>
+<s> Benjamin Franz  </s>
+<s> One case is when a 1.1 proxy receives a document from a 1.0 server, and it is unlabelled.  </s>
+<s> The proxy stores the document in its cache, and on a later request from a 1.1 client, has to do something about the charset.  </s>
+<s> If charset labelling is mandatory the proxy has to guess, which is not going to work.  </s>
+<s> So if charset labelling is mandatory in 1.1, either the proxy has to have some way of indicating the content has an unknown charset, or (ugh) it would have to revert to 1.0 protocol so that it could legally send an unlabelled response.  </s>
+<s> Shel  </s>
+<s> Reverting to 1.0 may not be pretty - but it has the tremendous virtue of *working*.  </s>
+<s> It seems the right thing to do in any case.  </s>
+<s> Attempting to 'upgrade' a response from 1.0 to 1.1 seems questionable practice at best and promises to break things.  </s>
+<s> Benjamin Franz  </s>

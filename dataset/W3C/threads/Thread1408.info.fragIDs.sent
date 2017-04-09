@@ -1,150 +1,150 @@
-Hi, 
-In section 1.6 of the specification it states: In order to allow better client handling of 403 and 409 responses, a distinct XML element type is associated with each method precondition and postcondition of a request. 
-But several Postconditions in the specification do not have any XML elements defined. 
-Section 8.5, 8.6, 8.7, 8.8, and 9.6 for example. 
-Do we need to change 1.6 to say that some 
-preconditions and postconditions have distinct XML elements? 
-Also regarding the 403/409 responses it was not clear from the spec when to send 403 and when to send 409. 
-The text in section 1.6 reads: If a method precondition for a request is not satisfied, or if a method postcondition for a request cannot be achieved, the response status of the request MUST be 403 (Forbidden) or 409 (Conflict). 
-Does this mean a 403 should be sent for a failed precondition and a 409 
-should be sent for a postcondition failure. 
-Or does it mean the server implementer can return either code in either situation. 
-This is not clear from reading the spec. 
-Regards, Peter Raymond - MERANT Technical Architect (ADM) WWW: http://www.merant.com 
-Postconditions with no XML elements defined?I had interpreted it as being 403 with precondition, 409 with postcondition, like you, but I agree it's not directly stated. 
-Can the spec clarify please? 
-lisa [mailto:ietf-dav-versioning-request@w3.org]On 
-Behalf Of Peter Raymond Hi, 
-In section 1.6 of the specification it states: In order to allow better client handling of 403 and 409 responses, a distinct XML element type is associated with each method precondition and postcondition of a request. 
-But several Postconditions in the specification do not have any XML elements defined. 
-Section 8.5, 8.6, 8.7, 8.8, and 9.6 for example. 
-Do we need to change 1.6 to say that some 
-preconditions and postconditions have distinct XML elements? 
-Also regarding the 403/409 responses it was not clear from the spec when to send 403 and when to send 409. 
-The text in section 1.6 reads: If a method precondition for a request is not satisfied, or if a method postcondition for a request cannot be achieved, the response status of the request MUST be 403 (Forbidden) or 409 (Conflict). 
-Does this mean a 403 should be sent for a failed precondition and a 409 
-should be sent for a postcondition failure. 
-Or does it mean the server implementer can return either code in either situation. 
-This is not clear from reading the spec. 
-Regards, Peter Raymond - MERANT Technical Architect (ADM) WWW: http://www.merant.com 
-I'd be inclined to name all the pre-postconditions, even if it is unlikely that a client will ever see them coming back from a server I think it is useful to name them so we can talk about them and refer to them easily. 
-It simply means that DeltaV is using the definitions found in RFC2616 and is not redefining their meanings. 
-In preactise this means that server implementers can choose within those guidelines, but I think we should agree between ourselves which are which. 
-Regards, Tim 
-Tim says: 
-I Agree. 
-Tim says: 
-Also sounds like a good idea, but could be a big job to review each pre/post condition and decide under what circumstances a 409 or a 403 should be returned. 
-While we are on the subject of pre/post conditions I also wonder if anyone can explain why the post condition XML elements are not worded as "negatives", but the preconditions are worded as "negatives". 
-For example on DELETE in section 3.12 we have: DAV:cannot-delete-referenced-version as a precondition. 
-I like the wording of this XML element it is clear that you have done something that is forbidden (eg it says cannot). 
-BUT in the same section we have: DAV:update-predecessor-set as a postcondition. 
-Why didn't we call this XML element DAV:update-predecessor-set-failed or some wording that indicates failure. 
-I am just intrigued as to why they got worded this way. 
-The status code already indicates that something is forbidden (403) or there is a conflict (409). 
-So you could actually argue that we should remove the "negatives" from all the elements (pre and post)...eg in the above example we should have: DAV:referenced-version DAV:predecessor-set 
-Regards, Peter Raymond - MERANT Technical Architect (ADM) WWW: http://www.merant.com 
-I did that a while ago, and it was not such a big deal however, there was a large grain of salt used when deciding between 403 and 
-409. 
-If there is interest in re-doing that list I'll happily do so, but wherever there is a disagreement about if it should be one or the other I will not offer any resistance :-) 
-They are not all that way. 
-The preconditions are statements that must be 
-true for a method to succeed, and the postconditions are statements that 
-must be true immediately after the method has suceeded. 
-I guess there are 
-more cases of a resource must not be (of a certain type | in a certain state | whatever) for preconditions than there are for postconditions. 
-Because the postcondition (i.e. that which must be true) is that the predecessor set was updated. 
-Don't think of them as error descriptions. 
-I prefer the more descriptive names. 
-Regards, Tim Ellison Java Technology Centre, MP146 IBM UK Laboratory, Hursley Park, Winchester, UK. SO21 2JN 
-and 
-Please make it simple and normative! 
-The preconditions are statements that must be true for a method to 
-succeed, Sounds like if the precondition is not true the operation is "Forbidden", 
-and the postconditions are statements that must be true immediately after 
-the method has suceeded. 
-Sounds like there must be a "Conflict" if the postcondition cannot be met. 
-If there are no strong objections, I propose that we adopt the simple normative rule a precondition is returned with 403 and a postcondition is returned with 409. 
-Lisa 
-We use the standard meanings of 403 and 409 defined in RFC 2616 i.e.: 10.4.4 403 Forbidden 
-The server understood the request, but is refusing to fulfill it. 
-Authorization will not help and the request SHOULD NOT be repeated. 
-10.4.10 409 Conflict The request could not be completed due to a conflict with the current state of the resource. 
-This code is only allowed in situations where it is expected that the user might be able to resolve the conflict and resubmit the request. 
-But to make sure there is no misunderstanding, how about the following rewording of the first paragraph of section 1.6: A "precondition" of a method describes the state on the server that must be true for that method to be performed. 
-A "postcondition" of a method describes the state on the server that must be true after that method has completed. 
-If a method precondition or postcondition for a request is not satisfied, the response status of the request MUST be either 403 (Forbidden) if the request should not be repeated because it will always fail, or 409 (Conflict) if it is expected that the user might be able to resolve the conflict and resubmit the request. 
-Cheers, Geoff I had interpreted it as being 403 with precondition, 409 with postcondition, like you, but I agree it's not directly stated. 
-Can the spec clarify please? 
-lisa -----Original Message----- [mailto:ietf-dav-versioning-request@w3.org]On 
-Behalf Of Peter Raymond Hi, In section 1.6 of the specification it states: In order to allow better client handling of 403 and 409 responses, a distinct XML element type is associated with each method precondition and postcondition of a request. 
-But several Postconditions in the specification do not have any XML elements defined. 
-Section 8.5, 8.6, 8.7, 8.8, and 9.6 for example. 
-Do we need to change 1.6 to say that some preconditions and postconditions have distinct XML elements? 
-Also regarding the 403/409 responses it was not clear from the spec when to send 403 and when to send 409. 
-The text in section 1.6 reads: If a method precondition for a request is not satisfied, or if a method postcondition for a request cannot be achieved, the response status of the request MUST be 403 (Forbidden) or 409 (Conflict). 
-Does this mean a 403 should be sent for a failed precondition and a 409 should be sent for a postcondition failure. 
-Or does it mean the server implementer can return either code in either situation. 
-This is not clear from reading the spec. 
-Regards, Peter Raymond - MERANT Technical Architect (ADM) WWW: http://www.merant.com 
-Those postconditions should each have a token defined for them. 
-I'll give them each one. 
-Thanks for noticing that! 
-Cheers, Geoff Hi, In section 1.6 of the specification it states: In order to allow better client handling of 403 and 409 responses, a distinct XML element 
-type is associated with each method precondition and postcondition of a request. 
-But several Postconditions in the specification do not have any XML elements defined. 
-Section 8.5, 8.6, 8.7, 8.8, and 9.6 for example. 
-Do we need to change 1.6 to say that some preconditions and postconditions have distinct XML elements? 
-Also regarding the 403/409 responses it was not clear from the spec when to send 403 and when to send 409. 
-The text in section 1.6 reads: If a method precondition for a request is not satisfied, or if a method postcondition for a request cannot be achieved, the response status of the request MUST be 403 (Forbidden) or 409 (Conflict). 
-Does this mean a 403 should be sent for a failed precondition and a 409 should be sent for a postcondition failure. 
-Or does it mean the server implementer can 
-return either code in either situation. 
-This is not clear from reading the spec. 
-Regards, Peter Raymond - MERANT Technical Architect (ADM) WWW: http://www.merant.com 
-A simple list would suffice, right? 
-The preconditions are statements that must be true for a method to 
-and the postconditions are statements that must be true 
-The 403 Forbidden means that you shouldn't bother trying any variations on this request because they will fail, an example would be trying to MOVE a version resource, there is nothing a client can do to make the server happy about this. 
-A 409 Conflict means the client likely can do something to fix the resource 
-or server state so that the request will succeed, for example trying to 
-CHECKOUT a checked-out resource will fail, but can succeed if the resource is first checked-in. 
-I don't think it is as simple as saying all preconditions are 403 and all postconditions are 409 as it would lead to some anomolies, such as the DAV:preserve-versioning-properties postcondition being a 409! 
-... but I did say that I wouldn't argue g Tim 
-From: Tim Ellison [mailto:Tim_Ellison@uk.ibm.com] 
-I did that a while ago, and it was not such a big deal Also, whether or not a particular response should be a 403 or a 409 depends on the particular request and on the implementation of the resource. 
-For example, with the DAV:preserve-versioning-properties postcondition and a MOVE request on a checked-out version-controlled resource, one server might not be able to preserver versioning properties so it returns a 403 indicating the MOVE will always fail, while another server might only be able to MOVE only checked-in VCR's, so it returns a 409 (since the user could MOVE the resource after checking it in). 
-So we could compile a non-normative list of what status codes are likely to be returned by certain implementations, but a client writer should not use this list (it should use the status code actually returned), and a server writer should only use the list if it reflects the implementation choices made by that server. 
-I would be strongly against including such a list in the protocol itself, since it would be too easy for a client writer to hardwire these "suggested" return codes into their implementation logic. 
-They are not all that way. 
-The preconditions are statements that must be 
-true for a method to succeed, and the postconditions are statements that 
-must be true immediately after the method has suceeded. 
-Don't think of them as error descriptions. 
-Yes. 
-I prefer the more descriptive names. 
-As do I. Cheers, Geoff 
-From: Lisa Dusseault [mailto:lisa@xythos.com] 
-Sounds like if the precondition is not true the operation is "Forbidden", 
-and the postconditions are statements that must be true immediately 
-after the method has suceeded. 
-Sounds like there must be a "Conflict" if the postcondition cannot be met. 
-If there are no strong objections, I propose that we adopt the simple normative rule a precondition is returned with 403 and a postcondition is returned with 409. 
-I'd fall into the "strong objection" camp. 
-403 means the user should not retry the operation, because it will never succeed. 
-This will sometimes be the case for both precondition and postcondition failures. 
-409 means that there is something the user could do to the resource to make the operation succeed. 
-This will also sometimes be the case for both precondition and postcondition failures. 
-Cheers, Geoff 
-Lisa: If there are no strong objections, I propose that we adopt the simple normative rule a precondition is returned with 403 and a postcondition is returned with 409. 
-Geoff: I'd fall into the "strong objection" camp. 
-403 means the user should not retry the operation, because it will never succeed. 
-This will sometimes be the case for both precondition and postcondition failures. 
-409 means that there is something the user could do to the resource to make the operation succeed. 
-This will also sometimes be the case for both precondition and postcondition failures. 
-Jim: I agree with Geoff. 
-It would be nice to have a consistent, simple rule distinguishing 403 and 409 that could be applied in all circumstances, but this would not account for useful variability across, or perhaps even within servers. 
-Interoperability won't suffer because the marshalling is the same, both are client error condidtions, and the semantics of the distinction between them is well specified by HTTP in a way that clients can make use of. 
-OK, I buy this reasoning. 
-Thanks. 
-Lisa 
+<s> Hi,  </s>
+<s> In section 1.6 of the specification it states: In order to allow better client handling of 403 and 409 responses, a distinct XML element type is associated with each method precondition and postcondition of a request.  </s>
+<s> But several Postconditions in the specification do not have any XML elements defined.  </s>
+<s> Section 8.5, 8.6, 8.7, 8.8, and 9.6 for example.  </s>
+<s> Do we need to change 1.6 to say that some  </s>
+<s> preconditions and postconditions have distinct XML elements?  </s>
+<s> Also regarding the 403/409 responses it was not clear from the spec when to send 403 and when to send 409.  </s>
+<s> The text in section 1.6 reads: If a method precondition for a request is not satisfied, or if a method postcondition for a request cannot be achieved, the response status of the request MUST be 403 (Forbidden) or 409 (Conflict).  </s>
+<s> Does this mean a 403 should be sent for a failed precondition and a 409  </s>
+<s> should be sent for a postcondition failure.  </s>
+<s> Or does it mean the server implementer can return either code in either situation.  </s>
+<s> This is not clear from reading the spec.  </s>
+<s> Regards, Peter Raymond - MERANT Technical Architect (ADM) WWW: http://www.merant.com  </s>
+<s> Postconditions with no XML elements defined?I had interpreted it as being 403 with precondition, 409 with postcondition, like you, but I agree it's not directly stated.  </s>
+<s> Can the spec clarify please?  </s>
+<s> lisa [mailto:ietf-dav-versioning-request@w3.org]On  </s>
+<s> Behalf Of Peter Raymond Hi,  </s>
+<s> In section 1.6 of the specification it states: In order to allow better client handling of 403 and 409 responses, a distinct XML element type is associated with each method precondition and postcondition of a request.  </s>
+<s> But several Postconditions in the specification do not have any XML elements defined.  </s>
+<s> Section 8.5, 8.6, 8.7, 8.8, and 9.6 for example.  </s>
+<s> Do we need to change 1.6 to say that some  </s>
+<s> preconditions and postconditions have distinct XML elements?  </s>
+<s> Also regarding the 403/409 responses it was not clear from the spec when to send 403 and when to send 409.  </s>
+<s> The text in section 1.6 reads: If a method precondition for a request is not satisfied, or if a method postcondition for a request cannot be achieved, the response status of the request MUST be 403 (Forbidden) or 409 (Conflict).  </s>
+<s> Does this mean a 403 should be sent for a failed precondition and a 409  </s>
+<s> should be sent for a postcondition failure.  </s>
+<s> Or does it mean the server implementer can return either code in either situation.  </s>
+<s> This is not clear from reading the spec.  </s>
+<s> Regards, Peter Raymond - MERANT Technical Architect (ADM) WWW: http://www.merant.com  </s>
+<s> I'd be inclined to name all the pre-postconditions, even if it is unlikely that a client will ever see them coming back from a server I think it is useful to name them so we can talk about them and refer to them easily.  </s>
+<s> It simply means that DeltaV is using the definitions found in RFC2616 and is not redefining their meanings.  </s>
+<s> In preactise this means that server implementers can choose within those guidelines, but I think we should agree between ourselves which are which.  </s>
+<s> Regards, Tim  </s>
+<s> Tim says:  </s>
+<s> I Agree.  </s>
+<s> Tim says:  </s>
+<s> Also sounds like a good idea, but could be a big job to review each pre/post condition and decide under what circumstances a 409 or a 403 should be returned.  </s>
+<s> While we are on the subject of pre/post conditions I also wonder if anyone can explain why the post condition XML elements are not worded as "negatives", but the preconditions are worded as "negatives".  </s>
+<s> For example on DELETE in section 3.12 we have: DAV:cannot-delete-referenced-version as a precondition.  </s>
+<s> I like the wording of this XML element it is clear that you have done something that is forbidden (eg it says cannot).  </s>
+<s> BUT in the same section we have: DAV:update-predecessor-set as a postcondition.  </s>
+<s> Why didn't we call this XML element DAV:update-predecessor-set-failed or some wording that indicates failure.  </s>
+<s> I am just intrigued as to why they got worded this way.  </s>
+<s> The status code already indicates that something is forbidden (403) or there is a conflict (409).  </s>
+<s> So you could actually argue that we should remove the "negatives" from all the elements (pre and post)...eg in the above example we should have: DAV:referenced-version DAV:predecessor-set  </s>
+<s> Regards, Peter Raymond - MERANT Technical Architect (ADM) WWW: http://www.merant.com  </s>
+<s> I did that a while ago, and it was not such a big deal however, there was a large grain of salt used when deciding between 403 and  </s>
+<s> 409.  </s>
+<s> If there is interest in re-doing that list I'll happily do so, but wherever there is a disagreement about if it should be one or the other I will not offer any resistance :-)  </s>
+<s> They are not all that way.  </s>
+<s> The preconditions are statements that must be  </s>
+<s> true for a method to succeed, and the postconditions are statements that  </s>
+<s> must be true immediately after the method has suceeded.  </s>
+<s> I guess there are  </s>
+<s> more cases of a resource must not be (of a certain type | in a certain state | whatever) for preconditions than there are for postconditions.  </s>
+<s> Because the postcondition (i.e. that which must be true) is that the predecessor set was updated.  </s>
+<s> Don't think of them as error descriptions.  </s>
+<s> I prefer the more descriptive names.  </s>
+<s> Regards, Tim Ellison Java Technology Centre, MP146 IBM UK Laboratory, Hursley Park, Winchester, UK. SO21 2JN  </s>
+<s> and  </s>
+<s> Please make it simple and normative!  </s>
+<s> The preconditions are statements that must be true for a method to  </s>
+<s> succeed, Sounds like if the precondition is not true the operation is "Forbidden",  </s>
+<s> and the postconditions are statements that must be true immediately after  </s>
+<s> the method has suceeded.  </s>
+<s> Sounds like there must be a "Conflict" if the postcondition cannot be met.  </s>
+<s> If there are no strong objections, I propose that we adopt the simple normative rule a precondition is returned with 403 and a postcondition is returned with 409.  </s>
+<s> Lisa  </s>
+<s> We use the standard meanings of 403 and 409 defined in RFC 2616 i.e.: 10.4.4 403 Forbidden  </s>
+<s> The server understood the request, but is refusing to fulfill it.  </s>
+<s> Authorization will not help and the request SHOULD NOT be repeated.  </s>
+<s> 10.4.10 409 Conflict The request could not be completed due to a conflict with the current state of the resource.  </s>
+<s> This code is only allowed in situations where it is expected that the user might be able to resolve the conflict and resubmit the request.  </s>
+<s> But to make sure there is no misunderstanding, how about the following rewording of the first paragraph of section 1.6: A "precondition" of a method describes the state on the server that must be true for that method to be performed.  </s>
+<s> A "postcondition" of a method describes the state on the server that must be true after that method has completed.  </s>
+<s> If a method precondition or postcondition for a request is not satisfied, the response status of the request MUST be either 403 (Forbidden) if the request should not be repeated because it will always fail, or 409 (Conflict) if it is expected that the user might be able to resolve the conflict and resubmit the request.  </s>
+<s> Cheers, Geoff I had interpreted it as being 403 with precondition, 409 with postcondition, like you, but I agree it's not directly stated.  </s>
+<s> Can the spec clarify please?  </s>
+<s> lisa -----Original Message----- [mailto:ietf-dav-versioning-request@w3.org]On  </s>
+<s> Behalf Of Peter Raymond Hi, In section 1.6 of the specification it states: In order to allow better client handling of 403 and 409 responses, a distinct XML element type is associated with each method precondition and postcondition of a request.  </s>
+<s> But several Postconditions in the specification do not have any XML elements defined.  </s>
+<s> Section 8.5, 8.6, 8.7, 8.8, and 9.6 for example.  </s>
+<s> Do we need to change 1.6 to say that some preconditions and postconditions have distinct XML elements?  </s>
+<s> Also regarding the 403/409 responses it was not clear from the spec when to send 403 and when to send 409.  </s>
+<s> The text in section 1.6 reads: If a method precondition for a request is not satisfied, or if a method postcondition for a request cannot be achieved, the response status of the request MUST be 403 (Forbidden) or 409 (Conflict).  </s>
+<s> Does this mean a 403 should be sent for a failed precondition and a 409 should be sent for a postcondition failure.  </s>
+<s> Or does it mean the server implementer can return either code in either situation.  </s>
+<s> This is not clear from reading the spec.  </s>
+<s> Regards, Peter Raymond - MERANT Technical Architect (ADM) WWW: http://www.merant.com  </s>
+<s> Those postconditions should each have a token defined for them.  </s>
+<s> I'll give them each one.  </s>
+<s> Thanks for noticing that!  </s>
+<s> Cheers, Geoff Hi, In section 1.6 of the specification it states: In order to allow better client handling of 403 and 409 responses, a distinct XML element  </s>
+<s> type is associated with each method precondition and postcondition of a request.  </s>
+<s> But several Postconditions in the specification do not have any XML elements defined.  </s>
+<s> Section 8.5, 8.6, 8.7, 8.8, and 9.6 for example.  </s>
+<s> Do we need to change 1.6 to say that some preconditions and postconditions have distinct XML elements?  </s>
+<s> Also regarding the 403/409 responses it was not clear from the spec when to send 403 and when to send 409.  </s>
+<s> The text in section 1.6 reads: If a method precondition for a request is not satisfied, or if a method postcondition for a request cannot be achieved, the response status of the request MUST be 403 (Forbidden) or 409 (Conflict).  </s>
+<s> Does this mean a 403 should be sent for a failed precondition and a 409 should be sent for a postcondition failure.  </s>
+<s> Or does it mean the server implementer can  </s>
+<s> return either code in either situation.  </s>
+<s> This is not clear from reading the spec.  </s>
+<s> Regards, Peter Raymond - MERANT Technical Architect (ADM) WWW: http://www.merant.com  </s>
+<s> A simple list would suffice, right?  </s>
+<s> The preconditions are statements that must be true for a method to  </s>
+<s> and the postconditions are statements that must be true  </s>
+<s> The 403 Forbidden means that you shouldn't bother trying any variations on this request because they will fail, an example would be trying to MOVE a version resource, there is nothing a client can do to make the server happy about this.  </s>
+<s> A 409 Conflict means the client likely can do something to fix the resource  </s>
+<s> or server state so that the request will succeed, for example trying to  </s>
+<s> CHECKOUT a checked-out resource will fail, but can succeed if the resource is first checked-in.  </s>
+<s> I don't think it is as simple as saying all preconditions are 403 and all postconditions are 409 as it would lead to some anomolies, such as the DAV:preserve-versioning-properties postcondition being a 409!  </s>
+<s> ... but I did say that I wouldn't argue g Tim  </s>
+<s> From: Tim Ellison [mailto:Tim_Ellison@uk.ibm.com]  </s>
+<s> I did that a while ago, and it was not such a big deal Also, whether or not a particular response should be a 403 or a 409 depends on the particular request and on the implementation of the resource.  </s>
+<s> For example, with the DAV:preserve-versioning-properties postcondition and a MOVE request on a checked-out version-controlled resource, one server might not be able to preserver versioning properties so it returns a 403 indicating the MOVE will always fail, while another server might only be able to MOVE only checked-in VCR's, so it returns a 409 (since the user could MOVE the resource after checking it in).  </s>
+<s> So we could compile a non-normative list of what status codes are likely to be returned by certain implementations, but a client writer should not use this list (it should use the status code actually returned), and a server writer should only use the list if it reflects the implementation choices made by that server.  </s>
+<s> I would be strongly against including such a list in the protocol itself, since it would be too easy for a client writer to hardwire these "suggested" return codes into their implementation logic.  </s>
+<s> They are not all that way.  </s>
+<s> The preconditions are statements that must be  </s>
+<s> true for a method to succeed, and the postconditions are statements that  </s>
+<s> must be true immediately after the method has suceeded.  </s>
+<s> Don't think of them as error descriptions.  </s>
+<s> Yes.  </s>
+<s> I prefer the more descriptive names.  </s>
+<s> As do I. Cheers, Geoff  </s>
+<s> From: Lisa Dusseault [mailto:lisa@xythos.com]  </s>
+<s> Sounds like if the precondition is not true the operation is "Forbidden",  </s>
+<s> and the postconditions are statements that must be true immediately  </s>
+<s> after the method has suceeded.  </s>
+<s> Sounds like there must be a "Conflict" if the postcondition cannot be met.  </s>
+<s> If there are no strong objections, I propose that we adopt the simple normative rule a precondition is returned with 403 and a postcondition is returned with 409.  </s>
+<s> I'd fall into the "strong objection" camp.  </s>
+<s> 403 means the user should not retry the operation, because it will never succeed.  </s>
+<s> This will sometimes be the case for both precondition and postcondition failures.  </s>
+<s> 409 means that there is something the user could do to the resource to make the operation succeed.  </s>
+<s> This will also sometimes be the case for both precondition and postcondition failures.  </s>
+<s> Cheers, Geoff  </s>
+<s> Lisa: If there are no strong objections, I propose that we adopt the simple normative rule a precondition is returned with 403 and a postcondition is returned with 409.  </s>
+<s> Geoff: I'd fall into the "strong objection" camp.  </s>
+<s> 403 means the user should not retry the operation, because it will never succeed.  </s>
+<s> This will sometimes be the case for both precondition and postcondition failures.  </s>
+<s> 409 means that there is something the user could do to the resource to make the operation succeed.  </s>
+<s> This will also sometimes be the case for both precondition and postcondition failures.  </s>
+<s> Jim: I agree with Geoff.  </s>
+<s> It would be nice to have a consistent, simple rule distinguishing 403 and 409 that could be applied in all circumstances, but this would not account for useful variability across, or perhaps even within servers.  </s>
+<s> Interoperability won't suffer because the marshalling is the same, both are client error condidtions, and the semantics of the distinction between them is well specified by HTTP in a way that clients can make use of.  </s>
+<s> OK, I buy this reasoning.  </s>
+<s> Thanks.  </s>
+<s> Lisa  </s>

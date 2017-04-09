@@ -1,57 +1,57 @@
-Hi there, RFC 2616, section 10.2.7 (206 Partial Content) says: If the response is the result of an If-Range request that used a weak validator, the response MUST NOT include other entity-headers; The above implies that it may be OK to respond with partial content to an If-Range request that uses a weak validator. 
-On the other hand, section 13.3.3 
-(Weak and Strong Validators) says, only a strong validator is usable for a sub-range retrieval, since otherwise the client might end up with an internally inconsistent entity. 
-and (less importantly) Clients MUST NOT use weak validators in [subrange] forms of request. 
-and (more importantly) A cache or origin server receiving a conditional request, other than a full-body GET request, MUST use the strong comparison function to evaluate the condition. 
-which seems to imply that a 206 Partial Content response cannot be a result of an If-Range request that used a weak validator. 
-In other words, section 10.2.7 seems to be documenting specifics of the behavior that is prohibited in section 13.3.3 
-because, according to 13.3.3, 
-weak If-Range should never match and the server MUST respond with 200 (OK) and not 206 (Partial Content). 
-My question is: [How] is it possible for a compliant implementation to generate a 206 Partial Content response as a result of an If-Range request that used a weak validator? 
-Thank you, Alex. 
-HTTP performance - Web Polygraph benchmark 
-www.measurement-factory.com | HTTP compliance+ - Co-Advisor test suite 
-all of the above - PolyBox appliance 
-I've posted the question below last year but got no opinions. 
-Repeated client inquiries prompted me to look at this again. 
-In short, parts of RFC 2616 say that a server MUST use strong tag comparison when generating 206 responses to If-Range (i.e., weak If-Range MOST NOT match), while another part places requirements on 206 responses to weak If-Range (implying that it is OK to respond with 206 to a weak If-Range). 
-See original post below for quotes/details. 
-Does anybody care to comment? 
-Would it be fair to say that the latter part documents requirements for violators? 
-That is, if and only if a server decides (due to local configuration or whatever) to violate a MUST it becomes subject to another MUST? 
-Or am I missing some way to generate a 206 response to a weak If-Range without violating any MUSTs? 
-Thanks, Alex. 
-www.measurement-factory.com | HTTP compliance+ - Co-Advisor test suite 
-all of the above - PolyBox appliance 
-I've posted the question below last year but got no opinions. 
-Repeated client inquiries prompted me to look at this again. 
-In short, parts of RFC 2616 say that a server MUST use strong tag comparison when generating 206 responses to If-Range (i.e., weak If-Range MOST NOT match), while another part places requirements on 206 responses to weak If-Range (implying that it is OK to respond with 206 to a weak If-Range). 
-See original post below for quotes/details. 
-Does anybody care to comment? 
-Or am I missing some way to generate a 206 response to a weak If-Range without violating any MUSTs? 
-I guess I ought to respond because I wrote most or all of these parts of the spec. 
-(Sorry for dropping the ball back in October.) You're probably right that there is a contradiction here, and that part you quoted from RFC 2616, section 10.2.7 (206 Partial Content): If the response is the result of an If-Range request that used a weak validator, the response MUST NOT include other entity-headers; is probably a bug. 
-That is, the entire sentence (including the rationale after the semicolon) probably ought to be deleted. 
-My guess is that this contradiction arose during a revision that made 13.3.3 
-stricter, and I failed to make 10.2.7 stricter as well. 
-This is all a bit mushy because 13.3.3 
-allows a sort of ambiguous situation if the validator in question is a Last-Modified timestamp rather than an entity tag. 
-Since there is no way to tag a Last-Modified value as "weak" (or "strong", for that matter), 13.3.3 
-has some rather fragile rules for allowing either the client or the server to infer strongness. 
-So if the heuristic here breaks ("60 seconds is too short") then it might be possible for a client to believe that it can generate an If-Range request with a Last-Modified value that the *client* thinks is strong, but the *server* thinks is weak. 
-But in this case, it's clearly a bad idea for the server to respond with 206, and so this language in 13.3.3: 
-A cache or origin server receiving a conditional request, other than a full-body GET request, MUST use the strong comparison function to evaluate the condition. 
-ought to be kept in the spec, rather than that contradictory sentence from 10.2.7. 
-Would it be fair to say that the latter part documents requirements for violators? 
-That is, if and only if a server decides (due to local configuration or whatever) to violate a MUST it becomes subject to another MUST? 
-I don't think we ever really wanted to document "requirements for violators," since the whole point of a specification is to give us a way to stamp out violators. 
-(Although during our debate about whether badly-misguided cache operators should be allowed to violate a server's clearly stated restrictions on caching, we ended up resolving the debate by documenting "requirements for violators." 
-But fortunately we didn't make a habit of this.) -Jeff 
-Jeff, Thanks for the explanation! 
-The situation seems to be clear now. 
-Based on your comments, it looks like the questionable part from section 10.2.7 should be added to the HTTP errata document. 
-The comment could say something like "ignore this MUST and its motivation because it contradicts the language of section 13.3.3 and the intent behind 206 (Partial Content) safety mechanisms". 
-If there are no objections, I would like to ask Scott Lawrence to update the errata page. 
-While I do not belive this is a big issue, it is a bug that still raises questions among developers that are concerned with RFC 2616 compliance. 
-Thank you, Alex. P.S. Your comments regarding different client and server views on the strength of a date-based validator are very interesting. 
-I would have to digest it some more, but there may be something we can test for there. 
+<s> Hi there, RFC 2616, section 10.2.7 (206 Partial Content) says: If the response is the result of an If-Range request that used a weak validator, the response MUST NOT include other entity-headers; The above implies that it may be OK to respond with partial content to an If-Range request that uses a weak validator.  </s>
+<s> On the other hand, section 13.3.3  </s>
+<s> (Weak and Strong Validators) says, only a strong validator is usable for a sub-range retrieval, since otherwise the client might end up with an internally inconsistent entity.  </s>
+<s> and (less importantly) Clients MUST NOT use weak validators in [subrange] forms of request.  </s>
+<s> and (more importantly) A cache or origin server receiving a conditional request, other than a full-body GET request, MUST use the strong comparison function to evaluate the condition.  </s>
+<s> which seems to imply that a 206 Partial Content response cannot be a result of an If-Range request that used a weak validator.  </s>
+<s> In other words, section 10.2.7 seems to be documenting specifics of the behavior that is prohibited in section 13.3.3  </s>
+<s> because, according to 13.3.3,  </s>
+<s> weak If-Range should never match and the server MUST respond with 200 (OK) and not 206 (Partial Content).  </s>
+<s> My question is: [How] is it possible for a compliant implementation to generate a 206 Partial Content response as a result of an If-Range request that used a weak validator?  </s>
+<s> Thank you, Alex.  </s>
+<s> HTTP performance - Web Polygraph benchmark  </s>
+<s> www.measurement-factory.com | HTTP compliance+ - Co-Advisor test suite  </s>
+<s> all of the above - PolyBox appliance  </s>
+<s> I've posted the question below last year but got no opinions.  </s>
+<s> Repeated client inquiries prompted me to look at this again.  </s>
+<s> In short, parts of RFC 2616 say that a server MUST use strong tag comparison when generating 206 responses to If-Range (i.e., weak If-Range MOST NOT match), while another part places requirements on 206 responses to weak If-Range (implying that it is OK to respond with 206 to a weak If-Range).  </s>
+<s> See original post below for quotes/details.  </s>
+<s> Does anybody care to comment?  </s>
+<s> Would it be fair to say that the latter part documents requirements for violators?  </s>
+<s> That is, if and only if a server decides (due to local configuration or whatever) to violate a MUST it becomes subject to another MUST?  </s>
+<s> Or am I missing some way to generate a 206 response to a weak If-Range without violating any MUSTs?  </s>
+<s> Thanks, Alex.  </s>
+<s> www.measurement-factory.com | HTTP compliance+ - Co-Advisor test suite  </s>
+<s> all of the above - PolyBox appliance  </s>
+<s> I've posted the question below last year but got no opinions.  </s>
+<s> Repeated client inquiries prompted me to look at this again.  </s>
+<s> In short, parts of RFC 2616 say that a server MUST use strong tag comparison when generating 206 responses to If-Range (i.e., weak If-Range MOST NOT match), while another part places requirements on 206 responses to weak If-Range (implying that it is OK to respond with 206 to a weak If-Range).  </s>
+<s> See original post below for quotes/details.  </s>
+<s> Does anybody care to comment?  </s>
+<s> Or am I missing some way to generate a 206 response to a weak If-Range without violating any MUSTs?  </s>
+<s> I guess I ought to respond because I wrote most or all of these parts of the spec.  </s>
+<s> (Sorry for dropping the ball back in October.) You're probably right that there is a contradiction here, and that part you quoted from RFC 2616, section 10.2.7 (206 Partial Content): If the response is the result of an If-Range request that used a weak validator, the response MUST NOT include other entity-headers; is probably a bug.  </s>
+<s> That is, the entire sentence (including the rationale after the semicolon) probably ought to be deleted.  </s>
+<s> My guess is that this contradiction arose during a revision that made 13.3.3  </s>
+<s> stricter, and I failed to make 10.2.7 stricter as well.  </s>
+<s> This is all a bit mushy because 13.3.3  </s>
+<s> allows a sort of ambiguous situation if the validator in question is a Last-Modified timestamp rather than an entity tag.  </s>
+<s> Since there is no way to tag a Last-Modified value as "weak" (or "strong", for that matter), 13.3.3  </s>
+<s> has some rather fragile rules for allowing either the client or the server to infer strongness.  </s>
+<s> So if the heuristic here breaks ("60 seconds is too short") then it might be possible for a client to believe that it can generate an If-Range request with a Last-Modified value that the *client* thinks is strong, but the *server* thinks is weak.  </s>
+<s> But in this case, it's clearly a bad idea for the server to respond with 206, and so this language in 13.3.3:  </s>
+<s> A cache or origin server receiving a conditional request, other than a full-body GET request, MUST use the strong comparison function to evaluate the condition.  </s>
+<s> ought to be kept in the spec, rather than that contradictory sentence from 10.2.7.  </s>
+<s> Would it be fair to say that the latter part documents requirements for violators?  </s>
+<s> That is, if and only if a server decides (due to local configuration or whatever) to violate a MUST it becomes subject to another MUST?  </s>
+<s> I don't think we ever really wanted to document "requirements for violators," since the whole point of a specification is to give us a way to stamp out violators.  </s>
+<s> (Although during our debate about whether badly-misguided cache operators should be allowed to violate a server's clearly stated restrictions on caching, we ended up resolving the debate by documenting "requirements for violators."  </s>
+<s> But fortunately we didn't make a habit of this.) -Jeff  </s>
+<s> Jeff, Thanks for the explanation!  </s>
+<s> The situation seems to be clear now.  </s>
+<s> Based on your comments, it looks like the questionable part from section 10.2.7 should be added to the HTTP errata document.  </s>
+<s> The comment could say something like "ignore this MUST and its motivation because it contradicts the language of section 13.3.3 and the intent behind 206 (Partial Content) safety mechanisms".  </s>
+<s> If there are no objections, I would like to ask Scott Lawrence to update the errata page.  </s>
+<s> While I do not belive this is a big issue, it is a bug that still raises questions among developers that are concerned with RFC 2616 compliance.  </s>
+<s> Thank you, Alex. P.S. Your comments regarding different client and server views on the strength of a date-based validator are very interesting.  </s>
+<s> I would have to digest it some more, but there may be something we can test for there.  </s>

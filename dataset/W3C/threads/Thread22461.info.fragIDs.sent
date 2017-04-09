@@ -1,64 +1,64 @@
-The latest Level 1 DOM specification has just been released, at There have been significant changes since the last public draft. 
-Amongst others: There is no separate XML document; all the XML interfaces are in the Core document. 
-We took the DTD stuff out, pending work on schemas in a future version of XML (what we had will shortly be released as a separate WD). 
-We took out NodeIterator. 
-The Java and OMG IDL bindings now validate. 
-The DOM WG thinks the DOM specification is nearly finished and almost ready to go to PR. The remaining issues are mostly listed in the spec, so feedback on these (to this mailing list) would be welcome. 
-regards, Lauren Wood, Chair, W3C DOM WG 
-o It's unfortunate that attributes is an attribute of Node when it is null for all subclasses except Element. 
-I suppose this was to avoid having to cast an Element object that is gotten from a NodeList :-( (Even if there is an attributes in future Declaration subtypes, I don't really think it belongs in the base interface.) 
-o Why "nodeName", "nodeValue", "nodeType" attributes of Node and not just name, value, type? 
-All Node subclasses have a attribute that could reasonably be refered to as "name" and many have a "value". 
-Programmers can make use of the convenience methods with signatures like Element.getTagName() and ProcessingInstruction.getTarget() to access the name variable with more semantic if they want to. 
-That brings up what I believe is a typo in the ECMA script interface. 
-It states that Object Attribute has all the properties and methods of Node as well as the properties defined below, and "name" is defined below. 
-This suggests that Attribute has both the property nodeName and name. 
-I don't think scripts can alias two variable names for a single variable in its object model, or are there supposed to be two different variables? 
-(Same thing for Element, etc.) 
-o You specify that the NodeList returned by Node.childNodes() must be live. 
-Is this true of all NodeLists? 
-What about NamedNodeMaps, is it required that they are static (I ask because they allow enumeration)? 
-o What were the objections to having a single NodeList interface providing both an an index accessor and a name accessor (and not have NamedNodeMap)? 
-It's my understanding that all Nodes in the DOM will normally have a non-null name, so all collection types should be able to handle name access (however inefficiently). 
-Of course smart implementations should use appropriate collection types for the various collections based on "liveness" and ordering requirements and predicted use patterns, but it seems they could all use the same NodeList interface. 
-o I am trying to understand the exceptions in Data. 
-The "data" attribute specifies that "If the character data of node cannot fit into the length of a wstring a DOM exception is raised." 
-Does this mean that append, insert, and replace raise this exception even though they don't say they do? 
-The comment seems to suggest that 
-the exception is raised during a property setter operation. 
-If so, isn't the character data already in a wstring before assignment? 
-What does the following statement mean, "If this exception is raised, the user may call substring to retrieve the data in manageable chunks"? 
-I don't understand where the character data was put such that it is now accessible via this object's substring. 
-Then in the substring method, "a DOMException is thrown if the specified range of text will not fit in a wstring." 
-How could a substring of a wstring not fit in a wstring? 
-Is substring() capable of pulling data 
-from adjacent or child Text nodes? 
-That's the only way I could think of getting this exception. 
-Also, shouldn't substring thow an invalid offset exception? 
-Cheers. 
-ted 
-You're right as to why this was added; we had to come to grips with the fact that "casting" is fairly expensive in Java and COM, and some wish to use the DOM in performance-critical environments. 
-So, we allow full functionality using just the Node interface, but still support the higher-level interfaces for those who prefer a more object-oriented API. 
-ECMAScript in particular is rather limited in its name scoping rules, and "simple" names will tend to clash with legacy APIs, so we have used the naming convention of using the interface name in the methods to minimize the chances for name clashes. 
-That will be fixed in the next release. 
-We'll apparently have to clarify this in the spec. 
-As I understand it, NamedNodeMaps are static (which is why they're not derived from NodeList). 
-There was much feeling in and outside of the WG that this would confuse more people than it enlightened. 
-Hmmmm ... they SHOULD say they do ... I'll double-check and fix if necessary. 
-The comment seems to suggest that 
-The scenario here is to imagine that a DOM document has some Data object that is larger than the size of a wstring on some platform (it presumably would not be stored internally using the data type that wstring maps onto!). 
-We added a means of telling the user that extracting the entire Data object would cause an overflow, and give them a means of extracting the Data in manageable chunks. 
-Could you point to something in the text that gives you the impression that the value of a Data object is a wstring (as opposed to an arbitrarily large collection of character data)? 
-We need to dispel that misconception. 
-Thanks, Mike Champion 
-I would like to strongly suggest that "value" should return a NodeList, and "data" should return a wstring (which is the way things were a couple of revs ago). 
-This makes the decision of whether to represent attribute and entity values as children an implementation decision, and allows values (which might be quite large in the case of entities) to be shared. 
-It also makes a lot more sense to call the string associated with a Text node its "data" than to call it its "value". 
-Would it avoid these conflicts by defining getName, getValue, setName, and setValue as methods instead of making them attributes? 
-It sounds to me as if you may need two kinds of NodeList, one that's ``live'' and one that isn't. 
-You need _something_ to return as the value of an operation that returns multiple nodes from different places in a document. 
-I suspect this may have been the original motivation behind DocumentFragment, but to use it you would have to move the nodes out of their original places in the document, which misses the point. 
-If this is the case, you probably have to define getData and setData as separate methods rather than defining data as an attribute. 
-Stephen R. Savitzky Chief Software Scientist, Ricoh Silicon Valley, Inc., steve@rsv.ricoh.com 
-California Research Center home: steve@starport.com 
-URL: http://www.starport.com/people/steve/ 
+<s> The latest Level 1 DOM specification has just been released, at There have been significant changes since the last public draft.  </s>
+<s> Amongst others: There is no separate XML document; all the XML interfaces are in the Core document.  </s>
+<s> We took the DTD stuff out, pending work on schemas in a future version of XML (what we had will shortly be released as a separate WD).  </s>
+<s> We took out NodeIterator.  </s>
+<s> The Java and OMG IDL bindings now validate.  </s>
+<s> The DOM WG thinks the DOM specification is nearly finished and almost ready to go to PR. The remaining issues are mostly listed in the spec, so feedback on these (to this mailing list) would be welcome.  </s>
+<s> regards, Lauren Wood, Chair, W3C DOM WG  </s>
+<s> o It's unfortunate that attributes is an attribute of Node when it is null for all subclasses except Element.  </s>
+<s> I suppose this was to avoid having to cast an Element object that is gotten from a NodeList :-( (Even if there is an attributes in future Declaration subtypes, I don't really think it belongs in the base interface.)  </s>
+<s> o Why "nodeName", "nodeValue", "nodeType" attributes of Node and not just name, value, type?  </s>
+<s> All Node subclasses have a attribute that could reasonably be refered to as "name" and many have a "value".  </s>
+<s> Programmers can make use of the convenience methods with signatures like Element.getTagName() and ProcessingInstruction.getTarget() to access the name variable with more semantic if they want to.  </s>
+<s> That brings up what I believe is a typo in the ECMA script interface.  </s>
+<s> It states that Object Attribute has all the properties and methods of Node as well as the properties defined below, and "name" is defined below.  </s>
+<s> This suggests that Attribute has both the property nodeName and name.  </s>
+<s> I don't think scripts can alias two variable names for a single variable in its object model, or are there supposed to be two different variables?  </s>
+<s> (Same thing for Element, etc.)  </s>
+<s> o You specify that the NodeList returned by Node.childNodes() must be live.  </s>
+<s> Is this true of all NodeLists?  </s>
+<s> What about NamedNodeMaps, is it required that they are static (I ask because they allow enumeration)?  </s>
+<s> o What were the objections to having a single NodeList interface providing both an an index accessor and a name accessor (and not have NamedNodeMap)?  </s>
+<s> It's my understanding that all Nodes in the DOM will normally have a non-null name, so all collection types should be able to handle name access (however inefficiently).  </s>
+<s> Of course smart implementations should use appropriate collection types for the various collections based on "liveness" and ordering requirements and predicted use patterns, but it seems they could all use the same NodeList interface.  </s>
+<s> o I am trying to understand the exceptions in Data.  </s>
+<s> The "data" attribute specifies that "If the character data of node cannot fit into the length of a wstring a DOM exception is raised."  </s>
+<s> Does this mean that append, insert, and replace raise this exception even though they don't say they do?  </s>
+<s> The comment seems to suggest that  </s>
+<s> the exception is raised during a property setter operation.  </s>
+<s> If so, isn't the character data already in a wstring before assignment?  </s>
+<s> What does the following statement mean, "If this exception is raised, the user may call substring to retrieve the data in manageable chunks"?  </s>
+<s> I don't understand where the character data was put such that it is now accessible via this object's substring.  </s>
+<s> Then in the substring method, "a DOMException is thrown if the specified range of text will not fit in a wstring."  </s>
+<s> How could a substring of a wstring not fit in a wstring?  </s>
+<s> Is substring() capable of pulling data  </s>
+<s> from adjacent or child Text nodes?  </s>
+<s> That's the only way I could think of getting this exception.  </s>
+<s> Also, shouldn't substring thow an invalid offset exception?  </s>
+<s> Cheers.  </s>
+<s> ted  </s>
+<s> You're right as to why this was added; we had to come to grips with the fact that "casting" is fairly expensive in Java and COM, and some wish to use the DOM in performance-critical environments.  </s>
+<s> So, we allow full functionality using just the Node interface, but still support the higher-level interfaces for those who prefer a more object-oriented API.  </s>
+<s> ECMAScript in particular is rather limited in its name scoping rules, and "simple" names will tend to clash with legacy APIs, so we have used the naming convention of using the interface name in the methods to minimize the chances for name clashes.  </s>
+<s> That will be fixed in the next release.  </s>
+<s> We'll apparently have to clarify this in the spec.  </s>
+<s> As I understand it, NamedNodeMaps are static (which is why they're not derived from NodeList).  </s>
+<s> There was much feeling in and outside of the WG that this would confuse more people than it enlightened.  </s>
+<s> Hmmmm ... they SHOULD say they do ... I'll double-check and fix if necessary.  </s>
+<s> The comment seems to suggest that  </s>
+<s> The scenario here is to imagine that a DOM document has some Data object that is larger than the size of a wstring on some platform (it presumably would not be stored internally using the data type that wstring maps onto!).  </s>
+<s> We added a means of telling the user that extracting the entire Data object would cause an overflow, and give them a means of extracting the Data in manageable chunks.  </s>
+<s> Could you point to something in the text that gives you the impression that the value of a Data object is a wstring (as opposed to an arbitrarily large collection of character data)?  </s>
+<s> We need to dispel that misconception.  </s>
+<s> Thanks, Mike Champion  </s>
+<s> I would like to strongly suggest that "value" should return a NodeList, and "data" should return a wstring (which is the way things were a couple of revs ago).  </s>
+<s> This makes the decision of whether to represent attribute and entity values as children an implementation decision, and allows values (which might be quite large in the case of entities) to be shared.  </s>
+<s> It also makes a lot more sense to call the string associated with a Text node its "data" than to call it its "value".  </s>
+<s> Would it avoid these conflicts by defining getName, getValue, setName, and setValue as methods instead of making them attributes?  </s>
+<s> It sounds to me as if you may need two kinds of NodeList, one that's ``live'' and one that isn't.  </s>
+<s> You need _something_ to return as the value of an operation that returns multiple nodes from different places in a document.  </s>
+<s> I suspect this may have been the original motivation behind DocumentFragment, but to use it you would have to move the nodes out of their original places in the document, which misses the point.  </s>
+<s> If this is the case, you probably have to define getData and setData as separate methods rather than defining data as an attribute.  </s>
+<s> Stephen R. Savitzky Chief Software Scientist, Ricoh Silicon Valley, Inc., steve@rsv.ricoh.com  </s>
+<s> California Research Center home: steve@starport.com  </s>
+<s> URL: http://www.starport.com/people/steve/  </s>

@@ -1,94 +1,94 @@
-What is your rationale for checked-in/out in the type? 
-I think I have missed something in the spec, since it feels like a property to me. 
-I agree that, for most of us, the checked-in status of a resource would be 
-considered part of its 'state' rather than its 'type'. 
-However, these 
-terms are ambiguous at best, and in previous posts I had tried to avoid using 'type'. 
-The only DAV:resourcetype that we have right now is DAV:collection which is useful to clients since it tells them that the namespace can be / is extended 'through' this resource. 
-It is also redundant since clients could simply try an operation on the extended namespace and react to its success or failure (e.g. PROPFIND depth 1 on something, or PUT to a URL one-segment-longer) to determine if the resource has collection semantics. 
-So I would suggest that the rationale for providing DAV:collection is that it is a convenient way to give clients a hint that these 'extended namespace' operations have a chance of succeeding, and to given them a reasonable assumption that they should display the [+] twisty progressively as the namespace is explored, etc. [Footnote: Of course after discovering a DAV:collection resource there is nothing to stop another client deleting the DAV:collection and replacing it with a non-DAV:collection thereby foiling the client's assumptions, which means all clients must have some way to deal with the world as though there was no DAV:collection anyway. 
-(lock everything yeh)] 
-So, if we are to continue this use of DAV:resourcetype it would be to give clients a useful classification of a resource at a particular point in time that would give them a reasonable set of data for displaying an icon, greying menu items and so on. 
-It should convey both versioning 'type' and 'state' that is within the mandate of WebDAV. 
-The specification has already called out a number of useful resource classifications and they are the ones that I proposed (DAV:checked-in _and_ DAV:checked-out may be redundant). 
-Tim 
-p.s. Just in case anyone missed an earlier post, I'll reiterate that the 
-spec is not broken, it works just fine as it is written today, and I continue to support it fully in its present form. 
-I'm just exploring this idea and enjoying the thoughtful observations that it produces re: spec complexity, clarity of presentation, etc. 
-Tim said: 
-In common usage, "type" is somewhere else along the range of persistence from "state". 
-A couple thoughts on how you can tell the difference: - When things can change state, it's because they're supposed to, so we give a way to check out something that's checked in and vice versa. 
-WebDAV does NOT give a way to turn a collection into a regular resource -- clients have to _remove_ the resource -- completely taking away its existence -- and replace it with a resource of a different type. 
-The only sense in which that operation "changes the type" of a collection is that it is an entity 
-that shares the same name as the previous entity -- but no other continuity. 
-DeltaV _does_ blur the line by adding a VERSION-CONTROL method to turn a regular resource into a VCR, however, this method performs drastic surgery, with the side effect of up to three resources being created. 
-Many servers will only support version-controlled resources, and thus not allow the 
-transformation in either direction. 
-- States are used as adjectives. 
-A "checked-out version-controlled resource" isn't a type, it's a type with a state modifier. 
-I think intuitively we use the language correctly: we abbreviate VCR, VR, and VHR to define different types of resources, but we don't through the state adjectives in to have COVCR and CIVCR. 
-- State changes more frequently than type. 
-A typical VCR will have its checked-in and checked-out state change MUCH more frequently than its type. 
-I understand that this is one of many situations where there is not a clear, 
-fine line between two things. 
-You can certainly blur the distinction if you 
-choose by attacking any one of my arguments, or all. 
-That does not prove 
-that we should clump them together. 
-Humans are capable of fuzzy distinctions, and these are useful to us, even if not to the software we write. 
-My argument is to apply common notions to decide what different types need to be called out in resourcetype. 
-IMHO, checked-in/checked-out is a state, not a type. 
-lisa 
-I'm surprised that you say this. 
-WebDAV gives me PROPPATCH. 
-Say I had a server that allowed clients to PROPPATCH the DAV:resourcetype property. 
-Why would that not be DAV compliant? 
-Imagine the client does a PUT to create a resource, sets some dead properties and so on, maybe even LOCKs it. 
-Then they decide that they are going to restructure the resources, and convert that resource into a collection. 
-The client simply PROPATCHes DAV:resourcetype, adding DAV:collection/ , to flag it as a resource capable of storing a "list of internal member URIs". 
-GET still works as before, PROPFIND still works as before, etc. 
-I don't recall seeing anything that said I have to delete the resource first. 
-RFC2518 provides MKCOL for creating a resource as a collection. 
-This is fine and obviously very useful as a means to create a resource (with no content) and set a specific property (DAV:resourcetype) simultaneously. 
-However, I hazard to guess that what most people would wish for is a method that allows simultaneous atomic creation of content and numerous properties in the same method. 
-(Of course we'd debate such a beast for so long ...). 
-DeltaV went through a phase of using MKRESOURCE to create all the different resources and ended up falling in line with MKCOL for numerous reasons. 
-So my question is, does WebDAV disallow DAV:collection/ being a "state" that I can change on a whim? 
-(assuming no internal members are being left orphaned) 
-That's one view of the world. 
-I don't hold that view and I think that RFC2518 permits both so that's cool. 
-But if you step into my shoes for a moment, and think of the transformation simply as a PROPPATCH with some set and remove elements the transformation may not seem so drastic (obviously it is the server changing the properties of the resource so it isn't actually akin to a PROPPATCH). 
-The regular resource - version-contolled resource transformation is, to me, setting up the resource so that the server treats it differently with respect to HTTP methods. 
-It is still the same resource (retains its dead properties, locks are unaffected, binding refs to it remain intact etc.). 
-However, if you think of the transformation as having to 'replace' the resource (i.e. by sequences of DELETE, LOCK, PUT/MKCOL, PROPATCH, BIND) then it does require lots of server effort to recreate a substantially equivalent resource state. 
-Isn't PROPPATCH simpler? 
-Many servers will only support version-controlled resources, and thus not allow the transformation in either direction. 
-Agreed. 
-And many servers will not support LOCKing for that matter :-) 
-Abbreviations aside, the specification DOES refer to "checked-out version-controlled resources" on many occasions since it is an important resource state, err type, err whatever. 
-Agreed that this is typically the case. 
-Hopefully you do not see this as attacking your arguments. 
-I understand your position and that works too. 
-I offered an alternate view which you are free to debunk. 
-That does not prove that we should clump them together. 
-Humans are capable of fuzzy distinctions, and these are useful to us, even if not to the software we write. 
-In the spec and in software we do need to be clear. 
-Whether I agree with checked-in/checked-out being a state or type (I happen to think of it as a state too), I'm claiming that there is no reason why DAV:resourcetype cannot contain both (despite its name), and that the only recognized value today DAV:collection/ can be viewed as either a state or type anyway. 
-Tim 
-So here's my proposal for resourcetype values ... I make no further apologies or arguments for what I consider to be a 'type' vs a 'state', but I do address how clients should detect variations in state. 
-I will however make a couple further argument for resourcetype because I just thought of them: - clients that don't want to implement DeltaV could still allow users to browse folders and resources and see if they're "special" in some way, just by adding these few values to their resourcetype handling. 
-E.g. a client like IE could display things is added as "versioned" even if it didn't know how to checkin/checkout or view old versions. 
-- ordering (really, grouping) by resourcetype ought to be easy, if desired I suspect that the text in this proposal would be scattered throughout the text wherever new resource types are introduced, and in the chapters that discuss those types. 
-So, I'll put my text in the same order as the current draft. 
-Those who are more familiar than I am with chapter 10 and later should review that part carefully. 
-I'm still a little confused about whether a version history is most usefully considered to be a collection (that contains versions) or not; if it's deemed reasonable to call it a collection then DAV:collection/ should be added to all the version history thingys. 
-------- proposal ------ Version-Controlled Resource: An additional element "DAV:version-controlled"is added to DAV:resourcetype to identify version-controlled resources. 
-E.g. To see if a VCR is checked-out, look for the checked-out property presence. 
-Version Resource: An additional element "DAV:version" is added to DAV:resourcetype to identify a version. 
-E.g. Version History Resource: An additional element "DAV:version-history" is added to DAV:resourcetype to identify a Version History Resource. 
-E.g. Workspace: An additional element "DAV:workspace" is added along with "DAV:collection" to identify a Workspace. 
-E.g. D:resourcetype D:collection/ D:workspace/ /D:resourcetype . 
-Baselines: An additional element "DAV:baseline" can be added to indicate that the version-controlled resource, its versions and version-history, are related to baselines or configurations rather than to regular resources. 
-E.g. Activity: An additional element "DAV:activity" is added to DAV:resourcetype to identify an activity. 
-E.g. Version-controlled collection: Existing elements are reused to identify a version-controlled resource. 
-E.g. lisa 
+<s> What is your rationale for checked-in/out in the type?  </s>
+<s> I think I have missed something in the spec, since it feels like a property to me.  </s>
+<s> I agree that, for most of us, the checked-in status of a resource would be  </s>
+<s> considered part of its 'state' rather than its 'type'.  </s>
+<s> However, these  </s>
+<s> terms are ambiguous at best, and in previous posts I had tried to avoid using 'type'.  </s>
+<s> The only DAV:resourcetype that we have right now is DAV:collection which is useful to clients since it tells them that the namespace can be / is extended 'through' this resource.  </s>
+<s> It is also redundant since clients could simply try an operation on the extended namespace and react to its success or failure (e.g. PROPFIND depth 1 on something, or PUT to a URL one-segment-longer) to determine if the resource has collection semantics.  </s>
+<s> So I would suggest that the rationale for providing DAV:collection is that it is a convenient way to give clients a hint that these 'extended namespace' operations have a chance of succeeding, and to given them a reasonable assumption that they should display the [+] twisty progressively as the namespace is explored, etc. [Footnote: Of course after discovering a DAV:collection resource there is nothing to stop another client deleting the DAV:collection and replacing it with a non-DAV:collection thereby foiling the client's assumptions, which means all clients must have some way to deal with the world as though there was no DAV:collection anyway.  </s>
+<s> (lock everything yeh)]  </s>
+<s> So, if we are to continue this use of DAV:resourcetype it would be to give clients a useful classification of a resource at a particular point in time that would give them a reasonable set of data for displaying an icon, greying menu items and so on.  </s>
+<s> It should convey both versioning 'type' and 'state' that is within the mandate of WebDAV.  </s>
+<s> The specification has already called out a number of useful resource classifications and they are the ones that I proposed (DAV:checked-in _and_ DAV:checked-out may be redundant).  </s>
+<s> Tim  </s>
+<s> p.s. Just in case anyone missed an earlier post, I'll reiterate that the  </s>
+<s> spec is not broken, it works just fine as it is written today, and I continue to support it fully in its present form.  </s>
+<s> I'm just exploring this idea and enjoying the thoughtful observations that it produces re: spec complexity, clarity of presentation, etc.  </s>
+<s> Tim said:  </s>
+<s> In common usage, "type" is somewhere else along the range of persistence from "state".  </s>
+<s> A couple thoughts on how you can tell the difference: - When things can change state, it's because they're supposed to, so we give a way to check out something that's checked in and vice versa.  </s>
+<s> WebDAV does NOT give a way to turn a collection into a regular resource -- clients have to _remove_ the resource -- completely taking away its existence -- and replace it with a resource of a different type.  </s>
+<s> The only sense in which that operation "changes the type" of a collection is that it is an entity  </s>
+<s> that shares the same name as the previous entity -- but no other continuity.  </s>
+<s> DeltaV _does_ blur the line by adding a VERSION-CONTROL method to turn a regular resource into a VCR, however, this method performs drastic surgery, with the side effect of up to three resources being created.  </s>
+<s> Many servers will only support version-controlled resources, and thus not allow the  </s>
+<s> transformation in either direction.  </s>
+<s> - States are used as adjectives.  </s>
+<s> A "checked-out version-controlled resource" isn't a type, it's a type with a state modifier.  </s>
+<s> I think intuitively we use the language correctly: we abbreviate VCR, VR, and VHR to define different types of resources, but we don't through the state adjectives in to have COVCR and CIVCR.  </s>
+<s> - State changes more frequently than type.  </s>
+<s> A typical VCR will have its checked-in and checked-out state change MUCH more frequently than its type.  </s>
+<s> I understand that this is one of many situations where there is not a clear,  </s>
+<s> fine line between two things.  </s>
+<s> You can certainly blur the distinction if you  </s>
+<s> choose by attacking any one of my arguments, or all.  </s>
+<s> That does not prove  </s>
+<s> that we should clump them together.  </s>
+<s> Humans are capable of fuzzy distinctions, and these are useful to us, even if not to the software we write.  </s>
+<s> My argument is to apply common notions to decide what different types need to be called out in resourcetype.  </s>
+<s> IMHO, checked-in/checked-out is a state, not a type.  </s>
+<s> lisa  </s>
+<s> I'm surprised that you say this.  </s>
+<s> WebDAV gives me PROPPATCH.  </s>
+<s> Say I had a server that allowed clients to PROPPATCH the DAV:resourcetype property.  </s>
+<s> Why would that not be DAV compliant?  </s>
+<s> Imagine the client does a PUT to create a resource, sets some dead properties and so on, maybe even LOCKs it.  </s>
+<s> Then they decide that they are going to restructure the resources, and convert that resource into a collection.  </s>
+<s> The client simply PROPATCHes DAV:resourcetype, adding DAV:collection/ , to flag it as a resource capable of storing a "list of internal member URIs".  </s>
+<s> GET still works as before, PROPFIND still works as before, etc.  </s>
+<s> I don't recall seeing anything that said I have to delete the resource first.  </s>
+<s> RFC2518 provides MKCOL for creating a resource as a collection.  </s>
+<s> This is fine and obviously very useful as a means to create a resource (with no content) and set a specific property (DAV:resourcetype) simultaneously.  </s>
+<s> However, I hazard to guess that what most people would wish for is a method that allows simultaneous atomic creation of content and numerous properties in the same method.  </s>
+<s> (Of course we'd debate such a beast for so long ...).  </s>
+<s> DeltaV went through a phase of using MKRESOURCE to create all the different resources and ended up falling in line with MKCOL for numerous reasons.  </s>
+<s> So my question is, does WebDAV disallow DAV:collection/ being a "state" that I can change on a whim?  </s>
+<s> (assuming no internal members are being left orphaned)  </s>
+<s> That's one view of the world.  </s>
+<s> I don't hold that view and I think that RFC2518 permits both so that's cool.  </s>
+<s> But if you step into my shoes for a moment, and think of the transformation simply as a PROPPATCH with some set and remove elements the transformation may not seem so drastic (obviously it is the server changing the properties of the resource so it isn't actually akin to a PROPPATCH).  </s>
+<s> The regular resource - version-contolled resource transformation is, to me, setting up the resource so that the server treats it differently with respect to HTTP methods.  </s>
+<s> It is still the same resource (retains its dead properties, locks are unaffected, binding refs to it remain intact etc.).  </s>
+<s> However, if you think of the transformation as having to 'replace' the resource (i.e. by sequences of DELETE, LOCK, PUT/MKCOL, PROPATCH, BIND) then it does require lots of server effort to recreate a substantially equivalent resource state.  </s>
+<s> Isn't PROPPATCH simpler?  </s>
+<s> Many servers will only support version-controlled resources, and thus not allow the transformation in either direction.  </s>
+<s> Agreed.  </s>
+<s> And many servers will not support LOCKing for that matter :-)  </s>
+<s> Abbreviations aside, the specification DOES refer to "checked-out version-controlled resources" on many occasions since it is an important resource state, err type, err whatever.  </s>
+<s> Agreed that this is typically the case.  </s>
+<s> Hopefully you do not see this as attacking your arguments.  </s>
+<s> I understand your position and that works too.  </s>
+<s> I offered an alternate view which you are free to debunk.  </s>
+<s> That does not prove that we should clump them together.  </s>
+<s> Humans are capable of fuzzy distinctions, and these are useful to us, even if not to the software we write.  </s>
+<s> In the spec and in software we do need to be clear.  </s>
+<s> Whether I agree with checked-in/checked-out being a state or type (I happen to think of it as a state too), I'm claiming that there is no reason why DAV:resourcetype cannot contain both (despite its name), and that the only recognized value today DAV:collection/ can be viewed as either a state or type anyway.  </s>
+<s> Tim  </s>
+<s> So here's my proposal for resourcetype values ... I make no further apologies or arguments for what I consider to be a 'type' vs a 'state', but I do address how clients should detect variations in state.  </s>
+<s> I will however make a couple further argument for resourcetype because I just thought of them: - clients that don't want to implement DeltaV could still allow users to browse folders and resources and see if they're "special" in some way, just by adding these few values to their resourcetype handling.  </s>
+<s> E.g. a client like IE could display things is added as "versioned" even if it didn't know how to checkin/checkout or view old versions.  </s>
+<s> - ordering (really, grouping) by resourcetype ought to be easy, if desired I suspect that the text in this proposal would be scattered throughout the text wherever new resource types are introduced, and in the chapters that discuss those types.  </s>
+<s> So, I'll put my text in the same order as the current draft.  </s>
+<s> Those who are more familiar than I am with chapter 10 and later should review that part carefully.  </s>
+<s> I'm still a little confused about whether a version history is most usefully considered to be a collection (that contains versions) or not; if it's deemed reasonable to call it a collection then DAV:collection/ should be added to all the version history thingys.  </s>
+<s> ------- proposal ------ Version-Controlled Resource: An additional element "DAV:version-controlled"is added to DAV:resourcetype to identify version-controlled resources.  </s>
+<s> E.g. To see if a VCR is checked-out, look for the checked-out property presence.  </s>
+<s> Version Resource: An additional element "DAV:version" is added to DAV:resourcetype to identify a version.  </s>
+<s> E.g. Version History Resource: An additional element "DAV:version-history" is added to DAV:resourcetype to identify a Version History Resource.  </s>
+<s> E.g. Workspace: An additional element "DAV:workspace" is added along with "DAV:collection" to identify a Workspace.  </s>
+<s> E.g. D:resourcetype D:collection/ D:workspace/ /D:resourcetype .  </s>
+<s> Baselines: An additional element "DAV:baseline" can be added to indicate that the version-controlled resource, its versions and version-history, are related to baselines or configurations rather than to regular resources.  </s>
+<s> E.g. Activity: An additional element "DAV:activity" is added to DAV:resourcetype to identify an activity.  </s>
+<s> E.g. Version-controlled collection: Existing elements are reused to identify a version-controlled resource.  </s>
+<s> E.g. lisa  </s>

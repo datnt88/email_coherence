@@ -1,93 +1,93 @@
-Hi: I've been following the discussion on NodeIterators for its entirety and would like to make some comments. 
-First, without Node locking semantics in DOM, the idea of maintaining a synchronized tree to readers and writers looks very difficult to me. 
-That the NodeIterator should be robust enough to take an insertion or deletion of children is given, but the results in a greater sense are not clear to me. 
-I'd also like to examine the cost of some of these operations (in Java) as 
-Don Parks mentioned. 
-Java has a high cost of object instantiation, so object reuse is paramount to a good implementation (again, I am working on 
-the Server side so we are talking about large numbers of DOM nodes and users). 
-The use of NodeIterator for both Attributes and child nodes is expensive in Java where an iterator will be instantiated for examining the Attributes and for examining the Child nodes. 
-My feeling is that we should make the common things fast. 
-If DOM trees are built, my assumption is that readers/users will outnumber writers/producers so that the reference operations need to be faster than the building operations. 
-In AttributeList where order is not important (at least not in XML), it seems like a waste to use the NodeIterator, when indexed access or 
-associative access is all that's needed. 
-Adding or deleting attributes should be up to the implementor to implement efficiently - the NodeIterator restriction limits the options for a developer. 
-What is the issue for using NodeIterator for AttributeList? 
-Is it because it is already defined conveniently? 
-Is it so that Entity References can be represented (thereby using Node rather than a simpler object for Attribute)? 
--MA ~-~-~-~-~-~-~-~-~-~-~-~-~-~-WEBEASY-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~ Michael Amstermamster@webeasy.com ~-~-~-~-~-~-~-~-~-~-~-~-~-~-WEBEASY-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~ Michael Amstermamster@webeasy.com 
-I don't understand what's not clear -- could you ask a more specific question? 
-I'm also not sure how locking semantics would help; they would help two DOM writers keep from making a mess out of things, but even with one DOM writer the NodeIterators need to reflect changes to the tree. 
-Are you suggesting that there be a way of creating (or re-initializing) a NodeIterator so that it can enumerate the Attributes, and then the children (or vice versa)? 
-That's an interesting idea that the API currently has no way to allow ... But my off-the-cuff answer is that it seems like more of an implementation matter than an API matter; I mean, there's no demand that getChildNodes or whaterver return a NEW Java object if an already created one can be re-initialized to traverse a Node's children ... What API change would you suggest? 
-Another implementation issue? 
-Maybe this point doesn't need re-emphasizing, but remember that the DOM is an ABSTRACT INTERFACE design, not a DATA STRUCTURE design; implementations can do whatever they need to do to be efficient within the DOM API's constraints. 
-Again, can you suggest an API change that would help? 
-[snip] 
-Both. 
-In XML, attribute values can be entity references, so things can get complicated, so we wanted to re-use the Node stuff. 
-BUT you have lots of company in questioning the efficiency of using NodeIterators in situations where most people would want a simple Collection or associative array. 
-This is under active discussion on the WG... If I have time I'll post a message laying out some of the issues and asking for opinions on how to handle some of the dilemmas we face. 
-Mike Champion 
-See, the problem is that this may not even be always true because it depends on the VM and/or JIT compiler you're using. 
-As a proof see James Gosling's claim about Hotspot at JavaOne [1]: (Short lived object benchmark: 18 secs classic VM, 8 sec's on Jview, 6 sec's malloc/free C, 2 sec's HotSpot) I think this clearly shows that it's very difficult, if not impossible, to take this kind of constraints into account while designing an API such as the DOM in a programming language independent manner. 
-This said it's true that we could design the API quite differently in order to avoid creating that many objects. 
-For instance, instead of having something like: NodeIterator getChildNodes() we could have instead: void getChildNodes(NodeIterator it) This would allow passing an iterator which has been created separately and possibly already used before. 
-Or it could be: NodeIterator getChildNodes(NodeIterator it) which would return a new iterator if it==null [1] Arnaud Le Hors - W3C, User Interface Domain - www.w3.org/People/Arnaud 
-One topic that is missing from the spec is how to free/delete/release objects obtained through DOM. 
-For example, what should one do with Node returned by Node.removeChild? 
-Document interface has methods for creating objects but nothing to delete them. 
-Are we do assume that language specific facilities are to be used? 
-Do we use 'delete' operator or 'free()' under C++? 
-What about CORBA and COM-based implementations? 
-One does not just 'delete' under COM. 
-Also how do we know which objects should be deleted and which one should not be? 
-What is wrong is designating 'release' on Node as well as iterators as Java specific delete facility? 
-For that matter, why not move it all the way up so everyone can standardize on the delete facility? 
-It would certain remove a lot of headaches. 
-If one is smart enough to invoke getNodeChilds, why is requiring invokation of release() too much? 
-Don Park 
-We expect that the DOM will be used in the context of various languages and object system, each which might have its own mechanism for memory management. 
-Any specific binding of the DOM should be able to specify its own memory management primitives. 
-COM, for example, has its own notion of reference counting, including AddRef() and Release() methods in the base IUnknown interface. 
-JavaScript is a garbage collected language. 
-In both cases, an explicit "release" method specified by the DOM would be redundant and unnecessary. 
-Since memory management is so object system specific, I strongly 
-believe that the DOM should not mandate its own primitives. 
---Vidur 
-management. 
-strongly 
-I understand the issues but my point is that language specific memory management primitives can be neatly packaged within the 'release' method. 
-COM version of 'release' method could invoke IUnknown- Release(). 
-Java version could move the object to a pool for recycling. 
-If a language does not require it, then it could be no-op. 
-I can understand why dress designer avoids pockets but I really do not see what substantial gains avoiding 'release' bring to DOM other than architectural beauty. 
-Regards, Don Park 
-Sorry to jump in on this one. 
-The case for COM is actually very simple. 
-Normally, when returning an object, the reference count is increased and it is up to the calling function to decrement it when its finished with the object. 
-In the case of Node.removeChild, the reference count would just be left alone, so that when the calling function was finished with it, it would decrement the reference count to zero and the Node would be deleted. 
-I found memory management to be one of the simpler things when implementing the previous DOM draft in COM, provided you are careful and follow the rules with AddRef and Release... 
-Would it not be possible for a Java implementation to mimic this COM behaviour to get around the "GC problem". 
-I don't understand the Java case too well, so maybe this isn't an option. 
-I suppose what you (Don) are asking for is exactly this, written into the spec. 
-However, it might actually cause confusion in a COM implementation (DOM release on top of the COM release!) 
-Alfie. From: donpark@quake.net 
-Subject: Re: NodeIterators &amp; Java implementation One topic that is missing from the spec is how to free/delete/release objects obtained through DOM. 
-For example, what should one do with Node returned by Node.removeChild? 
-Document interface has methods for creating objects but nothing to delete them. 
-Are we do assume that language specific facilities are to be used? 
-Do we use 'delete' operator or 'free()' under C++? 
-What about CORBA and COM-based implementations? 
-One does not just 'delete' under COM. 
-Also how do we know which objects should be deleted and which one should not be? 
-What is wrong is designating 'release' on Node as well as iterators as Java specific delete facility? 
-For that matter, why not move it all the way up so everyone can standardize on the delete facility? 
-It would certain remove a lot of headaches. 
-If one is smart enough to invoke getNodeChilds, why is requiring invokation of release() too much? 
-Don Park 
-Alfie, 
-You are right in that COM programmers will instinctively (yeah right, COM is real natural *add some rolling eyes here *) invoke Release which will conflict with 'release' method. 
-One ugly solution would be to double AddRef to account for double release. 
-Better solution would be to name the release method to match the COM Release method. 
-Its almost COM-ical when you think about it. 
-Regards, Don Park 
+<s> Hi: I've been following the discussion on NodeIterators for its entirety and would like to make some comments.  </s>
+<s> First, without Node locking semantics in DOM, the idea of maintaining a synchronized tree to readers and writers looks very difficult to me.  </s>
+<s> That the NodeIterator should be robust enough to take an insertion or deletion of children is given, but the results in a greater sense are not clear to me.  </s>
+<s> I'd also like to examine the cost of some of these operations (in Java) as  </s>
+<s> Don Parks mentioned.  </s>
+<s> Java has a high cost of object instantiation, so object reuse is paramount to a good implementation (again, I am working on  </s>
+<s> the Server side so we are talking about large numbers of DOM nodes and users).  </s>
+<s> The use of NodeIterator for both Attributes and child nodes is expensive in Java where an iterator will be instantiated for examining the Attributes and for examining the Child nodes.  </s>
+<s> My feeling is that we should make the common things fast.  </s>
+<s> If DOM trees are built, my assumption is that readers/users will outnumber writers/producers so that the reference operations need to be faster than the building operations.  </s>
+<s> In AttributeList where order is not important (at least not in XML), it seems like a waste to use the NodeIterator, when indexed access or  </s>
+<s> associative access is all that's needed.  </s>
+<s> Adding or deleting attributes should be up to the implementor to implement efficiently - the NodeIterator restriction limits the options for a developer.  </s>
+<s> What is the issue for using NodeIterator for AttributeList?  </s>
+<s> Is it because it is already defined conveniently?  </s>
+<s> Is it so that Entity References can be represented (thereby using Node rather than a simpler object for Attribute)?  </s>
+<s> -MA ~-~-~-~-~-~-~-~-~-~-~-~-~-~-WEBEASY-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~ Michael Amstermamster@webeasy.com ~-~-~-~-~-~-~-~-~-~-~-~-~-~-WEBEASY-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~ Michael Amstermamster@webeasy.com  </s>
+<s> I don't understand what's not clear -- could you ask a more specific question?  </s>
+<s> I'm also not sure how locking semantics would help; they would help two DOM writers keep from making a mess out of things, but even with one DOM writer the NodeIterators need to reflect changes to the tree.  </s>
+<s> Are you suggesting that there be a way of creating (or re-initializing) a NodeIterator so that it can enumerate the Attributes, and then the children (or vice versa)?  </s>
+<s> That's an interesting idea that the API currently has no way to allow ... But my off-the-cuff answer is that it seems like more of an implementation matter than an API matter; I mean, there's no demand that getChildNodes or whaterver return a NEW Java object if an already created one can be re-initialized to traverse a Node's children ... What API change would you suggest?  </s>
+<s> Another implementation issue?  </s>
+<s> Maybe this point doesn't need re-emphasizing, but remember that the DOM is an ABSTRACT INTERFACE design, not a DATA STRUCTURE design; implementations can do whatever they need to do to be efficient within the DOM API's constraints.  </s>
+<s> Again, can you suggest an API change that would help?  </s>
+<s> [snip]  </s>
+<s> Both.  </s>
+<s> In XML, attribute values can be entity references, so things can get complicated, so we wanted to re-use the Node stuff.  </s>
+<s> BUT you have lots of company in questioning the efficiency of using NodeIterators in situations where most people would want a simple Collection or associative array.  </s>
+<s> This is under active discussion on the WG... If I have time I'll post a message laying out some of the issues and asking for opinions on how to handle some of the dilemmas we face.  </s>
+<s> Mike Champion  </s>
+<s> See, the problem is that this may not even be always true because it depends on the VM and/or JIT compiler you're using.  </s>
+<s> As a proof see James Gosling's claim about Hotspot at JavaOne [1]: (Short lived object benchmark: 18 secs classic VM, 8 sec's on Jview, 6 sec's malloc/free C, 2 sec's HotSpot) I think this clearly shows that it's very difficult, if not impossible, to take this kind of constraints into account while designing an API such as the DOM in a programming language independent manner.  </s>
+<s> This said it's true that we could design the API quite differently in order to avoid creating that many objects.  </s>
+<s> For instance, instead of having something like: NodeIterator getChildNodes() we could have instead: void getChildNodes(NodeIterator it) This would allow passing an iterator which has been created separately and possibly already used before.  </s>
+<s> Or it could be: NodeIterator getChildNodes(NodeIterator it) which would return a new iterator if it==null [1] Arnaud Le Hors - W3C, User Interface Domain - www.w3.org/People/Arnaud  </s>
+<s> One topic that is missing from the spec is how to free/delete/release objects obtained through DOM.  </s>
+<s> For example, what should one do with Node returned by Node.removeChild?  </s>
+<s> Document interface has methods for creating objects but nothing to delete them.  </s>
+<s> Are we do assume that language specific facilities are to be used?  </s>
+<s> Do we use 'delete' operator or 'free()' under C++?  </s>
+<s> What about CORBA and COM-based implementations?  </s>
+<s> One does not just 'delete' under COM.  </s>
+<s> Also how do we know which objects should be deleted and which one should not be?  </s>
+<s> What is wrong is designating 'release' on Node as well as iterators as Java specific delete facility?  </s>
+<s> For that matter, why not move it all the way up so everyone can standardize on the delete facility?  </s>
+<s> It would certain remove a lot of headaches.  </s>
+<s> If one is smart enough to invoke getNodeChilds, why is requiring invokation of release() too much?  </s>
+<s> Don Park  </s>
+<s> We expect that the DOM will be used in the context of various languages and object system, each which might have its own mechanism for memory management.  </s>
+<s> Any specific binding of the DOM should be able to specify its own memory management primitives.  </s>
+<s> COM, for example, has its own notion of reference counting, including AddRef() and Release() methods in the base IUnknown interface.  </s>
+<s> JavaScript is a garbage collected language.  </s>
+<s> In both cases, an explicit "release" method specified by the DOM would be redundant and unnecessary.  </s>
+<s> Since memory management is so object system specific, I strongly  </s>
+<s> believe that the DOM should not mandate its own primitives.  </s>
+<s> --Vidur  </s>
+<s> management.  </s>
+<s> strongly  </s>
+<s> I understand the issues but my point is that language specific memory management primitives can be neatly packaged within the 'release' method.  </s>
+<s> COM version of 'release' method could invoke IUnknown- Release().  </s>
+<s> Java version could move the object to a pool for recycling.  </s>
+<s> If a language does not require it, then it could be no-op.  </s>
+<s> I can understand why dress designer avoids pockets but I really do not see what substantial gains avoiding 'release' bring to DOM other than architectural beauty.  </s>
+<s> Regards, Don Park  </s>
+<s> Sorry to jump in on this one.  </s>
+<s> The case for COM is actually very simple.  </s>
+<s> Normally, when returning an object, the reference count is increased and it is up to the calling function to decrement it when its finished with the object.  </s>
+<s> In the case of Node.removeChild, the reference count would just be left alone, so that when the calling function was finished with it, it would decrement the reference count to zero and the Node would be deleted.  </s>
+<s> I found memory management to be one of the simpler things when implementing the previous DOM draft in COM, provided you are careful and follow the rules with AddRef and Release...  </s>
+<s> Would it not be possible for a Java implementation to mimic this COM behaviour to get around the "GC problem".  </s>
+<s> I don't understand the Java case too well, so maybe this isn't an option.  </s>
+<s> I suppose what you (Don) are asking for is exactly this, written into the spec.  </s>
+<s> However, it might actually cause confusion in a COM implementation (DOM release on top of the COM release!)  </s>
+<s> Alfie. From: donpark@quake.net  </s>
+<s> Subject: Re: NodeIterators &amp; Java implementation One topic that is missing from the spec is how to free/delete/release objects obtained through DOM.  </s>
+<s> For example, what should one do with Node returned by Node.removeChild?  </s>
+<s> Document interface has methods for creating objects but nothing to delete them.  </s>
+<s> Are we do assume that language specific facilities are to be used?  </s>
+<s> Do we use 'delete' operator or 'free()' under C++?  </s>
+<s> What about CORBA and COM-based implementations?  </s>
+<s> One does not just 'delete' under COM.  </s>
+<s> Also how do we know which objects should be deleted and which one should not be?  </s>
+<s> What is wrong is designating 'release' on Node as well as iterators as Java specific delete facility?  </s>
+<s> For that matter, why not move it all the way up so everyone can standardize on the delete facility?  </s>
+<s> It would certain remove a lot of headaches.  </s>
+<s> If one is smart enough to invoke getNodeChilds, why is requiring invokation of release() too much?  </s>
+<s> Don Park  </s>
+<s> Alfie,  </s>
+<s> You are right in that COM programmers will instinctively (yeah right, COM is real natural *add some rolling eyes here *) invoke Release which will conflict with 'release' method.  </s>
+<s> One ugly solution would be to double AddRef to account for double release.  </s>
+<s> Better solution would be to name the release method to match the COM Release method.  </s>
+<s> Its almost COM-ical when you think about it.  </s>
+<s> Regards, Don Park  </s>

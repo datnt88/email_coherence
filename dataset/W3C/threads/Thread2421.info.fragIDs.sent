@@ -1,137 +1,137 @@
-I was hoping to polish this proposal a little more before floating it externally, but alas, with the meeting on Monday, time did not permit. 
-I hope that I have at least stated my perspective well enough to stimulate discussion. 
-Problem statement: The existing HTTP authentication model does not allow authentication realms to be distributed across servers. 
-To protect user credentials. 
-HTTP browsers associate each realm with a single IP address, and will not pass user credentials to multiple servers even if they claim to belong to the same realm. 
-This security measure, built into the browser, has created the undesirable side effect of requiring users to re-type their user names and passwords for each protected server within a multiple server site. 
-Abstract: A proposal is made to: Allow the distribution of protection realms across servers Protect user credentials from "imposter" servers which claim to belong to a realm but do no Pass user credentials securely to content servers which identify themselves as members of those realms To re-use user credentials throughout protection realms so that users are challenged for user name and password only once within the context of a single session. 
-Create secure, trusted relationships between servers Centralize authentication, authorization, and directory services for one or multiple websites Centralize directory security Simplify or eliminate directory services on distributed content servers Make it scalable I propose that this new authentication scheme be named "remote authentication". 
-Theory of operation: When access is first attempted to a content page which is protected by remote authentication, the browser is redirected to the "remote authentication" server for that realm. 
-This redirection should be done via SSL for security. 
-The user is then challenged for user name and password by basic authentication. 
-The server then encrypts the user name and password with a secret (symmetric) key and returns the user name and password to the browser where they are cached for the session. 
-The browser is then re-directed to the original content server and the browser passes the encrypted user name and password to the server. 
-The content server, which shares the same secret key as the authentication server, is able to decrypt the user name and password. 
-When the browser is challenged by another server which claims to be in the same realm, the user credentials are served. 
-If the server is trusted, it will share the same secret key as the authentication server and the user name and password will be decrypted. 
-If the server is an imposter, decryption will fail and the user credentials remain secure. 
-The way I see it, the browser will associate each realm with an encrypted user name and password, which are simply opaque strings. 
-In addition, I would like the browser to allow the server to cache an additional string of arbitrary length to pass state to the other servers in the realm. 
-It could be used to store additional authentication and authorization semantics, such as an expiration time for the authentication, authorization information such as a list of groups to which the individual belongs, an index to identify the identity of the encryption key, etc. 
-This information could be signed with an MD5 MAC or encrypted or just plain cleartext. 
-I think that we could do the web a great big favor if we eliminated the need to replicate directories to content servers. 
-The authentication piece is easy, but if we can solve the authorization part I believe that we could simplify the common registration puzzle at the same time. 
-Thank you for your support, -e 
-From: Dave Kristol[SMTP:dmk@bell-labs.com] Sent: Tuesday, December 09, 1997 11:56 AM Lawrence; http-wg%cuckoo.hpl.hp.com@hplb.hpl.hp.com Subject: Re: Proposal for new HTTP 1.1 authentication scheme 
-Most of the suggestions by Paul and Dave seem to be clarifications of the original intent. 
-They should not cause problems. 
-I still feel my one objection about proxy-added headers is substantive and unresolved. 
-Briefly, an origin server might omit headers that get figured into the entity-digest calculation. 
-A proxy might subsequently add those headers. 
-The client sees a message *with* the headers, calculates an entity-digest that figures them in, and gets a different answer from what the origin server calculated. 
-I agree that this hasn't been addressed. 
-I don't think it'll be a problem in practice -- implementors would quickly discover that Message Digest didn't work if the origin server omits any headers and proxies add them. 
-It would be (at least) nice to be clear about this, though. 
-There are two ways to fix the problem -- 1. Say that origin servers can't omit the headers 2. Say that proxies can't add them when using Message Disgest. 
-I don't know which is best. 
-For Date, at least, it seems silly to omit it. 
-Paul 
-I think we're looking at the problem from different directions. 
-A *sender* produces an entity-digest. 
-I look at the problem from the perspective of an origin server *receiving* the entity-digest. 
-In this case the sender is a client (user-agent), possibly doing a PUT or POST. 
-Clients seldom send Date. 
-Proxies could (conceivably) add them. 
-I like Benjamin Franz's suggestion of a fixed date that means "this is not a date" as a placeholder. 
-Content-length is another matter. 
-If the client sends the entity with chunked encoding, it probably does not know the content length, although it may calculate an entity-digest on the fly (and add it as a trailer?). 
-But the proxy may coalesce the entity and add a Content-length header. 
-Now what? 
-The entity-digest as calculated by the two parties will be different because of the Content-length. 
-Dave Kristol 
-I like Benjamin Franz's suggestion of a fixed date that means "this is not a date" as a placeholder. 
-and various other people seem to agree. 
-I have a suggestion: instead of coming up with a new syntax for "this is not a date" (when the existing date syntax, horribly inefficient and hard-to-parse as it is, has at least more or less been tamed by implementors) perhaps we can get by with something a little simpler. 
-For example, we could say If the sender is required to send a Date header by some part of this specification, and is unable to generate a current HTTP-date value, it SHOULD send a legal HTTP-date value that is provably in the past. 
-For example, send Date: Thu, 01 Jan 1970 00:0:01 GMT As far as I can tell, this will not lead to any more trouble than simply omitting the Date header. 
-It also seems to be legal according to section 14.19 of -rev-01. 
--Jeff 
-There's another solution -- declare that proxies can't add "Date" when digest is in use, just like we say that they can't change the content coding. 
-We could allow "Date" to be in the trailer, so that if it really wants to add it it can. 
-But that seems overkill -- the question really is: why do we have to allow Date to be added by a proxy? 
-Let me give some background: 
-Fundamentally, good crypto practice says that EVERYTHING should be in the digest. 
-It is almost impossible to figure out every possible attack that someone might make by being able to modify an undigested field, so the only safe thing to do is digest them all. 
-For HTTP that proved to be infeasible. 
-Some fields really have to be modified by proxies. 
-(Those could still be included in the Proxy-Auth, though... 
-I hadn't thought of that, because the proxy auth was added later... but anyway...) The fields that _really_ have to be modifed can't be in the digest. 
-I see no compelling reason for L-M or Expires to be changed by a proxy, and it's plausible that severe service degradation (forcing lots of cache misses) could be caused by an attacker changing them. 
-Or that an attacker could feed you an old response with recent L-M. 
-Maybe these aren't actually problems, but it's a lot of work to validate that they aren't, and we haven't demonstrated harm by including them. 
-So, I see no reason to remove them from the digest. 
-The only problem I can see is that an existing proxy that doesn't understand Digest and add Date will break digest. 
-But so will an existing proxy that doesn't understand Digest and reformats Date without changing the value. 
-I don't see either as a showstopper. 
-Paul 
-Where is that "eject" button when you need one? 
-I think the time has come to declare Digest as dead. 
-Dead because it was stuffed with featuritis in an attempt to solve multiple authentication and security concerns instead of the only one for which it was originally designed. 
-The current definition seems to have lost all of the advantages it had over transport-level encryption, without any of the additional security/privacy attributes of TLS/SSL, and has become just as difficult to implement. 
-Now it doesn't even support non-shared caching. 
-Good crypto practice usually involves well-defined encapsulation of what is being digested/signed, preferably at multiple levels so that the signature can be signed as well. 
-There are many ways to do this effectively, and several proposed standards already exist for doing it with MIME multiparts. 
-Why not separate these features (which nobody currently uses because no UA supports it) from the comparatively simple act of exchanging authentication credentials? 
-It's no surprise that Digest doesn't do this well, since originally it was not intended to do it at all. 
-If you don't separate message-level metadata (like Date) from what you are digesting, then the mechanism has broken its transfer-independence quality. 
-Losing that quality means that Digest has no advantages over just using TLS (SSL, whatever). 
-Service degradation is not an issue -- that can be accomplished more effectively by changing the digested part so that it no longer matches the digest and thus force a reset of the whole process. 
-....Roy 
-Yea, and now Internet Explorer 4.0 has broken their digest implementation form 3.0. 
-Of course, netscape doesn't do digests. 
-Of course, digests never authenticated the transaction and return codes, leaving them vulnerable to man-in-the-middle attacks. 
-Quite the mess. 
-A couple of simple fixes and this would be very useful. 
-What gives? 
-Did you read the spec? 
-The Digest Access Authentication scheme is not intended to be a complete answer to the need for security in the World Wide Web. 
-This scheme provides no encryption of object content. 
-The intent is simply to create a weak access authentication method, which avoids the most serious flaws of Basic authentication. 
-The design objectives of digest were 1) replace the clear text passwords of Basic, 2) no patent or export restrictions, i.e. NO ENCRYPTION. 
-It is not fair to criticize a bicycle because it does a rotten job as a school bus. 
-If you want to keep Basic forever, so be it. 
-But Basic is currently used at least an order of magnitude more than any other authentication or security system. 
-This will continue indefinitely if digest is abandoned. 
-I have no idea what "digests never authenticated the transaction and return codes" means. 
-The spec allows authentication of all return headers which proxies don't change and the entity body. 
-This works and there are implementations. 
-It is optionaly since usually it is not worth the overhead. 
-People need to keep in mind what this is for. 
-It is designed for something like the NY Times reader registration. 
-It is not suitable for electronic commerce. 
-John Franks john@math.nwu.edu 
-Excuse me. 
-Did I say encryption? 
-It has to provide a hash of the return codes and a hash of the entity to achieve its full potential. 
-This allows client to know that you have the right entity body and it allows the client to know how the server processed the request, i.e. the entire transaction is authenticated. 
-This point has been raised before on the list. 
-I can't why it isn't dead obvious. 
-Earlier versions of Internet Explorer did indeed do digests because they were based on the Spyglass code, which did. 
-The digest authentication specification has been stable for quite some time. 
-There are numerous implementations which interoperate. 
-Some of them (e.g. Apache) are widely deployed. 
-The recent spate of posts have criticized it because 1) "it suffers from featuritis", and 2) "with just a couple of additions it could be really useful." 
-As Roy Fielding pointed out the primary failing is that it is not implemented in MSIE and Netscape. 
-The only thing we can do to remedy this is keep the specification on track. 
-The only reason this came up at this point was that because a hash of the Date, L-M and Expires headers can be part of the response there could be a problem for servers with no clock if a proxy added a Date header. 
-There is a simple answer to this which is that proxies should not be allowed to add or change Date, L-M or Expires headers. 
-There are no known implementations which do so and no one has suggested any reason it is necessary to do so. 
-In short there is nothing wrong with digest. 
-It works; there are implementations; they interoperate. 
-We would like more implementations and the way to get that is keep the specification on track. 
-John Franks john@math.nwu.edu 
-Unfortunatly, this last is incorrect. 
-I just tested against my clockless server at noclock11.agranat.com 
-through the jigsaw proxy at jigsaw.w3.org; it not only added a Date header, it replace the Last-Modified header in the original response with a different value (which is broken no matter how you figure it). 
-As I have pointed out before, we cannot interpret the fact that proxy implementors won't step up and tell us what they are doing as meaning that they are only doing what we hope is true. 
-I repeat my call for other proxies we can use for testing. 
+<s> I was hoping to polish this proposal a little more before floating it externally, but alas, with the meeting on Monday, time did not permit.  </s>
+<s> I hope that I have at least stated my perspective well enough to stimulate discussion.  </s>
+<s> Problem statement: The existing HTTP authentication model does not allow authentication realms to be distributed across servers.  </s>
+<s> To protect user credentials.  </s>
+<s> HTTP browsers associate each realm with a single IP address, and will not pass user credentials to multiple servers even if they claim to belong to the same realm.  </s>
+<s> This security measure, built into the browser, has created the undesirable side effect of requiring users to re-type their user names and passwords for each protected server within a multiple server site.  </s>
+<s> Abstract: A proposal is made to: Allow the distribution of protection realms across servers Protect user credentials from "imposter" servers which claim to belong to a realm but do no Pass user credentials securely to content servers which identify themselves as members of those realms To re-use user credentials throughout protection realms so that users are challenged for user name and password only once within the context of a single session.  </s>
+<s> Create secure, trusted relationships between servers Centralize authentication, authorization, and directory services for one or multiple websites Centralize directory security Simplify or eliminate directory services on distributed content servers Make it scalable I propose that this new authentication scheme be named "remote authentication".  </s>
+<s> Theory of operation: When access is first attempted to a content page which is protected by remote authentication, the browser is redirected to the "remote authentication" server for that realm.  </s>
+<s> This redirection should be done via SSL for security.  </s>
+<s> The user is then challenged for user name and password by basic authentication.  </s>
+<s> The server then encrypts the user name and password with a secret (symmetric) key and returns the user name and password to the browser where they are cached for the session.  </s>
+<s> The browser is then re-directed to the original content server and the browser passes the encrypted user name and password to the server.  </s>
+<s> The content server, which shares the same secret key as the authentication server, is able to decrypt the user name and password.  </s>
+<s> When the browser is challenged by another server which claims to be in the same realm, the user credentials are served.  </s>
+<s> If the server is trusted, it will share the same secret key as the authentication server and the user name and password will be decrypted.  </s>
+<s> If the server is an imposter, decryption will fail and the user credentials remain secure.  </s>
+<s> The way I see it, the browser will associate each realm with an encrypted user name and password, which are simply opaque strings.  </s>
+<s> In addition, I would like the browser to allow the server to cache an additional string of arbitrary length to pass state to the other servers in the realm.  </s>
+<s> It could be used to store additional authentication and authorization semantics, such as an expiration time for the authentication, authorization information such as a list of groups to which the individual belongs, an index to identify the identity of the encryption key, etc.  </s>
+<s> This information could be signed with an MD5 MAC or encrypted or just plain cleartext.  </s>
+<s> I think that we could do the web a great big favor if we eliminated the need to replicate directories to content servers.  </s>
+<s> The authentication piece is easy, but if we can solve the authorization part I believe that we could simplify the common registration puzzle at the same time.  </s>
+<s> Thank you for your support, -e  </s>
+<s> From: Dave Kristol[SMTP:dmk@bell-labs.com] Sent: Tuesday, December 09, 1997 11:56 AM Lawrence; http-wg%cuckoo.hpl.hp.com@hplb.hpl.hp.com Subject: Re: Proposal for new HTTP 1.1 authentication scheme  </s>
+<s> Most of the suggestions by Paul and Dave seem to be clarifications of the original intent.  </s>
+<s> They should not cause problems.  </s>
+<s> I still feel my one objection about proxy-added headers is substantive and unresolved.  </s>
+<s> Briefly, an origin server might omit headers that get figured into the entity-digest calculation.  </s>
+<s> A proxy might subsequently add those headers.  </s>
+<s> The client sees a message *with* the headers, calculates an entity-digest that figures them in, and gets a different answer from what the origin server calculated.  </s>
+<s> I agree that this hasn't been addressed.  </s>
+<s> I don't think it'll be a problem in practice -- implementors would quickly discover that Message Digest didn't work if the origin server omits any headers and proxies add them.  </s>
+<s> It would be (at least) nice to be clear about this, though.  </s>
+<s> There are two ways to fix the problem -- 1. Say that origin servers can't omit the headers 2. Say that proxies can't add them when using Message Disgest.  </s>
+<s> I don't know which is best.  </s>
+<s> For Date, at least, it seems silly to omit it.  </s>
+<s> Paul  </s>
+<s> I think we're looking at the problem from different directions.  </s>
+<s> A *sender* produces an entity-digest.  </s>
+<s> I look at the problem from the perspective of an origin server *receiving* the entity-digest.  </s>
+<s> In this case the sender is a client (user-agent), possibly doing a PUT or POST.  </s>
+<s> Clients seldom send Date.  </s>
+<s> Proxies could (conceivably) add them.  </s>
+<s> I like Benjamin Franz's suggestion of a fixed date that means "this is not a date" as a placeholder.  </s>
+<s> Content-length is another matter.  </s>
+<s> If the client sends the entity with chunked encoding, it probably does not know the content length, although it may calculate an entity-digest on the fly (and add it as a trailer?).  </s>
+<s> But the proxy may coalesce the entity and add a Content-length header.  </s>
+<s> Now what?  </s>
+<s> The entity-digest as calculated by the two parties will be different because of the Content-length.  </s>
+<s> Dave Kristol  </s>
+<s> I like Benjamin Franz's suggestion of a fixed date that means "this is not a date" as a placeholder.  </s>
+<s> and various other people seem to agree.  </s>
+<s> I have a suggestion: instead of coming up with a new syntax for "this is not a date" (when the existing date syntax, horribly inefficient and hard-to-parse as it is, has at least more or less been tamed by implementors) perhaps we can get by with something a little simpler.  </s>
+<s> For example, we could say If the sender is required to send a Date header by some part of this specification, and is unable to generate a current HTTP-date value, it SHOULD send a legal HTTP-date value that is provably in the past.  </s>
+<s> For example, send Date: Thu, 01 Jan 1970 00:0:01 GMT As far as I can tell, this will not lead to any more trouble than simply omitting the Date header.  </s>
+<s> It also seems to be legal according to section 14.19 of -rev-01.  </s>
+<s> -Jeff  </s>
+<s> There's another solution -- declare that proxies can't add "Date" when digest is in use, just like we say that they can't change the content coding.  </s>
+<s> We could allow "Date" to be in the trailer, so that if it really wants to add it it can.  </s>
+<s> But that seems overkill -- the question really is: why do we have to allow Date to be added by a proxy?  </s>
+<s> Let me give some background:  </s>
+<s> Fundamentally, good crypto practice says that EVERYTHING should be in the digest.  </s>
+<s> It is almost impossible to figure out every possible attack that someone might make by being able to modify an undigested field, so the only safe thing to do is digest them all.  </s>
+<s> For HTTP that proved to be infeasible.  </s>
+<s> Some fields really have to be modified by proxies.  </s>
+<s> (Those could still be included in the Proxy-Auth, though...  </s>
+<s> I hadn't thought of that, because the proxy auth was added later... but anyway...) The fields that _really_ have to be modifed can't be in the digest.  </s>
+<s> I see no compelling reason for L-M or Expires to be changed by a proxy, and it's plausible that severe service degradation (forcing lots of cache misses) could be caused by an attacker changing them.  </s>
+<s> Or that an attacker could feed you an old response with recent L-M.  </s>
+<s> Maybe these aren't actually problems, but it's a lot of work to validate that they aren't, and we haven't demonstrated harm by including them.  </s>
+<s> So, I see no reason to remove them from the digest.  </s>
+<s> The only problem I can see is that an existing proxy that doesn't understand Digest and add Date will break digest.  </s>
+<s> But so will an existing proxy that doesn't understand Digest and reformats Date without changing the value.  </s>
+<s> I don't see either as a showstopper.  </s>
+<s> Paul  </s>
+<s> Where is that "eject" button when you need one?  </s>
+<s> I think the time has come to declare Digest as dead.  </s>
+<s> Dead because it was stuffed with featuritis in an attempt to solve multiple authentication and security concerns instead of the only one for which it was originally designed.  </s>
+<s> The current definition seems to have lost all of the advantages it had over transport-level encryption, without any of the additional security/privacy attributes of TLS/SSL, and has become just as difficult to implement.  </s>
+<s> Now it doesn't even support non-shared caching.  </s>
+<s> Good crypto practice usually involves well-defined encapsulation of what is being digested/signed, preferably at multiple levels so that the signature can be signed as well.  </s>
+<s> There are many ways to do this effectively, and several proposed standards already exist for doing it with MIME multiparts.  </s>
+<s> Why not separate these features (which nobody currently uses because no UA supports it) from the comparatively simple act of exchanging authentication credentials?  </s>
+<s> It's no surprise that Digest doesn't do this well, since originally it was not intended to do it at all.  </s>
+<s> If you don't separate message-level metadata (like Date) from what you are digesting, then the mechanism has broken its transfer-independence quality.  </s>
+<s> Losing that quality means that Digest has no advantages over just using TLS (SSL, whatever).  </s>
+<s> Service degradation is not an issue -- that can be accomplished more effectively by changing the digested part so that it no longer matches the digest and thus force a reset of the whole process.  </s>
+<s> ....Roy  </s>
+<s> Yea, and now Internet Explorer 4.0 has broken their digest implementation form 3.0.  </s>
+<s> Of course, netscape doesn't do digests.  </s>
+<s> Of course, digests never authenticated the transaction and return codes, leaving them vulnerable to man-in-the-middle attacks.  </s>
+<s> Quite the mess.  </s>
+<s> A couple of simple fixes and this would be very useful.  </s>
+<s> What gives?  </s>
+<s> Did you read the spec?  </s>
+<s> The Digest Access Authentication scheme is not intended to be a complete answer to the need for security in the World Wide Web.  </s>
+<s> This scheme provides no encryption of object content.  </s>
+<s> The intent is simply to create a weak access authentication method, which avoids the most serious flaws of Basic authentication.  </s>
+<s> The design objectives of digest were 1) replace the clear text passwords of Basic, 2) no patent or export restrictions, i.e. NO ENCRYPTION.  </s>
+<s> It is not fair to criticize a bicycle because it does a rotten job as a school bus.  </s>
+<s> If you want to keep Basic forever, so be it.  </s>
+<s> But Basic is currently used at least an order of magnitude more than any other authentication or security system.  </s>
+<s> This will continue indefinitely if digest is abandoned.  </s>
+<s> I have no idea what "digests never authenticated the transaction and return codes" means.  </s>
+<s> The spec allows authentication of all return headers which proxies don't change and the entity body.  </s>
+<s> This works and there are implementations.  </s>
+<s> It is optionaly since usually it is not worth the overhead.  </s>
+<s> People need to keep in mind what this is for.  </s>
+<s> It is designed for something like the NY Times reader registration.  </s>
+<s> It is not suitable for electronic commerce.  </s>
+<s> John Franks john@math.nwu.edu  </s>
+<s> Excuse me.  </s>
+<s> Did I say encryption?  </s>
+<s> It has to provide a hash of the return codes and a hash of the entity to achieve its full potential.  </s>
+<s> This allows client to know that you have the right entity body and it allows the client to know how the server processed the request, i.e. the entire transaction is authenticated.  </s>
+<s> This point has been raised before on the list.  </s>
+<s> I can't why it isn't dead obvious.  </s>
+<s> Earlier versions of Internet Explorer did indeed do digests because they were based on the Spyglass code, which did.  </s>
+<s> The digest authentication specification has been stable for quite some time.  </s>
+<s> There are numerous implementations which interoperate.  </s>
+<s> Some of them (e.g. Apache) are widely deployed.  </s>
+<s> The recent spate of posts have criticized it because 1) "it suffers from featuritis", and 2) "with just a couple of additions it could be really useful."  </s>
+<s> As Roy Fielding pointed out the primary failing is that it is not implemented in MSIE and Netscape.  </s>
+<s> The only thing we can do to remedy this is keep the specification on track.  </s>
+<s> The only reason this came up at this point was that because a hash of the Date, L-M and Expires headers can be part of the response there could be a problem for servers with no clock if a proxy added a Date header.  </s>
+<s> There is a simple answer to this which is that proxies should not be allowed to add or change Date, L-M or Expires headers.  </s>
+<s> There are no known implementations which do so and no one has suggested any reason it is necessary to do so.  </s>
+<s> In short there is nothing wrong with digest.  </s>
+<s> It works; there are implementations; they interoperate.  </s>
+<s> We would like more implementations and the way to get that is keep the specification on track.  </s>
+<s> John Franks john@math.nwu.edu  </s>
+<s> Unfortunatly, this last is incorrect.  </s>
+<s> I just tested against my clockless server at noclock11.agranat.com  </s>
+<s> through the jigsaw proxy at jigsaw.w3.org; it not only added a Date header, it replace the Last-Modified header in the original response with a different value (which is broken no matter how you figure it).  </s>
+<s> As I have pointed out before, we cannot interpret the fact that proxy implementors won't step up and tell us what they are doing as meaning that they are only doing what we hope is true.  </s>
+<s> I repeat my call for other proxies we can use for testing.  </s>

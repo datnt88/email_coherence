@@ -1,62 +1,62 @@
-Dave Kristol in brought up the problem that the current draft of the HTTP/1.1 specification is ambiguous or hard to interpret in several ways. 
-I believe we have now identified all of the actual ambiguities and created "issues" for them: issue IM_IUS_412 issue CACHE_CONDITIONAL issue HEAD_WITH_IMS (not visible in the archive yet) This leaves the problem that it is still somewhat hard to read the specification, especially if one is trying to figure out how the various headers interact. 
-Dave and I have spent several days coming up with pseudo-code that, we believe, correctly represents the specified behavior in all possible cases. 
-It was agreed during this week's editorial teleconference that the next draft should include such pseudo-code, as an explanation of how to interpret the existing specification. 
-Since neither Dave nor I was able to get the right code on our first tries, we would appreciate some review of this! 
-Because the cutoff date for Internet-Draft submission is Friday, March 13, and Jim Gettys will need several days to actually generate the draft in the required format, any comments must be received as soon as possible (i.e., "read this today"). 
--Jeff (and Dave Kristol) P.S.: Note that the somewhat repetitive format of this code is intentional. 
-I found that the only way that I could be sure that we had covered every possible case was to fully expand the ELSE clauses of every IF statement. 
-Also, Dave and I (mildly) disagreed on whether it is clearer to use a few GOTO statements, or an auxilliary state variable which is set in one place and tested in another. 
-My preference was to use the GOTOs, to make the control flow as clear as possible. 
-NEW SECTION 13.3.5 
-Interpreting combinations of conditional headers HTTP/1.1 includes four request-header fields that can be used to make a request conditional: If-Match (section 14.24), If-Modified-Since (section 14.25), If-None-Match (section 14.26), and If-Unmodified-Since (section 14.28). 
-The protocol allows combinations of these four headers, and the proper interpretation of the meaning of the possible combinations has proved to be difficult to extract from the language of the specification. 
-We therefore include a description, in pseudo-code, of one possible correct implementation of the logic for processing HTTP/1.1 conditional headers in order to decide whether to perform the request, or to return a status code of 304 (Not Modified) or 412 (Predoncondition Failed). 
-Many other implementations are allowed by the HTTP/1.1 specification, but their external behavior is required to conform to the behavior of the pseudo-code below, in all cases where it defines a specific behavior. 
-Note that there is a fifth conditional header, If-Range (section 14.26) that is not described here. 
-It does not make sense to combine the If-Range request-header field with other conditional request-header fields, and so there is no need to define its interaction with other such fields. 
-/* Logic for processing HTTP/1.1 conditional headers *(not including If-Range) * Implicit inputs: *The request message *The selected resource * Outputs: * the response status code, if its value is defined by this logic * otherwise, the decision to continue processing the request * Uses the following functions: * BOOLEAN reqhdrs_include(STRING field_name) *returns true if the request headers include the given field-name. 
-* STRING fieldval(STRING field_name) *returns the request's field-value for the given field-name. 
-*(May involve combining multiple instances of the same header.) * INT count_match_current_etag(STRING field_value) *returns the number of entity tags in the field-value that *match the current entity tag of the selected resource. 
-* BOOLEAN matches_lastmod(STRING field_value) *returns true if the timestamp in the field-value matches *the current last-modified timestamp of the selected resource. 
-* NOTE: all branches of the IF-THEN-ELSE statements are included * in the following nested conditional, to ensure that no cases * are omitted IF reqhdrs_include("If-None-Match") THEN { IF count_match_current_etag(fieldval("If-None-Match"))  0 THEN { IF reqhdrs_include("If-Modified-Since") THEN { IF matches_lastmod(fieldval("If-Modified-Since")) THEN { IF req_method == "GET" OR req_method == "HEAD" THEN { status_code = 304; RETURN; } ELSE { /* WARNING: meaningless If-Modified-Since ? 
-*/ GOTO next_step; } ENDIF } ELSE {/* If-Modified-Since mismatch */ GOTO next_step; } ENDIF } ELSE {/* entity tags match, no If-Modified-Since */ /* 14.26 says MUST NOT perform method */ IF req_method == "GET" OR req_method == "HEAD" THEN { status_code = 304; RETURN; } ELSE { status_code = 412; RETURN; } ENDIF } ENDIF } ELSE {/* no entity tag matches, ignore If-Modified-Since */ GOTO next_step; } ENDIF } ELSE { /* Check for vanilla If-Modified-Since */ IF reqhdrs_include("If-Modified-Since") THEN { IF matches_lastmod(fieldval("If-Modified-Since")) THEN { IF req_method == "GET" OR req_method == "HEAD" THEN { status_code = 304; RETURN; } ELSE { /* WARNING: meaningless If-Modified-Since ? 
-*/ GOTO next_step; } ENDIF } ELSE {/* If-Modified-Since mismatch */ GOTO next_step; } ENDIF } ELSE { GOTO next_step; } ENDIF } ENDIF next_step: /* If-Match */ IF reqhdrs_include("If-Match") THEN { IF count_match_current_etag(fieldval("If-Match")) == 0 THEN { status_code = 412; RETURN; } ENDIF } ENDIF /* If-Unmodified-Since */ IF reqhdrs_include("If-Unmodified-Since") THEN { IF NOT matches_lastmod(fieldval("If-Unmodified-Since")) THEN { status_code = 412; RETURN; } ENDIF } ENDIF /* continue processing the request */ 
-We already had an Issues list item for this (IMS_INM_MISMATCH) based on from last November. 
-The ambiguities regarding multiple conditionals were first mentioned (by me) at the last LA IETF, and a solution was posted a year ago in 
-I am less interested in specifying pseudocode that represents strictly what the specification (incompletely) says than I am in simply specifying the precedence according to what the specification *should* say and then fixing the contradictions in the spec. 
-This is not an easy problem, as I warned when the WG insisted on separate conditional fields instead of 
-a single IF header field. 
-However, I cannot believe that the right solution is to specify it in unreadable pseudocode -- at least choose a language with structure. 
-It is in fact far less readable than the actual code from Apache (and I know that the code works). 
-In any case, the pseudocode given does not do the right thing. 
-The order of the checks is important, since ETag checks are supposed to be more accurate than checks relative to the modification time. 
-None of the checks are made if the response would already be an error. 
-Furthermore, some of the conditionals (If-Match and If-Unmodified-Since) demand stronger action (higher precedence) due to their semantics (i.e., a response of 412 always overrides a check of 200/304). 
-Finally, if a strong validation check is available, we do not care about the result of any weaker validation check (and thus the weaker check must not be performed). 
-These observations need to be added to the current specification, preferably by grouping all of the conditional fields under a single section and defining the precedence at the start. 
-The right procedure to follow is described in the Apache code+comments: if (the server has already decided to respond with an error) return with the error status; SRV := the selected resource variant if ((an If-Match request-header field was given) AND ((SRV does not have an ETag defined) OR ((SRV's ETag does not match any of the entity tags in that field) AND (the field value is not "*" [meaning match anything]))) return with a status of 412 (Precondition Failed); else if ((a valid If-Unmodified-Since request-header field was given) AND (SRV has been modified since the IUS time)) return with a status of 412 (Precondition Failed); if ((an If-None-Match request-header field was given) AND ((the field value is "*" [meaning match anything]) OR ((SRV has an ETag defined) AND (SRV's ETag matches any of the entity tags in that field)))) if (the request method was GET or HEAD) return with a status of 304 (Not Modified); else return with a status of 412 (Precondition Failed); else if ((a valid If-Modified-Since request-header field was given) AND (the request method was GET or HEAD) AND (SRV has not been modified since the IMS time)) return with a status of 304 (Not Modified); return SRV with the appropriate success status; 
-That can be added to the spec if desired, but the important thing is that the specification must define a precedence in order to avoid contradictions. 
-Since precondition checks   validation checks and etag checks  last_mod, the only sensible precedence is If-Match  If-Unmodified-Since  If-None-Match  If-Modified-Since 
-.....Roy 
-This is certainly clear and simple. 
-But, why do precondition checks take precedence over validation checks? 
-While we are on the subject, what is the purpose of the precondition checks? 
-John Franks john@math.nwu.edu 
-I find decision tables are a useful way to analyse such problems. 
-(My reference is over 25 years old: "Programs from Decision Tables", E. Humbey, Macdonald/American Elsevier computer monographs, ISBN 0-444-19569-6/0-356-04126-3. 
-It's probably not still in print. 
-It does contain a number of references to decision table articles published in the 1960s in Commications of the ACM: August 1967, September 1970, January 1966, November 1966, October 1968, January 1965, February 1964, June 1970, November 1965, June 1965, February 1971. 
-All of these pre-date even my library of "Communications". 
-Strangely, I'm not aware of any more recent references.) GK. Graham Klyne 
-At the risk of saying the obvious, Roy Fielding's remarks about conditional headers in propose a different algorithm from what Jeff Mogul and I hammered out based on the current specification: I don't know which is the better answer, but, as an implementer, I find myself stuck, uncertain about what exactly I should implement. 
-Since I haven't seen any clarifying noise on http-wg, I would feel better if someone said (on the list) that they were working behind the scenes to resolve the discrepancy. 
-Dave Kristol 
-A precondition gives a client the opportunity to require that the resource (or at least some aspect of the resource) has not changed before applying a method. 
-Preconditions are necessary to support atomic check+set actions which are common in distributed authoring and version control situations. 
-Actually, validation checks are also preconditions, but I didn't have a convenient word for preconditions-that-return-412-when-false vs preconditions-that-return-304-when-false. 
-The latter is only used for cache validation checks. 
-The precedence is due to the requirement that 304 be returned only if the response would otherwise be 200. 
-Since a 412 is not a 200, those preconditions win. 
-Checking them first is a performance issue, but also simplifies the algorithm description. 
-....Roy 
+<s> Dave Kristol in brought up the problem that the current draft of the HTTP/1.1 specification is ambiguous or hard to interpret in several ways.  </s>
+<s> I believe we have now identified all of the actual ambiguities and created "issues" for them: issue IM_IUS_412 issue CACHE_CONDITIONAL issue HEAD_WITH_IMS (not visible in the archive yet) This leaves the problem that it is still somewhat hard to read the specification, especially if one is trying to figure out how the various headers interact.  </s>
+<s> Dave and I have spent several days coming up with pseudo-code that, we believe, correctly represents the specified behavior in all possible cases.  </s>
+<s> It was agreed during this week's editorial teleconference that the next draft should include such pseudo-code, as an explanation of how to interpret the existing specification.  </s>
+<s> Since neither Dave nor I was able to get the right code on our first tries, we would appreciate some review of this!  </s>
+<s> Because the cutoff date for Internet-Draft submission is Friday, March 13, and Jim Gettys will need several days to actually generate the draft in the required format, any comments must be received as soon as possible (i.e., "read this today").  </s>
+<s> -Jeff (and Dave Kristol) P.S.: Note that the somewhat repetitive format of this code is intentional.  </s>
+<s> I found that the only way that I could be sure that we had covered every possible case was to fully expand the ELSE clauses of every IF statement.  </s>
+<s> Also, Dave and I (mildly) disagreed on whether it is clearer to use a few GOTO statements, or an auxilliary state variable which is set in one place and tested in another.  </s>
+<s> My preference was to use the GOTOs, to make the control flow as clear as possible.  </s>
+<s> NEW SECTION 13.3.5  </s>
+<s> Interpreting combinations of conditional headers HTTP/1.1 includes four request-header fields that can be used to make a request conditional: If-Match (section 14.24), If-Modified-Since (section 14.25), If-None-Match (section 14.26), and If-Unmodified-Since (section 14.28).  </s>
+<s> The protocol allows combinations of these four headers, and the proper interpretation of the meaning of the possible combinations has proved to be difficult to extract from the language of the specification.  </s>
+<s> We therefore include a description, in pseudo-code, of one possible correct implementation of the logic for processing HTTP/1.1 conditional headers in order to decide whether to perform the request, or to return a status code of 304 (Not Modified) or 412 (Predoncondition Failed).  </s>
+<s> Many other implementations are allowed by the HTTP/1.1 specification, but their external behavior is required to conform to the behavior of the pseudo-code below, in all cases where it defines a specific behavior.  </s>
+<s> Note that there is a fifth conditional header, If-Range (section 14.26) that is not described here.  </s>
+<s> It does not make sense to combine the If-Range request-header field with other conditional request-header fields, and so there is no need to define its interaction with other such fields.  </s>
+<s> /* Logic for processing HTTP/1.1 conditional headers *(not including If-Range) * Implicit inputs: *The request message *The selected resource * Outputs: * the response status code, if its value is defined by this logic * otherwise, the decision to continue processing the request * Uses the following functions: * BOOLEAN reqhdrs_include(STRING field_name) *returns true if the request headers include the given field-name.  </s>
+<s> * STRING fieldval(STRING field_name) *returns the request's field-value for the given field-name.  </s>
+<s> *(May involve combining multiple instances of the same header.) * INT count_match_current_etag(STRING field_value) *returns the number of entity tags in the field-value that *match the current entity tag of the selected resource.  </s>
+<s> * BOOLEAN matches_lastmod(STRING field_value) *returns true if the timestamp in the field-value matches *the current last-modified timestamp of the selected resource.  </s>
+<s> * NOTE: all branches of the IF-THEN-ELSE statements are included * in the following nested conditional, to ensure that no cases * are omitted IF reqhdrs_include("If-None-Match") THEN { IF count_match_current_etag(fieldval("If-None-Match"))  0 THEN { IF reqhdrs_include("If-Modified-Since") THEN { IF matches_lastmod(fieldval("If-Modified-Since")) THEN { IF req_method == "GET" OR req_method == "HEAD" THEN { status_code = 304; RETURN; } ELSE { /* WARNING: meaningless If-Modified-Since ?  </s>
+<s> */ GOTO next_step; } ENDIF } ELSE {/* If-Modified-Since mismatch */ GOTO next_step; } ENDIF } ELSE {/* entity tags match, no If-Modified-Since */ /* 14.26 says MUST NOT perform method */ IF req_method == "GET" OR req_method == "HEAD" THEN { status_code = 304; RETURN; } ELSE { status_code = 412; RETURN; } ENDIF } ENDIF } ELSE {/* no entity tag matches, ignore If-Modified-Since */ GOTO next_step; } ENDIF } ELSE { /* Check for vanilla If-Modified-Since */ IF reqhdrs_include("If-Modified-Since") THEN { IF matches_lastmod(fieldval("If-Modified-Since")) THEN { IF req_method == "GET" OR req_method == "HEAD" THEN { status_code = 304; RETURN; } ELSE { /* WARNING: meaningless If-Modified-Since ?  </s>
+<s> */ GOTO next_step; } ENDIF } ELSE {/* If-Modified-Since mismatch */ GOTO next_step; } ENDIF } ELSE { GOTO next_step; } ENDIF } ENDIF next_step: /* If-Match */ IF reqhdrs_include("If-Match") THEN { IF count_match_current_etag(fieldval("If-Match")) == 0 THEN { status_code = 412; RETURN; } ENDIF } ENDIF /* If-Unmodified-Since */ IF reqhdrs_include("If-Unmodified-Since") THEN { IF NOT matches_lastmod(fieldval("If-Unmodified-Since")) THEN { status_code = 412; RETURN; } ENDIF } ENDIF /* continue processing the request */  </s>
+<s> We already had an Issues list item for this (IMS_INM_MISMATCH) based on from last November.  </s>
+<s> The ambiguities regarding multiple conditionals were first mentioned (by me) at the last LA IETF, and a solution was posted a year ago in  </s>
+<s> I am less interested in specifying pseudocode that represents strictly what the specification (incompletely) says than I am in simply specifying the precedence according to what the specification *should* say and then fixing the contradictions in the spec.  </s>
+<s> This is not an easy problem, as I warned when the WG insisted on separate conditional fields instead of  </s>
+<s> a single IF header field.  </s>
+<s> However, I cannot believe that the right solution is to specify it in unreadable pseudocode -- at least choose a language with structure.  </s>
+<s> It is in fact far less readable than the actual code from Apache (and I know that the code works).  </s>
+<s> In any case, the pseudocode given does not do the right thing.  </s>
+<s> The order of the checks is important, since ETag checks are supposed to be more accurate than checks relative to the modification time.  </s>
+<s> None of the checks are made if the response would already be an error.  </s>
+<s> Furthermore, some of the conditionals (If-Match and If-Unmodified-Since) demand stronger action (higher precedence) due to their semantics (i.e., a response of 412 always overrides a check of 200/304).  </s>
+<s> Finally, if a strong validation check is available, we do not care about the result of any weaker validation check (and thus the weaker check must not be performed).  </s>
+<s> These observations need to be added to the current specification, preferably by grouping all of the conditional fields under a single section and defining the precedence at the start.  </s>
+<s> The right procedure to follow is described in the Apache code+comments: if (the server has already decided to respond with an error) return with the error status; SRV := the selected resource variant if ((an If-Match request-header field was given) AND ((SRV does not have an ETag defined) OR ((SRV's ETag does not match any of the entity tags in that field) AND (the field value is not "*" [meaning match anything]))) return with a status of 412 (Precondition Failed); else if ((a valid If-Unmodified-Since request-header field was given) AND (SRV has been modified since the IUS time)) return with a status of 412 (Precondition Failed); if ((an If-None-Match request-header field was given) AND ((the field value is "*" [meaning match anything]) OR ((SRV has an ETag defined) AND (SRV's ETag matches any of the entity tags in that field)))) if (the request method was GET or HEAD) return with a status of 304 (Not Modified); else return with a status of 412 (Precondition Failed); else if ((a valid If-Modified-Since request-header field was given) AND (the request method was GET or HEAD) AND (SRV has not been modified since the IMS time)) return with a status of 304 (Not Modified); return SRV with the appropriate success status;  </s>
+<s> That can be added to the spec if desired, but the important thing is that the specification must define a precedence in order to avoid contradictions.  </s>
+<s> Since precondition checks   validation checks and etag checks  last_mod, the only sensible precedence is If-Match  If-Unmodified-Since  If-None-Match  If-Modified-Since  </s>
+<s> .....Roy  </s>
+<s> This is certainly clear and simple.  </s>
+<s> But, why do precondition checks take precedence over validation checks?  </s>
+<s> While we are on the subject, what is the purpose of the precondition checks?  </s>
+<s> John Franks john@math.nwu.edu  </s>
+<s> I find decision tables are a useful way to analyse such problems.  </s>
+<s> (My reference is over 25 years old: "Programs from Decision Tables", E. Humbey, Macdonald/American Elsevier computer monographs, ISBN 0-444-19569-6/0-356-04126-3.  </s>
+<s> It's probably not still in print.  </s>
+<s> It does contain a number of references to decision table articles published in the 1960s in Commications of the ACM: August 1967, September 1970, January 1966, November 1966, October 1968, January 1965, February 1964, June 1970, November 1965, June 1965, February 1971.  </s>
+<s> All of these pre-date even my library of "Communications".  </s>
+<s> Strangely, I'm not aware of any more recent references.) GK. Graham Klyne  </s>
+<s> At the risk of saying the obvious, Roy Fielding's remarks about conditional headers in propose a different algorithm from what Jeff Mogul and I hammered out based on the current specification: I don't know which is the better answer, but, as an implementer, I find myself stuck, uncertain about what exactly I should implement.  </s>
+<s> Since I haven't seen any clarifying noise on http-wg, I would feel better if someone said (on the list) that they were working behind the scenes to resolve the discrepancy.  </s>
+<s> Dave Kristol  </s>
+<s> A precondition gives a client the opportunity to require that the resource (or at least some aspect of the resource) has not changed before applying a method.  </s>
+<s> Preconditions are necessary to support atomic check+set actions which are common in distributed authoring and version control situations.  </s>
+<s> Actually, validation checks are also preconditions, but I didn't have a convenient word for preconditions-that-return-412-when-false vs preconditions-that-return-304-when-false.  </s>
+<s> The latter is only used for cache validation checks.  </s>
+<s> The precedence is due to the requirement that 304 be returned only if the response would otherwise be 200.  </s>
+<s> Since a 412 is not a 200, those preconditions win.  </s>
+<s> Checking them first is a performance issue, but also simplifies the algorithm description.  </s>
+<s> ....Roy  </s>

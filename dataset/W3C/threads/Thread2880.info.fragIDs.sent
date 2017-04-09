@@ -1,32 +1,32 @@
-I am seeing SilverStream servers closing HTTP/1.1 connections immediately after a small random number of GET requests without notice - no 'connection: close' response header is returned with the last successful request. 
-Is this behaviour consistent with a) the spirit of the RFC b) the letter of the RFC I understand that servers will close idle connections after some time, but in this case a FIN packet arrives typically within 0.5 seconds of the last successful request, which may be before or after the client has sent the next request. 
-The client is not pipelining requests - it waits for a response to each request before submitting the next - but does not expect the behaviour described above. 
-The servers in question are not stressed. 
-If this behaviour is normal, can you confirm the natural corollary to this - that any HTTP/1.1 client must cope with a 'null' response to any 2nd or subsequent HTTP/1.1 request by creating a new socket and re-submitting the request - even where no 'connection: close' response header was included with the previous response? 
-Thanks, Matt Black 
-I am seeing SilverStream servers closing HTTP/1.1 connections immediately after a small random number of GET requests without notice - no 'connection: close' response header is returned with the last successful request. 
-Is this behaviour consistent with a) the spirit of the RFC b) the letter of the RFC Answer: (b) See RFC2616, section 8.1.4 (Practical Considerations): A client, server, or proxy MAY close the transport connection at any time. 
-For example, a client might have started to send a new request at the same time that the server has decided to close the "idle" connection. 
-From the server's point of view, the connection is being closed while it was idle, but from the client's point of view, a request is in progress. 
-This means that clients, servers, and proxies MUST be able to recover from asynchronous close events. 
-The use of "Connection: close" is a SHOULD-level requirement in the case where "the server chooses to close the connection immediately after sending the response" (section 8.1.2.1), but since you say that the server in your case is waiting 0.5 seconds, it's hard to say if this is really "immediately" or if it is just a shorter delay than you like. 
-I understand that servers will close idle connections after some time, but in this case a FIN packet arrives typically within 0.5 seconds of the last successful request, which may be before or after the client has sent the next request. 
-The client is not pipelining requests - it waits for a response to each request before submitting the next - but does not expect the behaviour described above. 
-The servers in question are not stressed. 
-The client is *required* to expect that behavior -- see the MUST-level requirement quoted above. 
-If this behaviour is normal, can you confirm the natural corollary to this - that any HTTP/1.1 client must cope with a 'null' response to any 2nd or subsequent HTTP/1.1 request by creating a new socket and re-submitting the request - even where no 'connection: close' response header was included with the previous response? 
-Section 8.1.4 goes on to say: Client software SHOULD reopen the transport connection and retransmit the aborted sequence of requests without user interaction so long as the request sequence is idempotent (see section 9.1.2). 
-Non-idempotent methods or sequences MUST NOT be automatically retried, although user agents MAY offer a human operator the choice of retrying the request(s). 
-Confirmation by user-agent software with semantic understanding of the application MAY substitute for user confirmation. 
-The automatic retry SHOULD NOT be repeated if the second sequence of requests fails. 
--Jeff 
-P.S.: My personal belief is that a well-implemented server with sufficient resources will try to keep a persistent connection open for as long as possible. 
-The specification, however, does not require this, and in many server architectures it seems to be difficult to maintain large numbers of idle connections without excessive resource consumption. 
-Jeff's summary was right on the mark. 
-The right amount of time seems to be dependent on a number of factors, including the nature of the server (origin/proxy/gateway), the type of applications being used via the server, and the mix of content. 
-A good study of HTTP timeouts on a general-purpose server can be found at Those numbers are based on a traditional daemon listening to a socket interface. 
-An HTTP server that is tightly integrated with the TCP implementation can do better by managing available ports as potential connections, resulting in significantly less overhead than a user process watching for more requests on a standard TCP socket. 
-The socket interface just isn't smart enough to efficiently handle adaptive timeouts on high-scalability servers. 
-The OS needs to manage both TCP wait states and the "between" states of connection-accept-til-first-data-segment and connection-close-til-client-acks-last-data, since otherwise the amount of time spent in those states prevents adaptive timeouts from making new connections available fast enough. 
-In other words, a client cannot anticipate the nature of a server's timeout, because HTTP allows it to be tuned according to the needs of the server implementation. 
-....Roy 
+<s> I am seeing SilverStream servers closing HTTP/1.1 connections immediately after a small random number of GET requests without notice - no 'connection: close' response header is returned with the last successful request.  </s>
+<s> Is this behaviour consistent with a) the spirit of the RFC b) the letter of the RFC I understand that servers will close idle connections after some time, but in this case a FIN packet arrives typically within 0.5 seconds of the last successful request, which may be before or after the client has sent the next request.  </s>
+<s> The client is not pipelining requests - it waits for a response to each request before submitting the next - but does not expect the behaviour described above.  </s>
+<s> The servers in question are not stressed.  </s>
+<s> If this behaviour is normal, can you confirm the natural corollary to this - that any HTTP/1.1 client must cope with a 'null' response to any 2nd or subsequent HTTP/1.1 request by creating a new socket and re-submitting the request - even where no 'connection: close' response header was included with the previous response?  </s>
+<s> Thanks, Matt Black  </s>
+<s> I am seeing SilverStream servers closing HTTP/1.1 connections immediately after a small random number of GET requests without notice - no 'connection: close' response header is returned with the last successful request.  </s>
+<s> Is this behaviour consistent with a) the spirit of the RFC b) the letter of the RFC Answer: (b) See RFC2616, section 8.1.4 (Practical Considerations): A client, server, or proxy MAY close the transport connection at any time.  </s>
+<s> For example, a client might have started to send a new request at the same time that the server has decided to close the "idle" connection.  </s>
+<s> From the server's point of view, the connection is being closed while it was idle, but from the client's point of view, a request is in progress.  </s>
+<s> This means that clients, servers, and proxies MUST be able to recover from asynchronous close events.  </s>
+<s> The use of "Connection: close" is a SHOULD-level requirement in the case where "the server chooses to close the connection immediately after sending the response" (section 8.1.2.1), but since you say that the server in your case is waiting 0.5 seconds, it's hard to say if this is really "immediately" or if it is just a shorter delay than you like.  </s>
+<s> I understand that servers will close idle connections after some time, but in this case a FIN packet arrives typically within 0.5 seconds of the last successful request, which may be before or after the client has sent the next request.  </s>
+<s> The client is not pipelining requests - it waits for a response to each request before submitting the next - but does not expect the behaviour described above.  </s>
+<s> The servers in question are not stressed.  </s>
+<s> The client is *required* to expect that behavior -- see the MUST-level requirement quoted above.  </s>
+<s> If this behaviour is normal, can you confirm the natural corollary to this - that any HTTP/1.1 client must cope with a 'null' response to any 2nd or subsequent HTTP/1.1 request by creating a new socket and re-submitting the request - even where no 'connection: close' response header was included with the previous response?  </s>
+<s> Section 8.1.4 goes on to say: Client software SHOULD reopen the transport connection and retransmit the aborted sequence of requests without user interaction so long as the request sequence is idempotent (see section 9.1.2).  </s>
+<s> Non-idempotent methods or sequences MUST NOT be automatically retried, although user agents MAY offer a human operator the choice of retrying the request(s).  </s>
+<s> Confirmation by user-agent software with semantic understanding of the application MAY substitute for user confirmation.  </s>
+<s> The automatic retry SHOULD NOT be repeated if the second sequence of requests fails.  </s>
+<s> -Jeff  </s>
+<s> P.S.: My personal belief is that a well-implemented server with sufficient resources will try to keep a persistent connection open for as long as possible.  </s>
+<s> The specification, however, does not require this, and in many server architectures it seems to be difficult to maintain large numbers of idle connections without excessive resource consumption.  </s>
+<s> Jeff's summary was right on the mark.  </s>
+<s> The right amount of time seems to be dependent on a number of factors, including the nature of the server (origin/proxy/gateway), the type of applications being used via the server, and the mix of content.  </s>
+<s> A good study of HTTP timeouts on a general-purpose server can be found at Those numbers are based on a traditional daemon listening to a socket interface.  </s>
+<s> An HTTP server that is tightly integrated with the TCP implementation can do better by managing available ports as potential connections, resulting in significantly less overhead than a user process watching for more requests on a standard TCP socket.  </s>
+<s> The socket interface just isn't smart enough to efficiently handle adaptive timeouts on high-scalability servers.  </s>
+<s> The OS needs to manage both TCP wait states and the "between" states of connection-accept-til-first-data-segment and connection-close-til-client-acks-last-data, since otherwise the amount of time spent in those states prevents adaptive timeouts from making new connections available fast enough.  </s>
+<s> In other words, a client cannot anticipate the nature of a server's timeout, because HTTP allows it to be tuned according to the needs of the server implementation.  </s>
+<s> ....Roy  </s>

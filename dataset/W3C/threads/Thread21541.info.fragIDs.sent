@@ -1,118 +1,118 @@
-[Outlines a (i.e. yet another) proposal for making RSS 2.0 RDF compatible, based upon Ziv's comments. 
-Shelley and Sjoerd are CC'd since they've shown the most interest in this whole line of investigation.] 
-The RDF/XML Syntax Specification (let's make that RXSS) is a completely different beast. 
-Where stylesheets and XML Schema are out-of-band, RXSS is in-band. 
-]]] - http://radio.weblogs.com/0106548/2002/09/11.html#a81 It is possible, with current technologies such as XSLT (and perhaps even 
-Notation3), to transform an RSS 2.0 document into RDF on a syntactic level. 
-There are a few obstacles to actually getting it all to work smoothly, and 
-be accepted by the community, that I want to address here. 
-Sjoerd created an XSLT stylesheet [1] (a kind of program) that transforms RSS 2.0 into RDF. 
-The two immediate problems that this approach raises are:- * How do people know that this mapping to RDF is the one that the creator of RSS 2.0 (i.e. Dave/UserLand) intends? 
-* For someone just getting into RSS 2.0, and wanting to convert it to RDF, how can they *find* this transformation? 
-The obvious answer to both of these questions is RDDL [2]. 
-RDDL is a namespace catalogue format that enables one to associate certain documents (usually text documentation, schemata, transformations, stylesheets, and behaviours) with a language via. 
-its namespace. 
-It ended years of flamewars on the xml-dev mailing list as to what should come at the end of a namespace; it works, and it's a deployed technology. 
-Basically, a RDDL document is an ordinary XHTML Basic document, but with a few special XLinks (the standard XML linking technology) and other elements added that can be read by machines. 
-The W3C's experimental XML Schema validator, XSV, can actually validate documents that use a RDDL namespace by parsing the RDDL and getting the linked schemata. 
-With RSS 2.0, it would be feasible for Dave to simply convert his RSS 2.0 
-schema document to RDDL. 
-(N.B. I'll be emailing Dave separately to ask him 
-about this). 
-I've prepared a possible example of this at:- Now, this serves the immediate purpose of informing anyone who comes to RSS 2.0 through the namespace where all the documentation and implementations are. 
-Technically, it should also satisfy those for whom "RSS" is synonymous with "RDF application". 
-The great thing about RDDL is that it's extensible: Sjoerd's transformation only converts to a non-RSS 1.0 application of RDF, but should someone write another stylesheet, that can easily be added. 
-Should anyone write some kind of DTD or schema for RDDL, that can be added too. 
-The only remaining problem is that this introduces a dependency on XSLT for anyone wanting to create RDF out of RSS 2.0. 
-The argument against RSS 2.0 at the moment is that RSS 2.0 could easily be an RDF application *and* remain simple enough to be true to its RSS 0.9x roots, and be implementable 
-by UserLand's customers and developers. 
-This puts extra burden on RDF developers, but to be quite frank, RDF developers have enough syntactic 
-worries already that requiring a nice little XSLT transform isn't going to make much difference. 
-And all XML parsers should come with an XSLT engine anyway :-) Perhaps some folk will beg to differ, and that's the main debating point of this proposal. 
-[1] http://w3future.com/weblog/gems/rss2rdf.xsl [2] http://www.rddl.org/ 
-Kindest Regards, Sean B. Palmer @prefix : http://purl.org/net/swn# . 
-:Sean :homepage http://purl.org/net/sbp/ . 
-2.0 
-Thanks! Other than by acronym, I had no idea what RDDL does until your mail. 
-If I understand correctly, what you're suggesting is this: 1. Keep RSS 2.0 as-is 2. RSS 2.0 currently has all the "core" elements in an "rss20" ns/URI 
-3. Put an XHTML with embedded RDDL info at the rss20 URI's "end" 
-4. This would allow any RSS 2.0 reader to continue working... 5. ...As well as allow RSS 1.0/RDF readers to transform RSS 2.0 into 
-RSS 1.0/RDF by following the rss20/URI, finding the RDDL info there, downloading the XSLT, and making the transformation. 
-(If this is not what you're saying, please let me know!) 
-I think I see a couple of possible snags in this scenario: A) The URI (actually URL) isn't under my control. 
-What if Dave refuses? 
-B) How would an RDF reader "know" what URIs to download and read as RDDL? 
-RSS 2.0 is namespace-extensible, so readers potentially have to 
-try several URIs, never knowing which the "correct" one is. 
-In a later post to my weblog I tried tackling both issues by embedding "link" information into the original document itself. 
-Now that you've mentioned RDDL, there are quite a few similarities, which I'd like to investigate further: 
-(i) Are there any standard/recommended techniques for embedding the rddl:resource links in the document (here RSS 2.0) itself rather than in a separate document? 
-(Note that rddl:resource is an element, and 
-obviously cannot be made the root element of the document; is there any convention that says "child rddl:resource elements of the root element necessary apply to the whole document"?; this is one reason I suggested 
-using processing instructions, BTW.) 
-(ii) Is there any standard technique for embedding information in the document itself that is an rddl:resource link pointing to the RDDL itself of the document? 
-Thanks! Ziv Caspi cell: +972-53-668-751 web: http://radio.weblogs.com/0106548/ 
-Well put. 
-RSS aggregators in particular, however, would probably be more 
-likely to have the stylesheet built-in as a part of the code, i.e. shipped along with the distribution. 
-In other words, there are only a handful of 
-syndication formats that an RSS aggregator (rather than a generic RDF processor) needs to know about, and so automatic transformation by querying the namespace wouldn't be necessary. 
-What the RDDL is for is to document the transformations (and other things related to the language), and to provide machine readable links should these be required in the future. 
-It's very simple to parse a RDDL document using a SAX filter (or something like that), and as I noted in my previous email, software such as XSV [1] already implements it. 
-Another benefit of the RDDL documented approach is that updates to the transformations can be checked for occasionally; and applications that have the transformation built-in are not precluded for doing this. 
-I'm sure that Dave is watching, and if not we can always show him what we've been talking about. 
-If he decides not to take this approach or something similar, I suspect he'll provide a reason either in public or on 
-request, so you could discuss it further with him then. 
-Really, I'm just approaching this from a technical viewpoint: I'm simply 
-advocating the use of RDDL as a potential benefit to the users of RSS. 
-This approach is neat because no one really loses anything, but we still have to discuss it and make our case. 
-I'm glad you've asked this question. 
-It's actually simple to pick the right namespace, keeping in mind a few facts about XML (that are currently being debated [2] on www-tag, but I'll proceed nevertheless). 
-* The root element of the document decides the language of the document: IOW, the namespace of the root element is the major language for the document * The rule above always applies, except for when you have XML functions [3] 
-Anyway, the point is that if you want to get the RDDL catalogue for a file, you should use the namespace of the root element, and that in RSS 2.0 none 
-of the namespace extensions could change the nature of the root element 
-(otherwise they'd change the meaning of the document). 
-Not that I know of. 
-The linking technique is comparable to the use of stylesheets: it's useful to have them out-of-band because repeating information on that scale is unnecessary, and parsers only need the information occasionally. 
-Think of the similar situation with XML schema: you don't embed a schema 
-documents in instances: instead, you used the xsi:schemaLocation attribute 
-(in fact, RDDL makes that unnecessary too). 
-The RDDL specification appears to only make provisions for the semantics of rddl:resource elements that appear within the context of the specially adapted RDDL XHTML derivation. 
-To answer your question, you'd have to carefully scour the documentation, and more likely email the authors. 
-There's nothing stopping you from embedding the rddl:resource elements, but you have to be aware that the semantics are likely "undefined" at this point. 
-There's nothing stopping you from making your own element, of course, but I suspect that you want RDDL parsers to be able to work on RSS 2.0 documents. 
-I don't think you could rely on them doing that. 
-In any case, using the root element's namespace as a link to the RDDL profile for the language is basically how the system was designed to work. 
-Apart from the root element's namespace? 
-:-) Just a quick sidenote: the other namespaces that constitute RSS 2.0 extensions could themselves use RDDL to define what they mean, and how they're to be converted. 
-However, the RSS 2.0 namespace overrides everything: you can't ask the namespace of bits of embedded elements to find out what those elements mean in that context. 
-You have to go to the root element's namespace, and find out what it says about stuff that's embedded inside it. 
-What RDDL could do with is a feature for saying "for other namespaces used as extensions to instances of this language, you can use their RDDL profiles as the definitions". 
-I note that the XSLT program that Sjoerd wrote is flexible enough to convert the extensions that Dave added to scripting.com's 
-RSS feed into RDF. 
-I haven't properly looked over his code yet, but I trust that it competently converts to RDF in all cases; if not, I'm sure Sjoerd would be happy to update it. 
-Many thanks for your comments, [1] http://www.garshol.priv.no/download/xmltools/prod/XSV.html [2] http://www.w3.org/2001/tag/ilist#mixedNamespaceMeaning-13 [3] http://www.w3.org/DesignIssues/XML [4] http://backend.userland.com/rss2 
-[5] http://static.userland.com/gems/backend/rssTwoExample.xml 
-Kindest Regards, Sean B. Palmer @prefix : http://purl.org/net/swn# . 
-:Sean :homepage http://purl.org/net/sbp/ . 
-Thanks for your comments, Sean. 
-or on 
-I didn't come out the way I wanted. 
-Sorry, my bad. 
-I'll rephrase that: A) The URI cannot point to an RDDL document. 
-(Three examples: the URI is not a URL, the URI/URL already has a well-known resource at its end which cannot be changed, the document producer does not control the URI/URL but would like to associate RDDL information with the document.) 
-simply 
-have 
-I couldn't agree more. 
-I'm a technical guy myself, and generally try to avoid political issues like the plague. 
-potentially 
-have to try several URIs, never knowing which the "correct" one is. 
-none 
-element 
-Okay, although if I were an RDF developer I might have liked something more explicit than that. 
-schema 
-attribute 
-Generally, you want to put all the slowly-varying stuff in an external document (for caching, to save bandwidth and disk space, to make central modifications easier). 
-However, there are sometimes benefits for in-lining. 
-DTDs, for example, can be either. 
-Ziv Caspi cell: +972-53-668-751 web: http://radio.weblogs.com/0106548/ 
+<s> [Outlines a (i.e. yet another) proposal for making RSS 2.0 RDF compatible, based upon Ziv's comments.  </s>
+<s> Shelley and Sjoerd are CC'd since they've shown the most interest in this whole line of investigation.]  </s>
+<s> The RDF/XML Syntax Specification (let's make that RXSS) is a completely different beast.  </s>
+<s> Where stylesheets and XML Schema are out-of-band, RXSS is in-band.  </s>
+<s> ]]] - http://radio.weblogs.com/0106548/2002/09/11.html#a81 It is possible, with current technologies such as XSLT (and perhaps even  </s>
+<s> Notation3), to transform an RSS 2.0 document into RDF on a syntactic level.  </s>
+<s> There are a few obstacles to actually getting it all to work smoothly, and  </s>
+<s> be accepted by the community, that I want to address here.  </s>
+<s> Sjoerd created an XSLT stylesheet [1] (a kind of program) that transforms RSS 2.0 into RDF.  </s>
+<s> The two immediate problems that this approach raises are:- * How do people know that this mapping to RDF is the one that the creator of RSS 2.0 (i.e. Dave/UserLand) intends?  </s>
+<s> * For someone just getting into RSS 2.0, and wanting to convert it to RDF, how can they *find* this transformation?  </s>
+<s> The obvious answer to both of these questions is RDDL [2].  </s>
+<s> RDDL is a namespace catalogue format that enables one to associate certain documents (usually text documentation, schemata, transformations, stylesheets, and behaviours) with a language via.  </s>
+<s> its namespace.  </s>
+<s> It ended years of flamewars on the xml-dev mailing list as to what should come at the end of a namespace; it works, and it's a deployed technology.  </s>
+<s> Basically, a RDDL document is an ordinary XHTML Basic document, but with a few special XLinks (the standard XML linking technology) and other elements added that can be read by machines.  </s>
+<s> The W3C's experimental XML Schema validator, XSV, can actually validate documents that use a RDDL namespace by parsing the RDDL and getting the linked schemata.  </s>
+<s> With RSS 2.0, it would be feasible for Dave to simply convert his RSS 2.0  </s>
+<s> schema document to RDDL.  </s>
+<s> (N.B. I'll be emailing Dave separately to ask him  </s>
+<s> about this).  </s>
+<s> I've prepared a possible example of this at:- Now, this serves the immediate purpose of informing anyone who comes to RSS 2.0 through the namespace where all the documentation and implementations are.  </s>
+<s> Technically, it should also satisfy those for whom "RSS" is synonymous with "RDF application".  </s>
+<s> The great thing about RDDL is that it's extensible: Sjoerd's transformation only converts to a non-RSS 1.0 application of RDF, but should someone write another stylesheet, that can easily be added.  </s>
+<s> Should anyone write some kind of DTD or schema for RDDL, that can be added too.  </s>
+<s> The only remaining problem is that this introduces a dependency on XSLT for anyone wanting to create RDF out of RSS 2.0.  </s>
+<s> The argument against RSS 2.0 at the moment is that RSS 2.0 could easily be an RDF application *and* remain simple enough to be true to its RSS 0.9x roots, and be implementable  </s>
+<s> by UserLand's customers and developers.  </s>
+<s> This puts extra burden on RDF developers, but to be quite frank, RDF developers have enough syntactic  </s>
+<s> worries already that requiring a nice little XSLT transform isn't going to make much difference.  </s>
+<s> And all XML parsers should come with an XSLT engine anyway :-) Perhaps some folk will beg to differ, and that's the main debating point of this proposal.  </s>
+<s> [1] http://w3future.com/weblog/gems/rss2rdf.xsl [2] http://www.rddl.org/  </s>
+<s> Kindest Regards, Sean B. Palmer @prefix : http://purl.org/net/swn# .  </s>
+<s> :Sean :homepage http://purl.org/net/sbp/ .  </s>
+<s> 2.0  </s>
+<s> Thanks! Other than by acronym, I had no idea what RDDL does until your mail.  </s>
+<s> If I understand correctly, what you're suggesting is this: 1. Keep RSS 2.0 as-is 2. RSS 2.0 currently has all the "core" elements in an "rss20" ns/URI  </s>
+<s> 3. Put an XHTML with embedded RDDL info at the rss20 URI's "end"  </s>
+<s> 4. This would allow any RSS 2.0 reader to continue working... 5. ...As well as allow RSS 1.0/RDF readers to transform RSS 2.0 into  </s>
+<s> RSS 1.0/RDF by following the rss20/URI, finding the RDDL info there, downloading the XSLT, and making the transformation.  </s>
+<s> (If this is not what you're saying, please let me know!)  </s>
+<s> I think I see a couple of possible snags in this scenario: A) The URI (actually URL) isn't under my control.  </s>
+<s> What if Dave refuses?  </s>
+<s> B) How would an RDF reader "know" what URIs to download and read as RDDL?  </s>
+<s> RSS 2.0 is namespace-extensible, so readers potentially have to  </s>
+<s> try several URIs, never knowing which the "correct" one is.  </s>
+<s> In a later post to my weblog I tried tackling both issues by embedding "link" information into the original document itself.  </s>
+<s> Now that you've mentioned RDDL, there are quite a few similarities, which I'd like to investigate further:  </s>
+<s> (i) Are there any standard/recommended techniques for embedding the rddl:resource links in the document (here RSS 2.0) itself rather than in a separate document?  </s>
+<s> (Note that rddl:resource is an element, and  </s>
+<s> obviously cannot be made the root element of the document; is there any convention that says "child rddl:resource elements of the root element necessary apply to the whole document"?; this is one reason I suggested  </s>
+<s> using processing instructions, BTW.)  </s>
+<s> (ii) Is there any standard technique for embedding information in the document itself that is an rddl:resource link pointing to the RDDL itself of the document?  </s>
+<s> Thanks! Ziv Caspi cell: +972-53-668-751 web: http://radio.weblogs.com/0106548/  </s>
+<s> Well put.  </s>
+<s> RSS aggregators in particular, however, would probably be more  </s>
+<s> likely to have the stylesheet built-in as a part of the code, i.e. shipped along with the distribution.  </s>
+<s> In other words, there are only a handful of  </s>
+<s> syndication formats that an RSS aggregator (rather than a generic RDF processor) needs to know about, and so automatic transformation by querying the namespace wouldn't be necessary.  </s>
+<s> What the RDDL is for is to document the transformations (and other things related to the language), and to provide machine readable links should these be required in the future.  </s>
+<s> It's very simple to parse a RDDL document using a SAX filter (or something like that), and as I noted in my previous email, software such as XSV [1] already implements it.  </s>
+<s> Another benefit of the RDDL documented approach is that updates to the transformations can be checked for occasionally; and applications that have the transformation built-in are not precluded for doing this.  </s>
+<s> I'm sure that Dave is watching, and if not we can always show him what we've been talking about.  </s>
+<s> If he decides not to take this approach or something similar, I suspect he'll provide a reason either in public or on  </s>
+<s> request, so you could discuss it further with him then.  </s>
+<s> Really, I'm just approaching this from a technical viewpoint: I'm simply  </s>
+<s> advocating the use of RDDL as a potential benefit to the users of RSS.  </s>
+<s> This approach is neat because no one really loses anything, but we still have to discuss it and make our case.  </s>
+<s> I'm glad you've asked this question.  </s>
+<s> It's actually simple to pick the right namespace, keeping in mind a few facts about XML (that are currently being debated [2] on www-tag, but I'll proceed nevertheless).  </s>
+<s> * The root element of the document decides the language of the document: IOW, the namespace of the root element is the major language for the document * The rule above always applies, except for when you have XML functions [3]  </s>
+<s> Anyway, the point is that if you want to get the RDDL catalogue for a file, you should use the namespace of the root element, and that in RSS 2.0 none  </s>
+<s> of the namespace extensions could change the nature of the root element  </s>
+<s> (otherwise they'd change the meaning of the document).  </s>
+<s> Not that I know of.  </s>
+<s> The linking technique is comparable to the use of stylesheets: it's useful to have them out-of-band because repeating information on that scale is unnecessary, and parsers only need the information occasionally.  </s>
+<s> Think of the similar situation with XML schema: you don't embed a schema  </s>
+<s> documents in instances: instead, you used the xsi:schemaLocation attribute  </s>
+<s> (in fact, RDDL makes that unnecessary too).  </s>
+<s> The RDDL specification appears to only make provisions for the semantics of rddl:resource elements that appear within the context of the specially adapted RDDL XHTML derivation.  </s>
+<s> To answer your question, you'd have to carefully scour the documentation, and more likely email the authors.  </s>
+<s> There's nothing stopping you from embedding the rddl:resource elements, but you have to be aware that the semantics are likely "undefined" at this point.  </s>
+<s> There's nothing stopping you from making your own element, of course, but I suspect that you want RDDL parsers to be able to work on RSS 2.0 documents.  </s>
+<s> I don't think you could rely on them doing that.  </s>
+<s> In any case, using the root element's namespace as a link to the RDDL profile for the language is basically how the system was designed to work.  </s>
+<s> Apart from the root element's namespace?  </s>
+<s> :-) Just a quick sidenote: the other namespaces that constitute RSS 2.0 extensions could themselves use RDDL to define what they mean, and how they're to be converted.  </s>
+<s> However, the RSS 2.0 namespace overrides everything: you can't ask the namespace of bits of embedded elements to find out what those elements mean in that context.  </s>
+<s> You have to go to the root element's namespace, and find out what it says about stuff that's embedded inside it.  </s>
+<s> What RDDL could do with is a feature for saying "for other namespaces used as extensions to instances of this language, you can use their RDDL profiles as the definitions".  </s>
+<s> I note that the XSLT program that Sjoerd wrote is flexible enough to convert the extensions that Dave added to scripting.com's  </s>
+<s> RSS feed into RDF.  </s>
+<s> I haven't properly looked over his code yet, but I trust that it competently converts to RDF in all cases; if not, I'm sure Sjoerd would be happy to update it.  </s>
+<s> Many thanks for your comments, [1] http://www.garshol.priv.no/download/xmltools/prod/XSV.html [2] http://www.w3.org/2001/tag/ilist#mixedNamespaceMeaning-13 [3] http://www.w3.org/DesignIssues/XML [4] http://backend.userland.com/rss2  </s>
+<s> [5] http://static.userland.com/gems/backend/rssTwoExample.xml  </s>
+<s> Kindest Regards, Sean B. Palmer @prefix : http://purl.org/net/swn# .  </s>
+<s> :Sean :homepage http://purl.org/net/sbp/ .  </s>
+<s> Thanks for your comments, Sean.  </s>
+<s> or on  </s>
+<s> I didn't come out the way I wanted.  </s>
+<s> Sorry, my bad.  </s>
+<s> I'll rephrase that: A) The URI cannot point to an RDDL document.  </s>
+<s> (Three examples: the URI is not a URL, the URI/URL already has a well-known resource at its end which cannot be changed, the document producer does not control the URI/URL but would like to associate RDDL information with the document.)  </s>
+<s> simply  </s>
+<s> have  </s>
+<s> I couldn't agree more.  </s>
+<s> I'm a technical guy myself, and generally try to avoid political issues like the plague.  </s>
+<s> potentially  </s>
+<s> have to try several URIs, never knowing which the "correct" one is.  </s>
+<s> none  </s>
+<s> element  </s>
+<s> Okay, although if I were an RDF developer I might have liked something more explicit than that.  </s>
+<s> schema  </s>
+<s> attribute  </s>
+<s> Generally, you want to put all the slowly-varying stuff in an external document (for caching, to save bandwidth and disk space, to make central modifications easier).  </s>
+<s> However, there are sometimes benefits for in-lining.  </s>
+<s> DTDs, for example, can be either.  </s>
+<s> Ziv Caspi cell: +972-53-668-751 web: http://radio.weblogs.com/0106548/  </s>

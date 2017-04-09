@@ -1,52 +1,52 @@
-Hi, I'm having a problem with jaxp1.0 and "ignorable" whitespace. 
-As any example, I have an element that has two child elements but the DOM ends up having a TEXT node with a linefeed in it. 
-This means the element has three children which did not happen in xml-tr2. 
-I do not have a mixed content model DTD and I am using parsing with validation. 
-XML 1.0 Section 2.10 Whitespace handling "... white space is typically not intended for inclusion in the delivered version of the document" Section 2.11 End-of-line Handling "normalizing all line breaks to #xA on input before parsing" I'm just really confused and have looked at the specs and can't find what I need to do. 
-Plus alot of my code is broken unless I squeeze the whitespace out of my documents and then they are not so editable or readable. 
-Thanks in advance for any help. 
-Eric :-) p.s. I posted comp.text.xml and www-dom with no replies. 
-The short answer: No support until DOM Level 3. 
-"Ignorable" whitespace is, unfortunately, a misnomer. 
-The more useful concept is whitespace-in-element-context (ie, whitespace that is not expected by the DTD grammar and hence not a meaningful part of the document's contents.) 
-The XML spec _requires_ that this whitespace be passed along by the XML Processor -- which is usually taken to mean the parser and the DOM. 
-The spec also requries that this whitespace be easily recognizable as being in element context. 
-The DOM hasn't addressed this yet. 
-Some parsers attempt to solve this by marking Text nodes that contain element-context whitespace at the time the node is created. 
-That isn't really reliable -- if the DOM is edited and this node is moved to a new location, the parser can't help you keep this flag set properly. 
-And of course the flag is a custom feature, so it's nonportable. 
-A better solution is to ask the DTD support whether a particular Text node is in Element Context, then ask the Text node if it contains only whitespace. 
-Unfortunately the DOM hasn't yet designed DTD support. 
-Some individual DOMs may have a custom feature for DTDs... but again, that's nonportable at this time. 
-DOM Level 3's "Content Model" chapter is expected to address this. 
-We're still not sure whether it'll be two seperate queries (one for Element Context, one for whitespace-only), or whether the latter is something you should determine yourself (probably not), or whether a convenience function should be provided that performs both tests. 
-Joe Kesselman / IBM Research 
-Hi Joe, 
-Yesterday, I got the pleasure of reading the reams of messages on this subject (just before I started following this list). 
-I realize the need for the XML parser to pass the linefeeds along. 
-I also realize that if DOM users need these then the DOM can't ignore them. 
-A method sort of like Element::normalize would do the trick but is not elegant and not really scalable. 
-Why check the whole tree you just built or much worse for lazy initialization ... The next big issue is the validated versus non-validated could lead to different results if the node is marked in the DTD verified version. 
-The long and the short is that this is a tough problem but it is also disappointing from a basic developer point of view none the less. 
-Thanks, Eric 
-... because everything related to creating a DOM tree remains in the area of proprietary, or at least nonstandard, APIs. 
-Including policy about inclusion of ignorable whitespace. 
-Usually-to-never ... If you look at the requirements the XML spec places on what an "XML Processor" does, you'll notice that parser APIs like SAX2 are almost a perfect match. 
-But DOM doesn't add anything, and has fundamental omissions (like error reporting, whitespace, catalog hooks, and much more). 
-I've found it much more useful to view DOM as a library, which can be used with or without an XML processor. 
-Notice that the DOM implementations which are backed by databases have no real need for an XML processor; they are easily populated and accessed without any interactions with such a processor, either. 
-That perspective makes it a lot easier to use DOM, too ... the presence or absence of annoying features like "ignorable" whitespace, entity/entityRef nodes, CDATA nodes, and so on is just a policy for filtering parser output when building a DOM tree corresponding to some data syntax. 
-- Dave 
-"We're making mistakes as fast as we can..." 
-As I said: It's on the list of issues for DOM Level 3. Level 2 considered it but decided it couldn't be done properly without DTD support. 
-Early filtering of the tree ("lazy initialization", as you called it) is certainly possible. 
-Maybe the Load/Save chapter of DOM Level 3 can look at that side of the issue. 
-If not, I expect custom solutions will continue to 
-exist on a DOM-builder-by-DOM-builder basis, though that wouldn't be as portable. 
-Joe Kesselman / IBM Research 
-Reworded. 
-It makes it harder for the new developer that doesn't know all the ins and out and leads to frustration and not new XML / DOM applications. 
-Making some good stuff as well. 
-I agree this certainly can't be done without a DTD. 
-Good idea- early filtering would work great for applications that validate the XML that don't need the nodes but comes at the cost since the non-validated document would still end up with the nodes since the DOM couldn't know what text is not needed. 
-Thanks, Eric Richardson 
+<s> Hi, I'm having a problem with jaxp1.0 and "ignorable" whitespace.  </s>
+<s> As any example, I have an element that has two child elements but the DOM ends up having a TEXT node with a linefeed in it.  </s>
+<s> This means the element has three children which did not happen in xml-tr2.  </s>
+<s> I do not have a mixed content model DTD and I am using parsing with validation.  </s>
+<s> XML 1.0 Section 2.10 Whitespace handling "... white space is typically not intended for inclusion in the delivered version of the document" Section 2.11 End-of-line Handling "normalizing all line breaks to #xA on input before parsing" I'm just really confused and have looked at the specs and can't find what I need to do.  </s>
+<s> Plus alot of my code is broken unless I squeeze the whitespace out of my documents and then they are not so editable or readable.  </s>
+<s> Thanks in advance for any help.  </s>
+<s> Eric :-) p.s. I posted comp.text.xml and www-dom with no replies.  </s>
+<s> The short answer: No support until DOM Level 3.  </s>
+<s> "Ignorable" whitespace is, unfortunately, a misnomer.  </s>
+<s> The more useful concept is whitespace-in-element-context (ie, whitespace that is not expected by the DTD grammar and hence not a meaningful part of the document's contents.)  </s>
+<s> The XML spec _requires_ that this whitespace be passed along by the XML Processor -- which is usually taken to mean the parser and the DOM.  </s>
+<s> The spec also requries that this whitespace be easily recognizable as being in element context.  </s>
+<s> The DOM hasn't addressed this yet.  </s>
+<s> Some parsers attempt to solve this by marking Text nodes that contain element-context whitespace at the time the node is created.  </s>
+<s> That isn't really reliable -- if the DOM is edited and this node is moved to a new location, the parser can't help you keep this flag set properly.  </s>
+<s> And of course the flag is a custom feature, so it's nonportable.  </s>
+<s> A better solution is to ask the DTD support whether a particular Text node is in Element Context, then ask the Text node if it contains only whitespace.  </s>
+<s> Unfortunately the DOM hasn't yet designed DTD support.  </s>
+<s> Some individual DOMs may have a custom feature for DTDs... but again, that's nonportable at this time.  </s>
+<s> DOM Level 3's "Content Model" chapter is expected to address this.  </s>
+<s> We're still not sure whether it'll be two seperate queries (one for Element Context, one for whitespace-only), or whether the latter is something you should determine yourself (probably not), or whether a convenience function should be provided that performs both tests.  </s>
+<s> Joe Kesselman / IBM Research  </s>
+<s> Hi Joe,  </s>
+<s> Yesterday, I got the pleasure of reading the reams of messages on this subject (just before I started following this list).  </s>
+<s> I realize the need for the XML parser to pass the linefeeds along.  </s>
+<s> I also realize that if DOM users need these then the DOM can't ignore them.  </s>
+<s> A method sort of like Element::normalize would do the trick but is not elegant and not really scalable.  </s>
+<s> Why check the whole tree you just built or much worse for lazy initialization ... The next big issue is the validated versus non-validated could lead to different results if the node is marked in the DTD verified version.  </s>
+<s> The long and the short is that this is a tough problem but it is also disappointing from a basic developer point of view none the less.  </s>
+<s> Thanks, Eric  </s>
+<s> ... because everything related to creating a DOM tree remains in the area of proprietary, or at least nonstandard, APIs.  </s>
+<s> Including policy about inclusion of ignorable whitespace.  </s>
+<s> Usually-to-never ... If you look at the requirements the XML spec places on what an "XML Processor" does, you'll notice that parser APIs like SAX2 are almost a perfect match.  </s>
+<s> But DOM doesn't add anything, and has fundamental omissions (like error reporting, whitespace, catalog hooks, and much more).  </s>
+<s> I've found it much more useful to view DOM as a library, which can be used with or without an XML processor.  </s>
+<s> Notice that the DOM implementations which are backed by databases have no real need for an XML processor; they are easily populated and accessed without any interactions with such a processor, either.  </s>
+<s> That perspective makes it a lot easier to use DOM, too ... the presence or absence of annoying features like "ignorable" whitespace, entity/entityRef nodes, CDATA nodes, and so on is just a policy for filtering parser output when building a DOM tree corresponding to some data syntax.  </s>
+<s> - Dave  </s>
+<s> "We're making mistakes as fast as we can..."  </s>
+<s> As I said: It's on the list of issues for DOM Level 3. Level 2 considered it but decided it couldn't be done properly without DTD support.  </s>
+<s> Early filtering of the tree ("lazy initialization", as you called it) is certainly possible.  </s>
+<s> Maybe the Load/Save chapter of DOM Level 3 can look at that side of the issue.  </s>
+<s> If not, I expect custom solutions will continue to  </s>
+<s> exist on a DOM-builder-by-DOM-builder basis, though that wouldn't be as portable.  </s>
+<s> Joe Kesselman / IBM Research  </s>
+<s> Reworded.  </s>
+<s> It makes it harder for the new developer that doesn't know all the ins and out and leads to frustration and not new XML / DOM applications.  </s>
+<s> Making some good stuff as well.  </s>
+<s> I agree this certainly can't be done without a DTD.  </s>
+<s> Good idea- early filtering would work great for applications that validate the XML that don't need the nodes but comes at the cost since the non-validated document would still end up with the nodes since the DOM couldn't know what text is not needed.  </s>
+<s> Thanks, Eric Richardson  </s>

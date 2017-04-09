@@ -1,16 +1,16 @@
-I am trying to port Amaya 1.0b to a DECStation running Ultrix 4.3. 
-There is a problem with tools/mkdep: it uses strdup even though configure has worked out it is not present. 
-Here is what happened: # ../configure creating cache ./config.cache checking host system type... mips-dec-ultrix4.5 checking target system type... mips-dec-ultrix4.5 checking build system type... mips-dec-ultrix4.5 [skipping...] checking for strdup... no [skipping...] Amaya and Thot packages are now configured Amaya configured with Java support Now start "make all" (GNU make preferably) to build the binaries # make all make[1]: Entering directory `/usr/local/Thot/objects/tools/mkdep' gcc -o mkdep mkdep.o 
-collect2: ld returned 1 exit status /usr/lib/cmplrs/cc/ld: Undefined: strdup make[1]: *** [mkdep] Error 1 make[1]: Leaving directory `/usr/local/Thot/objects/tools/mkdep' make: *** [tools/mkdep/mkdep] Error 2 Peter Pudney 
-Ok, will be corrected in next release. 
-add the following to Thot/tools/mkdep/mkdep.c if not already done after the line : #define MAX_SUB_INCLUDE 30 #ifndef HAVE_STRDUP char *strdup(const char *s) char *str; if (s == NULL) return(NULL); str = malloc(strlen(s) + 1); if (str == NULL) return(NULL); strcpy(str, s); return(str); #endif Daniel Daniel Veillard@w3.org | W3C / INRIA Rhone-Alpes | Today's Bookmarks : Daniel.Veillard@inrialpes.fr| 655 av de l'Europe | Linux, WWW, Java, Tel : +33 (0)4 76 61 53 85 | 38330 Montbonnot | badminton, Kaffe, Home: +33 (0)4 76 63 05 86 | http://opera.inrialpes.fr/veillard 
-The strdup problem also occurs in javastub.c. 
-A similar fix corrects this problem. 
-I am now having problems with the standard gcc header files: make[1]: Entering directory `/usr/local/Thot/objects/tablelib' [skipping a few warnings...] In file included from /usr/local/lib/gcc-lib/mips-dec-ultrix4.5/2.7.2.2.f.2/include/X11/Intrinsic.h:74, from /usr/include/X11/IntrinsicP.h:58, from ../../thotlib/include/thot_gui.h:112, from ../../thotlib/include/interface.h:20, from ../../thotlib/include/app.h:19, 
-from ../../thotlib/internals/h/typestr.h:32, from ../../thotlib/internals/h/typeint.h:19, from ../../thotlib/internals/h/typemedia.h:19, from ../../tablelib/table.c:30: 
-/usr/local/lib/gcc-lib/mips-dec-ultrix4.5/2.7.2.2.f.2/include/string.h:82: 
-parse error before `(' /usr/local/lib/gcc-lib/mips-dec-ultrix4.5/2.7.2.2.f.2/include/string.h:82: 
-parse error before `void' make[1]: *** [table.o] 
-Error 1 The parse error occurs in the middle of string.h. 
-Any clues? 
-Peter 
+<s> I am trying to port Amaya 1.0b to a DECStation running Ultrix 4.3.  </s>
+<s> There is a problem with tools/mkdep: it uses strdup even though configure has worked out it is not present.  </s>
+<s> Here is what happened: # ../configure creating cache ./config.cache checking host system type... mips-dec-ultrix4.5 checking target system type... mips-dec-ultrix4.5 checking build system type... mips-dec-ultrix4.5 [skipping...] checking for strdup... no [skipping...] Amaya and Thot packages are now configured Amaya configured with Java support Now start "make all" (GNU make preferably) to build the binaries # make all make[1]: Entering directory `/usr/local/Thot/objects/tools/mkdep' gcc -o mkdep mkdep.o  </s>
+<s> collect2: ld returned 1 exit status /usr/lib/cmplrs/cc/ld: Undefined: strdup make[1]: *** [mkdep] Error 1 make[1]: Leaving directory `/usr/local/Thot/objects/tools/mkdep' make: *** [tools/mkdep/mkdep] Error 2 Peter Pudney  </s>
+<s> Ok, will be corrected in next release.  </s>
+<s> add the following to Thot/tools/mkdep/mkdep.c if not already done after the line : #define MAX_SUB_INCLUDE 30 #ifndef HAVE_STRDUP char *strdup(const char *s) char *str; if (s == NULL) return(NULL); str = malloc(strlen(s) + 1); if (str == NULL) return(NULL); strcpy(str, s); return(str); #endif Daniel Daniel Veillard@w3.org | W3C / INRIA Rhone-Alpes | Today's Bookmarks : Daniel.Veillard@inrialpes.fr| 655 av de l'Europe | Linux, WWW, Java, Tel : +33 (0)4 76 61 53 85 | 38330 Montbonnot | badminton, Kaffe, Home: +33 (0)4 76 63 05 86 | http://opera.inrialpes.fr/veillard  </s>
+<s> The strdup problem also occurs in javastub.c.  </s>
+<s> A similar fix corrects this problem.  </s>
+<s> I am now having problems with the standard gcc header files: make[1]: Entering directory `/usr/local/Thot/objects/tablelib' [skipping a few warnings...] In file included from /usr/local/lib/gcc-lib/mips-dec-ultrix4.5/2.7.2.2.f.2/include/X11/Intrinsic.h:74, from /usr/include/X11/IntrinsicP.h:58, from ../../thotlib/include/thot_gui.h:112, from ../../thotlib/include/interface.h:20, from ../../thotlib/include/app.h:19,  </s>
+<s> from ../../thotlib/internals/h/typestr.h:32, from ../../thotlib/internals/h/typeint.h:19, from ../../thotlib/internals/h/typemedia.h:19, from ../../tablelib/table.c:30:  </s>
+<s> /usr/local/lib/gcc-lib/mips-dec-ultrix4.5/2.7.2.2.f.2/include/string.h:82:  </s>
+<s> parse error before `(' /usr/local/lib/gcc-lib/mips-dec-ultrix4.5/2.7.2.2.f.2/include/string.h:82:  </s>
+<s> parse error before `void' make[1]: *** [table.o]  </s>
+<s> Error 1 The parse error occurs in the middle of string.h.  </s>
+<s> Any clues?  </s>
+<s> Peter  </s>

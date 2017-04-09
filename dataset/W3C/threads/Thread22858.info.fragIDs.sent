@@ -1,163 +1,163 @@
-As presently specified, DOM2 does not indicate how to obtain an instance of 
-DocumentTraversal. 
-It appears that this interface should be implemented by 
-whatever class also implements DOMImplementation, and that you should be able to cast that to DocumentTraversal if the implementation reports that it supports DocumentTraversal. 
-I think some clarification is needed, even if just to say that the way to get one is implementation dependant. 
-Keith 
-of 
-In DOMs which support the Traversal feature, the DocumentTraversal 
-interface will be implemented by Document objects. 
-This is shown in the 
-examples: NodeIterator iter=((DocumentTraversal)document).creatNodeIterator(node, 
-NodeFilter.SHOW_ELEMENT, myFilter); 
-... but you're right, it doesn't seem to be stated explicitly. 
-Oops! 
-I'll fix. 
-Joe Kesselman / IBM Research 
-Really?!! That's disgusting -- it forces the use of a cast. 
-OK, so it's no worse than anything em else /em in the DOM, which simply strong cannot be used safely /strong without run-time type checking. 
-That doesn't make it right. 
-I guess I'm just too much of a language purist for this business -- I've always been of the opinion that if you're forced to resort to a cast in order to do something, you've found a serious design flaw in the API. 
-A better alternative would be a getDocumentTraversal method on Document or, 
-better, DOMImplementation: it would of course return null if the Traversal 
-feature was unimplemented. 
-Stephen R. Savitzky steve@rsv.ricoh.com 
-http://rsv.ricoh.com/~steve/ 
-Platform for Information Applications: http://RiSource.org/PIA/ 
-Chief Software Scientist, Ricoh Silicon Valley, Inc. Calif. 
-Research Center home: steve@theStarport.org 
-URL: http://theStarport.org/people/steve/ 
-Same solution as in factories for the other optional Level 2 modules. 
-Hanging it off a factory method/getter elsewhere in the DOM would be no cheaper. 
-You only have to cast once per document, of course, if you cache the DocumentTraversal view. 
-or, 
-I believe we did look at that alternative. 
-I'm not sure I remember exactly why it was rejected. 
-Joe Kesselman / IBM Research 
-You might want to re-think this. 
-AT present, both Document and DOMImplementation serve as factories for various things. 
-You are saying that you would use Document to create TreeWalkers and NodeIterators, but as currently specified you use DOMImplementation to create DocumentType and Document objects, a bit inconsistent. 
-No, that's actually pretty consistant. 
-Most of the DOM's objects are required to be aware of which Document they 
-belong to. 
-As a result, they would need to be either created by the Document, or the Document would have to be passed into their factory. 
-We chose the former, which I think is a better idiom. 
-But that isn't true of Document itself -- a Document has its own context, and we didn't want to require that you have a Document before you could 
-create a Document. 
-Since a Document's context is mostly defined by the DOMImplementation, we put the factory there. 
-We could have put it on DocumentType, but DocumentType is optional. 
-Our current design assumes that the DocumentType may help direct the instantiation of the Document; therefore we have to be able to create it before the Document is created, and we put the factory on DOMImplementation. 
-However, DocumentType does get bound to a specific Document when the Document's factory is called, and some have said they want to be able to instantiate and bind the DocumentType after the Document; we'll look at this in more detail in Level 3. 
-I'm not sure if traversal should be an exception or not. 
-As noted above, we were guessing that DOMs might want to use their DocumentType to direct subclassing of the document tree, in order to add behaviors specific to that kind of document. 
-In Theory, that might also want to affect which implementation of the traversal engines you use -- a TreeWalker or NodeIterator which is aware of the structure of a valid document may be able to optimize some kinds of navigation. 
-("This portion of the grammar will never contain a Text node, so don't bother looking for one", or "This kind of document uses a different back-end storage model, which has helper functions for the next-matching-node lookup"). 
-If we move the factory up to DOMImplementation, it's a bit harder to take advantage of those opportunities -- I suspect that you'd wind up having to pass the Document or DocumentType into the factory as a parameter, which is roughly equivalent to moving the factory back down to those objects. 
-The other issue is that because Node.getOwnerDocument() is specified to return null, not "this", in the case of a DOCUMENT_NODE, you cannot use the following code: node.getOwnerDocument().createTreeWalker(), 
-DOM Level 1 behavior, debated at that time. 
-Given that there may be existing code which depends on it, I think it's a bit late for a change. 
-A simple conditional will handle this case, but I agree it isn't pretty. 
-Joe Kesselman / IBM Research 
-You might want to re-think this. 
-AT present, both Document and DOMImplementation serve as factories for various things. 
-You are saying that you would use Document to create TreeWalkers and NodeIterators, but as currently specified you use DOMImplementation to create DocumentType and Document objects, a bit inconsistent. 
-Except for DocumentType objects. 
-Something has to be a factory-for-the-factory, so having a special case 
-to bootsrap a Document doesn't seem odd to me. 
-And anyway, DocumentType as factory for Document would be wrong since the contained object can't create its container. 
-- Dave 
-Maybe another abstraction is in order. 
-How about introducing a 'DocumentSchema' interface that represents a specific class of documents. 
-The DocumentSchema interface could be implemented with either an external DTD or by a Schema. 
-The DocumentType interface would refer to the DocumentSchema. 
-So I'd ask the implementation to create a schema, ask a schema to create a document that complies with that schema, tell the document to create its document type, which references the schema that was used to create the document. 
-I think this would eliminate the chicken and egg problem. 
-First: The DocumentTraversal methods appears to be an extension of the Node 
-Interface, rather than an additional interface that may be supported by the 
-Document. 
-You should be able to create a TreeWalker or NodeIterator that 
-works with any conforming DOM 2 implementation using only the Node, flags and filter. 
-Since the TreeWalker or NodeIterator is rooted at a specific node, this would seem to imply that the factory method might be most appropriately placed on Node, so that the root of the walker or iterator thus created is simply the node that it was created from. 
-If the implementation needs the owner document to create the node from, then it can obtain that information from the node. 
-This puts the onus of getting the owner document on the implementation if necessary, instead of the application using the DOM API, where it shouldn't be necessary. 
-Secondly, the expandEntityReferences flag on the factory method should really just be another constant that can be passed into whatToShow: SHOW_ENTITY_REFERENCE_EXPANSION or SHOW_ENTITY_REFERENCE_CHILDREN. 
-This 
-change doesn't remove any functionality from the API, and it does eliminate a parameter from one of the methods. 
-Keith 
-Node 
-the 
-Interesting thought. 
-We designed these to live on the Document with the other factory methods, and to be passed their root node as an argument... but we _could_ have instead designed them so the factory was invoked on the root node itself, and had that association be implicit. 
-I agree that the latter is prettier architecturally. 
-But consider the recent comment "You mean I have to cast to get access to the DocumentTraversal methods? 
-Yuck!" -- If these live on the Document object, you may be able to cast once and hang onto the DocumentTraversal through repeated operations on that document. 
-If they live on individual Nodes you'd have to cast each root node, probably every time unless you're 
-repeatedly iterating over a single subtree. 
-Unless the factory continues to take the root node as a parameter... in which case I'm not sure the difference between this proposal and status quo 
-is large enough to make much difference. 
-I don't have a hugely strong opinion on this either way. 
-It could be another bit in that mask, true. 
-I'm not sure this is a net gain, though; it's conflating two seperate operations. 
-Given that the factory call is a relatively rare operation compared to actually using the traversal objects, I'm not convinced that saving a parameter really gains us anything. 
-Especially as bits are a scarce resource; I don't expect us to 
-need more than 31 nodeTypes, and there's the workaround of moving the nodeType test into a filter, but I'd rather not establish a precedent of nibbling from both ends toward the middle. 
-And thinking about how I'd implement it, the first thing I'd be inclined to 
-do inside the factory would be to break SHOW_ENTITY_REFERENCE_EXPANSION out 
-into a separate boolean so it could be tested conveniently, and clear that bit in the mask so I didn't have to special-case it when deciding how to handle the rest. 
-So saving a parameter might increase computation. 
-I think this winds up being a matter of style as much as anything else. 
-My instincts say to leave it as is. 
-Your milage may vary. 
-Joe Kesselman / IBM Research 
-What sort of schema? 
-RELAX, RDF, SOX1, SOX2, MS-Schema, W3C-Schema, ... ? 
-In any case, support for all of those would be a post-L2 issue, since many of them aren't even stable yet. 
-Nope, see my original posting on the chicken/egg problem and you'll see why anything short of having the Document be the factory for its DocumentType is not practical: There's a direct translation to schemas, too -- except that it's likely worse. 
-Anyone reading a document isn't going to know the schema to use until it's partly parsed, just like they're not going to know the DocumentType to use until "late" either. 
-With DTDs you only need to read through the root element start tag. 
-With schemas, depending on how they're associated with the document, you may need to read much more deeply into the document text before you can start to create the DOM Document object. 
-For example, if a schema were wholly embedded in the document, you'd have major trouble. 
-- Dave 
-Schemas/DTDs are a pending issue, to be addressed in DOM Level 3. And yes, we do expect to reconsider the chicken-and-egg problem at that time. 
-The relationship between these content models and the DocType is still to be determined. 
-Joe Kesselman / IBM Research 
-As you said, your mileage may vary. 
-Mine still does, so perhaps I can make more convincing arguments: 
-From: www-dom-request@w3.org 
-[mailto:www-dom-request@w3.org]On 
-Behalf Of keshlam@us.ibm.com 
-Sent: Monday, March 06, 2000 1:08 PM Subject: Re: DocumentTraversal 
-time 
-proposal 
-One way to avoid this would be to just put the two factory operations on Node, removing the factory altogether. 
-Then take the approach that a Node 
-supporting (c.f. "supports()") the traversal API would return a non-null TreeWalker/Iterator from the createTreeWalker/createIterator methods, whereas one that doesn't support it simply returns null. 
-This eliminates the need for the cast (and the separate Factory) completely. 
-OK, so now you have to check the result everytime you call createTreeWalker ..., perhaps not as nice as a factory which always returns a TreeWalker or Iterator. 
-Yup, it breaks existing implementations, but you've already required existing implementations to modify node anyway. 
-Those that don't care to support the new methods can add a few lines of code and they are done. 
-Finally, I would hope that the largest users of the API would be developers, not implementors. 
-That would mean to me that making it easier for developers should take priority. 
-Making it easier to access these from Node does make it easier for developers. 
-NOTE: I cannot make the same argument for Range, as that really should be available from Document. 
-Although if you do decide to put the factory methods in Document, you should take the same approach with the RangeFactory methods in a Document. 
-to 
-to 
-out 
-The spec says that "whatToShow" specifies which node types may appear in the logical view of the tree presented by the iterator. 
-As far as I'm concerned, that is the operation being referenced, so I don't consider the two operations to be 'conflated'. 
-Sure, you've made it easy to implement it as: if ((whatToShow &amp; ( 1   node.getNodeType()) 
-!= 0) show(node); if (expandEntityReferences &amp;&amp; node.getNodeType() == Node.ENTITY_REFERENCE) showChildren(node); But that's syntactic sugar unless you make the above implementation part of the specification. 
-[i.e., indicate that the flags will always be specified that way]. 
-BTW: The easy implementation shown above wouldn't pass muster in our organization. 
-It's a cute trick, but it isn't obvious what the code does, and it relies on some details that could change in a subsequent release. 
-Furthermore, if you want the same "simplicity" you can handle it just as easily using a static array, which is independant of where you put the actual flag values. 
-if ((whatToShow &amp; showMasks[node.getNodeType()]) 
-!= 0) show(node); if ((whatToShow &amp;&amp; expandMasks[node.getNodeType()]) 
-!= 0) showChildren(node); The second implementation seems preferable, especially when you consider that TreeWalker and NodeIterator may be used to walk/iterate over DocumentTypes in DOM3, in which case you might have more flags like expandEntityReference. 
-If you are going to stick with the two separate arguments, could you at least make the second one another mask, and define a constant for entity references. 
-That way it is extensible enough so that if DOM3 wants to, it can expand into the field. 
-Keith 
-I don't think that everybody would like to see the methods to get a range or a css (or whatever module you choose) object on the Node interface, right ? 
-So adding the factory operations of the Traversal on the Node interface is not a good idea. 
-Philippe. 
+<s> As presently specified, DOM2 does not indicate how to obtain an instance of  </s>
+<s> DocumentTraversal.  </s>
+<s> It appears that this interface should be implemented by  </s>
+<s> whatever class also implements DOMImplementation, and that you should be able to cast that to DocumentTraversal if the implementation reports that it supports DocumentTraversal.  </s>
+<s> I think some clarification is needed, even if just to say that the way to get one is implementation dependant.  </s>
+<s> Keith  </s>
+<s> of  </s>
+<s> In DOMs which support the Traversal feature, the DocumentTraversal  </s>
+<s> interface will be implemented by Document objects.  </s>
+<s> This is shown in the  </s>
+<s> examples: NodeIterator iter=((DocumentTraversal)document).creatNodeIterator(node,  </s>
+<s> NodeFilter.SHOW_ELEMENT, myFilter);  </s>
+<s> ... but you're right, it doesn't seem to be stated explicitly.  </s>
+<s> Oops!  </s>
+<s> I'll fix.  </s>
+<s> Joe Kesselman / IBM Research  </s>
+<s> Really?!! That's disgusting -- it forces the use of a cast.  </s>
+<s> OK, so it's no worse than anything em else /em in the DOM, which simply strong cannot be used safely /strong without run-time type checking.  </s>
+<s> That doesn't make it right.  </s>
+<s> I guess I'm just too much of a language purist for this business -- I've always been of the opinion that if you're forced to resort to a cast in order to do something, you've found a serious design flaw in the API.  </s>
+<s> A better alternative would be a getDocumentTraversal method on Document or,  </s>
+<s> better, DOMImplementation: it would of course return null if the Traversal  </s>
+<s> feature was unimplemented.  </s>
+<s> Stephen R. Savitzky steve@rsv.ricoh.com  </s>
+<s> http://rsv.ricoh.com/~steve/  </s>
+<s> Platform for Information Applications: http://RiSource.org/PIA/  </s>
+<s> Chief Software Scientist, Ricoh Silicon Valley, Inc. Calif.  </s>
+<s> Research Center home: steve@theStarport.org  </s>
+<s> URL: http://theStarport.org/people/steve/  </s>
+<s> Same solution as in factories for the other optional Level 2 modules.  </s>
+<s> Hanging it off a factory method/getter elsewhere in the DOM would be no cheaper.  </s>
+<s> You only have to cast once per document, of course, if you cache the DocumentTraversal view.  </s>
+<s> or,  </s>
+<s> I believe we did look at that alternative.  </s>
+<s> I'm not sure I remember exactly why it was rejected.  </s>
+<s> Joe Kesselman / IBM Research  </s>
+<s> You might want to re-think this.  </s>
+<s> AT present, both Document and DOMImplementation serve as factories for various things.  </s>
+<s> You are saying that you would use Document to create TreeWalkers and NodeIterators, but as currently specified you use DOMImplementation to create DocumentType and Document objects, a bit inconsistent.  </s>
+<s> No, that's actually pretty consistant.  </s>
+<s> Most of the DOM's objects are required to be aware of which Document they  </s>
+<s> belong to.  </s>
+<s> As a result, they would need to be either created by the Document, or the Document would have to be passed into their factory.  </s>
+<s> We chose the former, which I think is a better idiom.  </s>
+<s> But that isn't true of Document itself -- a Document has its own context, and we didn't want to require that you have a Document before you could  </s>
+<s> create a Document.  </s>
+<s> Since a Document's context is mostly defined by the DOMImplementation, we put the factory there.  </s>
+<s> We could have put it on DocumentType, but DocumentType is optional.  </s>
+<s> Our current design assumes that the DocumentType may help direct the instantiation of the Document; therefore we have to be able to create it before the Document is created, and we put the factory on DOMImplementation.  </s>
+<s> However, DocumentType does get bound to a specific Document when the Document's factory is called, and some have said they want to be able to instantiate and bind the DocumentType after the Document; we'll look at this in more detail in Level 3.  </s>
+<s> I'm not sure if traversal should be an exception or not.  </s>
+<s> As noted above, we were guessing that DOMs might want to use their DocumentType to direct subclassing of the document tree, in order to add behaviors specific to that kind of document.  </s>
+<s> In Theory, that might also want to affect which implementation of the traversal engines you use -- a TreeWalker or NodeIterator which is aware of the structure of a valid document may be able to optimize some kinds of navigation.  </s>
+<s> ("This portion of the grammar will never contain a Text node, so don't bother looking for one", or "This kind of document uses a different back-end storage model, which has helper functions for the next-matching-node lookup").  </s>
+<s> If we move the factory up to DOMImplementation, it's a bit harder to take advantage of those opportunities -- I suspect that you'd wind up having to pass the Document or DocumentType into the factory as a parameter, which is roughly equivalent to moving the factory back down to those objects.  </s>
+<s> The other issue is that because Node.getOwnerDocument() is specified to return null, not "this", in the case of a DOCUMENT_NODE, you cannot use the following code: node.getOwnerDocument().createTreeWalker(),  </s>
+<s> DOM Level 1 behavior, debated at that time.  </s>
+<s> Given that there may be existing code which depends on it, I think it's a bit late for a change.  </s>
+<s> A simple conditional will handle this case, but I agree it isn't pretty.  </s>
+<s> Joe Kesselman / IBM Research  </s>
+<s> You might want to re-think this.  </s>
+<s> AT present, both Document and DOMImplementation serve as factories for various things.  </s>
+<s> You are saying that you would use Document to create TreeWalkers and NodeIterators, but as currently specified you use DOMImplementation to create DocumentType and Document objects, a bit inconsistent.  </s>
+<s> Except for DocumentType objects.  </s>
+<s> Something has to be a factory-for-the-factory, so having a special case  </s>
+<s> to bootsrap a Document doesn't seem odd to me.  </s>
+<s> And anyway, DocumentType as factory for Document would be wrong since the contained object can't create its container.  </s>
+<s> - Dave  </s>
+<s> Maybe another abstraction is in order.  </s>
+<s> How about introducing a 'DocumentSchema' interface that represents a specific class of documents.  </s>
+<s> The DocumentSchema interface could be implemented with either an external DTD or by a Schema.  </s>
+<s> The DocumentType interface would refer to the DocumentSchema.  </s>
+<s> So I'd ask the implementation to create a schema, ask a schema to create a document that complies with that schema, tell the document to create its document type, which references the schema that was used to create the document.  </s>
+<s> I think this would eliminate the chicken and egg problem.  </s>
+<s> First: The DocumentTraversal methods appears to be an extension of the Node  </s>
+<s> Interface, rather than an additional interface that may be supported by the  </s>
+<s> Document.  </s>
+<s> You should be able to create a TreeWalker or NodeIterator that  </s>
+<s> works with any conforming DOM 2 implementation using only the Node, flags and filter.  </s>
+<s> Since the TreeWalker or NodeIterator is rooted at a specific node, this would seem to imply that the factory method might be most appropriately placed on Node, so that the root of the walker or iterator thus created is simply the node that it was created from.  </s>
+<s> If the implementation needs the owner document to create the node from, then it can obtain that information from the node.  </s>
+<s> This puts the onus of getting the owner document on the implementation if necessary, instead of the application using the DOM API, where it shouldn't be necessary.  </s>
+<s> Secondly, the expandEntityReferences flag on the factory method should really just be another constant that can be passed into whatToShow: SHOW_ENTITY_REFERENCE_EXPANSION or SHOW_ENTITY_REFERENCE_CHILDREN.  </s>
+<s> This  </s>
+<s> change doesn't remove any functionality from the API, and it does eliminate a parameter from one of the methods.  </s>
+<s> Keith  </s>
+<s> Node  </s>
+<s> the  </s>
+<s> Interesting thought.  </s>
+<s> We designed these to live on the Document with the other factory methods, and to be passed their root node as an argument... but we _could_ have instead designed them so the factory was invoked on the root node itself, and had that association be implicit.  </s>
+<s> I agree that the latter is prettier architecturally.  </s>
+<s> But consider the recent comment "You mean I have to cast to get access to the DocumentTraversal methods?  </s>
+<s> Yuck!" -- If these live on the Document object, you may be able to cast once and hang onto the DocumentTraversal through repeated operations on that document.  </s>
+<s> If they live on individual Nodes you'd have to cast each root node, probably every time unless you're  </s>
+<s> repeatedly iterating over a single subtree.  </s>
+<s> Unless the factory continues to take the root node as a parameter... in which case I'm not sure the difference between this proposal and status quo  </s>
+<s> is large enough to make much difference.  </s>
+<s> I don't have a hugely strong opinion on this either way.  </s>
+<s> It could be another bit in that mask, true.  </s>
+<s> I'm not sure this is a net gain, though; it's conflating two seperate operations.  </s>
+<s> Given that the factory call is a relatively rare operation compared to actually using the traversal objects, I'm not convinced that saving a parameter really gains us anything.  </s>
+<s> Especially as bits are a scarce resource; I don't expect us to  </s>
+<s> need more than 31 nodeTypes, and there's the workaround of moving the nodeType test into a filter, but I'd rather not establish a precedent of nibbling from both ends toward the middle.  </s>
+<s> And thinking about how I'd implement it, the first thing I'd be inclined to  </s>
+<s> do inside the factory would be to break SHOW_ENTITY_REFERENCE_EXPANSION out  </s>
+<s> into a separate boolean so it could be tested conveniently, and clear that bit in the mask so I didn't have to special-case it when deciding how to handle the rest.  </s>
+<s> So saving a parameter might increase computation.  </s>
+<s> I think this winds up being a matter of style as much as anything else.  </s>
+<s> My instincts say to leave it as is.  </s>
+<s> Your milage may vary.  </s>
+<s> Joe Kesselman / IBM Research  </s>
+<s> What sort of schema?  </s>
+<s> RELAX, RDF, SOX1, SOX2, MS-Schema, W3C-Schema, ... ?  </s>
+<s> In any case, support for all of those would be a post-L2 issue, since many of them aren't even stable yet.  </s>
+<s> Nope, see my original posting on the chicken/egg problem and you'll see why anything short of having the Document be the factory for its DocumentType is not practical: There's a direct translation to schemas, too -- except that it's likely worse.  </s>
+<s> Anyone reading a document isn't going to know the schema to use until it's partly parsed, just like they're not going to know the DocumentType to use until "late" either.  </s>
+<s> With DTDs you only need to read through the root element start tag.  </s>
+<s> With schemas, depending on how they're associated with the document, you may need to read much more deeply into the document text before you can start to create the DOM Document object.  </s>
+<s> For example, if a schema were wholly embedded in the document, you'd have major trouble.  </s>
+<s> - Dave  </s>
+<s> Schemas/DTDs are a pending issue, to be addressed in DOM Level 3. And yes, we do expect to reconsider the chicken-and-egg problem at that time.  </s>
+<s> The relationship between these content models and the DocType is still to be determined.  </s>
+<s> Joe Kesselman / IBM Research  </s>
+<s> As you said, your mileage may vary.  </s>
+<s> Mine still does, so perhaps I can make more convincing arguments:  </s>
+<s> From: www-dom-request@w3.org  </s>
+<s> [mailto:www-dom-request@w3.org]On  </s>
+<s> Behalf Of keshlam@us.ibm.com  </s>
+<s> Sent: Monday, March 06, 2000 1:08 PM Subject: Re: DocumentTraversal  </s>
+<s> time  </s>
+<s> proposal  </s>
+<s> One way to avoid this would be to just put the two factory operations on Node, removing the factory altogether.  </s>
+<s> Then take the approach that a Node  </s>
+<s> supporting (c.f. "supports()") the traversal API would return a non-null TreeWalker/Iterator from the createTreeWalker/createIterator methods, whereas one that doesn't support it simply returns null.  </s>
+<s> This eliminates the need for the cast (and the separate Factory) completely.  </s>
+<s> OK, so now you have to check the result everytime you call createTreeWalker ..., perhaps not as nice as a factory which always returns a TreeWalker or Iterator.  </s>
+<s> Yup, it breaks existing implementations, but you've already required existing implementations to modify node anyway.  </s>
+<s> Those that don't care to support the new methods can add a few lines of code and they are done.  </s>
+<s> Finally, I would hope that the largest users of the API would be developers, not implementors.  </s>
+<s> That would mean to me that making it easier for developers should take priority.  </s>
+<s> Making it easier to access these from Node does make it easier for developers.  </s>
+<s> NOTE: I cannot make the same argument for Range, as that really should be available from Document.  </s>
+<s> Although if you do decide to put the factory methods in Document, you should take the same approach with the RangeFactory methods in a Document.  </s>
+<s> to  </s>
+<s> to  </s>
+<s> out  </s>
+<s> The spec says that "whatToShow" specifies which node types may appear in the logical view of the tree presented by the iterator.  </s>
+<s> As far as I'm concerned, that is the operation being referenced, so I don't consider the two operations to be 'conflated'.  </s>
+<s> Sure, you've made it easy to implement it as: if ((whatToShow &amp; ( 1   node.getNodeType())  </s>
+<s> != 0) show(node); if (expandEntityReferences &amp;&amp; node.getNodeType() == Node.ENTITY_REFERENCE) showChildren(node); But that's syntactic sugar unless you make the above implementation part of the specification.  </s>
+<s> [i.e., indicate that the flags will always be specified that way].  </s>
+<s> BTW: The easy implementation shown above wouldn't pass muster in our organization.  </s>
+<s> It's a cute trick, but it isn't obvious what the code does, and it relies on some details that could change in a subsequent release.  </s>
+<s> Furthermore, if you want the same "simplicity" you can handle it just as easily using a static array, which is independant of where you put the actual flag values.  </s>
+<s> if ((whatToShow &amp; showMasks[node.getNodeType()])  </s>
+<s> != 0) show(node); if ((whatToShow &amp;&amp; expandMasks[node.getNodeType()])  </s>
+<s> != 0) showChildren(node); The second implementation seems preferable, especially when you consider that TreeWalker and NodeIterator may be used to walk/iterate over DocumentTypes in DOM3, in which case you might have more flags like expandEntityReference.  </s>
+<s> If you are going to stick with the two separate arguments, could you at least make the second one another mask, and define a constant for entity references.  </s>
+<s> That way it is extensible enough so that if DOM3 wants to, it can expand into the field.  </s>
+<s> Keith  </s>
+<s> I don't think that everybody would like to see the methods to get a range or a css (or whatever module you choose) object on the Node interface, right ?  </s>
+<s> So adding the factory operations of the Traversal on the Node interface is not a good idea.  </s>
+<s> Philippe.  </s>

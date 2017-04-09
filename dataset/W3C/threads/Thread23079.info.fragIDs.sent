@@ -1,27 +1,27 @@
-I've noticed an issue regarding DOM Events, Levels 2 and 3, which is not clear in the specifications. 
-For event capturing and bubbling, if the actual target (or an ancestor node of the actual target) is removed or replaced, the specs do not state the correct behavior of the Event object. 
-I'd like a clarification on whether the Event object should continue to propagate, should bubble later, should throw a strict warning or DOM exception, etc. 
-I have a bug filed at mozilla.org's Bugzilla (http://bugzilla.mozilla.org/show_bug.cgi?id=191242 ) to resolve the issue in Mozilla. 
-The bug has two testcases you can reach via link -- one in XUL (you will need a Gecko-based browser such as Mozilla or K-Meleon to see it), and one in XHTML. 
-Both testcases use ECMAScript to access the DOM. 
-Very respectfully, Alexander J. Vincent author, JavaScript Developer's Dictionary (Sams Publishing) moderator, XML forum @ codingforums.com 
-Vallejo, CA Tired of spam? 
-Get advanced junk mail protection with MSN 8. 
-On Fri, 31 Jan 2003 08:40:21 -0800 
-I'm a little rusty on Events at the moment and I did not work on any of the drafts/recommendations but does this: REC-DOM-Level-2-Events-20001113: 2.2. 
-Event Capture "The chain of EventTargets from the top of the tree to the event's target is determined before the initial dispatch of the event. 
-If modifications occur to the tree during event processing, event flow will proceed based on the initial state of the tree." have any influence on your conclusion? 
-My DOM implementation (written in C) builds an array of targets beforehand and dispatches on each: i = tcount; /* save state of tree in targets array */ for (t = target- parentNode; t; t = t- parentNode) { targets[--i] = t; /* Trigger capturers evt- eventPhase = DOM_EVENT_CAPTURING_PHASE; for (i = 0; i  tcount &amp;&amp; evt- _sp == 0; i++) { trigger(targets[i], evt, 1); /* Trigger regular listeners evt- eventPhase = DOM_EVENT_AT_TARGET; trigger(target, evt, 0); /* Trigger bubblers evt- eventPhase = DOM_EVENT_BUBBLING_PHASE; i = tcount; while (i-- &amp;&amp; evt- bubbles &amp;&amp; evt- _sp == 0) { trigger(targets[i], evt, 0); So I believe the correct behavior would be for Events to be dispatched on the old nodes (that were replaced). 
-The new replacing nodes should not receive any Events. 
-So events are dispatched on a "snapshot" of the tree. 
-Although, I'm not sure what happens if you register a handler in a handler say during the capturing phase on a target that would be traversed during the bubbling phase. 
-As it is I think my implementation would trigger such a listener. 
-Mmm. 
-Mike A program should be written to model the concepts of the task it performs rather than the physical world or a process because this maximizes the potential for it to be applied to tasks that are conceptually similar and, more important, to tasks that have not yet been conceived. 
-It is defined in the Events specification, even if it is in the capture phase description but still applies for the entire event propagation: The chain of EventTargets from the top of the tree to the event's target is determined before the initial dispatch of the event. 
-If modifications occur to the tree during event processing, event flow will proceed based on the initial state of the tree. 
-Philippe 
-If a "bubbling" event listener is registered during the capture phase of the event propagation, it will be triggered. 
-If a "capturing" event listener is registered during the capture phase of the event propagation, it will not be triggered. 
-If an EventListener is added to an EventTarget while it is processing an event, it will not be triggered by the current actions but may be triggered during a later stage of event flow, such as the bubbling phase. 
-Philippe 
+<s> I've noticed an issue regarding DOM Events, Levels 2 and 3, which is not clear in the specifications.  </s>
+<s> For event capturing and bubbling, if the actual target (or an ancestor node of the actual target) is removed or replaced, the specs do not state the correct behavior of the Event object.  </s>
+<s> I'd like a clarification on whether the Event object should continue to propagate, should bubble later, should throw a strict warning or DOM exception, etc.  </s>
+<s> I have a bug filed at mozilla.org's Bugzilla (http://bugzilla.mozilla.org/show_bug.cgi?id=191242 ) to resolve the issue in Mozilla.  </s>
+<s> The bug has two testcases you can reach via link -- one in XUL (you will need a Gecko-based browser such as Mozilla or K-Meleon to see it), and one in XHTML.  </s>
+<s> Both testcases use ECMAScript to access the DOM.  </s>
+<s> Very respectfully, Alexander J. Vincent author, JavaScript Developer's Dictionary (Sams Publishing) moderator, XML forum @ codingforums.com  </s>
+<s> Vallejo, CA Tired of spam?  </s>
+<s> Get advanced junk mail protection with MSN 8.  </s>
+<s> On Fri, 31 Jan 2003 08:40:21 -0800  </s>
+<s> I'm a little rusty on Events at the moment and I did not work on any of the drafts/recommendations but does this: REC-DOM-Level-2-Events-20001113: 2.2.  </s>
+<s> Event Capture "The chain of EventTargets from the top of the tree to the event's target is determined before the initial dispatch of the event.  </s>
+<s> If modifications occur to the tree during event processing, event flow will proceed based on the initial state of the tree." have any influence on your conclusion?  </s>
+<s> My DOM implementation (written in C) builds an array of targets beforehand and dispatches on each: i = tcount; /* save state of tree in targets array */ for (t = target- parentNode; t; t = t- parentNode) { targets[--i] = t; /* Trigger capturers evt- eventPhase = DOM_EVENT_CAPTURING_PHASE; for (i = 0; i  tcount &amp;&amp; evt- _sp == 0; i++) { trigger(targets[i], evt, 1); /* Trigger regular listeners evt- eventPhase = DOM_EVENT_AT_TARGET; trigger(target, evt, 0); /* Trigger bubblers evt- eventPhase = DOM_EVENT_BUBBLING_PHASE; i = tcount; while (i-- &amp;&amp; evt- bubbles &amp;&amp; evt- _sp == 0) { trigger(targets[i], evt, 0); So I believe the correct behavior would be for Events to be dispatched on the old nodes (that were replaced).  </s>
+<s> The new replacing nodes should not receive any Events.  </s>
+<s> So events are dispatched on a "snapshot" of the tree.  </s>
+<s> Although, I'm not sure what happens if you register a handler in a handler say during the capturing phase on a target that would be traversed during the bubbling phase.  </s>
+<s> As it is I think my implementation would trigger such a listener.  </s>
+<s> Mmm.  </s>
+<s> Mike A program should be written to model the concepts of the task it performs rather than the physical world or a process because this maximizes the potential for it to be applied to tasks that are conceptually similar and, more important, to tasks that have not yet been conceived.  </s>
+<s> It is defined in the Events specification, even if it is in the capture phase description but still applies for the entire event propagation: The chain of EventTargets from the top of the tree to the event's target is determined before the initial dispatch of the event.  </s>
+<s> If modifications occur to the tree during event processing, event flow will proceed based on the initial state of the tree.  </s>
+<s> Philippe  </s>
+<s> If a "bubbling" event listener is registered during the capture phase of the event propagation, it will be triggered.  </s>
+<s> If a "capturing" event listener is registered during the capture phase of the event propagation, it will not be triggered.  </s>
+<s> If an EventListener is added to an EventTarget while it is processing an event, it will not be triggered by the current actions but may be triggered during a later stage of event flow, such as the bubbling phase.  </s>
+<s> Philippe  </s>

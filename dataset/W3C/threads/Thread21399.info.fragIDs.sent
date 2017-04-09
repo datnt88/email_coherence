@@ -1,115 +1,115 @@
-Hi all, 
-in the protocol document [1] all the examples for context use a literal as 
-its value. 
-The schema doesn't specify any domain or range. 
-In my annotools I used an rdf:resource as the object, on the basis that it was going to be an Xpointer or a URI. 
-The ZAnnot server is returning this as 
-if it were a literal. 
-Is there a reason why the object should be one or the other? 
-Does the specification remain purposely silent on the question, or are the examples reflective of the assumed use. 
-And what do implementations expect? 
-A related question is how this applies to the Annotates property - what happens if I use an rdf:Bag for the things that a particular annotation annotates? 
-cheers Chaals Post: 21 Mitchell street, FOOTSCRAY Vic 3011, Australia or W3C, 2004 Route des Lucioles, 06902 Sophia Antipolis Cedex, France 
-"Charles McCathieNevile" charles@w3.org wrote in message news:Pine.LNX.4.30.0301262115510.8589-100000@tux.w3.org... 
-as 
-This changed between the old and new protocol, it's the one area of concern I have with the new protocol, context seems problematical, I still want to be able to annotate svg/raster images via my RDF img parts (like hte RDF 
-generated in http://jibbering.com/svg/annotateimage.html - example: a lot more complicated object than is really expressable in a literal. 
-I've been trying to think of an alternative suggestion, but not come up with one. 
-I don't distinguish between literal/resource, if they smell the same they're used the same. 
-Jim. 
-The value of the context is a literal, not a resource. 
-It looks like a URI, but it could have any other value. 
-I think that the previous draft of the protocol had an error and was 
-showing the value of the context as a resource. 
-I've some net problems so I can't verify the Annotea RDF schema to see how we declared the context there or if there's an ambiguity. 
-In all cases, it is a literal. 
-The ZAnnot server is correct. 
--jose 
-Doh! I should pay more attention to the list. 
-For some reason I had gotten the impression that it was supposed to be a resource, so I changed it for 0.4rc1. 
-I'll change it back, though, if it's really supposed to be a literal. 
-For my future reference, how do you determine whether something is a resource or a literal from the schema? 
-and 'annotates' (a resource), as: 
-rdfs:comment The context within the resource named in 'annotates' to which the Annotation most directly applies. 
-/rdfs:comment rdfs:isDefinedBy rdf:resource="http://www.w3.org/2000/10/annotation-ns#"/ rdfs:comment Relates an Annotation to the resource to which the Annotation applies. 
-The inverse relation is 'hasAnnotation' /rdfs:comment rdfs:isDefinedBy rdf:resource="http://www.w3.org/2000/10/annotation-ns#"/ 
-To me these look pretty much the same. 
-Am I missing something? 
---Brent 
------BEGIN PGP SIGNED MESSAGE----- Hash: SHA1 Mercoled?, 5 Mar 2003, alle 21:01 Europe/Paris, Brent Hendricks ha 
-scritto: 
-The one with " rdfs:range rdf:resource="#Literal"/ " is a literal ;-) 
-I'm wondering, why does zAnnot care about, isn't it a good idea for a server to return what it gets. 
-Does zAnnot allow the author attribute to be both a Resource (VCARD or so) as well as a Literal, or does zAnnot insist on getting what it expects? 
-reto PS: is there a public zAnnot server against which I can test my client? 
------BEGIN PGP SIGNATURE----- Version: GnuPG v1.0.7 (Darwin) iD8DBQE+ZwSoD1pReGFYfq4RAu0NAKCaWLEoa8eG+aMtBfA/CrvNZLRadACfa3Vd aO2bmq/aOSOEVWJoFpf3o5g= =yD0h -----END PGP SIGNATURE----- 
-[snip] 
-So that would be none of them. 
-I'm now thoroughly confused. 
-:) 
-ZAnnot attempts to follow the Annotea spec as written. 
-There, creator appears as a literal. 
-I can try to be a little more flexible in what I accept, but I'm concerned about interoperability. 
-If each client is 
-basically choosing what type of data to send for each field, how will they ever be compatible? 
---Brent 
-Sure. http://thehendricks.org:8080/annotations Username: guest Password: annotations It's running ZAnnot 0.4rc1 that I just released yesterday 
-summary: - "dc:creator" can be anything 
-- reconsidering the idea of context as a literal. 
-details: dc:creator 
-As far as I can tell the protocol makes no formal requirement on the content of dc:creator, and the Dublin Core doesn't either. 
-So for interoperability you should expect to get any kind of content, and return what you got. 
-This can be helpful. 
-For example I might want to claim that the creator of document is foaf:Person foaf:mbox mailto:charles@sidar.org . 
-i.e. the person who has the email address charles@sidar.org, expressed in a way that can be processed by RDF and matched less ambiguously than just a literal. 
-This is legal according to my reading of the schemas. 
-To return to context... 
-The protocol is written by several people, and I am not one of them. 
-Jose, who is, says that the context is meant to be a literal - this could be made explicit in the schema as Reto pointed out. 
-It seems to me that there are some possible arguments for not forcing context to be a literal, rather than simply correcting the schema to say explicitly what the protocol authors said on this list. 
-One of the use cases for annotations is EARL. 
-From my experience, it makes sense to be able to make EARL statements about a part of a document - which is like annotating a context. 
-EARL may use an xpath to identify a context, but this is not defined for HTML documents. 
-Instead, it might be useful to describe the context with a complex bit of RDF, for example identifying the context as "an xpath for a document available by submitting an HTML document to a web service at http://example.org/tidy-it". 
-(For that matter I might like to do this in general annotations). 
-cheers chaals [snip] 
-I could rework ZAnnot to do this, although not in time for the upcoming 0.4 release. 
-It may be legal, but I'm not convinced that it's a good idea. 
-If you create an annotation with some arbitrary RDF resource(s) as the value of dc:creator, there will be several Annotea clients that won't know what to do with it. 
-That sounds like a cool way to extend annotations, but again, it will incompatible with clients that implement a:context as a literal. 
-I don't mean to be a stick-in-the-mud, but to be *usefully* interoperable, standards need to be explicit. 
-If the Annotea protocol says "This property can be a resource or a literal, do what you want", 
-then we'll end up with a myriad of incompatible client implementations that can't read each others' annotations. 
-This defeats the point of having a standard to begin with. 
-I would much rather see an Annotea 
-spec/schema that explicitly lays out a basic set of well defined properties *and* their allowed values. 
-Anyone who implemented that would be able to claim "Annotea X.Y" compliance. 
-Anyone wishing to extend the protocol could add properties to the a:Annotation resource, and clients that don't understand the extensions could just safely ignore them, confident that they're still getting the core functionality. 
---Brent 
------BEGIN PGP SIGNED MESSAGE----- Hash: SHA1 Gioved?, 6 Mar 2003, alle 19:08 Europe/Paris, Brent Hendricks ha scritto: 
-I think it's the beauty of RDF to allow interoperability even with only partial understanding. 
-Of course the use of interaction is higher the bigger the common vocabulary, however flexibility is greater if this 
-vocabulary is made up from a set of schemas rather than one comprehensive schema. 
-Ideally the annotea schema should define nothing that can be expressed with another schema and should avoid references to other schema where the user could possibly choose between functional equivalent schemas. 
-The apparent disadvantage of this is that an annotea/foaf and an annotea/vcard client dont' understand the author attribute created by the other, but this transparent and partial incompatibility is still much better than if one would have to replace the annotea standart because she need to improve the possibility of describing the author (e.g. anonymous unambiguous identification). 
-Not to forget that keeping the annotea protocol small, clients can develop and exchange much more information that initially planned without the servers having to know anything about this development (think of how the web would have developed if http would have constrained the content to be hypertext). 
-Furthermore, by the use of inference engines I guess that it should be easy to write client that support various schemas, even if I write my client with only annotea/vcard in mind it should still be able to partially handle annotea/foaf because of concluded statements the inference engine added to the model. 
-cheers, reto -----BEGIN PGP SIGNATURE----- Version: GnuPG v1.0.7 (Darwin) iD8DBQE+aG2jD1pReGFYfq4RArB5AJ9/j4g82+QVrX8Irq86oyQ8zo1tqQCfRiLO Xrs57H/LFCTKuG24otnJD2o= =PRxi -----END PGP SIGNATURE----- 
-In theory this means they are not correctly implementing what is specified - in general there is no reason in RDF not to do this. 
-Of course, as you say, that doesn't automatically mean that people will implement it. 
-It would be 
-good to know which annotea clients can or can't handle this kind of thing (and servers for that matter). 
-I assumed in developing my little tools that this would be a possiblity, but 
-they don't do anything useful yet where it would be an issue. 
-I would prefer that it was specified that implementations should be able to cope with this approach, so people could say that their implementation was missing the capability but people could expect it in the future, or would realise that this is something to take into account in implementing. 
-Another possibility is to explicitly specify that the content is a Literal, but i think there are use cases which show that isn't going to be as helpful in the long run. 
-A third possibility is to have two vocabularies, where one is a subset that requires a Literal and the other allows for general RDF content - if this route is chosen I think that the choice of whether the existing schema should be one with explicit restrictions or should be the "full" one can depend on what works best for current implementors (but this is just my opinion - there may be other good reasons for going one way or the other that I haven't figured out yet). 
-I think that this is like your proposal for profiles... just my 2 cents worth chaals 
------BEGIN PGP SIGNED MESSAGE----- Hash: SHA1 Luned?, 10 Mar 2003, alle 16:51 Europe/Paris, Charles McCathieNevile ha scritto: 
-Not sure if I understand you right, if a resource is accepted as author, this mean that this resource can be of any type, even those that will be defined in future. 
-How could a client possibly implement the protocol correctly? 
-(Telling the user "you need a plugin to support visualisation of http://xmlns.com/foaf/0.1/" 
-?) 
-Maybe it would be a useful extension of the protocol if clients could tell the server which rdf-schemas they support (similarly ore as a enhancement to the "accept" header in http), a smart server would then accept and store foaf:Person resource as author and deliver a literal to a client that does not indicate to know about foaf. 
-What do you think? 
-cheers, reto -----BEGIN PGP SIGNATURE----- Version: GnuPG v1.0.7 (Darwin) iD8DBQE+biVSD1pReGFYfq4RAlSkAKCQzlL1IOt3MfNBMvvBo/IZew1gXQCgpOQ8 84gHGeZubNXuSBAPcqIpfsg= =x1NL -----END PGP SIGNATURE----- 
+<s> Hi all,  </s>
+<s> in the protocol document [1] all the examples for context use a literal as  </s>
+<s> its value.  </s>
+<s> The schema doesn't specify any domain or range.  </s>
+<s> In my annotools I used an rdf:resource as the object, on the basis that it was going to be an Xpointer or a URI.  </s>
+<s> The ZAnnot server is returning this as  </s>
+<s> if it were a literal.  </s>
+<s> Is there a reason why the object should be one or the other?  </s>
+<s> Does the specification remain purposely silent on the question, or are the examples reflective of the assumed use.  </s>
+<s> And what do implementations expect?  </s>
+<s> A related question is how this applies to the Annotates property - what happens if I use an rdf:Bag for the things that a particular annotation annotates?  </s>
+<s> cheers Chaals Post: 21 Mitchell street, FOOTSCRAY Vic 3011, Australia or W3C, 2004 Route des Lucioles, 06902 Sophia Antipolis Cedex, France  </s>
+<s> "Charles McCathieNevile" charles@w3.org wrote in message news:Pine.LNX.4.30.0301262115510.8589-100000@tux.w3.org...  </s>
+<s> as  </s>
+<s> This changed between the old and new protocol, it's the one area of concern I have with the new protocol, context seems problematical, I still want to be able to annotate svg/raster images via my RDF img parts (like hte RDF  </s>
+<s> generated in http://jibbering.com/svg/annotateimage.html - example: a lot more complicated object than is really expressable in a literal.  </s>
+<s> I've been trying to think of an alternative suggestion, but not come up with one.  </s>
+<s> I don't distinguish between literal/resource, if they smell the same they're used the same.  </s>
+<s> Jim.  </s>
+<s> The value of the context is a literal, not a resource.  </s>
+<s> It looks like a URI, but it could have any other value.  </s>
+<s> I think that the previous draft of the protocol had an error and was  </s>
+<s> showing the value of the context as a resource.  </s>
+<s> I've some net problems so I can't verify the Annotea RDF schema to see how we declared the context there or if there's an ambiguity.  </s>
+<s> In all cases, it is a literal.  </s>
+<s> The ZAnnot server is correct.  </s>
+<s> -jose  </s>
+<s> Doh! I should pay more attention to the list.  </s>
+<s> For some reason I had gotten the impression that it was supposed to be a resource, so I changed it for 0.4rc1.  </s>
+<s> I'll change it back, though, if it's really supposed to be a literal.  </s>
+<s> For my future reference, how do you determine whether something is a resource or a literal from the schema?  </s>
+<s> and 'annotates' (a resource), as:  </s>
+<s> rdfs:comment The context within the resource named in 'annotates' to which the Annotation most directly applies.  </s>
+<s> /rdfs:comment rdfs:isDefinedBy rdf:resource="http://www.w3.org/2000/10/annotation-ns#"/ rdfs:comment Relates an Annotation to the resource to which the Annotation applies.  </s>
+<s> The inverse relation is 'hasAnnotation' /rdfs:comment rdfs:isDefinedBy rdf:resource="http://www.w3.org/2000/10/annotation-ns#"/  </s>
+<s> To me these look pretty much the same.  </s>
+<s> Am I missing something?  </s>
+<s> --Brent  </s>
+<s> -----BEGIN PGP SIGNED MESSAGE----- Hash: SHA1 Mercoled?, 5 Mar 2003, alle 21:01 Europe/Paris, Brent Hendricks ha  </s>
+<s> scritto:  </s>
+<s> The one with " rdfs:range rdf:resource="#Literal"/ " is a literal ;-)  </s>
+<s> I'm wondering, why does zAnnot care about, isn't it a good idea for a server to return what it gets.  </s>
+<s> Does zAnnot allow the author attribute to be both a Resource (VCARD or so) as well as a Literal, or does zAnnot insist on getting what it expects?  </s>
+<s> reto PS: is there a public zAnnot server against which I can test my client?  </s>
+<s> -----BEGIN PGP SIGNATURE----- Version: GnuPG v1.0.7 (Darwin) iD8DBQE+ZwSoD1pReGFYfq4RAu0NAKCaWLEoa8eG+aMtBfA/CrvNZLRadACfa3Vd aO2bmq/aOSOEVWJoFpf3o5g= =yD0h -----END PGP SIGNATURE-----  </s>
+<s> [snip]  </s>
+<s> So that would be none of them.  </s>
+<s> I'm now thoroughly confused.  </s>
+<s> :)  </s>
+<s> ZAnnot attempts to follow the Annotea spec as written.  </s>
+<s> There, creator appears as a literal.  </s>
+<s> I can try to be a little more flexible in what I accept, but I'm concerned about interoperability.  </s>
+<s> If each client is  </s>
+<s> basically choosing what type of data to send for each field, how will they ever be compatible?  </s>
+<s> --Brent  </s>
+<s> Sure. http://thehendricks.org:8080/annotations Username: guest Password: annotations It's running ZAnnot 0.4rc1 that I just released yesterday  </s>
+<s> summary: - "dc:creator" can be anything  </s>
+<s> - reconsidering the idea of context as a literal.  </s>
+<s> details: dc:creator  </s>
+<s> As far as I can tell the protocol makes no formal requirement on the content of dc:creator, and the Dublin Core doesn't either.  </s>
+<s> So for interoperability you should expect to get any kind of content, and return what you got.  </s>
+<s> This can be helpful.  </s>
+<s> For example I might want to claim that the creator of document is foaf:Person foaf:mbox mailto:charles@sidar.org .  </s>
+<s> i.e. the person who has the email address charles@sidar.org, expressed in a way that can be processed by RDF and matched less ambiguously than just a literal.  </s>
+<s> This is legal according to my reading of the schemas.  </s>
+<s> To return to context...  </s>
+<s> The protocol is written by several people, and I am not one of them.  </s>
+<s> Jose, who is, says that the context is meant to be a literal - this could be made explicit in the schema as Reto pointed out.  </s>
+<s> It seems to me that there are some possible arguments for not forcing context to be a literal, rather than simply correcting the schema to say explicitly what the protocol authors said on this list.  </s>
+<s> One of the use cases for annotations is EARL.  </s>
+<s> From my experience, it makes sense to be able to make EARL statements about a part of a document - which is like annotating a context.  </s>
+<s> EARL may use an xpath to identify a context, but this is not defined for HTML documents.  </s>
+<s> Instead, it might be useful to describe the context with a complex bit of RDF, for example identifying the context as "an xpath for a document available by submitting an HTML document to a web service at http://example.org/tidy-it".  </s>
+<s> (For that matter I might like to do this in general annotations).  </s>
+<s> cheers chaals [snip]  </s>
+<s> I could rework ZAnnot to do this, although not in time for the upcoming 0.4 release.  </s>
+<s> It may be legal, but I'm not convinced that it's a good idea.  </s>
+<s> If you create an annotation with some arbitrary RDF resource(s) as the value of dc:creator, there will be several Annotea clients that won't know what to do with it.  </s>
+<s> That sounds like a cool way to extend annotations, but again, it will incompatible with clients that implement a:context as a literal.  </s>
+<s> I don't mean to be a stick-in-the-mud, but to be *usefully* interoperable, standards need to be explicit.  </s>
+<s> If the Annotea protocol says "This property can be a resource or a literal, do what you want",  </s>
+<s> then we'll end up with a myriad of incompatible client implementations that can't read each others' annotations.  </s>
+<s> This defeats the point of having a standard to begin with.  </s>
+<s> I would much rather see an Annotea  </s>
+<s> spec/schema that explicitly lays out a basic set of well defined properties *and* their allowed values.  </s>
+<s> Anyone who implemented that would be able to claim "Annotea X.Y" compliance.  </s>
+<s> Anyone wishing to extend the protocol could add properties to the a:Annotation resource, and clients that don't understand the extensions could just safely ignore them, confident that they're still getting the core functionality.  </s>
+<s> --Brent  </s>
+<s> -----BEGIN PGP SIGNED MESSAGE----- Hash: SHA1 Gioved?, 6 Mar 2003, alle 19:08 Europe/Paris, Brent Hendricks ha scritto:  </s>
+<s> I think it's the beauty of RDF to allow interoperability even with only partial understanding.  </s>
+<s> Of course the use of interaction is higher the bigger the common vocabulary, however flexibility is greater if this  </s>
+<s> vocabulary is made up from a set of schemas rather than one comprehensive schema.  </s>
+<s> Ideally the annotea schema should define nothing that can be expressed with another schema and should avoid references to other schema where the user could possibly choose between functional equivalent schemas.  </s>
+<s> The apparent disadvantage of this is that an annotea/foaf and an annotea/vcard client dont' understand the author attribute created by the other, but this transparent and partial incompatibility is still much better than if one would have to replace the annotea standart because she need to improve the possibility of describing the author (e.g. anonymous unambiguous identification).  </s>
+<s> Not to forget that keeping the annotea protocol small, clients can develop and exchange much more information that initially planned without the servers having to know anything about this development (think of how the web would have developed if http would have constrained the content to be hypertext).  </s>
+<s> Furthermore, by the use of inference engines I guess that it should be easy to write client that support various schemas, even if I write my client with only annotea/vcard in mind it should still be able to partially handle annotea/foaf because of concluded statements the inference engine added to the model.  </s>
+<s> cheers, reto -----BEGIN PGP SIGNATURE----- Version: GnuPG v1.0.7 (Darwin) iD8DBQE+aG2jD1pReGFYfq4RArB5AJ9/j4g82+QVrX8Irq86oyQ8zo1tqQCfRiLO Xrs57H/LFCTKuG24otnJD2o= =PRxi -----END PGP SIGNATURE-----  </s>
+<s> In theory this means they are not correctly implementing what is specified - in general there is no reason in RDF not to do this.  </s>
+<s> Of course, as you say, that doesn't automatically mean that people will implement it.  </s>
+<s> It would be  </s>
+<s> good to know which annotea clients can or can't handle this kind of thing (and servers for that matter).  </s>
+<s> I assumed in developing my little tools that this would be a possiblity, but  </s>
+<s> they don't do anything useful yet where it would be an issue.  </s>
+<s> I would prefer that it was specified that implementations should be able to cope with this approach, so people could say that their implementation was missing the capability but people could expect it in the future, or would realise that this is something to take into account in implementing.  </s>
+<s> Another possibility is to explicitly specify that the content is a Literal, but i think there are use cases which show that isn't going to be as helpful in the long run.  </s>
+<s> A third possibility is to have two vocabularies, where one is a subset that requires a Literal and the other allows for general RDF content - if this route is chosen I think that the choice of whether the existing schema should be one with explicit restrictions or should be the "full" one can depend on what works best for current implementors (but this is just my opinion - there may be other good reasons for going one way or the other that I haven't figured out yet).  </s>
+<s> I think that this is like your proposal for profiles... just my 2 cents worth chaals  </s>
+<s> -----BEGIN PGP SIGNED MESSAGE----- Hash: SHA1 Luned?, 10 Mar 2003, alle 16:51 Europe/Paris, Charles McCathieNevile ha scritto:  </s>
+<s> Not sure if I understand you right, if a resource is accepted as author, this mean that this resource can be of any type, even those that will be defined in future.  </s>
+<s> How could a client possibly implement the protocol correctly?  </s>
+<s> (Telling the user "you need a plugin to support visualisation of http://xmlns.com/foaf/0.1/"  </s>
+<s> ?)  </s>
+<s> Maybe it would be a useful extension of the protocol if clients could tell the server which rdf-schemas they support (similarly ore as a enhancement to the "accept" header in http), a smart server would then accept and store foaf:Person resource as author and deliver a literal to a client that does not indicate to know about foaf.  </s>
+<s> What do you think?  </s>
+<s> cheers, reto -----BEGIN PGP SIGNATURE----- Version: GnuPG v1.0.7 (Darwin) iD8DBQE+biVSD1pReGFYfq4RAlSkAKCQzlL1IOt3MfNBMvvBo/IZew1gXQCgpOQ8 84gHGeZubNXuSBAPcqIpfsg= =x1NL -----END PGP SIGNATURE-----  </s>

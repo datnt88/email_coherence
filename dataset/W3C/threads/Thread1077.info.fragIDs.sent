@@ -1,40 +1,40 @@
-B"H Can someone please send me a very simple example of using TidyLib with UTF8 strings. 
-I have the data in a wchar_t* and would like to return a wchar_t* thank you verry much 
-Hi Moshe, wchar_t is usually UTF16. 
-What platform are you on? 
-It helps to figure out if you should use Little or Big Endian unicode (UTF16LE and UTF16BE, respectively). 
-If you can manage to save your documents with a byte-order mark (two bytes at the beginning of the file that indicate the byte order), 
-you can specify plain UTF16. 
-For example, Intel (Windows and Linux) are LE. Sparc (Solaris) and PowerPC 
-(Mac, IBM AIX) are BE. Alpha (Linux) can be either, but is usually LE. take it easy, Charlie 
-Hi Moshe, Just to get it straight, are you using TidyLib directly or via the ATL wrapper? 
-It will make a difference. 
-If using TidyLib and the BSTR directly, I'd just use UTF16LE character encoding. 
-If the BSTR is not NULL terminated (my memory escapes me), just 
-attach a TidyBuffer to it and call tidyParseBuffer(). 
-int tidyParseBSTR( TidyDoc tdoc, BSTR content ) int rc = 0; TidyBuffer buf; tidyBufAttach( &amp;buf, content, ::SysStringByteLen(content) ); tidyOptSetCharEncoding( tdoc, _T("UTF16LE") ); return tidyParseBuffer( tdoc, &amp;buf ); hth, 
-Charlie 
-B"H Actualy I work with Meir Kogan, and I have the string as a BSTR Which as far as I understand is just wchar_t * with a length. 
-The vbscript page that I am getting it from is set to use codepage 65001 i.e. utf8. 
-So I am asuming its utf8 stored in an array of wchar_t however that works. 
-I was thinking of redfining the tidy string (whats it called 
-cbmtstr?) to use wchar_t and then rely on the config file to alter the internal ... or to just cast the bstr to byte* and put it in the buffer. 
-or maybe I'm way off. 
-thanks for all the help. 
-order), 
-PowerPC 
-Hi Moshe, I think I figured out the "right thing to do" with ParseString() and SaveString(). 
-Anyway, I updated TidyATL and put it up on my Tidy page. 
-Works on my system, but it did before as well. 
-Can you give it a try on yours? 
-For those just tuning in, Microsoft COM uses Unicode (UTF16LE) internally. 
-So, for the ParseString() and SaveString() methods, TidyATL now temporarily forces the encoding to UTF16LE. 
-It restores the original setting upon return for use w/ file operations. 
-This seems like a general issue when using memory-to-memory operations with the library. 
-One needs to be aware that the in-memory representation can be different than the on disk and set the Tidy encoding options appropriately. 
-Btw, the function is tidySetCharEncoding(), my mistake. 
-You can find most of the tidy functions in tidy.h. 
-The enum definitions are in tidyenum.h 
-and there are a handful of methods in buffio.h and fileio.h 
-relating to, buffer and file sources and sinks. 
-take it easy, Charlie 
+<s> B"H Can someone please send me a very simple example of using TidyLib with UTF8 strings.  </s>
+<s> I have the data in a wchar_t* and would like to return a wchar_t* thank you verry much  </s>
+<s> Hi Moshe, wchar_t is usually UTF16.  </s>
+<s> What platform are you on?  </s>
+<s> It helps to figure out if you should use Little or Big Endian unicode (UTF16LE and UTF16BE, respectively).  </s>
+<s> If you can manage to save your documents with a byte-order mark (two bytes at the beginning of the file that indicate the byte order),  </s>
+<s> you can specify plain UTF16.  </s>
+<s> For example, Intel (Windows and Linux) are LE. Sparc (Solaris) and PowerPC  </s>
+<s> (Mac, IBM AIX) are BE. Alpha (Linux) can be either, but is usually LE. take it easy, Charlie  </s>
+<s> Hi Moshe, Just to get it straight, are you using TidyLib directly or via the ATL wrapper?  </s>
+<s> It will make a difference.  </s>
+<s> If using TidyLib and the BSTR directly, I'd just use UTF16LE character encoding.  </s>
+<s> If the BSTR is not NULL terminated (my memory escapes me), just  </s>
+<s> attach a TidyBuffer to it and call tidyParseBuffer().  </s>
+<s> int tidyParseBSTR( TidyDoc tdoc, BSTR content ) int rc = 0; TidyBuffer buf; tidyBufAttach( &amp;buf, content, ::SysStringByteLen(content) ); tidyOptSetCharEncoding( tdoc, _T("UTF16LE") ); return tidyParseBuffer( tdoc, &amp;buf ); hth,  </s>
+<s> Charlie  </s>
+<s> B"H Actualy I work with Meir Kogan, and I have the string as a BSTR Which as far as I understand is just wchar_t * with a length.  </s>
+<s> The vbscript page that I am getting it from is set to use codepage 65001 i.e. utf8.  </s>
+<s> So I am asuming its utf8 stored in an array of wchar_t however that works.  </s>
+<s> I was thinking of redfining the tidy string (whats it called  </s>
+<s> cbmtstr?) to use wchar_t and then rely on the config file to alter the internal ... or to just cast the bstr to byte* and put it in the buffer.  </s>
+<s> or maybe I'm way off.  </s>
+<s> thanks for all the help.  </s>
+<s> order),  </s>
+<s> PowerPC  </s>
+<s> Hi Moshe, I think I figured out the "right thing to do" with ParseString() and SaveString().  </s>
+<s> Anyway, I updated TidyATL and put it up on my Tidy page.  </s>
+<s> Works on my system, but it did before as well.  </s>
+<s> Can you give it a try on yours?  </s>
+<s> For those just tuning in, Microsoft COM uses Unicode (UTF16LE) internally.  </s>
+<s> So, for the ParseString() and SaveString() methods, TidyATL now temporarily forces the encoding to UTF16LE.  </s>
+<s> It restores the original setting upon return for use w/ file operations.  </s>
+<s> This seems like a general issue when using memory-to-memory operations with the library.  </s>
+<s> One needs to be aware that the in-memory representation can be different than the on disk and set the Tidy encoding options appropriately.  </s>
+<s> Btw, the function is tidySetCharEncoding(), my mistake.  </s>
+<s> You can find most of the tidy functions in tidy.h.  </s>
+<s> The enum definitions are in tidyenum.h  </s>
+<s> and there are a handful of methods in buffio.h and fileio.h  </s>
+<s> relating to, buffer and file sources and sinks.  </s>
+<s> take it easy, Charlie  </s>

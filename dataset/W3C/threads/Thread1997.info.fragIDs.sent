@@ -1,215 +1,215 @@
-I also hate to lob this into the discussion so shortly before IETF, and particularly when I haven't had time yet to finish looking at HTTP/1.1, but.... 
-Several HTTP/1.1 methods (POST, e.g.) propose a two-phase send, first headers, then body. 
-A server can respond with 100 Continue after receiving the headers. 
-My concern: I don't think what's described can be implemented. 
-The spec. 
-calls for a five-second timeout. 
-In the face of a chain of proxies, early agents in the chain are likely to timeout and proceed, and the body is likely to cross paths with the 100 response. 
-In fact, no one timeout is ever likely to be correct for all circumstances. 
-Dave Kristol 
-It doesn't have to be correct -- it exists as a safety-valve, allowing almost all servers (even with multiple levels of persistent-connection proxies) to send back a terminate response before the user agent has sent a large portion of the request data. 
-If it misses, that's okay -- at least it tried. 
-Perhaps more importantly, it forces the implementor to think about these issues. 
-...Roy T. Fielding Department of Information &amp; Computer Science (fielding@ics.uci.edu) 
-I thought I started to understand this issue in the working group meeting, that the 'five seconds' was an arbitrary timeout, and that if the timeout were 'zero seconds' that this would also continue to work: senders should read if sending would block, and recievers should send abort messages as soon as they can, and NOT CLOSE THE CONNECTION if they care whether the sender actually gets the abort. 
-Did I get this right? 
-Yep, that's right. 
-The 5 seconds is arbitrary and only serves as a forcing function. 
-......Roy 
-I too want to understand the question Alex raised during the WG meeting re. why slow start and transmit windows don't prevent this from being a non-concern? 
-Isn't the client naturally restricted from sending a huge number of bytes before the server starts receiving some of the 
-bytes? 
-If there needs to be a timeout to protect poor implementations, might it not be better to restrict the server from closing the connection for some interval after sending the abort. 
-The server can leave the data unreceived or otherwise close the receive window but leave the connection open. 
-Dave Morris 
-If someone would test that theory on real systems and see if it works, that would be a big help. 
-I specified the only known solution to the stated problem -- not the only possible solution. 
-......Roy 
-Since I was unable to attend the IETF meeting (to be honest, I was also unwilling to go to Dallas), I am only vaguely aware of the problem that the two-phase approach is trying to solve. 
-Apparently, the problem is that a server may want to refuse to accept a large entity body from a client, to avoid being "deluged by bytes." 
-Is this the correct (and only) problem that two-phase send is trying to solve? 
-If not, would someone please define the problem? 
-Anyway, I'll assume that I have the right definition. 
-In other contexts, people make the distinction between "optimistic" and "pessimistic" approaches. 
-(For example, concurrency control, parallel simulation event processing, etc.) Optimistic approaches assume that everything will go well, and then if things don't go well, you pay something to fix the damage. 
-Pessimistic approaches assume that things will go badly, and always pay something to protect against this ever happening. 
-Usually, pessimistic approaches pay less overhead for "good events" than optimistic approaches pay for "fixing up after bad events", but if bad events are rare, then the optimistic approach is still a net win. 
-Roy has taken a pessimistic approach to the byte-deluge problem. 
-In particular, every use of every method with a two-phase requirement must pay either the arbitrary timeout period OR at least one round-trip time. 
-In other words, by taking this approach, we build in "extra" delay to every POST (etc.) invocation for millions of users for many years. 
-Hmm. 
-The optimistic approach would be more along the line of "if the server decides that the entity body is too large, it can do something fairly expensive to solve the problem". 
-Ideally, the "solution" would include making sure that the client does not continually retry its large POST (or whatever). 
-The optimistic approach makes sense if we expect that most of the time, servers will accept the POST (or whatever), and so removing the extra RTT is a net win, even if it makes someone's life harder in those few cases where a POST is large *and* the server doesn't want to see it. 
-Since we presumably want to avoid congestive collapse of the server, we ought to look for a solution that forces the costs of this case onto the client. 
-David Morris suggests (apparently following a suggestion from "Alex"): 
-And Roy responds: If someone would test that theory on real systems and see if it works, that would be a big help. 
-One part of the theory, at least, is true by the definition of TCP (and all other reliable transport protocols that I know about): the receiver can avoid being deluged by data simply by not accepting anything, since the flow-control mechanisms are specifically designed for this purpose. 
-Some possible ways to accomplish this are: (1) use a small or zero receive window (2) don't do any read()s from the input stream (3) close or reset the connection. 
-So we have a way to avoid the deluge for the current connection. 
-We need two other things: (A) some way to ensure that the client doesn't simply try again with a large POST. 
-(B) some way to indicate to the user that the operation isn't allowed. 
-Unfortunately, I don't expect that the other part of the theory is correct. 
-I.e., that it would work reliably to simply keep the connection open for some arbitrary timeout, after sending an abort. 
-This is because I suspect that some clients which simply write() the entire POST body before bothering to read() any response will simply block. 
-No matter how long the server holds the connection open, the client will never read the response. 
-(We could try to have the spec insist that a conforming 1.1 client must always be looking for asynchronous responses, but I doubt this would fly.) So here's an alternate suggestion (mostly as a way to start people thinking about additional suggestions, although I think it would work). 
-If the server doesn't want to receive the large body, it immediately replies with its 4xx or 5xx response, and immediately closes (not resets) the connection. 
-If the client manages to read the 4xx or 5xx response, it must honor it and should reflect it to the user. 
-If the client simply sees the transport connection disappear, then the language in section 1.4, "Overall Operation", Both clients and servers must be capable of handling cases where either party closes the connection prematurely, due to user action, automated time-out, or program failure. 
-In any case, the closing of the connection by either or both parties always terminates the current request, regardless of 
-its status. 
-applies with one variation: if the aborted request is a POST, PUT, PATCH, etc. (i.e., any request with a non-empty entity body) then if the client repeats the aborted request, it MUST include the request-header: Connection: two-phase and then follow Roy's two-phase protocol: wait for a response or for an specified timeout period before 
-proceeding. 
-A client MAY use Connection: two-phase at other times, on its own initiative, but MUST use it when repeating a request because of a prematurely-closed connection. 
-We might also want to do this: Servers rejecting an entity-body for reasons of size must respond with 413 Request too large Once a client has received a 413 response from a server, it SHOULD always use Connection: two-phase and the two-phase protocol with that server in the future. 
-This is actually not a big cost, because we know that a server which has sent us a 413 response is an HTTP 1.1 server, and so the client should (almost?) never need to wait much longer than one RTT for the two-phase mechanism to complete. 
-Several people have pointed out that 5 seconds seems like a poor choice for a time. 
-It appears to be a compromise between "give the server enough time to respond" and "don't delay too long waiting for HTTP 1.0 servers, which won't send a Continue response." 
-But in the optimistic approach, we only invoke the N-second wait in the (hopefully) rare case of a prematurely closed connection. 
-So N could be somewhat larger than 5 (say, 10 or 20) without impacting the normal case. 
--Jeff 
-Jeff If the server doesn't want to receive the large body, it Jeff immediately replies with its 4xx or 5xx response, and Jeff immediately closes (not resets) the connection. 
-Jeff If the client manages to read the 4xx or 5xx response, it must Jeff honor it and should reflect it to the user. 
-I really don't like the "If". 
-401 (not to mention 3xx) -require- the client to read the response, because they aren't fatal, and they contain critical information to making the transaction succeed! 
-If there is any doubt that the client might not read the response, then we are doing something wrong. 
-The protocol should be deterministic in any case where the physical connection hasn't been screwed up. 
-I'm all for fault tolerance and fallback mechanisms, but they should not be the "standard" way of moving data around. 
-Anyway, everyone keeps talking about the 4xx and 5xx -fatal- cases. 
-These are the easy ones. 
-In any scenario, please think in terms of a harder case, such as the client wants to PUT a giant chunk of data to a location that requires authentication, or tries to POST to a resource that has moved, etc. -Roger Roger Gonzalez NetCentric Corporation rg@server.net 
-56 Rogers Street home (617) 646-0028 Cambridge, MA 02142 mobile (617) 755-0635 work (617) 868-8600 60 09 3A EE FE 6A 1E CC -pgp- B7 F7 6B 0F 00 1D 01 C7 
-Jeff If the server doesn't want to receive the large body, it Jeff immediately replies with its 4xx or 5xx response, and Jeff immediately closes (not resets) the connection. 
-Jeff If the client manages to read the 4xx or 5xx response, it must Jeff honor it and should reflect it to the user. 
-I really don't like the "If". 
-401 (not to mention 3xx) -require- the client to read the response, because they aren't fatal, and they contain critical information to making the transaction succeed! 
-If there is any doubt that the client might not read the response, then we are doing something wrong. 
-Good point, although this is actually the result of an ambiguity in what I wrote. 
-When I wrote "4xx or 5xx response", I was essentially qouting from Roy's draft. 
-It occurred to me while I was writing that message 
-that the two-phase mechanism really needed an explicit status code for use here, which is why I ended up including this bit: We might also want to do this: Servers rejecting an entity-body for reasons of size must respond with 413 Request too large So I would restate the phrases you object to as: If the server doesn't want to receive the large body, it 
-immediately replies with a 413 response, and immediately closes (not resets) the connection. 
-If the client manages to read the 413 response, it must honor it and should reflect it to the user. 
-In other words, the server should only prematurely close the connection for this specific purposes (request too large) and SHOULD NOT prematurely close the connection for other 4xx and 5xx statuses (although the server is always allowed to prematurely close the connection if it has to ... for example, if it crashes and reboots!) The protocol should be deterministic in any case where the physical connection hasn't been screwed up. 
-I'm all for fault tolerance and fallback mechanisms, but they should not be the "standard" way of moving data around. 
-I think my proposal is fully deterministic if no networking failures occur, although it does require at least one retry in some rare cases. 
-Anyway, everyone keeps talking about the 4xx and 5xx -fatal- cases. 
-These are the easy ones. 
-In any scenario, please think in terms of a harder case, such as the client wants to PUT a giant chunk of data to a location that requires authentication, or tries to POST to a resource that has moved, etc. 
-The real question here is "if there are two or more reasons why a request would fail, which one is reported in the status code?" (this is because each response carries exactly one status code). 
-One answer would be "it doesn't matter" (more precisely, "it's up to the server implementer"). 
-Take your first example: if the client wants to PUT a zillion bytes to a location that requires authentication, then does it really matter why it fails? 
-Either way, it can't be done. 
-We could take that approach, but I think it might be too crude. 
-For example, suppose that a server will accept a 1 KB chunk from anyone, but wants authentication before it will accept a 20MB chunk. 
-If a 20 MB Put arrives without authentication, it would be more useful to respond with 401 Unauthorized than 413 Request too large, since if the client sees the 401 it could presumably retry after authentication, whereas if it simply sees the 413, it has no clue. 
-Even in this scenario, it may be the case that the server implementor might have some reason for sending the 413 response in preference to the 401 response (e.g., an organizational security policy that tries to obscure the reasons for a failure), so I think the HTTP spec could recommend a set of status-code precedences, but not require it. 
--Jeff 
-Well there is the interesting situation where the server requires authentication for a PUT AND also can't accept 1meg of data. 
-The way WWW/HTTP authentication works, the client may not know that authentication is required until attempting the PUT and getting the 401 unauthorized response. 
-HENCE, we have a situation where the client could be presented two possible errors, one which it can possibly correct and one which it can't ever correct. 
-In normal transaction flow authentication would be verified and the semantics of the request would be verified. 
-YET, what is the point of a server issuing an unauthorized response when it could/should/might know it's is never going to process the transaction anyway. 
-As an end user, I'd be mightly annoyed if I did what I believed was valid, was delayed for the password prompt in response to the 401 UNAUTHORIZED and possibly some substantial delay because of the bytes in the pipe the first time only to be then told that the size of the data to PUT was too big. 
-rom a protocol perspective it needs to be valid to issue the failures in either order because the size failure may be detected only when a processing 'CGI' program responds while the server detects the unauthorized situation. 
-It would be good however to encourage presentation of fatal (can't be overcome) errors before correctable failures, when possib To backup .... as I understand the discussion, the purpose of the 2 phase send was to increase the probablility that the client has a chance to receive the response. 
-The impression was that some/many TCP implementations may close a connection in such a way that the response is flushed and never seen from the client. 
-The second lesser concern was that by using a short delay, there was less waste of bandwidth in the failure case. 
-I like your (Jeffrey Mogul) suggestion for requiring the explict two phase request from the client in the quiet close case. 
-I would further extend your suggestion to get rid of the timeout or make it quite large and only allow the client to continue when the response arrives. 
-Dave Morris 
-I'm becoming more and more convenced that single-exchange PUT is unworkable. 
-That is, PUT might have to happen in two steps: 
-1. client: wanna PUT this file of this size of this media type in this location with these PERMS with this validator 2. server: OK, send file (or permission denied) 3. client: OK, here's the file. 
-4. server: OK, got the file 
-Step 1 might offer more than one media type with step 2 accepting a particular one or a subset. 
-Step 1 might say that it doesn't know the file size, for example. 
-Opinions? 
-One of the possible solutions we (Henrik and I) discussed this summer was a two-request form of PUT (using PUTQ as the probe method). 
-That solution was discarded because the server's requirements/status may change between the two requests and thus the second request must still be protected using the two-phased approach (or something similar). 
-Therefore, there was no immediate advantage to using two requests other than for obtaining the access requirements -- the OPTIONS method does that. 
-If we allow such negotiation, we must also provide a mechanism for expressing it. 
-None is available currently and it's a bit of a rats nest to come up with one that can encompass the server's options. 
-On the whole, I think we are better-off having the client ask "can I do this" for each combination of request until the server says "go ahead and do that". 
-...Roy T. Fielding Department of Information &amp; Computer Science (fielding@ics.uci.edu) 
-What are the drawbacks to single-exchange PUT if clients are full-duplex? 
-The current NaviPress/NaviServer interaction goes like this: Press 1.1Server 1.1 tries to save file - PUT headers - doesn't have auth - 401 headers - client hasn't noticed - PUT buffer of body - tosses data into bitbucket - PUT buffer of body - - PUT buffer of body - client finally realizes something's wrong, while reading response Now, this isn't too bad at LAN speeds, but it sure is a pain over dialup. 
-If the server only replies early for failure, then the new logic wouldn't too bad - put a check for the availability of the response into the body writing loop: Press 2.0Server 1.1 tries to save file - PUT headers - doesn't have auth - 401 headers - client hasn't noticed - PUT 0 - 1 buffers worth of body - socket is readable! 
-abort, read response... 
-This gets slightly uglier if the server is allowed to 200 early, in that we would wind up running the request and response logic in parallel, and abort the request on a failure response. 
-As you can see, the NaviServers already support a full-duplex single exchange (they need to do the bitbucketing anyway, for other reasons), and I was going to get the logic into NaviPress Real Soon Now. 
-(Sorry, Roy, a bunch of OEM work came up in the last couple of weeks...) If y'all have your hearts set on dual exchange PUT, or can tell me why this single-exchange is too simplistic, I'll abandon efforts on it. 
--Dave I'll probably do the only-failures-early model first, because my experience has been that an FTP server is the only thing that most of our users ever get a chance to PUT to, so the NaviServer is at the limits of my world of interoperability. 
-If you've got a PUT'able server, send me mail, and I'll work on keeping us interoperable. 
-Roy has taken a pessimistic approach to the byte-deluge problem. 
-In particular, every use of every method with a two-phase requirement must pay either the arbitrary timeout period OR at least one round-trip time. 
-In other words, by taking this approach, we build in "extra" delay to every POST (etc.) invocation for millions of users for many years. 
-Hmm. 
-To which Roy responded: Yes, this is an excellent analysis of the tradeoffs. 
-However, it fails to consider that all of the two-phase methods are not speed-dependent: it is far more important to get it right the first time (before data is sent across the wire, if possible) then it is to save one or two round-trips. 
-Given that, it is okay to be pessimistic and pay for that round-trip every time. 
-I would like to dig a little deeper into this tradeoff before conceding that pessimism is preferrable to optimism. 
-I should start with a quick summary of my proposed solution, which I will call the "optimistic two-phase" scheme: Initially, the client tries to use a one-phase PUT. 
-If the server wants to reject the PUT, it sends an error status and simply closes the TCP connection, forcing the client to abort its transmission. 
-If the client sees the error status, fine. 
-If it simply sees the connection close prematurely, then it may retry the PUT, but this time must use a two-phase protocol (send the headers, wait for a "Continue", then send the data). 
-Note that a very similar problem arises with persistent connections. 
-In the current one-request-per-TCP-connection model, we assume that the server does not close the TCP connection before sending a full response. 
-In the persistent-connection world, however, once the server has responded to at least one request, it is free to close the connection at any time. 
-This might happen after the client has transmitted a subsequent request (perhaps before the server receives it, though) and so to the client, this will look like a premature close by the server. 
-So in order to make persistent connections work, the client has to be able to retry after a premature close (although this is not to say that a client must implement persistent connections). 
-One possible problem with this approach is that the client might retry ad infinitum. 
-We can ban this in HTTP 1.1 (just as easily as we can require any two-phase behavior), but we may have a problem with those HTTP 1.0 clients that already support persistent connections. 
-I'll assume for the purposes of this analysis that this problem does not arise, but I may have to concede this point. 
-On with the analysis: 
-We want to find the costs of these schemes, in addition to the basic cost of the HTTP interaction (which might be less than 1 round-trip time [RTT], if persistent connections are used, or several RTTs in other cases). 
-The additional cost of a two-phase interaction is one RTT, since the client must pause for at least one RTT before it sees the "Continue" status. 
-The cost of a *failed* one-phase interaction (i.e., client tries a PUT, server says "no way" and closes the TCP connection) is a little harder to measure. 
-The entire first (aborted) connection is wasted, so there are at least two or possibly three RTTs involved in that. 
-I'll assume 3 RTTs, to be concrete and conservative. 
-Then there is one more RTT to go through the two-phase interaction, which is guaranteed to result in a rejection (but the client doesn't yet know that) 
-So we have these cases: Pessimistic (pure) two-phase, if server accepts: cost = 1 RTT Pessimistic (pure) two-phase, if server rejects: cost = 1 RTT Optimistic (my) two-phase, if server accepts: cost = 0 Optimistic (my) two-phase, if server rejects: cost = 4 RTTs Now define P(a) = "probability" that the server accepts the PUT I put "probability" in quotes because this isn't really a non-deterministic process, but from the point of view of a client, it might as well be one. 
-So the overall "expected values" of the costs of the two schemes are: Pessimistic two-phase: (P(a) * 1 RTT) + ((1 - P(a)) * 1 RTT) which simplifies to 1 RTT Optimistic two-phase: (P(a) * 0 RTT) + ((1 - P(a)) * 4 RTT) which simplifies to (1 - P(a)) * 4 RTT So "optimistic" costs less than "pessimistic" if (1 - P(a)) * 4 RTT  1 RTT which simplifies to: P(a)  0.75 In other words, if servers will accept PUTs more often than 75% of the time, then under this analysis (which, I admit, might be buggy) it pays off "on the average" to use an optimistic two-phase approach. 
-The numbers might shift slightly if one counts packets or bytes instead of RTTs, but since the speed of light is the only true constant, I prefer to think in terms of RTTs. 
-On the other hand, my analysis assumes that all servers speak HTTP 1.1 (and thus respond immediately with a Continue or an error code. 
-Whenever a pre-1.1 server is involved, the pessimistic two-phase scheme adds an additional 5 seconds, which is probably worth several RTTs in most instances. 
-And this is "wasted" time in this case, because a pre-1.1 server won't respond with an error at this point. 
-But I'll assume for the sake of the argument that almost all servers will adopt HTTP 1.1. 
-Would anyone like to argue that more than 25% of PUTs (and similar HTTP methods) are going to be rejected? 
-To me, this seems unlikely (most users will learn not to ask for things that the servers don't allow), but I don't have enough experience to know. 
--Jeff 
-This is interesting analysis, but doesn't apply to what I said. 
-RTTs are not sufficiently important for the two-phase methods for them to be the measure of what is "best". 
-What is important is: 1) reliability (which boils down to both sides eventually knowing what happened) 2) not sending unwanted data over the wire (if possible). 
-I agree that an optimistic approach is capable of handling (1). 
-However, it is not capable of handling (2). 
-In most cases, this difference is trivial. 
-However, some security-related systems consider the ability to refuse a vulnerable operation before it occurs to be a showstopper. 
-Also, some networks will require the user to pay by the amount of data sent, regardless of whether that data was initially rejected by the server. 
-Given these cases exist, a pessimistic approach is "best". 
-This does not mean that the 5 second delay is the best solution -- it is just a way of forcing a real solution to be created. 
-...Roy T. Fielding Department of Information &amp; Computer Science (fielding@ics.uci.edu) 
-RTTs are not sufficiently important for the two-phase methods for them to be the measure of what is "best". 
-That's a strong statement to be made without at least some elaboration. 
-RTTs are the only delay in the Web (except for human "think time") that cannot be improved by technology. 
-(As Mike Powell once said, you can buy better bandwidth but only God can change the speed of light.) 
-It may be true that PUT-like methods are not latency-sensitive, but if so, this requires some justification. 
-In most cases, this difference is trivial. 
-However, some security-related systems consider the ability to refuse a vulnerable operation before it occurs to be a showstopper. 
-The security issue here is new, and seems to have several components (I'm reading between the lines in your message): (1) The transmission of some data that would have been rejected might expose it to eavesdropping. 
-(2) The mere attempt to do a "vulnerable operation" that would be rejected could cause some havoc at the server side. 
-Am I missing any others? 
-Frankly, I don't buy either of these arguments; especially, as Koen points out, the 5-second timeout can be manipulated by an external agent (via a temporary denial-of-service attack) but also because we ought not to be pretending that security can be accomplished without encryption for privacy and authentication for authorization. 
-Also, some networks will require the user to pay by the amount of data sent, regardless of whether that data was initially rejected by the server. 
-A good point. 
-But even if the HTTP protocol allows the use of an optimistic two-phase scheme (as I am suggesting), this does not mean that it would be required (since the optimistic scheme includes the pessimistic scheme as a backstop). 
-In other words, a user that was being charged by the packet could choose to employ the pessimistic scheme, on its own initiative. 
-Given these cases exist, a pessimistic approach is "best". 
-This does not mean that the 5 second delay is the best solution -- it is just a way of forcing a real solution to be created. 
-Which is exactly what I think has happened: you have done us a service by forcing us to think about the problem. 
-But I still assert that the optimistic approach is "better" (perhaps not "best") if one believes that, most of the time, RTTs do matter and servers will not reject PUT-like methods. 
-And it leaves the issue of sensitivity to usage-pricing to the transmitter of the data, not to an a priori choice in the protocol design. 
--Jeff 
-I think the ideal approach would be: 1) to send small files in one-phase PUT (where extra RTT has big effects) 2) to send large files in two-phase PUT (where extra RTT has less effects) Now, here is a hybrid scheme: Step one: send header PLUS part of the data (fit into one packet) Step two: wait for "continue" or timeout Step three: send the rest of the data if there are any For small files (ie, header and data fit into one packet), it is effectively a one-phase PUT while for large files, a two-phase PUT. 
-Cheers Zheng 
+<s> I also hate to lob this into the discussion so shortly before IETF, and particularly when I haven't had time yet to finish looking at HTTP/1.1, but....  </s>
+<s> Several HTTP/1.1 methods (POST, e.g.) propose a two-phase send, first headers, then body.  </s>
+<s> A server can respond with 100 Continue after receiving the headers.  </s>
+<s> My concern: I don't think what's described can be implemented.  </s>
+<s> The spec.  </s>
+<s> calls for a five-second timeout.  </s>
+<s> In the face of a chain of proxies, early agents in the chain are likely to timeout and proceed, and the body is likely to cross paths with the 100 response.  </s>
+<s> In fact, no one timeout is ever likely to be correct for all circumstances.  </s>
+<s> Dave Kristol  </s>
+<s> It doesn't have to be correct -- it exists as a safety-valve, allowing almost all servers (even with multiple levels of persistent-connection proxies) to send back a terminate response before the user agent has sent a large portion of the request data.  </s>
+<s> If it misses, that's okay -- at least it tried.  </s>
+<s> Perhaps more importantly, it forces the implementor to think about these issues.  </s>
+<s> ...Roy T. Fielding Department of Information &amp; Computer Science (fielding@ics.uci.edu)  </s>
+<s> I thought I started to understand this issue in the working group meeting, that the 'five seconds' was an arbitrary timeout, and that if the timeout were 'zero seconds' that this would also continue to work: senders should read if sending would block, and recievers should send abort messages as soon as they can, and NOT CLOSE THE CONNECTION if they care whether the sender actually gets the abort.  </s>
+<s> Did I get this right?  </s>
+<s> Yep, that's right.  </s>
+<s> The 5 seconds is arbitrary and only serves as a forcing function.  </s>
+<s> ......Roy  </s>
+<s> I too want to understand the question Alex raised during the WG meeting re. why slow start and transmit windows don't prevent this from being a non-concern?  </s>
+<s> Isn't the client naturally restricted from sending a huge number of bytes before the server starts receiving some of the  </s>
+<s> bytes?  </s>
+<s> If there needs to be a timeout to protect poor implementations, might it not be better to restrict the server from closing the connection for some interval after sending the abort.  </s>
+<s> The server can leave the data unreceived or otherwise close the receive window but leave the connection open.  </s>
+<s> Dave Morris  </s>
+<s> If someone would test that theory on real systems and see if it works, that would be a big help.  </s>
+<s> I specified the only known solution to the stated problem -- not the only possible solution.  </s>
+<s> ......Roy  </s>
+<s> Since I was unable to attend the IETF meeting (to be honest, I was also unwilling to go to Dallas), I am only vaguely aware of the problem that the two-phase approach is trying to solve.  </s>
+<s> Apparently, the problem is that a server may want to refuse to accept a large entity body from a client, to avoid being "deluged by bytes."  </s>
+<s> Is this the correct (and only) problem that two-phase send is trying to solve?  </s>
+<s> If not, would someone please define the problem?  </s>
+<s> Anyway, I'll assume that I have the right definition.  </s>
+<s> In other contexts, people make the distinction between "optimistic" and "pessimistic" approaches.  </s>
+<s> (For example, concurrency control, parallel simulation event processing, etc.) Optimistic approaches assume that everything will go well, and then if things don't go well, you pay something to fix the damage.  </s>
+<s> Pessimistic approaches assume that things will go badly, and always pay something to protect against this ever happening.  </s>
+<s> Usually, pessimistic approaches pay less overhead for "good events" than optimistic approaches pay for "fixing up after bad events", but if bad events are rare, then the optimistic approach is still a net win.  </s>
+<s> Roy has taken a pessimistic approach to the byte-deluge problem.  </s>
+<s> In particular, every use of every method with a two-phase requirement must pay either the arbitrary timeout period OR at least one round-trip time.  </s>
+<s> In other words, by taking this approach, we build in "extra" delay to every POST (etc.) invocation for millions of users for many years.  </s>
+<s> Hmm.  </s>
+<s> The optimistic approach would be more along the line of "if the server decides that the entity body is too large, it can do something fairly expensive to solve the problem".  </s>
+<s> Ideally, the "solution" would include making sure that the client does not continually retry its large POST (or whatever).  </s>
+<s> The optimistic approach makes sense if we expect that most of the time, servers will accept the POST (or whatever), and so removing the extra RTT is a net win, even if it makes someone's life harder in those few cases where a POST is large *and* the server doesn't want to see it.  </s>
+<s> Since we presumably want to avoid congestive collapse of the server, we ought to look for a solution that forces the costs of this case onto the client.  </s>
+<s> David Morris suggests (apparently following a suggestion from "Alex"):  </s>
+<s> And Roy responds: If someone would test that theory on real systems and see if it works, that would be a big help.  </s>
+<s> One part of the theory, at least, is true by the definition of TCP (and all other reliable transport protocols that I know about): the receiver can avoid being deluged by data simply by not accepting anything, since the flow-control mechanisms are specifically designed for this purpose.  </s>
+<s> Some possible ways to accomplish this are: (1) use a small or zero receive window (2) don't do any read()s from the input stream (3) close or reset the connection.  </s>
+<s> So we have a way to avoid the deluge for the current connection.  </s>
+<s> We need two other things: (A) some way to ensure that the client doesn't simply try again with a large POST.  </s>
+<s> (B) some way to indicate to the user that the operation isn't allowed.  </s>
+<s> Unfortunately, I don't expect that the other part of the theory is correct.  </s>
+<s> I.e., that it would work reliably to simply keep the connection open for some arbitrary timeout, after sending an abort.  </s>
+<s> This is because I suspect that some clients which simply write() the entire POST body before bothering to read() any response will simply block.  </s>
+<s> No matter how long the server holds the connection open, the client will never read the response.  </s>
+<s> (We could try to have the spec insist that a conforming 1.1 client must always be looking for asynchronous responses, but I doubt this would fly.) So here's an alternate suggestion (mostly as a way to start people thinking about additional suggestions, although I think it would work).  </s>
+<s> If the server doesn't want to receive the large body, it immediately replies with its 4xx or 5xx response, and immediately closes (not resets) the connection.  </s>
+<s> If the client manages to read the 4xx or 5xx response, it must honor it and should reflect it to the user.  </s>
+<s> If the client simply sees the transport connection disappear, then the language in section 1.4, "Overall Operation", Both clients and servers must be capable of handling cases where either party closes the connection prematurely, due to user action, automated time-out, or program failure.  </s>
+<s> In any case, the closing of the connection by either or both parties always terminates the current request, regardless of  </s>
+<s> its status.  </s>
+<s> applies with one variation: if the aborted request is a POST, PUT, PATCH, etc. (i.e., any request with a non-empty entity body) then if the client repeats the aborted request, it MUST include the request-header: Connection: two-phase and then follow Roy's two-phase protocol: wait for a response or for an specified timeout period before  </s>
+<s> proceeding.  </s>
+<s> A client MAY use Connection: two-phase at other times, on its own initiative, but MUST use it when repeating a request because of a prematurely-closed connection.  </s>
+<s> We might also want to do this: Servers rejecting an entity-body for reasons of size must respond with 413 Request too large Once a client has received a 413 response from a server, it SHOULD always use Connection: two-phase and the two-phase protocol with that server in the future.  </s>
+<s> This is actually not a big cost, because we know that a server which has sent us a 413 response is an HTTP 1.1 server, and so the client should (almost?) never need to wait much longer than one RTT for the two-phase mechanism to complete.  </s>
+<s> Several people have pointed out that 5 seconds seems like a poor choice for a time.  </s>
+<s> It appears to be a compromise between "give the server enough time to respond" and "don't delay too long waiting for HTTP 1.0 servers, which won't send a Continue response."  </s>
+<s> But in the optimistic approach, we only invoke the N-second wait in the (hopefully) rare case of a prematurely closed connection.  </s>
+<s> So N could be somewhat larger than 5 (say, 10 or 20) without impacting the normal case.  </s>
+<s> -Jeff  </s>
+<s> Jeff If the server doesn't want to receive the large body, it Jeff immediately replies with its 4xx or 5xx response, and Jeff immediately closes (not resets) the connection.  </s>
+<s> Jeff If the client manages to read the 4xx or 5xx response, it must Jeff honor it and should reflect it to the user.  </s>
+<s> I really don't like the "If".  </s>
+<s> 401 (not to mention 3xx) -require- the client to read the response, because they aren't fatal, and they contain critical information to making the transaction succeed!  </s>
+<s> If there is any doubt that the client might not read the response, then we are doing something wrong.  </s>
+<s> The protocol should be deterministic in any case where the physical connection hasn't been screwed up.  </s>
+<s> I'm all for fault tolerance and fallback mechanisms, but they should not be the "standard" way of moving data around.  </s>
+<s> Anyway, everyone keeps talking about the 4xx and 5xx -fatal- cases.  </s>
+<s> These are the easy ones.  </s>
+<s> In any scenario, please think in terms of a harder case, such as the client wants to PUT a giant chunk of data to a location that requires authentication, or tries to POST to a resource that has moved, etc. -Roger Roger Gonzalez NetCentric Corporation rg@server.net  </s>
+<s> 56 Rogers Street home (617) 646-0028 Cambridge, MA 02142 mobile (617) 755-0635 work (617) 868-8600 60 09 3A EE FE 6A 1E CC -pgp- B7 F7 6B 0F 00 1D 01 C7  </s>
+<s> Jeff If the server doesn't want to receive the large body, it Jeff immediately replies with its 4xx or 5xx response, and Jeff immediately closes (not resets) the connection.  </s>
+<s> Jeff If the client manages to read the 4xx or 5xx response, it must Jeff honor it and should reflect it to the user.  </s>
+<s> I really don't like the "If".  </s>
+<s> 401 (not to mention 3xx) -require- the client to read the response, because they aren't fatal, and they contain critical information to making the transaction succeed!  </s>
+<s> If there is any doubt that the client might not read the response, then we are doing something wrong.  </s>
+<s> Good point, although this is actually the result of an ambiguity in what I wrote.  </s>
+<s> When I wrote "4xx or 5xx response", I was essentially qouting from Roy's draft.  </s>
+<s> It occurred to me while I was writing that message  </s>
+<s> that the two-phase mechanism really needed an explicit status code for use here, which is why I ended up including this bit: We might also want to do this: Servers rejecting an entity-body for reasons of size must respond with 413 Request too large So I would restate the phrases you object to as: If the server doesn't want to receive the large body, it  </s>
+<s> immediately replies with a 413 response, and immediately closes (not resets) the connection.  </s>
+<s> If the client manages to read the 413 response, it must honor it and should reflect it to the user.  </s>
+<s> In other words, the server should only prematurely close the connection for this specific purposes (request too large) and SHOULD NOT prematurely close the connection for other 4xx and 5xx statuses (although the server is always allowed to prematurely close the connection if it has to ... for example, if it crashes and reboots!) The protocol should be deterministic in any case where the physical connection hasn't been screwed up.  </s>
+<s> I'm all for fault tolerance and fallback mechanisms, but they should not be the "standard" way of moving data around.  </s>
+<s> I think my proposal is fully deterministic if no networking failures occur, although it does require at least one retry in some rare cases.  </s>
+<s> Anyway, everyone keeps talking about the 4xx and 5xx -fatal- cases.  </s>
+<s> These are the easy ones.  </s>
+<s> In any scenario, please think in terms of a harder case, such as the client wants to PUT a giant chunk of data to a location that requires authentication, or tries to POST to a resource that has moved, etc.  </s>
+<s> The real question here is "if there are two or more reasons why a request would fail, which one is reported in the status code?" (this is because each response carries exactly one status code).  </s>
+<s> One answer would be "it doesn't matter" (more precisely, "it's up to the server implementer").  </s>
+<s> Take your first example: if the client wants to PUT a zillion bytes to a location that requires authentication, then does it really matter why it fails?  </s>
+<s> Either way, it can't be done.  </s>
+<s> We could take that approach, but I think it might be too crude.  </s>
+<s> For example, suppose that a server will accept a 1 KB chunk from anyone, but wants authentication before it will accept a 20MB chunk.  </s>
+<s> If a 20 MB Put arrives without authentication, it would be more useful to respond with 401 Unauthorized than 413 Request too large, since if the client sees the 401 it could presumably retry after authentication, whereas if it simply sees the 413, it has no clue.  </s>
+<s> Even in this scenario, it may be the case that the server implementor might have some reason for sending the 413 response in preference to the 401 response (e.g., an organizational security policy that tries to obscure the reasons for a failure), so I think the HTTP spec could recommend a set of status-code precedences, but not require it.  </s>
+<s> -Jeff  </s>
+<s> Well there is the interesting situation where the server requires authentication for a PUT AND also can't accept 1meg of data.  </s>
+<s> The way WWW/HTTP authentication works, the client may not know that authentication is required until attempting the PUT and getting the 401 unauthorized response.  </s>
+<s> HENCE, we have a situation where the client could be presented two possible errors, one which it can possibly correct and one which it can't ever correct.  </s>
+<s> In normal transaction flow authentication would be verified and the semantics of the request would be verified.  </s>
+<s> YET, what is the point of a server issuing an unauthorized response when it could/should/might know it's is never going to process the transaction anyway.  </s>
+<s> As an end user, I'd be mightly annoyed if I did what I believed was valid, was delayed for the password prompt in response to the 401 UNAUTHORIZED and possibly some substantial delay because of the bytes in the pipe the first time only to be then told that the size of the data to PUT was too big.  </s>
+<s> rom a protocol perspective it needs to be valid to issue the failures in either order because the size failure may be detected only when a processing 'CGI' program responds while the server detects the unauthorized situation.  </s>
+<s> It would be good however to encourage presentation of fatal (can't be overcome) errors before correctable failures, when possib To backup .... as I understand the discussion, the purpose of the 2 phase send was to increase the probablility that the client has a chance to receive the response.  </s>
+<s> The impression was that some/many TCP implementations may close a connection in such a way that the response is flushed and never seen from the client.  </s>
+<s> The second lesser concern was that by using a short delay, there was less waste of bandwidth in the failure case.  </s>
+<s> I like your (Jeffrey Mogul) suggestion for requiring the explict two phase request from the client in the quiet close case.  </s>
+<s> I would further extend your suggestion to get rid of the timeout or make it quite large and only allow the client to continue when the response arrives.  </s>
+<s> Dave Morris  </s>
+<s> I'm becoming more and more convenced that single-exchange PUT is unworkable.  </s>
+<s> That is, PUT might have to happen in two steps:  </s>
+<s> 1. client: wanna PUT this file of this size of this media type in this location with these PERMS with this validator 2. server: OK, send file (or permission denied) 3. client: OK, here's the file.  </s>
+<s> 4. server: OK, got the file  </s>
+<s> Step 1 might offer more than one media type with step 2 accepting a particular one or a subset.  </s>
+<s> Step 1 might say that it doesn't know the file size, for example.  </s>
+<s> Opinions?  </s>
+<s> One of the possible solutions we (Henrik and I) discussed this summer was a two-request form of PUT (using PUTQ as the probe method).  </s>
+<s> That solution was discarded because the server's requirements/status may change between the two requests and thus the second request must still be protected using the two-phased approach (or something similar).  </s>
+<s> Therefore, there was no immediate advantage to using two requests other than for obtaining the access requirements -- the OPTIONS method does that.  </s>
+<s> If we allow such negotiation, we must also provide a mechanism for expressing it.  </s>
+<s> None is available currently and it's a bit of a rats nest to come up with one that can encompass the server's options.  </s>
+<s> On the whole, I think we are better-off having the client ask "can I do this" for each combination of request until the server says "go ahead and do that".  </s>
+<s> ...Roy T. Fielding Department of Information &amp; Computer Science (fielding@ics.uci.edu)  </s>
+<s> What are the drawbacks to single-exchange PUT if clients are full-duplex?  </s>
+<s> The current NaviPress/NaviServer interaction goes like this: Press 1.1Server 1.1 tries to save file - PUT headers - doesn't have auth - 401 headers - client hasn't noticed - PUT buffer of body - tosses data into bitbucket - PUT buffer of body - - PUT buffer of body - client finally realizes something's wrong, while reading response Now, this isn't too bad at LAN speeds, but it sure is a pain over dialup.  </s>
+<s> If the server only replies early for failure, then the new logic wouldn't too bad - put a check for the availability of the response into the body writing loop: Press 2.0Server 1.1 tries to save file - PUT headers - doesn't have auth - 401 headers - client hasn't noticed - PUT 0 - 1 buffers worth of body - socket is readable!  </s>
+<s> abort, read response...  </s>
+<s> This gets slightly uglier if the server is allowed to 200 early, in that we would wind up running the request and response logic in parallel, and abort the request on a failure response.  </s>
+<s> As you can see, the NaviServers already support a full-duplex single exchange (they need to do the bitbucketing anyway, for other reasons), and I was going to get the logic into NaviPress Real Soon Now.  </s>
+<s> (Sorry, Roy, a bunch of OEM work came up in the last couple of weeks...) If y'all have your hearts set on dual exchange PUT, or can tell me why this single-exchange is too simplistic, I'll abandon efforts on it.  </s>
+<s> -Dave I'll probably do the only-failures-early model first, because my experience has been that an FTP server is the only thing that most of our users ever get a chance to PUT to, so the NaviServer is at the limits of my world of interoperability.  </s>
+<s> If you've got a PUT'able server, send me mail, and I'll work on keeping us interoperable.  </s>
+<s> Roy has taken a pessimistic approach to the byte-deluge problem.  </s>
+<s> In particular, every use of every method with a two-phase requirement must pay either the arbitrary timeout period OR at least one round-trip time.  </s>
+<s> In other words, by taking this approach, we build in "extra" delay to every POST (etc.) invocation for millions of users for many years.  </s>
+<s> Hmm.  </s>
+<s> To which Roy responded: Yes, this is an excellent analysis of the tradeoffs.  </s>
+<s> However, it fails to consider that all of the two-phase methods are not speed-dependent: it is far more important to get it right the first time (before data is sent across the wire, if possible) then it is to save one or two round-trips.  </s>
+<s> Given that, it is okay to be pessimistic and pay for that round-trip every time.  </s>
+<s> I would like to dig a little deeper into this tradeoff before conceding that pessimism is preferrable to optimism.  </s>
+<s> I should start with a quick summary of my proposed solution, which I will call the "optimistic two-phase" scheme: Initially, the client tries to use a one-phase PUT.  </s>
+<s> If the server wants to reject the PUT, it sends an error status and simply closes the TCP connection, forcing the client to abort its transmission.  </s>
+<s> If the client sees the error status, fine.  </s>
+<s> If it simply sees the connection close prematurely, then it may retry the PUT, but this time must use a two-phase protocol (send the headers, wait for a "Continue", then send the data).  </s>
+<s> Note that a very similar problem arises with persistent connections.  </s>
+<s> In the current one-request-per-TCP-connection model, we assume that the server does not close the TCP connection before sending a full response.  </s>
+<s> In the persistent-connection world, however, once the server has responded to at least one request, it is free to close the connection at any time.  </s>
+<s> This might happen after the client has transmitted a subsequent request (perhaps before the server receives it, though) and so to the client, this will look like a premature close by the server.  </s>
+<s> So in order to make persistent connections work, the client has to be able to retry after a premature close (although this is not to say that a client must implement persistent connections).  </s>
+<s> One possible problem with this approach is that the client might retry ad infinitum.  </s>
+<s> We can ban this in HTTP 1.1 (just as easily as we can require any two-phase behavior), but we may have a problem with those HTTP 1.0 clients that already support persistent connections.  </s>
+<s> I'll assume for the purposes of this analysis that this problem does not arise, but I may have to concede this point.  </s>
+<s> On with the analysis:  </s>
+<s> We want to find the costs of these schemes, in addition to the basic cost of the HTTP interaction (which might be less than 1 round-trip time [RTT], if persistent connections are used, or several RTTs in other cases).  </s>
+<s> The additional cost of a two-phase interaction is one RTT, since the client must pause for at least one RTT before it sees the "Continue" status.  </s>
+<s> The cost of a *failed* one-phase interaction (i.e., client tries a PUT, server says "no way" and closes the TCP connection) is a little harder to measure.  </s>
+<s> The entire first (aborted) connection is wasted, so there are at least two or possibly three RTTs involved in that.  </s>
+<s> I'll assume 3 RTTs, to be concrete and conservative.  </s>
+<s> Then there is one more RTT to go through the two-phase interaction, which is guaranteed to result in a rejection (but the client doesn't yet know that)  </s>
+<s> So we have these cases: Pessimistic (pure) two-phase, if server accepts: cost = 1 RTT Pessimistic (pure) two-phase, if server rejects: cost = 1 RTT Optimistic (my) two-phase, if server accepts: cost = 0 Optimistic (my) two-phase, if server rejects: cost = 4 RTTs Now define P(a) = "probability" that the server accepts the PUT I put "probability" in quotes because this isn't really a non-deterministic process, but from the point of view of a client, it might as well be one.  </s>
+<s> So the overall "expected values" of the costs of the two schemes are: Pessimistic two-phase: (P(a) * 1 RTT) + ((1 - P(a)) * 1 RTT) which simplifies to 1 RTT Optimistic two-phase: (P(a) * 0 RTT) + ((1 - P(a)) * 4 RTT) which simplifies to (1 - P(a)) * 4 RTT So "optimistic" costs less than "pessimistic" if (1 - P(a)) * 4 RTT  1 RTT which simplifies to: P(a)  0.75 In other words, if servers will accept PUTs more often than 75% of the time, then under this analysis (which, I admit, might be buggy) it pays off "on the average" to use an optimistic two-phase approach.  </s>
+<s> The numbers might shift slightly if one counts packets or bytes instead of RTTs, but since the speed of light is the only true constant, I prefer to think in terms of RTTs.  </s>
+<s> On the other hand, my analysis assumes that all servers speak HTTP 1.1 (and thus respond immediately with a Continue or an error code.  </s>
+<s> Whenever a pre-1.1 server is involved, the pessimistic two-phase scheme adds an additional 5 seconds, which is probably worth several RTTs in most instances.  </s>
+<s> And this is "wasted" time in this case, because a pre-1.1 server won't respond with an error at this point.  </s>
+<s> But I'll assume for the sake of the argument that almost all servers will adopt HTTP 1.1.  </s>
+<s> Would anyone like to argue that more than 25% of PUTs (and similar HTTP methods) are going to be rejected?  </s>
+<s> To me, this seems unlikely (most users will learn not to ask for things that the servers don't allow), but I don't have enough experience to know.  </s>
+<s> -Jeff  </s>
+<s> This is interesting analysis, but doesn't apply to what I said.  </s>
+<s> RTTs are not sufficiently important for the two-phase methods for them to be the measure of what is "best".  </s>
+<s> What is important is: 1) reliability (which boils down to both sides eventually knowing what happened) 2) not sending unwanted data over the wire (if possible).  </s>
+<s> I agree that an optimistic approach is capable of handling (1).  </s>
+<s> However, it is not capable of handling (2).  </s>
+<s> In most cases, this difference is trivial.  </s>
+<s> However, some security-related systems consider the ability to refuse a vulnerable operation before it occurs to be a showstopper.  </s>
+<s> Also, some networks will require the user to pay by the amount of data sent, regardless of whether that data was initially rejected by the server.  </s>
+<s> Given these cases exist, a pessimistic approach is "best".  </s>
+<s> This does not mean that the 5 second delay is the best solution -- it is just a way of forcing a real solution to be created.  </s>
+<s> ...Roy T. Fielding Department of Information &amp; Computer Science (fielding@ics.uci.edu)  </s>
+<s> RTTs are not sufficiently important for the two-phase methods for them to be the measure of what is "best".  </s>
+<s> That's a strong statement to be made without at least some elaboration.  </s>
+<s> RTTs are the only delay in the Web (except for human "think time") that cannot be improved by technology.  </s>
+<s> (As Mike Powell once said, you can buy better bandwidth but only God can change the speed of light.)  </s>
+<s> It may be true that PUT-like methods are not latency-sensitive, but if so, this requires some justification.  </s>
+<s> In most cases, this difference is trivial.  </s>
+<s> However, some security-related systems consider the ability to refuse a vulnerable operation before it occurs to be a showstopper.  </s>
+<s> The security issue here is new, and seems to have several components (I'm reading between the lines in your message): (1) The transmission of some data that would have been rejected might expose it to eavesdropping.  </s>
+<s> (2) The mere attempt to do a "vulnerable operation" that would be rejected could cause some havoc at the server side.  </s>
+<s> Am I missing any others?  </s>
+<s> Frankly, I don't buy either of these arguments; especially, as Koen points out, the 5-second timeout can be manipulated by an external agent (via a temporary denial-of-service attack) but also because we ought not to be pretending that security can be accomplished without encryption for privacy and authentication for authorization.  </s>
+<s> Also, some networks will require the user to pay by the amount of data sent, regardless of whether that data was initially rejected by the server.  </s>
+<s> A good point.  </s>
+<s> But even if the HTTP protocol allows the use of an optimistic two-phase scheme (as I am suggesting), this does not mean that it would be required (since the optimistic scheme includes the pessimistic scheme as a backstop).  </s>
+<s> In other words, a user that was being charged by the packet could choose to employ the pessimistic scheme, on its own initiative.  </s>
+<s> Given these cases exist, a pessimistic approach is "best".  </s>
+<s> This does not mean that the 5 second delay is the best solution -- it is just a way of forcing a real solution to be created.  </s>
+<s> Which is exactly what I think has happened: you have done us a service by forcing us to think about the problem.  </s>
+<s> But I still assert that the optimistic approach is "better" (perhaps not "best") if one believes that, most of the time, RTTs do matter and servers will not reject PUT-like methods.  </s>
+<s> And it leaves the issue of sensitivity to usage-pricing to the transmitter of the data, not to an a priori choice in the protocol design.  </s>
+<s> -Jeff  </s>
+<s> I think the ideal approach would be: 1) to send small files in one-phase PUT (where extra RTT has big effects) 2) to send large files in two-phase PUT (where extra RTT has less effects) Now, here is a hybrid scheme: Step one: send header PLUS part of the data (fit into one packet) Step two: wait for "continue" or timeout Step three: send the rest of the data if there are any For small files (ie, header and data fit into one packet), it is effectively a one-phase PUT while for large files, a two-phase PUT.  </s>
+<s> Cheers Zheng  </s>

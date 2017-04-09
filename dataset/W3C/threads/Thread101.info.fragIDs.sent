@@ -1,57 +1,57 @@
-We have come across a rather peculiar situation, which has arisen because of a legacy inheritance from "pre HTML" days. 
-An object , embed or param element can have an attribute such as eg script="...script commands..." These "legacy" script commands it turns out have some undesirable features a) they often contain semantic line breaks. 
-for example # comment where the # starts on a new line and the comment ends with a line break b) Even worse, the scripts can use the  or  operators. 
-Tidy of course breaks on b), but fortunately, the  can be replaced by an entity declaration in the instance that we use (Chime). 
-Its case a) that this query relates to. 
-Might it be possible to have a Tidy flag which would be used to suppress processing of the value of an attribute? 
-For example, a particularly long value is currently concatenated onto a single line, with line breaks removed. 
-The new flag would suppress this. 
-Or is it perhaps that XHTML specification mandates that the value of an element attribute MUST be specified on a single line? 
-Or possibly that XHTML imposes a character length limit on the value of an attribute? 
-Dept. 
-Chemistry, Imperial College, London, SW7 2AY, UK. 
-In principle this could be done, it should be relatively easy to modify ParseValue() in lexer.c to do this. 
-Do you have any examples of such legacy scripts, and why these need to be included in attribute values rather than as the content of script elements, or in linked scripts? 
-XHTML could specify whitespace handling beyond that specified by XML 1.0. 
-So far folks have not been in favor of specifying limits on the length of attribute values. 
-Regards, -- Dave Raggett dsr@w3.org 
-http://www.w3.org/People/Raggett World Wide Web Consortium (on assignment from HP Labs) 
-a) In chemistry, element attributes such as script="..." often contain semantic line breaks. 
-for example # comment where the # starts on a new line and the comment ends with a line break b) Even worse, the scripts can use the  or  operators. 
-Dave R replied 
-and Richard O'Keefe added; 
-I don't see any way around problem (a). 
-Problem b). 
-So script='cout   "foo"' should be perfectly ok in HTML. 
-HTML Tidy automatically translates   to   in attribute value literals, so problem (b) would seem to be solved. 
-I agree a) is semantically wrong. 
-A (temporary) solution might have been to simply suppress ALL processing of the value of an attribute, thus preserving line breaks, but running the risk of producing invalid XHTML. 
-Our basic problem was that a lot of chemists have produced a great many HTML pages containing scripts with problem a) and we need to produce a solution. 
-This answers Dave's question about why they had to be inlined rather than linked scripts, ie its what 1000s of pages unfortunately contain! 
-The best I think will be to pre-process the page, identifying the scripts that show this, and replace them with a line-break independent version Problem b) is actually much more complicated than we realised. 
-Richard is correct in stating that Tidy translates  , but in fact the answer is "sometimes", ie not always. 
-Its this behaviour that perhaps someone who is familiar with the Tidy code might wish to comment upon. 
-The best way of illustrating that is to give two examples 
-Example 1 Fails with Tidy with the error "Error: missing quotemark for attribute value" Example 2 Works as Richard Indicates Example 1 align=abscenter width=250 height=300 spiny=360 startspin=true display3D=ball&amp;stick SCRIPT=" # Avoid Colour Problems! 
-select (atomno =15) and (atomno =24) select atomno=(atomno =1) and (atomno =14) select (atomno =16) and (atomno =23) " Example 2 # Avoid Colour Problems! 
-select (atomno =15) and (atomno =24) select (atomno =16) and (atomno =23) " More generally, we have identified the following conditions c) Only the presence of  fails Tidy,  always is translated to an entity d) In the case that an occurrance of  exists, only up to 3 new existances of either  or 
-are translated. 
-More cause failure. 
-That is why example 2 works and not 1. e) After the first occurance of  , in the case that neither  or  occur again , only 8 new script lines are allowed with unlimited number of commands on each line. 
-f) If our script attribute value is put in a single line separated by ; (that is the syntax support in our script language) in the case of an occurance, up to 10 occurances of  or  are allowed but not more. 
-The number of other commands is unlimited. 
-Clearly, there must be buffer and counter limits in Tidy relating to handling the value of an attribute. 
-Of the cases above, fixing d) would help a great deal, and extending the limits found in e) and f) would be nice. 
-Dept. 
-Chemistry, Imperial College, London, SW7 2AY, UK. 
-Tidy has to use a rule of thumb to detect missing trailing quote marks and missing close tag symbols (" "). 
-This works by giving bad marks to a number of features and reaching a conclusion once the aggregate score exceeds some limit. 
-It is no good tweaking these rules which are there for the common case. 
-Instead, it will be necessary to switch off the quotemark rule and preserve the line breaks as per the authors original intentions. 
-It is a shame that the plugin relies in the line breaks as this prevents this markup from being reflowed. 
-For JavaScript literals, Tidy know's how to escape any newlines it inserts so that these don't effect the script. 
-What you have is the reverse - the line breaks are significant and need to be preserved. 
-I will look into this. 
-Perhaps the solution is to add a new config option to declare particular attributes as behaving like PRE content. 
-Regards, -- Dave Raggett dsr@w3.org 
-http://www.w3.org/People/Raggett World Wide Web Consortium (on assignment from HP Labs) 
+<s> We have come across a rather peculiar situation, which has arisen because of a legacy inheritance from "pre HTML" days.  </s>
+<s> An object , embed or param element can have an attribute such as eg script="...script commands..." These "legacy" script commands it turns out have some undesirable features a) they often contain semantic line breaks.  </s>
+<s> for example # comment where the # starts on a new line and the comment ends with a line break b) Even worse, the scripts can use the  or  operators.  </s>
+<s> Tidy of course breaks on b), but fortunately, the  can be replaced by an entity declaration in the instance that we use (Chime).  </s>
+<s> Its case a) that this query relates to.  </s>
+<s> Might it be possible to have a Tidy flag which would be used to suppress processing of the value of an attribute?  </s>
+<s> For example, a particularly long value is currently concatenated onto a single line, with line breaks removed.  </s>
+<s> The new flag would suppress this.  </s>
+<s> Or is it perhaps that XHTML specification mandates that the value of an element attribute MUST be specified on a single line?  </s>
+<s> Or possibly that XHTML imposes a character length limit on the value of an attribute?  </s>
+<s> Dept.  </s>
+<s> Chemistry, Imperial College, London, SW7 2AY, UK.  </s>
+<s> In principle this could be done, it should be relatively easy to modify ParseValue() in lexer.c to do this.  </s>
+<s> Do you have any examples of such legacy scripts, and why these need to be included in attribute values rather than as the content of script elements, or in linked scripts?  </s>
+<s> XHTML could specify whitespace handling beyond that specified by XML 1.0.  </s>
+<s> So far folks have not been in favor of specifying limits on the length of attribute values.  </s>
+<s> Regards, -- Dave Raggett dsr@w3.org  </s>
+<s> http://www.w3.org/People/Raggett World Wide Web Consortium (on assignment from HP Labs)  </s>
+<s> a) In chemistry, element attributes such as script="..." often contain semantic line breaks.  </s>
+<s> for example # comment where the # starts on a new line and the comment ends with a line break b) Even worse, the scripts can use the  or  operators.  </s>
+<s> Dave R replied  </s>
+<s> and Richard O'Keefe added;  </s>
+<s> I don't see any way around problem (a).  </s>
+<s> Problem b).  </s>
+<s> So script='cout   "foo"' should be perfectly ok in HTML.  </s>
+<s> HTML Tidy automatically translates   to   in attribute value literals, so problem (b) would seem to be solved.  </s>
+<s> I agree a) is semantically wrong.  </s>
+<s> A (temporary) solution might have been to simply suppress ALL processing of the value of an attribute, thus preserving line breaks, but running the risk of producing invalid XHTML.  </s>
+<s> Our basic problem was that a lot of chemists have produced a great many HTML pages containing scripts with problem a) and we need to produce a solution.  </s>
+<s> This answers Dave's question about why they had to be inlined rather than linked scripts, ie its what 1000s of pages unfortunately contain!  </s>
+<s> The best I think will be to pre-process the page, identifying the scripts that show this, and replace them with a line-break independent version Problem b) is actually much more complicated than we realised.  </s>
+<s> Richard is correct in stating that Tidy translates  , but in fact the answer is "sometimes", ie not always.  </s>
+<s> Its this behaviour that perhaps someone who is familiar with the Tidy code might wish to comment upon.  </s>
+<s> The best way of illustrating that is to give two examples  </s>
+<s> Example 1 Fails with Tidy with the error "Error: missing quotemark for attribute value" Example 2 Works as Richard Indicates Example 1 align=abscenter width=250 height=300 spiny=360 startspin=true display3D=ball&amp;stick SCRIPT=" # Avoid Colour Problems!  </s>
+<s> select (atomno =15) and (atomno =24) select atomno=(atomno =1) and (atomno =14) select (atomno =16) and (atomno =23) " Example 2 # Avoid Colour Problems!  </s>
+<s> select (atomno =15) and (atomno =24) select (atomno =16) and (atomno =23) " More generally, we have identified the following conditions c) Only the presence of  fails Tidy,  always is translated to an entity d) In the case that an occurrance of  exists, only up to 3 new existances of either  or  </s>
+<s> are translated.  </s>
+<s> More cause failure.  </s>
+<s> That is why example 2 works and not 1. e) After the first occurance of  , in the case that neither  or  occur again , only 8 new script lines are allowed with unlimited number of commands on each line.  </s>
+<s> f) If our script attribute value is put in a single line separated by ; (that is the syntax support in our script language) in the case of an occurance, up to 10 occurances of  or  are allowed but not more.  </s>
+<s> The number of other commands is unlimited.  </s>
+<s> Clearly, there must be buffer and counter limits in Tidy relating to handling the value of an attribute.  </s>
+<s> Of the cases above, fixing d) would help a great deal, and extending the limits found in e) and f) would be nice.  </s>
+<s> Dept.  </s>
+<s> Chemistry, Imperial College, London, SW7 2AY, UK.  </s>
+<s> Tidy has to use a rule of thumb to detect missing trailing quote marks and missing close tag symbols (" ").  </s>
+<s> This works by giving bad marks to a number of features and reaching a conclusion once the aggregate score exceeds some limit.  </s>
+<s> It is no good tweaking these rules which are there for the common case.  </s>
+<s> Instead, it will be necessary to switch off the quotemark rule and preserve the line breaks as per the authors original intentions.  </s>
+<s> It is a shame that the plugin relies in the line breaks as this prevents this markup from being reflowed.  </s>
+<s> For JavaScript literals, Tidy know's how to escape any newlines it inserts so that these don't effect the script.  </s>
+<s> What you have is the reverse - the line breaks are significant and need to be preserved.  </s>
+<s> I will look into this.  </s>
+<s> Perhaps the solution is to add a new config option to declare particular attributes as behaving like PRE content.  </s>
+<s> Regards, -- Dave Raggett dsr@w3.org  </s>
+<s> http://www.w3.org/People/Raggett World Wide Web Consortium (on assignment from HP Labs)  </s>

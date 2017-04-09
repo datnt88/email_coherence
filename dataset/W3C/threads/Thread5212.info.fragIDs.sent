@@ -1,48 +1,48 @@
-Some terminological points: We now encourage the term _process occurrence_ to mean the occurrence of a 'perform' for that process in another, complex process. 
-A process occurrence is not the same as the execution of a process, because of loops. 
-Suppose there's a text-translation service T that has process T#P, and I want to translate a document that's in English to French and back again, as a test of the translator. 
-I might try to use a process like this: (sequence (perform T#P) (perform T#P)) "Perform" helps make it clear that I and running the same process, T#P, twice. 
-(More, of course, if someone puts my process in a loop.) Question 1: How do I express such a process in OWL-S 1.0, where there doesn't seem to be anything named "perform"? 
-Perhaps naively, I'd use something like this: But does that have the right semantics? 
-I can't figure it out from the OWL-S 1.0 Technical Overview or from Process.owl, and I don't know of any more complete reference. 
-Question 2: How to I specify the data-flow? 
-Let's say that T#P has inputs T#inText and T#inLang, outputs T#outText and T#outLang. 
-I want to say that an input in my composite process, 
-call it #originalText, goes into an occurrence of T#P. 
-If there was only one occurrence of T#P, I could say #originalText at myProcess and T#inText at T#P had the same value. 
-But there are two occurrences of T#P. 
-How do I say which one I mean? 
-And how do I connect T#outText from the first to the T#inText of the second? 
-Perhaps this calls for indirection. 
-Instead of having a sequence that uses T#P directly, I could create two new processes, P1 and P2. 
-They would each be, say, (Unordered T#P) and they would have their own input and output parameters. 
-Then I could join up the data-flow at the top level using those parameters, because they're all "at" different points. 
-#originalText would have the same-value as P1#inText at P1, for example. 
-Or could I say T#inText at P1? So I have P1 = (Unordered T#P) P2 = (Unordered T#P) and may test process = (Sequence P1 P2). 
-But I'd still have the problem of saying, for instance, that P1#intext at P1 and T#inText at T#P had the same value. 
-Since I still have two occurrences of T#P, how do I say which one I mean? 
-It's looks like there's probably a scope rule, so that if I attach the sameValues to P1, I'm referring to the T#P in P, but I can't tell for sure from the Technical Overview or Process.owl. 
-Also, this all seems excessively complicated, which makes me unsure that this approach (using P1 and P2 etc) is the right one. 
-Perhaps there's an RDF trick, or something, that I've overlooked. 
-I'd appreciate any help anyone could give. 
--- Jeff 
-There will be in 1.1. 
-The syntax will look like this: in the simplest case, but we're also introducing flexible notations for binding the inputs and outputs of a performed process. 
-(See below.) 
-The problem with putting in a reference to the process directly is that you have no place to hang the descriptions of input and outputs parameter bindings. 
-If 'P' takes two inputs, named 'Doc' and 'TargetLang', we can bind to them thus: owls:valueForm rdf:resource="http://www.eurodisney.fr/MickeyLeMous 
-e.doc" / If 'hasBinding' were a property of a process, then there would be no way to distinguish the bindings on one occurrence from the bindings on another. 
-Oops, I seem to have answered this question already, at least for the inputs. 
-It seems to me that 'outLang' should be an input (what I called TargetLang), unless it represents T#P's best guess about what the target is. 
-I assume that T#outText is actually a bunch of text. 
-Or it might be the URL where the translator put the answer. 
-Either way, we refer to it later by making reference to the same Perform This 'valueForm' property might occur inside the input binding for a subsequent step. 
-Note that the 'fromProcess' property has as value the ID of a Perform. 
-The main trick is to supply a concise surface representation plus a program to translate in and out of RDF. -- Drew -- Drew McDermott Yale Computer Science Department 
-Thanks. 
-I think I understand that answer, though I'm still not sure what I should do to express the data-flow on OWL-S 1.0 (other than the approach I suggested). 
-Quoting Drew McDermott drew.mcdermott@yale.edu 
-: 
-Yes, you're right: outLang should be an input. 
-Having it as an output was due to some careless editing on my part. 
--- Jeff 
+<s> Some terminological points: We now encourage the term _process occurrence_ to mean the occurrence of a 'perform' for that process in another, complex process.  </s>
+<s> A process occurrence is not the same as the execution of a process, because of loops.  </s>
+<s> Suppose there's a text-translation service T that has process T#P, and I want to translate a document that's in English to French and back again, as a test of the translator.  </s>
+<s> I might try to use a process like this: (sequence (perform T#P) (perform T#P)) "Perform" helps make it clear that I and running the same process, T#P, twice.  </s>
+<s> (More, of course, if someone puts my process in a loop.) Question 1: How do I express such a process in OWL-S 1.0, where there doesn't seem to be anything named "perform"?  </s>
+<s> Perhaps naively, I'd use something like this: But does that have the right semantics?  </s>
+<s> I can't figure it out from the OWL-S 1.0 Technical Overview or from Process.owl, and I don't know of any more complete reference.  </s>
+<s> Question 2: How to I specify the data-flow?  </s>
+<s> Let's say that T#P has inputs T#inText and T#inLang, outputs T#outText and T#outLang.  </s>
+<s> I want to say that an input in my composite process,  </s>
+<s> call it #originalText, goes into an occurrence of T#P.  </s>
+<s> If there was only one occurrence of T#P, I could say #originalText at myProcess and T#inText at T#P had the same value.  </s>
+<s> But there are two occurrences of T#P.  </s>
+<s> How do I say which one I mean?  </s>
+<s> And how do I connect T#outText from the first to the T#inText of the second?  </s>
+<s> Perhaps this calls for indirection.  </s>
+<s> Instead of having a sequence that uses T#P directly, I could create two new processes, P1 and P2.  </s>
+<s> They would each be, say, (Unordered T#P) and they would have their own input and output parameters.  </s>
+<s> Then I could join up the data-flow at the top level using those parameters, because they're all "at" different points.  </s>
+<s> #originalText would have the same-value as P1#inText at P1, for example.  </s>
+<s> Or could I say T#inText at P1? So I have P1 = (Unordered T#P) P2 = (Unordered T#P) and may test process = (Sequence P1 P2).  </s>
+<s> But I'd still have the problem of saying, for instance, that P1#intext at P1 and T#inText at T#P had the same value.  </s>
+<s> Since I still have two occurrences of T#P, how do I say which one I mean?  </s>
+<s> It's looks like there's probably a scope rule, so that if I attach the sameValues to P1, I'm referring to the T#P in P, but I can't tell for sure from the Technical Overview or Process.owl.  </s>
+<s> Also, this all seems excessively complicated, which makes me unsure that this approach (using P1 and P2 etc) is the right one.  </s>
+<s> Perhaps there's an RDF trick, or something, that I've overlooked.  </s>
+<s> I'd appreciate any help anyone could give.  </s>
+<s> -- Jeff  </s>
+<s> There will be in 1.1.  </s>
+<s> The syntax will look like this: in the simplest case, but we're also introducing flexible notations for binding the inputs and outputs of a performed process.  </s>
+<s> (See below.)  </s>
+<s> The problem with putting in a reference to the process directly is that you have no place to hang the descriptions of input and outputs parameter bindings.  </s>
+<s> If 'P' takes two inputs, named 'Doc' and 'TargetLang', we can bind to them thus: owls:valueForm rdf:resource="http://www.eurodisney.fr/MickeyLeMous  </s>
+<s> e.doc" / If 'hasBinding' were a property of a process, then there would be no way to distinguish the bindings on one occurrence from the bindings on another.  </s>
+<s> Oops, I seem to have answered this question already, at least for the inputs.  </s>
+<s> It seems to me that 'outLang' should be an input (what I called TargetLang), unless it represents T#P's best guess about what the target is.  </s>
+<s> I assume that T#outText is actually a bunch of text.  </s>
+<s> Or it might be the URL where the translator put the answer.  </s>
+<s> Either way, we refer to it later by making reference to the same Perform This 'valueForm' property might occur inside the input binding for a subsequent step.  </s>
+<s> Note that the 'fromProcess' property has as value the ID of a Perform.  </s>
+<s> The main trick is to supply a concise surface representation plus a program to translate in and out of RDF. -- Drew -- Drew McDermott Yale Computer Science Department  </s>
+<s> Thanks.  </s>
+<s> I think I understand that answer, though I'm still not sure what I should do to express the data-flow on OWL-S 1.0 (other than the approach I suggested).  </s>
+<s> Quoting Drew McDermott drew.mcdermott@yale.edu  </s>
+<s> :  </s>
+<s> Yes, you're right: outLang should be an input.  </s>
+<s> Having it as an output was due to some careless editing on my part.  </s>
+<s> -- Jeff  </s>

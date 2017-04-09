@@ -1,91 +1,91 @@
-Hi all, I'm currently having great difficulty creating Japanese XML document in memory. 
-Problem arises because most parsers do not treat 'encoding' attribute as part of the ?xml? . 
-As a concrete example: 1. MS' s parser I can't loadXML document containing Japanese tag names. 
-I'm also unable to specify encoding in the document because the document isn't loaded yet. 
-2. Oracle's parser After createDocument(), I can't immediately issue setEncoding() method. 
-I have to issue the method after creating a dummy node. 
-Encoding is necessary to load Japanese XML documents but encoding can not be specified on a null document. 
-It would be nice if all attributes of processing instructions are REQUIRED to be treated as part of a PI node itself. 
-Thus, to change document encoding, I would only have to change setEncoding() method parameter instead of adding new procedures. 
-H.Ozawa h-ozawa@hitachi-system.co.jp 
-Creating the document in memory shouldn't be a problem. 
-All strings in the 
-DOM, by definition, are expressed in UTF-16, which should be able to handle Japanese characters. 
-As you point out, writing that document out and reading it back in are somewhat more complicated. 
-The serializer and parser have to understand how to translate between UTF-16 and your preferred encoding, and you have to figure out how to tell them which encoding to use. 
-Unfortunately, setEncoding() is not part of the standardized DOM API. 
-The standard DOM does not have any representation of the XML Declaration ( ?xml? ), and so does not store the encoding. 
-Some tools express this as a Processing Instruction, but the XML specification and the Infoset both say that this isn't really the right answer. 
-Some parsers make the encoding name available as a separate piece of information, and some serializers accept the encoding as a parameter along with the top-level DOM node; that's probably a better design than the PI approach. 
-We're aware that this is probably an oversight in the DOM. 
-It's on our Open Issues list for future DOM development, and I expect it will be addressed as part of the DOM Level 3 Serialization chapter. 
-Meanwhile, I'm afraid you're stuck with nonportable solutions... and with hunting for parsers that support the encodings you want to use. 
-(Obligatory marketing: Have you tried IBM's XML4J, or the Apache parser based on that code? 
-Since the first version of that parser was written by a group in our Tokyo research center, I would be very surprised if it didn't include support for Japanese documents!) 
-Joe Kesselman / IBM Research 
-Hello, Your description wasn't quite clear what you're doing, so it's hard to say just what was going wrong. 
-For example, exactly which encoding line was used? 
-I understand there are quite a few encodings used in Japan, not all of which are widely supported. 
-I've seen ones like this work pretty consistently: 
-Note that parsing isn't a DOM issue; DOM just represents documents 
-in memory. 
-And the difference between a DOM document with Japanese 
-text (or tags, or attributes, etc) and one with, say, English ones is just the contents of some strings, ones which the DOM won't have much reason to look at after the tree model is created. 
-(The strings are invariably going to be encoded in UTF-16 or Unicode.) See my XML.com reviews of XML parsers, linked from the bottom of These show parsers which handle Japanese encodings. 
-Look at the very last section of the "Full Test Results" for any parser, and you'll see that many do a good job of parsing the XML documents (in Japanese) provided by Fuji Xerox. 
-I think the parsers provided by corporations pass these tests pretty consistently, and the others didn't. 
-Sun's, as one example, handled those Japanese test cases with no trouble. 
-Which Microsoft parser? 
-Their Java parser isn't really worth looking at; almost any other parser is miles ahead. 
-But the IE5 "MSXML.DLL" is much better, even though it's got DTD troubles, and I've observed it to load documents with Japanese encodings. 
-Again, it's not clear what you're doing. 
-The tests reported above show that there were some problems with an older release of Oracle's Java parser (2.0.0.2) and some Japanese encodings, but not with others. 
-I suspect Oracle has a much more up-to-date version than that. 
-But an XML declaration, or a text declaration, isn't a PI. 
-And even if it were modeled as one in DOM, that wouldn't help anything happening in a parser -- since by the time you get a DOM model of an XML document into memory, it's been parsed. 
-Transcoding documents isn't a DOM functionality, neither is any sort of setEncoding() method. 
-So I think you can see why I'm puzzled exactly what you're doing, and what's going wrong! - Dave 
-I would just need a OS that accept entries in UTF-16. 
-Most Japanese data are either in Shift_JIS or EUC. 
-It would be a waste of time to convert all literals to UTF16. 
-Assume if XML document supported EBCDIC by default. 
-Would you then convert 
-your ASCII to EBCDIC just to use the technology? 
-I have a 3 tier system. 
-Client validates entries before sending to to the server. 
-Server returns a XML document by creating XML document from query result. 
-Client system uses Windows which uses Shift_JIS. 
-Server is either HP or SUN server which uses Shift_JIS or EUC. 
-These are given with most companies. 
-UTF16 is theorically excellent but as of now, it is logically a failing choice. 
-Well, I'm really not hunting for a parser. 
-I've already contacted Oracle and MS about these issues. 
-I just don't want to go around every time asking them to support Japanese. 
-I think people from non-UTF8 will face a similar problem. 
-I think most English users do not see the urgency of this problem but it really demands quick resolution. 
-Thought it better to resolve the problem at the root rather than at leaves. 
-Might try Linux-Apache set. 
-Have to check out JDBC support. 
-H.Ozawa h-ozawa@hitachi-system.co.jp 
-Most parsers could handle XML document files creatED externally. 
-The problem comes when I try to create a XML document directly (ie. 
-no external file) in memory. 
-I'm creating XML documents dynamically from form entries and from database query results. 
-H.Ozawa h-ozawa@hitachi-system.co.jp 
-For what it's worth, we have had some discussions with the I18N group about how to improve the DOM's internationalization support. 
-The results have been somewhat inconclusive; the two groups have had a bit of trouble reaching a consensus on what functions are needed and how to organize them. 
-"I18N indexing" is listed as one of the issues to be revisited in future versions of the DOM, but there are probably other functions that would be needed as well. 
-My own personal guess is that what's needed is a general internationalized-text-string datatype, which might then be slotted into the DOM as an implementation of DOMString as well as being usable independently. 
-But I suspect that datatype should be designed by the I18N group rather than the DOM group; they're the ones who have the relevant expertise. 
-Re the problem of multiple encodings: In fact, if you're using a DOM on an EBCDIC-based system, you _are_ expected to translate from EBCDIC to UTF-16. 
-ASCII-based environments may have an unfair advantage, but they still have to add the leading 0 byte to every character, so all they really avoid is a table look-up. 
-However... character-set translation is something that the DOM Level 3 Serialization chapter will have to deal with, at least implicitly; it might make sense to ask that the encoding conversion routines be exposed as subroutines. 
-I'll record this as an open issue. 
-That doesn't guarantee that we'll address it, but at least it'll keep us from forgetting about it. 
-Joe Kesselman / IBM Research 
-Tcl does a pretty good job of handling character encodings. 
-With TclDOM, documents in memory are stored as UTF-8 (whether created from scratch in memory or parsed from XML). 
-In Tcl you can serialize the document as a string. 
-If you are writing the XML to a file you have complete control over the encoding of the output stream, using standard Tcl channel commands (Tcl uses "channels" rather than "file descriptors" to account for platform differences). 
-Hope that helps, Steve Ball Steve Ball | Swish XML Editor | Training &amp; Seminars Zveno Pty Ltd | Web Tcl Complete | XML XSL Steve.Ball@zveno.com 
-+-----------------------+--------------------- 
+<s> Hi all, I'm currently having great difficulty creating Japanese XML document in memory.  </s>
+<s> Problem arises because most parsers do not treat 'encoding' attribute as part of the ?xml? .  </s>
+<s> As a concrete example: 1. MS' s parser I can't loadXML document containing Japanese tag names.  </s>
+<s> I'm also unable to specify encoding in the document because the document isn't loaded yet.  </s>
+<s> 2. Oracle's parser After createDocument(), I can't immediately issue setEncoding() method.  </s>
+<s> I have to issue the method after creating a dummy node.  </s>
+<s> Encoding is necessary to load Japanese XML documents but encoding can not be specified on a null document.  </s>
+<s> It would be nice if all attributes of processing instructions are REQUIRED to be treated as part of a PI node itself.  </s>
+<s> Thus, to change document encoding, I would only have to change setEncoding() method parameter instead of adding new procedures.  </s>
+<s> H.Ozawa h-ozawa@hitachi-system.co.jp  </s>
+<s> Creating the document in memory shouldn't be a problem.  </s>
+<s> All strings in the  </s>
+<s> DOM, by definition, are expressed in UTF-16, which should be able to handle Japanese characters.  </s>
+<s> As you point out, writing that document out and reading it back in are somewhat more complicated.  </s>
+<s> The serializer and parser have to understand how to translate between UTF-16 and your preferred encoding, and you have to figure out how to tell them which encoding to use.  </s>
+<s> Unfortunately, setEncoding() is not part of the standardized DOM API.  </s>
+<s> The standard DOM does not have any representation of the XML Declaration ( ?xml? ), and so does not store the encoding.  </s>
+<s> Some tools express this as a Processing Instruction, but the XML specification and the Infoset both say that this isn't really the right answer.  </s>
+<s> Some parsers make the encoding name available as a separate piece of information, and some serializers accept the encoding as a parameter along with the top-level DOM node; that's probably a better design than the PI approach.  </s>
+<s> We're aware that this is probably an oversight in the DOM.  </s>
+<s> It's on our Open Issues list for future DOM development, and I expect it will be addressed as part of the DOM Level 3 Serialization chapter.  </s>
+<s> Meanwhile, I'm afraid you're stuck with nonportable solutions... and with hunting for parsers that support the encodings you want to use.  </s>
+<s> (Obligatory marketing: Have you tried IBM's XML4J, or the Apache parser based on that code?  </s>
+<s> Since the first version of that parser was written by a group in our Tokyo research center, I would be very surprised if it didn't include support for Japanese documents!)  </s>
+<s> Joe Kesselman / IBM Research  </s>
+<s> Hello, Your description wasn't quite clear what you're doing, so it's hard to say just what was going wrong.  </s>
+<s> For example, exactly which encoding line was used?  </s>
+<s> I understand there are quite a few encodings used in Japan, not all of which are widely supported.  </s>
+<s> I've seen ones like this work pretty consistently:  </s>
+<s> Note that parsing isn't a DOM issue; DOM just represents documents  </s>
+<s> in memory.  </s>
+<s> And the difference between a DOM document with Japanese  </s>
+<s> text (or tags, or attributes, etc) and one with, say, English ones is just the contents of some strings, ones which the DOM won't have much reason to look at after the tree model is created.  </s>
+<s> (The strings are invariably going to be encoded in UTF-16 or Unicode.) See my XML.com reviews of XML parsers, linked from the bottom of These show parsers which handle Japanese encodings.  </s>
+<s> Look at the very last section of the "Full Test Results" for any parser, and you'll see that many do a good job of parsing the XML documents (in Japanese) provided by Fuji Xerox.  </s>
+<s> I think the parsers provided by corporations pass these tests pretty consistently, and the others didn't.  </s>
+<s> Sun's, as one example, handled those Japanese test cases with no trouble.  </s>
+<s> Which Microsoft parser?  </s>
+<s> Their Java parser isn't really worth looking at; almost any other parser is miles ahead.  </s>
+<s> But the IE5 "MSXML.DLL" is much better, even though it's got DTD troubles, and I've observed it to load documents with Japanese encodings.  </s>
+<s> Again, it's not clear what you're doing.  </s>
+<s> The tests reported above show that there were some problems with an older release of Oracle's Java parser (2.0.0.2) and some Japanese encodings, but not with others.  </s>
+<s> I suspect Oracle has a much more up-to-date version than that.  </s>
+<s> But an XML declaration, or a text declaration, isn't a PI.  </s>
+<s> And even if it were modeled as one in DOM, that wouldn't help anything happening in a parser -- since by the time you get a DOM model of an XML document into memory, it's been parsed.  </s>
+<s> Transcoding documents isn't a DOM functionality, neither is any sort of setEncoding() method.  </s>
+<s> So I think you can see why I'm puzzled exactly what you're doing, and what's going wrong! - Dave  </s>
+<s> I would just need a OS that accept entries in UTF-16.  </s>
+<s> Most Japanese data are either in Shift_JIS or EUC.  </s>
+<s> It would be a waste of time to convert all literals to UTF16.  </s>
+<s> Assume if XML document supported EBCDIC by default.  </s>
+<s> Would you then convert  </s>
+<s> your ASCII to EBCDIC just to use the technology?  </s>
+<s> I have a 3 tier system.  </s>
+<s> Client validates entries before sending to to the server.  </s>
+<s> Server returns a XML document by creating XML document from query result.  </s>
+<s> Client system uses Windows which uses Shift_JIS.  </s>
+<s> Server is either HP or SUN server which uses Shift_JIS or EUC.  </s>
+<s> These are given with most companies.  </s>
+<s> UTF16 is theorically excellent but as of now, it is logically a failing choice.  </s>
+<s> Well, I'm really not hunting for a parser.  </s>
+<s> I've already contacted Oracle and MS about these issues.  </s>
+<s> I just don't want to go around every time asking them to support Japanese.  </s>
+<s> I think people from non-UTF8 will face a similar problem.  </s>
+<s> I think most English users do not see the urgency of this problem but it really demands quick resolution.  </s>
+<s> Thought it better to resolve the problem at the root rather than at leaves.  </s>
+<s> Might try Linux-Apache set.  </s>
+<s> Have to check out JDBC support.  </s>
+<s> H.Ozawa h-ozawa@hitachi-system.co.jp  </s>
+<s> Most parsers could handle XML document files creatED externally.  </s>
+<s> The problem comes when I try to create a XML document directly (ie.  </s>
+<s> no external file) in memory.  </s>
+<s> I'm creating XML documents dynamically from form entries and from database query results.  </s>
+<s> H.Ozawa h-ozawa@hitachi-system.co.jp  </s>
+<s> For what it's worth, we have had some discussions with the I18N group about how to improve the DOM's internationalization support.  </s>
+<s> The results have been somewhat inconclusive; the two groups have had a bit of trouble reaching a consensus on what functions are needed and how to organize them.  </s>
+<s> "I18N indexing" is listed as one of the issues to be revisited in future versions of the DOM, but there are probably other functions that would be needed as well.  </s>
+<s> My own personal guess is that what's needed is a general internationalized-text-string datatype, which might then be slotted into the DOM as an implementation of DOMString as well as being usable independently.  </s>
+<s> But I suspect that datatype should be designed by the I18N group rather than the DOM group; they're the ones who have the relevant expertise.  </s>
+<s> Re the problem of multiple encodings: In fact, if you're using a DOM on an EBCDIC-based system, you _are_ expected to translate from EBCDIC to UTF-16.  </s>
+<s> ASCII-based environments may have an unfair advantage, but they still have to add the leading 0 byte to every character, so all they really avoid is a table look-up.  </s>
+<s> However... character-set translation is something that the DOM Level 3 Serialization chapter will have to deal with, at least implicitly; it might make sense to ask that the encoding conversion routines be exposed as subroutines.  </s>
+<s> I'll record this as an open issue.  </s>
+<s> That doesn't guarantee that we'll address it, but at least it'll keep us from forgetting about it.  </s>
+<s> Joe Kesselman / IBM Research  </s>
+<s> Tcl does a pretty good job of handling character encodings.  </s>
+<s> With TclDOM, documents in memory are stored as UTF-8 (whether created from scratch in memory or parsed from XML).  </s>
+<s> In Tcl you can serialize the document as a string.  </s>
+<s> If you are writing the XML to a file you have complete control over the encoding of the output stream, using standard Tcl channel commands (Tcl uses "channels" rather than "file descriptors" to account for platform differences).  </s>
+<s> Hope that helps, Steve Ball Steve Ball | Swish XML Editor | Training &amp; Seminars Zveno Pty Ltd | Web Tcl Complete | XML XSL Steve.Ball@zveno.com  </s>
+<s> +-----------------------+---------------------  </s>

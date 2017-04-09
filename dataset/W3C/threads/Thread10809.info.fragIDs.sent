@@ -1,119 +1,119 @@
-D.1 What behavior should XML systems exhibit if no DTD, or only a partial DTD, is given with a document? 
-There are four cases worth considering for partial DTDs: (1) the DTD covers everything in the instance (e.g. it's a subset of DOCBOOK) This is a full DTD as far as the instance is concerned... 
-(2) there are elements in the instance not in the DTD, or attributes, entities, or other wilde beasties. 
-But at least some names in the DTD correspond to the instance. 
-The DTD, in other words, is a strict subset of the one that an SGML parser would need to parse and accept this instance. 
-In this case, there are two main possibilities. 
-(2a) the undefined names are errors; the instance (or DTD) is invalid (2b) the undefined names are accepted, as if they were declared automatically and implicitly. 
-I would strongly favour 2b. 
-(3) there is a DTD, but no names in the instance are actually used in the document. 
-This is indistinguishable from having the wrong DTD, and arguably could be an error. 
-But in practice it is the same as having no DTD, for all the good it does. 
-(4) there is no DTD. 
-This is the case if a partial DTD is actually empty, for example. 
-It seems to me that cases 2, 3 and 4 are all similar in that there are names in the instance that have not been explicitly declared in an actual manifestation of a DTD. 
-If case (4) is supported, cases (2) and (3) also should be supported, and route (2b) should be taken. 
-In particular, should there be a way to distinguish a document instance for which a DTD exists but is not given from an instance for which no DTD exists? 
-I think that's a question of philosophy. 
-You can only distinguish between where you have or can get a DTD, and where you don't have one and can't get one. 
-If you don't have a DTD, you're in the same position as if you had an empty DTD. 
-You can read (as long as we don't screw up the XML definition) but not validate. 
-If you work with SGML tools, you'll of course have a program to create an SGML DTD from an XML instance, as otherwise you couldn't use XML files with SGML tools. 
-Lee 
-[Summary. 
-Disagreement with case analysis. 
-I see two cases: DTD given, in which case we can validate (if we can get the DTD), or not. 
-DTD not given, 
-in which case validation is never an option. 
-No need to tell application 
-about existence of DTDs absent some kind of access handle (agreement with Lee, I think).] 
-D.1 What behavior should XML systems exhibit if no DTD, or only a partial DTD, is given with a document? 
-Sure. 
-I wish we could complain about missing element declarations, but we can't so we might as well live with it. 
-I would strongly favor 2a. 
-By making the DTD optional, we let people be lazy about declarations. 
-But once they create declarations, they've made a commitment to structure, and should be (at least) of violations of that structure. 
-A DTD is supposed to constrain documents. 
-That's why we made it optional, but that's also why, if present, it should have teeth. 
-That's also why I don't like the notion of "partial DTD" that creates a situation where I have to do 2b, because I'm lacking _some_ declarations. 
-I guess that this means that it's a validation error, as we will not be able to prevent non-validating applications from implementing 2b. 
-A validation error becuase of undeclared elements (in the presence of declarations). 
-This is OK, because without a DTD, the notion of validation is vacuous. 
-All instances are legal, if they meet instance syntax restrictions. 
-I lump them differently, into two basic cases: DTD given (and validation reports undeclared instance stuff) And partial DTDs are malformed if the instance refers to undeclared stuff. 
-DTD not given: Anything goes, and validation errors are neve given (only basic XML instance syntax errors). 
-In particular, should there be a way to distinguish a document instance for which a DTD exists but is not given from an instance for which no DTD exists? 
-I agree. 
-If the DTD exists, you should have some kind of reference to it (that you may ignore, or that might be broken). 
-Sure. 
-Yep. I think this will be a useful XML tool, as well. 
-So I think what we really have is a two phase process: Parse, which uses instance syntax, and produces a basic data structure. 
-This can always be done with no DTD information. 
-Validate, that takes a DTD and determines that the instance matches it. 
-Only possible when the DTD exists and is accessible. 
-Applications can't use information of the form there is a DTD, but I'm not giving you a chance to access it, so it should not be included. 
--- David RE delenda est. 
-I am not a number. 
-I am an undefined character. 
-David Durand dgd@cs.bu.edu \ david@dynamicDiagrams.com 
-Boston University Computer Science \ Sr. Analyst --------------------------------------------\ http://dynamicDiagrams.com/ MAPA: mapping for the WWW \__________________________ 
-Right now, XML distinguishes "well-formed" and "valid" documents. 
-"Well-formed" may require recourse to part of a DTD, for example entity declarations and [depending on EMPTY syntax] EMPTY declarations. 
-However, If you ask an XML processor to validate an instance, that means that the appearance of an undeclared element is an error, period. 
-An undeclared tag could be the result of (1) a typographical error while typing in XML source with Notepad [it *will* happen], or (2) a missing declaration in the DTD. 
-It is not the job of an XML processor to intuit which is the case. 
-More concisely, I do *not* favor partial DTD's in the context of validation. 
-Cheers, Tim Bray 
-tbray@textuality.com http://www.textuality.com/ 
-+1-604-488-1167 
-On Fri, 25 Oct 1996 12:05:01 -0400 Tim Bray said: 
-It seems to me this means we need to know whether something is in fact a partial DTD, or is (intended to be) a full DTD. (I am using 'DTD' here in the sense of 'explicit markup declarations', not in the larger sense prescribed by 8879). 
-Something intended to be a 
-full DTD is in theory suitable for validation; something intended 
-only to be a partial DTD (e.g. to provide declarations of external entities) is not suitable as the basis for validation. 
-In the one case, having an element with an unknown GI is an error and should be flagged as such by any validating parser. 
-In the other case, such an element is the normal state of affairs and it is senseless to try to validate the document: an ideally helpful system would say "Er, it's pointless trying to validate this, it only has a partial DTD" rather than issuing a few hundred error messages. 
-But no system can know which to do unless it can distinguish a full DTD from a partial DTD, i.e. unless there is something in the document to say "This set of markup declarations is complete" or "This set of markup declarations is not complete". 
-So, I think the answer to the original question is, Yes, there should be an XML parameter entity to indicate whether the DTD given is a full DTD (as for SGML) or a partial DTD not intended to make the document valid (probably, in practice, intended only to make it well-formed). 
--C. M. Sperberg-McQueen 
-I think we should forgo partial DTDs. 
-XML should be specified in such a way to permit (require) parsing of well-formed XML without reference to *any* DTD-like information. 
-Of course, this would require that we revisit optional external text entities. 
-On the other hand, we could get right down to business and describe an XML document as claiming to be in a ready-to-validate state or not. 
-The full/partial business makes me uncomfortable because the ends are just degenerate cases of the middle, but stating that you think something is ready to be validated is a useful piece of information. 
-(PI, not parment, right?) People who are making ad hoc document 
-structures will not want to add a PI saying that the structures are ad hoc. 
-It would make more sense to require documents that are "complete" to have a PI saying so, since saying so would buy more 
-useful processing -- namely, validation by recipients. 
-And since 
-much document exchange (I'm guessing) won't be for the purpose of validation by recipients, the PI can be left off a lot of the time. 
-Eve 
-On Wed, 30 Oct 1996 09:14:24 -0500 Eve L. Maler said: 
-Right. Processing instruction, not parameter entity. 
-I shouldn't draft postings when I'm tired. 
-Eve is surely right that claiming validity is probably more useful and to the point than saying 'DTD is complete/incomplete'; also right to suggest the default should be 'no validity claimed'. 
--Michael Sperberg-McQueen 
-Or, we can avoid any feature that would make this distiction necessary. 
-So we have _no declarations_ or a _full DTD_. 
-This is why I favor some distinctive syntax for empty elements (any of the possibilities will do). 
-I can't remember what other sticking points there are to eliminating the notion of partial DTDs. 
-Oh, yes, entities. 
-If we allow transclusion semantics, browsers can treat an undefined entity as a broken link, in the same way they treat a broken grapic now... 
-This is another reason I think that unresolved entities are natural. 
-Or undefined entities can be an error in a DTD- and subset-less document. 
-BTW what is happening with the subset? 
-If we need "partial DTDs" couldn't we implement them more nicely as subsets to empty doctypes (which in this case would add value for the user, by letting them declare entities). 
-A subset without a DTD would be well-formed, whatever declarations it contained. 
--- David RE delenda est. 
-I am not a number. 
-I am an undefined character. 
-David Durand dgd@cs.bu.edu \ david@dynamicDiagrams.com 
-Boston University Computer Science \ Sr. Analyst --------------------------------------------\ http://dynamicDiagrams.com/ MAPA: mapping for the WWW \__________________________ 
-And since valid documents will require a doctype, we don't need any extra flag at all! 
-We expect that it is valid if it has a doctype, and well-formed if it has no doctype (or maybe a " !doctype foo SYSTEM [ some dumb subset ] " doctype, if we can't eliminate the notion of partial DTDs). 
---- David 
-RE delenda est. 
-I am not a number. 
-I am an undefined character. 
-David Durand dgd@cs.bu.edu \ david@dynamicDiagrams.com 
-Boston University Computer Science \ Sr. Analyst --------------------------------------------\ http://dynamicDiagrams.com/ MAPA: mapping for the WWW \__________________________ 
+<s> D.1 What behavior should XML systems exhibit if no DTD, or only a partial DTD, is given with a document?  </s>
+<s> There are four cases worth considering for partial DTDs: (1) the DTD covers everything in the instance (e.g. it's a subset of DOCBOOK) This is a full DTD as far as the instance is concerned...  </s>
+<s> (2) there are elements in the instance not in the DTD, or attributes, entities, or other wilde beasties.  </s>
+<s> But at least some names in the DTD correspond to the instance.  </s>
+<s> The DTD, in other words, is a strict subset of the one that an SGML parser would need to parse and accept this instance.  </s>
+<s> In this case, there are two main possibilities.  </s>
+<s> (2a) the undefined names are errors; the instance (or DTD) is invalid (2b) the undefined names are accepted, as if they were declared automatically and implicitly.  </s>
+<s> I would strongly favour 2b.  </s>
+<s> (3) there is a DTD, but no names in the instance are actually used in the document.  </s>
+<s> This is indistinguishable from having the wrong DTD, and arguably could be an error.  </s>
+<s> But in practice it is the same as having no DTD, for all the good it does.  </s>
+<s> (4) there is no DTD.  </s>
+<s> This is the case if a partial DTD is actually empty, for example.  </s>
+<s> It seems to me that cases 2, 3 and 4 are all similar in that there are names in the instance that have not been explicitly declared in an actual manifestation of a DTD.  </s>
+<s> If case (4) is supported, cases (2) and (3) also should be supported, and route (2b) should be taken.  </s>
+<s> In particular, should there be a way to distinguish a document instance for which a DTD exists but is not given from an instance for which no DTD exists?  </s>
+<s> I think that's a question of philosophy.  </s>
+<s> You can only distinguish between where you have or can get a DTD, and where you don't have one and can't get one.  </s>
+<s> If you don't have a DTD, you're in the same position as if you had an empty DTD.  </s>
+<s> You can read (as long as we don't screw up the XML definition) but not validate.  </s>
+<s> If you work with SGML tools, you'll of course have a program to create an SGML DTD from an XML instance, as otherwise you couldn't use XML files with SGML tools.  </s>
+<s> Lee  </s>
+<s> [Summary.  </s>
+<s> Disagreement with case analysis.  </s>
+<s> I see two cases: DTD given, in which case we can validate (if we can get the DTD), or not.  </s>
+<s> DTD not given,  </s>
+<s> in which case validation is never an option.  </s>
+<s> No need to tell application  </s>
+<s> about existence of DTDs absent some kind of access handle (agreement with Lee, I think).]  </s>
+<s> D.1 What behavior should XML systems exhibit if no DTD, or only a partial DTD, is given with a document?  </s>
+<s> Sure.  </s>
+<s> I wish we could complain about missing element declarations, but we can't so we might as well live with it.  </s>
+<s> I would strongly favor 2a.  </s>
+<s> By making the DTD optional, we let people be lazy about declarations.  </s>
+<s> But once they create declarations, they've made a commitment to structure, and should be (at least) of violations of that structure.  </s>
+<s> A DTD is supposed to constrain documents.  </s>
+<s> That's why we made it optional, but that's also why, if present, it should have teeth.  </s>
+<s> That's also why I don't like the notion of "partial DTD" that creates a situation where I have to do 2b, because I'm lacking _some_ declarations.  </s>
+<s> I guess that this means that it's a validation error, as we will not be able to prevent non-validating applications from implementing 2b.  </s>
+<s> A validation error becuase of undeclared elements (in the presence of declarations).  </s>
+<s> This is OK, because without a DTD, the notion of validation is vacuous.  </s>
+<s> All instances are legal, if they meet instance syntax restrictions.  </s>
+<s> I lump them differently, into two basic cases: DTD given (and validation reports undeclared instance stuff) And partial DTDs are malformed if the instance refers to undeclared stuff.  </s>
+<s> DTD not given: Anything goes, and validation errors are neve given (only basic XML instance syntax errors).  </s>
+<s> In particular, should there be a way to distinguish a document instance for which a DTD exists but is not given from an instance for which no DTD exists?  </s>
+<s> I agree.  </s>
+<s> If the DTD exists, you should have some kind of reference to it (that you may ignore, or that might be broken).  </s>
+<s> Sure.  </s>
+<s> Yep. I think this will be a useful XML tool, as well.  </s>
+<s> So I think what we really have is a two phase process: Parse, which uses instance syntax, and produces a basic data structure.  </s>
+<s> This can always be done with no DTD information.  </s>
+<s> Validate, that takes a DTD and determines that the instance matches it.  </s>
+<s> Only possible when the DTD exists and is accessible.  </s>
+<s> Applications can't use information of the form there is a DTD, but I'm not giving you a chance to access it, so it should not be included.  </s>
+<s> -- David RE delenda est.  </s>
+<s> I am not a number.  </s>
+<s> I am an undefined character.  </s>
+<s> David Durand dgd@cs.bu.edu \ david@dynamicDiagrams.com  </s>
+<s> Boston University Computer Science \ Sr. Analyst --------------------------------------------\ http://dynamicDiagrams.com/ MAPA: mapping for the WWW \__________________________  </s>
+<s> Right now, XML distinguishes "well-formed" and "valid" documents.  </s>
+<s> "Well-formed" may require recourse to part of a DTD, for example entity declarations and [depending on EMPTY syntax] EMPTY declarations.  </s>
+<s> However, If you ask an XML processor to validate an instance, that means that the appearance of an undeclared element is an error, period.  </s>
+<s> An undeclared tag could be the result of (1) a typographical error while typing in XML source with Notepad [it *will* happen], or (2) a missing declaration in the DTD.  </s>
+<s> It is not the job of an XML processor to intuit which is the case.  </s>
+<s> More concisely, I do *not* favor partial DTD's in the context of validation.  </s>
+<s> Cheers, Tim Bray  </s>
+<s> tbray@textuality.com http://www.textuality.com/  </s>
+<s> +1-604-488-1167  </s>
+<s> On Fri, 25 Oct 1996 12:05:01 -0400 Tim Bray said:  </s>
+<s> It seems to me this means we need to know whether something is in fact a partial DTD, or is (intended to be) a full DTD. (I am using 'DTD' here in the sense of 'explicit markup declarations', not in the larger sense prescribed by 8879).  </s>
+<s> Something intended to be a  </s>
+<s> full DTD is in theory suitable for validation; something intended  </s>
+<s> only to be a partial DTD (e.g. to provide declarations of external entities) is not suitable as the basis for validation.  </s>
+<s> In the one case, having an element with an unknown GI is an error and should be flagged as such by any validating parser.  </s>
+<s> In the other case, such an element is the normal state of affairs and it is senseless to try to validate the document: an ideally helpful system would say "Er, it's pointless trying to validate this, it only has a partial DTD" rather than issuing a few hundred error messages.  </s>
+<s> But no system can know which to do unless it can distinguish a full DTD from a partial DTD, i.e. unless there is something in the document to say "This set of markup declarations is complete" or "This set of markup declarations is not complete".  </s>
+<s> So, I think the answer to the original question is, Yes, there should be an XML parameter entity to indicate whether the DTD given is a full DTD (as for SGML) or a partial DTD not intended to make the document valid (probably, in practice, intended only to make it well-formed).  </s>
+<s> -C. M. Sperberg-McQueen  </s>
+<s> I think we should forgo partial DTDs.  </s>
+<s> XML should be specified in such a way to permit (require) parsing of well-formed XML without reference to *any* DTD-like information.  </s>
+<s> Of course, this would require that we revisit optional external text entities.  </s>
+<s> On the other hand, we could get right down to business and describe an XML document as claiming to be in a ready-to-validate state or not.  </s>
+<s> The full/partial business makes me uncomfortable because the ends are just degenerate cases of the middle, but stating that you think something is ready to be validated is a useful piece of information.  </s>
+<s> (PI, not parment, right?) People who are making ad hoc document  </s>
+<s> structures will not want to add a PI saying that the structures are ad hoc.  </s>
+<s> It would make more sense to require documents that are "complete" to have a PI saying so, since saying so would buy more  </s>
+<s> useful processing -- namely, validation by recipients.  </s>
+<s> And since  </s>
+<s> much document exchange (I'm guessing) won't be for the purpose of validation by recipients, the PI can be left off a lot of the time.  </s>
+<s> Eve  </s>
+<s> On Wed, 30 Oct 1996 09:14:24 -0500 Eve L. Maler said:  </s>
+<s> Right. Processing instruction, not parameter entity.  </s>
+<s> I shouldn't draft postings when I'm tired.  </s>
+<s> Eve is surely right that claiming validity is probably more useful and to the point than saying 'DTD is complete/incomplete'; also right to suggest the default should be 'no validity claimed'.  </s>
+<s> -Michael Sperberg-McQueen  </s>
+<s> Or, we can avoid any feature that would make this distiction necessary.  </s>
+<s> So we have _no declarations_ or a _full DTD_.  </s>
+<s> This is why I favor some distinctive syntax for empty elements (any of the possibilities will do).  </s>
+<s> I can't remember what other sticking points there are to eliminating the notion of partial DTDs.  </s>
+<s> Oh, yes, entities.  </s>
+<s> If we allow transclusion semantics, browsers can treat an undefined entity as a broken link, in the same way they treat a broken grapic now...  </s>
+<s> This is another reason I think that unresolved entities are natural.  </s>
+<s> Or undefined entities can be an error in a DTD- and subset-less document.  </s>
+<s> BTW what is happening with the subset?  </s>
+<s> If we need "partial DTDs" couldn't we implement them more nicely as subsets to empty doctypes (which in this case would add value for the user, by letting them declare entities).  </s>
+<s> A subset without a DTD would be well-formed, whatever declarations it contained.  </s>
+<s> -- David RE delenda est.  </s>
+<s> I am not a number.  </s>
+<s> I am an undefined character.  </s>
+<s> David Durand dgd@cs.bu.edu \ david@dynamicDiagrams.com  </s>
+<s> Boston University Computer Science \ Sr. Analyst --------------------------------------------\ http://dynamicDiagrams.com/ MAPA: mapping for the WWW \__________________________  </s>
+<s> And since valid documents will require a doctype, we don't need any extra flag at all!  </s>
+<s> We expect that it is valid if it has a doctype, and well-formed if it has no doctype (or maybe a " !doctype foo SYSTEM [ some dumb subset ] " doctype, if we can't eliminate the notion of partial DTDs).  </s>
+<s> --- David  </s>
+<s> RE delenda est.  </s>
+<s> I am not a number.  </s>
+<s> I am an undefined character.  </s>
+<s> David Durand dgd@cs.bu.edu \ david@dynamicDiagrams.com  </s>
+<s> Boston University Computer Science \ Sr. Analyst --------------------------------------------\ http://dynamicDiagrams.com/ MAPA: mapping for the WWW \__________________________  </s>

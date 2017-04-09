@@ -1,85 +1,85 @@
-(moved from www-style@w3.org to www-dom@w3.org) 
-| There is no SelectorList class (for now at least). 
-SelectorLists are | passed as simple Perl array refs. 
-Likewise for the SACMediaList. 
-This | may change at some point if I realize that there is value in making | those into objects, but for now it seems useless. 
-If I change it, they | will still be accessible as array refs. 
-It would be consistent with the DOM if those lists are objects with item() and getLength() methods. 
-In the new Perl DOMs, NodeLists aren't objects either, just plain and simple arrayrefs. 
-That seems inconsistent with the DOM spec. 
-How does it implement the live aspects of NodeLists if it is an array? 
-Philippe 
-| There is no SelectorList class (for now at | least). 
-SelectorLists are passed as simple Perl array | refs. 
-Likewise for the SACMediaList. 
-This may change at some | point if I realize that there is value in making those into | objects, but for now it seems useless. 
-If I change it, they | will still be accessible as array refs. 
-It would be consistent with the DOM if those lists are objects with item() and getLength() methods. 
-In the new Perl DOMs, NodeLists aren't objects either, just plain and simple arrayrefs. 
-For a fully conformant DOM "lite", is because it doesn't use a "plain" Perl array but instead uses a tied array as an interface to a conformant implementation. 
-Having said that, and like the Python folks' Minidom, the general populace seems to prefer a "faster" non-conformant implementation over a fully conformant one. 
-For reference, I posted a draft of the proposed Perl DOM "lite" to the perl-xml list and have a copy here: Note that this draft does not cover every information item right now, but the pattern should be apparent. 
-In summary, Perl DOM lite differs from DOM in these ways: * does not have navigation or node manipulation methods (depends on Perl-style navigation and manipulation) * NodeList and NamedNodeMap are replaced by native Perl array and hash syntax (note: does not imply native implementation in conforming implementations) * uses a (URI,LocalName) pair to the non-NS methods in places where *NS() methods would be used * uses hash syntax for Element.Attributes (also supporting (URI,LocalName) indexes) * uses native String syntax (noting !~ implementation again) * node types are symbols, not constants (tentatively) * exceptions have yet to be mapped to Perl exceptions, so no further detail is available yet In all respects, a conforming Perl DOM lite implementation, via an OMG IDL wrapper, should be a conforming DOM implementation. 
-Mostly it's a difference in presentation. 
--- Ken 
-In the new Perl DOMs, NodeLists aren't objects either, just plain and simple arrayrefs. 
-As Ken explained earlier today, it's more an addition to the interface than a reduction of it. 
-Some minimal implementations will choose to make those simple arrays (and thus drop the liveness) but more complex ones will provide item() and getLength(), as well as take care of the liveness. 
-The array interface really makes a lot of things much easier, notably for implementing queries with filters (ie XPath or CSS selection) over a DOM. 
-The fact that an array can be implemented just about any way under the hood (using ties for instance) means that there is no loss of funcitonality if the implementor choose so. 
-Similarly, using hashes for NamedNodeMaps with an underlying tie means that both $nnmap{[%ns_uri, $lname]} and $nnmap{$qname} can work on the same hash. 
-Or that one can do $text_node =~ s/foo/bar/ to directly modify the text node's value. 
-It doesn't mean that the DOM methods aren't there, but those are nice convience additions which one would expect to see in the Perl world. 
-As per Bjoern's request, I've been adding Java/spec equivalents to SAC, and will do the same when I'm done with CSS::DOM. 
--- robin b. Smoking is one of the leading causes of statistics. 
-If the NodeList returned by a DOM call isn't live, you can't claim to comply to the DOM specification. 
-If you really want a non-live "snapshot" array, I would recommend that you create a new class and a new method to retrieve it -- as long as you're going to be incompatable anyway, you might as well make the difference visible and official. 
-Joe Kesselman / IBM Research 
-I'm building a Perl DOM based on Ken's work. 
-Compliance is one thing that 
-I'm gunning for (to a certain degree at first, more later) but so is performance. 
-Live NodeLists just don't work with the latter. 
-Note that 
-using a simple array reference means that the NodeList is already close to being live, if the array is modified somewhere then it'll be modified everywhere simply because it's a reference. 
-However, the Nodes it contains won't see their {Previous,Next}Sibling updated, and other such nastiness. 
-The way this is made visible and official is first and foremost claiming to stick first to the Perlish DOM, and then only to DOM2 (a la JDOM). 
-Also, the Document interface is extended to have a setNodeListFactory() method, which allows one to choose the kind of NodeList one wants. 
-I think that such options nicely resolve the comply to rec vs get the job done tensions. 
-Beyond that, cross-language interop (as Ken pointed out) can be achieved using wrappers, adapters, specific options to the DOMImplementation, and in some cases nothing at all. 
--- robin b. 
-All programmers are playwrights and all computers are lousy actors. 
-Understood. 
-It's generally not a matter of "wanting a snapshot" as much as caring whether or not the result of get_elements_by_tag_name() is or is not live. 
-If one cares, be sure to select an implementation that does not have that feature or it is disabled. 
-Like the Python folks, it's likely that the "core" XML modules in Perl will be small and lightweight implementations, and possibly not 100% conformant. 
-Whereas the larger, more conformant implementations will be seperate add-ons. 
-By far, most if not all of our users seem very comfortable with this approach. 
--- Ken 
-The solution taken in the Java world, and as far as I can tell in the JavaScript and C++ worlds, is that this is an accepted tradeoff. 
-Nobody is required to use NodeList; if they don't like its performance they can walk the tree directly or use the DOM Level 2 Traversal feature instead. 
-There are some fairly straightforward implementation tricks which keep the overhead minimal when NodeLists are not actively in use, ranging from a flag which isn't set until the first NodeList is created to not rebuilding NodeLists until they user actually accesses them. 
-There are a number of open-source fully-compliant DOMs in other languages; you might want to look at how they've handled NodeList before you conclude that it's unsupportable. 
-I freely admit that I've never liked NodeLists. 
-I initially had exactly the same concerns you've voiced. 
-But I discovered that I could, in fact, write a reasonable implementation which performs well in the most common cases and performs correctly in the rest without an unacceptable amount of impact on code size or performance of the rest of the DOM. 
-NodeList will always have some cases where its performance is horrendous and behavior is unintuitive, but DOM users know that and write around it. 
-I really would recommend that Perl implementations adopt these strategies and attempt full compliance with the DOM spec. 
-Especially if you might be interested in some day convincing the W3C to officially recognize a standard Perl binding for the DOM. 
-Joe Kesselman / IBM Research 
-Sorry if I was unclear. 
-I never concluded that NodeLists were unsupportable, and in fact they are supported. 
-Only, depending on the needs of the user one can have various flavours. 
-Some are NodeLists as per DOM, others are simpler (and faster). 
-I have some web apps that create and process 2-3 DOMs. 
-I know they're read-only so I request lightweight NodeLists (ie not live). 
-In other situations I know that liveness is required so I pull it in. 
-I actually don't mind NodeLists per se. 
-It just so happens that when using a language that has powerful ways to manipulate arrays I don't want to be limited to item and length. 
-I don't think that adding an array interface on top of NodeLists is a harmful addition. 
-Especially given that i'm flagging it as a feature of the said DOMImplementation. 
-I don't know if that is ever going to happen, but you never know. 
-Chances are the core Perlish DOM deviates too much from DOM2 to gain approval there. 
-But perhaps core Perlish DOM + one of the add ons may work its way there. 
--- robin b. 
-There are things that are so serious that you can only joke about them. 
--- Heisenberg 
+<s> (moved from www-style@w3.org to www-dom@w3.org)  </s>
+<s> | There is no SelectorList class (for now at least).  </s>
+<s> SelectorLists are | passed as simple Perl array refs.  </s>
+<s> Likewise for the SACMediaList.  </s>
+<s> This | may change at some point if I realize that there is value in making | those into objects, but for now it seems useless.  </s>
+<s> If I change it, they | will still be accessible as array refs.  </s>
+<s> It would be consistent with the DOM if those lists are objects with item() and getLength() methods.  </s>
+<s> In the new Perl DOMs, NodeLists aren't objects either, just plain and simple arrayrefs.  </s>
+<s> That seems inconsistent with the DOM spec.  </s>
+<s> How does it implement the live aspects of NodeLists if it is an array?  </s>
+<s> Philippe  </s>
+<s> | There is no SelectorList class (for now at | least).  </s>
+<s> SelectorLists are passed as simple Perl array | refs.  </s>
+<s> Likewise for the SACMediaList.  </s>
+<s> This may change at some | point if I realize that there is value in making those into | objects, but for now it seems useless.  </s>
+<s> If I change it, they | will still be accessible as array refs.  </s>
+<s> It would be consistent with the DOM if those lists are objects with item() and getLength() methods.  </s>
+<s> In the new Perl DOMs, NodeLists aren't objects either, just plain and simple arrayrefs.  </s>
+<s> For a fully conformant DOM "lite", is because it doesn't use a "plain" Perl array but instead uses a tied array as an interface to a conformant implementation.  </s>
+<s> Having said that, and like the Python folks' Minidom, the general populace seems to prefer a "faster" non-conformant implementation over a fully conformant one.  </s>
+<s> For reference, I posted a draft of the proposed Perl DOM "lite" to the perl-xml list and have a copy here: Note that this draft does not cover every information item right now, but the pattern should be apparent.  </s>
+<s> In summary, Perl DOM lite differs from DOM in these ways: * does not have navigation or node manipulation methods (depends on Perl-style navigation and manipulation) * NodeList and NamedNodeMap are replaced by native Perl array and hash syntax (note: does not imply native implementation in conforming implementations) * uses a (URI,LocalName) pair to the non-NS methods in places where *NS() methods would be used * uses hash syntax for Element.Attributes (also supporting (URI,LocalName) indexes) * uses native String syntax (noting !~ implementation again) * node types are symbols, not constants (tentatively) * exceptions have yet to be mapped to Perl exceptions, so no further detail is available yet In all respects, a conforming Perl DOM lite implementation, via an OMG IDL wrapper, should be a conforming DOM implementation.  </s>
+<s> Mostly it's a difference in presentation.  </s>
+<s> -- Ken  </s>
+<s> In the new Perl DOMs, NodeLists aren't objects either, just plain and simple arrayrefs.  </s>
+<s> As Ken explained earlier today, it's more an addition to the interface than a reduction of it.  </s>
+<s> Some minimal implementations will choose to make those simple arrays (and thus drop the liveness) but more complex ones will provide item() and getLength(), as well as take care of the liveness.  </s>
+<s> The array interface really makes a lot of things much easier, notably for implementing queries with filters (ie XPath or CSS selection) over a DOM.  </s>
+<s> The fact that an array can be implemented just about any way under the hood (using ties for instance) means that there is no loss of funcitonality if the implementor choose so.  </s>
+<s> Similarly, using hashes for NamedNodeMaps with an underlying tie means that both $nnmap{[%ns_uri, $lname]} and $nnmap{$qname} can work on the same hash.  </s>
+<s> Or that one can do $text_node =~ s/foo/bar/ to directly modify the text node's value.  </s>
+<s> It doesn't mean that the DOM methods aren't there, but those are nice convience additions which one would expect to see in the Perl world.  </s>
+<s> As per Bjoern's request, I've been adding Java/spec equivalents to SAC, and will do the same when I'm done with CSS::DOM.  </s>
+<s> -- robin b. Smoking is one of the leading causes of statistics.  </s>
+<s> If the NodeList returned by a DOM call isn't live, you can't claim to comply to the DOM specification.  </s>
+<s> If you really want a non-live "snapshot" array, I would recommend that you create a new class and a new method to retrieve it -- as long as you're going to be incompatable anyway, you might as well make the difference visible and official.  </s>
+<s> Joe Kesselman / IBM Research  </s>
+<s> I'm building a Perl DOM based on Ken's work.  </s>
+<s> Compliance is one thing that  </s>
+<s> I'm gunning for (to a certain degree at first, more later) but so is performance.  </s>
+<s> Live NodeLists just don't work with the latter.  </s>
+<s> Note that  </s>
+<s> using a simple array reference means that the NodeList is already close to being live, if the array is modified somewhere then it'll be modified everywhere simply because it's a reference.  </s>
+<s> However, the Nodes it contains won't see their {Previous,Next}Sibling updated, and other such nastiness.  </s>
+<s> The way this is made visible and official is first and foremost claiming to stick first to the Perlish DOM, and then only to DOM2 (a la JDOM).  </s>
+<s> Also, the Document interface is extended to have a setNodeListFactory() method, which allows one to choose the kind of NodeList one wants.  </s>
+<s> I think that such options nicely resolve the comply to rec vs get the job done tensions.  </s>
+<s> Beyond that, cross-language interop (as Ken pointed out) can be achieved using wrappers, adapters, specific options to the DOMImplementation, and in some cases nothing at all.  </s>
+<s> -- robin b.  </s>
+<s> All programmers are playwrights and all computers are lousy actors.  </s>
+<s> Understood.  </s>
+<s> It's generally not a matter of "wanting a snapshot" as much as caring whether or not the result of get_elements_by_tag_name() is or is not live.  </s>
+<s> If one cares, be sure to select an implementation that does not have that feature or it is disabled.  </s>
+<s> Like the Python folks, it's likely that the "core" XML modules in Perl will be small and lightweight implementations, and possibly not 100% conformant.  </s>
+<s> Whereas the larger, more conformant implementations will be seperate add-ons.  </s>
+<s> By far, most if not all of our users seem very comfortable with this approach.  </s>
+<s> -- Ken  </s>
+<s> The solution taken in the Java world, and as far as I can tell in the JavaScript and C++ worlds, is that this is an accepted tradeoff.  </s>
+<s> Nobody is required to use NodeList; if they don't like its performance they can walk the tree directly or use the DOM Level 2 Traversal feature instead.  </s>
+<s> There are some fairly straightforward implementation tricks which keep the overhead minimal when NodeLists are not actively in use, ranging from a flag which isn't set until the first NodeList is created to not rebuilding NodeLists until they user actually accesses them.  </s>
+<s> There are a number of open-source fully-compliant DOMs in other languages; you might want to look at how they've handled NodeList before you conclude that it's unsupportable.  </s>
+<s> I freely admit that I've never liked NodeLists.  </s>
+<s> I initially had exactly the same concerns you've voiced.  </s>
+<s> But I discovered that I could, in fact, write a reasonable implementation which performs well in the most common cases and performs correctly in the rest without an unacceptable amount of impact on code size or performance of the rest of the DOM.  </s>
+<s> NodeList will always have some cases where its performance is horrendous and behavior is unintuitive, but DOM users know that and write around it.  </s>
+<s> I really would recommend that Perl implementations adopt these strategies and attempt full compliance with the DOM spec.  </s>
+<s> Especially if you might be interested in some day convincing the W3C to officially recognize a standard Perl binding for the DOM.  </s>
+<s> Joe Kesselman / IBM Research  </s>
+<s> Sorry if I was unclear.  </s>
+<s> I never concluded that NodeLists were unsupportable, and in fact they are supported.  </s>
+<s> Only, depending on the needs of the user one can have various flavours.  </s>
+<s> Some are NodeLists as per DOM, others are simpler (and faster).  </s>
+<s> I have some web apps that create and process 2-3 DOMs.  </s>
+<s> I know they're read-only so I request lightweight NodeLists (ie not live).  </s>
+<s> In other situations I know that liveness is required so I pull it in.  </s>
+<s> I actually don't mind NodeLists per se.  </s>
+<s> It just so happens that when using a language that has powerful ways to manipulate arrays I don't want to be limited to item and length.  </s>
+<s> I don't think that adding an array interface on top of NodeLists is a harmful addition.  </s>
+<s> Especially given that i'm flagging it as a feature of the said DOMImplementation.  </s>
+<s> I don't know if that is ever going to happen, but you never know.  </s>
+<s> Chances are the core Perlish DOM deviates too much from DOM2 to gain approval there.  </s>
+<s> But perhaps core Perlish DOM + one of the add ons may work its way there.  </s>
+<s> -- robin b.  </s>
+<s> There are things that are so serious that you can only joke about them.  </s>
+<s> -- Heisenberg  </s>

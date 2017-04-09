@@ -1,76 +1,76 @@
-Its simpler than it seems. 
-Each insertion or removal involves incrementing or decrementing the index by one. 
-That's not quite so simple, unless I'm missing something. 
-You're proposing we update the index of all the listed Nodes after the insert or delete point. 
-I looked at that approach. 
-For insertion, it means doing a common-root search (or some equivalent thereof) between that point and all the currently listed nodes until you find the appropriate insert point in the NodeList. 
-Not cheap, though it probably beats repeating the search from scratch every time you increment the index. 
-You have to do this for all the currently-active NodeLists that might want to know about that portion of the tree. 
-That "currently-active" phrase looks to be a disaster in Java. 
-There's no architected way to terminate a NodeList, and the reference from the tree to the NodeList (required to ensure that the NodeList responds when the tree is changed) will also ensure that the latter is never garbage-collected until the tree itself goes away. 
-So even if the above can be made to run quickly, it's a memory leak begging for an opportunity. 
-Am I misunderstanding your suggestion, or misunderstanding the spec? 
-There is nothing in the spec about updating of the index positions and such. 
-It is entirely up to the user to stay out of trouble. 
-Since the current DOM spec does not support concurrent access to a DOM, this is easily done. 
-Uhm... Don, that's the question I started with: "Does the fact that NodeList is explicitly described as 'live' imply that if I take a NodeList, insert and/or delete nodes, take another NodeList and compare the two, they will have the same nodes at the same indices?" 
-I was told "yes". 
-If that's correct, the update (or something that achieves the same appearance) is required... which is what I'm trying to find a clean implementation for, specifically in the case where the NodeList came from getElementsByTagName() and hence may reach deep into the tree. 
-Unless, of course, my understanding of getElementsByTagName() is incorrect and it really means "get immediate children by tag name", which would make the whole problem cheap enough not to have to worry about... but the description of that method says it searches the subtree. 
-I don't see how getElementsByTagName could _possibly_ return a ``live'' NodeList unless one of the following two conditions is true: 1. it only returns immediate children of the given node, AND the indices of those children in the NodeList returned are the same as their indices in the parent node, i.e. there are some indices that contain nulls. 
-OR 2. Elements found by getElementsByTagName are _ripped out_ of their original places in tree, and made into the children of a single, possibly orphan, Node. 
-Stephen R. Savitzky Chief Software Scientist, Ricoh Silicon Valley, Inc., steve@rsv.ricoh.com 
-California Research Center home: steve@starport.com 
-URL: http://www.starport.com/people/steve/ 
-Neither of these are consistent with the spec. 
-Sorry, but this *is* going to be hard to implement efficiently. 
-I think the best implementation is to lazily evaluate the NodeList, i.e., make the NodeList be an interface that really has what we used to call a NodeIterator under the covers. 
-That way, you only see nodes in the tree when the user asks for them. 
-That puts the burden of capturing changes to the tree on the call to item(). 
-Mike Champion 
-You and Don Park need to get together on what ``liveness'' means, and when it's required by the spec. 
-This means that every call on item() involves a complete traversal of half the tree (on average) to make sure that a new node of the type selected by getElementsByTagName hasn't snuck in behind your back. 
-In the case of large documents, possibly containing references to external parsed entities, this could take a *very long time*. 
-ON THE OTHER HAND, "Don Park" donpark@quake.net writes 
-This confusion stems from the movement of words between different versions of the spec. 
-If you read the latest spec more carefully, you will see that the word "live" is used only in the description of the attribute "childNodes". 
-This means that the NodeList itself is not always live and that the NodeList returned by getElementsByTagName is not live. 
-Only the NodeList returned by getChildNodes is "live". 
-I think this suggests that the spec is ambiguous, and should be rewritten to clarify the situation, preferably in the direction of Don Park's commonsense interpretation. 
-Stephen R. Savitzky Chief Software Scientist, Ricoh Silicon Valley, Inc., steve@rsv.ricoh.com 
-California Research Center home: steve@starport.com 
-URL: http://www.starport.com/people/steve/ 
-The DOM specification states: parentNode The parent of the given Node instance. 
-All nodes, except Documents and DocumentFragments, have a parent. 
-If a node has just been created and not yet added to the tree, it has an implicit parent which is a DocumentFragment. 
-This strikes me as misguided. 
-Surely it's better for a newly-created Node to have a null parent. 
-Otherwise, the process of creating a Node and adding it to a tree consists of: creating a new DocumentFragment creating the Node. 
-adding the new Node to the DocumentFragment's children removing the new Node from the DocumentFragment's children adding the new Node to the tree in the correct place ... at which point we probably have no references remaining to the DocumentFragment, so it hangs around taking up space until the garbage collector scavenges it. 
-Of course, the DocumentFragment in question could be effectively a freelist, but why constrain the implementation, and wouldn't a NodeList be more appropriate for the purpose? 
-It looks as if there was a point in the spec's evolution where somebody attempted to replace NodeList with DocumentFragment. 
-Stephen R. Savitzky Chief Software Scientist, Ricoh Silicon Valley, Inc., steve@rsv.ricoh.com 
-California Research Center home: steve@starport.com 
-URL: http://www.starport.com/people/steve/ 
-I don't get the sense that the WG wants to reconsider this; but I will propose some wording that I plan to add to the spec to explain what we have in mind. 
-If people outside of the IG/WG really howl I suppose we could reconsider, but please give this a fair hearing: 
-[I'll send a separate message proposing wording explaining why Atrribute nodes should not have parents; this *is* under discussion by the WG] 
-parentNode The parent of the given Node instance. 
-All nodes, except Attributes, Documents and DocumentFragments, have a parent. 
-If a node has just been created and not yet added to the tree, it has an implicit parent which is a DocumentFragment. 
-All nodes are created in association with an active Document object because many existing implementations do not allow free-standing objects, or objects that span multiple documents. 
-DocumentFragment objects have a masterDoc attribute that reflects the document that it and its contents are associated with. 
-By having the implementation implicitly create a DocumentFragment as the parent for every Node that is created, there is a way for the DOM user to track the Document that is associated with every node, even if it does not currently exist in the document tree. 
-(Note that the implementation may "lazily" create the DOM DocumentFragment on demand, i.e., when the parentNode of a Node is accessed). 
-Furthermore, a DocumentFragment object will often be needed as a "scratchpad" upon which to build up a subtree of new objects before they are inserted into an actual document tree, or when moving a subtree from one part of a document to another, especially since various operations such as insertBefore and appendNode may take DocumentFragment objects as their argument and will move the entire contents to the new location. 
-[In short, by insisting that DOM implementers always have a DocumentFragment associated with a Node or subtree that has not yet been put in a tree or has been cut out of a tree, we make it easier for users to track and manipulate those nodes.] 
-Mike Champion 
-[wording deleted] 
-I would be willing to accept this ONLY if there were a way to determine whether a node was really an orphan without actually creating the ghost DocumentFragment. 
-Otherwise it's actually more difficult to keep track of nodes that are presumably already in a NodeList or variable. 
-I suppose it's not unreasonable for the node-creation operations on Document to create a DocumentFragment as a parent, but it would be useful in that case to have some way of reaching the new nodes from the Document. 
-There are other ways of creating nodes, however: most languages have a "new" operator. 
-Nodes created in that way will _not_ have an identifiable parent. 
-Stephen R. Savitzky Chief Software Scientist, Ricoh Silicon Valley, Inc., steve@rsv.ricoh.com 
-California Research Center home: steve@starport.com 
-URL: http://www.starport.com/people/steve/ 
+<s> Its simpler than it seems.  </s>
+<s> Each insertion or removal involves incrementing or decrementing the index by one.  </s>
+<s> That's not quite so simple, unless I'm missing something.  </s>
+<s> You're proposing we update the index of all the listed Nodes after the insert or delete point.  </s>
+<s> I looked at that approach.  </s>
+<s> For insertion, it means doing a common-root search (or some equivalent thereof) between that point and all the currently listed nodes until you find the appropriate insert point in the NodeList.  </s>
+<s> Not cheap, though it probably beats repeating the search from scratch every time you increment the index.  </s>
+<s> You have to do this for all the currently-active NodeLists that might want to know about that portion of the tree.  </s>
+<s> That "currently-active" phrase looks to be a disaster in Java.  </s>
+<s> There's no architected way to terminate a NodeList, and the reference from the tree to the NodeList (required to ensure that the NodeList responds when the tree is changed) will also ensure that the latter is never garbage-collected until the tree itself goes away.  </s>
+<s> So even if the above can be made to run quickly, it's a memory leak begging for an opportunity.  </s>
+<s> Am I misunderstanding your suggestion, or misunderstanding the spec?  </s>
+<s> There is nothing in the spec about updating of the index positions and such.  </s>
+<s> It is entirely up to the user to stay out of trouble.  </s>
+<s> Since the current DOM spec does not support concurrent access to a DOM, this is easily done.  </s>
+<s> Uhm... Don, that's the question I started with: "Does the fact that NodeList is explicitly described as 'live' imply that if I take a NodeList, insert and/or delete nodes, take another NodeList and compare the two, they will have the same nodes at the same indices?"  </s>
+<s> I was told "yes".  </s>
+<s> If that's correct, the update (or something that achieves the same appearance) is required... which is what I'm trying to find a clean implementation for, specifically in the case where the NodeList came from getElementsByTagName() and hence may reach deep into the tree.  </s>
+<s> Unless, of course, my understanding of getElementsByTagName() is incorrect and it really means "get immediate children by tag name", which would make the whole problem cheap enough not to have to worry about... but the description of that method says it searches the subtree.  </s>
+<s> I don't see how getElementsByTagName could _possibly_ return a ``live'' NodeList unless one of the following two conditions is true: 1. it only returns immediate children of the given node, AND the indices of those children in the NodeList returned are the same as their indices in the parent node, i.e. there are some indices that contain nulls.  </s>
+<s> OR 2. Elements found by getElementsByTagName are _ripped out_ of their original places in tree, and made into the children of a single, possibly orphan, Node.  </s>
+<s> Stephen R. Savitzky Chief Software Scientist, Ricoh Silicon Valley, Inc., steve@rsv.ricoh.com  </s>
+<s> California Research Center home: steve@starport.com  </s>
+<s> URL: http://www.starport.com/people/steve/  </s>
+<s> Neither of these are consistent with the spec.  </s>
+<s> Sorry, but this *is* going to be hard to implement efficiently.  </s>
+<s> I think the best implementation is to lazily evaluate the NodeList, i.e., make the NodeList be an interface that really has what we used to call a NodeIterator under the covers.  </s>
+<s> That way, you only see nodes in the tree when the user asks for them.  </s>
+<s> That puts the burden of capturing changes to the tree on the call to item().  </s>
+<s> Mike Champion  </s>
+<s> You and Don Park need to get together on what ``liveness'' means, and when it's required by the spec.  </s>
+<s> This means that every call on item() involves a complete traversal of half the tree (on average) to make sure that a new node of the type selected by getElementsByTagName hasn't snuck in behind your back.  </s>
+<s> In the case of large documents, possibly containing references to external parsed entities, this could take a *very long time*.  </s>
+<s> ON THE OTHER HAND, "Don Park" donpark@quake.net writes  </s>
+<s> This confusion stems from the movement of words between different versions of the spec.  </s>
+<s> If you read the latest spec more carefully, you will see that the word "live" is used only in the description of the attribute "childNodes".  </s>
+<s> This means that the NodeList itself is not always live and that the NodeList returned by getElementsByTagName is not live.  </s>
+<s> Only the NodeList returned by getChildNodes is "live".  </s>
+<s> I think this suggests that the spec is ambiguous, and should be rewritten to clarify the situation, preferably in the direction of Don Park's commonsense interpretation.  </s>
+<s> Stephen R. Savitzky Chief Software Scientist, Ricoh Silicon Valley, Inc., steve@rsv.ricoh.com  </s>
+<s> California Research Center home: steve@starport.com  </s>
+<s> URL: http://www.starport.com/people/steve/  </s>
+<s> The DOM specification states: parentNode The parent of the given Node instance.  </s>
+<s> All nodes, except Documents and DocumentFragments, have a parent.  </s>
+<s> If a node has just been created and not yet added to the tree, it has an implicit parent which is a DocumentFragment.  </s>
+<s> This strikes me as misguided.  </s>
+<s> Surely it's better for a newly-created Node to have a null parent.  </s>
+<s> Otherwise, the process of creating a Node and adding it to a tree consists of: creating a new DocumentFragment creating the Node.  </s>
+<s> adding the new Node to the DocumentFragment's children removing the new Node from the DocumentFragment's children adding the new Node to the tree in the correct place ... at which point we probably have no references remaining to the DocumentFragment, so it hangs around taking up space until the garbage collector scavenges it.  </s>
+<s> Of course, the DocumentFragment in question could be effectively a freelist, but why constrain the implementation, and wouldn't a NodeList be more appropriate for the purpose?  </s>
+<s> It looks as if there was a point in the spec's evolution where somebody attempted to replace NodeList with DocumentFragment.  </s>
+<s> Stephen R. Savitzky Chief Software Scientist, Ricoh Silicon Valley, Inc., steve@rsv.ricoh.com  </s>
+<s> California Research Center home: steve@starport.com  </s>
+<s> URL: http://www.starport.com/people/steve/  </s>
+<s> I don't get the sense that the WG wants to reconsider this; but I will propose some wording that I plan to add to the spec to explain what we have in mind.  </s>
+<s> If people outside of the IG/WG really howl I suppose we could reconsider, but please give this a fair hearing:  </s>
+<s> [I'll send a separate message proposing wording explaining why Atrribute nodes should not have parents; this *is* under discussion by the WG]  </s>
+<s> parentNode The parent of the given Node instance.  </s>
+<s> All nodes, except Attributes, Documents and DocumentFragments, have a parent.  </s>
+<s> If a node has just been created and not yet added to the tree, it has an implicit parent which is a DocumentFragment.  </s>
+<s> All nodes are created in association with an active Document object because many existing implementations do not allow free-standing objects, or objects that span multiple documents.  </s>
+<s> DocumentFragment objects have a masterDoc attribute that reflects the document that it and its contents are associated with.  </s>
+<s> By having the implementation implicitly create a DocumentFragment as the parent for every Node that is created, there is a way for the DOM user to track the Document that is associated with every node, even if it does not currently exist in the document tree.  </s>
+<s> (Note that the implementation may "lazily" create the DOM DocumentFragment on demand, i.e., when the parentNode of a Node is accessed).  </s>
+<s> Furthermore, a DocumentFragment object will often be needed as a "scratchpad" upon which to build up a subtree of new objects before they are inserted into an actual document tree, or when moving a subtree from one part of a document to another, especially since various operations such as insertBefore and appendNode may take DocumentFragment objects as their argument and will move the entire contents to the new location.  </s>
+<s> [In short, by insisting that DOM implementers always have a DocumentFragment associated with a Node or subtree that has not yet been put in a tree or has been cut out of a tree, we make it easier for users to track and manipulate those nodes.]  </s>
+<s> Mike Champion  </s>
+<s> [wording deleted]  </s>
+<s> I would be willing to accept this ONLY if there were a way to determine whether a node was really an orphan without actually creating the ghost DocumentFragment.  </s>
+<s> Otherwise it's actually more difficult to keep track of nodes that are presumably already in a NodeList or variable.  </s>
+<s> I suppose it's not unreasonable for the node-creation operations on Document to create a DocumentFragment as a parent, but it would be useful in that case to have some way of reaching the new nodes from the Document.  </s>
+<s> There are other ways of creating nodes, however: most languages have a "new" operator.  </s>
+<s> Nodes created in that way will _not_ have an identifiable parent.  </s>
+<s> Stephen R. Savitzky Chief Software Scientist, Ricoh Silicon Valley, Inc., steve@rsv.ricoh.com  </s>
+<s> California Research Center home: steve@starport.com  </s>
+<s> URL: http://www.starport.com/people/steve/  </s>

@@ -1,206 +1,206 @@
-Since this thread is now discussing specifically tools that would help 
-solving the problem of missing ALT, I'm changing the Subject line. 
-For the same reason, I'd like to present some ideas for a project that would use some form of Web collaboration to fix the missing ALT problems. 
-The document is at http://www.w3.org/WAI/altserv.htm 
-Also attached in ascii below. 
-The ALT-server ("An eye for an alt") A accessibility/collaboration project proposal Introduction For most people, visiting a web page is a one-to-one experience where one client program, the user's browser, gets and presents some resources coming from one information provider, usually the provider's web server. 
-It's the client/server paradigm as we understand it. 
-The client usually gets an "initial" HTML file from which it derives a complete presentation made of pieces found in the document itself (text, markup, style, alt text, etc) and additional pieces fetched by going back to the provider servers (images, audio, longdesc, etc). 
-It doesn't have to be always that way. 
-The web addressing and transport architecture is flexible enough so that the set of resources that makes one's web session can seamlessly integrate from independent providers, or chains of providers. 
-This paper presents the application of this principle to Web Accessibility. 
-The design of a system to retrieve and generate missing textual description of particular HTML elements (such as images) is examined, as well as the human collaboration foundation on which it is based. 
-Web Accessibility Web Accessibility covers a very broad set of issues. 
-There are of course different kind of disabilities to consider, such a visual or hearing impairment, which all relate to different types of access denial (e.g. a missing caption for an audio stream, or the inability to linearize the content of a table for speech output). 
-For the purpose of this paper, we will focus on one important aspect of accessibility for non-visual based user-agent: the textual description, or rather the lack thereof, attached to graphical images on the web, i.e. the well known missing ALT text in HTML. 
-However, we believe the system presented can be generalized to other kind of resources. 
-The current situation is the following: when presented with a piece of HTML containing an image, a non-visual browser needs to "degrade gracefully" by presenting the user with a textual version of the image (that can be output as speech or braille). 
-Most such systems currently only look for the textual information in the ALT attribute of the IMG element of the image. 
-With progress happening in the browser area, other ways to find this textual/alternate text will soon be implemented, such as: look in the TITLE attribute, the HTTP stream, or the URL filename part. 
-What characterizes these approaches is that the textual description can only come from the origin document or the provider server. 
-Suppose... As we alluded to in the introduction, another way of getting this information is to ask a different server altogether. 
-Suppose there was a web server somewhere on the Internet whose primary job was to serve textual description of other servers' images. 
-A non-visual browser (such as lynx) 
-would then just have to query it when image ALT and TITLE attributes are missing and use the result in its presentation. 
-Let's consider an example expressed in pseudo HTTP sequences of queries and replies: * A non-visual browser makes a request for an initial HTML document GET www.merchand.com 
-/order.html 
-* It gets back some HTML containing an image and no ALT text for it Content-type: text/html HTML ... IMG SRC="Images/card.png" Order now! 
-* Since there is no ALT, nor TITLE, the browser is configured to make a query to an alt text server (wai.w3.org), giving it the absolute URL of the image as a parameter GET wai.w3.org /ALT?url=www.merchand.com/Images/card.png 
-* The alt server returns a piece of text corresponding to the textual description of this image Content-type text/ascii A credit card logo (if the alt text server hadn't returned anything, the browser could default to using "card.png" as the textual description of this image) * The non-visual browser uses that in place of regular ALT text. 
-We'll look at the server issues later on, but for now, let's concentrate on the client side. 
-The important line in the example above is the query to the alt server. 
-GET wai.w3.org /ALT?url=www.merchand.com/Images/card.png 
-It's just a regular HTTP request that provides the server with the URL of an image and expects the ALT text for this image back. 
-The /SERVICE?name=value can of course be generalized to handle different type of resources and more information about one given resource. 
-Consider the following examples: GET wai.w3.org /TABLE?url=www.foo.com/doc.html#n4 
-which asks the server for a linear/textual version of the fourth table found in www.foo.com/doc.html. 
-GET wai.w3.org /AUDIOCAPTION?url=www.merchand.com/Sounds/hello.midi which asks for a caption of the audio track found at the given URL. 
-GET wai.w3.org /ALT?url=www.merchand.com/Images/card.png;isA;line=2 which mentions to the server that the image is used in the context of an A tag (a link anchor), and appears on line 2 of the document, making it more important to treat. 
-I think it's easily understandable what one can achieve there. 
-Two things worth mentioning: the performance hit is nothing really to worry about: we merely add a web request in the overall building of a page, as graphical browsers do all the time. 
-The minimal configuration on the browser side is also really small: declaring the alt server name to query from. 
-So it's mostly transparent for the non visual browser user. 
-The implementation of this new GET functionality in a given browser (like lynx of amaya) is trivial. 
-Collaboration At the beginning of the previous section, we assumed that "there was a web server somewhere on the Internet whose primary job was to serve textual description of other servers' images". 
-How do we go about implementing this alt server ? 
-Basically, I envision two ways of generating alt text for images. 
-The first is automatic extraction, the second human generation. 
-I will not expand on the first as this is an area of advanced research (shape and pattern recognition). 
-I'll just mention that for a entire category of images, those representing text using some big fonts and colors, there exist algorithms out there (e.g. OCR) that could be used to extract the characters out of the graphics. 
-A centralized server is well suited to integrate the latest and greatest solution in one location while readily serving the entire community. 
-The second way, human generation, is where I see the power of the web as a collaboration tool best applied. 
-This is how it could work. 
-The ALT server logically maintains a list of tuples (image-url, textual-description, state) where state is one of to-be-described, being-described, and described. 
-Processing works as follow: * queries for textual descriptions of images come in * if the image, identified by its url, is in the list with a described state, the description is returned. 
-* if not, a failure code is returned and the image url is added with a to-be-described flag * the server continuously prioritizes this list using generic information such as frequency of the query (how many clients asked for the same data) and specific information (the image appears in an anchor, at the beginning of the page, etc) * the server provides a form interface for sighted web users to enter the textual description of the images * once an image has gotten its textual description, it is moved in the described state The part with the form filling needs to be detailed. 
-Each time a sighted user access the form (see annex), the next to-be-described image with the highest priority is presented while its state moves to being-described. 
-Sighted user can then enter the description in an input field aside the image and submit the form to the server, which validates the text and either move the entry in the described state of just unlock it my moving it back to to-be-described state (invalid might be empty text for instance). 
-The locking is necessary due to the asynchronous nature of web form filling: several users could access and fill the "same" form at the same time, and we only need one image description per image. 
-So this is basic principle of the alt text server: use the eyes of sighted web volunteers to help those who cannot see. 
-The reason why this system can work is based on two facts: * there are much more sighted users than the opposite, and a lot of them are willing to help * the same images are requested by a lot of different people In addition, the number of images with no description should go down as the awareness of content providers to accessibility is raised and authoring tools are improved. 
-If the automatic extraction part is improved, this will also diminish the number of images actually needing some human collaboration. 
-Regarding implementation on the server side, see the annex for pseudo code. 
-I expect a first version handling the base service to take a week of programming. 
-A more complete version (generating reports, ranking, and doing more automatization can take a couple to several months. 
-Misc [ to be developed ] * One issue is whether such a system can be detrimental to native alt as content providers start counting on the system to solve their alt problem... * I think not because the system can be used as incentive for content provider to add alt text to their own images: anybody can query the alt server by site and see the "no alt worse of the week". 
-In effect, the alt server can act a complaint repository. 
-* storing the describer id can be used to provide a ranked output as incentive to get more describers * automatic recognition of simple decoration (one color line, repeated pattern, 1x1, 2xN images, etc) should be easy * send email to webmaster@host for each 10 http//host/image.png with no alt. 
-* provide a way to check and do notification of mis-described image (empty, dirty words, etc) * provide a way to check and do notification of broken link image * provide n-at-a-time image/input-desc form * provide site and url targeted form filling (e.g. a visual impaired friend asks me to help him with a particular site or image and the prioritization scheme needs to be shortcut - note that this could also be accomplished by running a private alt text server). 
-* provide a way to seed the database of the alt server using a robot that explores a given list of sites. 
-* sort images by base filename (www.foo.com/img.png 
-and www.bar.com/dir/img.png) and do a image compare to see if they are really the same. 
-* do the same identical-image-check based on same size images pre-sort. 
-* hard to identify images used as pieces (jigsaw) in a bigger image laid out in a table Annexes 1 - Form layout Example of form used to query the sighter user. 
-Welcome to the ALT-server filling form You are about to describe: (entered Dec 25 1997 and was queried 12 times) Enter the description(*) of this image [No Alt by definition] Select Language: Optional: (*)the description should be short and to the point: e.g. "a american express credit card", "a dog", "a map with a magnifier". 
-No need to add "an image of" or "this is a". Link to Advanced query form providing n-at-a-time, site or url targeted filling, and database dump ranked by images site name, describer id, base image file name, etc. 2 - Simple pseudo code for ALT-server script This script handles both the queries for alt desc and the insertion of alt desc by sighted users for an hypothetical server hosted at // for now ignore lang, date entered, number queries, id of describer, // checking dup, validaty, security, and additional services like // ranking of bad site, good describers, etc) // INPUT: 3 cases // 1 (asking for textual description of url) // http://www.w3.org/WAI/altserv?url=www.merchand.com/Images/card.png 
-// 2 (giving a textual description for url) // http://www.w3.org/WAI/altserv?url=www.merchand.com/Images/card.png 
-// desc="A credit card logo" // 3 (asking for form to fill in desc for a url) // http://www.w3.org/WAI/altserv // OUTPUT: see RETURN statement below // maintains a persistent list of [url, desc, state] // with state = d, bd, tbd (described, being described, to be described) if url if !desc // case 1 : asking for textual description of url if (url in list) if (list[url].state = d) RETURN list[url].desc 
-else RETURN no desc else add url in list list[url].state 
-= tbd RETURN no desc else // case 2 : giving a textual description for url // should check list[url].state 
-= bd and desc valid list[url].state 
-= d list[url].desc 
-= desc RETURN ok else // case 3 : no param, asking for form to fill in desc for a url get top url with list[url].state 
-= tbd list[url].state 
-= bd // should check url valid with HEAD RETURN form HTML with embedded image url 
-Great idea. 
-On a related note, here is a pointer to some technology that would help us put this prototype together Muffin found at http://muffin.doit.org/ is a proxy server written in Java that can sit between the users browser and the rest of the WWW and act as a filtering gateway. 
-I'm still playing with it to see what all one can do, but the possibilities are huge given the variety of filters it enables. 
-Best Regards, --raman as representative of my employer, Adobe Systems Inc. 
-does a browser fix play in here? 
-if so, why not have the browser capable of upon the users action send a request for an alt tag to the webmaster of a site. 
-or something similar. 
-it could go from the individual graphic to all non alted graphics. 
-Otherwise, this approach is a welcomed piece of work. 
-Hands-On-Technolog(eye)s touching the internet voice: 1-(301) 949-7599 poehlman@clark.net 
-ftp://ftp.clark.net/pub/poehlman 
-Reply to: RE ALT tools (was: Censorship by laziness) I also don't want to be negative, but... 
-This seems like an awfully cumbersome technological fix to a fairly easily solved problem in Web access. 
-Our experience in one- on-one discussions with webmasters is that of all the access fixes they're willing to deal with, remembering to include alt-text tags is the easiest and most readily accepted. 
-The proposal basically lets them off the hook 
-of the first thing they are willing to do. 
-I also think people underestimate the effort it would take to have a volunteer corps of people inserting tags. 
-There must be millions upon millions of tags and even those of us working in the field wouldn't be pleased to have to add tags to every image of every page we surfed during the day. 
-The proposed technology may be elegant, but it seems to me that this would 
-actually result in less tags, not more. 
-Putting warning (if not error) messages in web authoring tools seems like a more productive path to work on. 
-I'm also quite skeptical of any automated tagging through image recognition - the look of even text in graphic form on the web would likely frustrate even the best OCR engine for the foreseeable future. 
-Let alone logos, photos, animations, etc. Doubtful that image (or speech recognition for deaf or hard- of-hearing people) is the likely solution. 
-A similar solution has been posed for adding captions and descriptions to multimedia on the web. 
-I can't imagine (my failure of imagination?) a volunteer corps of captioners and describers taking up the slack for busy or unsympathetic webmasters being the answer. 
-When the producer has the video or audio clip in hand and in house is when the captioning or description is most readily accomplished. 
-Quality control issues are an obvious problem as well. 
-Better web-based multimedia captioning and description tools would be a vast help, and we may see some soon. 
-I would warn against putting alot of development time into this centralized tagging concept where there seems to be so many tougher development tasks at hand. 
-One man's opnion... 
-- Larry Larry Goldberg, Director Media Access WGBH Educational Foundation 125 Western Ave. 
-Boston, MA 02134 617-492-9258 (voice/TTY) Internet: Larry_Goldberg@WGBH.org 
-Reply to: RE  ALT tools (was: Censorship by laziness) 
-Since the day Altavista went live, I've changed my mind regarding what 
-is and what is not possible on the Web Yes, perhaps I've stopped dreaming enough (letting reality intrude) 
-today, Altavista is doing live translation... 
-Has anyone analyzed the quality of these automated translations? 
-Good enough for a native speaker? 
-- Larry 
------------------- RFC822 Header Follows ------------------ Received: by wgbh.org with ADMIN;23 Jan 1998 15:11:39 -0500 Received: by www47.inria.fr 
-(8.8.6/8.8.5) id VAA16939; Fri, 23 Jan 1998 21:11:35 +0100 (MET) Message-Id: 199801232011.VAA16939@www47.inria.fr 
-From: Daniel Dardailler danield@w3.org 
-Subject: Re: ALT tools (was: Censorship by laziness) Date: Fri, 23 Jan 1998 21:11:33 +0100 Sender: Daniel.Dardailler@sophia.inria.fr 
-Hello Larry, and thanks for your honest feedback. 
-I agree. 
-Prevention is always better than cure. 
-But until we eradicate the disease, we need both. 
-This system is about a cure for Web sites that never add ALT to their image. 
-The "complaint server" aspect is not to be under-estimated too and I think the reporting part might help to force webmaster into adding their own ALT. 
-To be frank, I haven't really thought about where, when and by who this kind of system will be implemented, in other words, there is no real project behind it, just a concept that I wanted to share with the community. 
-With respect to other development at hand: we're not in an either/or situation. 
-We're talking different kind of resources in fact. 
-Having a given authoring tool vendor to upgrade his browser to our guidelines is a "persuasion" job, where implementing an Alt-server could be a summer internship programming job. 
-Regarding feasability/scalability. 
-A couple of years ago, a guy at Digital (a former INRIA researcher :-) said he could build a system that would index the whole Internet and provide a free full-text search interface to the public. 
-Since the day Altavista went live, I've changed my mind regarding what is and what is not possible on the Web (and today, Altavista is doing live translation, which seems at least as complex as OCR stuff). 
-the hook 
-Hi Larry, I agree that the question is how to best help web page authors to find the problem - how they intend to solve the problem is another question and is probably a function of what authoring tools they use etc. 
-From a personal point of view, what I want is a tool that I can easily use to run over my set of resources and tell me where there are missing ALT tags. 
-This was the reason for adding the functionality to the libwww robot in the first place [1]. 
-Henrik [1] http://www.w3.org/Robot/ Henrik Frystyk Nielsen, World Wide Web Consortium 
-[Daniel Dardailler] 
-today, Altavista is doing live translation... 
-[Larry Goldberg] 
-Not hardly. 
-On several mailing lists and newsfroups I frequent, it has become an amusing exercise to drive a phrase to closure (the point at which a round-trip produces the starting phrase). 
-In a recent example, "I hate spam and want Congress to make it illegal" came back as something like "I hate Spam, which it Congress educates itself illegally." 
-Try it. 
-Have fun. 
--Chris !ENTITY crism PUBLIC "-//O'Reilly//NONSGML Christopher R. Maden//EN" 
-URL http://www.oreilly.com/people/staff/crism/ 
-TEL +1.617.499.7487 
-to follow up on what Larry Goldberg said: 
-Good question. 
-What questions should that analysis ask? 
-How much of the information in the foreign language document was accessible without the auto-translation? 
-How much of the information in the foreign language document was accessible with the translation? 
-The experience I have heard from a linguist is that the most effective approach is not to try to clean up the output to be fluent in the target language. 
-People are very flexible and tolerant of technical errors. 
-The reader can read through that. 
-The first brute force word for word transliteration removes the bulk of the mystery. 
-Polishing after that is past the knee in the curve. 
-Al asgilman@access.digex.net 
-The experience I have heard from a linguist is that the most effective approach is not to try to clean up the output to be fluent in the target language. 
-People are very flexible and tolerant of technical errors. 
-The reader can read through that. 
-The first brute force word for word transliteration removes the bulk of the mystery. 
-Polishing after that is past the knee in the curve. 
-That may be true of people in general, however, many deaf people use a form of sign language (e.g., American Sign Language) as their first language and therefore are often not fluent with a written language even though the person may have lived their whole life in a country speaking that language. 
-For example, there are many deaf people who have lived in the U.S.A. all their lives and nevertheless do not have a fluent grasp of the English Language but rather utilize ASL as their native language. 
-For these individuals, reading some written language without technical errors is a challenge, and therefore reading a translation with technical errors would likely be insurmountable in terms of comprehension. 
-I state this not to throw a monkey wrench in your efforts to improve accessibility but to make you all aware that there is a significant population of deaf people who have difficulty reading error-free written language let alone technically deficient written translations. 
-Of course, I want to clarify that there are just as many deaf people who will be able to gain sufficient understanding of the message from poor translations, and that no one should have a stereotypical image of the average deaf cyberspace surfer. 
-Just my two cents, Howard A. Rosenblum Attorney, Monahan &amp; Cohen (Chicago, IL) Representative for National Association of the Deaf, Committee on Computing Technology Access The above statements are the opinion of the writer alone and are not intended to be given as legal advice nor representative of the opinions of the law firm of Monahan &amp; Cohen. 
-The statements are given in representation of the general interests of deaf consumers on behalf of the N.A.D. 
-Howard, One of the things I have been curious about is the state of text-to-sign translation into ASL, for example. 
-Do you happen to know about that? 
--- Al Gilman 
-Howard, One of the things I have been curious about is the state of text-to-sign translation into ASL, for example. 
-Do you happen to know about that? 
--- Al Gilman No I am not aware of any such software. 
-There are software that allow you to type a word and it will give you the sign for it. 
-However, because ASL has a drastically different grammar structure from English, I have yet to see a software that is able to translate from text to ASL. 
-I will ask around and get back to you. 
-Hello all, I've just tried Altavistas translation system. 
-It's not high quality, but helps a lot. 
-I'd say it's good. 
-(I tried English to Spanish). 
-Regards, Javier Roma?ach COCEMFE, Comisi?n I+D Madrid, Spain jromanac@dial.eunet.es 
-Th difficulty here is that there is probably insufficient alt tagging for the java. 
-Which would illustrate the issue nicely, but not help a lot of people, particularly those reliant on lynx. 
-If the source code is available, or the thing can be replicated in a CGI version then it could be a very good idea. 
-Charles McCathieNevile 
-whilst basically supporting the position put out below, could I suggest a compromise position. 
-TV's option, Java intervention twixt browser and server sounds straightforward for automated use - I will certainly look at getting rid of cookies and other rubbish! the various 'fix it' options by volunteers could be applied on a request basis. 
-Rather than try to change the world, why not do it on a request basis. 
-This would focus effort where needed. 
-A request of ' I went to url xxx, need info from there, and failed to find my way round' could then be translated into action. 
-Sounds like a valuable service could be provided, which is tailored to need rather than spread so thinly as to be almost unnoticable. 
-DaveP 
-Sorry-- you have not taken the time to understand what I mailed out. 
-Best Regards, --raman as representative of my employer, Adobe Systems Inc. 
+<s> Since this thread is now discussing specifically tools that would help  </s>
+<s> solving the problem of missing ALT, I'm changing the Subject line.  </s>
+<s> For the same reason, I'd like to present some ideas for a project that would use some form of Web collaboration to fix the missing ALT problems.  </s>
+<s> The document is at http://www.w3.org/WAI/altserv.htm  </s>
+<s> Also attached in ascii below.  </s>
+<s> The ALT-server ("An eye for an alt") A accessibility/collaboration project proposal Introduction For most people, visiting a web page is a one-to-one experience where one client program, the user's browser, gets and presents some resources coming from one information provider, usually the provider's web server.  </s>
+<s> It's the client/server paradigm as we understand it.  </s>
+<s> The client usually gets an "initial" HTML file from which it derives a complete presentation made of pieces found in the document itself (text, markup, style, alt text, etc) and additional pieces fetched by going back to the provider servers (images, audio, longdesc, etc).  </s>
+<s> It doesn't have to be always that way.  </s>
+<s> The web addressing and transport architecture is flexible enough so that the set of resources that makes one's web session can seamlessly integrate from independent providers, or chains of providers.  </s>
+<s> This paper presents the application of this principle to Web Accessibility.  </s>
+<s> The design of a system to retrieve and generate missing textual description of particular HTML elements (such as images) is examined, as well as the human collaboration foundation on which it is based.  </s>
+<s> Web Accessibility Web Accessibility covers a very broad set of issues.  </s>
+<s> There are of course different kind of disabilities to consider, such a visual or hearing impairment, which all relate to different types of access denial (e.g. a missing caption for an audio stream, or the inability to linearize the content of a table for speech output).  </s>
+<s> For the purpose of this paper, we will focus on one important aspect of accessibility for non-visual based user-agent: the textual description, or rather the lack thereof, attached to graphical images on the web, i.e. the well known missing ALT text in HTML.  </s>
+<s> However, we believe the system presented can be generalized to other kind of resources.  </s>
+<s> The current situation is the following: when presented with a piece of HTML containing an image, a non-visual browser needs to "degrade gracefully" by presenting the user with a textual version of the image (that can be output as speech or braille).  </s>
+<s> Most such systems currently only look for the textual information in the ALT attribute of the IMG element of the image.  </s>
+<s> With progress happening in the browser area, other ways to find this textual/alternate text will soon be implemented, such as: look in the TITLE attribute, the HTTP stream, or the URL filename part.  </s>
+<s> What characterizes these approaches is that the textual description can only come from the origin document or the provider server.  </s>
+<s> Suppose... As we alluded to in the introduction, another way of getting this information is to ask a different server altogether.  </s>
+<s> Suppose there was a web server somewhere on the Internet whose primary job was to serve textual description of other servers' images.  </s>
+<s> A non-visual browser (such as lynx)  </s>
+<s> would then just have to query it when image ALT and TITLE attributes are missing and use the result in its presentation.  </s>
+<s> Let's consider an example expressed in pseudo HTTP sequences of queries and replies: * A non-visual browser makes a request for an initial HTML document GET www.merchand.com  </s>
+<s> /order.html  </s>
+<s> * It gets back some HTML containing an image and no ALT text for it Content-type: text/html HTML ... IMG SRC="Images/card.png" Order now!  </s>
+<s> * Since there is no ALT, nor TITLE, the browser is configured to make a query to an alt text server (wai.w3.org), giving it the absolute URL of the image as a parameter GET wai.w3.org /ALT?url=www.merchand.com/Images/card.png  </s>
+<s> * The alt server returns a piece of text corresponding to the textual description of this image Content-type text/ascii A credit card logo (if the alt text server hadn't returned anything, the browser could default to using "card.png" as the textual description of this image) * The non-visual browser uses that in place of regular ALT text.  </s>
+<s> We'll look at the server issues later on, but for now, let's concentrate on the client side.  </s>
+<s> The important line in the example above is the query to the alt server.  </s>
+<s> GET wai.w3.org /ALT?url=www.merchand.com/Images/card.png  </s>
+<s> It's just a regular HTTP request that provides the server with the URL of an image and expects the ALT text for this image back.  </s>
+<s> The /SERVICE?name=value can of course be generalized to handle different type of resources and more information about one given resource.  </s>
+<s> Consider the following examples: GET wai.w3.org /TABLE?url=www.foo.com/doc.html#n4  </s>
+<s> which asks the server for a linear/textual version of the fourth table found in www.foo.com/doc.html.  </s>
+<s> GET wai.w3.org /AUDIOCAPTION?url=www.merchand.com/Sounds/hello.midi which asks for a caption of the audio track found at the given URL.  </s>
+<s> GET wai.w3.org /ALT?url=www.merchand.com/Images/card.png;isA;line=2 which mentions to the server that the image is used in the context of an A tag (a link anchor), and appears on line 2 of the document, making it more important to treat.  </s>
+<s> I think it's easily understandable what one can achieve there.  </s>
+<s> Two things worth mentioning: the performance hit is nothing really to worry about: we merely add a web request in the overall building of a page, as graphical browsers do all the time.  </s>
+<s> The minimal configuration on the browser side is also really small: declaring the alt server name to query from.  </s>
+<s> So it's mostly transparent for the non visual browser user.  </s>
+<s> The implementation of this new GET functionality in a given browser (like lynx of amaya) is trivial.  </s>
+<s> Collaboration At the beginning of the previous section, we assumed that "there was a web server somewhere on the Internet whose primary job was to serve textual description of other servers' images".  </s>
+<s> How do we go about implementing this alt server ?  </s>
+<s> Basically, I envision two ways of generating alt text for images.  </s>
+<s> The first is automatic extraction, the second human generation.  </s>
+<s> I will not expand on the first as this is an area of advanced research (shape and pattern recognition).  </s>
+<s> I'll just mention that for a entire category of images, those representing text using some big fonts and colors, there exist algorithms out there (e.g. OCR) that could be used to extract the characters out of the graphics.  </s>
+<s> A centralized server is well suited to integrate the latest and greatest solution in one location while readily serving the entire community.  </s>
+<s> The second way, human generation, is where I see the power of the web as a collaboration tool best applied.  </s>
+<s> This is how it could work.  </s>
+<s> The ALT server logically maintains a list of tuples (image-url, textual-description, state) where state is one of to-be-described, being-described, and described.  </s>
+<s> Processing works as follow: * queries for textual descriptions of images come in * if the image, identified by its url, is in the list with a described state, the description is returned.  </s>
+<s> * if not, a failure code is returned and the image url is added with a to-be-described flag * the server continuously prioritizes this list using generic information such as frequency of the query (how many clients asked for the same data) and specific information (the image appears in an anchor, at the beginning of the page, etc) * the server provides a form interface for sighted web users to enter the textual description of the images * once an image has gotten its textual description, it is moved in the described state The part with the form filling needs to be detailed.  </s>
+<s> Each time a sighted user access the form (see annex), the next to-be-described image with the highest priority is presented while its state moves to being-described.  </s>
+<s> Sighted user can then enter the description in an input field aside the image and submit the form to the server, which validates the text and either move the entry in the described state of just unlock it my moving it back to to-be-described state (invalid might be empty text for instance).  </s>
+<s> The locking is necessary due to the asynchronous nature of web form filling: several users could access and fill the "same" form at the same time, and we only need one image description per image.  </s>
+<s> So this is basic principle of the alt text server: use the eyes of sighted web volunteers to help those who cannot see.  </s>
+<s> The reason why this system can work is based on two facts: * there are much more sighted users than the opposite, and a lot of them are willing to help * the same images are requested by a lot of different people In addition, the number of images with no description should go down as the awareness of content providers to accessibility is raised and authoring tools are improved.  </s>
+<s> If the automatic extraction part is improved, this will also diminish the number of images actually needing some human collaboration.  </s>
+<s> Regarding implementation on the server side, see the annex for pseudo code.  </s>
+<s> I expect a first version handling the base service to take a week of programming.  </s>
+<s> A more complete version (generating reports, ranking, and doing more automatization can take a couple to several months.  </s>
+<s> Misc [ to be developed ] * One issue is whether such a system can be detrimental to native alt as content providers start counting on the system to solve their alt problem... * I think not because the system can be used as incentive for content provider to add alt text to their own images: anybody can query the alt server by site and see the "no alt worse of the week".  </s>
+<s> In effect, the alt server can act a complaint repository.  </s>
+<s> * storing the describer id can be used to provide a ranked output as incentive to get more describers * automatic recognition of simple decoration (one color line, repeated pattern, 1x1, 2xN images, etc) should be easy * send email to webmaster@host for each 10 http//host/image.png with no alt.  </s>
+<s> * provide a way to check and do notification of mis-described image (empty, dirty words, etc) * provide a way to check and do notification of broken link image * provide n-at-a-time image/input-desc form * provide site and url targeted form filling (e.g. a visual impaired friend asks me to help him with a particular site or image and the prioritization scheme needs to be shortcut - note that this could also be accomplished by running a private alt text server).  </s>
+<s> * provide a way to seed the database of the alt server using a robot that explores a given list of sites.  </s>
+<s> * sort images by base filename (www.foo.com/img.png  </s>
+<s> and www.bar.com/dir/img.png) and do a image compare to see if they are really the same.  </s>
+<s> * do the same identical-image-check based on same size images pre-sort.  </s>
+<s> * hard to identify images used as pieces (jigsaw) in a bigger image laid out in a table Annexes 1 - Form layout Example of form used to query the sighter user.  </s>
+<s> Welcome to the ALT-server filling form You are about to describe: (entered Dec 25 1997 and was queried 12 times) Enter the description(*) of this image [No Alt by definition] Select Language: Optional: (*)the description should be short and to the point: e.g. "a american express credit card", "a dog", "a map with a magnifier".  </s>
+<s> No need to add "an image of" or "this is a". Link to Advanced query form providing n-at-a-time, site or url targeted filling, and database dump ranked by images site name, describer id, base image file name, etc. 2 - Simple pseudo code for ALT-server script This script handles both the queries for alt desc and the insertion of alt desc by sighted users for an hypothetical server hosted at // for now ignore lang, date entered, number queries, id of describer, // checking dup, validaty, security, and additional services like // ranking of bad site, good describers, etc) // INPUT: 3 cases // 1 (asking for textual description of url) // http://www.w3.org/WAI/altserv?url=www.merchand.com/Images/card.png  </s>
+<s> // 2 (giving a textual description for url) // http://www.w3.org/WAI/altserv?url=www.merchand.com/Images/card.png  </s>
+<s> // desc="A credit card logo" // 3 (asking for form to fill in desc for a url) // http://www.w3.org/WAI/altserv // OUTPUT: see RETURN statement below // maintains a persistent list of [url, desc, state] // with state = d, bd, tbd (described, being described, to be described) if url if !desc // case 1 : asking for textual description of url if (url in list) if (list[url].state = d) RETURN list[url].desc  </s>
+<s> else RETURN no desc else add url in list list[url].state  </s>
+<s> = tbd RETURN no desc else // case 2 : giving a textual description for url // should check list[url].state  </s>
+<s> = bd and desc valid list[url].state  </s>
+<s> = d list[url].desc  </s>
+<s> = desc RETURN ok else // case 3 : no param, asking for form to fill in desc for a url get top url with list[url].state  </s>
+<s> = tbd list[url].state  </s>
+<s> = bd // should check url valid with HEAD RETURN form HTML with embedded image url  </s>
+<s> Great idea.  </s>
+<s> On a related note, here is a pointer to some technology that would help us put this prototype together Muffin found at http://muffin.doit.org/ is a proxy server written in Java that can sit between the users browser and the rest of the WWW and act as a filtering gateway.  </s>
+<s> I'm still playing with it to see what all one can do, but the possibilities are huge given the variety of filters it enables.  </s>
+<s> Best Regards, --raman as representative of my employer, Adobe Systems Inc.  </s>
+<s> does a browser fix play in here?  </s>
+<s> if so, why not have the browser capable of upon the users action send a request for an alt tag to the webmaster of a site.  </s>
+<s> or something similar.  </s>
+<s> it could go from the individual graphic to all non alted graphics.  </s>
+<s> Otherwise, this approach is a welcomed piece of work.  </s>
+<s> Hands-On-Technolog(eye)s touching the internet voice: 1-(301) 949-7599 poehlman@clark.net  </s>
+<s> ftp://ftp.clark.net/pub/poehlman  </s>
+<s> Reply to: RE ALT tools (was: Censorship by laziness) I also don't want to be negative, but...  </s>
+<s> This seems like an awfully cumbersome technological fix to a fairly easily solved problem in Web access.  </s>
+<s> Our experience in one- on-one discussions with webmasters is that of all the access fixes they're willing to deal with, remembering to include alt-text tags is the easiest and most readily accepted.  </s>
+<s> The proposal basically lets them off the hook  </s>
+<s> of the first thing they are willing to do.  </s>
+<s> I also think people underestimate the effort it would take to have a volunteer corps of people inserting tags.  </s>
+<s> There must be millions upon millions of tags and even those of us working in the field wouldn't be pleased to have to add tags to every image of every page we surfed during the day.  </s>
+<s> The proposed technology may be elegant, but it seems to me that this would  </s>
+<s> actually result in less tags, not more.  </s>
+<s> Putting warning (if not error) messages in web authoring tools seems like a more productive path to work on.  </s>
+<s> I'm also quite skeptical of any automated tagging through image recognition - the look of even text in graphic form on the web would likely frustrate even the best OCR engine for the foreseeable future.  </s>
+<s> Let alone logos, photos, animations, etc. Doubtful that image (or speech recognition for deaf or hard- of-hearing people) is the likely solution.  </s>
+<s> A similar solution has been posed for adding captions and descriptions to multimedia on the web.  </s>
+<s> I can't imagine (my failure of imagination?) a volunteer corps of captioners and describers taking up the slack for busy or unsympathetic webmasters being the answer.  </s>
+<s> When the producer has the video or audio clip in hand and in house is when the captioning or description is most readily accomplished.  </s>
+<s> Quality control issues are an obvious problem as well.  </s>
+<s> Better web-based multimedia captioning and description tools would be a vast help, and we may see some soon.  </s>
+<s> I would warn against putting alot of development time into this centralized tagging concept where there seems to be so many tougher development tasks at hand.  </s>
+<s> One man's opnion...  </s>
+<s> - Larry Larry Goldberg, Director Media Access WGBH Educational Foundation 125 Western Ave.  </s>
+<s> Boston, MA 02134 617-492-9258 (voice/TTY) Internet: Larry_Goldberg@WGBH.org  </s>
+<s> Reply to: RE  ALT tools (was: Censorship by laziness)  </s>
+<s> Since the day Altavista went live, I've changed my mind regarding what  </s>
+<s> is and what is not possible on the Web Yes, perhaps I've stopped dreaming enough (letting reality intrude)  </s>
+<s> today, Altavista is doing live translation...  </s>
+<s> Has anyone analyzed the quality of these automated translations?  </s>
+<s> Good enough for a native speaker?  </s>
+<s> - Larry  </s>
+<s> ------------------ RFC822 Header Follows ------------------ Received: by wgbh.org with ADMIN;23 Jan 1998 15:11:39 -0500 Received: by www47.inria.fr  </s>
+<s> (8.8.6/8.8.5) id VAA16939; Fri, 23 Jan 1998 21:11:35 +0100 (MET) Message-Id: 199801232011.VAA16939@www47.inria.fr  </s>
+<s> From: Daniel Dardailler danield@w3.org  </s>
+<s> Subject: Re: ALT tools (was: Censorship by laziness) Date: Fri, 23 Jan 1998 21:11:33 +0100 Sender: Daniel.Dardailler@sophia.inria.fr  </s>
+<s> Hello Larry, and thanks for your honest feedback.  </s>
+<s> I agree.  </s>
+<s> Prevention is always better than cure.  </s>
+<s> But until we eradicate the disease, we need both.  </s>
+<s> This system is about a cure for Web sites that never add ALT to their image.  </s>
+<s> The "complaint server" aspect is not to be under-estimated too and I think the reporting part might help to force webmaster into adding their own ALT.  </s>
+<s> To be frank, I haven't really thought about where, when and by who this kind of system will be implemented, in other words, there is no real project behind it, just a concept that I wanted to share with the community.  </s>
+<s> With respect to other development at hand: we're not in an either/or situation.  </s>
+<s> We're talking different kind of resources in fact.  </s>
+<s> Having a given authoring tool vendor to upgrade his browser to our guidelines is a "persuasion" job, where implementing an Alt-server could be a summer internship programming job.  </s>
+<s> Regarding feasability/scalability.  </s>
+<s> A couple of years ago, a guy at Digital (a former INRIA researcher :-) said he could build a system that would index the whole Internet and provide a free full-text search interface to the public.  </s>
+<s> Since the day Altavista went live, I've changed my mind regarding what is and what is not possible on the Web (and today, Altavista is doing live translation, which seems at least as complex as OCR stuff).  </s>
+<s> the hook  </s>
+<s> Hi Larry, I agree that the question is how to best help web page authors to find the problem - how they intend to solve the problem is another question and is probably a function of what authoring tools they use etc.  </s>
+<s> From a personal point of view, what I want is a tool that I can easily use to run over my set of resources and tell me where there are missing ALT tags.  </s>
+<s> This was the reason for adding the functionality to the libwww robot in the first place [1].  </s>
+<s> Henrik [1] http://www.w3.org/Robot/ Henrik Frystyk Nielsen, World Wide Web Consortium  </s>
+<s> [Daniel Dardailler]  </s>
+<s> today, Altavista is doing live translation...  </s>
+<s> [Larry Goldberg]  </s>
+<s> Not hardly.  </s>
+<s> On several mailing lists and newsfroups I frequent, it has become an amusing exercise to drive a phrase to closure (the point at which a round-trip produces the starting phrase).  </s>
+<s> In a recent example, "I hate spam and want Congress to make it illegal" came back as something like "I hate Spam, which it Congress educates itself illegally."  </s>
+<s> Try it.  </s>
+<s> Have fun.  </s>
+<s> -Chris !ENTITY crism PUBLIC "-//O'Reilly//NONSGML Christopher R. Maden//EN"  </s>
+<s> URL http://www.oreilly.com/people/staff/crism/  </s>
+<s> TEL +1.617.499.7487  </s>
+<s> to follow up on what Larry Goldberg said:  </s>
+<s> Good question.  </s>
+<s> What questions should that analysis ask?  </s>
+<s> How much of the information in the foreign language document was accessible without the auto-translation?  </s>
+<s> How much of the information in the foreign language document was accessible with the translation?  </s>
+<s> The experience I have heard from a linguist is that the most effective approach is not to try to clean up the output to be fluent in the target language.  </s>
+<s> People are very flexible and tolerant of technical errors.  </s>
+<s> The reader can read through that.  </s>
+<s> The first brute force word for word transliteration removes the bulk of the mystery.  </s>
+<s> Polishing after that is past the knee in the curve.  </s>
+<s> Al asgilman@access.digex.net  </s>
+<s> The experience I have heard from a linguist is that the most effective approach is not to try to clean up the output to be fluent in the target language.  </s>
+<s> People are very flexible and tolerant of technical errors.  </s>
+<s> The reader can read through that.  </s>
+<s> The first brute force word for word transliteration removes the bulk of the mystery.  </s>
+<s> Polishing after that is past the knee in the curve.  </s>
+<s> That may be true of people in general, however, many deaf people use a form of sign language (e.g., American Sign Language) as their first language and therefore are often not fluent with a written language even though the person may have lived their whole life in a country speaking that language.  </s>
+<s> For example, there are many deaf people who have lived in the U.S.A. all their lives and nevertheless do not have a fluent grasp of the English Language but rather utilize ASL as their native language.  </s>
+<s> For these individuals, reading some written language without technical errors is a challenge, and therefore reading a translation with technical errors would likely be insurmountable in terms of comprehension.  </s>
+<s> I state this not to throw a monkey wrench in your efforts to improve accessibility but to make you all aware that there is a significant population of deaf people who have difficulty reading error-free written language let alone technically deficient written translations.  </s>
+<s> Of course, I want to clarify that there are just as many deaf people who will be able to gain sufficient understanding of the message from poor translations, and that no one should have a stereotypical image of the average deaf cyberspace surfer.  </s>
+<s> Just my two cents, Howard A. Rosenblum Attorney, Monahan &amp; Cohen (Chicago, IL) Representative for National Association of the Deaf, Committee on Computing Technology Access The above statements are the opinion of the writer alone and are not intended to be given as legal advice nor representative of the opinions of the law firm of Monahan &amp; Cohen.  </s>
+<s> The statements are given in representation of the general interests of deaf consumers on behalf of the N.A.D.  </s>
+<s> Howard, One of the things I have been curious about is the state of text-to-sign translation into ASL, for example.  </s>
+<s> Do you happen to know about that?  </s>
+<s> -- Al Gilman  </s>
+<s> Howard, One of the things I have been curious about is the state of text-to-sign translation into ASL, for example.  </s>
+<s> Do you happen to know about that?  </s>
+<s> -- Al Gilman No I am not aware of any such software.  </s>
+<s> There are software that allow you to type a word and it will give you the sign for it.  </s>
+<s> However, because ASL has a drastically different grammar structure from English, I have yet to see a software that is able to translate from text to ASL.  </s>
+<s> I will ask around and get back to you.  </s>
+<s> Hello all, I've just tried Altavistas translation system.  </s>
+<s> It's not high quality, but helps a lot.  </s>
+<s> I'd say it's good.  </s>
+<s> (I tried English to Spanish).  </s>
+<s> Regards, Javier Roma?ach COCEMFE, Comisi?n I+D Madrid, Spain jromanac@dial.eunet.es  </s>
+<s> Th difficulty here is that there is probably insufficient alt tagging for the java.  </s>
+<s> Which would illustrate the issue nicely, but not help a lot of people, particularly those reliant on lynx.  </s>
+<s> If the source code is available, or the thing can be replicated in a CGI version then it could be a very good idea.  </s>
+<s> Charles McCathieNevile  </s>
+<s> whilst basically supporting the position put out below, could I suggest a compromise position.  </s>
+<s> TV's option, Java intervention twixt browser and server sounds straightforward for automated use - I will certainly look at getting rid of cookies and other rubbish! the various 'fix it' options by volunteers could be applied on a request basis.  </s>
+<s> Rather than try to change the world, why not do it on a request basis.  </s>
+<s> This would focus effort where needed.  </s>
+<s> A request of ' I went to url xxx, need info from there, and failed to find my way round' could then be translated into action.  </s>
+<s> Sounds like a valuable service could be provided, which is tailored to need rather than spread so thinly as to be almost unnoticable.  </s>
+<s> DaveP  </s>
+<s> Sorry-- you have not taken the time to understand what I mailed out.  </s>
+<s> Best Regards, --raman as representative of my employer, Adobe Systems Inc.  </s>

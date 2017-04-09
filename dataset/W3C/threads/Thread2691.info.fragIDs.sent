@@ -1,91 +1,91 @@
-I'm curious about how HTTP/1.1 [RFC2616] persistent connections typically work 
-with respect to the typical browsers out in the wild today (Netscape &amp; Microsoft being the two I'm particularly interested in). 
-If I cause a browser to send a GET request for a given URL (using HTTP/1.1) to a server, and the server doesn't encounter any errors in processing it and responding, and then I (say) don't touch the browser for hours, what *typically* happens to the established HTTP/1.1 (-over-TCP) connection? 
-I note that RFC2616 says (in part).. 8 Connections 8.1 Persistent Connections HTTP implementations SHOULD implement persistent connections. 
-A significant difference between HTTP/1.1 and earlier versions of HTTP is that persistent connections are the default behavior of any HTTP connection. 
-That is, unless otherwise indicated, the client SHOULD assume that the server will maintain a persistent connection, even after error responses from the server. 
-As it is written, this effectively puts the responsibility for closing the HTTP/1.1-cum-TCP connection on the client. 
-In nosing around on this subject, I note that in [W.R.Stevens, TCP/IP Illustrated Vol 1, http://www.dqc.org/~chris/tcpip_ill/], in chapter 23 Stevens says that.. 1. "Keepalives are not part of the TCP specification. 
-... Nevertheless, many implementations provide the keep-alive timer." 2. "If there is no activity on a given connection for 2 hours, the server sends a probe segment to the client. 
-... A perpetual question by people discovering the keepalive option is whether the 2-hour idle time value can be changed. 
-They normally want it much lower, on the order of minutes. 
-As we show in Appendix E, the value can usually be changed, but in all the systems described in this appendix, the keepalive interval is a system-wide value, so changing it affects all users of the option. 
-" ..and in appendix E he shows kernel configuration parameters for several Unix-based TCP implementations, most all of which have a default 2-hour timeout *before* a keepalive packet will be sent. 
-I also note that Microsoft shows a default value of 2 hour idletime for the keepalive timer in this doc: 
-Some questions (again, in the case of HTTP/1.1 persistent connections): Q1. Do the popular browsers typically take the platform's OS's TCP defaults for the keepalive (if such capability is provided by the TCP/IP stack, and if it is actually used by the browser), or do they typically set this value to something in particular? 
-Q2. What typical assumptions are made on the browsers' parts about an established connection to a web site in the absence of user actions? 
-If a browser opened a HTTP/1.1 connection and the server is behaving as-specified by RFC2616, then it is up to the browser to close the connection. 
-What do browsers typically do? 
-I looked through the documented configuration parameters for Netscape Communicator.. ..and could not find a timeout setting that's applicable for this particular case. 
-How long will browsers, that are speaking HTTP/1.1, let this connection sit in the ESTABLISHED state? 
-Q3. Are the popular browsers typically using HTTP/1.1, or HTTP/1.0? 
-I didn't notice any config parameters that might have something to do with setting the default. 
-thanks, JeffH 
-The web server will close the connection due to inactivity. 
-You have to realize that web servers are trying to service literally thousands of clients with only a relatively few TCP/IP connections. 
-If you don't use it you lose it. 
-Also, most web servers actively look for reasons to close a connection 
-to a client. 
-For example, if the web server generates any dynamic content 
-for the client, then it will usually close the connection after the response it 
-sent back. 
-Regardless of whether or not the client supplied a Connection: 
-Keep-Alive header or not. 
-The reasoning behind this is that if the sever 
-had to generate dynamic content on your behalf, then you've had your share 
-and its time to give some other poor slob a turn. 
-Nope. See my comments above. 
-Also, you have to realize that just cuz the client sends a Connection: Keep-Alive header it is in no way a guarantee that the server will not close the connection after the response is sent back. 
-There is a HUGE difference between the way the HTTP spec is written and the way that web server's are actually designed to work on the internet. 
-I'm not saying that the web server designers violated the HTTP protocol. 
-Rather they have simply done what they have to do in order to protect their web server from attacks, deadlocks, and starving clients. 
-Read further in the spec and you will see that the HTTP spec says that unsafe methods should not be pipelined. 
-An unsafe method is a method that in some sense changes the state of the server and will not necessarily generate the same response every time it is executed. 
-On the internet unsafe methods are typically used to represent a clients actions on the internet (i.e. I've just sent a request to buy product X with my credit card number aaaa-bbbb-cccc-dddd). 
-Before submitting another unsafe method I should be allowed to get feedback about the current unsafe method and determine if I wish to proceed with the next unsafe method or not. 
-So, when receiving an unsafe method (POST) most web servers will close the connection after the response is generated. 
-Even if more unsafe methods have been sent into the pipe. 
-They are simply discarded. 
-Here I think you are confusing TCP/IP keep alive, with HTTP's Connection header and its Keep-Alive value. 
-Trust me. 
-These are two very different unrelatred things. 
-Browsers do not use this at all I'm quite sure. 
-Until the server closes it IMHO. 
-The server will close the connection due to inactivity; 30 seconds by default for iPlanet web server. 
-It is fair to say that the client has no idea of what sort of resource limits the server may have, so it should leave the connection open unless it has some particular reason (eg. 
-wanting to limit the total 
-number of connections it has open to all servers) to close it. 
-In 
-reality, common browsers probably put some fixed time limit on how long they keep a connection open; if anyone wants to know exactly what whatever browsers they are concerned with do, try it. 
-On the same token, the server has no great desire to arbitrarily close connections, so it will leave it open unless it has some "reason" to close it. 
-Currently, many servers use a very simple metric for this, which is a fixed timeout of x seconds after the last response was sent. 
-This is arguably a very poor metric to use, there has been some small amount of research on adaptive keepalive timeouts based on load. 
-The server, however, has a lot more information on which to base a decision to close a connection. 
-It isn't that this sort of behaviour doesn't follow the spec, but simply that there is no need to embed this sort of runtime information in a protocol spec. 
-If you read the spec carefully, you will note it goes to great lengths to ensure that the server may close the connection whenever it is idle, which requires things like a half-duplex close, etc. 
-The bottom line, however, is that if you open a connection and make one request every few hours, I really don't see why you should care if it is persistent or not, since persistent connections are just an optimization. 
-Huh? That would be a webserver with some very... odd ideas. 
-If you are talking about "Connection: Keep-Alive" then you appear to be 
-talking about HTTP/1.0, in which there is no chunked encoding so unless the server puts a content-length on its dynamic content (which is perfectly possible for it to do, but many don't for reasons that are also perfectly legitimate) then there is no way to use a persistent connection since in that case the only end-of-reponse marker you have is the close of connection. 
-The HTTP spec also doesn't describe what sort of config files you should use for your server, since that isn't part of the protocol either. 
-Umh... again, your reasoning here is a little confused. 
-Closing the connection after sending the response to a POST by no means ensures that this problem is avoided and, at that state of the game, is pointless. 
-It is legitimate to send a non-idempotent request with several idempotent requests pipelined after it. 
-I think you are again getting confused by the requirement for a content-length or chunking or the lack of a response body in order to do persistent connections. 
-As a concrete example the iPlanet Enterprise v4.1 server always closes the connection after responding to a POST request or anytime that dynamic content is generated (possibly because the response does not have a Content-Length: header field and the response is not chunked). 
-I have verified this and it is clearly documented in their literature. 
-Nope. 
-I'm clear on that. 
-All I was trying to say was that some web servers always close the connection after they have processed what they believe to be a non-idempotent request; iPlanet is a case in point. 
-You are missing the point; it doesn't do it out of some odd desire to "share" since a client has "had it's fill of dynamic content for now", like you suggested it does. 
-OK. OK. 
-I get your point. 
-It may not be out of some odd desire to "share". 
-But it is certainly based on the idea that many clients need to be serviced with relatively few connections. 
-From: jlacey@mothost.mot.com [mailto:jlacey@mothost.mot.com]On 
-Behalf Of James Lacey Sent: Thursday, 02 November 2000 20:22 Subject: Re: Of HTTP/1.1 persistent connections and TCP Keepalive timers 
-Some servers can close a connection after sending dynamic content because of security resons. 
-(or because they are bad implementations.) As for POST, if a server responds (except the 1xx status codes), the request must have ended. 
-At least, this is the most logic thing for me. 
-Also I don't know how to send a POST request without using content-length or chunked encoding and having the server knowning absolutely sure that request has ended. 
-- Joris 
+<s> I'm curious about how HTTP/1.1 [RFC2616] persistent connections typically work  </s>
+<s> with respect to the typical browsers out in the wild today (Netscape &amp; Microsoft being the two I'm particularly interested in).  </s>
+<s> If I cause a browser to send a GET request for a given URL (using HTTP/1.1) to a server, and the server doesn't encounter any errors in processing it and responding, and then I (say) don't touch the browser for hours, what *typically* happens to the established HTTP/1.1 (-over-TCP) connection?  </s>
+<s> I note that RFC2616 says (in part).. 8 Connections 8.1 Persistent Connections HTTP implementations SHOULD implement persistent connections.  </s>
+<s> A significant difference between HTTP/1.1 and earlier versions of HTTP is that persistent connections are the default behavior of any HTTP connection.  </s>
+<s> That is, unless otherwise indicated, the client SHOULD assume that the server will maintain a persistent connection, even after error responses from the server.  </s>
+<s> As it is written, this effectively puts the responsibility for closing the HTTP/1.1-cum-TCP connection on the client.  </s>
+<s> In nosing around on this subject, I note that in [W.R.Stevens, TCP/IP Illustrated Vol 1, http://www.dqc.org/~chris/tcpip_ill/], in chapter 23 Stevens says that.. 1. "Keepalives are not part of the TCP specification.  </s>
+<s> ... Nevertheless, many implementations provide the keep-alive timer." 2. "If there is no activity on a given connection for 2 hours, the server sends a probe segment to the client.  </s>
+<s> ... A perpetual question by people discovering the keepalive option is whether the 2-hour idle time value can be changed.  </s>
+<s> They normally want it much lower, on the order of minutes.  </s>
+<s> As we show in Appendix E, the value can usually be changed, but in all the systems described in this appendix, the keepalive interval is a system-wide value, so changing it affects all users of the option.  </s>
+<s> " ..and in appendix E he shows kernel configuration parameters for several Unix-based TCP implementations, most all of which have a default 2-hour timeout *before* a keepalive packet will be sent.  </s>
+<s> I also note that Microsoft shows a default value of 2 hour idletime for the keepalive timer in this doc:  </s>
+<s> Some questions (again, in the case of HTTP/1.1 persistent connections): Q1. Do the popular browsers typically take the platform's OS's TCP defaults for the keepalive (if such capability is provided by the TCP/IP stack, and if it is actually used by the browser), or do they typically set this value to something in particular?  </s>
+<s> Q2. What typical assumptions are made on the browsers' parts about an established connection to a web site in the absence of user actions?  </s>
+<s> If a browser opened a HTTP/1.1 connection and the server is behaving as-specified by RFC2616, then it is up to the browser to close the connection.  </s>
+<s> What do browsers typically do?  </s>
+<s> I looked through the documented configuration parameters for Netscape Communicator.. ..and could not find a timeout setting that's applicable for this particular case.  </s>
+<s> How long will browsers, that are speaking HTTP/1.1, let this connection sit in the ESTABLISHED state?  </s>
+<s> Q3. Are the popular browsers typically using HTTP/1.1, or HTTP/1.0?  </s>
+<s> I didn't notice any config parameters that might have something to do with setting the default.  </s>
+<s> thanks, JeffH  </s>
+<s> The web server will close the connection due to inactivity.  </s>
+<s> You have to realize that web servers are trying to service literally thousands of clients with only a relatively few TCP/IP connections.  </s>
+<s> If you don't use it you lose it.  </s>
+<s> Also, most web servers actively look for reasons to close a connection  </s>
+<s> to a client.  </s>
+<s> For example, if the web server generates any dynamic content  </s>
+<s> for the client, then it will usually close the connection after the response it  </s>
+<s> sent back.  </s>
+<s> Regardless of whether or not the client supplied a Connection:  </s>
+<s> Keep-Alive header or not.  </s>
+<s> The reasoning behind this is that if the sever  </s>
+<s> had to generate dynamic content on your behalf, then you've had your share  </s>
+<s> and its time to give some other poor slob a turn.  </s>
+<s> Nope. See my comments above.  </s>
+<s> Also, you have to realize that just cuz the client sends a Connection: Keep-Alive header it is in no way a guarantee that the server will not close the connection after the response is sent back.  </s>
+<s> There is a HUGE difference between the way the HTTP spec is written and the way that web server's are actually designed to work on the internet.  </s>
+<s> I'm not saying that the web server designers violated the HTTP protocol.  </s>
+<s> Rather they have simply done what they have to do in order to protect their web server from attacks, deadlocks, and starving clients.  </s>
+<s> Read further in the spec and you will see that the HTTP spec says that unsafe methods should not be pipelined.  </s>
+<s> An unsafe method is a method that in some sense changes the state of the server and will not necessarily generate the same response every time it is executed.  </s>
+<s> On the internet unsafe methods are typically used to represent a clients actions on the internet (i.e. I've just sent a request to buy product X with my credit card number aaaa-bbbb-cccc-dddd).  </s>
+<s> Before submitting another unsafe method I should be allowed to get feedback about the current unsafe method and determine if I wish to proceed with the next unsafe method or not.  </s>
+<s> So, when receiving an unsafe method (POST) most web servers will close the connection after the response is generated.  </s>
+<s> Even if more unsafe methods have been sent into the pipe.  </s>
+<s> They are simply discarded.  </s>
+<s> Here I think you are confusing TCP/IP keep alive, with HTTP's Connection header and its Keep-Alive value.  </s>
+<s> Trust me.  </s>
+<s> These are two very different unrelatred things.  </s>
+<s> Browsers do not use this at all I'm quite sure.  </s>
+<s> Until the server closes it IMHO.  </s>
+<s> The server will close the connection due to inactivity; 30 seconds by default for iPlanet web server.  </s>
+<s> It is fair to say that the client has no idea of what sort of resource limits the server may have, so it should leave the connection open unless it has some particular reason (eg.  </s>
+<s> wanting to limit the total  </s>
+<s> number of connections it has open to all servers) to close it.  </s>
+<s> In  </s>
+<s> reality, common browsers probably put some fixed time limit on how long they keep a connection open; if anyone wants to know exactly what whatever browsers they are concerned with do, try it.  </s>
+<s> On the same token, the server has no great desire to arbitrarily close connections, so it will leave it open unless it has some "reason" to close it.  </s>
+<s> Currently, many servers use a very simple metric for this, which is a fixed timeout of x seconds after the last response was sent.  </s>
+<s> This is arguably a very poor metric to use, there has been some small amount of research on adaptive keepalive timeouts based on load.  </s>
+<s> The server, however, has a lot more information on which to base a decision to close a connection.  </s>
+<s> It isn't that this sort of behaviour doesn't follow the spec, but simply that there is no need to embed this sort of runtime information in a protocol spec.  </s>
+<s> If you read the spec carefully, you will note it goes to great lengths to ensure that the server may close the connection whenever it is idle, which requires things like a half-duplex close, etc.  </s>
+<s> The bottom line, however, is that if you open a connection and make one request every few hours, I really don't see why you should care if it is persistent or not, since persistent connections are just an optimization.  </s>
+<s> Huh? That would be a webserver with some very... odd ideas.  </s>
+<s> If you are talking about "Connection: Keep-Alive" then you appear to be  </s>
+<s> talking about HTTP/1.0, in which there is no chunked encoding so unless the server puts a content-length on its dynamic content (which is perfectly possible for it to do, but many don't for reasons that are also perfectly legitimate) then there is no way to use a persistent connection since in that case the only end-of-reponse marker you have is the close of connection.  </s>
+<s> The HTTP spec also doesn't describe what sort of config files you should use for your server, since that isn't part of the protocol either.  </s>
+<s> Umh... again, your reasoning here is a little confused.  </s>
+<s> Closing the connection after sending the response to a POST by no means ensures that this problem is avoided and, at that state of the game, is pointless.  </s>
+<s> It is legitimate to send a non-idempotent request with several idempotent requests pipelined after it.  </s>
+<s> I think you are again getting confused by the requirement for a content-length or chunking or the lack of a response body in order to do persistent connections.  </s>
+<s> As a concrete example the iPlanet Enterprise v4.1 server always closes the connection after responding to a POST request or anytime that dynamic content is generated (possibly because the response does not have a Content-Length: header field and the response is not chunked).  </s>
+<s> I have verified this and it is clearly documented in their literature.  </s>
+<s> Nope.  </s>
+<s> I'm clear on that.  </s>
+<s> All I was trying to say was that some web servers always close the connection after they have processed what they believe to be a non-idempotent request; iPlanet is a case in point.  </s>
+<s> You are missing the point; it doesn't do it out of some odd desire to "share" since a client has "had it's fill of dynamic content for now", like you suggested it does.  </s>
+<s> OK. OK.  </s>
+<s> I get your point.  </s>
+<s> It may not be out of some odd desire to "share".  </s>
+<s> But it is certainly based on the idea that many clients need to be serviced with relatively few connections.  </s>
+<s> From: jlacey@mothost.mot.com [mailto:jlacey@mothost.mot.com]On  </s>
+<s> Behalf Of James Lacey Sent: Thursday, 02 November 2000 20:22 Subject: Re: Of HTTP/1.1 persistent connections and TCP Keepalive timers  </s>
+<s> Some servers can close a connection after sending dynamic content because of security resons.  </s>
+<s> (or because they are bad implementations.) As for POST, if a server responds (except the 1xx status codes), the request must have ended.  </s>
+<s> At least, this is the most logic thing for me.  </s>
+<s> Also I don't know how to send a POST request without using content-length or chunked encoding and having the server knowning absolutely sure that request has ended.  </s>
+<s> - Joris  </s>

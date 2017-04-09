@@ -1,38 +1,38 @@
-Hi, Suppose we have a simple service having as input the current location of a user and as output the nearest airport. 
-I suppose that the web service should describe what "nearest" means. 
-A way to d escribe this, I think, is by using rules. 
-Probably the definition of "nearest" could be: nearest(current_location, X):- airport(X), airport(Y), X =\= Y, (location(X) - current_location)  (location(Y) - current_location). 
-Could anybody explain me how I can use OWL Rule Language [1] in specifying such a rule, taking into account that in OWL Rule Language only variables that occur in the anteced ent of a rule may occur in the consequent. 
-And one more thing: in OWL-S, a rule language should be deployed only for the r eason that it may help in describing preconditions and effects in a more comfortable way(i.e. not having to use for example in OWL-S Profile the definitions of "preconditions" and "effect", but rather considering the rule: _if a buyer has a valid Account and a valid Credit Card, then he can buy the bo ok_ ) or for the reason that it gives more expressivity (if yes, please explain wha t this expressivity means and how it is achieved or can be achieved). 
-Thank you, Titi Roman [1] http://www.daml.org/rules/proposal/rules-all.html 
-In my opinion, here two problems are mixed: 1) How to describe predicates such as nearest 2) The way to describe preconditions and effects In 1), using rules seems to be a natural approach. 
-But, is it realistic to expect that a requester (a human user or a business process) will define nearest to specify his goal in this way? 
-In 2), the semantics of preconditions and effects doesnt change if you specify them using a rule. 
-Therefore, probably depending on the reasoning mechanism you want to use to reason about the service functionality, one description will be more appropriate than the other. 
-For example, if you intend to apply AI planning techniques (as I think is the approach of OWL-S), using preconditions and effects and not rules might be the most natural way to do it. 
-So defining the rule _if a buyer has a valid Account and a valid Credit Card, then he can buy the book_ might not be more comfortable than saying that valid(Account) and valid(CreditCard) are preconditions and buy(Book) and effect. 
-Best regards Rub�n Lara Hern�ndez Digital Enterprise Research Institute (DERI) Innsbruck http://deri.semanticweb.org/ 
-http://deri.semanticweb.org/ 
-Institut f�r Informatik (IFI) Universit�t Innsbruck Technikerstrasse 13, 6020 Innsbruck Austria E-mail: Ruben.Lara@uibk.ac.at 
-On Behalf Of titi roman Hi, Suppose we have a simple service having as input the current location of a user and as output the nearest airport. 
-I suppose that the web service should describe what "nearest" means. 
-A way to describe this, I think, is by using rules. 
-Probably the definition of "nearest" could be: nearest(current_location, X):- airport(X), airport(Y), X =\= Y, (location(X) - current_location) (location(Y) - current_location). 
-Could anybody explain me how I can use OWL Rule Language [1] in specifying such a rule, taking into account that in OWL Rule Language only variables that occur in the antecedent of a rule may occur in the consequent. 
-And one more thing: in OWL-S, a rule language should be deployed only for the reason that it may help in describing preconditions and effects in a more comfortable way(i.e. not having to use for example in OWL-S Profile the definitions of "preconditions" and "effect", but rather considering the rule: _if a buyer has a valid Account and a valid Credit Card, then he can buy the book_ !-- specification that the inputs are the actual variables of the rule-- ) or for the reason that it gives more expressivity (if yes, please explain what this expressivity means and how it is achieved or can be achieved). 
-Thank you, Titi Roman [1] http://www.daml.org/rules/proposal/rules-all.html 
-Suppose we have a simple service having as input the current location of = a user and as output the nearest airport. 
-I suppose that the web service should describe what "nearest" means. 
-A = way to describe this, I think, is by using rules.=20 
-Probably the definition of "nearest" could be: nearest(current_location, X) :- airport(X), airport(Y), X =\= Y, (location(X) - current_location) = (location(Y) - current_location). 
-Could anybody explain me how I can use OWL Rule Language [1] in = specifying such a rule, taking=20 into account that in OWL Rule Language only variables that occur in the = antecedent of a rule may occur in the consequent. 
-The rule you gave doesn't say what you want. 
-It says that X is the nearest if there exists a Y (not = X) such that X is closer than Y. In fact, the existence of such a Y is neither a necessary nor a sufficient reason for Y to be nearest. 
-The correct way to say it is nearest(current_location, X) :- airport(X), forall (Y) (airport(Y) - (location(X) - current_location) = (location(Y) - current_location)) (The inequality condition is unnecessary, although harmless). 
-To eliminate the explicit quantifier, there are two approaches one can take. 
-One is to skolemize, replacing Y by a term sk_nst(X): nearest(current_location, X) :- airport(X), (airport(sk_nst(X)) - (location(X) - current_location) = (location(sk_nst(X)) - current_location)) A theorem prover might use this as follows: To prove that JFK is the nearest airport, verify that JFK is an airport, then assume that sk_nst(JFK) is an arbitrary airport, and prove that (location(sk_nst(JFK)) - current_location) is  (location(JFK) - current_location) You probably won't be able to prove this unless you have a list of all the airports, so that you can infer sk_nst(JFK) = BDL V sk_nst(JFK) = LAX V sk_nst(JFK) = GTW V ... Then case analysis and equality substitution would finish the proof off. 
-The alternative is to use negation-as-failure, writing the axiom nearest(current_location, X) :- airport(X), (\+ (airport(Y), (location(X) - current_location) (location(Y) - current_location))) where \+ is the usual Prolog symbol for negation-as-failure. 
-This version says, in essence, if I can't think of an airport Y that is closer than X to my current location, then X is the nearest airport. 
-The NAF approach is likely to be much more efficient, much easier to implement, and much more likely to yield a useful conclusion than the heavy-duty theorem prover. 
-I hope the people who deprecate it realize that the heavy-duty theorem prover is the only alternative. 
--- Drew McDermott Yale University CS Dept. 
+<s> Hi, Suppose we have a simple service having as input the current location of a user and as output the nearest airport.  </s>
+<s> I suppose that the web service should describe what "nearest" means.  </s>
+<s> A way to d escribe this, I think, is by using rules.  </s>
+<s> Probably the definition of "nearest" could be: nearest(current_location, X):- airport(X), airport(Y), X =\= Y, (location(X) - current_location)  (location(Y) - current_location).  </s>
+<s> Could anybody explain me how I can use OWL Rule Language [1] in specifying such a rule, taking into account that in OWL Rule Language only variables that occur in the anteced ent of a rule may occur in the consequent.  </s>
+<s> And one more thing: in OWL-S, a rule language should be deployed only for the r eason that it may help in describing preconditions and effects in a more comfortable way(i.e. not having to use for example in OWL-S Profile the definitions of "preconditions" and "effect", but rather considering the rule: _if a buyer has a valid Account and a valid Credit Card, then he can buy the bo ok_ ) or for the reason that it gives more expressivity (if yes, please explain wha t this expressivity means and how it is achieved or can be achieved).  </s>
+<s> Thank you, Titi Roman [1] http://www.daml.org/rules/proposal/rules-all.html  </s>
+<s> In my opinion, here two problems are mixed: 1) How to describe predicates such as nearest 2) The way to describe preconditions and effects In 1), using rules seems to be a natural approach.  </s>
+<s> But, is it realistic to expect that a requester (a human user or a business process) will define nearest to specify his goal in this way?  </s>
+<s> In 2), the semantics of preconditions and effects doesnt change if you specify them using a rule.  </s>
+<s> Therefore, probably depending on the reasoning mechanism you want to use to reason about the service functionality, one description will be more appropriate than the other.  </s>
+<s> For example, if you intend to apply AI planning techniques (as I think is the approach of OWL-S), using preconditions and effects and not rules might be the most natural way to do it.  </s>
+<s> So defining the rule _if a buyer has a valid Account and a valid Credit Card, then he can buy the book_ might not be more comfortable than saying that valid(Account) and valid(CreditCard) are preconditions and buy(Book) and effect.  </s>
+<s> Best regards Rub�n Lara Hern�ndez Digital Enterprise Research Institute (DERI) Innsbruck http://deri.semanticweb.org/  </s>
+<s> http://deri.semanticweb.org/  </s>
+<s> Institut f�r Informatik (IFI) Universit�t Innsbruck Technikerstrasse 13, 6020 Innsbruck Austria E-mail: Ruben.Lara@uibk.ac.at  </s>
+<s> On Behalf Of titi roman Hi, Suppose we have a simple service having as input the current location of a user and as output the nearest airport.  </s>
+<s> I suppose that the web service should describe what "nearest" means.  </s>
+<s> A way to describe this, I think, is by using rules.  </s>
+<s> Probably the definition of "nearest" could be: nearest(current_location, X):- airport(X), airport(Y), X =\= Y, (location(X) - current_location) (location(Y) - current_location).  </s>
+<s> Could anybody explain me how I can use OWL Rule Language [1] in specifying such a rule, taking into account that in OWL Rule Language only variables that occur in the antecedent of a rule may occur in the consequent.  </s>
+<s> And one more thing: in OWL-S, a rule language should be deployed only for the reason that it may help in describing preconditions and effects in a more comfortable way(i.e. not having to use for example in OWL-S Profile the definitions of "preconditions" and "effect", but rather considering the rule: _if a buyer has a valid Account and a valid Credit Card, then he can buy the book_ !-- specification that the inputs are the actual variables of the rule-- ) or for the reason that it gives more expressivity (if yes, please explain what this expressivity means and how it is achieved or can be achieved).  </s>
+<s> Thank you, Titi Roman [1] http://www.daml.org/rules/proposal/rules-all.html  </s>
+<s> Suppose we have a simple service having as input the current location of = a user and as output the nearest airport.  </s>
+<s> I suppose that the web service should describe what "nearest" means.  </s>
+<s> A = way to describe this, I think, is by using rules.=20  </s>
+<s> Probably the definition of "nearest" could be: nearest(current_location, X) :- airport(X), airport(Y), X =\= Y, (location(X) - current_location) = (location(Y) - current_location).  </s>
+<s> Could anybody explain me how I can use OWL Rule Language [1] in = specifying such a rule, taking=20 into account that in OWL Rule Language only variables that occur in the = antecedent of a rule may occur in the consequent.  </s>
+<s> The rule you gave doesn't say what you want.  </s>
+<s> It says that X is the nearest if there exists a Y (not = X) such that X is closer than Y. In fact, the existence of such a Y is neither a necessary nor a sufficient reason for Y to be nearest.  </s>
+<s> The correct way to say it is nearest(current_location, X) :- airport(X), forall (Y) (airport(Y) - (location(X) - current_location) = (location(Y) - current_location)) (The inequality condition is unnecessary, although harmless).  </s>
+<s> To eliminate the explicit quantifier, there are two approaches one can take.  </s>
+<s> One is to skolemize, replacing Y by a term sk_nst(X): nearest(current_location, X) :- airport(X), (airport(sk_nst(X)) - (location(X) - current_location) = (location(sk_nst(X)) - current_location)) A theorem prover might use this as follows: To prove that JFK is the nearest airport, verify that JFK is an airport, then assume that sk_nst(JFK) is an arbitrary airport, and prove that (location(sk_nst(JFK)) - current_location) is  (location(JFK) - current_location) You probably won't be able to prove this unless you have a list of all the airports, so that you can infer sk_nst(JFK) = BDL V sk_nst(JFK) = LAX V sk_nst(JFK) = GTW V ... Then case analysis and equality substitution would finish the proof off.  </s>
+<s> The alternative is to use negation-as-failure, writing the axiom nearest(current_location, X) :- airport(X), (\+ (airport(Y), (location(X) - current_location) (location(Y) - current_location))) where \+ is the usual Prolog symbol for negation-as-failure.  </s>
+<s> This version says, in essence, if I can't think of an airport Y that is closer than X to my current location, then X is the nearest airport.  </s>
+<s> The NAF approach is likely to be much more efficient, much easier to implement, and much more likely to yield a useful conclusion than the heavy-duty theorem prover.  </s>
+<s> I hope the people who deprecate it realize that the heavy-duty theorem prover is the only alternative.  </s>
+<s> -- Drew McDermott Yale University CS Dept.  </s>

@@ -1,71 +1,71 @@
-XQuery 1.0: An XML Query Language W3C Working Draft 12 November 2003 A.2.2 Lexical Rules Some of the lexical states have incorrect transitions, causing the lexer to reject valid queries. 
-Specifically: 
-Query: !---- blah ---- | e Query: ?PITarget ? 
-| e Query: ![CDATA[x]] | e Problem: In each case, after the " ", the lexer is in DEFAULT, which 
-doesn't recognize "|" (or any other operator). 
-Fix: In DEFAULT, for the transitions on " !----", " ?", and 
-![CDATA[", change "pushState()" to "pushState(OPERATOR)". 
-Note: I reported this on November 28, 2002 (three versions ago), in 
-Query: Q { typeswitch (e) case e return e default return e } /Q 
-Problem: After the "}", the lexer is in OPERATOR, which doesn't recognize " /". 
-Fix: In DEFAULT, the transition for "typeswitch" "(" should not 
-involve "pushState(OPERATOR)". 
-Query: processing-instruction {x} {x} 
-Problem: Accepting the last "}" causes popState() on an empty stack. 
-Fix: In OPERATOR, the transition for "{" needs "pushState()". 
-Query: declare variable $x as processing-instruction()? 
-external; e 
-Problem: After the ")", the lexer is in OPERATOR, which doesn't recognize "?". 
-Fix: In ITEMTYPE, the transition for "processing-instruction" "(" 
-should change "pushState(OPERATOR)" to 
-"pushState(OCCURRENCEINDICATOR)". Query: declare variable $x external; e 
-Query: declare function Q() external; e 
-Problem: These leave DEFAULT on the stack. 
-It's not clear whether this 
-means that the lexer should reject them, but even if not, it's 
-still bad form: a lexer with a maximum stack size would be much 
-more likely to hit its limit. 
-Fix: In DEFAULT, for the transitions on "declare" "variable" "$" 
-and "declare" "function" , don't "pushState(DEFAULT)". 
--Michael Dyck 
-Hi Michael. 
-Your last call comment in [1] has been given the ID qt-2004Jan0243-01. 
-This is the official response from the XQuery and XSLT working groups. 
-Your comments have been classified as flagging errors, and the resolution as follows. 
-![CDATA[", change "pushState()" to "pushState(OPERATOR)". 
-Note: I 
-The relevant patterns now "pushState(OPERATOR)" when in non-element content, and "pushState" in the ELEMENT_CONTENT state. 
-I apologize for missing your first comment on this. 
-The samples you gave have been added to the regression tests for the test parser. 
-Query: Q { typeswitch (e) case e return e default return e } 
-Problem: After the "}", the lexer is in OPERATOR, which 
-recognize " /". 
-Fix: In DEFAULT, the 
-involve 
-"typeswitch" "(" no longer pushes a state. 
-The sample you gave has been added to the regression tests for the test parser. 
-Query: processing-instruction {x} {x} Problem: Accepting the 
-Fix: In OPERATOR, 
-I believe I have now balanced the "{" "}" push/pops. 
-This also required some fixes to a few of the validate long patterns, so that they no longer push. 
-The sample you gave has been added to the regression tests for the test parser. 
-Query: declare variable $x as processing-instruction()? 
-Problem: After the ")", the lexer is in OPERATOR, which 
-recognize "?". 
-Fix: In ITEMTYPE, the 
-should change 
-"pushState(OCCURRENCEINDICATOR)". 
-Your suggested fix has been made, and the sample query added to the regression set. 
-Query: declare variable $x external; e Query: declare 
-Problem: These leave DEFAULT on the stack. 
-means that the lexer should 
-still bad form: a lexer 
-more likely to hit 
-Fix: In DEFAULT, for the transitions on "declare" 
-and "declare" "function" , don't 
-The extraneous pushes have been removed. 
-Thank you for raising the comment. 
-I would be grateful if you would confirm that this provides an adequate resolution. 
--scott [1] 
-Without knowing exactly how you balanced the "{" "}" push/pops, I can't say for sure, but as far as I can tell, yes. 
--Michael Dyck 
+<s> XQuery 1.0: An XML Query Language W3C Working Draft 12 November 2003 A.2.2 Lexical Rules Some of the lexical states have incorrect transitions, causing the lexer to reject valid queries.  </s>
+<s> Specifically:  </s>
+<s> Query: !---- blah ---- | e Query: ?PITarget ?  </s>
+<s> | e Query: ![CDATA[x]] | e Problem: In each case, after the " ", the lexer is in DEFAULT, which  </s>
+<s> doesn't recognize "|" (or any other operator).  </s>
+<s> Fix: In DEFAULT, for the transitions on " !----", " ?", and  </s>
+<s> ![CDATA[", change "pushState()" to "pushState(OPERATOR)".  </s>
+<s> Note: I reported this on November 28, 2002 (three versions ago), in  </s>
+<s> Query: Q { typeswitch (e) case e return e default return e } /Q  </s>
+<s> Problem: After the "}", the lexer is in OPERATOR, which doesn't recognize " /".  </s>
+<s> Fix: In DEFAULT, the transition for "typeswitch" "(" should not  </s>
+<s> involve "pushState(OPERATOR)".  </s>
+<s> Query: processing-instruction {x} {x}  </s>
+<s> Problem: Accepting the last "}" causes popState() on an empty stack.  </s>
+<s> Fix: In OPERATOR, the transition for "{" needs "pushState()".  </s>
+<s> Query: declare variable $x as processing-instruction()?  </s>
+<s> external; e  </s>
+<s> Problem: After the ")", the lexer is in OPERATOR, which doesn't recognize "?".  </s>
+<s> Fix: In ITEMTYPE, the transition for "processing-instruction" "("  </s>
+<s> should change "pushState(OPERATOR)" to  </s>
+<s> "pushState(OCCURRENCEINDICATOR)". Query: declare variable $x external; e  </s>
+<s> Query: declare function Q() external; e  </s>
+<s> Problem: These leave DEFAULT on the stack.  </s>
+<s> It's not clear whether this  </s>
+<s> means that the lexer should reject them, but even if not, it's  </s>
+<s> still bad form: a lexer with a maximum stack size would be much  </s>
+<s> more likely to hit its limit.  </s>
+<s> Fix: In DEFAULT, for the transitions on "declare" "variable" "$"  </s>
+<s> and "declare" "function" , don't "pushState(DEFAULT)".  </s>
+<s> -Michael Dyck  </s>
+<s> Hi Michael.  </s>
+<s> Your last call comment in [1] has been given the ID qt-2004Jan0243-01.  </s>
+<s> This is the official response from the XQuery and XSLT working groups.  </s>
+<s> Your comments have been classified as flagging errors, and the resolution as follows.  </s>
+<s> ![CDATA[", change "pushState()" to "pushState(OPERATOR)".  </s>
+<s> Note: I  </s>
+<s> The relevant patterns now "pushState(OPERATOR)" when in non-element content, and "pushState" in the ELEMENT_CONTENT state.  </s>
+<s> I apologize for missing your first comment on this.  </s>
+<s> The samples you gave have been added to the regression tests for the test parser.  </s>
+<s> Query: Q { typeswitch (e) case e return e default return e }  </s>
+<s> Problem: After the "}", the lexer is in OPERATOR, which  </s>
+<s> recognize " /".  </s>
+<s> Fix: In DEFAULT, the  </s>
+<s> involve  </s>
+<s> "typeswitch" "(" no longer pushes a state.  </s>
+<s> The sample you gave has been added to the regression tests for the test parser.  </s>
+<s> Query: processing-instruction {x} {x} Problem: Accepting the  </s>
+<s> Fix: In OPERATOR,  </s>
+<s> I believe I have now balanced the "{" "}" push/pops.  </s>
+<s> This also required some fixes to a few of the validate long patterns, so that they no longer push.  </s>
+<s> The sample you gave has been added to the regression tests for the test parser.  </s>
+<s> Query: declare variable $x as processing-instruction()?  </s>
+<s> Problem: After the ")", the lexer is in OPERATOR, which  </s>
+<s> recognize "?".  </s>
+<s> Fix: In ITEMTYPE, the  </s>
+<s> should change  </s>
+<s> "pushState(OCCURRENCEINDICATOR)".  </s>
+<s> Your suggested fix has been made, and the sample query added to the regression set.  </s>
+<s> Query: declare variable $x external; e Query: declare  </s>
+<s> Problem: These leave DEFAULT on the stack.  </s>
+<s> means that the lexer should  </s>
+<s> still bad form: a lexer  </s>
+<s> more likely to hit  </s>
+<s> Fix: In DEFAULT, for the transitions on "declare"  </s>
+<s> and "declare" "function" , don't  </s>
+<s> The extraneous pushes have been removed.  </s>
+<s> Thank you for raising the comment.  </s>
+<s> I would be grateful if you would confirm that this provides an adequate resolution.  </s>
+<s> -scott [1]  </s>
+<s> Without knowing exactly how you balanced the "{" "}" push/pops, I can't say for sure, but as far as I can tell, yes.  </s>
+<s> -Michael Dyck  </s>

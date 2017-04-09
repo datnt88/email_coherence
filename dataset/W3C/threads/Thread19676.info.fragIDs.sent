@@ -1,56 +1,56 @@
-Hi everybody, I just built amaya 0.9a on solaris 2.5 and thought you might find useful the following report of how things went. 
-Hope this helps, 
-Arnaud Le Hors - W3C Technical Staff - http://www.w3.org 
-Here is my experience while compiling Amaya on my Solaris 2.5 machine. 
-In http://www.w3.org/member/WWW/Amaya/User/Compiling.html it is said: 
-
-How to build, short version: Here is a simple recipe explaining how to build on one of the supported target: 
-cd to Amaya/Target directory. 
-However, there is no Amaya directory in the hierarchy. 
-I assume it's really Thot/Target and go into Thot/solaris2. 
-
-$ make gcc -c -O -Wall -DRISC -DSVR4 -DSYSV -I/usr/X11/include -I/nfs/u/lehors/Thot/solaris2 -DHAVE_CONFIG_H -I/nfs/u/lehors/Thot/thotlib/include -I/nfs/u/lehors/Thot/thotlib/internals/var -I/nfs/u/lehors/Thot/thotlib/internals/h -I/nfs/u/lehors/Thot/thotlib/internals/f -I/nfs/u/lehors/Thot/schemas -I/nfs/u/lehors/Thot/schemasOPERA -I/nfs/u/lehors/Thot/libjpeg -I/nfs/u/lehors/Thot/libpng -I/nfs/u/lehors/Thot/libpng/zlib -I/usr/X11/include -o /nfs/u/lehors/Thot/solaris2/thotlib/base/compilmsg.o /nfs/u/lehors/Thot/thotlib/base/compilmsg.c 
-In file included from /nfs/u/lehors/Thot/thotlib/include/interface.h:20, from /nfs/u/lehors/Thot/thotlib/include/app.h:19, from /nfs/u/lehors/Thot/thotlib/internals/h/typestr.h:30, from /nfs/u/lehors/Thot/thotlib/internals/h/typeint.h:19, from /nfs/u/lehors/Thot/thotlib/internals/h/typemedia.h:19, from /nfs/u/lehors/Thot/thotlib/base/compilmsg.c:21: 
-/nfs/u/lehors/Thot/thotlib/include/thot_gui.h:152: X11/keysym.h: 
-No such file or directory /nfs/u/lehors/Thot/thotlib/include/thot_gui.h:153: 
-X11/IntrinsicP.h: 
-No such file or directory /nfs/u/lehors/Thot/thotlib/include/thot_gui.h:154: 
-X11/CoreP.h: 
-No such 
-file or *** Error code 1 make: Fatal error: Command failed for target `/nfs/u/lehors/Thot/solaris2/thotlib/base/compilmsg.o' 
-I set the following in the Makefile: MOTIFLIBS = -L/usr/dt/lib -L/usr/openwin/lib -lXm -lXt# Solaris STDLIBS = -L/usr/openwin/lib -lX11 -lsocket -lnsl -lm -lc # Solaris COMPIL_OPTIONS= -c $(CFLAGS) $(SYSTEM_FLAGS) -I /usr/dt/include -I/usr/openwin/include -I$(THOTDIR)/${MACHINE} -DHAVE_CONFIG_H This time the build goes all the way through. 
-I get to the second step 'make amaya' which fails with the following error: 
-
-cd /nfs/u/lehors/Thot/amaya; /nfs/u/lehors/Thot/solaris2/bin/str HTML sh: cpp: not found 
-*** Error code 139 make: Fatal error: Command failed for target `/nfs/u/lehors/Thot/amaya/HTML.STR' cpp on solaris is in /usr/ccs/lib. 
-I wouldn't expect people to have this in there PATH. 
-cpp should be defined at compile time, and controlled via a variable in the Makefile. 
-I add /usr/ccs/lib to my PATH though and restart 'make amaya'. 
-This time it works all the way through. 
-I try to start it: 
-
-$ bin/amaya ld.so.1: bin/amaya: fatal: libXm.so.3: can't open file: errno=2 Killed 
-Gasp. 
-
-$ ldd bin/amaya libXm.so.3 = (not found) libXt.so.4 = /usr/lib/libXt.so.4 libX11.so.4 = /usr/lib/libX11.so.4 libsocket.so.1 = /usr/lib/libsocket.so.1 libnsl.so.1 = /usr/lib/libnsl.so.1 libm.so.1 = /usr/lib/libm.so.1 libc.so.1 = /usr/lib/libc.so.1 libXext.so.0 = /usr/openwin/lib/libXext.so.0 libdl.so.1 = /usr/lib/libdl.so.1 libw.so.1 = /usr/lib/libw.so.1 libintl.so.1 = /usr/lib/libintl.so.1 libmp.so.1 = /usr/lib/libmp.so.1 
-(BTW ldd is not available on all systems, on HP it's chatr, etc...) 
-I start it with LD_LIBRARY_PATH=/usr/dt/lib:/usr/openwin/lib. 
-I'm not sure why I need this since there is -L/usr/dt/lib in the link command of amya... 
-One other comment: the lack of edit/browse mode makes it difficult to use amaya as a simple browser since I can modify by mistake the document I'm browsing. 
-Could we have an option to make editing inactive ? 
-Hi Arnaud, seems that you went throught a number of configuration problems, I guess that most answers were in the same document but at the end in the troubleshooting section : 
-right , an error in the doc, the base name changed ... 
-Ok, just a problem of includes (and library path in the Makefile) This potentialp problem is handled in "If make failed" section, bullet 2 point 2. 
-Section Prerequisite : "Having usual Unix development tools, at least sed, awk and cpp should be available." 
-Section "If make failed", bullet 3, point 2 give a replacement for cpp using a script shell based on gcc 
-I love this one, that's the beauty of shared libs ... Section "If amaya binary doesn't work", point 1. 
-Ok, didn't know for HP systems, on Linux it's ldd too ... I guess the worse is for AIX, we were not abble to found the ldd equivalent . 
-I don't think it's very complicated, is it a priority ? 
-Thank you for your comments, I will modify the Makefile.orig of solaris2 Target to point to the openwin and dt directories for includes and libraries. 
-It's more standard than the paths we are using for development. 
-yes definitely, Daniel Daniel Veillard@w3.org | W3C / INRIA Rhone-Alpes | Today's Bookmarks : Daniel.Veillard@inrialpes.fr| 655 av de l'Europe | Linux, WWW, Tel : +33 04 76 61 53 85 | 38330 Montbonnot | badminton, Home: +33 04 76 63 05 86 | http://opera.inrialpes.fr/veillard 
-Well, I guess not really, but on the other hand if the ratio benefit/time is high it might still be worth it. 
-Excellent. 
-This was basically the intent of my report. 
-Thanks for the prompt answer too. 
-Arnaud Le Hors - W3C Technical Staff - http://www.w3.org 
+<s> Hi everybody, I just built amaya 0.9a on solaris 2.5 and thought you might find useful the following report of how things went.  </s>
+<s> Hope this helps,  </s>
+<s> Arnaud Le Hors - W3C Technical Staff - http://www.w3.org  </s>
+<s> Here is my experience while compiling Amaya on my Solaris 2.5 machine.  </s>
+<s> In http://www.w3.org/member/WWW/Amaya/User/Compiling.html it is said:  </s>
+<s>  </s>
+<s> How to build, short version: Here is a simple recipe explaining how to build on one of the supported target:  </s>
+<s> cd to Amaya/Target directory.  </s>
+<s> However, there is no Amaya directory in the hierarchy.  </s>
+<s> I assume it's really Thot/Target and go into Thot/solaris2.  </s>
+<s>  </s>
+<s> $ make gcc -c -O -Wall -DRISC -DSVR4 -DSYSV -I/usr/X11/include -I/nfs/u/lehors/Thot/solaris2 -DHAVE_CONFIG_H -I/nfs/u/lehors/Thot/thotlib/include -I/nfs/u/lehors/Thot/thotlib/internals/var -I/nfs/u/lehors/Thot/thotlib/internals/h -I/nfs/u/lehors/Thot/thotlib/internals/f -I/nfs/u/lehors/Thot/schemas -I/nfs/u/lehors/Thot/schemasOPERA -I/nfs/u/lehors/Thot/libjpeg -I/nfs/u/lehors/Thot/libpng -I/nfs/u/lehors/Thot/libpng/zlib -I/usr/X11/include -o /nfs/u/lehors/Thot/solaris2/thotlib/base/compilmsg.o /nfs/u/lehors/Thot/thotlib/base/compilmsg.c  </s>
+<s> In file included from /nfs/u/lehors/Thot/thotlib/include/interface.h:20, from /nfs/u/lehors/Thot/thotlib/include/app.h:19, from /nfs/u/lehors/Thot/thotlib/internals/h/typestr.h:30, from /nfs/u/lehors/Thot/thotlib/internals/h/typeint.h:19, from /nfs/u/lehors/Thot/thotlib/internals/h/typemedia.h:19, from /nfs/u/lehors/Thot/thotlib/base/compilmsg.c:21:  </s>
+<s> /nfs/u/lehors/Thot/thotlib/include/thot_gui.h:152: X11/keysym.h:  </s>
+<s> No such file or directory /nfs/u/lehors/Thot/thotlib/include/thot_gui.h:153:  </s>
+<s> X11/IntrinsicP.h:  </s>
+<s> No such file or directory /nfs/u/lehors/Thot/thotlib/include/thot_gui.h:154:  </s>
+<s> X11/CoreP.h:  </s>
+<s> No such  </s>
+<s> file or *** Error code 1 make: Fatal error: Command failed for target `/nfs/u/lehors/Thot/solaris2/thotlib/base/compilmsg.o'  </s>
+<s> I set the following in the Makefile: MOTIFLIBS = -L/usr/dt/lib -L/usr/openwin/lib -lXm -lXt# Solaris STDLIBS = -L/usr/openwin/lib -lX11 -lsocket -lnsl -lm -lc # Solaris COMPIL_OPTIONS= -c $(CFLAGS) $(SYSTEM_FLAGS) -I /usr/dt/include -I/usr/openwin/include -I$(THOTDIR)/${MACHINE} -DHAVE_CONFIG_H This time the build goes all the way through.  </s>
+<s> I get to the second step 'make amaya' which fails with the following error:  </s>
+<s>  </s>
+<s> cd /nfs/u/lehors/Thot/amaya; /nfs/u/lehors/Thot/solaris2/bin/str HTML sh: cpp: not found  </s>
+<s> *** Error code 139 make: Fatal error: Command failed for target `/nfs/u/lehors/Thot/amaya/HTML.STR' cpp on solaris is in /usr/ccs/lib.  </s>
+<s> I wouldn't expect people to have this in there PATH.  </s>
+<s> cpp should be defined at compile time, and controlled via a variable in the Makefile.  </s>
+<s> I add /usr/ccs/lib to my PATH though and restart 'make amaya'.  </s>
+<s> This time it works all the way through.  </s>
+<s> I try to start it:  </s>
+<s>  </s>
+<s> $ bin/amaya ld.so.1: bin/amaya: fatal: libXm.so.3: can't open file: errno=2 Killed  </s>
+<s> Gasp.  </s>
+<s>  </s>
+<s> $ ldd bin/amaya libXm.so.3 = (not found) libXt.so.4 = /usr/lib/libXt.so.4 libX11.so.4 = /usr/lib/libX11.so.4 libsocket.so.1 = /usr/lib/libsocket.so.1 libnsl.so.1 = /usr/lib/libnsl.so.1 libm.so.1 = /usr/lib/libm.so.1 libc.so.1 = /usr/lib/libc.so.1 libXext.so.0 = /usr/openwin/lib/libXext.so.0 libdl.so.1 = /usr/lib/libdl.so.1 libw.so.1 = /usr/lib/libw.so.1 libintl.so.1 = /usr/lib/libintl.so.1 libmp.so.1 = /usr/lib/libmp.so.1  </s>
+<s> (BTW ldd is not available on all systems, on HP it's chatr, etc...)  </s>
+<s> I start it with LD_LIBRARY_PATH=/usr/dt/lib:/usr/openwin/lib.  </s>
+<s> I'm not sure why I need this since there is -L/usr/dt/lib in the link command of amya...  </s>
+<s> One other comment: the lack of edit/browse mode makes it difficult to use amaya as a simple browser since I can modify by mistake the document I'm browsing.  </s>
+<s> Could we have an option to make editing inactive ?  </s>
+<s> Hi Arnaud, seems that you went throught a number of configuration problems, I guess that most answers were in the same document but at the end in the troubleshooting section :  </s>
+<s> right , an error in the doc, the base name changed ...  </s>
+<s> Ok, just a problem of includes (and library path in the Makefile) This potentialp problem is handled in "If make failed" section, bullet 2 point 2.  </s>
+<s> Section Prerequisite : "Having usual Unix development tools, at least sed, awk and cpp should be available."  </s>
+<s> Section "If make failed", bullet 3, point 2 give a replacement for cpp using a script shell based on gcc  </s>
+<s> I love this one, that's the beauty of shared libs ... Section "If amaya binary doesn't work", point 1.  </s>
+<s> Ok, didn't know for HP systems, on Linux it's ldd too ... I guess the worse is for AIX, we were not abble to found the ldd equivalent .  </s>
+<s> I don't think it's very complicated, is it a priority ?  </s>
+<s> Thank you for your comments, I will modify the Makefile.orig of solaris2 Target to point to the openwin and dt directories for includes and libraries.  </s>
+<s> It's more standard than the paths we are using for development.  </s>
+<s> yes definitely, Daniel Daniel Veillard@w3.org | W3C / INRIA Rhone-Alpes | Today's Bookmarks : Daniel.Veillard@inrialpes.fr| 655 av de l'Europe | Linux, WWW, Tel : +33 04 76 61 53 85 | 38330 Montbonnot | badminton, Home: +33 04 76 63 05 86 | http://opera.inrialpes.fr/veillard  </s>
+<s> Well, I guess not really, but on the other hand if the ratio benefit/time is high it might still be worth it.  </s>
+<s> Excellent.  </s>
+<s> This was basically the intent of my report.  </s>
+<s> Thanks for the prompt answer too.  </s>
+<s> Arnaud Le Hors - W3C Technical Staff - http://www.w3.org  </s>

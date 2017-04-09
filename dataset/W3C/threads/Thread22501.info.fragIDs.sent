@@ -1,97 +1,97 @@
-Re deprecating the next/previous sibling attributes: I would actually expect my user set to use them more than the item() accessor. 
-I grant that this may just reflect my own programming practices, but I'd still be Real Unhappy to see them go away. 
-"Aren't very useful" depends on how the application wants to handle the document. 
-(And "aren't very efficient", which is my problem with item() and getSize(), probably depends on how the implementation is storing the document.) 
-In fact, these accessors seem to be the one place where mixing implementations gets into the worst trouble, since it's a place where non-DOM-specified optimizations (such as "has this changed since I last looked at it" flags for the "live" behavior) may not know how to talk with each other. 
-Maybe the answer there is for Level 2 to actually define those support channels, if this can be done in a sufficiently general way that it isn't bound to specific implementations, so mixing node types doesn't break that connection. 
-But that may not belong in the base DOM; it's more code and I'm sure some folks are going to want to put DOM-based code into palmtops and smaller, where 10KB still makes a real difference. 
-Distributed documents is an interesting question. 
-I'm not sure if that's 
-best addressed at the DOM, above DOM, or below DOM. 
-If all the distributed fragments independently honor the DOM API, this looks to be basically the same question as mixed implementations -- a mechanism is needed to allow crossing DOM boundaries -- plus the issue of dealing with a node which may be in more than one document and hence doesn't have a "parent" except in the context of a particular set of operations. 
-(Which may be a point in favor of making the accessors be a separate interface, which could maintain this higher-level connectivity information.) 
-Joe Kesselman / IBM Research Unless stated otherwise, all opinions are solely those of the author. 
-Claude, I'd still like to understand why removing get-next and get-previous from the server-dom spec would be a good thing. 
-What harm are they doing if you don't use 'em? 
-On a server, I presume your concern isn't code size. 
-It could be performance, but... reading between the lines, I'd suspect that concern could be addressed by doing a bit of per-session caching of which node you last accessed. 
-Not perfectly, but to about the same degree that caching data makes NodeList's "liveness" managable. 
-Joe Kesselman / IBM Research Unless stated otherwise, all opinions are solely those of the author. 
-I guess either next/previousSibling or NodelList.item() can be efficient 
-but usually not both. 
-The best way to solve this would be to introduce 
-iterators. 
-I am advocating the deprecation of next/previousSibling only if they are replaced with iterators (and only for the "server-DOM"). 
-Your right, and thats why it would be nice to perhaps split the DOM into two or more "packages". 
-One for small client-side scripting applications and one more in tune with distributed server-side applications where resources such as storage are a little cheaper. 
-It should be possible to mix implementations and still restrict nodes to having just one parent. 
-But it would be nice to have the option of sharing nodes among several parent trees. 
-Perhaps there could be orphan nodes that do not belong to a particular document and have no explicit parents. 
-Something akin to a DocumentFragment but without the flattening semantics when added to a new parent. 
-It seems like quite a few people are totally against the idea of mixing implementations. 
-I'm not quite sure why since it seems pretty useful. 
-Especially for highly dynamic documents whose structure is maintained by more than one generator. 
-It would be nice to have a public API that supports this since sharing implementations sort of depends on it. 
-Perhaps a seperate "heterogenous-mixing-server-DOM" spec could be defined? 
-;) 
-- Claude Zervas 
-Because they preclude or make difficult the mixing of implementations and node sharing. 
-Iterators are just a better solution and don't preclude any future changes in this direction. 
-It would be fine if I could just count on myself not using them but I can't govern what a remote client may expect from a supposedly compliant DOM. 
-I realize now I'm just going against the majority opinion now, but it just seems kind of short-sighted to completely dismiss using the DOM in a heterogenous distributed environment... 
-The document trees on my server are not just used by a single server application but by clients, other servers, and various other engines. 
-I'm not really that concerned with the performance issues, since they can be solved, but I am concerned with the parts of the DOM that could potentially limit its use and/or expansion in the future. 
-Maybe Don Park is right and the DOM is not a good place to start but there is no other public standard that comes as close. 
-- Claude Zervas 
-As I understand it the grove model is where serious/traditional/batch processing of SGML is rooted and resembles the previous/next sibling API. 
-For that reason, you will probably have difficulty convincing many that previous/next doesn't belong on the server. 
-I believe browsers were first to expose an indexable child collection, making that more expendable on the server, but I still find it quite useful on occasion.I guess I look for (and implement) a power implementation for my work where both are efficient. 
-In my implementation, each child knows its number in the parent sibling list by using a BTree with backwards-accessible bucket-relative index, So little actual mutation has to occur to effectively insert chidren and virtually slide all the higher indices, so that previous/next for all higher children still works. 
-Or in a simpler child-list implementation, you just visit every sibling beyond the insertion and update the index number so it can index siblings. 
-Or you maintain both a child list and previous/next pointer. 
-Or, in a fully-linked implementation with no indexability, you can construct a cache. 
-None of these implementations seem particularly bad to me. 
-If this is a significant issue for lots of implementors, then we certainly need to pick one or the other for those specific environments. 
-Even with multiple APIs, I never want to arbitrarily mix implementations in any environment. 
-I would lose all efficiency just for starters. 
-Inserting and removing nodes in the hierarchy implies that many more implementation details are set in stone -- dictated by the API. 
-Otherwise, there are private mechanisms involved in being a sibling, a child, a member of a query result, a database object, etc. 
-It shackles any implementation to be forced to incorporate nodes that cannot participate in specific advanced implementational relationships. 
-You might try throwing together an example interface of node methods that would have to be added (in a seperate interface extending Node) for intermixing implementations and see how many other implementors would like it. 
-I believe it would make good implementations significantly less efficient, leaving untouched only those that chose to implement exactly and directly as the extended interface dictated. 
-Another starting point would be to make a case that it is useful, and worth the sacrifices. 
-But I think you would still need the transferNode method for implementations like mine that would never want to participate because they would lose so much in the process. 
-Ray Whitmer ray@imall.com 
-How can I unsubscribe to this email list? 
-You send email to www-dom-request@w3.org, with the subject line "unsubscribe". 
-For more information, see Lauren 
-...enumeration of 24000 elements took 200 milliseconds using item() and 220 milliseconds using getNextSibling(). 
-I think my implementation probably runs both pretty quickly... EXCEPT when "liveness" becomes an issue, at which point losing the cached info blows one out of the water. 
-Joe Kesselman / IBM Research Unless stated otherwise, all opinions are solely those of the author. 
-Certainly the underlying representation may bias this one way or the other. 
-As far as I can tell, that doesn't solve the efficiency challenge, it just moves it out of the Node class. 
-You still wind up implementing the same logic. 
-Having an iterator object may make caching some state information easier, though, especially in a multithreaded environment, and may reduce how much code you have to actually load into an application. 
-I'm not against the idea of mixing implementations. 
-But the only way I see to do it is to define new parts of the API to support it, which means either figuring out exactly what's needed and trying to incorporate that into Level 2 or writing a DOM superset which adds this. 
-Either way, because Level 1 _doesn't_ have the hooks to support it, you don't have complete freedom to mix any two arbitrary DOMs. 
-And I still think mixability and server are separable issues. 
-In fact, a mixable-server is going to need code that can talk to other servers, which is probably application-level (well, server-level) code rather than DOM code. 
-Joe Kesselman / IBM Research Unless stated otherwise, all opinions are solely those of the author. 
-Quoth Claude: 
-I still can't quite understand why this is such an unpleasant idea. 
-The current DOM is very close to being able to support this as is. 
-The _idea_ of sharing nodes between implementations is pleasant. 
-The thought of what could be involved in implementing it properly makes me worry about whether it belongs in the DOM or in a higher-level architecture. 
-External entities: Strikes me as the right answer for multiple-source documents. 
-Among other things, since applications are explicitly permitted to decline to expand the entity (if not validating), or lazily expand it, partially masks the challenge of implementing getElementsByTagName() across this boundary. 
-Not completely, though. 
-Joe Kesselman / IBM Research Unless stated otherwise, all opinions are solely those of the author. 
-...enumeration of 24000 elements took 200 milliseconds using item() and 220 milliseconds using getNextSibling(). 
-My numbers are for 'live' children list. 
-All you have to do is cache the index of the last accessed position in the NodeList implementation. 
-For getNextSibling(), just search forward from the cached index. 
-For getPreviousSibling(), search backward. 
-If any element is removed before the cached index position, decrement the cached index. 
-If you can't make sense out of my description, just wait for Docuverse DOM SDK to be released (soon) and check out the source code. 
-Don 
+<s> Re deprecating the next/previous sibling attributes: I would actually expect my user set to use them more than the item() accessor.  </s>
+<s> I grant that this may just reflect my own programming practices, but I'd still be Real Unhappy to see them go away.  </s>
+<s> "Aren't very useful" depends on how the application wants to handle the document.  </s>
+<s> (And "aren't very efficient", which is my problem with item() and getSize(), probably depends on how the implementation is storing the document.)  </s>
+<s> In fact, these accessors seem to be the one place where mixing implementations gets into the worst trouble, since it's a place where non-DOM-specified optimizations (such as "has this changed since I last looked at it" flags for the "live" behavior) may not know how to talk with each other.  </s>
+<s> Maybe the answer there is for Level 2 to actually define those support channels, if this can be done in a sufficiently general way that it isn't bound to specific implementations, so mixing node types doesn't break that connection.  </s>
+<s> But that may not belong in the base DOM; it's more code and I'm sure some folks are going to want to put DOM-based code into palmtops and smaller, where 10KB still makes a real difference.  </s>
+<s> Distributed documents is an interesting question.  </s>
+<s> I'm not sure if that's  </s>
+<s> best addressed at the DOM, above DOM, or below DOM.  </s>
+<s> If all the distributed fragments independently honor the DOM API, this looks to be basically the same question as mixed implementations -- a mechanism is needed to allow crossing DOM boundaries -- plus the issue of dealing with a node which may be in more than one document and hence doesn't have a "parent" except in the context of a particular set of operations.  </s>
+<s> (Which may be a point in favor of making the accessors be a separate interface, which could maintain this higher-level connectivity information.)  </s>
+<s> Joe Kesselman / IBM Research Unless stated otherwise, all opinions are solely those of the author.  </s>
+<s> Claude, I'd still like to understand why removing get-next and get-previous from the server-dom spec would be a good thing.  </s>
+<s> What harm are they doing if you don't use 'em?  </s>
+<s> On a server, I presume your concern isn't code size.  </s>
+<s> It could be performance, but... reading between the lines, I'd suspect that concern could be addressed by doing a bit of per-session caching of which node you last accessed.  </s>
+<s> Not perfectly, but to about the same degree that caching data makes NodeList's "liveness" managable.  </s>
+<s> Joe Kesselman / IBM Research Unless stated otherwise, all opinions are solely those of the author.  </s>
+<s> I guess either next/previousSibling or NodelList.item() can be efficient  </s>
+<s> but usually not both.  </s>
+<s> The best way to solve this would be to introduce  </s>
+<s> iterators.  </s>
+<s> I am advocating the deprecation of next/previousSibling only if they are replaced with iterators (and only for the "server-DOM").  </s>
+<s> Your right, and thats why it would be nice to perhaps split the DOM into two or more "packages".  </s>
+<s> One for small client-side scripting applications and one more in tune with distributed server-side applications where resources such as storage are a little cheaper.  </s>
+<s> It should be possible to mix implementations and still restrict nodes to having just one parent.  </s>
+<s> But it would be nice to have the option of sharing nodes among several parent trees.  </s>
+<s> Perhaps there could be orphan nodes that do not belong to a particular document and have no explicit parents.  </s>
+<s> Something akin to a DocumentFragment but without the flattening semantics when added to a new parent.  </s>
+<s> It seems like quite a few people are totally against the idea of mixing implementations.  </s>
+<s> I'm not quite sure why since it seems pretty useful.  </s>
+<s> Especially for highly dynamic documents whose structure is maintained by more than one generator.  </s>
+<s> It would be nice to have a public API that supports this since sharing implementations sort of depends on it.  </s>
+<s> Perhaps a seperate "heterogenous-mixing-server-DOM" spec could be defined?  </s>
+<s> ;)  </s>
+<s> - Claude Zervas  </s>
+<s> Because they preclude or make difficult the mixing of implementations and node sharing.  </s>
+<s> Iterators are just a better solution and don't preclude any future changes in this direction.  </s>
+<s> It would be fine if I could just count on myself not using them but I can't govern what a remote client may expect from a supposedly compliant DOM.  </s>
+<s> I realize now I'm just going against the majority opinion now, but it just seems kind of short-sighted to completely dismiss using the DOM in a heterogenous distributed environment...  </s>
+<s> The document trees on my server are not just used by a single server application but by clients, other servers, and various other engines.  </s>
+<s> I'm not really that concerned with the performance issues, since they can be solved, but I am concerned with the parts of the DOM that could potentially limit its use and/or expansion in the future.  </s>
+<s> Maybe Don Park is right and the DOM is not a good place to start but there is no other public standard that comes as close.  </s>
+<s> - Claude Zervas  </s>
+<s> As I understand it the grove model is where serious/traditional/batch processing of SGML is rooted and resembles the previous/next sibling API.  </s>
+<s> For that reason, you will probably have difficulty convincing many that previous/next doesn't belong on the server.  </s>
+<s> I believe browsers were first to expose an indexable child collection, making that more expendable on the server, but I still find it quite useful on occasion.I guess I look for (and implement) a power implementation for my work where both are efficient.  </s>
+<s> In my implementation, each child knows its number in the parent sibling list by using a BTree with backwards-accessible bucket-relative index, So little actual mutation has to occur to effectively insert chidren and virtually slide all the higher indices, so that previous/next for all higher children still works.  </s>
+<s> Or in a simpler child-list implementation, you just visit every sibling beyond the insertion and update the index number so it can index siblings.  </s>
+<s> Or you maintain both a child list and previous/next pointer.  </s>
+<s> Or, in a fully-linked implementation with no indexability, you can construct a cache.  </s>
+<s> None of these implementations seem particularly bad to me.  </s>
+<s> If this is a significant issue for lots of implementors, then we certainly need to pick one or the other for those specific environments.  </s>
+<s> Even with multiple APIs, I never want to arbitrarily mix implementations in any environment.  </s>
+<s> I would lose all efficiency just for starters.  </s>
+<s> Inserting and removing nodes in the hierarchy implies that many more implementation details are set in stone -- dictated by the API.  </s>
+<s> Otherwise, there are private mechanisms involved in being a sibling, a child, a member of a query result, a database object, etc.  </s>
+<s> It shackles any implementation to be forced to incorporate nodes that cannot participate in specific advanced implementational relationships.  </s>
+<s> You might try throwing together an example interface of node methods that would have to be added (in a seperate interface extending Node) for intermixing implementations and see how many other implementors would like it.  </s>
+<s> I believe it would make good implementations significantly less efficient, leaving untouched only those that chose to implement exactly and directly as the extended interface dictated.  </s>
+<s> Another starting point would be to make a case that it is useful, and worth the sacrifices.  </s>
+<s> But I think you would still need the transferNode method for implementations like mine that would never want to participate because they would lose so much in the process.  </s>
+<s> Ray Whitmer ray@imall.com  </s>
+<s> How can I unsubscribe to this email list?  </s>
+<s> You send email to www-dom-request@w3.org, with the subject line "unsubscribe".  </s>
+<s> For more information, see Lauren  </s>
+<s> ...enumeration of 24000 elements took 200 milliseconds using item() and 220 milliseconds using getNextSibling().  </s>
+<s> I think my implementation probably runs both pretty quickly... EXCEPT when "liveness" becomes an issue, at which point losing the cached info blows one out of the water.  </s>
+<s> Joe Kesselman / IBM Research Unless stated otherwise, all opinions are solely those of the author.  </s>
+<s> Certainly the underlying representation may bias this one way or the other.  </s>
+<s> As far as I can tell, that doesn't solve the efficiency challenge, it just moves it out of the Node class.  </s>
+<s> You still wind up implementing the same logic.  </s>
+<s> Having an iterator object may make caching some state information easier, though, especially in a multithreaded environment, and may reduce how much code you have to actually load into an application.  </s>
+<s> I'm not against the idea of mixing implementations.  </s>
+<s> But the only way I see to do it is to define new parts of the API to support it, which means either figuring out exactly what's needed and trying to incorporate that into Level 2 or writing a DOM superset which adds this.  </s>
+<s> Either way, because Level 1 _doesn't_ have the hooks to support it, you don't have complete freedom to mix any two arbitrary DOMs.  </s>
+<s> And I still think mixability and server are separable issues.  </s>
+<s> In fact, a mixable-server is going to need code that can talk to other servers, which is probably application-level (well, server-level) code rather than DOM code.  </s>
+<s> Joe Kesselman / IBM Research Unless stated otherwise, all opinions are solely those of the author.  </s>
+<s> Quoth Claude:  </s>
+<s> I still can't quite understand why this is such an unpleasant idea.  </s>
+<s> The current DOM is very close to being able to support this as is.  </s>
+<s> The _idea_ of sharing nodes between implementations is pleasant.  </s>
+<s> The thought of what could be involved in implementing it properly makes me worry about whether it belongs in the DOM or in a higher-level architecture.  </s>
+<s> External entities: Strikes me as the right answer for multiple-source documents.  </s>
+<s> Among other things, since applications are explicitly permitted to decline to expand the entity (if not validating), or lazily expand it, partially masks the challenge of implementing getElementsByTagName() across this boundary.  </s>
+<s> Not completely, though.  </s>
+<s> Joe Kesselman / IBM Research Unless stated otherwise, all opinions are solely those of the author.  </s>
+<s> ...enumeration of 24000 elements took 200 milliseconds using item() and 220 milliseconds using getNextSibling().  </s>
+<s> My numbers are for 'live' children list.  </s>
+<s> All you have to do is cache the index of the last accessed position in the NodeList implementation.  </s>
+<s> For getNextSibling(), just search forward from the cached index.  </s>
+<s> For getPreviousSibling(), search backward.  </s>
+<s> If any element is removed before the cached index position, decrement the cached index.  </s>
+<s> If you can't make sense out of my description, just wait for Docuverse DOM SDK to be released (soon) and check out the source code.  </s>
+<s> Don  </s>

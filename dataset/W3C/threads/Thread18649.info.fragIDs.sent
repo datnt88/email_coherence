@@ -1,74 +1,74 @@
-See comments indicated by @@@ Donald E. Eastlake, 3rd 17 Skyline Drive, Hawthorne, NY 10532 USA home: 65 Shindegan Hill Road, RR#1, Carmel, NY 10512 USA relyea@netscape.com 
-(Bob Relyea) on 04/20/99 05:32:53 PM Subject: Re: XML versus ASN.1/DER blob 
-### If you want to define a "PKCS7" signature algorithm and do things in a hybrid XML / ASN.1 fashion, I suppose you should be able to. 
-But 
-people 
-who want to really do it in XML without having to drag in ASN.1/DER encoders and decoders, in addition to their XML logic, should be able to also. 
-If you want to do anything interesting with signed data, you already have to include ASN.1 and DER. 
-RSA PKCS #1 signatures have imbedded ASN.1 data. 
-You also need modular exponenatiation code, which swamps DER in size and complexity. 
-@@@ First of all, you seem to be assuming asymetric keying and RSA, which just isn't always true. 
-But even given that, your logic leads to the following train: the inner signature is in PKCS#1 which uses ASN.1 so as long as we are using it there for structured data, we might as well use PKCS#7 for the manifest so as long as we have full ASN.1 capabilities for strucutred data, we might as well use it for all stuctured data, like everthing in the web. 
-What's wrong with this picture? 
-Two things: the intial premises that PKCS#1 involves much ASN.1 processing is not generally true; and the fact that using ASN.1 for anything represents a huge cost in opacity, inflexibility, lack of extensibility, etc. so you *really* want to avoid ASN.1 becoming contagious and spreading. 
-@@@ Why do I say PKCS#1 doesn't involve much ASN.1 processing? 
-Becasue, for many applications, all you need do is insert a baroque constant on signing and check for it on verification. 
-For example, for an RSA/MD5 siganture, you just need to insert or check for hex 3020300c06082a864886f70d020505000410 @@@ For more variable or complex cases, you need to do a little more. 
-Furthermore, interfaces to RSAREF and the like are happy to work at the PKCS#1 level. 
-It's ASN.1'ness is unfortunate but completely hidden within it and does not couple to any ASN.1 requirement outside the PKCS#1 formatted inner signatures. 
-In otherwords, PKCS#1 is not contagious. 
-This means that we need to define how XML applications can get access to non-XML objects anyway. 
-### XML applications should be accessing things with DOM or the like. 
-I presumed there would be something like this. 
-We then need to define that the DOM methodes look like for things like PKCS #7 objects. 
-On the other hand, wtih XML syntax as show in the Richard Brown proposal, you do have the readability and extensibility that are goals 
-of 
-XML. 
-I don't see anything wrong with the base structure of Richard's proposal. 
-We just need to spend the time to hash out what specifically shows up as XML tags, what shows up in PKCS #7 blobs, what shows up in both, and how do XML applications get to stuff in the PKCS #7 blob, and what shows up in both. 
-### In an XML standard, things should be in XML tags. 
-If you want to do PKCS#7 signatures that make some use of XML packaging, you can. 
-Just 
-don't 
-pretend they are XML signatures. 
-So our RSA signatures should be encrypted blobs of XML, and not PKCS #1 blobs to be real XML signatures, even though every security token in the world would barf on that data? 
-@@@ It might be nice if the encrypted blobs of PKCS#1 were XML but they are not human observable, due to the encryption, so the readability of XML is lost in any case. 
-I would certainly have never chosen to use ASN.1 inside the PKCS#1 encrypted blob but nobody asked me and it is such a simple case that it imposes no requirment for general ASN.1 processing and is not contagious to the application since all the "ASN.1" 
-processing is internal to the inner signing and verification algorithms. 
-Quite frankly, if you go with the blob, I don't see any 
-justification 
-for calling the result an XML digital signature. 
-We're working on Signed XML. 
-An XML digital signature, as you are trying to define it appears to me to be and interesting academic exersize, but does not get us any closer to deploying and using signed XML documents -- and certainly does not meet any goal of getting something useful in the next 18 months! 
-@@@ When people see it to their advantage, they sure can read a lot into the workshop title... 
-The document point of view is not the only one. 
-Why should IOTP protocol messages or AADS financial messages, if they don't have any certificates and might easily be using shared secret keys, be forced to use ASN.1/DER encoded PKCS#7 instead of a clean XML Manifest? 
-### A PKCS#7 blob is an ASN.1/DER signature. 
-It is never a MIME 
-signature. 
-In S/MIME, it is an ASN.1/DER signature of a MIME object packaged with MIME. 
-You could certainly design a way to use PKCS#7 blobs to get an ASN.1/DER signature of arbitrary stuff, including XML, packaged in XML. 
-So I submit that if you are trying to build a new *signature* standard, that work should be done under some other working group. 
-@@@ I'm willing to go along with the current PKCS#1 encoding for public key signatures. 
-You're the one trying to get general XML/RFD assertiongs crunched into ASN.1/DER. 
-The best analogy I can think of to what you are suggesting is if someone decided that we need an XML Image format, because JPEG is to hard. 
-The new format would build on JPEG, and use DCT's, have all sorts of low level binary data. 
-it will have some interesting things like image size and resolution that the XML application can use. 
-@@@ I don't think it is a very good analogy. 
-I supose it would be nice for JPEG's to have their header fields in XML. 
-But I agree with you that it would not be worth the change. 
-However, the situation would be different if people customized their JPEGs by putting in their favorite image compression and rendering functions and even more different if JPEGs included arbitrary attributes in XML/RDF and further different if instead of being handed lots of existing JPEGs you are talking about creating and parsing JPEGs under new circumstances. 
-Under those conditions I certainly would say that a recoding of JPEG in XML would be the only reasonable way to go. 
-Again an interesting exersize, but not someone would actually use in a commercial application. 
-bob @@@ Donald 
-While I know I am on the heretical fringe here, I would like whatever we do in this activity to allow for public key bindings to be conveyed in other than X.509 certificates. 
-Before you start shooting, let me assure you that I want to accomodate them, too. 
-But I personally find the ideas in the SDSI/SPKI approach to be very attractive, and someday I'd like to see those ideas implemented in an RDF syntax. 
-After all, as has been stated on this list, trust in a public key-based signature is gained through attestation by a known, trusted party that said key should be trusted for the purpose to which it is being used. 
-Since there are many reasons one would want to trust a key other than identity (like affiliation, for example), a set of RDF assertions signed by the 3rd party can well convey the desired information. 
-But I am not proposing to develop such a new "certificate" standard here. 
-I am proposing that we recognize that ASN.1 is not at the core of this technology, and that whatever we do accomodates a wide set of authentication means. 
-Alan Alan Kotok, Associate Chairman mailto:kotok@w3.org 
-World Wide Web Consortium http://www.w3.org MIT Laboratory for Computer Science, 545 Technology Square, Room NE43-409 
-Granted :-) Richard D. 
-World Wide Web Consortium http://www.w3.org MIT Laboratory for Computer Science, 545 Technology Square, Room NE43-409 
+<s> See comments indicated by @@@ Donald E. Eastlake, 3rd 17 Skyline Drive, Hawthorne, NY 10532 USA home: 65 Shindegan Hill Road, RR#1, Carmel, NY 10512 USA relyea@netscape.com  </s>
+<s> (Bob Relyea) on 04/20/99 05:32:53 PM Subject: Re: XML versus ASN.1/DER blob  </s>
+<s> ### If you want to define a "PKCS7" signature algorithm and do things in a hybrid XML / ASN.1 fashion, I suppose you should be able to.  </s>
+<s> But  </s>
+<s> people  </s>
+<s> who want to really do it in XML without having to drag in ASN.1/DER encoders and decoders, in addition to their XML logic, should be able to also.  </s>
+<s> If you want to do anything interesting with signed data, you already have to include ASN.1 and DER.  </s>
+<s> RSA PKCS #1 signatures have imbedded ASN.1 data.  </s>
+<s> You also need modular exponenatiation code, which swamps DER in size and complexity.  </s>
+<s> @@@ First of all, you seem to be assuming asymetric keying and RSA, which just isn't always true.  </s>
+<s> But even given that, your logic leads to the following train: the inner signature is in PKCS#1 which uses ASN.1 so as long as we are using it there for structured data, we might as well use PKCS#7 for the manifest so as long as we have full ASN.1 capabilities for strucutred data, we might as well use it for all stuctured data, like everthing in the web.  </s>
+<s> What's wrong with this picture?  </s>
+<s> Two things: the intial premises that PKCS#1 involves much ASN.1 processing is not generally true; and the fact that using ASN.1 for anything represents a huge cost in opacity, inflexibility, lack of extensibility, etc. so you *really* want to avoid ASN.1 becoming contagious and spreading.  </s>
+<s> @@@ Why do I say PKCS#1 doesn't involve much ASN.1 processing?  </s>
+<s> Becasue, for many applications, all you need do is insert a baroque constant on signing and check for it on verification.  </s>
+<s> For example, for an RSA/MD5 siganture, you just need to insert or check for hex 3020300c06082a864886f70d020505000410 @@@ For more variable or complex cases, you need to do a little more.  </s>
+<s> Furthermore, interfaces to RSAREF and the like are happy to work at the PKCS#1 level.  </s>
+<s> It's ASN.1'ness is unfortunate but completely hidden within it and does not couple to any ASN.1 requirement outside the PKCS#1 formatted inner signatures.  </s>
+<s> In otherwords, PKCS#1 is not contagious.  </s>
+<s> This means that we need to define how XML applications can get access to non-XML objects anyway.  </s>
+<s> ### XML applications should be accessing things with DOM or the like.  </s>
+<s> I presumed there would be something like this.  </s>
+<s> We then need to define that the DOM methodes look like for things like PKCS #7 objects.  </s>
+<s> On the other hand, wtih XML syntax as show in the Richard Brown proposal, you do have the readability and extensibility that are goals  </s>
+<s> of  </s>
+<s> XML.  </s>
+<s> I don't see anything wrong with the base structure of Richard's proposal.  </s>
+<s> We just need to spend the time to hash out what specifically shows up as XML tags, what shows up in PKCS #7 blobs, what shows up in both, and how do XML applications get to stuff in the PKCS #7 blob, and what shows up in both.  </s>
+<s> ### In an XML standard, things should be in XML tags.  </s>
+<s> If you want to do PKCS#7 signatures that make some use of XML packaging, you can.  </s>
+<s> Just  </s>
+<s> don't  </s>
+<s> pretend they are XML signatures.  </s>
+<s> So our RSA signatures should be encrypted blobs of XML, and not PKCS #1 blobs to be real XML signatures, even though every security token in the world would barf on that data?  </s>
+<s> @@@ It might be nice if the encrypted blobs of PKCS#1 were XML but they are not human observable, due to the encryption, so the readability of XML is lost in any case.  </s>
+<s> I would certainly have never chosen to use ASN.1 inside the PKCS#1 encrypted blob but nobody asked me and it is such a simple case that it imposes no requirment for general ASN.1 processing and is not contagious to the application since all the "ASN.1"  </s>
+<s> processing is internal to the inner signing and verification algorithms.  </s>
+<s> Quite frankly, if you go with the blob, I don't see any  </s>
+<s> justification  </s>
+<s> for calling the result an XML digital signature.  </s>
+<s> We're working on Signed XML.  </s>
+<s> An XML digital signature, as you are trying to define it appears to me to be and interesting academic exersize, but does not get us any closer to deploying and using signed XML documents -- and certainly does not meet any goal of getting something useful in the next 18 months!  </s>
+<s> @@@ When people see it to their advantage, they sure can read a lot into the workshop title...  </s>
+<s> The document point of view is not the only one.  </s>
+<s> Why should IOTP protocol messages or AADS financial messages, if they don't have any certificates and might easily be using shared secret keys, be forced to use ASN.1/DER encoded PKCS#7 instead of a clean XML Manifest?  </s>
+<s> ### A PKCS#7 blob is an ASN.1/DER signature.  </s>
+<s> It is never a MIME  </s>
+<s> signature.  </s>
+<s> In S/MIME, it is an ASN.1/DER signature of a MIME object packaged with MIME.  </s>
+<s> You could certainly design a way to use PKCS#7 blobs to get an ASN.1/DER signature of arbitrary stuff, including XML, packaged in XML.  </s>
+<s> So I submit that if you are trying to build a new *signature* standard, that work should be done under some other working group.  </s>
+<s> @@@ I'm willing to go along with the current PKCS#1 encoding for public key signatures.  </s>
+<s> You're the one trying to get general XML/RFD assertiongs crunched into ASN.1/DER.  </s>
+<s> The best analogy I can think of to what you are suggesting is if someone decided that we need an XML Image format, because JPEG is to hard.  </s>
+<s> The new format would build on JPEG, and use DCT's, have all sorts of low level binary data.  </s>
+<s> it will have some interesting things like image size and resolution that the XML application can use.  </s>
+<s> @@@ I don't think it is a very good analogy.  </s>
+<s> I supose it would be nice for JPEG's to have their header fields in XML.  </s>
+<s> But I agree with you that it would not be worth the change.  </s>
+<s> However, the situation would be different if people customized their JPEGs by putting in their favorite image compression and rendering functions and even more different if JPEGs included arbitrary attributes in XML/RDF and further different if instead of being handed lots of existing JPEGs you are talking about creating and parsing JPEGs under new circumstances.  </s>
+<s> Under those conditions I certainly would say that a recoding of JPEG in XML would be the only reasonable way to go.  </s>
+<s> Again an interesting exersize, but not someone would actually use in a commercial application.  </s>
+<s> bob @@@ Donald  </s>
+<s> While I know I am on the heretical fringe here, I would like whatever we do in this activity to allow for public key bindings to be conveyed in other than X.509 certificates.  </s>
+<s> Before you start shooting, let me assure you that I want to accomodate them, too.  </s>
+<s> But I personally find the ideas in the SDSI/SPKI approach to be very attractive, and someday I'd like to see those ideas implemented in an RDF syntax.  </s>
+<s> After all, as has been stated on this list, trust in a public key-based signature is gained through attestation by a known, trusted party that said key should be trusted for the purpose to which it is being used.  </s>
+<s> Since there are many reasons one would want to trust a key other than identity (like affiliation, for example), a set of RDF assertions signed by the 3rd party can well convey the desired information.  </s>
+<s> But I am not proposing to develop such a new "certificate" standard here.  </s>
+<s> I am proposing that we recognize that ASN.1 is not at the core of this technology, and that whatever we do accomodates a wide set of authentication means.  </s>
+<s> Alan Alan Kotok, Associate Chairman mailto:kotok@w3.org  </s>
+<s> World Wide Web Consortium http://www.w3.org MIT Laboratory for Computer Science, 545 Technology Square, Room NE43-409  </s>
+<s> Granted :-) Richard D.  </s>
+<s> World Wide Web Consortium http://www.w3.org MIT Laboratory for Computer Science, 545 Technology Square, Room NE43-409  </s>

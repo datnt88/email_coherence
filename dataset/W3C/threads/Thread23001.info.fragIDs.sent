@@ -1,65 +1,65 @@
-This is an implementation question regarding both the default namespace as defined by "xmlns=", and special-case namespaces/prefixes, such as for xml: and xmlns:. 
-If the XML parsed into the DOM was the following: and the context for XPath evaluation is the node "doc", what should the following XPath return as the result set, assuming I asked for ORDERED_NODE_SNAPSHOT_TYPE? 
-namespace::* If the above syntax is not exactly right, please correct me, but the general idea is that I'm trying to get all of the namespace nodes in scope for the "doc" element. 
-In particular, what should all of the Node attributes be for the XPathNamespace node that represents xmlns="default"? 
-Here's what I believe the answers should be: An ordered snapshot of length 3: Result[0] = XPathNamespace { // Note: omitted attributes are null or false nodeName:"xml" 
-nodeType:13 ownerDocument:(Document node) namespaceURI:"http://www.w3.org/XML/1998/namespace" prefix:"xml" 
-Result[1] = XPathNamespace { // Note: omitted attributes are null or false nodeName:"xmlns" nodeType:13 ownerDocument:(Document node) namespaceURI:"http://www.w3.org/2000/xmlns/" 
-prefix:"xmlns" 
-Result[2] = XPathNamespace { // Note: omitted attributes are null or false nodeName:"" // i.e., empty string, NOT null 
-nodeType:13 ownerDocument:(Document node) namespaceURI:"default/" prefix:"" // i.e., empty string, NOT null 
-Things I'm not completely sure about: 
-* Should the special-case namespace nodes always be in scope? 
-* Should the "xml:" special-case be included, and if so, should its order be before xmlns:? 
-* For xmlns="default/", should the nodeName and prefix be empty string, or null? 
-I'm assuming empty, because I can find no reference in any DOM Core spec that permits nodeName to be null, and I'm told that anything not expressly permitted in the spec is forbidden. 
-Perry A. Caro Adobe Systems Incorporated 
-[deleted] 
-[deleted] 
-as per the DOM L3 core spec the prefix for default namespace should be null. 
-See 
--vivek. 
-Vivek Pandey XML &amp; Webservices Sun Microsystems, Inc. 
-Thanks for the citation. 
-I checked it, but I didn't find an answer to my question. 
-Can you quote me the text in Core that permits nodeName to be null? 
-I understand that the prefix attribute can be null. 
-I also understand that for XPathNamespace, the nodeName is supposed to be the same as the prefix. 
-My question is, should I assume the logical implication, that if prefix is null, then nodeName should also be null? 
-I hesitate to do so, since I see no explicit statement that null is permitted for nodeName. 
-Perry A. Caro Adobe Systems Incorporated 
-Correct. 
-No. This does not appear in the XPath or DOM model or in the infoset. 
-I believe nodeName should be null in this case. 
-The namespaceURI is a deprecated relative URI, so the value of namespaceURI is unpredictable, at best. 
-but they may be treated literally as you have shown here. 
-Yes. But not xmlns. 
-Only xml. 
-The rule here is whatever the XPath specification says. 
-xmlns is never included. 
-The order of these is implementation-dependent. 
-This is a case that we did not specifically consider when creating the API. 
-It is obvious to me that prefix should be null in this case, as it is in other similar cases in the specification. 
-This should be made clear in the specification. 
-We did not think of the default namespace when creating that part of the API. 
-I agree that it is a problem with nodeName being null because we have never said it may be null except by implication that it must match the others. 
-I am not sure what to do in this case. 
-I will have to think about that. 
-Perhaps we need to reconsider the decision to make nodeName match prefix, because it is unnecessary and may be confusing, as we now see. 
-Another alternative would to have the value of nodeName be something like "#namespace", as it is #text for text, etc. 
-By the way, are you implementing this? 
-If so, in what language, if I may ask. 
-Ray Whitmer rayw@netscape.com 
-Indeed, now that you point it out, the Infoset is quite specific about both cases. 
-From section 2.2: [in-scope namespaces] An unordered set of namespace information items, one for each of the namespaces in effect for this element. 
-This set always contains an item with the prefix xml which is implicitly bound to the namespace name with the prefix xmlns (used for declaring namespaces), since an application can never encounter an element or attribute with that prefix. 
-Sorry about the relative URI. 
-Substitute the following example XML: 
-I completely agree that the prefix should be null for the default namespace declaration. 
-I also agree that the nodeName should NEVER be null. 
-Therefore, some change in the specification seems necessary. 
-Either alternative you propose would be fine with me, with a slight preference for the "#namespace" alternative. 
-Yes, we have implemented the DOM 3 XPath API on our existing DOM implementation. 
-It is in C++. 
-We're already putting this implementation into products, so a quick resolution of this issue would be greatly appreciated. 
-Perry A. Caro Adobe Systems Incorporated 
+<s> This is an implementation question regarding both the default namespace as defined by "xmlns=", and special-case namespaces/prefixes, such as for xml: and xmlns:.  </s>
+<s> If the XML parsed into the DOM was the following: and the context for XPath evaluation is the node "doc", what should the following XPath return as the result set, assuming I asked for ORDERED_NODE_SNAPSHOT_TYPE?  </s>
+<s> namespace::* If the above syntax is not exactly right, please correct me, but the general idea is that I'm trying to get all of the namespace nodes in scope for the "doc" element.  </s>
+<s> In particular, what should all of the Node attributes be for the XPathNamespace node that represents xmlns="default"?  </s>
+<s> Here's what I believe the answers should be: An ordered snapshot of length 3: Result[0] = XPathNamespace { // Note: omitted attributes are null or false nodeName:"xml"  </s>
+<s> nodeType:13 ownerDocument:(Document node) namespaceURI:"http://www.w3.org/XML/1998/namespace" prefix:"xml"  </s>
+<s> Result[1] = XPathNamespace { // Note: omitted attributes are null or false nodeName:"xmlns" nodeType:13 ownerDocument:(Document node) namespaceURI:"http://www.w3.org/2000/xmlns/"  </s>
+<s> prefix:"xmlns"  </s>
+<s> Result[2] = XPathNamespace { // Note: omitted attributes are null or false nodeName:"" // i.e., empty string, NOT null  </s>
+<s> nodeType:13 ownerDocument:(Document node) namespaceURI:"default/" prefix:"" // i.e., empty string, NOT null  </s>
+<s> Things I'm not completely sure about:  </s>
+<s> * Should the special-case namespace nodes always be in scope?  </s>
+<s> * Should the "xml:" special-case be included, and if so, should its order be before xmlns:?  </s>
+<s> * For xmlns="default/", should the nodeName and prefix be empty string, or null?  </s>
+<s> I'm assuming empty, because I can find no reference in any DOM Core spec that permits nodeName to be null, and I'm told that anything not expressly permitted in the spec is forbidden.  </s>
+<s> Perry A. Caro Adobe Systems Incorporated  </s>
+<s> [deleted]  </s>
+<s> [deleted]  </s>
+<s> as per the DOM L3 core spec the prefix for default namespace should be null.  </s>
+<s> See  </s>
+<s> -vivek.  </s>
+<s> Vivek Pandey XML &amp; Webservices Sun Microsystems, Inc.  </s>
+<s> Thanks for the citation.  </s>
+<s> I checked it, but I didn't find an answer to my question.  </s>
+<s> Can you quote me the text in Core that permits nodeName to be null?  </s>
+<s> I understand that the prefix attribute can be null.  </s>
+<s> I also understand that for XPathNamespace, the nodeName is supposed to be the same as the prefix.  </s>
+<s> My question is, should I assume the logical implication, that if prefix is null, then nodeName should also be null?  </s>
+<s> I hesitate to do so, since I see no explicit statement that null is permitted for nodeName.  </s>
+<s> Perry A. Caro Adobe Systems Incorporated  </s>
+<s> Correct.  </s>
+<s> No. This does not appear in the XPath or DOM model or in the infoset.  </s>
+<s> I believe nodeName should be null in this case.  </s>
+<s> The namespaceURI is a deprecated relative URI, so the value of namespaceURI is unpredictable, at best.  </s>
+<s> but they may be treated literally as you have shown here.  </s>
+<s> Yes. But not xmlns.  </s>
+<s> Only xml.  </s>
+<s> The rule here is whatever the XPath specification says.  </s>
+<s> xmlns is never included.  </s>
+<s> The order of these is implementation-dependent.  </s>
+<s> This is a case that we did not specifically consider when creating the API.  </s>
+<s> It is obvious to me that prefix should be null in this case, as it is in other similar cases in the specification.  </s>
+<s> This should be made clear in the specification.  </s>
+<s> We did not think of the default namespace when creating that part of the API.  </s>
+<s> I agree that it is a problem with nodeName being null because we have never said it may be null except by implication that it must match the others.  </s>
+<s> I am not sure what to do in this case.  </s>
+<s> I will have to think about that.  </s>
+<s> Perhaps we need to reconsider the decision to make nodeName match prefix, because it is unnecessary and may be confusing, as we now see.  </s>
+<s> Another alternative would to have the value of nodeName be something like "#namespace", as it is #text for text, etc.  </s>
+<s> By the way, are you implementing this?  </s>
+<s> If so, in what language, if I may ask.  </s>
+<s> Ray Whitmer rayw@netscape.com  </s>
+<s> Indeed, now that you point it out, the Infoset is quite specific about both cases.  </s>
+<s> From section 2.2: [in-scope namespaces] An unordered set of namespace information items, one for each of the namespaces in effect for this element.  </s>
+<s> This set always contains an item with the prefix xml which is implicitly bound to the namespace name with the prefix xmlns (used for declaring namespaces), since an application can never encounter an element or attribute with that prefix.  </s>
+<s> Sorry about the relative URI.  </s>
+<s> Substitute the following example XML:  </s>
+<s> I completely agree that the prefix should be null for the default namespace declaration.  </s>
+<s> I also agree that the nodeName should NEVER be null.  </s>
+<s> Therefore, some change in the specification seems necessary.  </s>
+<s> Either alternative you propose would be fine with me, with a slight preference for the "#namespace" alternative.  </s>
+<s> Yes, we have implemented the DOM 3 XPath API on our existing DOM implementation.  </s>
+<s> It is in C++.  </s>
+<s> We're already putting this implementation into products, so a quick resolution of this issue would be greatly appreciated.  </s>
+<s> Perry A. Caro Adobe Systems Incorporated  </s>

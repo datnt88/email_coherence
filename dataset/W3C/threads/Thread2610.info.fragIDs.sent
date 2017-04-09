@@ -1,36 +1,36 @@
-I think we need to establish errata for RFC 2616 &amp; 2617, since minor problems are popping up. 
-Are there any volunteers willing to help take this on? 
-There've been a couple of candidates already. 
-Ob-erratum RFC 2616: Section 3.5 calls for IANA to establish a registry of "content-coding value tokens" that includes gzip, compress, and deflate. 
-Section 3.6 calls for IANA to establish a registry of "transfer-coding value tokens" that includes "chunked" and "identity", but goes on to list "gzip", "compress" and "deflate". 
-But "gzip", "compress" and "deflate" are not transfer-coding value tokens, they're content-coding value tokens. 
-Larry 
-Sure - how is it done? 
-For 2617 we have one from Joe Orton: appended below - an ABNF error. 
-Scott Lawrence Director of R &amp; D lawrence@agranat.com 
-Agranat Systems, Inc. Embedded Web Technology http://www.agranat.com/ 
-From:Joe Orton [joe@orton.demon.co.uk] Subject:rfc2617: BNF for 'domain' Section 3.2.1.: Does domain = "domain" "=" " URI ( 1*SP URI ) " really describe "A quoted, space-separated list of URIs"? 
-Should there be a '*' before the '('? 
-joe Joe Orton joe@orton.demon.co.uk ... jeo101@york.ac.uk 
-In a previous episode Larry Masinter said... :: Ob-erratum RFC 2616: :: Section 3.5 calls for IANA to establish a registry of :: "content-coding value tokens" that includes gzip, compress, :: and deflate. 
-:: Section 3.6 calls for IANA to establish a registry of :: "transfer-coding value tokens" that includes :: "chunked" and "identity", but goes on to list :: "gzip", "compress" and "deflate". 
-But "gzip", "compress" :: and "deflate" are not transfer-coding value tokens, they're :: content-coding value tokens. 
-I don't get it.. but, I am having a bad day so it's most likely my fault at interpretation.. but I thought the various compression codings made sense for both content-coding and transfer-coding.. here's my understanding: they are different things: the former is a property of the entity, and the latter is a property of the message.. and the various proxies and clients in the chain are going to handle them differently depending on whether they are content or transfer based (i.e. application/postscript that is content-coded gzip should probably be saved to disk as .ps.gz but if it is transfer-coded gzip then the UA would like decompress and display, and if anything gets saved it's the .ps 
-only), but the algorithms and encodings themselves make sense in both contexts.. whereas something like chunked or jeff's delta musings make sense only as transfer encodings. 
-and I thought that's exactly what the document says... so where am I confused? 
--Pat 
-:: Section 3.6 calls for IANA to establish a registry of :: "transfer-coding value tokens" that includes :: "chunked" and "identity", but goes on to list :: "gzip", "compress" and "deflate". 
-But "gzip", "compress" :: and "deflate" are not transfer-coding value tokens, they're :: content-coding value tokens. 
-I don't get it.. but, I am having a bad day so it's most likely my fault at interpretation.. but I thought the various compression codings made sense for both content-coding and transfer-coding.. You're right; RFC2616 is pretty clear that there are two distinct IANA registries, one for content-coding and one for transfer-coding. 
-Both registries currently contain the subset gzip|deflate|compress|identity but only transfer-coding also includes chunked and only content-coding also includes (as deprecated choices) x-gzip|x-compress here's my understanding: they are different things: the former is a property of the entity, and the latter is a property of the message.. and the various proxies and clients in the chain are going to handle them differently depending on whether they are content or transfer based (i.e. application/postscript that is content-coded gzip should probably be saved to disk as .ps.gz but if it is transfer-coded gzip then the UA would like decompress and display, and if anything gets saved it's the .ps 
-only), but the algorithms and encodings themselves make sense in both contexts.. whereas something like chunked or jeff's delta musings make sense only as transfer encodings. 
-Actually, our "Delta encoding in HTTP" draft has a lengthy discussion of this issue, and shows that delta encoding can be done either way - as a content-coding or as a transfer-coding. 
-(See section 5.3 of that draft, conveniently titled "Content-coding or Transfer-coding?".) There are some tricky interactions between content-codings, transfer-codings, and range responses, which are explained in section 4 of that draft ("Relationship between content-coding, transfer-coding, and ranges"), although these are not specific to delta encoding. 
-Once you take these interactions into account, in fact, delta encoding usually makes more sense as a content-coding than as a transfer-coding. 
-In your example of a response that is marked Content-type: application/postscript Content-Encoding: gzip it's not entirely clear to me whether it should be saved to disk in compressed format, but if one wants to actually display this response in a browser (or a helper application, in this case) it should certainly be decompressed first. 
--Jeff 
-OK, I blew it. 
-'compress', 'gzip' and 'deflate' are both content-encodings and transfer-encodings. 
-Thanks to my friends for correcting me. 
-Sorry for being so quick on the trigger today. 
-Larry 
+<s> I think we need to establish errata for RFC 2616 &amp; 2617, since minor problems are popping up.  </s>
+<s> Are there any volunteers willing to help take this on?  </s>
+<s> There've been a couple of candidates already.  </s>
+<s> Ob-erratum RFC 2616: Section 3.5 calls for IANA to establish a registry of "content-coding value tokens" that includes gzip, compress, and deflate.  </s>
+<s> Section 3.6 calls for IANA to establish a registry of "transfer-coding value tokens" that includes "chunked" and "identity", but goes on to list "gzip", "compress" and "deflate".  </s>
+<s> But "gzip", "compress" and "deflate" are not transfer-coding value tokens, they're content-coding value tokens.  </s>
+<s> Larry  </s>
+<s> Sure - how is it done?  </s>
+<s> For 2617 we have one from Joe Orton: appended below - an ABNF error.  </s>
+<s> Scott Lawrence Director of R &amp; D lawrence@agranat.com  </s>
+<s> Agranat Systems, Inc. Embedded Web Technology http://www.agranat.com/  </s>
+<s> From:Joe Orton [joe@orton.demon.co.uk] Subject:rfc2617: BNF for 'domain' Section 3.2.1.: Does domain = "domain" "=" " URI ( 1*SP URI ) " really describe "A quoted, space-separated list of URIs"?  </s>
+<s> Should there be a '*' before the '('?  </s>
+<s> joe Joe Orton joe@orton.demon.co.uk ... jeo101@york.ac.uk  </s>
+<s> In a previous episode Larry Masinter said... :: Ob-erratum RFC 2616: :: Section 3.5 calls for IANA to establish a registry of :: "content-coding value tokens" that includes gzip, compress, :: and deflate.  </s>
+<s> :: Section 3.6 calls for IANA to establish a registry of :: "transfer-coding value tokens" that includes :: "chunked" and "identity", but goes on to list :: "gzip", "compress" and "deflate".  </s>
+<s> But "gzip", "compress" :: and "deflate" are not transfer-coding value tokens, they're :: content-coding value tokens.  </s>
+<s> I don't get it.. but, I am having a bad day so it's most likely my fault at interpretation.. but I thought the various compression codings made sense for both content-coding and transfer-coding.. here's my understanding: they are different things: the former is a property of the entity, and the latter is a property of the message.. and the various proxies and clients in the chain are going to handle them differently depending on whether they are content or transfer based (i.e. application/postscript that is content-coded gzip should probably be saved to disk as .ps.gz but if it is transfer-coded gzip then the UA would like decompress and display, and if anything gets saved it's the .ps  </s>
+<s> only), but the algorithms and encodings themselves make sense in both contexts.. whereas something like chunked or jeff's delta musings make sense only as transfer encodings.  </s>
+<s> and I thought that's exactly what the document says... so where am I confused?  </s>
+<s> -Pat  </s>
+<s> :: Section 3.6 calls for IANA to establish a registry of :: "transfer-coding value tokens" that includes :: "chunked" and "identity", but goes on to list :: "gzip", "compress" and "deflate".  </s>
+<s> But "gzip", "compress" :: and "deflate" are not transfer-coding value tokens, they're :: content-coding value tokens.  </s>
+<s> I don't get it.. but, I am having a bad day so it's most likely my fault at interpretation.. but I thought the various compression codings made sense for both content-coding and transfer-coding.. You're right; RFC2616 is pretty clear that there are two distinct IANA registries, one for content-coding and one for transfer-coding.  </s>
+<s> Both registries currently contain the subset gzip|deflate|compress|identity but only transfer-coding also includes chunked and only content-coding also includes (as deprecated choices) x-gzip|x-compress here's my understanding: they are different things: the former is a property of the entity, and the latter is a property of the message.. and the various proxies and clients in the chain are going to handle them differently depending on whether they are content or transfer based (i.e. application/postscript that is content-coded gzip should probably be saved to disk as .ps.gz but if it is transfer-coded gzip then the UA would like decompress and display, and if anything gets saved it's the .ps  </s>
+<s> only), but the algorithms and encodings themselves make sense in both contexts.. whereas something like chunked or jeff's delta musings make sense only as transfer encodings.  </s>
+<s> Actually, our "Delta encoding in HTTP" draft has a lengthy discussion of this issue, and shows that delta encoding can be done either way - as a content-coding or as a transfer-coding.  </s>
+<s> (See section 5.3 of that draft, conveniently titled "Content-coding or Transfer-coding?".) There are some tricky interactions between content-codings, transfer-codings, and range responses, which are explained in section 4 of that draft ("Relationship between content-coding, transfer-coding, and ranges"), although these are not specific to delta encoding.  </s>
+<s> Once you take these interactions into account, in fact, delta encoding usually makes more sense as a content-coding than as a transfer-coding.  </s>
+<s> In your example of a response that is marked Content-type: application/postscript Content-Encoding: gzip it's not entirely clear to me whether it should be saved to disk in compressed format, but if one wants to actually display this response in a browser (or a helper application, in this case) it should certainly be decompressed first.  </s>
+<s> -Jeff  </s>
+<s> OK, I blew it.  </s>
+<s> 'compress', 'gzip' and 'deflate' are both content-encodings and transfer-encodings.  </s>
+<s> Thanks to my friends for correcting me.  </s>
+<s> Sorry for being so quick on the trigger today.  </s>
+<s> Larry  </s>

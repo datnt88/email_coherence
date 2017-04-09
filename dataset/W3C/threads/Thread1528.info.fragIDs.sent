@@ -1,133 +1,133 @@
-A working resource can be created by checking out an arbitrary version, so in general, it is not associated with any VCR. 
-So you do need to support either the update feature or the merge feature if you support the working resource feature (that is why the client-side workspace package contains the update feature. 
-Cheers, Geoff right? 
-My user performs a CHECKOUT, PUT, and CHECKIN. 
-He wants the contents to change, and he wants a new version. 
-I'm using working resources. 
-To get this behavior, the user must: 1) CHECKOUT the VCR. 2) PUT on the working copy identified by the Location URL in the CHECKOUT response. 
-3) CHECKIN the VCR. 
-It appears that if they do a CHECKIN on the working copy, they will not get what they expect. 
-9.4 indicates that they create a 'version' but that the VCR doesn't know about it. 
-Since I don't support UPDATE or MERGE I seem to have two options. 
-Fail the CHECKIN on a working copy or treat it as a CHECKIN on the VCR silently. 
-I have a non-forking server and I will not allow people to check out a prior version, which seems to be allowed in the spec. 
-I'm willing to refuse to allow a CHECKIN on the working copy and require it be issued on the VCR. 
-But a CHECKIN that doesn't 'check the file in' violates the expectations of every user of every source control system I've ever seen. 
-[mailto:ietf-dav-versioning-request@w3.org] 
-On Behalf Of Clemm, Geoff A working resource can be created by checking out an arbitrary version, so in general, it is not associated with any VCR. 
-So you do need to support either the update feature or the merge feature if you support the working resource feature (that is why the client-side workspace package contains the update feature. 
-Cheers, Geoff -----Original Message----- right? 
-My user performs a CHECKOUT, PUT, and CHECKIN. 
-He wants the contents to change, and he wants a new version. 
-I'm using working resources. 
-To get this behavior, the user must: 1) CHECKOUT the VCR. 2) PUT on the working copy identified by the Location URL in the CHECKOUT response. 
-3) CHECKIN the VCR. 
-It appears that if they do a CHECKIN on the working copy, they will not get what they expect. 
-9.4 indicates that they create a 'version' but that the VCR doesn't know about it. 
-Since I don't support UPDATE or MERGE I seem to have two options. 
-Fail the CHECKIN on a working copy or treat it as a CHECKIN on the VCR silently. 
-From: Tim_Ellison@uk.ibm.com [mailto:Tim_Ellison@uk.ibm.com] 
-Section 9.4 does state that UPDATE or MERGE are required after a checkin from a working resource, but this is misleading. 
-What it actually says is: "Note that checking in a working resource does not change the content or dead properties of any version-controlled resource, therefore an UPDATE or MERGE request must be used to update a version-controlled resource with the content and dead properties of a version created by checking in a working resource" So yes, to clarify, that "must be used" should be changed to "may be used" (i.e. if you don't want to update a version-controlled resource, then don't bother with an UPDATE or MERGE.) This sentence was intended to be parsed as "in order to update a version-controlled resource with the content and dead properties of a version created by checking in a working resource, an UPDATE or MERGE request must be used". 
-This was an attempt (clearly unsuccessful :-) to preemptively address the question above. 
-I'll try to reword this so that it is clearer. 
-Merge can only be done if there are a couple things that can be merged. 
-There is always at least one other version (the initial version). 
-That's not always the case; nor is the server always capable of doing a merge. 
-Note that if your server does not support branching, a MERGE will always just set the content and dead properties to whatever version is later ... no client or server defined content modification is required. 
-Imagine I check out an image in my repository, I get a working-resource URL, and I PUT the new image to the working-resource. 
-Now you can see that UPDATE is absolutely required or the version-controlled resource to ever have its contents and dead properties change. 
-The MERGE is merging version history, not resource content(*). 
-To merge means to update this version-controlled resource with the latest (in the version history) version given two versions to choose from, or complain if one version is not the predecessor of the other. 
-That is, if the versions are on different branches then it is ambiguous as to which version represents the 'latest' state of the resource and the merge must fail. 
-Obviously there is more to it than that, and the definitive description is given in the document. 
-Yes. 
-(*) the spec does give a server the right to merge content if it is capable of doing so, and the server must give an indication of what it has done so that it can be verified. 
-This is only going to be available on super-advanced servers (with initals CC g ) Actually we only do the simple automatable merges (i.e. merging two directory versions). 
-For content merges, we leave that to the user (although we do provide a super-duper n-way merge GUI to help out :-). 
-Cheers, Geoff 
-From: Lisa Dusseault [mailto:lisa@xythos.com] We might also consider trying to remove the dependency [of the working-resource option on the update option], since one would think that in a non-forking server, a CHECKIN would 99% of the time be followed by a UPDATE to push the latest content to the VCR. 
-Rolling those two actions into one request (unless specified otherwise) would save a round-trip, because the CHECKIN and UPDATE can't be pipelined if you have to wait for the successful response to the CHECKIN before knowing how to send the UPDATE. 
-If folks agree that this is worth making an addition to the protocol to support, I'd suggest the fillowing: 
-Add a property to a working resource like "DAV:checked-out-VCR". 
-Set this property on the working resource created when a CHECKOUT is applied to a VCR with the DAV:apply-to-version option. 
-A client is of course free to add/delete/change this property. 
-Then add a postcondition to "CHECKIN" that says that if there is a DAV:checked-out-VCR on the working resource being checked in, the specified VCR will automatically be updated to reflect the content and dead properties of that version. 
-And I will also point out that we would then have a live property 
-that would distinguish a working resource from a checked-out version-controlled resource ... (and thus remove one of the objections of using DAV:supported-live-property-set to classify versioning resources ... I can sense Tim either smiling widely, or groaning loudly, or both :-). 
-Cheers, Geoff 
-I think something like this would be highly desireable. 
-It removes the dependency on UPDATE/MERGE, it makes the meaning of CHECKIN on a working resource with this flag the same as a CHECKIN on a edit-in-place resource, and it simplifies the life of simple clients / servers greatly. 
-Not supporting working copies and instead giving people 'checkout-in-place' introduced the unwanted side effect of exposing users to works in progress. 
-As I understand it then, the language goes something like this: DAV:apply-to-version -- If this property is present, a CHECKOUT of a WORKING COPY on the VCR will set the property checked-out-VCR on the working copy. 
-An implementation MAY support this feature. 
-An implementation MAY allow this property to be changed. 
-An implementation that supports this property, the feature WORKING COPY, but not the features UPDATE or MERGE, SHOULD prevent this property from being modified. 
-DAV:checked-out-VCR If this optional property exists on a working copy, then a CHECKIN will also update the VCR listed. 
-An implementation MUST support this property if it supports WORKING COPY but not one of (UPDATE, MERGE). 
-CHECKIN postcondition: If the property checked-out-VCR is present, then a CHECKIN will automatically update the VCR to reflect the content and dead properties of this version. 
-From: John Hall [mailto:johnhall@evergo.net] 
-I think something like this would be highly desireable. 
-... As I understand it then, the language goes something like this: DAV:apply-to-version -- If this property is present, a CHECKOUT of a WORKING COPY on the VCR will set the property checked-out-VCR on the working copy. 
-Probably more like: "If DAV:apply-to-version is specified in the request body, then the DAV:checked-out-VCR property of the working resource created by the request MUST contain a DAV:href that contains the request-URL. 
-An implementation MAY support this feature. 
-I'd make it a MUST, unless someone can make a convincing argument for why it is prohibitively difficult for some servers to support this when they support the working resource feature. 
-An implementation MAY allow this property to be changed. 
-I'd make that a MUST as well. 
-Every MAY in the spec indicates a failure to reach agreement, and represents an increase in the complexity of writing an interoperable client. 
-An implementation that supports this property, the feature WORKING COPY, but not the features UPDATE or MERGE, SHOULD prevent this property from being modified. 
-I see no reason for this constraint (SHOULD's are only slightly better than MAY's). 
-Yes (this is already a defined element in the protocol). 
-DAV:checked-out-VCR If this optional property exists on a working copy, then a CHECKIN will also update the VCR listed. 
-An implementation MUST support this property if it supports WORKING COPY but not one of (UPDATE, MERGE). 
-As above, I'd make it a required part of the working resource feature, not conditional on the non-support of some other feature. 
-CHECKIN postcondition: If the property checked-out-VCR is present, then a CHECKIN will automatically update the VCR to reflect the content and dead properties of this version. 
-Yes. 
-Cheers, Geoff 
-My 'MAY' values are only trying to keep the client from getting into an impossible state. 
-Namely, no UPDATE/MERGE available but the CHECKIN 'apply-to-version' isn't specified. 
-Now, I thought 'apply-to-version' was a flag on the working resource, but you are putting it in the CHECKIN body. 
-OK. 
-So can you just let me fail the CHECKIN if 'apply-to-version' isn't specified and neither is UPDATE/MERGE? 
-And another reason for 'MAY' is that different companies might wish to configure a given server in different ways. 
-Although my server will allow versions to be deleted, I'll also provide an admin flag (proprietary) to prohibit it. 
-SO: CHECKOUT (of working copy) postcondition: !ELEMENT checked-out-VCR (href) MAY be set on the working copy with the href of the VCR when the current version is checked out. 
-This is set when the server supports apply-to-version. 
-CHECKIN (of working copy) marshalling: If !ELEMENT apply-to-version EMPTY is present and !ELEMENT checked-out-VCR (href) exists the server performs a CHECKIN (of working copy) and then automatically updates the VCR to reflect the content and dead properties of this version. 
-[I need an error condition here if the UPDATE wasn't successful. 
-That could happen if checked-out-VCR was invalid.] 
-From: John Hall [mailto:johnhall@evergo.net] My 'MAY' values are only trying to keep the client from getting into an impossible state. 
-Namely, no UPDATE/MERGE available but the CHECKIN 'apply-to-version' isn't specified. 
-That is not an impossible state. 
-A server may wish to allow versions to be created that will never be used to update the state of a VCR. 
-Or a server may have some other non-standard method of using a version to update the state of a VCR. 
-Now, I thought 'apply-to-version' was a flag on the working resource, but you are putting it in the CHECKIN body. 
-OK. 
-The DAV:apply-to-version flag is already defined in the protocol (in the CHECKOUT body). 
-So can you just let me fail the CHECKIN if 'apply-to-version' isn't specified and neither is UPDATE/MERGE? 
-A server is of course free to do so, but an interoperable client will not expect that behavior. 
-An interoperable client will expect that you do support UPDATE, since that is part of the client workspace package. 
-And another reason for 'MAY' is that different companies might wish to configure a given server in different ways. 
-Although my server will allow versions to be deleted, I'll also provide an admin flag (proprietary) to prohibit it. 
-Every MAY is an interoperability problem, only added as a last resort. 
-The "MAY" for version deletion represents an inherent tension between the desire of a user to preserve history, and the desire of a user to preserve space. 
-Any other "MAY" needs a correspondingly compelling argument. 
-SO: CHECKOUT (of working copy) postcondition: !ELEMENT checked-out-VCR (href) MAY be set on the working copy with the href of the VCR when the current version is checked out. 
-This is set when the server supports apply-to-version. 
-A server that supports the working-resource option MUST support the DAV:apply-to-version, and if we add this protocol element, it similarly MUST add DAV:checked-out-VCR when DAV:apply-to-version is used. 
-Otherwise clients would have to inspect the working resource to determine if DAV:checked-out-VCR was inserted, and then have separate code paths for if it does, or if it doesn't. 
-CHECKIN (of working copy) marshalling: If !ELEMENT apply-to-version EMPTY is present and !ELEMENT checked-out-VCR (href) exists the server performs a CHECKIN (of working copy) and then automatically updates the VCR to reflect the content and dead properties of this version. 
-DAV:apply-to-version only appears in CHECKOUT, not CHECKIN. 
-[I need an error condition here if the UPDATE wasn't successful. 
-That could happen if checked-out-VCR was invalid.] 
-Good point! 
-That raises two issues: - why did I propose that a client be able to modify the DAV:checked-out-VCR? 
-A client could have checked out a particular version if it didn't want a DAV:checked-out-VCR to be set. 
-- should a server be required to update the DAV:checked-out-VCR property of a working resource if the VCR is moved? 
-I think the answer is yes (only the server can do this correctly). 
-This goes along with the previous constraint that the DAV:checked-out-VCR property is protected. 
-So the modified proposal is: Add a protected DAV:checked-out-vcr property for a working resource. 
-Set this property on the working resource created when a CHECKOUT with the DAV:apply-to-version flag is applied to a VCR. 
-Add a postcondition to "CHECKIN" of a working resource that says that if there is a DAV:checked-out-VCR on the working resource, the specified VCR will automatically be updated to reflect the content and dead properties of the new version. 
-Add a postcondition to "MOVE" of a VCR that says that if there is a DAV:checked-out-VCR that identifies that VCR, that property is updated to reflect the new location of the VCR. 
-Cheers, Geoff 
+<s> A working resource can be created by checking out an arbitrary version, so in general, it is not associated with any VCR.  </s>
+<s> So you do need to support either the update feature or the merge feature if you support the working resource feature (that is why the client-side workspace package contains the update feature.  </s>
+<s> Cheers, Geoff right?  </s>
+<s> My user performs a CHECKOUT, PUT, and CHECKIN.  </s>
+<s> He wants the contents to change, and he wants a new version.  </s>
+<s> I'm using working resources.  </s>
+<s> To get this behavior, the user must: 1) CHECKOUT the VCR. 2) PUT on the working copy identified by the Location URL in the CHECKOUT response.  </s>
+<s> 3) CHECKIN the VCR.  </s>
+<s> It appears that if they do a CHECKIN on the working copy, they will not get what they expect.  </s>
+<s> 9.4 indicates that they create a 'version' but that the VCR doesn't know about it.  </s>
+<s> Since I don't support UPDATE or MERGE I seem to have two options.  </s>
+<s> Fail the CHECKIN on a working copy or treat it as a CHECKIN on the VCR silently.  </s>
+<s> I have a non-forking server and I will not allow people to check out a prior version, which seems to be allowed in the spec.  </s>
+<s> I'm willing to refuse to allow a CHECKIN on the working copy and require it be issued on the VCR.  </s>
+<s> But a CHECKIN that doesn't 'check the file in' violates the expectations of every user of every source control system I've ever seen.  </s>
+<s> [mailto:ietf-dav-versioning-request@w3.org]  </s>
+<s> On Behalf Of Clemm, Geoff A working resource can be created by checking out an arbitrary version, so in general, it is not associated with any VCR.  </s>
+<s> So you do need to support either the update feature or the merge feature if you support the working resource feature (that is why the client-side workspace package contains the update feature.  </s>
+<s> Cheers, Geoff -----Original Message----- right?  </s>
+<s> My user performs a CHECKOUT, PUT, and CHECKIN.  </s>
+<s> He wants the contents to change, and he wants a new version.  </s>
+<s> I'm using working resources.  </s>
+<s> To get this behavior, the user must: 1) CHECKOUT the VCR. 2) PUT on the working copy identified by the Location URL in the CHECKOUT response.  </s>
+<s> 3) CHECKIN the VCR.  </s>
+<s> It appears that if they do a CHECKIN on the working copy, they will not get what they expect.  </s>
+<s> 9.4 indicates that they create a 'version' but that the VCR doesn't know about it.  </s>
+<s> Since I don't support UPDATE or MERGE I seem to have two options.  </s>
+<s> Fail the CHECKIN on a working copy or treat it as a CHECKIN on the VCR silently.  </s>
+<s> From: Tim_Ellison@uk.ibm.com [mailto:Tim_Ellison@uk.ibm.com]  </s>
+<s> Section 9.4 does state that UPDATE or MERGE are required after a checkin from a working resource, but this is misleading.  </s>
+<s> What it actually says is: "Note that checking in a working resource does not change the content or dead properties of any version-controlled resource, therefore an UPDATE or MERGE request must be used to update a version-controlled resource with the content and dead properties of a version created by checking in a working resource" So yes, to clarify, that "must be used" should be changed to "may be used" (i.e. if you don't want to update a version-controlled resource, then don't bother with an UPDATE or MERGE.) This sentence was intended to be parsed as "in order to update a version-controlled resource with the content and dead properties of a version created by checking in a working resource, an UPDATE or MERGE request must be used".  </s>
+<s> This was an attempt (clearly unsuccessful :-) to preemptively address the question above.  </s>
+<s> I'll try to reword this so that it is clearer.  </s>
+<s> Merge can only be done if there are a couple things that can be merged.  </s>
+<s> There is always at least one other version (the initial version).  </s>
+<s> That's not always the case; nor is the server always capable of doing a merge.  </s>
+<s> Note that if your server does not support branching, a MERGE will always just set the content and dead properties to whatever version is later ... no client or server defined content modification is required.  </s>
+<s> Imagine I check out an image in my repository, I get a working-resource URL, and I PUT the new image to the working-resource.  </s>
+<s> Now you can see that UPDATE is absolutely required or the version-controlled resource to ever have its contents and dead properties change.  </s>
+<s> The MERGE is merging version history, not resource content(*).  </s>
+<s> To merge means to update this version-controlled resource with the latest (in the version history) version given two versions to choose from, or complain if one version is not the predecessor of the other.  </s>
+<s> That is, if the versions are on different branches then it is ambiguous as to which version represents the 'latest' state of the resource and the merge must fail.  </s>
+<s> Obviously there is more to it than that, and the definitive description is given in the document.  </s>
+<s> Yes.  </s>
+<s> (*) the spec does give a server the right to merge content if it is capable of doing so, and the server must give an indication of what it has done so that it can be verified.  </s>
+<s> This is only going to be available on super-advanced servers (with initals CC g ) Actually we only do the simple automatable merges (i.e. merging two directory versions).  </s>
+<s> For content merges, we leave that to the user (although we do provide a super-duper n-way merge GUI to help out :-).  </s>
+<s> Cheers, Geoff  </s>
+<s> From: Lisa Dusseault [mailto:lisa@xythos.com] We might also consider trying to remove the dependency [of the working-resource option on the update option], since one would think that in a non-forking server, a CHECKIN would 99% of the time be followed by a UPDATE to push the latest content to the VCR.  </s>
+<s> Rolling those two actions into one request (unless specified otherwise) would save a round-trip, because the CHECKIN and UPDATE can't be pipelined if you have to wait for the successful response to the CHECKIN before knowing how to send the UPDATE.  </s>
+<s> If folks agree that this is worth making an addition to the protocol to support, I'd suggest the fillowing:  </s>
+<s> Add a property to a working resource like "DAV:checked-out-VCR".  </s>
+<s> Set this property on the working resource created when a CHECKOUT is applied to a VCR with the DAV:apply-to-version option.  </s>
+<s> A client is of course free to add/delete/change this property.  </s>
+<s> Then add a postcondition to "CHECKIN" that says that if there is a DAV:checked-out-VCR on the working resource being checked in, the specified VCR will automatically be updated to reflect the content and dead properties of that version.  </s>
+<s> And I will also point out that we would then have a live property  </s>
+<s> that would distinguish a working resource from a checked-out version-controlled resource ... (and thus remove one of the objections of using DAV:supported-live-property-set to classify versioning resources ... I can sense Tim either smiling widely, or groaning loudly, or both :-).  </s>
+<s> Cheers, Geoff  </s>
+<s> I think something like this would be highly desireable.  </s>
+<s> It removes the dependency on UPDATE/MERGE, it makes the meaning of CHECKIN on a working resource with this flag the same as a CHECKIN on a edit-in-place resource, and it simplifies the life of simple clients / servers greatly.  </s>
+<s> Not supporting working copies and instead giving people 'checkout-in-place' introduced the unwanted side effect of exposing users to works in progress.  </s>
+<s> As I understand it then, the language goes something like this: DAV:apply-to-version -- If this property is present, a CHECKOUT of a WORKING COPY on the VCR will set the property checked-out-VCR on the working copy.  </s>
+<s> An implementation MAY support this feature.  </s>
+<s> An implementation MAY allow this property to be changed.  </s>
+<s> An implementation that supports this property, the feature WORKING COPY, but not the features UPDATE or MERGE, SHOULD prevent this property from being modified.  </s>
+<s> DAV:checked-out-VCR If this optional property exists on a working copy, then a CHECKIN will also update the VCR listed.  </s>
+<s> An implementation MUST support this property if it supports WORKING COPY but not one of (UPDATE, MERGE).  </s>
+<s> CHECKIN postcondition: If the property checked-out-VCR is present, then a CHECKIN will automatically update the VCR to reflect the content and dead properties of this version.  </s>
+<s> From: John Hall [mailto:johnhall@evergo.net]  </s>
+<s> I think something like this would be highly desireable.  </s>
+<s> ... As I understand it then, the language goes something like this: DAV:apply-to-version -- If this property is present, a CHECKOUT of a WORKING COPY on the VCR will set the property checked-out-VCR on the working copy.  </s>
+<s> Probably more like: "If DAV:apply-to-version is specified in the request body, then the DAV:checked-out-VCR property of the working resource created by the request MUST contain a DAV:href that contains the request-URL.  </s>
+<s> An implementation MAY support this feature.  </s>
+<s> I'd make it a MUST, unless someone can make a convincing argument for why it is prohibitively difficult for some servers to support this when they support the working resource feature.  </s>
+<s> An implementation MAY allow this property to be changed.  </s>
+<s> I'd make that a MUST as well.  </s>
+<s> Every MAY in the spec indicates a failure to reach agreement, and represents an increase in the complexity of writing an interoperable client.  </s>
+<s> An implementation that supports this property, the feature WORKING COPY, but not the features UPDATE or MERGE, SHOULD prevent this property from being modified.  </s>
+<s> I see no reason for this constraint (SHOULD's are only slightly better than MAY's).  </s>
+<s> Yes (this is already a defined element in the protocol).  </s>
+<s> DAV:checked-out-VCR If this optional property exists on a working copy, then a CHECKIN will also update the VCR listed.  </s>
+<s> An implementation MUST support this property if it supports WORKING COPY but not one of (UPDATE, MERGE).  </s>
+<s> As above, I'd make it a required part of the working resource feature, not conditional on the non-support of some other feature.  </s>
+<s> CHECKIN postcondition: If the property checked-out-VCR is present, then a CHECKIN will automatically update the VCR to reflect the content and dead properties of this version.  </s>
+<s> Yes.  </s>
+<s> Cheers, Geoff  </s>
+<s> My 'MAY' values are only trying to keep the client from getting into an impossible state.  </s>
+<s> Namely, no UPDATE/MERGE available but the CHECKIN 'apply-to-version' isn't specified.  </s>
+<s> Now, I thought 'apply-to-version' was a flag on the working resource, but you are putting it in the CHECKIN body.  </s>
+<s> OK.  </s>
+<s> So can you just let me fail the CHECKIN if 'apply-to-version' isn't specified and neither is UPDATE/MERGE?  </s>
+<s> And another reason for 'MAY' is that different companies might wish to configure a given server in different ways.  </s>
+<s> Although my server will allow versions to be deleted, I'll also provide an admin flag (proprietary) to prohibit it.  </s>
+<s> SO: CHECKOUT (of working copy) postcondition: !ELEMENT checked-out-VCR (href) MAY be set on the working copy with the href of the VCR when the current version is checked out.  </s>
+<s> This is set when the server supports apply-to-version.  </s>
+<s> CHECKIN (of working copy) marshalling: If !ELEMENT apply-to-version EMPTY is present and !ELEMENT checked-out-VCR (href) exists the server performs a CHECKIN (of working copy) and then automatically updates the VCR to reflect the content and dead properties of this version.  </s>
+<s> [I need an error condition here if the UPDATE wasn't successful.  </s>
+<s> That could happen if checked-out-VCR was invalid.]  </s>
+<s> From: John Hall [mailto:johnhall@evergo.net] My 'MAY' values are only trying to keep the client from getting into an impossible state.  </s>
+<s> Namely, no UPDATE/MERGE available but the CHECKIN 'apply-to-version' isn't specified.  </s>
+<s> That is not an impossible state.  </s>
+<s> A server may wish to allow versions to be created that will never be used to update the state of a VCR.  </s>
+<s> Or a server may have some other non-standard method of using a version to update the state of a VCR.  </s>
+<s> Now, I thought 'apply-to-version' was a flag on the working resource, but you are putting it in the CHECKIN body.  </s>
+<s> OK.  </s>
+<s> The DAV:apply-to-version flag is already defined in the protocol (in the CHECKOUT body).  </s>
+<s> So can you just let me fail the CHECKIN if 'apply-to-version' isn't specified and neither is UPDATE/MERGE?  </s>
+<s> A server is of course free to do so, but an interoperable client will not expect that behavior.  </s>
+<s> An interoperable client will expect that you do support UPDATE, since that is part of the client workspace package.  </s>
+<s> And another reason for 'MAY' is that different companies might wish to configure a given server in different ways.  </s>
+<s> Although my server will allow versions to be deleted, I'll also provide an admin flag (proprietary) to prohibit it.  </s>
+<s> Every MAY is an interoperability problem, only added as a last resort.  </s>
+<s> The "MAY" for version deletion represents an inherent tension between the desire of a user to preserve history, and the desire of a user to preserve space.  </s>
+<s> Any other "MAY" needs a correspondingly compelling argument.  </s>
+<s> SO: CHECKOUT (of working copy) postcondition: !ELEMENT checked-out-VCR (href) MAY be set on the working copy with the href of the VCR when the current version is checked out.  </s>
+<s> This is set when the server supports apply-to-version.  </s>
+<s> A server that supports the working-resource option MUST support the DAV:apply-to-version, and if we add this protocol element, it similarly MUST add DAV:checked-out-VCR when DAV:apply-to-version is used.  </s>
+<s> Otherwise clients would have to inspect the working resource to determine if DAV:checked-out-VCR was inserted, and then have separate code paths for if it does, or if it doesn't.  </s>
+<s> CHECKIN (of working copy) marshalling: If !ELEMENT apply-to-version EMPTY is present and !ELEMENT checked-out-VCR (href) exists the server performs a CHECKIN (of working copy) and then automatically updates the VCR to reflect the content and dead properties of this version.  </s>
+<s> DAV:apply-to-version only appears in CHECKOUT, not CHECKIN.  </s>
+<s> [I need an error condition here if the UPDATE wasn't successful.  </s>
+<s> That could happen if checked-out-VCR was invalid.]  </s>
+<s> Good point!  </s>
+<s> That raises two issues: - why did I propose that a client be able to modify the DAV:checked-out-VCR?  </s>
+<s> A client could have checked out a particular version if it didn't want a DAV:checked-out-VCR to be set.  </s>
+<s> - should a server be required to update the DAV:checked-out-VCR property of a working resource if the VCR is moved?  </s>
+<s> I think the answer is yes (only the server can do this correctly).  </s>
+<s> This goes along with the previous constraint that the DAV:checked-out-VCR property is protected.  </s>
+<s> So the modified proposal is: Add a protected DAV:checked-out-vcr property for a working resource.  </s>
+<s> Set this property on the working resource created when a CHECKOUT with the DAV:apply-to-version flag is applied to a VCR.  </s>
+<s> Add a postcondition to "CHECKIN" of a working resource that says that if there is a DAV:checked-out-VCR on the working resource, the specified VCR will automatically be updated to reflect the content and dead properties of the new version.  </s>
+<s> Add a postcondition to "MOVE" of a VCR that says that if there is a DAV:checked-out-VCR that identifies that VCR, that property is updated to reflect the new location of the VCR.  </s>
+<s> Cheers, Geoff  </s>

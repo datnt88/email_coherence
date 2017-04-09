@@ -1,112 +1,112 @@
-From: Gavin Nicol gtn@eps.inso.com 
-I can accept the ENCODING parameter on the XML declaration as being of *informative* value, but if you have anything more reliable to use, it should be given priority. 
-We have been talking an either/or choice along our decision tree. 
-But there is another possibility: the encoding PI and the charset parameter (and locale and user preferences) are just a priority list for autodetection. 
-In the usual 
-case, there should be agreement between the encoding PI and the charset parameter, I'd hope (since Gavin assures us of the future excellence of servers in this regard :-) . 
-I don't really like this, because I think we need to be clearer. 
-It is a difficult problem and it deserves good attention. 
-Maybe we should just require that XML *always* be in utf8? 
-(I diasgree on a personal level, but from one viewpoint, this has a lot in it's favor). 
-Is that you suggesting this Gavin? 
-It would be nice if this were possible, for XML 10.0. 
-Without wishing to be too tedious, there are several different models, each leading 
-to different results: 
-PSEUDO-GAVIN Let me invent a person called Pseudo-Gavin. 
-He sees the need in these kind of terms: 1) we need a way for a document's encoding to be known by a server; &amp; 2) we need a way for a document's encoding to be known by a client. 
-Number 2) is already handled by MIME. 
-Number 1) is better handled by system dependent methods at the server end, ideally using MIME format. 
-PSEUDO-MAKOTOSAN Let me invent another person called Pseudo-Makotosan. 
-He sees the need in these terms: 1) there should only be one primary method for a document to describe 
-itself; other methods are only in case of failure. 
-PIs are the only way to do this. 
-PSEUDO-RICKO Let me introduce Pseudo-Ricko (? 
-Is this what they call "reinventing yourself" ?) He thinks: 1) "horses for courses":where there is a reliable system-specific way to store, transmit or maintain character encodings, that way is to be preferred, since it will make the document integrate better into that system; 
-2) where there is no reliable system-specific way to store and maintain character encoding, then the PI must be used; 
-This means: * an http client should prefer MIME to PIs for received XML documents; * a UNIX http server must use PIs because its files are undecoratable; * a Macintosh http server should prefer PIs rather than charset data in the resource fork, because a simple file transfer from another OS will maintain the PI, but maybe won't set the resource fork correctly; * a stream editor using UNIX pipes should have XML documents with PIs; PSEUDO-RAVIN 
-Here is another fiction, Pseudo-Ravin. 
-He thinks: 1) PIs are only reliable if there is smart transcoding (to rewrite the PI); 2) MIME is only reliable if there is smart transcoding (to rewrite the MIME charset); 3) http servers shouldn't invent a character encoding if the PI is available; 4) http clients shouldn't use something else if MIME charset is available; 5) unthinking transcoding without altering the MIME or the PI will always stuff things up: the issue for us is not "how to prevent stuff-ups" but "how to allow reliablility"; and 6) an http server should rewrite the charset pseudo-attribute if it transcodes the file; an http server should rewrite the charset pseudo-attribute if it transcodes the file; so should an intermediate proxy. 
-PSEUDO-DRACO Finally, a spector of Draco appears: 1) If an http client finds a file with a different MIME charset to its PI, then there has been some dumb processing going on, and the file must be regarded as suspect, and therefore killed. 
-2) This is really a problem of maintaining and verifying the integrity of data across uncontrolled systems. 
-So XML files are binary, not text. 
-Rick Jelliffe 
-I can accept the ENCODING parameter on the XML declaration as being of *informative* value, but if you have anything more reliable to use, it should be given priority. 
-I don't like word "autodetection" in the sentence, and would prefer "determination". 
-In other words, unless I can *know*, with a reasonable degree of certainty, what the encoding is, I consider the system broken. 
-Maybe we should just require that XML *always* be in utf8? 
-(I diasgree on a personal level, but from one viewpoint, this has a lot in it's favor). 
-Guilty as charged. 
-As you and I know, there are many reasons why this is still not possible.... 
-You got the stance right, without most of the justification, unfortunately. 
-I think his stance is a bit further afield than that. 
-Seems like they want all kinds of autodetection in there. 
-I have no argument against this, and indeed, this is very close to the start of my thought process. 
-This is where we diverge. 
-I would like to remove the restrictions on all these systems, rather than adjust to them. 
-I think position (1) is reasonable, and this is a reportable error in XML today. 
-Rick, Thank you very much for your summary. 
-I believe that your mail is very constructive and provides a sound basis for further discussion. 
-I am still collecting input from my colleagues in the SGML community and the W3C project at Keio and am thus not ready for a full proposal. 
-But allow me to me clarify my point. 
-Yes, what I should have said clearer is that the document itself is the most reliable method to describe its encoding. 
-(This principle has been clearly stated by my colleagues such as Hiyama-san and Matsuda-san, and none of them members of the W3C ML at Keio disagree.) Servers and proxy servers must only echo what the 
-document says. 
-Proxy servers with code conversion are disappearing. 
-Servers have no reliable information other than the document. 
-caused problem for ASCII documents, said Ishikawa-san at Keio.) 
-It is true that I listed many possible hueristics, and that I have not made really clear the basic principle. 
-But my main point is what Rick correcly observes. 
-By the way, I heard from Ishikawa-san that RFC 2070 (HTML-I18N) allows the element type "A" to have the CHARSET parameter, but the present version of Cougar does not. 
-Regards, Murata, Makoto Fuji Xerox Information Systems E-mail: murata@apsdc.ksp.fujixerox.co.jp 
-Well, all I can say is that this flies in the face of any sensible protocol design. 
-I do not think this is true, but this is beside the point ... 
-This is not true in all cases. 
-Also, saying "have not" is not equivalent to "could not": If necessary information is missing, some infrastructure for specifying it is needed, not a kludge to get around the problem. 
-I have almost given up on WWW I18N... 
-Internet experts at Keio University (W3C host) and SGML experts in Japan have discussed the encoding detection issue. 
-Here is my (personal) summary of our agreement. 
-We should use BOM and encoding declarations only. 
-If a document entity or an external entity does not have BOM or an encoding declaration, it is in UTF-8. 
-Period. 
-Other information or huristics such as "Metadata provided 
-by the native OS file system or by document management software" (4.3.3, 
-Part 1) should not be used. 
-Encoding 
-inheritance should not be introduced. 
-There should be nothing similar to the CHARSET parameter of the element type A (HTML-I18N). 
-If HTTP or MIME headers provide encoding information, it should be identical to the encoding specified in the transmitted document (possibly implicitly by the XML default, which is UTF-8). 
-If not identical, the system is in error. 
-Is this agreeable? 
-I think this is very clear. 
-This is not always very convenient, but nobody or no systems will be confused. 
-Note: Some of you may think this is very different from what I wrote in my mail 9706070915.AA00089@lute.apsdc.ksp.fujixerox.co.jp . 
-Actually, I was merely suggesting all possiblilities rather than proposing them. 
-However, I have changed my mind in that encoding inheritance should not be introduced. 
-Makoto Fuji Xerox Information Systems E-mail: murata@apsdc.ksp.fujixerox.co.jp 
-Looks good. 
-Simple. 
-Checking heuristics and prefering MIME to PIs in case of disagreement become (formally) implementors' and applications' error handling strategies, and outside the realm of valid XML. 
-If you say MIME and PI must agree, else it indicates a system error, then surely you should also require MIME and OS metadata must agree? 
-Rick Jelliffe 
-I would like to keep that issue outside the scope of XML. 
-In a local environment, the user or implementor might want to do what is not allowed in XML (e.g., using OS metadata, encoding inheritance, etc). 
-As far as they are aware that their documents are not XML, this is ok. Makoto Fuji Xerox Information Systems E-mail: murata@apsdc.ksp.fujixerox.co.jp 
-This is quite repulsive. 
-It seems to me that your group of experts knows little, or nothing, about network protocol design, and especially HTTP (which is quite obviously going to be the primary protocol use for XML delivery in the short term). 
-Why not? 
-Encoding inheritance should not be introduced. 
-I'm glad to see that you have changed your stance on this. 
-This has far too many failure cases to be useful. 
-How is a caching HTTP proxy server supposed to determine if this is the case without parsing the XML header? 
-I think that if you want to make a concrete proposal, you should provide some rationale. 
-My concrete proposal is: 1) If external metadata (for example: HTTP protocol headers, file system information, metadata stored in a database) specifying the encoding is available, this should be given priority. 
-It is a reportable error for the XML declaration to differ from the encoding specified by meta-data, but need not be fatal. 
-2) If external meta-data is unavailable, auto-detection, as specified in Appendex E. is to be used to determine the character encoding of the document. 
-My rationale for (1) is that in open systems, and especially in the face of proxies, transforming/transcoding servers etc. the only (supposedly) reliable mechanism you have is the protocol. 
-Without this, caching etc. all fall to peices. 
-For (2), my rationale is that this is a reasonable fallback strategy. 
-At a personal level, I am deeply troubled with requiring *any* encoding to be supported, and for the need for the XML declaration. 
-Given that we do require some encodings, I think we should restrict ourselves to UTF-8. 
-The proposal mentioned nothing at all about error recovery. 
-Not necessarily. 
-The file could be transcoded before being transmitted (quite common in DynaWeb, for example). 
+<s> From: Gavin Nicol gtn@eps.inso.com  </s>
+<s> I can accept the ENCODING parameter on the XML declaration as being of *informative* value, but if you have anything more reliable to use, it should be given priority.  </s>
+<s> We have been talking an either/or choice along our decision tree.  </s>
+<s> But there is another possibility: the encoding PI and the charset parameter (and locale and user preferences) are just a priority list for autodetection.  </s>
+<s> In the usual  </s>
+<s> case, there should be agreement between the encoding PI and the charset parameter, I'd hope (since Gavin assures us of the future excellence of servers in this regard :-) .  </s>
+<s> I don't really like this, because I think we need to be clearer.  </s>
+<s> It is a difficult problem and it deserves good attention.  </s>
+<s> Maybe we should just require that XML *always* be in utf8?  </s>
+<s> (I diasgree on a personal level, but from one viewpoint, this has a lot in it's favor).  </s>
+<s> Is that you suggesting this Gavin?  </s>
+<s> It would be nice if this were possible, for XML 10.0.  </s>
+<s> Without wishing to be too tedious, there are several different models, each leading  </s>
+<s> to different results:  </s>
+<s> PSEUDO-GAVIN Let me invent a person called Pseudo-Gavin.  </s>
+<s> He sees the need in these kind of terms: 1) we need a way for a document's encoding to be known by a server; &amp; 2) we need a way for a document's encoding to be known by a client.  </s>
+<s> Number 2) is already handled by MIME.  </s>
+<s> Number 1) is better handled by system dependent methods at the server end, ideally using MIME format.  </s>
+<s> PSEUDO-MAKOTOSAN Let me invent another person called Pseudo-Makotosan.  </s>
+<s> He sees the need in these terms: 1) there should only be one primary method for a document to describe  </s>
+<s> itself; other methods are only in case of failure.  </s>
+<s> PIs are the only way to do this.  </s>
+<s> PSEUDO-RICKO Let me introduce Pseudo-Ricko (?  </s>
+<s> Is this what they call "reinventing yourself" ?) He thinks: 1) "horses for courses":where there is a reliable system-specific way to store, transmit or maintain character encodings, that way is to be preferred, since it will make the document integrate better into that system;  </s>
+<s> 2) where there is no reliable system-specific way to store and maintain character encoding, then the PI must be used;  </s>
+<s> This means: * an http client should prefer MIME to PIs for received XML documents; * a UNIX http server must use PIs because its files are undecoratable; * a Macintosh http server should prefer PIs rather than charset data in the resource fork, because a simple file transfer from another OS will maintain the PI, but maybe won't set the resource fork correctly; * a stream editor using UNIX pipes should have XML documents with PIs; PSEUDO-RAVIN  </s>
+<s> Here is another fiction, Pseudo-Ravin.  </s>
+<s> He thinks: 1) PIs are only reliable if there is smart transcoding (to rewrite the PI); 2) MIME is only reliable if there is smart transcoding (to rewrite the MIME charset); 3) http servers shouldn't invent a character encoding if the PI is available; 4) http clients shouldn't use something else if MIME charset is available; 5) unthinking transcoding without altering the MIME or the PI will always stuff things up: the issue for us is not "how to prevent stuff-ups" but "how to allow reliablility"; and 6) an http server should rewrite the charset pseudo-attribute if it transcodes the file; an http server should rewrite the charset pseudo-attribute if it transcodes the file; so should an intermediate proxy.  </s>
+<s> PSEUDO-DRACO Finally, a spector of Draco appears: 1) If an http client finds a file with a different MIME charset to its PI, then there has been some dumb processing going on, and the file must be regarded as suspect, and therefore killed.  </s>
+<s> 2) This is really a problem of maintaining and verifying the integrity of data across uncontrolled systems.  </s>
+<s> So XML files are binary, not text.  </s>
+<s> Rick Jelliffe  </s>
+<s> I can accept the ENCODING parameter on the XML declaration as being of *informative* value, but if you have anything more reliable to use, it should be given priority.  </s>
+<s> I don't like word "autodetection" in the sentence, and would prefer "determination".  </s>
+<s> In other words, unless I can *know*, with a reasonable degree of certainty, what the encoding is, I consider the system broken.  </s>
+<s> Maybe we should just require that XML *always* be in utf8?  </s>
+<s> (I diasgree on a personal level, but from one viewpoint, this has a lot in it's favor).  </s>
+<s> Guilty as charged.  </s>
+<s> As you and I know, there are many reasons why this is still not possible....  </s>
+<s> You got the stance right, without most of the justification, unfortunately.  </s>
+<s> I think his stance is a bit further afield than that.  </s>
+<s> Seems like they want all kinds of autodetection in there.  </s>
+<s> I have no argument against this, and indeed, this is very close to the start of my thought process.  </s>
+<s> This is where we diverge.  </s>
+<s> I would like to remove the restrictions on all these systems, rather than adjust to them.  </s>
+<s> I think position (1) is reasonable, and this is a reportable error in XML today.  </s>
+<s> Rick, Thank you very much for your summary.  </s>
+<s> I believe that your mail is very constructive and provides a sound basis for further discussion.  </s>
+<s> I am still collecting input from my colleagues in the SGML community and the W3C project at Keio and am thus not ready for a full proposal.  </s>
+<s> But allow me to me clarify my point.  </s>
+<s> Yes, what I should have said clearer is that the document itself is the most reliable method to describe its encoding.  </s>
+<s> (This principle has been clearly stated by my colleagues such as Hiyama-san and Matsuda-san, and none of them members of the W3C ML at Keio disagree.) Servers and proxy servers must only echo what the  </s>
+<s> document says.  </s>
+<s> Proxy servers with code conversion are disappearing.  </s>
+<s> Servers have no reliable information other than the document.  </s>
+<s> caused problem for ASCII documents, said Ishikawa-san at Keio.)  </s>
+<s> It is true that I listed many possible hueristics, and that I have not made really clear the basic principle.  </s>
+<s> But my main point is what Rick correcly observes.  </s>
+<s> By the way, I heard from Ishikawa-san that RFC 2070 (HTML-I18N) allows the element type "A" to have the CHARSET parameter, but the present version of Cougar does not.  </s>
+<s> Regards, Murata, Makoto Fuji Xerox Information Systems E-mail: murata@apsdc.ksp.fujixerox.co.jp  </s>
+<s> Well, all I can say is that this flies in the face of any sensible protocol design.  </s>
+<s> I do not think this is true, but this is beside the point ...  </s>
+<s> This is not true in all cases.  </s>
+<s> Also, saying "have not" is not equivalent to "could not": If necessary information is missing, some infrastructure for specifying it is needed, not a kludge to get around the problem.  </s>
+<s> I have almost given up on WWW I18N...  </s>
+<s> Internet experts at Keio University (W3C host) and SGML experts in Japan have discussed the encoding detection issue.  </s>
+<s> Here is my (personal) summary of our agreement.  </s>
+<s> We should use BOM and encoding declarations only.  </s>
+<s> If a document entity or an external entity does not have BOM or an encoding declaration, it is in UTF-8.  </s>
+<s> Period.  </s>
+<s> Other information or huristics such as "Metadata provided  </s>
+<s> by the native OS file system or by document management software" (4.3.3,  </s>
+<s> Part 1) should not be used.  </s>
+<s> Encoding  </s>
+<s> inheritance should not be introduced.  </s>
+<s> There should be nothing similar to the CHARSET parameter of the element type A (HTML-I18N).  </s>
+<s> If HTTP or MIME headers provide encoding information, it should be identical to the encoding specified in the transmitted document (possibly implicitly by the XML default, which is UTF-8).  </s>
+<s> If not identical, the system is in error.  </s>
+<s> Is this agreeable?  </s>
+<s> I think this is very clear.  </s>
+<s> This is not always very convenient, but nobody or no systems will be confused.  </s>
+<s> Note: Some of you may think this is very different from what I wrote in my mail 9706070915.AA00089@lute.apsdc.ksp.fujixerox.co.jp .  </s>
+<s> Actually, I was merely suggesting all possiblilities rather than proposing them.  </s>
+<s> However, I have changed my mind in that encoding inheritance should not be introduced.  </s>
+<s> Makoto Fuji Xerox Information Systems E-mail: murata@apsdc.ksp.fujixerox.co.jp  </s>
+<s> Looks good.  </s>
+<s> Simple.  </s>
+<s> Checking heuristics and prefering MIME to PIs in case of disagreement become (formally) implementors' and applications' error handling strategies, and outside the realm of valid XML.  </s>
+<s> If you say MIME and PI must agree, else it indicates a system error, then surely you should also require MIME and OS metadata must agree?  </s>
+<s> Rick Jelliffe  </s>
+<s> I would like to keep that issue outside the scope of XML.  </s>
+<s> In a local environment, the user or implementor might want to do what is not allowed in XML (e.g., using OS metadata, encoding inheritance, etc).  </s>
+<s> As far as they are aware that their documents are not XML, this is ok. Makoto Fuji Xerox Information Systems E-mail: murata@apsdc.ksp.fujixerox.co.jp  </s>
+<s> This is quite repulsive.  </s>
+<s> It seems to me that your group of experts knows little, or nothing, about network protocol design, and especially HTTP (which is quite obviously going to be the primary protocol use for XML delivery in the short term).  </s>
+<s> Why not?  </s>
+<s> Encoding inheritance should not be introduced.  </s>
+<s> I'm glad to see that you have changed your stance on this.  </s>
+<s> This has far too many failure cases to be useful.  </s>
+<s> How is a caching HTTP proxy server supposed to determine if this is the case without parsing the XML header?  </s>
+<s> I think that if you want to make a concrete proposal, you should provide some rationale.  </s>
+<s> My concrete proposal is: 1) If external metadata (for example: HTTP protocol headers, file system information, metadata stored in a database) specifying the encoding is available, this should be given priority.  </s>
+<s> It is a reportable error for the XML declaration to differ from the encoding specified by meta-data, but need not be fatal.  </s>
+<s> 2) If external meta-data is unavailable, auto-detection, as specified in Appendex E. is to be used to determine the character encoding of the document.  </s>
+<s> My rationale for (1) is that in open systems, and especially in the face of proxies, transforming/transcoding servers etc. the only (supposedly) reliable mechanism you have is the protocol.  </s>
+<s> Without this, caching etc. all fall to peices.  </s>
+<s> For (2), my rationale is that this is a reasonable fallback strategy.  </s>
+<s> At a personal level, I am deeply troubled with requiring *any* encoding to be supported, and for the need for the XML declaration.  </s>
+<s> Given that we do require some encodings, I think we should restrict ourselves to UTF-8.  </s>
+<s> The proposal mentioned nothing at all about error recovery.  </s>
+<s> Not necessarily.  </s>
+<s> The file could be transcoded before being transmitted (quite common in DynaWeb, for example).  </s>

@@ -1,109 +1,109 @@
-The last section of the spec discusses Extended Linking Groups. 
-These are the magic glue that makes indirect links and hypertext-i-fying readonly documents possible. 
-I assume that this request is about additional XML-LINK syntax or semantics which may be added to XLG. 
-At present XLG (I assume this means GROUP and DOCUMENT) is trivial to implement at application level because the syntax does not require any behaviour. 
-So DOCUMENT and GROUP elements don't 'do' anything unless they have attributes from LOCATOR (which they aren't #REQUIREd to have). 
-Suppose I read a doc, and it's got an XLG, which causes me to read another, 
-At present JUMBO will not 'cause one XLG to read another' unless there are additional attributes such as ACTUATE. 
-If the cause comes from application-dependent attributes, then we have to leave those to the application. 
-So my paraphrase of the question might be: 'If a DOCUMENT and/or a group contains an ACTUATE="AUTO" attribute, should any constraints be placed on that?' If this isn't what is intended, then (at least for me) the spec needs redrafting :-). 
-I'll assume that that is what is meant. 
-and it has an XLG too, that is different? 
-Do I go on following the XLG chain forever? 
-HyTime, whose BOS concept is related, has a BOSlength or some such parameter. 
-Things we could do in XML include: 1. Saying nothing, and let processors work it out 
-This is default JUMBO behaviour in the absence of attributes. 
-In the presence of attributes, JUMBO follows each one in the order it finds it. 
-If this makes JUMBO roam cyberspace, then the documents need reauthoring. 
-2. Saying that XLG's should only be followed one step 3. Saying that XLG's should be followed for two steps. 
-Huh? 
-This actually makes some sense - you could have N docs each having a single-entry XLG pointing at the N+1th doc, which works as a hub document. 
-I don't like 2 and 3 at all. 
-I see XLG being used to create quite deep hierarchies with no reason to limit the depth. 
-I already have an application which requires 2 steps - with ACTUATE="AUTO" set. 
-I can see XLGs being used for trees, linked lists, tables, etc. 
-4. Defining an XML-XLG-COUNT attribute that says how many steps the doc author thinks a processor should chain out, in order to build the appropriate set of links. 
-I wouldn't argue against this, although I suspect this is more a stylesheet issue. 
-For example, JUMBO has a createTOC(int depth) routine for display which limits the display of the tree. 
-The document is only one of several places where the value might be reasonably settable. 
-If you want to avoid infinite trees or loops, etc., then a good application should probably have a check and switch determining this. 
-Since we must remember that the target of the DOCUMENT may not be under the control of the author of GROUP, it's impossible to say on any day how large the tree is. 
-P. Peter Murray-Rust, domestic net connection Virtual School of Molecular Sciences 
-The last section of the spec discusses Extended Linking Groups. 
-These are the magic glue that makes indirect links and hypertext-i-fying readonly documents possible. 
-Suppose I read a doc, and it's got an XLG, which causes me to read another, and it has an XLG too, that is different? 
-Do I go on following the XLG chain forever? 
-HyTime, whose BOS concept is related, has a BOSlength or some such parameter. 
-Things we could do in XML include: 1. Saying nothing, and let processors work it out 2. Saying that XLG's should only be followed one step 
-3. Saying that XLG's should be followed for two steps. 
-Huh? 
-This actually makes some sense - you could have N docs each having a single-entry XLG pointing at the N+1th doc, which works as a hub document. 
-4. Defining an XML-XLG-COUNT attribute that says how many steps the doc author thinks a processor should chain out, in order to build the appropriate set of links. 
-Cheers, Tim Bray tbray@textuality.com 
-http://www.textuality.com/ 
-+1-604-708-9592 
-In message 6803@ursus.demon.co.uk Peter@ursus.demon.co.uk (Peter Murray-Rust) awaits enlightenment: 
-I do hope that others comment on this area, because it's not trivial to work out what should be implemented. 
-I've arrived at the present analysis and would like some feedback. 
-DOCUMENT and GROUP don't *do* anything and they are purely structuring elements. 
-An example (A) is: !DOCTYPE FOO [ ] which says it all. 
-So what is the point? 
-(a) there is a recognised attribute GROUP which can be located *independently of the application*. 
-(b) The children of GROUP have to be DOCUMENT and nothing else because the XML book says so. 
-The parser won't enforce that, and it's up to the DTD designer to make sure that GROUP has a content model of (DOCUMENT)+ - unless we are altering the parser or building a post-parser. 
-So - the post-parser can verify that GROUP has only DOCUMENT children. 
-Everything after that is application-dependent. 
-Our contract with the application is to hand it a well-defined container, but with no XML semantics for behaviour. 
-Now let's use EXTENDED and LOCATOR (Example B) !DOCTYPE FOO [ ] 'Twas brillig and the dsssl-goves did gyre... Example A and Example B have certain similarities. 
-(In fact they are identical apart from: (a) their handles (GROUP/EXTENDED) (b) #PCDATA forbidden in A (c) implied ACTUATE="USER" SHOW="REPLACE" in B) The main difference seems to be that EXTENDED has XML-based display/traversal semantics and GROUP has not. 
-Everything in GROUP can be catered for by EXTENDED, so why have it? 
-The only answer I can come up with is that GROUP is a mechanism for *forbidding* display/traversal of a resource by the XML default and leaving it to the application whether it wants to. 
-This seems unnecessarily complex. 
-If we don't want to display something, let's just say so. 
-I'd come to this conclusion from the other end. 
-Suppose we have a set of links like: Now - what happens when I actuate HREF="#mammal"? 
-JUMBO's answer is to bring up the default display for a UL/EXTENDED - probably a list box. 
-If I actuate #eutheria, then I get another list box, and so on. 
-Ultimately I get a picture of a human, or whatever. 
-If I write and click the mammals, I traverse every branch of the hierarchy and get several hundred pictures (kangaroos, whales, etc.). 
-I would probably like to do this this without displaying all the intermediate list boxes. 
-BUT these must be traversed in display mode which means SHOW = something. 
-A new value NULL should be added to the SHOW model group. 
-This attribute would enable all traveral to be carried out, but would not require the element to be rendered. 
-GROUP is now the same as XML-LINK="EXTENDED" SHOW="NULL" (apart from the #PCDATA, which could be ignored if required). 
-If this analysis is right, we need a NULL attribute for SHOW and we no longer need GROUP and DOCUMENT. 
-If labels are required, then we can either search for EXTENDED SHOW="NULL" or use ROLE. 
-P. Peter Murray-Rust, domestic net connection Virtual School of Molecular Sciences 
-Actually a more correct keyword would be "CACHE". 
-Group is designed to tell 
-you what files you need to call into cache memory before displaying text with AUTO includes, or to avoid delays when a user calls a file that has to be called at some point in processing the file. 
-It will normally be a precursor to any Extended and Simple links that reference the same files. 
-Martin Bryan, The SGML Centre, Churchdown, Glos. 
-GL3 2PU, UK 
-Thanks Martin, I think this highlights the very important need to bring the implied semantics into the open. 
-This use of GROUP had not occurred to me at all - a warning to the pre-application that it would be getting a series of EXTENDED links later. 
-Rather like an orange signal on the UK rail system. 
-I had already thought about CACHE, but in a different context - a page has been displayed and this is a hint to the processor that it shouldn't destroy it. 
-For example SHOW="REPLACE" cause JUMBO to trash the first back and going 'back' requires it to be recreated. 
-(This is because the JavaVM would soon run out of memory). 
-NULL is different from cache, because it says that the page will never bee displayed. 
-(I omitted to say that NULL would only make sense in the context of AUTO - USER-ACTUATEable buttons on an invisible component aren't much use.) 
-We must still remember that GROUP doesn't (yet) have any XML-required semantics. 
-Therefore (a) this use will not occur to everyone (b) other people will overload GROUP with different semantics. 
-So at present GROUP is simply a handle, nothing more. 
-P. 
-Peter Murray-Rust, domestic net connection Virtual School of Molecular Sciences 
-[Tim Bray] 
-I strongly favor this alternative. 
-The chain should stop when it returns to an already-known document, but other than that, I think it should be up to the application. 
-I can see some applications only going a certain distance down the chain; others that silently follow the chain in the background, updating the display as they go; and others that just don't follow it at all. 
-This is an excellent space for browsers to distinguish themselves in, and I think any one prescribed handling will break at least one possible application. 
--Chris Christopher R. Maden One Richmond Square DynaText SIT Technical Support Providence, RI 02906 USA Inso Corporation +1.401.421.9550 (voice) Electronic Publishing Solutions +1.401.521.2030 (facsimile) 
-On Sun, 18 May 1997 05:39:04 -0400 (EDT) Tim Bray said: 
-I'm with Chris Maden, in favor of (1). 
-I think the spec should say more explicitly than it does (but sorry, I don't have wording) that a GROUP element serves as a signal to the application that there are (or may be) links involving the current document, whose existence is asserted in the documents referred to by the enclosed DOCUMENT elements. 
-Given the confusion that has reigned over the question, perhaps the spec should also mention explicitly in passing that those links may take the form either of n-way links (EXTENDED) or simple links (SIMPLE). 
-I'm inclined to think we should *not* need to say "A browser might invite the user to specify which of the documents listed, if any, should be read by the browser in order to discover links into the current document." 
-That seems an obvious behavior to me, but it's probably too obvious to need mentioning -- unless of course it's not obvious at all, in which case it may not be as good an idea as I thought. 
--C. 
-M. Sperberg-McQueen 
+<s> The last section of the spec discusses Extended Linking Groups.  </s>
+<s> These are the magic glue that makes indirect links and hypertext-i-fying readonly documents possible.  </s>
+<s> I assume that this request is about additional XML-LINK syntax or semantics which may be added to XLG.  </s>
+<s> At present XLG (I assume this means GROUP and DOCUMENT) is trivial to implement at application level because the syntax does not require any behaviour.  </s>
+<s> So DOCUMENT and GROUP elements don't 'do' anything unless they have attributes from LOCATOR (which they aren't #REQUIREd to have).  </s>
+<s> Suppose I read a doc, and it's got an XLG, which causes me to read another,  </s>
+<s> At present JUMBO will not 'cause one XLG to read another' unless there are additional attributes such as ACTUATE.  </s>
+<s> If the cause comes from application-dependent attributes, then we have to leave those to the application.  </s>
+<s> So my paraphrase of the question might be: 'If a DOCUMENT and/or a group contains an ACTUATE="AUTO" attribute, should any constraints be placed on that?' If this isn't what is intended, then (at least for me) the spec needs redrafting :-).  </s>
+<s> I'll assume that that is what is meant.  </s>
+<s> and it has an XLG too, that is different?  </s>
+<s> Do I go on following the XLG chain forever?  </s>
+<s> HyTime, whose BOS concept is related, has a BOSlength or some such parameter.  </s>
+<s> Things we could do in XML include: 1. Saying nothing, and let processors work it out  </s>
+<s> This is default JUMBO behaviour in the absence of attributes.  </s>
+<s> In the presence of attributes, JUMBO follows each one in the order it finds it.  </s>
+<s> If this makes JUMBO roam cyberspace, then the documents need reauthoring.  </s>
+<s> 2. Saying that XLG's should only be followed one step 3. Saying that XLG's should be followed for two steps.  </s>
+<s> Huh?  </s>
+<s> This actually makes some sense - you could have N docs each having a single-entry XLG pointing at the N+1th doc, which works as a hub document.  </s>
+<s> I don't like 2 and 3 at all.  </s>
+<s> I see XLG being used to create quite deep hierarchies with no reason to limit the depth.  </s>
+<s> I already have an application which requires 2 steps - with ACTUATE="AUTO" set.  </s>
+<s> I can see XLGs being used for trees, linked lists, tables, etc.  </s>
+<s> 4. Defining an XML-XLG-COUNT attribute that says how many steps the doc author thinks a processor should chain out, in order to build the appropriate set of links.  </s>
+<s> I wouldn't argue against this, although I suspect this is more a stylesheet issue.  </s>
+<s> For example, JUMBO has a createTOC(int depth) routine for display which limits the display of the tree.  </s>
+<s> The document is only one of several places where the value might be reasonably settable.  </s>
+<s> If you want to avoid infinite trees or loops, etc., then a good application should probably have a check and switch determining this.  </s>
+<s> Since we must remember that the target of the DOCUMENT may not be under the control of the author of GROUP, it's impossible to say on any day how large the tree is.  </s>
+<s> P. Peter Murray-Rust, domestic net connection Virtual School of Molecular Sciences  </s>
+<s> The last section of the spec discusses Extended Linking Groups.  </s>
+<s> These are the magic glue that makes indirect links and hypertext-i-fying readonly documents possible.  </s>
+<s> Suppose I read a doc, and it's got an XLG, which causes me to read another, and it has an XLG too, that is different?  </s>
+<s> Do I go on following the XLG chain forever?  </s>
+<s> HyTime, whose BOS concept is related, has a BOSlength or some such parameter.  </s>
+<s> Things we could do in XML include: 1. Saying nothing, and let processors work it out 2. Saying that XLG's should only be followed one step  </s>
+<s> 3. Saying that XLG's should be followed for two steps.  </s>
+<s> Huh?  </s>
+<s> This actually makes some sense - you could have N docs each having a single-entry XLG pointing at the N+1th doc, which works as a hub document.  </s>
+<s> 4. Defining an XML-XLG-COUNT attribute that says how many steps the doc author thinks a processor should chain out, in order to build the appropriate set of links.  </s>
+<s> Cheers, Tim Bray tbray@textuality.com  </s>
+<s> http://www.textuality.com/  </s>
+<s> +1-604-708-9592  </s>
+<s> In message 6803@ursus.demon.co.uk Peter@ursus.demon.co.uk (Peter Murray-Rust) awaits enlightenment:  </s>
+<s> I do hope that others comment on this area, because it's not trivial to work out what should be implemented.  </s>
+<s> I've arrived at the present analysis and would like some feedback.  </s>
+<s> DOCUMENT and GROUP don't *do* anything and they are purely structuring elements.  </s>
+<s> An example (A) is: !DOCTYPE FOO [ ] which says it all.  </s>
+<s> So what is the point?  </s>
+<s> (a) there is a recognised attribute GROUP which can be located *independently of the application*.  </s>
+<s> (b) The children of GROUP have to be DOCUMENT and nothing else because the XML book says so.  </s>
+<s> The parser won't enforce that, and it's up to the DTD designer to make sure that GROUP has a content model of (DOCUMENT)+ - unless we are altering the parser or building a post-parser.  </s>
+<s> So - the post-parser can verify that GROUP has only DOCUMENT children.  </s>
+<s> Everything after that is application-dependent.  </s>
+<s> Our contract with the application is to hand it a well-defined container, but with no XML semantics for behaviour.  </s>
+<s> Now let's use EXTENDED and LOCATOR (Example B) !DOCTYPE FOO [ ] 'Twas brillig and the dsssl-goves did gyre... Example A and Example B have certain similarities.  </s>
+<s> (In fact they are identical apart from: (a) their handles (GROUP/EXTENDED) (b) #PCDATA forbidden in A (c) implied ACTUATE="USER" SHOW="REPLACE" in B) The main difference seems to be that EXTENDED has XML-based display/traversal semantics and GROUP has not.  </s>
+<s> Everything in GROUP can be catered for by EXTENDED, so why have it?  </s>
+<s> The only answer I can come up with is that GROUP is a mechanism for *forbidding* display/traversal of a resource by the XML default and leaving it to the application whether it wants to.  </s>
+<s> This seems unnecessarily complex.  </s>
+<s> If we don't want to display something, let's just say so.  </s>
+<s> I'd come to this conclusion from the other end.  </s>
+<s> Suppose we have a set of links like: Now - what happens when I actuate HREF="#mammal"?  </s>
+<s> JUMBO's answer is to bring up the default display for a UL/EXTENDED - probably a list box.  </s>
+<s> If I actuate #eutheria, then I get another list box, and so on.  </s>
+<s> Ultimately I get a picture of a human, or whatever.  </s>
+<s> If I write and click the mammals, I traverse every branch of the hierarchy and get several hundred pictures (kangaroos, whales, etc.).  </s>
+<s> I would probably like to do this this without displaying all the intermediate list boxes.  </s>
+<s> BUT these must be traversed in display mode which means SHOW = something.  </s>
+<s> A new value NULL should be added to the SHOW model group.  </s>
+<s> This attribute would enable all traveral to be carried out, but would not require the element to be rendered.  </s>
+<s> GROUP is now the same as XML-LINK="EXTENDED" SHOW="NULL" (apart from the #PCDATA, which could be ignored if required).  </s>
+<s> If this analysis is right, we need a NULL attribute for SHOW and we no longer need GROUP and DOCUMENT.  </s>
+<s> If labels are required, then we can either search for EXTENDED SHOW="NULL" or use ROLE.  </s>
+<s> P. Peter Murray-Rust, domestic net connection Virtual School of Molecular Sciences  </s>
+<s> Actually a more correct keyword would be "CACHE".  </s>
+<s> Group is designed to tell  </s>
+<s> you what files you need to call into cache memory before displaying text with AUTO includes, or to avoid delays when a user calls a file that has to be called at some point in processing the file.  </s>
+<s> It will normally be a precursor to any Extended and Simple links that reference the same files.  </s>
+<s> Martin Bryan, The SGML Centre, Churchdown, Glos.  </s>
+<s> GL3 2PU, UK  </s>
+<s> Thanks Martin, I think this highlights the very important need to bring the implied semantics into the open.  </s>
+<s> This use of GROUP had not occurred to me at all - a warning to the pre-application that it would be getting a series of EXTENDED links later.  </s>
+<s> Rather like an orange signal on the UK rail system.  </s>
+<s> I had already thought about CACHE, but in a different context - a page has been displayed and this is a hint to the processor that it shouldn't destroy it.  </s>
+<s> For example SHOW="REPLACE" cause JUMBO to trash the first back and going 'back' requires it to be recreated.  </s>
+<s> (This is because the JavaVM would soon run out of memory).  </s>
+<s> NULL is different from cache, because it says that the page will never bee displayed.  </s>
+<s> (I omitted to say that NULL would only make sense in the context of AUTO - USER-ACTUATEable buttons on an invisible component aren't much use.)  </s>
+<s> We must still remember that GROUP doesn't (yet) have any XML-required semantics.  </s>
+<s> Therefore (a) this use will not occur to everyone (b) other people will overload GROUP with different semantics.  </s>
+<s> So at present GROUP is simply a handle, nothing more.  </s>
+<s> P.  </s>
+<s> Peter Murray-Rust, domestic net connection Virtual School of Molecular Sciences  </s>
+<s> [Tim Bray]  </s>
+<s> I strongly favor this alternative.  </s>
+<s> The chain should stop when it returns to an already-known document, but other than that, I think it should be up to the application.  </s>
+<s> I can see some applications only going a certain distance down the chain; others that silently follow the chain in the background, updating the display as they go; and others that just don't follow it at all.  </s>
+<s> This is an excellent space for browsers to distinguish themselves in, and I think any one prescribed handling will break at least one possible application.  </s>
+<s> -Chris Christopher R. Maden One Richmond Square DynaText SIT Technical Support Providence, RI 02906 USA Inso Corporation +1.401.421.9550 (voice) Electronic Publishing Solutions +1.401.521.2030 (facsimile)  </s>
+<s> On Sun, 18 May 1997 05:39:04 -0400 (EDT) Tim Bray said:  </s>
+<s> I'm with Chris Maden, in favor of (1).  </s>
+<s> I think the spec should say more explicitly than it does (but sorry, I don't have wording) that a GROUP element serves as a signal to the application that there are (or may be) links involving the current document, whose existence is asserted in the documents referred to by the enclosed DOCUMENT elements.  </s>
+<s> Given the confusion that has reigned over the question, perhaps the spec should also mention explicitly in passing that those links may take the form either of n-way links (EXTENDED) or simple links (SIMPLE).  </s>
+<s> I'm inclined to think we should *not* need to say "A browser might invite the user to specify which of the documents listed, if any, should be read by the browser in order to discover links into the current document."  </s>
+<s> That seems an obvious behavior to me, but it's probably too obvious to need mentioning -- unless of course it's not obvious at all, in which case it may not be as good an idea as I thought.  </s>
+<s> -C.  </s>
+<s> M. Sperberg-McQueen  </s>

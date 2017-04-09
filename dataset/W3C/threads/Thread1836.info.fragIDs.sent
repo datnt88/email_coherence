@@ -1,111 +1,111 @@
-Hi. As far as I know, there has been a long discussion about whether this feature is required or not. 
-Fact is, it's missing from RFC3253, yet several systems need a way to implement it. 
-Several workaround have been discussed, but IMHO all of them have some disadvantages, and furthermore there's no interoperability here: 1) COPY to new resource / DELETE old / MOVE back Disadvantage: creates new resource (ACLs are lost, DAV:resource-id changes), requires multiple steps 
-2) DELETE on version history resource 
-Disadvantage: actually requires that VHRs are supported, also it's quit 
-possible that the version history should be preserved 
-3) PROPPATCH/remove on live properties such as DAV:checked-in, DAV:checked-out or DAV:version-history Disadvantage: messy and breaks RFC3253 (because the properties are protected). 
-Therefore I think that an (optional) new method "UNVERSION-CONTROL" makes most sense. 
-Servers won't need to support it, and it's presence can easily be detected using OPTIONS and PROPFIND/supported-method-set. 
-I can think of one optional parameter that would be marshalled in the request body: whether the version history should be deleted as well or not. 
-Feedback appreciated, Julian 
-Could you motivate the need to unversion-control a resource but not delete it? 
-In particular, should a server that automatically 
-puts all resources under version control fail such a request, or just ignore it? 
-Cheers, Geoff Hi. 
-As far as I know, there has been a long discussion about whether this feature is required or not. 
-Fact is, it's missing from RFC3253, yet several systems need a way to implement it. 
-Several workaround have been discussed, but IMHO all of them have some disadvantages, and furthermore there's no interoperability here: 1) COPY to new resource / DELETE old / MOVE back Disadvantage: creates new resource (ACLs are lost, DAV:resource-id changes), requires multiple steps 
-2) DELETE on version history resource 
-Disadvantage: actually requires that VHRs are supported, also it's quit 
-possible that the version history should be preserved 
-3) PROPPATCH/remove on live properties such as DAV:checked-in, DAV:checked-out or DAV:version-history Disadvantage: messy and breaks RFC3253 (because the properties are protected). 
-Therefore I think that an (optional) new method "UNVERSION-CONTROL" makes most sense. 
-Servers won't need to support it, and it's presence can easily be detected using OPTIONS and PROPFIND/supported-method-set. 
-I can think of one optional parameter that would be marshalled in the request body: whether the version history should be deleted as well or not. 
-Feedback appreciated, Julian 
-I don't see why this needs to be coupled. 
-I do understand that there are cases where servers do not support the concept of un-vcr-ing a resource, but we have provably two independant implementations that both want/need to support this feature and are looking for a interoperable way to do it easily. 
-I think in this case it's best to just return 405 (not allowed), just as a RFC3253-conforming server would do it anyway. 
-Julian 
-The main part of the question was: "Could you motivate the need to unversion-control a resource." 
-The fact that "two implementations want to do it" is not the most compelling answer (there are lots of things that you could get two implementations to agree on that would not merit adding to a standard protocol). 
-Note: I'm not saying there are no compelling use cases ... just that I haven't heard any yet. 
-Cheers, Geoff 
-I don't see why this needs to be coupled. 
-I do understand that there are cases where servers do not support the concept of un-vcr-ing a resource, but we have provably two independant implementations that both want/need to support this feature and are looking for a interoperable way to do it easily. 
-I think in this case it's best to just return 405 (not allowed), just as a RFC3253-conforming server would do it anyway. 
-Julian 
-Well, if there are multiple implementations that want it, it's certainly nice if you can marshall it. 
-That was the point of the proposal. 
-Right now, I really don't care which kind of activity this leads to (deltaV addendum, private informational RFC, ...). 
-Regarding the what-is-the-need-question: it makes a difference whether you are building a new system that accurately reflects the deltaV model, or if 
-you are busing deltaV to HTTP-marshall requests between systems that exist independantly of WebDAV. 
-In the latter case, you really can't choose -- you'll have to come up with a way to marshall that type of request (or you'll have to live with an unhappy customer). 
-In general, I understand why a system would version everything, or a system where the decision about what is version-controlled is made by the server. 
-What I don't really see is the use case for a system that has an explicit "enable" but no "disable" call. 
-Julian 
-From: Julian Reschke [mailto:julian.reschke@greenbytes.de] 
-Well, if there are multiple implementations that want it, it's certainly nice if you can marshall it. 
-New standard protocol features do not come for free ... they introduce additional complexity into the protocol, especially for client and server implementations that try to fully implement the protocol (to maximize interoperability). 
-So I believe it is reasonable to at least 
-require a compelling use case (and even that is not sufficient, when there is not agreement on how to handle that use case, e.g. the rejection of the Translate header). 
-Regarding the what-is-the-need-question: it makes a difference whether you are building a new system that accurately reflects the deltaV model, or if you are using deltaV to HTTP-marshall requests between systems that exist independantly of WebDAV. 
-In the latter case, you really can't choose -- you'll have to come up with a way to marshall that type of request (or you'll have to live with an unhappy customer). 
-If you included in the standard every feature provided by any system, the protocol would be unusably complex, and would provide no basis for effective inter-operation. 
-So every system will have a set of non-standard features and extensions that it supports. 
-Only ones that are considered widely needed will end up in the standard protocol. 
-In general, I understand why a system would version everything, or a system where the decision about what is version-controlled is made by the server. 
-What I don't really see is the use case for a system that has an explicit "enable" but no "disable" call. 
-The burden of proof is on the proponent of a new feature. 
-A new feature is accepted because you have convinced people that it is useful/necessary, not just because nobody demonstrated it was not useful. 
-Note that there are use cases for deleting the history of a resource (which is marshalled by issuing a DELETE request against the version-history resource). 
-What has not been demonstrated is the need to "disconnect" a resource from its history without deleting the history. 
-Cheers, Geoff 
-I wasn't actually asking for a "standard protocol feature". 
-I was looking for an agreement between those that *do* want that feature, so that *their* servers can interoperate. 
-Note that under that proposal, any existing RFC3253 server would be compliant, because it specifically allows servers not to implement it (just like RFC3253 is silent about whether new resources are automatically version-controlled or not). 
-That's correct, but I don't think the comparison makes sense here. 
-The reason for the rejection of the "translate" header is that it's in direct violation of the base spec (RFC2616). 
-I don't see any problem like that with a potential UNVERSION-CONTROL feature. 
-Yes. That's why this feature hasn't made it into RFC3253. 
-But that doesn't mean that it can't make it into a different specification, possibly just an informational RFC. 
-Given the choice of several people coming up with proprietary and undocumented solutions, or having them agree on a common protocol and have that published as RFC, I definitively prefer the latter. 
-Don't you? 
-As far as I understand, RFC3253 makes no promise at all about what happens 
-with a VCR when it's version history is deleted. 
-Will it end up unversioned, 
-or will it's version properties be left dangling (pointing to resources that have been removed)? 
-I think that if RFC3253 would mandate the former, less people would be asking for this feature. 
-Julian 
-I agree that DeltaV needs a real and standardized way to make a resource unversioned. 
-Work-around proposals so far have not met the requirements for the feature. 
-Here's the use case that demonstrates the need. 
-First, a resource exists -- foo.doc. 
-It is version-controlled. 
-I decide to make foo.doc a regular resource. 
-Why? 
-Could be any of a number of reasons: - It was a mistake to make it versioned in the first place - My quota isn't big enough for all the old versions. 
-- The resource is now published (publicly readable), not being authored, so it's no longer appropriate to show or track changes via versioning So far, this motivates the basic need to have the content at URL "foo.doc" not be versioned... Now some side requirements: Although I want "foo.doc" to be unversioned, other things should stay the same. 
-Among these things: - The creationdate should not change - The user who created it should not change, nor should the owner - Permissions should not be re-initialized or changed - If there's a file access history, that should still be there - If foo.doc is locked, the lock should stay. 
-- Other characteristics like tickets should not change. 
-The unversion use case may need to be supported in any repository where both versioned and unversioned resources exist. 
-Users make mistakes, and they like to undo mistakes without making themselves even worse off. 
-The unversion problem, if not dealt with via a standard and well-behaved mechanism, could become the same as the "safe-save" problem which Julian has documented on the WebDAV. 
-When a client does a safe save to a resource like "foo.doc", the client often does something like this: 1. PUT foo.doc~ 2. HEAD foo.doc~ 3. DELETE foo.doc 4. MOVE foo.doc~ to foo.doc 
-When a user's client "safe saves" their document, the user is surprised if the file's permissions change. 
-Yet it's very common for the server to apply a set of default permissions to "foo.doc~" when it's created, and then the custom permissions on "foo.doc" are lost when that one is deleted. 
-If clients start to do (1) COPY foo.doc to foo.doc~, (2) DELETE foo.doc, (3) MOVE foo.doc~ to foo.doc in order to accomplish unversioning, then we'll just see more safe-save type garbage. 
-Lisa 
-From: Julian Reschke [mailto:julian.reschke@greenbytes.de] 
-I wasn't actually asking for a "standard protocol feature". 
-I was looking for an agreement between those that *do* want that feature, so that *their* servers can interoperate. 
-OK, that wasn't clear before (there was a request earlier to get an UNVERSION-CONTROL method into the standard protocol). 
-As far as I understand, RFC3253 makes no promise at all about what happens with a VCR when it's version history is deleted. 
-Will it end up unversioned, or will it's version properties be left dangling (pointing to resources that have been removed)? 
-I think that if RFC3253 would mandate the former, less people would be asking for this feature. 
-Yes, that was my impression as well. 
-In particular, this is the use case that Lisa identified in her email on this thread. 
-I personally would be willing to require that deleting a version history converts all version-controlled resources for that version-history into non-version-controlled resources, if that addresses the primary use case that is motivating the request for an UNVERSION-CONTROL method. 
-(And if it doesn't, please motivate the use case where you want to keep the version history, and you want to keep a version-controlled resource, but you no longer want that version-controlled resource to be associated with that version history.) Edgar: Does this also address your request for an UNBASELINE-CONTROL operation (i.e. if we defined that deleting the version-controlled-configuration causes the associated baseline-controlled collection to no longer be baseline controlled)? 
-Cheers, Geoff 
+<s> Hi. As far as I know, there has been a long discussion about whether this feature is required or not.  </s>
+<s> Fact is, it's missing from RFC3253, yet several systems need a way to implement it.  </s>
+<s> Several workaround have been discussed, but IMHO all of them have some disadvantages, and furthermore there's no interoperability here: 1) COPY to new resource / DELETE old / MOVE back Disadvantage: creates new resource (ACLs are lost, DAV:resource-id changes), requires multiple steps  </s>
+<s> 2) DELETE on version history resource  </s>
+<s> Disadvantage: actually requires that VHRs are supported, also it's quit  </s>
+<s> possible that the version history should be preserved  </s>
+<s> 3) PROPPATCH/remove on live properties such as DAV:checked-in, DAV:checked-out or DAV:version-history Disadvantage: messy and breaks RFC3253 (because the properties are protected).  </s>
+<s> Therefore I think that an (optional) new method "UNVERSION-CONTROL" makes most sense.  </s>
+<s> Servers won't need to support it, and it's presence can easily be detected using OPTIONS and PROPFIND/supported-method-set.  </s>
+<s> I can think of one optional parameter that would be marshalled in the request body: whether the version history should be deleted as well or not.  </s>
+<s> Feedback appreciated, Julian  </s>
+<s> Could you motivate the need to unversion-control a resource but not delete it?  </s>
+<s> In particular, should a server that automatically  </s>
+<s> puts all resources under version control fail such a request, or just ignore it?  </s>
+<s> Cheers, Geoff Hi.  </s>
+<s> As far as I know, there has been a long discussion about whether this feature is required or not.  </s>
+<s> Fact is, it's missing from RFC3253, yet several systems need a way to implement it.  </s>
+<s> Several workaround have been discussed, but IMHO all of them have some disadvantages, and furthermore there's no interoperability here: 1) COPY to new resource / DELETE old / MOVE back Disadvantage: creates new resource (ACLs are lost, DAV:resource-id changes), requires multiple steps  </s>
+<s> 2) DELETE on version history resource  </s>
+<s> Disadvantage: actually requires that VHRs are supported, also it's quit  </s>
+<s> possible that the version history should be preserved  </s>
+<s> 3) PROPPATCH/remove on live properties such as DAV:checked-in, DAV:checked-out or DAV:version-history Disadvantage: messy and breaks RFC3253 (because the properties are protected).  </s>
+<s> Therefore I think that an (optional) new method "UNVERSION-CONTROL" makes most sense.  </s>
+<s> Servers won't need to support it, and it's presence can easily be detected using OPTIONS and PROPFIND/supported-method-set.  </s>
+<s> I can think of one optional parameter that would be marshalled in the request body: whether the version history should be deleted as well or not.  </s>
+<s> Feedback appreciated, Julian  </s>
+<s> I don't see why this needs to be coupled.  </s>
+<s> I do understand that there are cases where servers do not support the concept of un-vcr-ing a resource, but we have provably two independant implementations that both want/need to support this feature and are looking for a interoperable way to do it easily.  </s>
+<s> I think in this case it's best to just return 405 (not allowed), just as a RFC3253-conforming server would do it anyway.  </s>
+<s> Julian  </s>
+<s> The main part of the question was: "Could you motivate the need to unversion-control a resource."  </s>
+<s> The fact that "two implementations want to do it" is not the most compelling answer (there are lots of things that you could get two implementations to agree on that would not merit adding to a standard protocol).  </s>
+<s> Note: I'm not saying there are no compelling use cases ... just that I haven't heard any yet.  </s>
+<s> Cheers, Geoff  </s>
+<s> I don't see why this needs to be coupled.  </s>
+<s> I do understand that there are cases where servers do not support the concept of un-vcr-ing a resource, but we have provably two independant implementations that both want/need to support this feature and are looking for a interoperable way to do it easily.  </s>
+<s> I think in this case it's best to just return 405 (not allowed), just as a RFC3253-conforming server would do it anyway.  </s>
+<s> Julian  </s>
+<s> Well, if there are multiple implementations that want it, it's certainly nice if you can marshall it.  </s>
+<s> That was the point of the proposal.  </s>
+<s> Right now, I really don't care which kind of activity this leads to (deltaV addendum, private informational RFC, ...).  </s>
+<s> Regarding the what-is-the-need-question: it makes a difference whether you are building a new system that accurately reflects the deltaV model, or if  </s>
+<s> you are busing deltaV to HTTP-marshall requests between systems that exist independantly of WebDAV.  </s>
+<s> In the latter case, you really can't choose -- you'll have to come up with a way to marshall that type of request (or you'll have to live with an unhappy customer).  </s>
+<s> In general, I understand why a system would version everything, or a system where the decision about what is version-controlled is made by the server.  </s>
+<s> What I don't really see is the use case for a system that has an explicit "enable" but no "disable" call.  </s>
+<s> Julian  </s>
+<s> From: Julian Reschke [mailto:julian.reschke@greenbytes.de]  </s>
+<s> Well, if there are multiple implementations that want it, it's certainly nice if you can marshall it.  </s>
+<s> New standard protocol features do not come for free ... they introduce additional complexity into the protocol, especially for client and server implementations that try to fully implement the protocol (to maximize interoperability).  </s>
+<s> So I believe it is reasonable to at least  </s>
+<s> require a compelling use case (and even that is not sufficient, when there is not agreement on how to handle that use case, e.g. the rejection of the Translate header).  </s>
+<s> Regarding the what-is-the-need-question: it makes a difference whether you are building a new system that accurately reflects the deltaV model, or if you are using deltaV to HTTP-marshall requests between systems that exist independantly of WebDAV.  </s>
+<s> In the latter case, you really can't choose -- you'll have to come up with a way to marshall that type of request (or you'll have to live with an unhappy customer).  </s>
+<s> If you included in the standard every feature provided by any system, the protocol would be unusably complex, and would provide no basis for effective inter-operation.  </s>
+<s> So every system will have a set of non-standard features and extensions that it supports.  </s>
+<s> Only ones that are considered widely needed will end up in the standard protocol.  </s>
+<s> In general, I understand why a system would version everything, or a system where the decision about what is version-controlled is made by the server.  </s>
+<s> What I don't really see is the use case for a system that has an explicit "enable" but no "disable" call.  </s>
+<s> The burden of proof is on the proponent of a new feature.  </s>
+<s> A new feature is accepted because you have convinced people that it is useful/necessary, not just because nobody demonstrated it was not useful.  </s>
+<s> Note that there are use cases for deleting the history of a resource (which is marshalled by issuing a DELETE request against the version-history resource).  </s>
+<s> What has not been demonstrated is the need to "disconnect" a resource from its history without deleting the history.  </s>
+<s> Cheers, Geoff  </s>
+<s> I wasn't actually asking for a "standard protocol feature".  </s>
+<s> I was looking for an agreement between those that *do* want that feature, so that *their* servers can interoperate.  </s>
+<s> Note that under that proposal, any existing RFC3253 server would be compliant, because it specifically allows servers not to implement it (just like RFC3253 is silent about whether new resources are automatically version-controlled or not).  </s>
+<s> That's correct, but I don't think the comparison makes sense here.  </s>
+<s> The reason for the rejection of the "translate" header is that it's in direct violation of the base spec (RFC2616).  </s>
+<s> I don't see any problem like that with a potential UNVERSION-CONTROL feature.  </s>
+<s> Yes. That's why this feature hasn't made it into RFC3253.  </s>
+<s> But that doesn't mean that it can't make it into a different specification, possibly just an informational RFC.  </s>
+<s> Given the choice of several people coming up with proprietary and undocumented solutions, or having them agree on a common protocol and have that published as RFC, I definitively prefer the latter.  </s>
+<s> Don't you?  </s>
+<s> As far as I understand, RFC3253 makes no promise at all about what happens  </s>
+<s> with a VCR when it's version history is deleted.  </s>
+<s> Will it end up unversioned,  </s>
+<s> or will it's version properties be left dangling (pointing to resources that have been removed)?  </s>
+<s> I think that if RFC3253 would mandate the former, less people would be asking for this feature.  </s>
+<s> Julian  </s>
+<s> I agree that DeltaV needs a real and standardized way to make a resource unversioned.  </s>
+<s> Work-around proposals so far have not met the requirements for the feature.  </s>
+<s> Here's the use case that demonstrates the need.  </s>
+<s> First, a resource exists -- foo.doc.  </s>
+<s> It is version-controlled.  </s>
+<s> I decide to make foo.doc a regular resource.  </s>
+<s> Why?  </s>
+<s> Could be any of a number of reasons: - It was a mistake to make it versioned in the first place - My quota isn't big enough for all the old versions.  </s>
+<s> - The resource is now published (publicly readable), not being authored, so it's no longer appropriate to show or track changes via versioning So far, this motivates the basic need to have the content at URL "foo.doc" not be versioned... Now some side requirements: Although I want "foo.doc" to be unversioned, other things should stay the same.  </s>
+<s> Among these things: - The creationdate should not change - The user who created it should not change, nor should the owner - Permissions should not be re-initialized or changed - If there's a file access history, that should still be there - If foo.doc is locked, the lock should stay.  </s>
+<s> - Other characteristics like tickets should not change.  </s>
+<s> The unversion use case may need to be supported in any repository where both versioned and unversioned resources exist.  </s>
+<s> Users make mistakes, and they like to undo mistakes without making themselves even worse off.  </s>
+<s> The unversion problem, if not dealt with via a standard and well-behaved mechanism, could become the same as the "safe-save" problem which Julian has documented on the WebDAV.  </s>
+<s> When a client does a safe save to a resource like "foo.doc", the client often does something like this: 1. PUT foo.doc~ 2. HEAD foo.doc~ 3. DELETE foo.doc 4. MOVE foo.doc~ to foo.doc  </s>
+<s> When a user's client "safe saves" their document, the user is surprised if the file's permissions change.  </s>
+<s> Yet it's very common for the server to apply a set of default permissions to "foo.doc~" when it's created, and then the custom permissions on "foo.doc" are lost when that one is deleted.  </s>
+<s> If clients start to do (1) COPY foo.doc to foo.doc~, (2) DELETE foo.doc, (3) MOVE foo.doc~ to foo.doc in order to accomplish unversioning, then we'll just see more safe-save type garbage.  </s>
+<s> Lisa  </s>
+<s> From: Julian Reschke [mailto:julian.reschke@greenbytes.de]  </s>
+<s> I wasn't actually asking for a "standard protocol feature".  </s>
+<s> I was looking for an agreement between those that *do* want that feature, so that *their* servers can interoperate.  </s>
+<s> OK, that wasn't clear before (there was a request earlier to get an UNVERSION-CONTROL method into the standard protocol).  </s>
+<s> As far as I understand, RFC3253 makes no promise at all about what happens with a VCR when it's version history is deleted.  </s>
+<s> Will it end up unversioned, or will it's version properties be left dangling (pointing to resources that have been removed)?  </s>
+<s> I think that if RFC3253 would mandate the former, less people would be asking for this feature.  </s>
+<s> Yes, that was my impression as well.  </s>
+<s> In particular, this is the use case that Lisa identified in her email on this thread.  </s>
+<s> I personally would be willing to require that deleting a version history converts all version-controlled resources for that version-history into non-version-controlled resources, if that addresses the primary use case that is motivating the request for an UNVERSION-CONTROL method.  </s>
+<s> (And if it doesn't, please motivate the use case where you want to keep the version history, and you want to keep a version-controlled resource, but you no longer want that version-controlled resource to be associated with that version history.) Edgar: Does this also address your request for an UNBASELINE-CONTROL operation (i.e. if we defined that deleting the version-controlled-configuration causes the associated baseline-controlled collection to no longer be baseline controlled)?  </s>
+<s> Cheers, Geoff  </s>

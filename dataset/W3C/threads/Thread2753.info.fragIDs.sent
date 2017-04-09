@@ -1,66 +1,66 @@
-I recently received the message below. 
-Looking at draft-ietf-http-v11-spec-rev-03 it seems the description of multipart/byteranges leaves a lot to be desired on the subject of where CRLF should occur. 
-Is there a definitive answer to this? 
-John Franks john@math.nwu.edu ---------- Forwarded message ---------- Date: Mon, 1 Jun 1998 16:04:33 -0600 (MDT) From: Alex Rousskov rousskov@nlanr.net 
-Subject: Re: Server: WN/2.0.0pre Hi John, In implementing multipart range responses you probably followed RFC 2046 (prepending boundaries with CRLF ). 
-However, HTTP RFC (2068) gives an example where boundaries are _not_ prepended with CRLF (note that there is only one empty line after headers): 
-HTTP/1.1 206 Partial content Date: Wed, 15 Nov 1995 06:25:24 GMT Last-modified: Wed, 15 Nov 1995 04:58:08 GMT 
-Content-type: multipart/byteranges; boundary=THIS_STRING_SEPARATES 
---THIS_STRING_SEPARATES Content-type: application/pdf Content-range: bytes 500-999/8000 ...the first range... --THIS_STRING_SEPARATES Content-type: application/pdf Content-range: bytes 7000-7999/8000 ...the second range --THIS_STRING_SEPARATES-- How did you decide which RFC to follow? 
-Any "well-known" clarifications that I am not aware about? 
-Thanks! 
-Alex. 
-I'd like to be sure I understand the question. 
-Please correct me if I've got it wrong. 
-It appears that RFC 2046 (Sect. 
-5.1.1) 
-treats the CRLF that precedes a boundary as *part* of the boundary: 
-The boundary delimiter MUST occur at the beginning of a line, i.e., following a CRLF, and the initial CRLF is considered to be attached to the boundary delimiter line rather than part of the preceding part. 
-NOTE: The CRLF preceding the boundary delimiter line is conceptually attached to the boundary so that it is possible to have a part that does not end with a CRLF (line break). 
-Body parts that must be considered to end with line breaks, therefore, must have two CRLFs preceding the boundary delimiter line, the first of which is part of the preceding body part, and the second of which is part of the encapsulation boundary. 
-In the example Alex cites, by RFC 2046, there should be two CRLFs in a row: 1) to separate the HTTP response headers from the response body; and 2) to precede (and be considered part of) the multipart boundary. 
-On the other hand, the purpose of the second CRLF is to ensure that the 
-boundary occurs at the beginning of a line, which we already know to be 
-true for the first boundary in an HTTP response (and in email messages?). 
-To me it appears that RFC 2068 conflicts with RFC 2046 in its letter, but follows it in the spirit. 
-I think we need a MIME guru to pass 
-judgement. 
-Or we can add another note to Section 19.4 of the HTTP/1.1 spec. 
-about this difference beteen HTTP and MIME. 
-(FWIW, the output from my server looks like the RFC 2068 example, with one blank line between the HTTP response headers and the first boundary.) 
-Dave Kristol 
-You understand the problem correctly. 
-I don't think that RFC is specific. 
-There is no discussion of CRLF. 
-It gives an example in which all CRLF's are invisible and that is all. 
-I personally would not want to draw conclusions based on the number of blank lines in the formating of the spec document! 
-I don't think it is sufficient to just refer to a MIME RFC either. 
-I don't care how it is done, but we need to be more precise. 
-John Franks john@math.nwu.edu 
-Exactly. 
-That's correct. 
-According to MIME, there also should be a CRLF before other boundaries (2nd, 3rd, etc). 
-However, the example is not detailed enough to see if those CRLF s are there. 
-I could understand why MIME cares about message "appearance". 
-I see no reason why HTTP should be human-oriented. 
-Too late for that though :). 
-Right, but to ease implementation (both generation and parsing) and to be consistent, it would be much better if HTTP would explicitly require CRLF to prepend _all_ boundaries rather than all but the first one. 
-Alternatively, HTTP could explicitly prohibit those extra CRLFs. 
-HTTP says nothing about CRLFs prepending the boundaries. 
-Thus, it encourages us to follow MIME specs. 
-MIME requires CRLFs. 
-However, the example in HTTP does not follow MIME requirements. 
-Since MIME contains a lot of requirements that HTTP overwrites, it is not clear if the intention was to overwrite this requirement as well or not. 
-IMHO, HTTP should minimize references to MIME format and simply provide its own BNF for multipart messages. 
-Personally, I find "refer-to-MIME and list-the-differences" approach error prone. 
-Such an approach leads to questions like "did they forget to list that difference?"... 
-Thus, we already have two serves implementing multiparts differently: NW and yours. 
-:) Thank you, Alex. 
-the example for the multipart/byteranges in the HTTP/1.1 spec. 
-I'm *very* sure that I knew (and know) nothing about MIME rules, nor have I ever read RFC2046. 
-Since I knew that I was ignorant, I asked a few MIME experts to check the specification and the example, and left it at that. 
-(I can't remember who I asked, so I won't try to assign any blame for not spotting the ambiguity.) And, as John Franks alludes, the formatting of the document has been somewhat at the whim of a well-known (and somewhat unpredictable) word procesing program, so it's not at all clear whether whatever example was originally written is the one that now appears in the draft. 
-(However, I don't think this one has been changed.) Bottom line: we should not be putting too much weight on this specific example. 
-If the text of the HTTP/1.1 spec is ambiguous, we need to fix that. 
-Then we can revise the example to match the text, perhaps with a note to be cautiously liberal about accepting multipart/byteranges with unexpected numbers of CRLFs. 
-And with a note to the RFC editor to be careful about the formatting of the example :-) -Jeff 
+<s> I recently received the message below.  </s>
+<s> Looking at draft-ietf-http-v11-spec-rev-03 it seems the description of multipart/byteranges leaves a lot to be desired on the subject of where CRLF should occur.  </s>
+<s> Is there a definitive answer to this?  </s>
+<s> John Franks john@math.nwu.edu ---------- Forwarded message ---------- Date: Mon, 1 Jun 1998 16:04:33 -0600 (MDT) From: Alex Rousskov rousskov@nlanr.net  </s>
+<s> Subject: Re: Server: WN/2.0.0pre Hi John, In implementing multipart range responses you probably followed RFC 2046 (prepending boundaries with CRLF ).  </s>
+<s> However, HTTP RFC (2068) gives an example where boundaries are _not_ prepended with CRLF (note that there is only one empty line after headers):  </s>
+<s> HTTP/1.1 206 Partial content Date: Wed, 15 Nov 1995 06:25:24 GMT Last-modified: Wed, 15 Nov 1995 04:58:08 GMT  </s>
+<s> Content-type: multipart/byteranges; boundary=THIS_STRING_SEPARATES  </s>
+<s> --THIS_STRING_SEPARATES Content-type: application/pdf Content-range: bytes 500-999/8000 ...the first range... --THIS_STRING_SEPARATES Content-type: application/pdf Content-range: bytes 7000-7999/8000 ...the second range --THIS_STRING_SEPARATES-- How did you decide which RFC to follow?  </s>
+<s> Any "well-known" clarifications that I am not aware about?  </s>
+<s> Thanks!  </s>
+<s> Alex.  </s>
+<s> I'd like to be sure I understand the question.  </s>
+<s> Please correct me if I've got it wrong.  </s>
+<s> It appears that RFC 2046 (Sect.  </s>
+<s> 5.1.1)  </s>
+<s> treats the CRLF that precedes a boundary as *part* of the boundary:  </s>
+<s> The boundary delimiter MUST occur at the beginning of a line, i.e., following a CRLF, and the initial CRLF is considered to be attached to the boundary delimiter line rather than part of the preceding part.  </s>
+<s> NOTE: The CRLF preceding the boundary delimiter line is conceptually attached to the boundary so that it is possible to have a part that does not end with a CRLF (line break).  </s>
+<s> Body parts that must be considered to end with line breaks, therefore, must have two CRLFs preceding the boundary delimiter line, the first of which is part of the preceding body part, and the second of which is part of the encapsulation boundary.  </s>
+<s> In the example Alex cites, by RFC 2046, there should be two CRLFs in a row: 1) to separate the HTTP response headers from the response body; and 2) to precede (and be considered part of) the multipart boundary.  </s>
+<s> On the other hand, the purpose of the second CRLF is to ensure that the  </s>
+<s> boundary occurs at the beginning of a line, which we already know to be  </s>
+<s> true for the first boundary in an HTTP response (and in email messages?).  </s>
+<s> To me it appears that RFC 2068 conflicts with RFC 2046 in its letter, but follows it in the spirit.  </s>
+<s> I think we need a MIME guru to pass  </s>
+<s> judgement.  </s>
+<s> Or we can add another note to Section 19.4 of the HTTP/1.1 spec.  </s>
+<s> about this difference beteen HTTP and MIME.  </s>
+<s> (FWIW, the output from my server looks like the RFC 2068 example, with one blank line between the HTTP response headers and the first boundary.)  </s>
+<s> Dave Kristol  </s>
+<s> You understand the problem correctly.  </s>
+<s> I don't think that RFC is specific.  </s>
+<s> There is no discussion of CRLF.  </s>
+<s> It gives an example in which all CRLF's are invisible and that is all.  </s>
+<s> I personally would not want to draw conclusions based on the number of blank lines in the formating of the spec document!  </s>
+<s> I don't think it is sufficient to just refer to a MIME RFC either.  </s>
+<s> I don't care how it is done, but we need to be more precise.  </s>
+<s> John Franks john@math.nwu.edu  </s>
+<s> Exactly.  </s>
+<s> That's correct.  </s>
+<s> According to MIME, there also should be a CRLF before other boundaries (2nd, 3rd, etc).  </s>
+<s> However, the example is not detailed enough to see if those CRLF s are there.  </s>
+<s> I could understand why MIME cares about message "appearance".  </s>
+<s> I see no reason why HTTP should be human-oriented.  </s>
+<s> Too late for that though :).  </s>
+<s> Right, but to ease implementation (both generation and parsing) and to be consistent, it would be much better if HTTP would explicitly require CRLF to prepend _all_ boundaries rather than all but the first one.  </s>
+<s> Alternatively, HTTP could explicitly prohibit those extra CRLFs.  </s>
+<s> HTTP says nothing about CRLFs prepending the boundaries.  </s>
+<s> Thus, it encourages us to follow MIME specs.  </s>
+<s> MIME requires CRLFs.  </s>
+<s> However, the example in HTTP does not follow MIME requirements.  </s>
+<s> Since MIME contains a lot of requirements that HTTP overwrites, it is not clear if the intention was to overwrite this requirement as well or not.  </s>
+<s> IMHO, HTTP should minimize references to MIME format and simply provide its own BNF for multipart messages.  </s>
+<s> Personally, I find "refer-to-MIME and list-the-differences" approach error prone.  </s>
+<s> Such an approach leads to questions like "did they forget to list that difference?"...  </s>
+<s> Thus, we already have two serves implementing multiparts differently: NW and yours.  </s>
+<s> :) Thank you, Alex.  </s>
+<s> the example for the multipart/byteranges in the HTTP/1.1 spec.  </s>
+<s> I'm *very* sure that I knew (and know) nothing about MIME rules, nor have I ever read RFC2046.  </s>
+<s> Since I knew that I was ignorant, I asked a few MIME experts to check the specification and the example, and left it at that.  </s>
+<s> (I can't remember who I asked, so I won't try to assign any blame for not spotting the ambiguity.) And, as John Franks alludes, the formatting of the document has been somewhat at the whim of a well-known (and somewhat unpredictable) word procesing program, so it's not at all clear whether whatever example was originally written is the one that now appears in the draft.  </s>
+<s> (However, I don't think this one has been changed.) Bottom line: we should not be putting too much weight on this specific example.  </s>
+<s> If the text of the HTTP/1.1 spec is ambiguous, we need to fix that.  </s>
+<s> Then we can revise the example to match the text, perhaps with a note to be cautiously liberal about accepting multipart/byteranges with unexpected numbers of CRLFs.  </s>
+<s> And with a note to the RFC editor to be careful about the formatting of the example :-) -Jeff  </s>

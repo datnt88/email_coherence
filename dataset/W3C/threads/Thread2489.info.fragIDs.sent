@@ -1,146 +1,146 @@
-On the Internet Printing Protocol list the following issues were raised in the context of a discussion of whether or not IPP should use HTTP/1.1 as a 'transport' protocol, defining IPP operations as usage conventions and extentions. 
-I will attempt to respond based on my understanding; if anyone else on http-wg disagrees, please correct or amplify. 
-IPP We discussed how MIME differs from the HTTP MIME-like IPP protocol. 
-There was a concern that the HTTP version of MIME IPP doesn't support Content-Transfer-Encoding, though we think that IPP we probably could add such an entity-header as an extension and IPP support it through a CGI script if necessary (though we aren't IPP sure about this). 
-Content-Transfer-Encoding is not supported by HTTP because it isn't needed; the HTTP transport is 8 bit clean. 
-IPP There was also a question about how to send binary data in a IPP multipart/mixed, especially in the chunked case because there is IPP no way to know if a CRLF in the midst of binary data is really a IPP CRLF. 
-Thus it is hard to find the boundary string. 
-CRLF is what it is - if it is in the binary data and is followed by the specified boundary string and another CRLF then you are at the end of the body part. 
-What is the question? 
-As I understand it, the selection of a boundary string in MIME is already 'probabilistic'; the sender is responsible for choosing a string that 'probably' won't appear in the body (I do not claim to be an authority on MIME). 
-IPP We believe that chunked applies to the entire multipart/mixed IPP entity and cannot be used for one of the sub-entities alone. 
-IPP Thus there is no length to mark the boundary of a sub-entity. 
-Correct; the 'Transfer-Encoding: chunked' applies to all of the HTTP message body. 
-For completeness, my companys' server implementation does support chunked encoding of the entire multipart/* body part, but we think it doesn't make much sense (because it is redundant) so that support may be compiled out to save code. 
-Scott Lawrence EmWeb Embedded Server lawrence@agranat.com 
-Agranat Systems, Inc. Engineering http://www.agranat.com/ 
-In my ignorance of MIME, I've been puzzled about this boundary business. 
-Assuming each multipart contains a Content-Length header, does it matter what the boundary is? 
-Can't the recipient just eat the 
-number of content bytes before looking for the next boundary? 
-If so, the boundary strings don't have to be particularly clever, do they? 
-Dave Kristol 
-DK In my ignorance of MIME, I've been puzzled about this boundary DK business. 
-Assuming each multipart contains a Content-Length header, DK does it matter what the boundary is? 
-Can't the recipient just eat the 
-DK number of content bytes before looking for the next boundary? 
-If so, DK the boundary strings don't have to be particularly clever, do they? 
-I had also considered the use of Content-Length to address this; the HTTP spec seems to allow it: 2068 19.4.5 HTTP Header Fields in Multipart Body-Parts 2068 In MIME, most header fields in multipart body-parts are generally 2068 ignored unless the field name begins with "Content-". 
-In HTTP/1.1, 2068 multipart body-parts may contain any HTTP header fields which are 2068 significant to the meaning of that part. 
-So is it legal for me to put an HTTP/1.1 Content-Length header into a multipart/* part to indicate its length? 
-It seems a workable (in fact, preferable) solution. 
-As server vendors we can't assume that though. 
-Scott Lawrence EmWeb Embedded Server lawrence@agranat.com 
-Agranat Systems, Inc. Engineering http://www.agranat.com/ 
-OK I'll admit it. 
-Content-Length is not actually valid MIME. 
-It was added to the HTTP spec after I discovered a problem with the original POST and PUT method - the spec stated that closing the connection was used to indicate the end of object which was kinda a lose on POST (think about it). 
-So I went off to talk it over with Tim and he agreed with me that we needed a length specifier. 
-We spent a while looking through the MIME specs looking for it but didn't find it. 
-Finally we punted and decided that it must be in there and that the only logical name was "Content-Length". 
-We added it to the HTTP spec as a header incorporated from MIME. 
-A while later we discovered that not only was there no MIME content length header but its absence was an anathema to the MIME people. 
-I had a long argument with Nat B. about this at WWW2. 
-There was absolutely no way I was going to corrupt the HTTP spec with stupid and unnecessary boundary markers. 
-Introducing probabalistic fudges when there is an analytic solution is something I dislike intensely. 
-Besides searching for the boundary marker was very expensive computationally, every byte had to be examnined. 
-Against this the MIME argument was that you might want to gate HTTP to mail. 
-The idea that the gateway should handle the convbersion was not acceptable. 
-I was keen to keep the HTTP spec clean because I wanted to support a 
-hyperterminal like "streaming mode" where the server sent a continuously extending page at the client. 
-This is what I believe the so called push technologies are doing although I don't regard that as "true push". 
-For that I would want to make the browser a client/server. 
-To push content onto 
-the browser you would execute a PUT or POST to a URL specified by the browser. 
-There would have to be some hailing protocol but I don't think that is too complex. 
-If the job was done properly there would be no need for all these quite bizare plugins to do chat. 
-So if people are wondering why the specs don't agree the answer is simple. 
-I was right, they were persuing a theological point and I didn't really want to call attention to the dispute at the time :-) Mind you, those guys did win on Content-MD5 :-( Phill 
-PH-B OK I'll admit it. 
-Content-Length is not actually valid MIME. 
-It PH-B was added to the HTTP spec after I discovered a problem with the PH-B original POST and PUT method [...] PH-B [...] There was absolutely no way I was going to corrupt the PH-B HTTP spec with stupid and unnecessary boundary PH-B markers. 
-Introducing probabalistic fudges when there is an PH-B analytic solution is something I dislike intensely. 
-Besides PH-B searching for the boundary marker was very expensive PH-B computationally, every byte had to be examnined. 
-Hear hear. 
-If the intent is/was that Content-Length should be used in each part of a multipart/* body part rather than boundary markers, then I believe that the spec needs some clarification on this point. 
-While I expect that others may disagree, I believe that such a change would be a big improvement. 
-PH-B Against this the MIME argument was that you might want to gate PH-B HTTP to mail. 
-The idea that the gateway should handle the PH-B convbersion was not acceptable. 
-A gateway would also have to do work to change the HTTP 8-bit data to some Content-Transfer-Encoding anyway, wouldn't it? 
-Adding a boundary marker (or the Content-Length in the other direction) in the process hardly seems an extraordinary requirement. 
-Scott Lawrence EmWeb Embedded Server lawrence@agranat.com 
-Agranat Systems, Inc. Engineering http://www.agranat.com/ 
-PH-B OK I'll admit it. 
-Content-Length is not actually valid MIME. 
-It PH-B was added to the HTTP spec after I discovered a problem with the PH-B original POST and PUT method [...] PH-B [...] There was absolutely no way I was going to corrupt the PH-B HTTP spec with stupid and unnecessary boundary PH-B markers. 
-Introducing probabalistic fudges when there is an PH-B analytic solution is something I dislike intensely. 
-Besides PH-B searching for the boundary marker was very expensive PH-B computationally, every byte had to be examnined. 
-Hear hear. 
-If the intent is/was that Content-Length should be used in each part of a multipart/* body part rather than boundary markers, then I believe that the spec needs some clarification on this point. 
-While I expect that others may disagree, I believe that such a change would be a big improvement. 
-It seems that this would be an improvement, but what about the case where you are not sure in advance what the Content-Length will be ? 
-I also dislike the Multipart boundaries, but don't see another way around the problem if you don't know the content-length. 
-PH-B Against this the MIME argument was that you might want to gate PH-B HTTP to mail. 
-The idea that the gateway should handle the PH-B convbersion was not acceptable. 
-A gateway would also have to do work to change the HTTP 8-bit data to some Content-Transfer-Encoding anyway, wouldn't it? 
-Adding a boundary marker (or the Content-Length in the other direction) in the process hardly seems an extraordinary requirement. 
-Scott Lawrence EmWeb Embedded Server lawrence@agranat.com 
-Agranat Systems, Inc. Engineering http://www.agranat.com/ 
-Nick 
-I have copied this message from the http list to the mhtml list (HMTL in email, or more exactly documents taken from the web in email) list, and suggest that you continue to cross-post to mhtml in this thread. 
-They might be very interested, and have something to say from their viewpoint. 
-Regards,Martin. 
-Dr.sc. 
-Martin J. Du"rst ' , . 
-p y f g c R l / = Institut fu"r Informatik a o e U i D h T n S - der Universita"t Zu"rich ; q j k x b m w v z Winterthurerstrasse 190 (the Dvorak keyboard) x 
-I think that the situation is now similar to that of Gopher where there were also unhelpful demands. 
-The Web is now the main engine for adoption of MIME and it is quite reasonable to expect changes in MIME to reflect HTTP usage at this point. 
-I entirely agree. 
-I never understood the boundary gateway argument at the time. 
-Conversations tended to go '"but you have to encode the character set because HTTP requires an 8 bit clean connection. 
-In reply we got a demand to cease using 8 bit clean connections and base 64 encode EVERY message. 
-MIME should have a content-length header and it should specify a subset for tunneling through backward compatible gateways. 
-I would like to see a radical overhaul of SMTP that ignores the sendmail legacy and explicitly considers the store and forward mail delivery paradigm. 
-SMTP is designed to deliver from source to destination, the idea that mail gateways should gateway SMTP-SMTP is really not considered in the script. 
-As part of this overhaul I would like to see a specification for "gold-class" handlers. 
-These would not introduce arbitary crap like stripping to 7-bits, truncating lines or any other stupid transformation. 
-The only character sets permitted in this class would be ASCII and UNICODE. 
-The protocol would explicitly support transaction like semantics including giving a reliable notification of delivery. 
-Mail delivered through the gold class network would never be held in "resend queues" and never screw up mailing lists. 
-It would support address books allowing them to acquire knowledge of the display abilities of mail users so the Word97 to Word95 user problem would be avoided. 
-Oh and all clients would support HTML. 
-In short it would work when a gold class object talked to another gold class object. 
-Gateways would be possible but the spec would not be corrupted to support a bunch of braindammaged bozos who use a mailler written by Thomas Jefferson with help from Charles Babbage which can only cope with line lengths of 8 characters written in morse code. 
-I'm sure that more effort goes into making the broken work than would be required to buiild somethin that really worked. 
-All we need is some competent engineers, the big vendors and some people who are willing to insist on extreeme principle. 
-Phill 
-It isn't hard to find the boundary string in binary data. 
-Look for CRLF followed by the boundary string followed by CRLF. 
-It doesn't matter whether a CRLF in the midst of binary data might actually be binary data, the robustness of multipart/* is based on the fact that the boundary doesn't appear, not on the parsing of CRLFs. 
-Besides searching for the boundary marker was very expensive computationally, every byte had to be examnined. 
-I think 'very' is pretty subjective, and using string matching algorithms like boyer-moore mean that the number of comparisons is reduced for longer boundary strings. 
-The standard says only that the boundary string DOES NOT appear in the body. 
-It happens that if you know nothing about the body at all, then you can implement this in a probabalistic way, e.g., the likelihood that a randomly generated boundary string would appear in arbitrary data could be made arbitrarily small ("less than the probability that the computer would spontaneously explode"). 
-In any case, I don't think we're going to change HTTP to suddenly require content-length on multipart boundaries; there may be some clarification needed to identify what's necessary for an interoperable implementation. 
-We've lost this particular battle a long time ago. 
-I just want to keep the HTTP spec ambiguous and functional. 
-I think we could do chunked multipart if we need to, but I don't think we're going to be able to require senders to generate it, so it may be that this whole discussion is just 'wishful thinking', or, to put it another way, part of the requirements setting for HTTP-NG. 
-I agree, but let me say something about Content-Length. 
-Content-Length is not a very efficient mechanism for high volume (tens of thousands of concurrent connections, at 200+ TPS) servers. 
-It requires that the server cache the entire message in order to determine the final length, then send the content. 
-This will generally require that the data is processed at least twice. 
-First to cache it, and again to send it. 
-It would be better if these protocols used a scheme that breaks the message into multiple messages. 
-Each message would start with a length field. 
-In this way, it would be easy to add a boundry marker as defined by a zero length part at end. 
-Continuous streams of 
-bytes are nice for some applications, but for high volume server activity, it is much better to have a protocol that is more specific about the length of the content, and does not require intermediate cache of content so you can calculate the length. 
-I'm not that familiar with MIME, but I would expect that one could define a MIME type that does contain "records", each of which contains a control header (length) and data (length bytes long). 
-Michael Giroux 
-Correct, and this is one of the main reasons why content-length mechanisms were not chosen for delimiting multipart boundaries in MIME messages. 
-The other reason was differences in the representation of text messages on different platforms. 
-HTTP doesn't have the latter problem to the same degree as MIME email does, but it does have the former problem. 
-Content-Length is almost as undesirable for HTTP as it is for MIME email. 
-(Not to mention that mixing the protocol-level framing in with the description of the payload causes all sorts of confusion.) 
-Exactly the solution adopted for SMTP chunking. 
-Keith 
+<s> On the Internet Printing Protocol list the following issues were raised in the context of a discussion of whether or not IPP should use HTTP/1.1 as a 'transport' protocol, defining IPP operations as usage conventions and extentions.  </s>
+<s> I will attempt to respond based on my understanding; if anyone else on http-wg disagrees, please correct or amplify.  </s>
+<s> IPP We discussed how MIME differs from the HTTP MIME-like IPP protocol.  </s>
+<s> There was a concern that the HTTP version of MIME IPP doesn't support Content-Transfer-Encoding, though we think that IPP we probably could add such an entity-header as an extension and IPP support it through a CGI script if necessary (though we aren't IPP sure about this).  </s>
+<s> Content-Transfer-Encoding is not supported by HTTP because it isn't needed; the HTTP transport is 8 bit clean.  </s>
+<s> IPP There was also a question about how to send binary data in a IPP multipart/mixed, especially in the chunked case because there is IPP no way to know if a CRLF in the midst of binary data is really a IPP CRLF.  </s>
+<s> Thus it is hard to find the boundary string.  </s>
+<s> CRLF is what it is - if it is in the binary data and is followed by the specified boundary string and another CRLF then you are at the end of the body part.  </s>
+<s> What is the question?  </s>
+<s> As I understand it, the selection of a boundary string in MIME is already 'probabilistic'; the sender is responsible for choosing a string that 'probably' won't appear in the body (I do not claim to be an authority on MIME).  </s>
+<s> IPP We believe that chunked applies to the entire multipart/mixed IPP entity and cannot be used for one of the sub-entities alone.  </s>
+<s> IPP Thus there is no length to mark the boundary of a sub-entity.  </s>
+<s> Correct; the 'Transfer-Encoding: chunked' applies to all of the HTTP message body.  </s>
+<s> For completeness, my companys' server implementation does support chunked encoding of the entire multipart/* body part, but we think it doesn't make much sense (because it is redundant) so that support may be compiled out to save code.  </s>
+<s> Scott Lawrence EmWeb Embedded Server lawrence@agranat.com  </s>
+<s> Agranat Systems, Inc. Engineering http://www.agranat.com/  </s>
+<s> In my ignorance of MIME, I've been puzzled about this boundary business.  </s>
+<s> Assuming each multipart contains a Content-Length header, does it matter what the boundary is?  </s>
+<s> Can't the recipient just eat the  </s>
+<s> number of content bytes before looking for the next boundary?  </s>
+<s> If so, the boundary strings don't have to be particularly clever, do they?  </s>
+<s> Dave Kristol  </s>
+<s> DK In my ignorance of MIME, I've been puzzled about this boundary DK business.  </s>
+<s> Assuming each multipart contains a Content-Length header, DK does it matter what the boundary is?  </s>
+<s> Can't the recipient just eat the  </s>
+<s> DK number of content bytes before looking for the next boundary?  </s>
+<s> If so, DK the boundary strings don't have to be particularly clever, do they?  </s>
+<s> I had also considered the use of Content-Length to address this; the HTTP spec seems to allow it: 2068 19.4.5 HTTP Header Fields in Multipart Body-Parts 2068 In MIME, most header fields in multipart body-parts are generally 2068 ignored unless the field name begins with "Content-".  </s>
+<s> In HTTP/1.1, 2068 multipart body-parts may contain any HTTP header fields which are 2068 significant to the meaning of that part.  </s>
+<s> So is it legal for me to put an HTTP/1.1 Content-Length header into a multipart/* part to indicate its length?  </s>
+<s> It seems a workable (in fact, preferable) solution.  </s>
+<s> As server vendors we can't assume that though.  </s>
+<s> Scott Lawrence EmWeb Embedded Server lawrence@agranat.com  </s>
+<s> Agranat Systems, Inc. Engineering http://www.agranat.com/  </s>
+<s> OK I'll admit it.  </s>
+<s> Content-Length is not actually valid MIME.  </s>
+<s> It was added to the HTTP spec after I discovered a problem with the original POST and PUT method - the spec stated that closing the connection was used to indicate the end of object which was kinda a lose on POST (think about it).  </s>
+<s> So I went off to talk it over with Tim and he agreed with me that we needed a length specifier.  </s>
+<s> We spent a while looking through the MIME specs looking for it but didn't find it.  </s>
+<s> Finally we punted and decided that it must be in there and that the only logical name was "Content-Length".  </s>
+<s> We added it to the HTTP spec as a header incorporated from MIME.  </s>
+<s> A while later we discovered that not only was there no MIME content length header but its absence was an anathema to the MIME people.  </s>
+<s> I had a long argument with Nat B. about this at WWW2.  </s>
+<s> There was absolutely no way I was going to corrupt the HTTP spec with stupid and unnecessary boundary markers.  </s>
+<s> Introducing probabalistic fudges when there is an analytic solution is something I dislike intensely.  </s>
+<s> Besides searching for the boundary marker was very expensive computationally, every byte had to be examnined.  </s>
+<s> Against this the MIME argument was that you might want to gate HTTP to mail.  </s>
+<s> The idea that the gateway should handle the convbersion was not acceptable.  </s>
+<s> I was keen to keep the HTTP spec clean because I wanted to support a  </s>
+<s> hyperterminal like "streaming mode" where the server sent a continuously extending page at the client.  </s>
+<s> This is what I believe the so called push technologies are doing although I don't regard that as "true push".  </s>
+<s> For that I would want to make the browser a client/server.  </s>
+<s> To push content onto  </s>
+<s> the browser you would execute a PUT or POST to a URL specified by the browser.  </s>
+<s> There would have to be some hailing protocol but I don't think that is too complex.  </s>
+<s> If the job was done properly there would be no need for all these quite bizare plugins to do chat.  </s>
+<s> So if people are wondering why the specs don't agree the answer is simple.  </s>
+<s> I was right, they were persuing a theological point and I didn't really want to call attention to the dispute at the time :-) Mind you, those guys did win on Content-MD5 :-( Phill  </s>
+<s> PH-B OK I'll admit it.  </s>
+<s> Content-Length is not actually valid MIME.  </s>
+<s> It PH-B was added to the HTTP spec after I discovered a problem with the PH-B original POST and PUT method [...] PH-B [...] There was absolutely no way I was going to corrupt the PH-B HTTP spec with stupid and unnecessary boundary PH-B markers.  </s>
+<s> Introducing probabalistic fudges when there is an PH-B analytic solution is something I dislike intensely.  </s>
+<s> Besides PH-B searching for the boundary marker was very expensive PH-B computationally, every byte had to be examnined.  </s>
+<s> Hear hear.  </s>
+<s> If the intent is/was that Content-Length should be used in each part of a multipart/* body part rather than boundary markers, then I believe that the spec needs some clarification on this point.  </s>
+<s> While I expect that others may disagree, I believe that such a change would be a big improvement.  </s>
+<s> PH-B Against this the MIME argument was that you might want to gate PH-B HTTP to mail.  </s>
+<s> The idea that the gateway should handle the PH-B convbersion was not acceptable.  </s>
+<s> A gateway would also have to do work to change the HTTP 8-bit data to some Content-Transfer-Encoding anyway, wouldn't it?  </s>
+<s> Adding a boundary marker (or the Content-Length in the other direction) in the process hardly seems an extraordinary requirement.  </s>
+<s> Scott Lawrence EmWeb Embedded Server lawrence@agranat.com  </s>
+<s> Agranat Systems, Inc. Engineering http://www.agranat.com/  </s>
+<s> PH-B OK I'll admit it.  </s>
+<s> Content-Length is not actually valid MIME.  </s>
+<s> It PH-B was added to the HTTP spec after I discovered a problem with the PH-B original POST and PUT method [...] PH-B [...] There was absolutely no way I was going to corrupt the PH-B HTTP spec with stupid and unnecessary boundary PH-B markers.  </s>
+<s> Introducing probabalistic fudges when there is an PH-B analytic solution is something I dislike intensely.  </s>
+<s> Besides PH-B searching for the boundary marker was very expensive PH-B computationally, every byte had to be examnined.  </s>
+<s> Hear hear.  </s>
+<s> If the intent is/was that Content-Length should be used in each part of a multipart/* body part rather than boundary markers, then I believe that the spec needs some clarification on this point.  </s>
+<s> While I expect that others may disagree, I believe that such a change would be a big improvement.  </s>
+<s> It seems that this would be an improvement, but what about the case where you are not sure in advance what the Content-Length will be ?  </s>
+<s> I also dislike the Multipart boundaries, but don't see another way around the problem if you don't know the content-length.  </s>
+<s> PH-B Against this the MIME argument was that you might want to gate PH-B HTTP to mail.  </s>
+<s> The idea that the gateway should handle the PH-B convbersion was not acceptable.  </s>
+<s> A gateway would also have to do work to change the HTTP 8-bit data to some Content-Transfer-Encoding anyway, wouldn't it?  </s>
+<s> Adding a boundary marker (or the Content-Length in the other direction) in the process hardly seems an extraordinary requirement.  </s>
+<s> Scott Lawrence EmWeb Embedded Server lawrence@agranat.com  </s>
+<s> Agranat Systems, Inc. Engineering http://www.agranat.com/  </s>
+<s> Nick  </s>
+<s> I have copied this message from the http list to the mhtml list (HMTL in email, or more exactly documents taken from the web in email) list, and suggest that you continue to cross-post to mhtml in this thread.  </s>
+<s> They might be very interested, and have something to say from their viewpoint.  </s>
+<s> Regards,Martin.  </s>
+<s> Dr.sc.  </s>
+<s> Martin J. Du"rst ' , .  </s>
+<s> p y f g c R l / = Institut fu"r Informatik a o e U i D h T n S - der Universita"t Zu"rich ; q j k x b m w v z Winterthurerstrasse 190 (the Dvorak keyboard) x  </s>
+<s> I think that the situation is now similar to that of Gopher where there were also unhelpful demands.  </s>
+<s> The Web is now the main engine for adoption of MIME and it is quite reasonable to expect changes in MIME to reflect HTTP usage at this point.  </s>
+<s> I entirely agree.  </s>
+<s> I never understood the boundary gateway argument at the time.  </s>
+<s> Conversations tended to go '"but you have to encode the character set because HTTP requires an 8 bit clean connection.  </s>
+<s> In reply we got a demand to cease using 8 bit clean connections and base 64 encode EVERY message.  </s>
+<s> MIME should have a content-length header and it should specify a subset for tunneling through backward compatible gateways.  </s>
+<s> I would like to see a radical overhaul of SMTP that ignores the sendmail legacy and explicitly considers the store and forward mail delivery paradigm.  </s>
+<s> SMTP is designed to deliver from source to destination, the idea that mail gateways should gateway SMTP-SMTP is really not considered in the script.  </s>
+<s> As part of this overhaul I would like to see a specification for "gold-class" handlers.  </s>
+<s> These would not introduce arbitary crap like stripping to 7-bits, truncating lines or any other stupid transformation.  </s>
+<s> The only character sets permitted in this class would be ASCII and UNICODE.  </s>
+<s> The protocol would explicitly support transaction like semantics including giving a reliable notification of delivery.  </s>
+<s> Mail delivered through the gold class network would never be held in "resend queues" and never screw up mailing lists.  </s>
+<s> It would support address books allowing them to acquire knowledge of the display abilities of mail users so the Word97 to Word95 user problem would be avoided.  </s>
+<s> Oh and all clients would support HTML.  </s>
+<s> In short it would work when a gold class object talked to another gold class object.  </s>
+<s> Gateways would be possible but the spec would not be corrupted to support a bunch of braindammaged bozos who use a mailler written by Thomas Jefferson with help from Charles Babbage which can only cope with line lengths of 8 characters written in morse code.  </s>
+<s> I'm sure that more effort goes into making the broken work than would be required to buiild somethin that really worked.  </s>
+<s> All we need is some competent engineers, the big vendors and some people who are willing to insist on extreeme principle.  </s>
+<s> Phill  </s>
+<s> It isn't hard to find the boundary string in binary data.  </s>
+<s> Look for CRLF followed by the boundary string followed by CRLF.  </s>
+<s> It doesn't matter whether a CRLF in the midst of binary data might actually be binary data, the robustness of multipart/* is based on the fact that the boundary doesn't appear, not on the parsing of CRLFs.  </s>
+<s> Besides searching for the boundary marker was very expensive computationally, every byte had to be examnined.  </s>
+<s> I think 'very' is pretty subjective, and using string matching algorithms like boyer-moore mean that the number of comparisons is reduced for longer boundary strings.  </s>
+<s> The standard says only that the boundary string DOES NOT appear in the body.  </s>
+<s> It happens that if you know nothing about the body at all, then you can implement this in a probabalistic way, e.g., the likelihood that a randomly generated boundary string would appear in arbitrary data could be made arbitrarily small ("less than the probability that the computer would spontaneously explode").  </s>
+<s> In any case, I don't think we're going to change HTTP to suddenly require content-length on multipart boundaries; there may be some clarification needed to identify what's necessary for an interoperable implementation.  </s>
+<s> We've lost this particular battle a long time ago.  </s>
+<s> I just want to keep the HTTP spec ambiguous and functional.  </s>
+<s> I think we could do chunked multipart if we need to, but I don't think we're going to be able to require senders to generate it, so it may be that this whole discussion is just 'wishful thinking', or, to put it another way, part of the requirements setting for HTTP-NG.  </s>
+<s> I agree, but let me say something about Content-Length.  </s>
+<s> Content-Length is not a very efficient mechanism for high volume (tens of thousands of concurrent connections, at 200+ TPS) servers.  </s>
+<s> It requires that the server cache the entire message in order to determine the final length, then send the content.  </s>
+<s> This will generally require that the data is processed at least twice.  </s>
+<s> First to cache it, and again to send it.  </s>
+<s> It would be better if these protocols used a scheme that breaks the message into multiple messages.  </s>
+<s> Each message would start with a length field.  </s>
+<s> In this way, it would be easy to add a boundry marker as defined by a zero length part at end.  </s>
+<s> Continuous streams of  </s>
+<s> bytes are nice for some applications, but for high volume server activity, it is much better to have a protocol that is more specific about the length of the content, and does not require intermediate cache of content so you can calculate the length.  </s>
+<s> I'm not that familiar with MIME, but I would expect that one could define a MIME type that does contain "records", each of which contains a control header (length) and data (length bytes long).  </s>
+<s> Michael Giroux  </s>
+<s> Correct, and this is one of the main reasons why content-length mechanisms were not chosen for delimiting multipart boundaries in MIME messages.  </s>
+<s> The other reason was differences in the representation of text messages on different platforms.  </s>
+<s> HTTP doesn't have the latter problem to the same degree as MIME email does, but it does have the former problem.  </s>
+<s> Content-Length is almost as undesirable for HTTP as it is for MIME email.  </s>
+<s> (Not to mention that mixing the protocol-level framing in with the description of the payload causes all sorts of confusion.)  </s>
+<s> Exactly the solution adopted for SMTP chunking.  </s>
+<s> Keith  </s>

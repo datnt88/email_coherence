@@ -1,58 +1,58 @@
-Should an INVALID_MODIFICATION_ERR be added to the list of possible 
-exceptions that can be generated using the setCssText() method, for the case where the user attempts to change the value type from 
-CSS_PRIMITIVE_VALUE, CSS_CUSTOM, or CSS_VALUE_LIST to a different type via 
-the setCssText() method? 
-(e.g. from type CSS_PRIMITIVE_VALUE to CSS_VALUE_LIST). 
-Blaine Brodie 
-CSSValue.setCssText() raises a SYNTAX_ERR in that case: SYNTAX_ERR: Raised if the specified CSS string value has a syntax error (according to the attached property) or is unparsable. 
-CSSValue are typed (according to the underlying property). 
-But it means also that we are inconsistent with CSSRule.cssText. 
-It raises an INVALID_MODIFICATION_ERR if you try to change the underlying type on a CSS rule. 
-What about removing the INVALID_MODIFICATION_ERR and changing the CSSRule.cssText from: SYNTAX_ERR: Raised if the specified CSS string value has a syntax error and is unparsable. 
-to: SYNTAX_ERR: Raised if the specified CSS string value has a syntax error (according to the underlying rule) or is unparsable. 
-It would mean that we can remove this exception from the DOMException exception. 
-Philippe 
-Hello Philippe, 
-Ok, I'd like to confirm my understanding of what you are saying with a 
-concrete example. 
-In the current SVG spec there exists a CSS property called 'stroke-dasharray' (I'm quoting SVG because this is the only concrete example I can find.). 
-The representation for this property is either "ident or list of 
-lengths". 
-The syntax for this property is 'none | dasharray | inherit'. 
-Assume I obtain this CSS value from the getPropertyCssValue() method... value = style.getPropertyCssValue("stroke-dasharray"); 
-value.getCssText(); 
-//returns "none" value.getValueType(); 
-//returns CSS_PRIMITIVE_VALUE CSSPrimitiveValue pValue = (CSSPrimitiveValue)value; pValue.getPrimitiveType(); 
-//returns CSS_IDENT pValue.setCssText("5 3 2 5 3 2"); //Throws SYNTAX_ERR exception 
-If the above is considered to be correct behavior then that is fine with me. 
-Eventhough, as a user I wouldn't expect this type of error to be thrown since "5 3 2 5 3 2" is still syntactically correct for the 'stroke-dasharray' property type. 
-However, if the above behavior is not correct and a SYNTAX_ERR exception is not thrown (ie the value type is changed), then can you please tell me which of the following behavior would be considered correct... pValue.getCssText(); 
-//returns "5 3 4 5 3 2" pValue.getValueType(); 
-//returns CSS_VALUE_LIST pValue.getPrimitiveType(); 
-//returns CSS_UNKNOWN 
-----OR--- pValue == null //returns true Thanks, Blaine 
-No, it doesn't return a SYNTAX_ERR since, according to the attached property, the syntax is correct. 
-The result of pValue.getPrimitiveType is undefined since it is no longer 
-a primivite value. 
-From a Java programmer point of view, it could throw a java.lang.IllegalStateException (for example). 
-In ECMAScript, you might get an unknown property error. 
-In any case, this is outside the scope of the specification. 
-Philippe 
-Hello Phillippe, To further clarify my understanding of how CSSPrimitiveValue is the following behavior considered to be correct behavior? 
-Continuing from my previous example. 
-pValue.getCssText(); 
-//returns "5 3 4 3 2" pValue.getValueType(); 
-//returns CSS_VALUE_LIST pValue.setCssText("none"); 
-//now pValue is back to a primitive type pValue.getPrimitiveType(); 
-//no state exception is thrown since pValue //has been reverted to a primitive type. 
-//returns CSS_STRING If this type of reversion capablity is considered correct behavior for CSSValues, is it also considered to be correct behavior when using higher level interfaces such as CSSStyleDeclaration. 
-For example is the following possible? 
-Assume I have a CSSStyleDeclaration named 'style' style.setCssText("color: 
-rgb(0, 0 ,0); font-size: 1.2em"); CSSValue value = style.getPropertyCssValue("color"); 
-style.setCssText("margin: 
-0.5em"); // throws some sort of state exception == value.getValueType(); 
-//note the color and font-size switch style.setCssText("font-size: 
-1.2em; color: rgb(0, 0 ,0) "); value.getValueType(); 
-//returns CSS_PRIMITIVE_VALUE //where the primitive has type CSS_RGBCOLOR Correct? 
-Thanks for the clarification. 
-Blaine 
+<s> Should an INVALID_MODIFICATION_ERR be added to the list of possible  </s>
+<s> exceptions that can be generated using the setCssText() method, for the case where the user attempts to change the value type from  </s>
+<s> CSS_PRIMITIVE_VALUE, CSS_CUSTOM, or CSS_VALUE_LIST to a different type via  </s>
+<s> the setCssText() method?  </s>
+<s> (e.g. from type CSS_PRIMITIVE_VALUE to CSS_VALUE_LIST).  </s>
+<s> Blaine Brodie  </s>
+<s> CSSValue.setCssText() raises a SYNTAX_ERR in that case: SYNTAX_ERR: Raised if the specified CSS string value has a syntax error (according to the attached property) or is unparsable.  </s>
+<s> CSSValue are typed (according to the underlying property).  </s>
+<s> But it means also that we are inconsistent with CSSRule.cssText.  </s>
+<s> It raises an INVALID_MODIFICATION_ERR if you try to change the underlying type on a CSS rule.  </s>
+<s> What about removing the INVALID_MODIFICATION_ERR and changing the CSSRule.cssText from: SYNTAX_ERR: Raised if the specified CSS string value has a syntax error and is unparsable.  </s>
+<s> to: SYNTAX_ERR: Raised if the specified CSS string value has a syntax error (according to the underlying rule) or is unparsable.  </s>
+<s> It would mean that we can remove this exception from the DOMException exception.  </s>
+<s> Philippe  </s>
+<s> Hello Philippe,  </s>
+<s> Ok, I'd like to confirm my understanding of what you are saying with a  </s>
+<s> concrete example.  </s>
+<s> In the current SVG spec there exists a CSS property called 'stroke-dasharray' (I'm quoting SVG because this is the only concrete example I can find.).  </s>
+<s> The representation for this property is either "ident or list of  </s>
+<s> lengths".  </s>
+<s> The syntax for this property is 'none | dasharray | inherit'.  </s>
+<s> Assume I obtain this CSS value from the getPropertyCssValue() method... value = style.getPropertyCssValue("stroke-dasharray");  </s>
+<s> value.getCssText();  </s>
+<s> //returns "none" value.getValueType();  </s>
+<s> //returns CSS_PRIMITIVE_VALUE CSSPrimitiveValue pValue = (CSSPrimitiveValue)value; pValue.getPrimitiveType();  </s>
+<s> //returns CSS_IDENT pValue.setCssText("5 3 2 5 3 2"); //Throws SYNTAX_ERR exception  </s>
+<s> If the above is considered to be correct behavior then that is fine with me.  </s>
+<s> Eventhough, as a user I wouldn't expect this type of error to be thrown since "5 3 2 5 3 2" is still syntactically correct for the 'stroke-dasharray' property type.  </s>
+<s> However, if the above behavior is not correct and a SYNTAX_ERR exception is not thrown (ie the value type is changed), then can you please tell me which of the following behavior would be considered correct... pValue.getCssText();  </s>
+<s> //returns "5 3 4 5 3 2" pValue.getValueType();  </s>
+<s> //returns CSS_VALUE_LIST pValue.getPrimitiveType();  </s>
+<s> //returns CSS_UNKNOWN  </s>
+<s> ----OR--- pValue == null //returns true Thanks, Blaine  </s>
+<s> No, it doesn't return a SYNTAX_ERR since, according to the attached property, the syntax is correct.  </s>
+<s> The result of pValue.getPrimitiveType is undefined since it is no longer  </s>
+<s> a primivite value.  </s>
+<s> From a Java programmer point of view, it could throw a java.lang.IllegalStateException (for example).  </s>
+<s> In ECMAScript, you might get an unknown property error.  </s>
+<s> In any case, this is outside the scope of the specification.  </s>
+<s> Philippe  </s>
+<s> Hello Phillippe, To further clarify my understanding of how CSSPrimitiveValue is the following behavior considered to be correct behavior?  </s>
+<s> Continuing from my previous example.  </s>
+<s> pValue.getCssText();  </s>
+<s> //returns "5 3 4 3 2" pValue.getValueType();  </s>
+<s> //returns CSS_VALUE_LIST pValue.setCssText("none");  </s>
+<s> //now pValue is back to a primitive type pValue.getPrimitiveType();  </s>
+<s> //no state exception is thrown since pValue //has been reverted to a primitive type.  </s>
+<s> //returns CSS_STRING If this type of reversion capablity is considered correct behavior for CSSValues, is it also considered to be correct behavior when using higher level interfaces such as CSSStyleDeclaration.  </s>
+<s> For example is the following possible?  </s>
+<s> Assume I have a CSSStyleDeclaration named 'style' style.setCssText("color:  </s>
+<s> rgb(0, 0 ,0); font-size: 1.2em"); CSSValue value = style.getPropertyCssValue("color");  </s>
+<s> style.setCssText("margin:  </s>
+<s> 0.5em"); // throws some sort of state exception == value.getValueType();  </s>
+<s> //note the color and font-size switch style.setCssText("font-size:  </s>
+<s> 1.2em; color: rgb(0, 0 ,0) "); value.getValueType();  </s>
+<s> //returns CSS_PRIMITIVE_VALUE //where the primitive has type CSS_RGBCOLOR Correct?  </s>
+<s> Thanks for the clarification.  </s>
+<s> Blaine  </s>

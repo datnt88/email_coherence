@@ -1,73 +1,73 @@
-Proposal: The RDF specification explicits says that implementations of the RDF graph may represent literal nodes with the same label as a single node or as multiple nodes; and that nothing in the specs allow these different implementations to be distinguished. 
-Hence, an operation like: RDFGraph.countLiteralNodes() 
-cannot be defined in a way that conforms with our recommendation. 
-Consider This creates a graph with: four initial triples sixteen triples reifying those four triples five triples forming the bag 
-This message is about: - how many Literal nodes are there? 
-- do we care? 
-My preference is to be able to systematically say we do not care. 
-There are at least two literal nodes, one labelled with an int 10, the other labelled with a RDF String Literal "10". 
-Since these labels are different 
-the nodes must be different. 
-Of the twentyfive triples in the graph eight have literal objects, thus there are at most eight literal nodes. 
-A syntactically tidy implementation would stop at two nodes. 
-A thorough untidy one would have eight nodes. 
-Some would argue that the object of the rdf:object triple in the reification is the same node as the object of the original triple. 
-Thus an implementation following this rationale would get four literals. 
-Of course, sensible implementations could choose to treat datatyped literals tidyly and RDF String Literals untidyly (or vice versa) which suggests that maybe six is also a plausible number of literals. 
-If in fact, our normative serialization of the graph does not allow us to distinguish these cases then we do not need to, and in fact, SHOULD NOT say either way. 
-The model theory needs to reflect this inability to represent the two different cases and not depend on some hidden node identity that we cannot serialize (this only rules out certain types of untidiness in the model theory). 
-In fact, we should explicitly say that we are not saying, and that this is deliberately underspecified, since nothing depends on it. 
-I believe that these two RDF/XML documents are entirely equivalent: 
-And I buy Guha's point at the Bristol F2F that with untidy literal semantics 
-rdf:object refers to the syntax of the triple not its semantics. 
-Jeremy 
-That is reopening an old issue where I believe we have already decided the value of the reification properties do not denote the syntax. 
-Are you suggesting this treatment be special for rdf:object? 
-Just when it takes a literal value? 
-Brian 
-Jeremy, I think you've touched on some very important points, though it appears that we are in fact not in agreement on how they should be addressed. 
-That's a pity, as I thought we were both in favor of syntactically untidy and explicitly named inline literals. 
-(I'm secretly hoping you're playing Devil's advocate here ;-) Comments follow... 
-Well, that depends. 
-If it is counting nodes specific to the internal, application-specific representation, then no, it can't, but if it is meant to reflect the number of nodes as defined for the abstract syntax, then it should. 
-I.e. it has to be clear whether the above function reflects the implementation graph or the abstract graph (and I can think of lots of utility for the latter, such as an implementation-neutral query API, etc.). 
-Do you mean according to the abstract syntax? 
-Or some hypothetical implementation? 
-Or perhaps ARP? 
-I'm presuming you mean the abstract graph here (but then, this thread is specifically about how many literal nodes there are in the abstract graph so...) 
-3 
-In the abstract graph? 
-Absolutely. 
-In some application's internal structures? 
-Not at all. 
-If we are to have generic, portable APIs which allow disparate RDF applications to interact consistently on the same knowledge base, I would argue that we should care a whole lot precisely how many nodes are in the abstract syntax. 
-As for the application syntax, we should explicitly not care nor ever impose any requirements on internal representations. 
-I would suggest that in the abstract syntax (leaving semantics aside) there would be exactly three literal nodes. 
-One node denoting the explicitly typed literal (xsd:integer, "10") and two nodes denoting the non-explicitly-typed literals, e.g. (_:x, "10") and (_:y, "10"). 
-Sensible implementations will be employing numerous mechanisms to maximize storage and processing efficiency. 
-That is not our concern. 
-I would expect that N-Triples would explicitly and accurately reflect the abstract syntax, and that RDF/XML would implicitly yet accurately reflect the abstract syntax. 
-Thus both normative serializations would say precisely how many literal nodes are in the abstract graph. 
-Whether that abstract syntax is used literally as the basis for some implementation is not our concern -- though one would expect and hope that generic APIs would reflect the abstract syntax, hiding all implementation-specific deviations from users. 
-Or rather, the MT needs to reflect that all literal nodes have either a URIref or systemID prefix, and given that, they are all syntactically tidy. 
-Explicitly typed literal nodes with URIref prefix are also semantically tidy and denote datatype values. 
-It remains to be seen whether we say anything more about systemID prefixed literal nodes, as to whether they are semantically tidy (by string equality of the string literal) or untidy, with the systemID implicitly denoting a datatype. 
-As for serializing the "hidden" node identity, I would suggest that the attribute rdf:nodeID is precisely the correct means to do so. 
-See below... 
-I agree. 
-However, I do not consider the following two RDF/XML documents as equivalent (syntactically at least): Though, the following would IMO be equivalent (if made legal): (in the case of the bagID refication, it's up to the parser to use the same systemID for the literal in both the eg:p1 statement and the rdf:object statement) 
-Well, I thought that was the official view. 
-After all, a "stating" is about the expression of the statements, not the meaning, right? 
-And an expression is captured in the syntax, not the MT. Cheers, Patrick 
-No, I think you have misunderstood. 
-I am not reopening any issues. 
-In There are three triples with "10" as object: #subj eg:p1 "10" . 
-#subj eg:p2 "10" . 
-#statement rdf:object "10" . 
-My understanding of the model theory (any version) is that nothing special links the interpretation of the "10" in the third triple to the interpretation of the "10" in the first, which is not also true of the second. 
-i.e. in a tidy model theory all three "10"'s are "10"; in an untidy model theory all three "10"'s are unconstrained. 
-Jeremy 
-Forgive me for not being clear. 
-Given your statement: rdf:object refers to the syntax of the triple not its semantics. 
-Given: are you suggesting that equivalent triples include _:stmt rdf:object "http://example.org/bar" . 
-Brian 
+<s> Proposal: The RDF specification explicits says that implementations of the RDF graph may represent literal nodes with the same label as a single node or as multiple nodes; and that nothing in the specs allow these different implementations to be distinguished.  </s>
+<s> Hence, an operation like: RDFGraph.countLiteralNodes()  </s>
+<s> cannot be defined in a way that conforms with our recommendation.  </s>
+<s> Consider This creates a graph with: four initial triples sixteen triples reifying those four triples five triples forming the bag  </s>
+<s> This message is about: - how many Literal nodes are there?  </s>
+<s> - do we care?  </s>
+<s> My preference is to be able to systematically say we do not care.  </s>
+<s> There are at least two literal nodes, one labelled with an int 10, the other labelled with a RDF String Literal "10".  </s>
+<s> Since these labels are different  </s>
+<s> the nodes must be different.  </s>
+<s> Of the twentyfive triples in the graph eight have literal objects, thus there are at most eight literal nodes.  </s>
+<s> A syntactically tidy implementation would stop at two nodes.  </s>
+<s> A thorough untidy one would have eight nodes.  </s>
+<s> Some would argue that the object of the rdf:object triple in the reification is the same node as the object of the original triple.  </s>
+<s> Thus an implementation following this rationale would get four literals.  </s>
+<s> Of course, sensible implementations could choose to treat datatyped literals tidyly and RDF String Literals untidyly (or vice versa) which suggests that maybe six is also a plausible number of literals.  </s>
+<s> If in fact, our normative serialization of the graph does not allow us to distinguish these cases then we do not need to, and in fact, SHOULD NOT say either way.  </s>
+<s> The model theory needs to reflect this inability to represent the two different cases and not depend on some hidden node identity that we cannot serialize (this only rules out certain types of untidiness in the model theory).  </s>
+<s> In fact, we should explicitly say that we are not saying, and that this is deliberately underspecified, since nothing depends on it.  </s>
+<s> I believe that these two RDF/XML documents are entirely equivalent:  </s>
+<s> And I buy Guha's point at the Bristol F2F that with untidy literal semantics  </s>
+<s> rdf:object refers to the syntax of the triple not its semantics.  </s>
+<s> Jeremy  </s>
+<s> That is reopening an old issue where I believe we have already decided the value of the reification properties do not denote the syntax.  </s>
+<s> Are you suggesting this treatment be special for rdf:object?  </s>
+<s> Just when it takes a literal value?  </s>
+<s> Brian  </s>
+<s> Jeremy, I think you've touched on some very important points, though it appears that we are in fact not in agreement on how they should be addressed.  </s>
+<s> That's a pity, as I thought we were both in favor of syntactically untidy and explicitly named inline literals.  </s>
+<s> (I'm secretly hoping you're playing Devil's advocate here ;-) Comments follow...  </s>
+<s> Well, that depends.  </s>
+<s> If it is counting nodes specific to the internal, application-specific representation, then no, it can't, but if it is meant to reflect the number of nodes as defined for the abstract syntax, then it should.  </s>
+<s> I.e. it has to be clear whether the above function reflects the implementation graph or the abstract graph (and I can think of lots of utility for the latter, such as an implementation-neutral query API, etc.).  </s>
+<s> Do you mean according to the abstract syntax?  </s>
+<s> Or some hypothetical implementation?  </s>
+<s> Or perhaps ARP?  </s>
+<s> I'm presuming you mean the abstract graph here (but then, this thread is specifically about how many literal nodes there are in the abstract graph so...)  </s>
+<s> 3  </s>
+<s> In the abstract graph?  </s>
+<s> Absolutely.  </s>
+<s> In some application's internal structures?  </s>
+<s> Not at all.  </s>
+<s> If we are to have generic, portable APIs which allow disparate RDF applications to interact consistently on the same knowledge base, I would argue that we should care a whole lot precisely how many nodes are in the abstract syntax.  </s>
+<s> As for the application syntax, we should explicitly not care nor ever impose any requirements on internal representations.  </s>
+<s> I would suggest that in the abstract syntax (leaving semantics aside) there would be exactly three literal nodes.  </s>
+<s> One node denoting the explicitly typed literal (xsd:integer, "10") and two nodes denoting the non-explicitly-typed literals, e.g. (_:x, "10") and (_:y, "10").  </s>
+<s> Sensible implementations will be employing numerous mechanisms to maximize storage and processing efficiency.  </s>
+<s> That is not our concern.  </s>
+<s> I would expect that N-Triples would explicitly and accurately reflect the abstract syntax, and that RDF/XML would implicitly yet accurately reflect the abstract syntax.  </s>
+<s> Thus both normative serializations would say precisely how many literal nodes are in the abstract graph.  </s>
+<s> Whether that abstract syntax is used literally as the basis for some implementation is not our concern -- though one would expect and hope that generic APIs would reflect the abstract syntax, hiding all implementation-specific deviations from users.  </s>
+<s> Or rather, the MT needs to reflect that all literal nodes have either a URIref or systemID prefix, and given that, they are all syntactically tidy.  </s>
+<s> Explicitly typed literal nodes with URIref prefix are also semantically tidy and denote datatype values.  </s>
+<s> It remains to be seen whether we say anything more about systemID prefixed literal nodes, as to whether they are semantically tidy (by string equality of the string literal) or untidy, with the systemID implicitly denoting a datatype.  </s>
+<s> As for serializing the "hidden" node identity, I would suggest that the attribute rdf:nodeID is precisely the correct means to do so.  </s>
+<s> See below...  </s>
+<s> I agree.  </s>
+<s> However, I do not consider the following two RDF/XML documents as equivalent (syntactically at least): Though, the following would IMO be equivalent (if made legal): (in the case of the bagID refication, it's up to the parser to use the same systemID for the literal in both the eg:p1 statement and the rdf:object statement)  </s>
+<s> Well, I thought that was the official view.  </s>
+<s> After all, a "stating" is about the expression of the statements, not the meaning, right?  </s>
+<s> And an expression is captured in the syntax, not the MT. Cheers, Patrick  </s>
+<s> No, I think you have misunderstood.  </s>
+<s> I am not reopening any issues.  </s>
+<s> In There are three triples with "10" as object: #subj eg:p1 "10" .  </s>
+<s> #subj eg:p2 "10" .  </s>
+<s> #statement rdf:object "10" .  </s>
+<s> My understanding of the model theory (any version) is that nothing special links the interpretation of the "10" in the third triple to the interpretation of the "10" in the first, which is not also true of the second.  </s>
+<s> i.e. in a tidy model theory all three "10"'s are "10"; in an untidy model theory all three "10"'s are unconstrained.  </s>
+<s> Jeremy  </s>
+<s> Forgive me for not being clear.  </s>
+<s> Given your statement: rdf:object refers to the syntax of the triple not its semantics.  </s>
+<s> Given: are you suggesting that equivalent triples include _:stmt rdf:object "http://example.org/bar" .  </s>
+<s> Brian  </s>

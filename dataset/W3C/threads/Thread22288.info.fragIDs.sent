@@ -1,169 +1,169 @@
-Dear DOM Fanatics, 
-As the co-editor of the DOM Level 2 Core spec, I would like invite you to make suggestions on what new features to include in the Level 2 Core. 
-Please make your suggestions specific, practical, and justifiable. 
-Sincerely, Don Park Docuverse 
-Just a note of clarification (hope you don't mind, Don!): DOM Level 2 *will* have the following packages of optional features: a Range interface to allow easy manipulation of "rectangular" subsets of a document such as you would get back from a UI selected region; an Event model; support for CSS style in HTML and XML; and iterators / filters. 
-Don is asking for suggestions about the DOM Core, i.e., the mandatory "hard core" of the DOM that's common to all implementations. 
-Mike Champion 
-I think one of the key missing features for me would be a Visitor pattern method on Node. 
-I suggested something like this earlier to this list, and I might even be able to dig up my past e-mail, which will be much more detailed than this one. 
-The justification for a Visitor pattern interface on Node is to remedy the fact that, given the current implementation, you often have to cast Nodes back up to whatever specific HTML class they are. 
-Since iterator-like classes, such as NodeList and NamedNodeMap are constantly returning base Node objects, the casting costs are quite high, especially in a strongly-typed language like Java. -- begin -- With all this talk of quickly casting to subclasses from a base class reference, I wonder if anyone has ever thought of putting Visitor design pattern functionality into Node? 
-I have also heard the Visitor pattern referred to as "double dispatch". 
-It would look something like this (in pseudo-Java): public interface Node { // rest of node methods and stuff public void visit(NodeVisitor v); public interface NodeVisitor { public void visitNode(Node n); public void visitElement(Element e); public void visitAttribute(Attribute a); public void visitData(Data d); And then in the actual implementation: public class Foo { public void bar() { // Somehow this thing gets a Node: Node n = getTheNode(); MyNodeVisitor visitor = v; n.visit(v); public class MyNodeVisitor implements NodeVisitor { public void visitNode(Node n) { // do the right thing for plain nodes public void visitElement(Element e) { // do the right thing for elements public void visitAttribute(Attribute a) { // do the right thing for attributes public void visitData(Data d) { // do the right thing for data public class MyElement extends MyNode implements Element { // ... other element methods ... public void visit(NodeVisitor v) { v.visitElement(this); public class MyData extends MyNode implements Data { // ... other data methods ... public void visit(NodeVisitor v) { v.visitNode(this); The implementations of Node and the descendants of those implementations each override the visit(NodeVisitor); method and call the appropriate NodeVisitor method, passing themselves in as parameters. 
-This pattern obviates the need for any casting; all the type checking is done by the compiler and any internal type checking mechanisms. 
-To extend this pattern to encompass the HTML specific classes, you just extend the NodeVisitor interface to take more methods. 
-To avoid type checking what kind of NodeVisitor a Node has received, you might make NodeVisitor an abstract base class with an Enumerated type field which contains an int (or bitfield, maybe) which specifies its type. 
-That way, subclasses which the base NodeVisitor doesn't cover could check the type of visitors without doing an instanceof test (which, I believe, does not exist in C++ anyway; however, I could be wrong, it's been a long time since I did any C++ programming) and cast as appropriate. 
-The Visitor pattern really excels at quickly and efficiently digesting structures like the DOM's Node hierarchy, where a program needs to differentiate by their subclasses a tree of objects which all inheret from the same base class. 
-It is far more effcient than instanceof/casting tests with big if-then-else statements, and faster again than checking something like a string which contains the "name"of the subclass in it (up to 8x faster than the latter, according to some tests I ran under JDK1.1.6 on my Solaris box). 
-The only structure that approached it in speed was a switch() statement off of an Enumerated int field in the object. 
--- end -- This message was based off an earlier version of the spec, so some of the specific data types might be off, but the spirit remains the same. 
-Thanks for your attention, Michael Allen 
-Must-have for level 2 (or how about a level 1.5): - iterators (with a specification that doesn't constrain implementations too much) - DTD access - validation (as a method on DocumentFragment--or better yet, as an implementation of the strategy pattern) - a clarification of the "liveness" of nodelists. 
-Without trying to start a religious war, I believe that the "livenes" of a nodelist is a quality of service issue. 
-Browser implementations may provide live nodelists, implementations in more constrained environments may not. 
-Place an attribute on the DOMImplementation that will specify whether or not an implmentation supports live nodelists. 
-Nice-to-have for level 2 (but only if they don't delay the above features): - a visitor pattern - a search mechanism - integration with CSL, XSL, XLL - an event model (like DHTML) - A more robust Document/DocumentContext And that's it. 
-Don't try to throw in the kitchen sink--it constrains (and complicates) implementations too much, and we don't need it. 
-The visitor pattern allows implementations to extend the functionality of the DOM without making incompatible extensions. 
-Jeff Mackay Vtopia, Inc. 
-For DOM 2: Add my vote for standard document creation interfaces. 
-Jonathan Borden JABR Technology Corp. 
-Things I'd like to see, 1. 
-A standard mechanism for creating XML/HTML documents. 
-2. An interface for moving/copying subtrees between documents belonging to the same implementation. 
-3. An interface for moving/copying subtrees between documents belonging to different implementations. 
-4. Non-live iterators for a few, well-chosen, tree traversals: over children; over descendents in pre-order (others?). 
-5. A node visitor. 
-6. DTD support. 
-Cheers, Miles Miles Sabin Cromwell Media Internet Systems Architect 5/6 Glenthorne Mews msabin@cromwellmedia.co.uk England 
-OMG specification include life-cycle services under the CosLifeCycle specification. 
-These interfaces include generalised factories and factory finders. 
-Synchronisation between DOM extensions and existing IDL adopted under the OMG would be preferable to rolling another set of interfaces from scratch. 
-Stephen J. McConnell, OSM sarl 
-Business Components for Electronic Commerce 
-Stephen McConnell wrote, 
-Whilst I personally have no problem with it, I suspect that this suggestion won't go down too well with those folks not committed to CORBA ... and that's a sizable chunk of the DOMs audience. 
-Cheers, Miles Miles Sabin Cromwell Media Internet Systems Architect 5/6 Glenthorne Mews msabin@cromwellmedia.co.uk England 
-What do you mean by non-live? 
-Do you mean that if an iterator over a document with 100 nodes should return exactly 100 nodes even if nodes have been inserted or removed from it during iteration? 
-I doubt this is what you want. 
-Don Park Docuverse 
-Don Park wrote, 
-Err ... poor choice of words on my part. 
-What I meant was: lightweight iterators which are not required by the spec to be robust in the face of modifications to the document. 
-So, for example, an iterator over children could be simply defined (tho' not necessarily implemented) in terms of sibling operations on the current node; a pre-order iterator could be defined in terms of sibling and parent/child operations on the current node. 
-This sort of locality is required if we want the possiblity of iterator operations being O(1). 
-Obviously, a traversal defined by such an iterator could be distrupted by modifications to the tree, eg. if the current node was removed during the traversal (amongst other possiblities). 
-The spec should document that fact, and leave iterator users to take appropriate action. 
-We can already build these iterators as things stand, but it'd be nice to have a standard iterator interface, particularly in conjunction with a hypothetical standard NodeVisitor (because we ought to keep traversal algorithms separate from the visitation stuff). 
-Steve (was it you?) has suggested that we might *also* (not instead) have more heavyweight iterators which *are* robust in the face of document modifications. 
-I'm not sure this is a good idea, partly because defining their behaviour looks to be very difficult, and partly because support for them might have a negative impact on implementations even if they're never actually used (cp. 
-NodeLists). 
-Cheers, Miles Miles Sabin Cromwell Media Internet Systems Architect 5/6 Glenthorne Mews msabin@cromwellmedia.co.uk England 
-Here are some features I have added to my DOM implementation to make it more useful. 
-Some of them reiterate items on most peoples' wish lists... 1) Document creation. 
-No surprise here, although I also support instantiating a document from XML source, as well as streaming a document out to XML source (C++ I/O streams). 
-2) ExceptionCode MEMORY_ERR = -1. 
-Very useful to catch allocation failures. 
-3) Direct child element searching by tag name or attribute value. 
-4) Convenience functions for adding a Text child to an element, or retrieving the text content of an element. 
-5) Validation function for DOMString to ensure it is a valid "name" value. 
-Tom Otvos Director of Research, Pervasive Software Inc. "Try not! 
-Do, or do not. 
-There is no 'try'." - Yoda 
-That was me. 
-I agree with you: I'd really prefer simple O(1) iterators with no implementation impact and easily-documented conditions under which their behavior is undefined. 
-The *also* was to mollify the crowd that wants to have robustness at any price. 
-In my opinion this should be left as an implementation decision. 
-Stephen R. Savitzky Chief Software Scientist, Ricoh Silicon Valley, Inc., steve@rsv.ricoh.com 
-California Research Center home: steve@starport.com 
-URL: http://www.starport.com/people/steve/ 
-I second this wish, and would hope for more than just direct child access. 
-However, I realize that agreeing on the query notation for a method like Element traverse(String query_str) will be a whole can of worms. 
-It would be great if there was some simple base notation like "foo.bar[2].baz" for descendant access. 
-Of course '.' is a name char and therefore not a good tag name delimiter. 
-Can anyone suggest a notation more concise than XPointer that might be standardized in the DOM (Level 2, 3, 4, ...)? 
--- ted 
-My own reasoning and two questions: 
-"Robustness" is a relative term, anyway. 
-But we have had lots of people that seem to think they will be severely disadvantaged if they cannot, for example, use an iterator to find nodes and remove them without destroying the context. 
-I take it that removal and the many other mutations that might occur (insertion, etc.) while iterating are not important use cases for you, or you expect the user to deal with it, correct? 
-I disagree strongly with having documented conditions where behavior is undefined, because it will cause code to be commonly written which works on some implementations and not on others. 
-Trying to explain to people that they shouldn't have used it in a certain way because it won't work in other implementations is a little like trying to convince people to use valid HTML, when what they wrote works on their browser. 
-Especially if the cases with mutation are important use cases, it is essentiual that we tie them down. 
-I think there are two different possible levels of compatibility with iterators. 
-1. is the API 2. is the factory/constructor which determines behaviors beyond the API Different factories would produce completely different iterators. 
-On the surface might iterate children, another iterates descendants with the a certain tag. 
-Another could find all the processing instructions, etc. 
-But all of these different factories conform to the API. 
-It doesn't seem unreasonable that iterators constructed by different factories would behave differently under mutation, as well. 
-When users get implementations of an API from a private factory, they can conform to the fundamentals of the API but define other behaviors how ever they like. 
-But I feel that any factory method defined in the DOM API must produce objects where all significant behavior happens in a single way -- no significant behavior that is exposed through the API can be left unspecified. 
-Do you have a problem with this? 
-Ray Whitmer 
-Maybe I'm missing something, but leaving "robustness" as an implementation decision would seriously impede interoperability, would it not? 
-That is, if a script encounters one of the conditions in which an iterator (or 
-NodeList, etc.) is undefined, it will probably crash on some implementations and run on "robust" implementations. 
-I don't think that's in the spirit of what the W3C working groups are trying to accomplish, although I understand that many of you are writing specialized applications for which interoperability is not an issue. 
-I *would* advocate (and have recently raised it yet again to the DOM IG/WG) 
-that we define a "minimal" or "non-handholding" DOM API that could be used 
-in environments where size/efficiency is more important than robustness e.g., servers, specialized network appliances, high-volume message processing applications, etc. Implementors could decide which flavor of the DOM to support, and there should be interoperability *within* that flavor, but would still have to fully implement the behavior specified by that DOM flavor. 
-Would such an approach help anyone who's been wrestling with efficiently implementing the various convenience "features" in DOM Level 1? 
-Mike Champion 
-===== ^^^^^^ Please note!!!!! 
-I am writing APPLICATIONS, not scripts. 
-That's really the crux of the whole argument. 
-I believe that the DOM should be of use not only to the authors of tiny browser scripts, but to professional programmers writing real, and sometimes very large, applications that deal with real, and sometimes _extremely_ large, documents. 
-Live nodelists and handholding iterators simply aren't acceptible if you're indexing the Web (to take a real, though not personal, example). 
-In any case, the issue is not so much crashing as returning a value which, while not invalid (for example, the value of toNextNode returned by an iterator is going to be either a Node or null under all circumstances), is not easily determined. 
-Personally, I consider a simple iterator that keeps a current node and navigates using links to be perfectly "robust" -- it will never crash as long as the programmer tests for nulls in the right places, and will produce deterministic results no matter what happens to the underlying document. 
-Some people, however, seem to think that an iterator must return an exception whenever its "current node" is affected by a structural change. 
-That way lies madness, as the behavior under exceptional conditions becomes harder and harder to specify, and has a more and more serious affect on the efficiency of the implementation (e.g. live nodelists). 
-I think perhaps that "robustness" is not the correct word, though I don't know what is. 
-"Handholding" comes close. 
-It's really a scalability problem; certain features are useful in small scripting applications, but don't scale to larger documents or higher speeds. 
-Yes. This is _exactly_ the kind of thing I want. 
-Stephen R. Savitzky Chief Software Scientist, Ricoh Silicon Valley, Inc., steve@rsv.ricoh.com 
-California Research Center home: steve@starport.com 
-URL: http://www.starport.com/people/steve/ 
-IG/WG) 
-used 
-I agree completely. 
-In other environments this might be called a "quality of service" issue. 
-The majority of users require the "robust" quality of service. 
-A vocal minority requires a less robust quality of service for this feature. 
-Other services--such as ODBC and JDBC for relational databases--support multiple quality of service features. 
-In order to use a feature, you can check to see if the driver (or in our case DOM implementation) supports that feature. 
-If you check and take appropriate action, you're safe. 
-If you don't, you are subject to different (albeit predictable) behavior for different implementations. 
-The point here is that there are applications for which a "live" iterator is unnecessary and could even be considered harmful because of the extra work and space required to implement. 
-Web crawlers, robots, spiders come to mind. 
-As do any number of specialized interfaces in embedded or handheld devices. 
-Should a hand-held book reader really be able to update a text while it is being read? 
-In some cases, the answer may be yes. 
-In others, a definite no. 
-Different quality of service levels could be implemented as separate APIs, but that isn't a very maintainable approach from an implementor's point of view. 
-I believe it makes more sense to allow applications to dynamically query the capabilities of an implemementation. 
-As an example, let's assume that I have two iterator classes: a LiveIterator and a StaticIterator. 
-I have an application that needs to traverse the tree, and I occasionally need to insert nodes into the hierarchy while I'm traversing. 
-When I use the LiveIterator, I can insert nodes while I'm traversing. 
-If I'm using a static iterator, I'll queue the inserts for processing when I'm through with the traversal. 
-Jeff Mackay Vtopia, Inc. e-mail: jmackay@vtopia.com 
-mailto:jmackay@vtopia.com 
-url: http://www.vtopia.com/ 
-Oh, I left out one major thing for me (and I suspect others): thread safety. 
-Even if it results in no overt API changes, the statement that DOM can be used in a server environment is essential. 
-There will probably be more to it than that, but I second Stephen's comment that DOM should be robust enough for "real applications". 
-I would merely refine it to say "including real *server* applications". 
-I am working on that aspect now in my implementation, and would be happy to pass on any insights along the way. 
-Tom Otvos Director of Research, Pervasive Software Inc. "Try not! 
-Do, or do not. 
-There is no 'try'." - Yoda 
-Some time ago I put up a document on my homepage with some of the suggestions from this mailing list. 
-I know it's outdated, but I guess it's nice as a "not to forget" list of features... 
-I hope it's a little useful... Cheers val it = ("?NOQ of the Sun", "Johnny Andersen", ["anoq@vip.cybercity.dk", 
-"anoq@berlin-consortium.org", "anoq@diku.dk"], 
-"http://users.cybercity.dk/~ccc25861/") 
-: cyberspacename * meatspacename * email list * homepage URL 
+<s> Dear DOM Fanatics,  </s>
+<s> As the co-editor of the DOM Level 2 Core spec, I would like invite you to make suggestions on what new features to include in the Level 2 Core.  </s>
+<s> Please make your suggestions specific, practical, and justifiable.  </s>
+<s> Sincerely, Don Park Docuverse  </s>
+<s> Just a note of clarification (hope you don't mind, Don!): DOM Level 2 *will* have the following packages of optional features: a Range interface to allow easy manipulation of "rectangular" subsets of a document such as you would get back from a UI selected region; an Event model; support for CSS style in HTML and XML; and iterators / filters.  </s>
+<s> Don is asking for suggestions about the DOM Core, i.e., the mandatory "hard core" of the DOM that's common to all implementations.  </s>
+<s> Mike Champion  </s>
+<s> I think one of the key missing features for me would be a Visitor pattern method on Node.  </s>
+<s> I suggested something like this earlier to this list, and I might even be able to dig up my past e-mail, which will be much more detailed than this one.  </s>
+<s> The justification for a Visitor pattern interface on Node is to remedy the fact that, given the current implementation, you often have to cast Nodes back up to whatever specific HTML class they are.  </s>
+<s> Since iterator-like classes, such as NodeList and NamedNodeMap are constantly returning base Node objects, the casting costs are quite high, especially in a strongly-typed language like Java. -- begin -- With all this talk of quickly casting to subclasses from a base class reference, I wonder if anyone has ever thought of putting Visitor design pattern functionality into Node?  </s>
+<s> I have also heard the Visitor pattern referred to as "double dispatch".  </s>
+<s> It would look something like this (in pseudo-Java): public interface Node { // rest of node methods and stuff public void visit(NodeVisitor v); public interface NodeVisitor { public void visitNode(Node n); public void visitElement(Element e); public void visitAttribute(Attribute a); public void visitData(Data d); And then in the actual implementation: public class Foo { public void bar() { // Somehow this thing gets a Node: Node n = getTheNode(); MyNodeVisitor visitor = v; n.visit(v); public class MyNodeVisitor implements NodeVisitor { public void visitNode(Node n) { // do the right thing for plain nodes public void visitElement(Element e) { // do the right thing for elements public void visitAttribute(Attribute a) { // do the right thing for attributes public void visitData(Data d) { // do the right thing for data public class MyElement extends MyNode implements Element { // ... other element methods ... public void visit(NodeVisitor v) { v.visitElement(this); public class MyData extends MyNode implements Data { // ... other data methods ... public void visit(NodeVisitor v) { v.visitNode(this); The implementations of Node and the descendants of those implementations each override the visit(NodeVisitor); method and call the appropriate NodeVisitor method, passing themselves in as parameters.  </s>
+<s> This pattern obviates the need for any casting; all the type checking is done by the compiler and any internal type checking mechanisms.  </s>
+<s> To extend this pattern to encompass the HTML specific classes, you just extend the NodeVisitor interface to take more methods.  </s>
+<s> To avoid type checking what kind of NodeVisitor a Node has received, you might make NodeVisitor an abstract base class with an Enumerated type field which contains an int (or bitfield, maybe) which specifies its type.  </s>
+<s> That way, subclasses which the base NodeVisitor doesn't cover could check the type of visitors without doing an instanceof test (which, I believe, does not exist in C++ anyway; however, I could be wrong, it's been a long time since I did any C++ programming) and cast as appropriate.  </s>
+<s> The Visitor pattern really excels at quickly and efficiently digesting structures like the DOM's Node hierarchy, where a program needs to differentiate by their subclasses a tree of objects which all inheret from the same base class.  </s>
+<s> It is far more effcient than instanceof/casting tests with big if-then-else statements, and faster again than checking something like a string which contains the "name"of the subclass in it (up to 8x faster than the latter, according to some tests I ran under JDK1.1.6 on my Solaris box).  </s>
+<s> The only structure that approached it in speed was a switch() statement off of an Enumerated int field in the object.  </s>
+<s> -- end -- This message was based off an earlier version of the spec, so some of the specific data types might be off, but the spirit remains the same.  </s>
+<s> Thanks for your attention, Michael Allen  </s>
+<s> Must-have for level 2 (or how about a level 1.5): - iterators (with a specification that doesn't constrain implementations too much) - DTD access - validation (as a method on DocumentFragment--or better yet, as an implementation of the strategy pattern) - a clarification of the "liveness" of nodelists.  </s>
+<s> Without trying to start a religious war, I believe that the "livenes" of a nodelist is a quality of service issue.  </s>
+<s> Browser implementations may provide live nodelists, implementations in more constrained environments may not.  </s>
+<s> Place an attribute on the DOMImplementation that will specify whether or not an implmentation supports live nodelists.  </s>
+<s> Nice-to-have for level 2 (but only if they don't delay the above features): - a visitor pattern - a search mechanism - integration with CSL, XSL, XLL - an event model (like DHTML) - A more robust Document/DocumentContext And that's it.  </s>
+<s> Don't try to throw in the kitchen sink--it constrains (and complicates) implementations too much, and we don't need it.  </s>
+<s> The visitor pattern allows implementations to extend the functionality of the DOM without making incompatible extensions.  </s>
+<s> Jeff Mackay Vtopia, Inc.  </s>
+<s> For DOM 2: Add my vote for standard document creation interfaces.  </s>
+<s> Jonathan Borden JABR Technology Corp.  </s>
+<s> Things I'd like to see, 1.  </s>
+<s> A standard mechanism for creating XML/HTML documents.  </s>
+<s> 2. An interface for moving/copying subtrees between documents belonging to the same implementation.  </s>
+<s> 3. An interface for moving/copying subtrees between documents belonging to different implementations.  </s>
+<s> 4. Non-live iterators for a few, well-chosen, tree traversals: over children; over descendents in pre-order (others?).  </s>
+<s> 5. A node visitor.  </s>
+<s> 6. DTD support.  </s>
+<s> Cheers, Miles Miles Sabin Cromwell Media Internet Systems Architect 5/6 Glenthorne Mews msabin@cromwellmedia.co.uk England  </s>
+<s> OMG specification include life-cycle services under the CosLifeCycle specification.  </s>
+<s> These interfaces include generalised factories and factory finders.  </s>
+<s> Synchronisation between DOM extensions and existing IDL adopted under the OMG would be preferable to rolling another set of interfaces from scratch.  </s>
+<s> Stephen J. McConnell, OSM sarl  </s>
+<s> Business Components for Electronic Commerce  </s>
+<s> Stephen McConnell wrote,  </s>
+<s> Whilst I personally have no problem with it, I suspect that this suggestion won't go down too well with those folks not committed to CORBA ... and that's a sizable chunk of the DOMs audience.  </s>
+<s> Cheers, Miles Miles Sabin Cromwell Media Internet Systems Architect 5/6 Glenthorne Mews msabin@cromwellmedia.co.uk England  </s>
+<s> What do you mean by non-live?  </s>
+<s> Do you mean that if an iterator over a document with 100 nodes should return exactly 100 nodes even if nodes have been inserted or removed from it during iteration?  </s>
+<s> I doubt this is what you want.  </s>
+<s> Don Park Docuverse  </s>
+<s> Don Park wrote,  </s>
+<s> Err ... poor choice of words on my part.  </s>
+<s> What I meant was: lightweight iterators which are not required by the spec to be robust in the face of modifications to the document.  </s>
+<s> So, for example, an iterator over children could be simply defined (tho' not necessarily implemented) in terms of sibling operations on the current node; a pre-order iterator could be defined in terms of sibling and parent/child operations on the current node.  </s>
+<s> This sort of locality is required if we want the possiblity of iterator operations being O(1).  </s>
+<s> Obviously, a traversal defined by such an iterator could be distrupted by modifications to the tree, eg. if the current node was removed during the traversal (amongst other possiblities).  </s>
+<s> The spec should document that fact, and leave iterator users to take appropriate action.  </s>
+<s> We can already build these iterators as things stand, but it'd be nice to have a standard iterator interface, particularly in conjunction with a hypothetical standard NodeVisitor (because we ought to keep traversal algorithms separate from the visitation stuff).  </s>
+<s> Steve (was it you?) has suggested that we might *also* (not instead) have more heavyweight iterators which *are* robust in the face of document modifications.  </s>
+<s> I'm not sure this is a good idea, partly because defining their behaviour looks to be very difficult, and partly because support for them might have a negative impact on implementations even if they're never actually used (cp.  </s>
+<s> NodeLists).  </s>
+<s> Cheers, Miles Miles Sabin Cromwell Media Internet Systems Architect 5/6 Glenthorne Mews msabin@cromwellmedia.co.uk England  </s>
+<s> Here are some features I have added to my DOM implementation to make it more useful.  </s>
+<s> Some of them reiterate items on most peoples' wish lists... 1) Document creation.  </s>
+<s> No surprise here, although I also support instantiating a document from XML source, as well as streaming a document out to XML source (C++ I/O streams).  </s>
+<s> 2) ExceptionCode MEMORY_ERR = -1.  </s>
+<s> Very useful to catch allocation failures.  </s>
+<s> 3) Direct child element searching by tag name or attribute value.  </s>
+<s> 4) Convenience functions for adding a Text child to an element, or retrieving the text content of an element.  </s>
+<s> 5) Validation function for DOMString to ensure it is a valid "name" value.  </s>
+<s> Tom Otvos Director of Research, Pervasive Software Inc. "Try not!  </s>
+<s> Do, or do not.  </s>
+<s> There is no 'try'." - Yoda  </s>
+<s> That was me.  </s>
+<s> I agree with you: I'd really prefer simple O(1) iterators with no implementation impact and easily-documented conditions under which their behavior is undefined.  </s>
+<s> The *also* was to mollify the crowd that wants to have robustness at any price.  </s>
+<s> In my opinion this should be left as an implementation decision.  </s>
+<s> Stephen R. Savitzky Chief Software Scientist, Ricoh Silicon Valley, Inc., steve@rsv.ricoh.com  </s>
+<s> California Research Center home: steve@starport.com  </s>
+<s> URL: http://www.starport.com/people/steve/  </s>
+<s> I second this wish, and would hope for more than just direct child access.  </s>
+<s> However, I realize that agreeing on the query notation for a method like Element traverse(String query_str) will be a whole can of worms.  </s>
+<s> It would be great if there was some simple base notation like "foo.bar[2].baz" for descendant access.  </s>
+<s> Of course '.' is a name char and therefore not a good tag name delimiter.  </s>
+<s> Can anyone suggest a notation more concise than XPointer that might be standardized in the DOM (Level 2, 3, 4, ...)?  </s>
+<s> -- ted  </s>
+<s> My own reasoning and two questions:  </s>
+<s> "Robustness" is a relative term, anyway.  </s>
+<s> But we have had lots of people that seem to think they will be severely disadvantaged if they cannot, for example, use an iterator to find nodes and remove them without destroying the context.  </s>
+<s> I take it that removal and the many other mutations that might occur (insertion, etc.) while iterating are not important use cases for you, or you expect the user to deal with it, correct?  </s>
+<s> I disagree strongly with having documented conditions where behavior is undefined, because it will cause code to be commonly written which works on some implementations and not on others.  </s>
+<s> Trying to explain to people that they shouldn't have used it in a certain way because it won't work in other implementations is a little like trying to convince people to use valid HTML, when what they wrote works on their browser.  </s>
+<s> Especially if the cases with mutation are important use cases, it is essentiual that we tie them down.  </s>
+<s> I think there are two different possible levels of compatibility with iterators.  </s>
+<s> 1. is the API 2. is the factory/constructor which determines behaviors beyond the API Different factories would produce completely different iterators.  </s>
+<s> On the surface might iterate children, another iterates descendants with the a certain tag.  </s>
+<s> Another could find all the processing instructions, etc.  </s>
+<s> But all of these different factories conform to the API.  </s>
+<s> It doesn't seem unreasonable that iterators constructed by different factories would behave differently under mutation, as well.  </s>
+<s> When users get implementations of an API from a private factory, they can conform to the fundamentals of the API but define other behaviors how ever they like.  </s>
+<s> But I feel that any factory method defined in the DOM API must produce objects where all significant behavior happens in a single way -- no significant behavior that is exposed through the API can be left unspecified.  </s>
+<s> Do you have a problem with this?  </s>
+<s> Ray Whitmer  </s>
+<s> Maybe I'm missing something, but leaving "robustness" as an implementation decision would seriously impede interoperability, would it not?  </s>
+<s> That is, if a script encounters one of the conditions in which an iterator (or  </s>
+<s> NodeList, etc.) is undefined, it will probably crash on some implementations and run on "robust" implementations.  </s>
+<s> I don't think that's in the spirit of what the W3C working groups are trying to accomplish, although I understand that many of you are writing specialized applications for which interoperability is not an issue.  </s>
+<s> I *would* advocate (and have recently raised it yet again to the DOM IG/WG)  </s>
+<s> that we define a "minimal" or "non-handholding" DOM API that could be used  </s>
+<s> in environments where size/efficiency is more important than robustness e.g., servers, specialized network appliances, high-volume message processing applications, etc. Implementors could decide which flavor of the DOM to support, and there should be interoperability *within* that flavor, but would still have to fully implement the behavior specified by that DOM flavor.  </s>
+<s> Would such an approach help anyone who's been wrestling with efficiently implementing the various convenience "features" in DOM Level 1?  </s>
+<s> Mike Champion  </s>
+<s> ===== ^^^^^^ Please note!!!!!  </s>
+<s> I am writing APPLICATIONS, not scripts.  </s>
+<s> That's really the crux of the whole argument.  </s>
+<s> I believe that the DOM should be of use not only to the authors of tiny browser scripts, but to professional programmers writing real, and sometimes very large, applications that deal with real, and sometimes _extremely_ large, documents.  </s>
+<s> Live nodelists and handholding iterators simply aren't acceptible if you're indexing the Web (to take a real, though not personal, example).  </s>
+<s> In any case, the issue is not so much crashing as returning a value which, while not invalid (for example, the value of toNextNode returned by an iterator is going to be either a Node or null under all circumstances), is not easily determined.  </s>
+<s> Personally, I consider a simple iterator that keeps a current node and navigates using links to be perfectly "robust" -- it will never crash as long as the programmer tests for nulls in the right places, and will produce deterministic results no matter what happens to the underlying document.  </s>
+<s> Some people, however, seem to think that an iterator must return an exception whenever its "current node" is affected by a structural change.  </s>
+<s> That way lies madness, as the behavior under exceptional conditions becomes harder and harder to specify, and has a more and more serious affect on the efficiency of the implementation (e.g. live nodelists).  </s>
+<s> I think perhaps that "robustness" is not the correct word, though I don't know what is.  </s>
+<s> "Handholding" comes close.  </s>
+<s> It's really a scalability problem; certain features are useful in small scripting applications, but don't scale to larger documents or higher speeds.  </s>
+<s> Yes. This is _exactly_ the kind of thing I want.  </s>
+<s> Stephen R. Savitzky Chief Software Scientist, Ricoh Silicon Valley, Inc., steve@rsv.ricoh.com  </s>
+<s> California Research Center home: steve@starport.com  </s>
+<s> URL: http://www.starport.com/people/steve/  </s>
+<s> IG/WG)  </s>
+<s> used  </s>
+<s> I agree completely.  </s>
+<s> In other environments this might be called a "quality of service" issue.  </s>
+<s> The majority of users require the "robust" quality of service.  </s>
+<s> A vocal minority requires a less robust quality of service for this feature.  </s>
+<s> Other services--such as ODBC and JDBC for relational databases--support multiple quality of service features.  </s>
+<s> In order to use a feature, you can check to see if the driver (or in our case DOM implementation) supports that feature.  </s>
+<s> If you check and take appropriate action, you're safe.  </s>
+<s> If you don't, you are subject to different (albeit predictable) behavior for different implementations.  </s>
+<s> The point here is that there are applications for which a "live" iterator is unnecessary and could even be considered harmful because of the extra work and space required to implement.  </s>
+<s> Web crawlers, robots, spiders come to mind.  </s>
+<s> As do any number of specialized interfaces in embedded or handheld devices.  </s>
+<s> Should a hand-held book reader really be able to update a text while it is being read?  </s>
+<s> In some cases, the answer may be yes.  </s>
+<s> In others, a definite no.  </s>
+<s> Different quality of service levels could be implemented as separate APIs, but that isn't a very maintainable approach from an implementor's point of view.  </s>
+<s> I believe it makes more sense to allow applications to dynamically query the capabilities of an implemementation.  </s>
+<s> As an example, let's assume that I have two iterator classes: a LiveIterator and a StaticIterator.  </s>
+<s> I have an application that needs to traverse the tree, and I occasionally need to insert nodes into the hierarchy while I'm traversing.  </s>
+<s> When I use the LiveIterator, I can insert nodes while I'm traversing.  </s>
+<s> If I'm using a static iterator, I'll queue the inserts for processing when I'm through with the traversal.  </s>
+<s> Jeff Mackay Vtopia, Inc. e-mail: jmackay@vtopia.com  </s>
+<s> mailto:jmackay@vtopia.com  </s>
+<s> url: http://www.vtopia.com/  </s>
+<s> Oh, I left out one major thing for me (and I suspect others): thread safety.  </s>
+<s> Even if it results in no overt API changes, the statement that DOM can be used in a server environment is essential.  </s>
+<s> There will probably be more to it than that, but I second Stephen's comment that DOM should be robust enough for "real applications".  </s>
+<s> I would merely refine it to say "including real *server* applications".  </s>
+<s> I am working on that aspect now in my implementation, and would be happy to pass on any insights along the way.  </s>
+<s> Tom Otvos Director of Research, Pervasive Software Inc. "Try not!  </s>
+<s> Do, or do not.  </s>
+<s> There is no 'try'." - Yoda  </s>
+<s> Some time ago I put up a document on my homepage with some of the suggestions from this mailing list.  </s>
+<s> I know it's outdated, but I guess it's nice as a "not to forget" list of features...  </s>
+<s> I hope it's a little useful... Cheers val it = ("?NOQ of the Sun", "Johnny Andersen", ["anoq@vip.cybercity.dk",  </s>
+<s> "anoq@berlin-consortium.org", "anoq@diku.dk"],  </s>
+<s> "http://users.cybercity.dk/~ccc25861/")  </s>
+<s> : cyberspacename * meatspacename * email list * homepage URL  </s>

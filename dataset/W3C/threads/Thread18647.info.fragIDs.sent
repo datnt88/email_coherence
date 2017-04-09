@@ -1,115 +1,115 @@
-Joseph, In your example from April 13 you have two keys represeted using rdf:Alt : 
-dsig:key ID="X509" type="http://iso.org/x509" 
-value="...308201F0308201B002010..."/ dsig:key ID="PGP" type="http://pgp.com/pgp" 
-value="...F3082010308201B002010..."/ The first key is carried in within a X.509 certificate. 
-The second key is carried in a PGP certificate. 
-I assume that you intend in this example for 
-both certificates to carry the same public key. 
-Evaluation of this signature will result in an ambiguos result. 
-The validation processing for X.509 is very different from PGP. 
-It is possible 
-for one certificate to be revoked and the signature invalid and the second certificate to be valid. 
-Even if both alternatives were in the same format, the associated 
-attributes would be different (or else they would be the same certificate). 
-Any variations in the certificate in name, validity period, key usage restrictions, or other attributes will effect the interpretation of the signature. 
-Allowing multiple alternatives for a key will allow create scenarios with ambiguos signature interpretations. 
-This example illustrates that a signing entity is more than just the public key. 
-The validation processing of a digital signature must consider all of the originator information carried with the public key. 
-We should include only one starting point for this validation process. 
-So, I propose that: XML digital signatures must carry only a single originator key or certificate. 
-Paul 
-Of course, this problem wouldn't exist if we weren't trying to express the signature in XML. 
-If the problem did exist, it would be in the underlying signature technology, and the signed XML group would not have created a new 
-security hole by trying to bundle new cryptographic techniques with the fundamental and different problem of signing XML. 
-John Boyer Software Development Manager UWI.Com -- The Internet Forms Company jboyer@uwi.com 
-new 
-Signing XML is not a fundamental and different problem. 
-We have many worked examples to learn from like: X.410, X.509, PEM, MOSS, DNS Sec, SDSI, 
-SPKI, PGP, DMS, and DSig 1.0. 
-The originator information is an often overlooked problem in signature 
-standards. 
-For example, formal evaluation of a PGP signature is difficult because PGP's web of trust does define a single evaluation path. 
-X.509 also has had similar problems with the attributes that reference the issuer. 
-Mulitple evaluation paths were possible because the issuer name 
-did not guarentee unique identification of and issuer certificate. 
-Id 
-numbers consisting of a certificate hash were invented to solve this 
-problem. 
-So, hopefully we will be able learn from these past efforts. 
-Paul "John Boyer" jboyer@uwi.com on 04/21/99 01:51:27 PM Subject: Re: Single Key in Originator Information Of course, this problem wouldn't exist if we weren't trying to express the signature in XML. 
-If the problem did exist, it would be in the underlying signature technology, and the signed XML group would not have created a new security hole by trying to bundle new cryptographic techniques with the fundamental and different problem of signing XML. 
-John Boyer Software Development Manager UWI.Com -- The Internet Forms Company jboyer@uwi.com 
-rdf:Alt : 
-for 
-possible 
-certificate). 
-Signing XML is a fundamentally different problem. 
-We do not need to learn from these past efforts if we do not try to duplicate them, as would be the 
-case if signed XML meant "sign XML then express signature in XML". 
-Signing 
-XML only requires us to define an interface to call upon these technologies. 
-As the cryptography experts learn from their past efforts and put out new standards, our interface will be able to call on the technology that implements the new standards. 
-All without changing our spec, DTDs, and software. 
-John Boyer Software Development Manager UWI.Com -- The Internet Forms Company jboyer@uwi.com 
-John, 
-the 
-Signing 
-technologies. 
-My proposal was directed at the use of certificates from PGP and X.509. 
-Only one originator should be supported. 
-It is not easy to "call on new technology" that hides relevant information in opaque blobs. 
-I'm obviously in the no-PKCS#7 for XML signatures camp. 
-We will not be able to prevent vendors from defining signature blobs that are based on PKCS#7, but we should not make this our solution provides equivelent functionality in an XML syntax. 
-My objection is based on the granularity of blobs. 
-PKCS#7 has too much information encoded within it's blob. 
-More on this later ... Paul "John Boyer" jboyer@uwi.com on 04/21/99 03:38:25 PM Subject: Re: Single Key in Originator Information 
-SDSI, 
-Signing XML is a fundamentally different problem. 
-We do not need to learn from these past efforts if we do not try to duplicate them, as would be the case if signed XML meant "sign XML then express signature in XML". 
-Signing XML only requires us to define an interface to call upon these technologies. 
-As the cryptography experts learn from their past efforts and put out new standards, our interface will be able to call on the technology that implements the new standards. 
-All without changing our spec, DTDs, and software. 
-John Boyer Software Development Manager UWI.Com -- The Internet Forms Company jboyer@uwi.com 
-I had a similar concern when I wrote the example, but I primarily wanted to show the usefulness of RDF semantics. 
-Regardless, how would you characterize 
-this type of restriction? 
-We can't place restrictions on a syntax, so this 
-is an operational requirement on trust applications? 
-Joseph Reagle Jr. W3C: http://www.w3.org/People/Reagle/ Policy Analyst Personal: http://web.mit.edu/reagle/www/ 
-Joseph, 
-Humm ... how do we develop a standard without any restrictions? 
-How can we generate conformance tests? 
-I agree that we can not prevent extensions and should even encourage flexibility, but we need to have some minimum syntax and some restrictions on the ways the syntax is used. 
-I believe this is just a matter of specification approach and guidelines. 
-This restriction on syntax is one of the reasons I'm pushing on differentiating the characteristics of a keyed hash versus public key mechanisms. 
-Keyed hash mechanisms require a Recipient Info field. 
-Public key techniques do not need to provide recipient unique information. 
-Paul 
-"Joseph M. Reagle Jr. (W3C)" reagle@w3.org 
-on 04/22/99 06:41:22 AM Subject: Re: Single Key in Originator Information 
-I had a similar concern when I wrote the example, but I primarily wanted to show the usefulness of RDF semantics. 
-Regardless, how would you characterize 
-this type of restriction? 
-We can't place restrictions on a syntax, so this 
-is an operational requirement on trust applications? 
-Joseph Reagle Jr. W3C: http://www.w3.org/People/Reagle/ Policy Analyst Personal: http://web.mit.edu/reagle/www/ 
-archived at: 
-We need restrictions, I'm merely stating that we may not be able to restrict some things, and we should be clear at what level we are specifying/constraining. 
-For instance, if you were to say signed-XML is just like XML but XYZ, that would get torpedoed pretty quickly because it wouldn't be XML anymore. 
-(We've encountered this with applications of XML defining their syntax in BNF which might be ok, but can get sort of hairy if it excludes permissible XML features...) I think one could potentially be specifying/constraining at numerous levels: 1. Syntax - strings/bits 2. Semantics - meaning 3. Syntax/Semantic defense - requirements to ignore or repulse intrusion on your own syntax/semantic. 
-4. State machine (of a protocol.) 5. APIs 6. Default values (protocol suites) 7. Application behavior, requirements, or constraints. 
-People frequently confuse these things. 
-Joseph Reagle Jr. W3C: http://www.w3.org/People/Reagle/ Policy Analyst Personal: http://web.mit.edu/reagle/www/ 
-Paul, 
-When you wrote "differentiating" do you mean being explicit in the documentation or adopting different markup? 
-Richard D. 
-I suggest adopting different markup. 
-The syntax and semantics of a message protected by a keyed hash are different than a public key signature. 
-The markup should clearly distinguish between these services. 
-A URI providing algorithm type is not sufficient. 
-I propose that we plan support and specific markup for: - public key digital signatures - keyed hash integrity 
-- encryption (very similar in structure and usage to keyed hash) 
-- key exchange (I've got lots of questions about this but will defer on this topic for awhile) I believe that this proposal is a very minor modification to exisitng proposals. 
-Paul 
-Paul, Please, explain the following statement: 
-Thanks, Richard D. Brown 
+<s> Joseph, In your example from April 13 you have two keys represeted using rdf:Alt :  </s>
+<s> dsig:key ID="X509" type="http://iso.org/x509"  </s>
+<s> value="...308201F0308201B002010..."/ dsig:key ID="PGP" type="http://pgp.com/pgp"  </s>
+<s> value="...F3082010308201B002010..."/ The first key is carried in within a X.509 certificate.  </s>
+<s> The second key is carried in a PGP certificate.  </s>
+<s> I assume that you intend in this example for  </s>
+<s> both certificates to carry the same public key.  </s>
+<s> Evaluation of this signature will result in an ambiguos result.  </s>
+<s> The validation processing for X.509 is very different from PGP.  </s>
+<s> It is possible  </s>
+<s> for one certificate to be revoked and the signature invalid and the second certificate to be valid.  </s>
+<s> Even if both alternatives were in the same format, the associated  </s>
+<s> attributes would be different (or else they would be the same certificate).  </s>
+<s> Any variations in the certificate in name, validity period, key usage restrictions, or other attributes will effect the interpretation of the signature.  </s>
+<s> Allowing multiple alternatives for a key will allow create scenarios with ambiguos signature interpretations.  </s>
+<s> This example illustrates that a signing entity is more than just the public key.  </s>
+<s> The validation processing of a digital signature must consider all of the originator information carried with the public key.  </s>
+<s> We should include only one starting point for this validation process.  </s>
+<s> So, I propose that: XML digital signatures must carry only a single originator key or certificate.  </s>
+<s> Paul  </s>
+<s> Of course, this problem wouldn't exist if we weren't trying to express the signature in XML.  </s>
+<s> If the problem did exist, it would be in the underlying signature technology, and the signed XML group would not have created a new  </s>
+<s> security hole by trying to bundle new cryptographic techniques with the fundamental and different problem of signing XML.  </s>
+<s> John Boyer Software Development Manager UWI.Com -- The Internet Forms Company jboyer@uwi.com  </s>
+<s> new  </s>
+<s> Signing XML is not a fundamental and different problem.  </s>
+<s> We have many worked examples to learn from like: X.410, X.509, PEM, MOSS, DNS Sec, SDSI,  </s>
+<s> SPKI, PGP, DMS, and DSig 1.0.  </s>
+<s> The originator information is an often overlooked problem in signature  </s>
+<s> standards.  </s>
+<s> For example, formal evaluation of a PGP signature is difficult because PGP's web of trust does define a single evaluation path.  </s>
+<s> X.509 also has had similar problems with the attributes that reference the issuer.  </s>
+<s> Mulitple evaluation paths were possible because the issuer name  </s>
+<s> did not guarentee unique identification of and issuer certificate.  </s>
+<s> Id  </s>
+<s> numbers consisting of a certificate hash were invented to solve this  </s>
+<s> problem.  </s>
+<s> So, hopefully we will be able learn from these past efforts.  </s>
+<s> Paul "John Boyer" jboyer@uwi.com on 04/21/99 01:51:27 PM Subject: Re: Single Key in Originator Information Of course, this problem wouldn't exist if we weren't trying to express the signature in XML.  </s>
+<s> If the problem did exist, it would be in the underlying signature technology, and the signed XML group would not have created a new security hole by trying to bundle new cryptographic techniques with the fundamental and different problem of signing XML.  </s>
+<s> John Boyer Software Development Manager UWI.Com -- The Internet Forms Company jboyer@uwi.com  </s>
+<s> rdf:Alt :  </s>
+<s> for  </s>
+<s> possible  </s>
+<s> certificate).  </s>
+<s> Signing XML is a fundamentally different problem.  </s>
+<s> We do not need to learn from these past efforts if we do not try to duplicate them, as would be the  </s>
+<s> case if signed XML meant "sign XML then express signature in XML".  </s>
+<s> Signing  </s>
+<s> XML only requires us to define an interface to call upon these technologies.  </s>
+<s> As the cryptography experts learn from their past efforts and put out new standards, our interface will be able to call on the technology that implements the new standards.  </s>
+<s> All without changing our spec, DTDs, and software.  </s>
+<s> John Boyer Software Development Manager UWI.Com -- The Internet Forms Company jboyer@uwi.com  </s>
+<s> John,  </s>
+<s> the  </s>
+<s> Signing  </s>
+<s> technologies.  </s>
+<s> My proposal was directed at the use of certificates from PGP and X.509.  </s>
+<s> Only one originator should be supported.  </s>
+<s> It is not easy to "call on new technology" that hides relevant information in opaque blobs.  </s>
+<s> I'm obviously in the no-PKCS#7 for XML signatures camp.  </s>
+<s> We will not be able to prevent vendors from defining signature blobs that are based on PKCS#7, but we should not make this our solution provides equivelent functionality in an XML syntax.  </s>
+<s> My objection is based on the granularity of blobs.  </s>
+<s> PKCS#7 has too much information encoded within it's blob.  </s>
+<s> More on this later ... Paul "John Boyer" jboyer@uwi.com on 04/21/99 03:38:25 PM Subject: Re: Single Key in Originator Information  </s>
+<s> SDSI,  </s>
+<s> Signing XML is a fundamentally different problem.  </s>
+<s> We do not need to learn from these past efforts if we do not try to duplicate them, as would be the case if signed XML meant "sign XML then express signature in XML".  </s>
+<s> Signing XML only requires us to define an interface to call upon these technologies.  </s>
+<s> As the cryptography experts learn from their past efforts and put out new standards, our interface will be able to call on the technology that implements the new standards.  </s>
+<s> All without changing our spec, DTDs, and software.  </s>
+<s> John Boyer Software Development Manager UWI.Com -- The Internet Forms Company jboyer@uwi.com  </s>
+<s> I had a similar concern when I wrote the example, but I primarily wanted to show the usefulness of RDF semantics.  </s>
+<s> Regardless, how would you characterize  </s>
+<s> this type of restriction?  </s>
+<s> We can't place restrictions on a syntax, so this  </s>
+<s> is an operational requirement on trust applications?  </s>
+<s> Joseph Reagle Jr. W3C: http://www.w3.org/People/Reagle/ Policy Analyst Personal: http://web.mit.edu/reagle/www/  </s>
+<s> Joseph,  </s>
+<s> Humm ... how do we develop a standard without any restrictions?  </s>
+<s> How can we generate conformance tests?  </s>
+<s> I agree that we can not prevent extensions and should even encourage flexibility, but we need to have some minimum syntax and some restrictions on the ways the syntax is used.  </s>
+<s> I believe this is just a matter of specification approach and guidelines.  </s>
+<s> This restriction on syntax is one of the reasons I'm pushing on differentiating the characteristics of a keyed hash versus public key mechanisms.  </s>
+<s> Keyed hash mechanisms require a Recipient Info field.  </s>
+<s> Public key techniques do not need to provide recipient unique information.  </s>
+<s> Paul  </s>
+<s> "Joseph M. Reagle Jr. (W3C)" reagle@w3.org  </s>
+<s> on 04/22/99 06:41:22 AM Subject: Re: Single Key in Originator Information  </s>
+<s> I had a similar concern when I wrote the example, but I primarily wanted to show the usefulness of RDF semantics.  </s>
+<s> Regardless, how would you characterize  </s>
+<s> this type of restriction?  </s>
+<s> We can't place restrictions on a syntax, so this  </s>
+<s> is an operational requirement on trust applications?  </s>
+<s> Joseph Reagle Jr. W3C: http://www.w3.org/People/Reagle/ Policy Analyst Personal: http://web.mit.edu/reagle/www/  </s>
+<s> archived at:  </s>
+<s> We need restrictions, I'm merely stating that we may not be able to restrict some things, and we should be clear at what level we are specifying/constraining.  </s>
+<s> For instance, if you were to say signed-XML is just like XML but XYZ, that would get torpedoed pretty quickly because it wouldn't be XML anymore.  </s>
+<s> (We've encountered this with applications of XML defining their syntax in BNF which might be ok, but can get sort of hairy if it excludes permissible XML features...) I think one could potentially be specifying/constraining at numerous levels: 1. Syntax - strings/bits 2. Semantics - meaning 3. Syntax/Semantic defense - requirements to ignore or repulse intrusion on your own syntax/semantic.  </s>
+<s> 4. State machine (of a protocol.) 5. APIs 6. Default values (protocol suites) 7. Application behavior, requirements, or constraints.  </s>
+<s> People frequently confuse these things.  </s>
+<s> Joseph Reagle Jr. W3C: http://www.w3.org/People/Reagle/ Policy Analyst Personal: http://web.mit.edu/reagle/www/  </s>
+<s> Paul,  </s>
+<s> When you wrote "differentiating" do you mean being explicit in the documentation or adopting different markup?  </s>
+<s> Richard D.  </s>
+<s> I suggest adopting different markup.  </s>
+<s> The syntax and semantics of a message protected by a keyed hash are different than a public key signature.  </s>
+<s> The markup should clearly distinguish between these services.  </s>
+<s> A URI providing algorithm type is not sufficient.  </s>
+<s> I propose that we plan support and specific markup for: - public key digital signatures - keyed hash integrity  </s>
+<s> - encryption (very similar in structure and usage to keyed hash)  </s>
+<s> - key exchange (I've got lots of questions about this but will defer on this topic for awhile) I believe that this proposal is a very minor modification to exisitng proposals.  </s>
+<s> Paul  </s>
+<s> Paul, Please, explain the following statement:  </s>
+<s> Thanks, Richard D. Brown  </s>

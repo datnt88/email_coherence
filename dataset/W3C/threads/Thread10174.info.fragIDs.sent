@@ -1,94 +1,94 @@
-This is the weekly call for agenda items. 
-On my list of possibles, I have: o plan (I'll send a strawman out Friday) 
-o concepts doc (I'm hoping for a new doc Thursday) 
-o syntax doc (I'm hoping for a new doc Thursday) o lbase review o proposed tech changes to model theory 
-o semantic bugs in domain and range 
-o semantics of lists 
-Brian 
-We could discuss the proposal (see www-rdf-comments thread) to revisit our decision on rdf-ns-prefix-confusion: 
-Dan 
-Yup. 
-Brian 
-This is misnamed. 
-There are currently bugs in subClassOf and subPropertyOf, and I will fix those bugs in the next draft of the MT. 
-The question about domain and range is a genuine question, not a bug: we can go either way, and there are arguments in both directions, so 
-we have to make a genuine decision. 
-And since, by the way, I seem to be in a lone minority on this argument, I am willing to just go with the flow and accept the Jeremy entailment (superclasses of ranges are also ranges). 
-If that will rapidly reach consensus, please let us rapidly reach consensus. 
-Let me ask that we place lists high on the agenda as we need to get this sorted out in order to get the MT done, and Webont needs it, and there are apparently some strongly held opinions about it. 
-Pat 
-IHMC(850)434 8903 home 40 South Alcaniz St.(850)202 4416 office FL 32501 (850)291 0667 cell phayes@ai.uwf.edu http://www.coginst.uwf.edu/~phayes 
-[Patrick Stickler, Nokia/Finland, (+358 40) 801 9690, patrick.stickler@nokia.com] 
-I seem to have missed this. 
-Does the above mean that if I have xsd:byte rdfs:subClassOf xsd:decimal . 
-age rdfs:range xsd:byte . 
-Jenny age "1000"^^xsd:decimal . 
-that there is no conflict between the range assertion and the value specified for Jenny's age? 
-That the above range 
-assertion entails age rdfs:range xds:decimal . 
-If so, then I would consider RDFS to be hopelessly broken and unusable. 
-Could someone please clarify? 
-Thanks, Patrick 
-You are only in a minority of one in webont on a different but related issue. 
-My take is that there are currently no strong advocates of the "Jeremy entailment" (I am not one). 
-However, this issue does interrelate with webont 
-issues - I suggest we: - decide whether we prefer the Jeremy entailment or not by a straw poll 
-- indicate that preference to webont - ask webont to accept this or ask us to change quickly. 
-(I will create the relevant web issue later today). 
-As the person with the strongly held opinions I guess I should articulate a way forward that I could support: RDF Core provide only syntax Webont use range constraints etc to convert rdf:List into owl:List owl:List subClassOf rdf:List owl:unionOf rdfs:range owl:List owl:List owl:unionOf   _:nil _:properList   . 
-_:nil owl:oneOf   rdf:nil _:properList is restriction on rdf:List to things with exactly one rdf:first and exactly one rdf:rest. 
-There is still a need for a magic wand to be cast by Pat or Peter to address the problem that we really want finite non-circular lists, a constraint that is not first-order. 
-That wand is cast in WebOnt. 
-Could you please remind us what it is 
-Brian 
-I guess it's the one from 
-1:[[ 
-eg:prop rdfs:range eg:A . 
-eg:A rdfs:subClassOf eg:B . 
-entails eg:prop rdfs:range eg:B . 
-Jos De Roo, AGFA http://www.agfa.com/w3c/jdroo/ 
-Brian McBride 
-m phayes@ai.uwf.edu 
-Sent by: cc: w3c-rdfcore-wg@w3.org 
-w3c-rdfcore-wg-requ Subject: Re: Semantics was RE: weekly call for agenda items est@w3.org 
-2002-10-25 10:01 AM 
-Could you please remind us what it is Brian 
-Which looks clearly false to me, so I'd better ask to find out what I'm missing. 
-Consider: IEXT(A) = {a} IEXT(B) = {a, b} Then if I say that prop can take any member of A as its value, it can also take any member of B, because B happens to be a superclass of B. 
-Wierd! 
-Isn't it to stop that sort of thing happening that we switched domain and range to conjunctive semantics, i.e. so that an inferencing engine finding a range constraint would know that all values must be a member of that class; there is no way to add members to the range? 
-Brian 
-I don't support it either, but it could make sense to have IFF (if and only if) semantics such that Range(P,C) iff (forall x,y P(x,y) - C(x)) and in that case rdfs:Resource would for instance be the range of any property 
-well, it all depends on the chosen semantics for range and I support the oneway IF as well Jos De Roo, AGFA http://www.agfa.com/w3c/jdroo/ 
-Brian: 
-I think I had better explain it in English, by means of the example Jos gave of rdfs:Resource. 
-The informal meaning of 
-eg:prop rdfs:range eg:A . is that "any object of an eg:prop triple is of type eg:A". 
-We happen to know that "any object of an eg:prop triple is of type rdfs:Resource". 
-(ignoring Literals for now) that is we know a priori that eg:prop rdfs:range rdfs:Resource . 
-To get to the actual entailment, we are given: 
-i.e. "any object of an eg:prop triple is of type eg:A" "any object of type eg:A is of tpe eg:B" therefore "any object of an eg:prop triple is of type eg:B" that is eg:prop rdfs:range eg:B . 
-or: eg:bananaTrifleContains rdfs:range eg:banana . 
-eg:banana rdfs:subClassOf eg:fruit . 
-entails eg:bananaTrifleContains rdfs:range eg:fruit . the conclusion is always true if the premises are true, unless the conclusion is seen as having intensional force. 
-This is an example of a wider issue that has come up in webont, which is: "Are properties of properties understood extensionally or intensionally?" Decoding that, in this example, is being a range of a property something which a class has because certain class membership relationships hold (extensional), or is something which a class has because somebody said so (intensional). 
-If you take the extensional view, then you should support the "Jeremy entailment", if you take the intensional view then you should oppose it. 
-As I said before the name reflects authorship not belief. 
-This is a genuine question, and both points of view are legitimate. 
-The relationship with WebOnt is that the majority on webont would like to treat all properties of properties in the same way (either all extensionally or all intensionally). 
-Which is the preferred way is yet to be decided. 
-If RDF Core either don't care or are split without strong opinions, then a way of deciding would be to follow the webont pref. 
-If RDF Core care, then that is a significant input into the WebOnt decision on the other properties of properties. 
-(eg. 
-owl:TransitiveProperty). 
-Jeremy 
-Ah, thanks for this. 
-I was wrong earlier. 
-The intersection semantics still apply. 
-In my earlier example, I was thinking that given IEXT(A) = {a} IEXT(B) = {a, b} then b became a legitimate value of prop. 
-That is wrong, yes? 
-Is there a reason why we would care? 
-Is the course allowing max flexibility not to have it. 
-If webont want it they can add it. 
-If we do it and they don't want it, they can't take it away. 
-Brian 
+<s> This is the weekly call for agenda items.  </s>
+<s> On my list of possibles, I have: o plan (I'll send a strawman out Friday)  </s>
+<s> o concepts doc (I'm hoping for a new doc Thursday)  </s>
+<s> o syntax doc (I'm hoping for a new doc Thursday) o lbase review o proposed tech changes to model theory  </s>
+<s> o semantic bugs in domain and range  </s>
+<s> o semantics of lists  </s>
+<s> Brian  </s>
+<s> We could discuss the proposal (see www-rdf-comments thread) to revisit our decision on rdf-ns-prefix-confusion:  </s>
+<s> Dan  </s>
+<s> Yup.  </s>
+<s> Brian  </s>
+<s> This is misnamed.  </s>
+<s> There are currently bugs in subClassOf and subPropertyOf, and I will fix those bugs in the next draft of the MT.  </s>
+<s> The question about domain and range is a genuine question, not a bug: we can go either way, and there are arguments in both directions, so  </s>
+<s> we have to make a genuine decision.  </s>
+<s> And since, by the way, I seem to be in a lone minority on this argument, I am willing to just go with the flow and accept the Jeremy entailment (superclasses of ranges are also ranges).  </s>
+<s> If that will rapidly reach consensus, please let us rapidly reach consensus.  </s>
+<s> Let me ask that we place lists high on the agenda as we need to get this sorted out in order to get the MT done, and Webont needs it, and there are apparently some strongly held opinions about it.  </s>
+<s> Pat  </s>
+<s> IHMC(850)434 8903 home 40 South Alcaniz St.(850)202 4416 office FL 32501 (850)291 0667 cell phayes@ai.uwf.edu http://www.coginst.uwf.edu/~phayes  </s>
+<s> [Patrick Stickler, Nokia/Finland, (+358 40) 801 9690, patrick.stickler@nokia.com]  </s>
+<s> I seem to have missed this.  </s>
+<s> Does the above mean that if I have xsd:byte rdfs:subClassOf xsd:decimal .  </s>
+<s> age rdfs:range xsd:byte .  </s>
+<s> Jenny age "1000"^^xsd:decimal .  </s>
+<s> that there is no conflict between the range assertion and the value specified for Jenny's age?  </s>
+<s> That the above range  </s>
+<s> assertion entails age rdfs:range xds:decimal .  </s>
+<s> If so, then I would consider RDFS to be hopelessly broken and unusable.  </s>
+<s> Could someone please clarify?  </s>
+<s> Thanks, Patrick  </s>
+<s> You are only in a minority of one in webont on a different but related issue.  </s>
+<s> My take is that there are currently no strong advocates of the "Jeremy entailment" (I am not one).  </s>
+<s> However, this issue does interrelate with webont  </s>
+<s> issues - I suggest we: - decide whether we prefer the Jeremy entailment or not by a straw poll  </s>
+<s> - indicate that preference to webont - ask webont to accept this or ask us to change quickly.  </s>
+<s> (I will create the relevant web issue later today).  </s>
+<s> As the person with the strongly held opinions I guess I should articulate a way forward that I could support: RDF Core provide only syntax Webont use range constraints etc to convert rdf:List into owl:List owl:List subClassOf rdf:List owl:unionOf rdfs:range owl:List owl:List owl:unionOf   _:nil _:properList   .  </s>
+<s> _:nil owl:oneOf   rdf:nil _:properList is restriction on rdf:List to things with exactly one rdf:first and exactly one rdf:rest.  </s>
+<s> There is still a need for a magic wand to be cast by Pat or Peter to address the problem that we really want finite non-circular lists, a constraint that is not first-order.  </s>
+<s> That wand is cast in WebOnt.  </s>
+<s> Could you please remind us what it is  </s>
+<s> Brian  </s>
+<s> I guess it's the one from  </s>
+<s> 1:[[  </s>
+<s> eg:prop rdfs:range eg:A .  </s>
+<s> eg:A rdfs:subClassOf eg:B .  </s>
+<s> entails eg:prop rdfs:range eg:B .  </s>
+<s> Jos De Roo, AGFA http://www.agfa.com/w3c/jdroo/  </s>
+<s> Brian McBride  </s>
+<s> m phayes@ai.uwf.edu  </s>
+<s> Sent by: cc: w3c-rdfcore-wg@w3.org  </s>
+<s> w3c-rdfcore-wg-requ Subject: Re: Semantics was RE: weekly call for agenda items est@w3.org  </s>
+<s> 2002-10-25 10:01 AM  </s>
+<s> Could you please remind us what it is Brian  </s>
+<s> Which looks clearly false to me, so I'd better ask to find out what I'm missing.  </s>
+<s> Consider: IEXT(A) = {a} IEXT(B) = {a, b} Then if I say that prop can take any member of A as its value, it can also take any member of B, because B happens to be a superclass of B.  </s>
+<s> Wierd!  </s>
+<s> Isn't it to stop that sort of thing happening that we switched domain and range to conjunctive semantics, i.e. so that an inferencing engine finding a range constraint would know that all values must be a member of that class; there is no way to add members to the range?  </s>
+<s> Brian  </s>
+<s> I don't support it either, but it could make sense to have IFF (if and only if) semantics such that Range(P,C) iff (forall x,y P(x,y) - C(x)) and in that case rdfs:Resource would for instance be the range of any property  </s>
+<s> well, it all depends on the chosen semantics for range and I support the oneway IF as well Jos De Roo, AGFA http://www.agfa.com/w3c/jdroo/  </s>
+<s> Brian:  </s>
+<s> I think I had better explain it in English, by means of the example Jos gave of rdfs:Resource.  </s>
+<s> The informal meaning of  </s>
+<s> eg:prop rdfs:range eg:A . is that "any object of an eg:prop triple is of type eg:A".  </s>
+<s> We happen to know that "any object of an eg:prop triple is of type rdfs:Resource".  </s>
+<s> (ignoring Literals for now) that is we know a priori that eg:prop rdfs:range rdfs:Resource .  </s>
+<s> To get to the actual entailment, we are given:  </s>
+<s> i.e. "any object of an eg:prop triple is of type eg:A" "any object of type eg:A is of tpe eg:B" therefore "any object of an eg:prop triple is of type eg:B" that is eg:prop rdfs:range eg:B .  </s>
+<s> or: eg:bananaTrifleContains rdfs:range eg:banana .  </s>
+<s> eg:banana rdfs:subClassOf eg:fruit .  </s>
+<s> entails eg:bananaTrifleContains rdfs:range eg:fruit . the conclusion is always true if the premises are true, unless the conclusion is seen as having intensional force.  </s>
+<s> This is an example of a wider issue that has come up in webont, which is: "Are properties of properties understood extensionally or intensionally?" Decoding that, in this example, is being a range of a property something which a class has because certain class membership relationships hold (extensional), or is something which a class has because somebody said so (intensional).  </s>
+<s> If you take the extensional view, then you should support the "Jeremy entailment", if you take the intensional view then you should oppose it.  </s>
+<s> As I said before the name reflects authorship not belief.  </s>
+<s> This is a genuine question, and both points of view are legitimate.  </s>
+<s> The relationship with WebOnt is that the majority on webont would like to treat all properties of properties in the same way (either all extensionally or all intensionally).  </s>
+<s> Which is the preferred way is yet to be decided.  </s>
+<s> If RDF Core either don't care or are split without strong opinions, then a way of deciding would be to follow the webont pref.  </s>
+<s> If RDF Core care, then that is a significant input into the WebOnt decision on the other properties of properties.  </s>
+<s> (eg.  </s>
+<s> owl:TransitiveProperty).  </s>
+<s> Jeremy  </s>
+<s> Ah, thanks for this.  </s>
+<s> I was wrong earlier.  </s>
+<s> The intersection semantics still apply.  </s>
+<s> In my earlier example, I was thinking that given IEXT(A) = {a} IEXT(B) = {a, b} then b became a legitimate value of prop.  </s>
+<s> That is wrong, yes?  </s>
+<s> Is there a reason why we would care?  </s>
+<s> Is the course allowing max flexibility not to have it.  </s>
+<s> If webont want it they can add it.  </s>
+<s> If we do it and they don't want it, they can't take it away.  </s>
+<s> Brian  </s>

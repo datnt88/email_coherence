@@ -1,76 +1,76 @@
-I'm interested in the question of what value there is in requiring un-minimized end tags when omittag is not allowed. 
-Requiring redundant information and allowing humans into the process of maintaining it will guarantee errors. 
-Someone has suggested that it makes XML processors a little easier to write since they won't need a stack. 
-I don't see what kind of useful processing you can do with structured data while not keeping track of its context in the structure. 
-You'll want a stack with or without named end tags. 
-I decided to play around with NET to see if I could come up with an SGML tagging scheme which eliminates named end tags while (in my opinion) improving legibility and programmer-friendliness. 
-I apologize in advance to anyone whose sensibilities are offended by this kludgery. 
-We can do this by making some adjustments to the concrete syntax. 
-Define NET such that it is a right-hand side of a commonly recognized character pair. 
-For instance "]", " ", "}" or ")". 
-We'll define some other delimiters while we're at it, taking care to match the number of left and right hand characters in the delimiter strings. 
-Since we're all learning Scheme these days, I'll use parentheses in this example. 
-SHORTREF must be disabled, along with OMITTAG and CONCUR. 
-NET ")" STAGO "((" ETAGO "(/" 
-TAGC ")/)" !-- needs two close parens, but must be lexically distinct from two NETs -- This results in a syntax for which any text editor with paren matching capability can be used to assist in navigating an instance. 
-Some of them, e.g. Emacs lisp-mode, can be used for pretty-printing as well. 
-My feeling is that it also helps make the element structure lexically evident: ((gi attr="val") Here is the content.) 
-((again) We can still use un-minimized end tags. 
-(/again)/) 
-[ Thanks and apologies to Arjun Ray for this idea. 
-] Here's a common tag-souper's mistake: Compared to: ((p) foo ((bold) stuff ((ital) more stuff) what's this?)) 
-An interesting by-product of this delimiter scheme is an alternate version of Huitfeld's and DeRose's Trapeze Act solution to recognizing EMPTY elements in the absence of a DTD. 
-We switch the requirement of using the NET enabling start tag from the EMPTY element tag, to all non-empty element tags. 
-That way, NET can be used to terminate every element. 
-This has the same advantages and disadvantages of the Trapeze Act. 
-I believe it also has the same effect as Charles Goldfarb's proposed [ S | E ]TAGC revision to 8879. 
-Here is the example from Michael Sperberg-McQueen's summary of the EMPTY element problem. 
-"blort" has declared content EMPTY. 
-((p) foo ((blort)/) bar ) ((p) foo ((noblort) bar )) ((p) foo ((noblort)) bar ) ((p) foo ((blort) bar)) !-- 
-This should be an error. 
-It tries to put data in an element declared EMPTY ((p) foo ((blort)) bar) ((p) foo ((noblort)/) bar) !-- Hmmm, XML would think this is empty, while an un-XML-fettered SGML parser would think " bar " is blort's content. 
-An XML validator with a DTD should report this as an error -- While I won't be shocked to learn that I've overlooked an obvious flaw, I do hope the above encourages thought in two areas: 1) Are un-minimized end tags really helpful in light of all the other proposed restrictions for XML? 2) If we're going to standardize on a concrete syntax, is the reference concrete syntax the best possible? 
-Thanks for your patience. 
--Bill William D. Lindsey blindsey@bdmtech.com 
-Note that the above example is incorrect if you use TAGC on start-tags as well as end-tags, because it should read: 
-((again)/) We can still use un-minimized end tags. 
-(/again)/) 
-The following presumes, therefore, that you were working on the earlier concept of separating the delimiters at the end of start and end-tags (which seems to be generally agreed as the right way to go on this list). 
-When I first saw this proposal (immediately after getting out of bed) I thought "Great, now I can easily distinguish XML from SGML, and make it easier for people to check nesting". 
-Then I had breakfast! 
-(I'm one of these people who wakes up after breakfast!) Then it dawned on me - I can't write is Scheme! 
-To see why not (if the last paragraph has not already shown you) consider the following extension to the above example: 
-((again) We can still use un-minimized end tags (aka ((cite)ISO 8879:1986 
-...... (SGML)(/cite)/). 
-(/again)/) I, for one, am not using &amp;lpar; and &amp;rpar; all over the place! 
-I might consider: 
-[[again]We can still use un-minimized end tags (aka [[cite]ISO 8879:1986 
-.... (SGML)[/cite]/]).[/again]/] but would prefer: 
-again We can still use un-minimized end tags (aka  cite ISO 8879:1986 ....(SGML) /cite / ). 
-/again / 
-The problem I have with this last version, however, is that it is not obvious that the angle brackets form nestable sets in the way it is with the parentheses. 
-(The square brackets seem to fall half-way between an obvious nesting and no obvious nesting.) The last alternative, {{again}We can still use un-minimized end tags (aka {{cite}ISO 8879:1986 ..... (SGML){/cite}/}.{/again}/} 
-appeals to me less, but is a distinct possibility in English, though I have some doubts about its acceptability in other languages, where curly braces are much more common.. Martin Bryan Martin Bryan, The SGML Centre, Churchdown, Glos. 
-GL3 2PU, UK 
-I don't think it is incorrect. 
-The idea is _every_ start tag uses NET rather than TAGC, unless we want to make explicit that it is EMPTY. 
-My understanding is that an element which is begun with a NET enabling start tag may be closed with an un-minimized close tag as well as a NET. 
-I'd rather eliminate un-minimized end tags entirely. 
-The above example was just to show that a simple paren matching algorithm would not need any special case handling for their presence. 
-Let me clarify my intent in the exercise. 
-I wanted to see if one could, within today's 8879, 1) use a single character to terminate elements, and 2) enable the use of a simple character counting algorith to track your location in an XML document, and 3) solve Arjun Ray's problem with tag-soupers' spanning element tendency. 
-It turns out that NET can be that single character, and if you use a sequence of two of its mate for STAGO, you have something that appears to meet the three criteria. 
-As it happens, by defining a rule which say's TAGC is only used on end tags and start tags with EMPTY content, you have the flip-side of the trapeze act, and no need to alter 8879 to distinguish ETAGC and STAGC. 
-Now, just to be a bit more radical, if we do decide that un-minimized end tags are more harmful than they're worth, and we decide it is not necessary to identify EMPTY elements, then we no longer have any use for either ETAGO or TAGC. 
-or, [[again]We can still use un-minimized end tags (aka [[cite]ISO 8879:1986 .... (SGML)]).] 
-You are right, there are problems with just about any delimiter characters we choose. 
-They either are too common in text, or don't offer the visual cues we'd like. 
-(I'm not too sure that foo /foo really provides any visual cues beyond what we've trained ourselvees to see.) There are several ways around this within 8879, none particularly attractive: 1) sacrifice the visual cue, choosing a rarely encountered character. 
-2) require lots of character entity references. 
-How about &amp;L; and &amp;R;? 
-Hey, we never said we had to make it easy on the typist. 
-3) allow the declaration of an alternate concrete syntax. 
-4) invent some stupid MSOCHAR/MSICHAR/MSSCHAR trick for escaping. 
-5) Use some non-text characters which resemble brackets when viewed, and teach our text editors to deal with 'em. 
-(offered by someone who wishes to remain anonymous) Any others? 
--Bill 
+<s> I'm interested in the question of what value there is in requiring un-minimized end tags when omittag is not allowed.  </s>
+<s> Requiring redundant information and allowing humans into the process of maintaining it will guarantee errors.  </s>
+<s> Someone has suggested that it makes XML processors a little easier to write since they won't need a stack.  </s>
+<s> I don't see what kind of useful processing you can do with structured data while not keeping track of its context in the structure.  </s>
+<s> You'll want a stack with or without named end tags.  </s>
+<s> I decided to play around with NET to see if I could come up with an SGML tagging scheme which eliminates named end tags while (in my opinion) improving legibility and programmer-friendliness.  </s>
+<s> I apologize in advance to anyone whose sensibilities are offended by this kludgery.  </s>
+<s> We can do this by making some adjustments to the concrete syntax.  </s>
+<s> Define NET such that it is a right-hand side of a commonly recognized character pair.  </s>
+<s> For instance "]", " ", "}" or ")".  </s>
+<s> We'll define some other delimiters while we're at it, taking care to match the number of left and right hand characters in the delimiter strings.  </s>
+<s> Since we're all learning Scheme these days, I'll use parentheses in this example.  </s>
+<s> SHORTREF must be disabled, along with OMITTAG and CONCUR.  </s>
+<s> NET ")" STAGO "((" ETAGO "(/"  </s>
+<s> TAGC ")/)" !-- needs two close parens, but must be lexically distinct from two NETs -- This results in a syntax for which any text editor with paren matching capability can be used to assist in navigating an instance.  </s>
+<s> Some of them, e.g. Emacs lisp-mode, can be used for pretty-printing as well.  </s>
+<s> My feeling is that it also helps make the element structure lexically evident: ((gi attr="val") Here is the content.)  </s>
+<s> ((again) We can still use un-minimized end tags.  </s>
+<s> (/again)/)  </s>
+<s> [ Thanks and apologies to Arjun Ray for this idea.  </s>
+<s> ] Here's a common tag-souper's mistake: Compared to: ((p) foo ((bold) stuff ((ital) more stuff) what's this?))  </s>
+<s> An interesting by-product of this delimiter scheme is an alternate version of Huitfeld's and DeRose's Trapeze Act solution to recognizing EMPTY elements in the absence of a DTD.  </s>
+<s> We switch the requirement of using the NET enabling start tag from the EMPTY element tag, to all non-empty element tags.  </s>
+<s> That way, NET can be used to terminate every element.  </s>
+<s> This has the same advantages and disadvantages of the Trapeze Act.  </s>
+<s> I believe it also has the same effect as Charles Goldfarb's proposed [ S | E ]TAGC revision to 8879.  </s>
+<s> Here is the example from Michael Sperberg-McQueen's summary of the EMPTY element problem.  </s>
+<s> "blort" has declared content EMPTY.  </s>
+<s> ((p) foo ((blort)/) bar ) ((p) foo ((noblort) bar )) ((p) foo ((noblort)) bar ) ((p) foo ((blort) bar)) !--  </s>
+<s> This should be an error.  </s>
+<s> It tries to put data in an element declared EMPTY ((p) foo ((blort)) bar) ((p) foo ((noblort)/) bar) !-- Hmmm, XML would think this is empty, while an un-XML-fettered SGML parser would think " bar " is blort's content.  </s>
+<s> An XML validator with a DTD should report this as an error -- While I won't be shocked to learn that I've overlooked an obvious flaw, I do hope the above encourages thought in two areas: 1) Are un-minimized end tags really helpful in light of all the other proposed restrictions for XML? 2) If we're going to standardize on a concrete syntax, is the reference concrete syntax the best possible?  </s>
+<s> Thanks for your patience.  </s>
+<s> -Bill William D. Lindsey blindsey@bdmtech.com  </s>
+<s> Note that the above example is incorrect if you use TAGC on start-tags as well as end-tags, because it should read:  </s>
+<s> ((again)/) We can still use un-minimized end tags.  </s>
+<s> (/again)/)  </s>
+<s> The following presumes, therefore, that you were working on the earlier concept of separating the delimiters at the end of start and end-tags (which seems to be generally agreed as the right way to go on this list).  </s>
+<s> When I first saw this proposal (immediately after getting out of bed) I thought "Great, now I can easily distinguish XML from SGML, and make it easier for people to check nesting".  </s>
+<s> Then I had breakfast!  </s>
+<s> (I'm one of these people who wakes up after breakfast!) Then it dawned on me - I can't write is Scheme!  </s>
+<s> To see why not (if the last paragraph has not already shown you) consider the following extension to the above example:  </s>
+<s> ((again) We can still use un-minimized end tags (aka ((cite)ISO 8879:1986  </s>
+<s> ...... (SGML)(/cite)/).  </s>
+<s> (/again)/) I, for one, am not using &amp;lpar; and &amp;rpar; all over the place!  </s>
+<s> I might consider:  </s>
+<s> [[again]We can still use un-minimized end tags (aka [[cite]ISO 8879:1986  </s>
+<s> .... (SGML)[/cite]/]).[/again]/] but would prefer:  </s>
+<s> again We can still use un-minimized end tags (aka  cite ISO 8879:1986 ....(SGML) /cite / ).  </s>
+<s> /again /  </s>
+<s> The problem I have with this last version, however, is that it is not obvious that the angle brackets form nestable sets in the way it is with the parentheses.  </s>
+<s> (The square brackets seem to fall half-way between an obvious nesting and no obvious nesting.) The last alternative, {{again}We can still use un-minimized end tags (aka {{cite}ISO 8879:1986 ..... (SGML){/cite}/}.{/again}/}  </s>
+<s> appeals to me less, but is a distinct possibility in English, though I have some doubts about its acceptability in other languages, where curly braces are much more common.. Martin Bryan Martin Bryan, The SGML Centre, Churchdown, Glos.  </s>
+<s> GL3 2PU, UK  </s>
+<s> I don't think it is incorrect.  </s>
+<s> The idea is _every_ start tag uses NET rather than TAGC, unless we want to make explicit that it is EMPTY.  </s>
+<s> My understanding is that an element which is begun with a NET enabling start tag may be closed with an un-minimized close tag as well as a NET.  </s>
+<s> I'd rather eliminate un-minimized end tags entirely.  </s>
+<s> The above example was just to show that a simple paren matching algorithm would not need any special case handling for their presence.  </s>
+<s> Let me clarify my intent in the exercise.  </s>
+<s> I wanted to see if one could, within today's 8879, 1) use a single character to terminate elements, and 2) enable the use of a simple character counting algorith to track your location in an XML document, and 3) solve Arjun Ray's problem with tag-soupers' spanning element tendency.  </s>
+<s> It turns out that NET can be that single character, and if you use a sequence of two of its mate for STAGO, you have something that appears to meet the three criteria.  </s>
+<s> As it happens, by defining a rule which say's TAGC is only used on end tags and start tags with EMPTY content, you have the flip-side of the trapeze act, and no need to alter 8879 to distinguish ETAGC and STAGC.  </s>
+<s> Now, just to be a bit more radical, if we do decide that un-minimized end tags are more harmful than they're worth, and we decide it is not necessary to identify EMPTY elements, then we no longer have any use for either ETAGO or TAGC.  </s>
+<s> or, [[again]We can still use un-minimized end tags (aka [[cite]ISO 8879:1986 .... (SGML)]).]  </s>
+<s> You are right, there are problems with just about any delimiter characters we choose.  </s>
+<s> They either are too common in text, or don't offer the visual cues we'd like.  </s>
+<s> (I'm not too sure that foo /foo really provides any visual cues beyond what we've trained ourselvees to see.) There are several ways around this within 8879, none particularly attractive: 1) sacrifice the visual cue, choosing a rarely encountered character.  </s>
+<s> 2) require lots of character entity references.  </s>
+<s> How about &amp;L; and &amp;R;?  </s>
+<s> Hey, we never said we had to make it easy on the typist.  </s>
+<s> 3) allow the declaration of an alternate concrete syntax.  </s>
+<s> 4) invent some stupid MSOCHAR/MSICHAR/MSSCHAR trick for escaping.  </s>
+<s> 5) Use some non-text characters which resemble brackets when viewed, and teach our text editors to deal with 'em.  </s>
+<s> (offered by someone who wishes to remain anonymous) Any others?  </s>
+<s> -Bill  </s>

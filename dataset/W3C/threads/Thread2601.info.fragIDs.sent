@@ -1,72 +1,72 @@
-Rohit Khare and I have revised an updated his draft on how to use the 1.1 
-Upgrade header to signal a change to HTTP over TLS on the current connection, allowing secured operation without using a separate port. 
-The I-D announcement is at: The I-D itself is at: or in HTML at: l In addition to the material on how to use Upgrade, this draft requests the creation of an IANA registry for Upgrade tokens and one for HTTP error codes. 
-Scott Lawrence Director of R &amp; D lawrence@agranat.com 
-Agranat Systems, Inc. Embedded Web Technology http://www.agranat.com/ 
-Is this necessary? 
-Can you use the CONNECT method instead? 
-(I know it's not actually defined in RFC2616--it's just reserved--but it is implemented, and it'd be easier to codify existing practice than to come up with a new mechanism.) 
-The CONNECT implementation in Apache's mod_proxy (at least, the one I'm running, version 1.2.4) takes a host:port specifier as the Request-URI and 
-opens up a connection to that host:port. 
-(I assume that at least Netscape's proxy server does the same thing, since Netscape Communicator works through this proxy.) 
-This does require a separate port on the destination machine; but, if the destination machine is the machine processing the CONNECT, then you don't have to worry about firewalls in the way. 
-Furthermore, if the server processing the CONNECT is the same process as the secure server, it doesn't even actually have to use a loopback connection; it can just pass the incoming connection to its TLS code. 
-Of course, making the secure server a separate process is likely to be safer, since there's less chance of information leaking across connections; in that case, the insecure server may be able to transfer the connection to the secure server process (if the OS allows, and if they're implemented so as to cooperate). 
-|John Stracke | My opinions are my own | S/MIME &amp; HTML OK | |francis@ecal.com|============================================| |Chief Scientist | NT's lack of reliability is only surpassed | |eCal Corp. | by its lack of scalability. 
--- John Kirch | 
-From: John Stracke Subject: Re: Upgrading to TLS Within HTTP/1.1 draft available 
-It really isn't a new mechanism in the sense that this kind of change from one protocol to another was exactly what the Upgrade header was included in HTTP to accomplish; it's just that the specifics of how to use it were not spelled out in the spec. 
-The CONNECT mechanism is really trying to do something different. 
-It creates a tunnel through an existing proxy, but doesn't signal the protocol to be used end-to-end on that connection. 
-Part of the goal here is to show how secured and unsecured traffic in any 
-protocol can share a TCP well known port, so that we can get away from 
-assigning two ports to each protocol. 
-Scott Lawrence Director of R &amp; D lawrence@agranat.com 
-Agranat Systems, Inc. Embedded Web Technology http://www.agranat.com/ 
-But aren't there security benefits to having separate ports (e.g., making it possible to run your secure server in a separate process)? 
-|John Stracke | My opinions are my own | S/MIME &amp; HTML OK | |francis@ecal.com|============================================| |Chief Scientist | NT's lack of reliability is only surpassed | |eCal Corp. | by its lack of scalability. 
--- John Kirch | 
-Sender: francis@ariel.local.thibault.org 
-From: John Stracke francis@ecal.com 
-Resent-From: http-wg@hplb.hpl.hp.com Date: Tue, 29 Jun 1999 16:47:55 +0000 Subject: Re: Upgrading to TLS Within HTTP/1.1 draft available 
-No: the problem is that establishing a connection to a separate port allows for man-in-the-middle attacks at connection establishment times; 
-you are just making attacks easier using different port numbers. 
-The new IESG/IANA policy is therefore to no longer allocate independent port numbers for secure connections. 
-This is the stronger motivation than conserving port numbers. 
-- Jim Gettys 
-OK, got it. 
-Thanks for the explanation. 
-|John Stracke | My opinions are my own | S/MIME &amp; HTML OK | |francis@ecal.com|============================================| |Chief Scientist | NT's lack of reliability is only surpassed | |eCal Corp. | by its lack of scalability. 
--- John Kirch | 
-From: francis@ariel.local.thibault.org 
-On Behalf Of John Stracke 
-There is nothing about the proposal that prevents that; I may run my secure server at http://www.example.com/ 
-and the secure one at IP address or a Host header value, or a part of the URL path to determine that the request needs to be upgraded to a secure connection. 
-In any event, separate ports are orthogonal to separate processes; one does not imply or require the other. 
-Scott Lawrence Director of R &amp; D lawrence@agranat.com 
-Agranat Systems, Inc. Embedded Web Technology http://www.agranat.com/ 
-John, We have been over this subject with the IETF Application Area Directors. 
-They don't want to see any extra ports for security. 
-Full stop. 
-Carl-Uno 
-From: John Stracke [mailto:francis@ecal.com] Sent: Tuesday, June 29, 1999 9:48 AM Subject: Re: Upgrading to TLS Within HTTP/1.1 draft available 
-I think the point is the reverse one: a single port requires a single process (or at least a family of related processes). 
-I cannot run two different pieces of software on one port _and_ get reasonable performance (if I care not about performance, its no problem, of 
-course). 
-Cheers, Ben. 
-"My grandfather once told me that there are two kinds of people: those who work and those who take the credit. 
-He told me to try to be in the first group; there was less competition there." - Indira Gandhi 
-It's possible on most Unices, where you can pass file descriptors from one process to another. 
-They need to cooperate, though, and the receiving process has to trust the sending process not to play man-in-the-middle games. 
-|John Stracke | My opinions are my own | S/MIME &amp; HTML OK | |francis@ecal.com|============================================| |Chief Scientist | NT's lack of reliability is only surpassed | |eCal Corp. | by its lack of scalability. 
--- John Kirch | 
-It is possible, but not particularly efficient or portable. 
-ISTR one of the very first things Apache did was to get rid of that nonsense. 
-Cheers, Ben. 
-"My grandfather once told me that there are two kinds of people: those who work and those who take the credit. 
-He told me to try to be in the first group; there was less competition there." - Indira Gandhi 
-More precisely, Apache chose not to adopt it. 
-NCSA 1.4 used an fd-passing scheme in order to handle accepts on its persistent child processes; the parent server accepted connections, and then fd-passed them to the children. 
-When we were trying to figure out what to do about producing a non-fork-per-request version of Apache, Rob Hartill did some experiments which pretty quickly showed that a simpler approach could yield results at least as good. 
-If you really need fd-passing behavior, there's sample code in one of Stevens' books ("Advanced Programming in the Unix Environment"), but it's messy; IIRC, there are multiple variants to deal with the variety of interfaces in different Unix variants. 
-rst 
+<s> Rohit Khare and I have revised an updated his draft on how to use the 1.1  </s>
+<s> Upgrade header to signal a change to HTTP over TLS on the current connection, allowing secured operation without using a separate port.  </s>
+<s> The I-D announcement is at: The I-D itself is at: or in HTML at: l In addition to the material on how to use Upgrade, this draft requests the creation of an IANA registry for Upgrade tokens and one for HTTP error codes.  </s>
+<s> Scott Lawrence Director of R &amp; D lawrence@agranat.com  </s>
+<s> Agranat Systems, Inc. Embedded Web Technology http://www.agranat.com/  </s>
+<s> Is this necessary?  </s>
+<s> Can you use the CONNECT method instead?  </s>
+<s> (I know it's not actually defined in RFC2616--it's just reserved--but it is implemented, and it'd be easier to codify existing practice than to come up with a new mechanism.)  </s>
+<s> The CONNECT implementation in Apache's mod_proxy (at least, the one I'm running, version 1.2.4) takes a host:port specifier as the Request-URI and  </s>
+<s> opens up a connection to that host:port.  </s>
+<s> (I assume that at least Netscape's proxy server does the same thing, since Netscape Communicator works through this proxy.)  </s>
+<s> This does require a separate port on the destination machine; but, if the destination machine is the machine processing the CONNECT, then you don't have to worry about firewalls in the way.  </s>
+<s> Furthermore, if the server processing the CONNECT is the same process as the secure server, it doesn't even actually have to use a loopback connection; it can just pass the incoming connection to its TLS code.  </s>
+<s> Of course, making the secure server a separate process is likely to be safer, since there's less chance of information leaking across connections; in that case, the insecure server may be able to transfer the connection to the secure server process (if the OS allows, and if they're implemented so as to cooperate).  </s>
+<s> |John Stracke | My opinions are my own | S/MIME &amp; HTML OK | |francis@ecal.com|============================================| |Chief Scientist | NT's lack of reliability is only surpassed | |eCal Corp. | by its lack of scalability.  </s>
+<s> -- John Kirch |  </s>
+<s> From: John Stracke Subject: Re: Upgrading to TLS Within HTTP/1.1 draft available  </s>
+<s> It really isn't a new mechanism in the sense that this kind of change from one protocol to another was exactly what the Upgrade header was included in HTTP to accomplish; it's just that the specifics of how to use it were not spelled out in the spec.  </s>
+<s> The CONNECT mechanism is really trying to do something different.  </s>
+<s> It creates a tunnel through an existing proxy, but doesn't signal the protocol to be used end-to-end on that connection.  </s>
+<s> Part of the goal here is to show how secured and unsecured traffic in any  </s>
+<s> protocol can share a TCP well known port, so that we can get away from  </s>
+<s> assigning two ports to each protocol.  </s>
+<s> Scott Lawrence Director of R &amp; D lawrence@agranat.com  </s>
+<s> Agranat Systems, Inc. Embedded Web Technology http://www.agranat.com/  </s>
+<s> But aren't there security benefits to having separate ports (e.g., making it possible to run your secure server in a separate process)?  </s>
+<s> |John Stracke | My opinions are my own | S/MIME &amp; HTML OK | |francis@ecal.com|============================================| |Chief Scientist | NT's lack of reliability is only surpassed | |eCal Corp. | by its lack of scalability.  </s>
+<s> -- John Kirch |  </s>
+<s> Sender: francis@ariel.local.thibault.org  </s>
+<s> From: John Stracke francis@ecal.com  </s>
+<s> Resent-From: http-wg@hplb.hpl.hp.com Date: Tue, 29 Jun 1999 16:47:55 +0000 Subject: Re: Upgrading to TLS Within HTTP/1.1 draft available  </s>
+<s> No: the problem is that establishing a connection to a separate port allows for man-in-the-middle attacks at connection establishment times;  </s>
+<s> you are just making attacks easier using different port numbers.  </s>
+<s> The new IESG/IANA policy is therefore to no longer allocate independent port numbers for secure connections.  </s>
+<s> This is the stronger motivation than conserving port numbers.  </s>
+<s> - Jim Gettys  </s>
+<s> OK, got it.  </s>
+<s> Thanks for the explanation.  </s>
+<s> |John Stracke | My opinions are my own | S/MIME &amp; HTML OK | |francis@ecal.com|============================================| |Chief Scientist | NT's lack of reliability is only surpassed | |eCal Corp. | by its lack of scalability.  </s>
+<s> -- John Kirch |  </s>
+<s> From: francis@ariel.local.thibault.org  </s>
+<s> On Behalf Of John Stracke  </s>
+<s> There is nothing about the proposal that prevents that; I may run my secure server at http://www.example.com/  </s>
+<s> and the secure one at IP address or a Host header value, or a part of the URL path to determine that the request needs to be upgraded to a secure connection.  </s>
+<s> In any event, separate ports are orthogonal to separate processes; one does not imply or require the other.  </s>
+<s> Scott Lawrence Director of R &amp; D lawrence@agranat.com  </s>
+<s> Agranat Systems, Inc. Embedded Web Technology http://www.agranat.com/  </s>
+<s> John, We have been over this subject with the IETF Application Area Directors.  </s>
+<s> They don't want to see any extra ports for security.  </s>
+<s> Full stop.  </s>
+<s> Carl-Uno  </s>
+<s> From: John Stracke [mailto:francis@ecal.com] Sent: Tuesday, June 29, 1999 9:48 AM Subject: Re: Upgrading to TLS Within HTTP/1.1 draft available  </s>
+<s> I think the point is the reverse one: a single port requires a single process (or at least a family of related processes).  </s>
+<s> I cannot run two different pieces of software on one port _and_ get reasonable performance (if I care not about performance, its no problem, of  </s>
+<s> course).  </s>
+<s> Cheers, Ben.  </s>
+<s> "My grandfather once told me that there are two kinds of people: those who work and those who take the credit.  </s>
+<s> He told me to try to be in the first group; there was less competition there." - Indira Gandhi  </s>
+<s> It's possible on most Unices, where you can pass file descriptors from one process to another.  </s>
+<s> They need to cooperate, though, and the receiving process has to trust the sending process not to play man-in-the-middle games.  </s>
+<s> |John Stracke | My opinions are my own | S/MIME &amp; HTML OK | |francis@ecal.com|============================================| |Chief Scientist | NT's lack of reliability is only surpassed | |eCal Corp. | by its lack of scalability.  </s>
+<s> -- John Kirch |  </s>
+<s> It is possible, but not particularly efficient or portable.  </s>
+<s> ISTR one of the very first things Apache did was to get rid of that nonsense.  </s>
+<s> Cheers, Ben.  </s>
+<s> "My grandfather once told me that there are two kinds of people: those who work and those who take the credit.  </s>
+<s> He told me to try to be in the first group; there was less competition there." - Indira Gandhi  </s>
+<s> More precisely, Apache chose not to adopt it.  </s>
+<s> NCSA 1.4 used an fd-passing scheme in order to handle accepts on its persistent child processes; the parent server accepted connections, and then fd-passed them to the children.  </s>
+<s> When we were trying to figure out what to do about producing a non-fork-per-request version of Apache, Rob Hartill did some experiments which pretty quickly showed that a simpler approach could yield results at least as good.  </s>
+<s> If you really need fd-passing behavior, there's sample code in one of Stevens' books ("Advanced Programming in the Unix Environment"), but it's messy; IIRC, there are multiple variants to deal with the variety of interfaces in different Unix variants.  </s>
+<s> rst  </s>

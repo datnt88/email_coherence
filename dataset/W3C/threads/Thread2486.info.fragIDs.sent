@@ -1,156 +1,156 @@
-I have reviewed the current proposal for State Management, and would like to suggest one additional cookie attribute that would be extremely useful for inTRAnet environments. 
-Specifically, I would like to suggest a new attribute that will specify a URL to be submitted if the user closes the browser while the cookie is still valid. 
-This new attribute would be used to make sure that server resources are freed if the user terminates the browser without logging off from the application. 
-The situation I am addressing is the case where an application is implemented on a mainframe or very large Unix server. 
-The application requires a logon, and maintains some context between interactions with the browser. 
-The cookie allows the application to select the correct context. 
-The following issues will exist in such an application. 
-1. 10,000 or more users connected. 
-2. The application *WILL* contain a logout button that users *should* press when disconnecting. 3. The application *WILL* have a timeout mechanism to expire sessions that 
-have not been active. 
-4. All users are behind corporate firewall, and employees of the company. 
-The problem that occurs is that some users do not press the logout button. 
-When this occurs, the mainframe must hold the resources associated with the context until the timeout occurs. 
-In some cases, this involves holding database resources and memory resources that impact overall system performance. 
-A malicious user might even mount a denial of service attack by starting many sessions. 
-In order to notify the server that the browser has terminated, and consequently will not be sending a logout anytime soon, I would like to 
-propose a new cookie attribute that would be processed by the browser during shutdown. 
-The attribute would specify a URL to be submitted that would tell the mainframe server to terminate the session and free associated resources. 
-I recognize that such a mechanism will not be acceptable to users in general. 
-However, for the corporate inTRAnet environment, it is important to be able to manage resources, and the availability of such an attribute would significantly improve availability and performance of a server. 
-As corporations replace 3270 terminals with browsers, this type of mechanism will become more important. 
-There are a number of very good reasons why one might not want the browser executing such a cookie. 
-Privacy issues, connection statistics, and many more. 
-Performance is another factor. 
-If a browser collected several of these cookies, it could take a while to shut down. 
-Recognizing these issues, I suggest that the user have full control over the proposed EndSession attribute. 
-The user should be able to configure a browser to act on this attribute in any number of optional ways: a. ignore the attribute completely b. 
-notify user when EndSession attribute is received c. notify user when EndSession is about to be executed during browser shutdown d. process EndSession only for specific "trusted" sites, thus allowing corporate applications to use EndSession, while rejecting the attribute from general internet sites. 
-There may be other optional modes of processing as well. 
-Summary: The EndSession attribute would allow a site to *ask* the browser to execute a logoff url if the browser is shut down. 
-This attribute attempts to solve a very specific problem for large scale corporate inTRAnet applications. 
-I would hope that this attribute is executed very rarely. 
-Normally, users will end a session explicitly by using an application LOGOFF button. 
-The user should have full control over how a browser processes such an attribute. 
-Finally, the attribute name "EndSession" is only a suggestion. 
-The working group may have a much better name. 
-The proposed user controls at the browser level are also only suggestions. 
-The wg may have a better solution for user management. 
-Michael Giroux 
-On Monday, April 28, 1997 7:37 AM, Scott Lawrence [SMTP:lawrence@agranat.com] 
-"MG" == Michael Giroux mgiroux@worldnet.att.net : 
-This is precisely why the browser needs to have configuration options for processing. 
-I fail to see how adding an attribute to the specification causes the problems that you envision. 
-First, the browser is not required to implement support. 
-Second, this is for inTRAnet applications where sites will have considerable 
-control over user configurations. 
-Finally, if the specification suggests that browsers should ignore such an attribute by default, then it seems tough to make any assumptions about it. 
-In addition, because you can't assume among other things that: - the users browser is up to date enough to support this - the user has not configured the browser to disable this - the client system will not crash 
-This feature is intended for inTRAnet applications. 
-In this case, the browsers *will* be up to date, and the site will dictate how to configure the browsers. 
-Again, inTRAnet. 
-These are corporate applications, behind the firewall, inside the glass house, ... Corporate policy will mandate that the proper browser is installed, and that it is configured appropriately. 
-As I said, the intent is for inTRAnet applications where the site administration has considerable control over the user environment. 
-True that the server will have to program for timeouts, but this should not preclude the workgroup from considering features that allow a site to improve on the situation. 
-It seems a bit shortsighted to leave a feature out of the specification just because it might cause a security problem. 
-If all specs took potential risks into account, we would never have been able to do file io or dereference pointers in C. Michael Giroux 
-On Tuesday, April 29, 1997 12:02 AM, Josh Cohen [SMTP:josh@netscape.com] 
-Hi Mike, I understand the problme you are trying to solve, but I see a large number of difficulties with the method which you are trying to solve it. 
-button. 
-1 On the D.O.S. attack, I dont really see how this helps. 
-In mounting any serious attack, the attacker would be smart to write a small client program to produce many sessions, assuming it could defeat a duplicate IP addr check ( multi session same client ), it could simply choose never to honor your endsession url.. 
-I agree, a clever programmer will write a program. 
-This would only stop beginners. 
-2 What about people like me who leave their browsers running forever, I just lock my screen at night, etc.. 
-The endession would never get executed. 
-The server will be required to have a timeout on the sessions. 
-I tried to explain that in the initial post. 
-However, always relying on the timeout will force servers to hold resources longer than necessary. 
-One sure event that could be trapped is browser shutdown. 
-Any sessions that are terminated prior to the server defined timeout will help. 
-3 Dont cookies often persist longer than the 'browser session' ? 
-ie stored in the cookie file? 
-SHould the browser delete the cookie on shutdown ? 
-Some cookies can persist longer than the browser session, but the State Management spec states that the DISCARD attribute, and Max-Age attributes will control this. 
-4. What is the method which the endsession URL should be submitted? 
-POST, GET? 
-What is the browser to do with the response? 
-This could be specified in the EndSession attribute. 
-However, I suspect it should be a POST. 
-5. Security. 
-Gee, this sounds like a nice way for a site to induce a client to access an abritrary URL at shutdown. 
-What if the URL is a file containing Java, ActiveX or the like ? 
-I agree this is a concern. 
-This concern is exactly why the browser needs to implement user control over whether this attribute is processed. 
-For the inTRAnet case, the server would be trusted, and this is not a concern. 
-I suggest that the browser be configurable to specify a set of trusted servers that this attribute will be accepted from. 
-Michael Giroux 
-The suggestion that 
-- the users browser is up to date enough to support this 
-Does not seem to apply. 
-This is a specification for a new type of cookie, defined by Set-Cookie2, and there is no guarantee that the browser will support the Set-Cookie2, least of all one of the attributes. 
-For those browsers that do support Set-Cookie2, the EndSession attribute would be entirely optional. 
-The specification would only define how the attribute is processed *if* implemented. 
-As for 
-- the client system will not crash 
-Any brwoser that crashes is coded incorrectly. 
-Browsers are supposed to ignore headers they do not recognize. 
-From the draft for HTTP State Management Mechanism (Rev 1) dated March 19, 1997 "The user agent should ignore attribute-values pairs whos attribute it does not recognize." 
-On the issue of security, here again, the draft is fairly clear "This state management specification therefore requires that a user agent give the user control over such a possible intrusion, although the interface through which the user is given this control is left unspecified." 
-On Monday, April 28, 1997 7:37 AM, Scott Lawrence [SMTP:lawrence@agranat.com] 
-"MG" == Michael Giroux mgiroux@worldnet.att.net : 
-Hi Mike, I understand the problme you are trying to solve, but I see a large number of difficulties with the method which you are trying to solve it. 
-1 On the D.O.S. attack, I dont really see how this helps. 
-In mounting any serious attack, the attacker would be smart to write a small client program to produce many sessions, assuming it could defeat a duplicate IP addr check ( multi session same client ), it could simply choose never to honor your endsession url.. 2 What about people like me who leave their browsers running forever, I just lock my screen at night, etc.. 
-The endession would never get executed. 
-3 Dont cookies often persist longer than the 'browser session' ? 
-ie stored in the cookie file? 
-SHould the browser delete the cookie on shutdown ? 
-4. What is the method which the endsession URL should be submitted? 
-POST, GET? 
-What is the browser to do with the response? 
-5. Security. 
-Gee, this sounds like a nice way for a site to induce a client to access an abritrary URL at shutdown. 
-What if the URL is a file containing Java, ActiveX or the like ? 
-Josh Cohen Netscape Communications Corp. Netscape Fire Department "Mighty Morphin' Proxy Ranger" Server Engineering josh@netscape.com http://home.netscape.com/people/josh/ 
-Michael, It is putting it perhaps to strongly to say that the IETF is the "Internet Engineering Task Force" and not the "InTRAnet Engineering Task Force", but in general there's very little sympathy for the point of view that Internet Standards need not take into account the security considerations necessary for deployment across the Internet. 
-This is true in general, but seems even more applicable in this particular case, where your proposal is motivated primarily by a desire to close off a security problem in the first place. 
-What we've learned is that non-beginners share their hacks with beginners so that everyone on alt.cool.hack.warez 
-knows how to crack the system. 
-In short: there's some sympathy that you've identified a 'problem', but your 'proposal' to solve the problem doesn't do so effectively. 
-In lieu of a more effective proposal, I don't think we're going to make progress on this issue. 
-Regards, Larry 
-On Wed, 30 Apr 1997 21:35:06 -0700, Michael Giroux 
-offering alternatives. 
-As you indicated, I have identified a problem. 
-It would be nice to get some discussion on it. 
-Seems to me the problem is a social one, not a technological one, so use a social solution. 
-Find a way to more strongly encourage end-users to logout. 
-For instance, automatically send them warning emails if they time-out instead of logout. 
-Flash big warning messages to them at next logon. 
-Cut their pay. 
-Whatever. 
-Daniel DuBois ddubois@pobox.com 
-Software Engineer (415) 917-1126 
-offering alternatives. 
-As you indicated, I have identified a problem. 
-It would be nice to get some discussion on it. 
-Surely you jest! 
-We have a technologically flawed protocol and you propose that a social solution be applied. 
-The stateless nature of HTTP has some positive implications and some negative implications. 
-The complete lack of any potential for automatic detection of user disconnect is a major negative problem for folks building interactive applications on top of HTTP. 
-I really don't see any security issue with a server registering a disconnect URL with a user agent. 
-I think a GET method should be used to keep the protocol simple and stress the restriction on side-effects. 
-If the URL can only be sent back to the server which registered it and if the registration can only arrive with an explicit user initiated transaction and not an indirect transaction. 
-Furthermore, define the URL as having a 'don't care' response ... as in send on a best effort basis and close after the status is received or whatever but ignore the response content, etc. Define some conditions which represent session termination ... UA is exited, user backs up in the history list and starts down a new path, perhaps the user types a new URL manually. 
-Essentially, a 'session' is over when the user can no longer click on links/buttons within the application context. 
-My perspective is that there is certainly a problem here. 
-There are safe technological approaches for improving the situation but I'm not really motivated to spend group time working on a solution given the large list of pressing issues. 
-A good topic for HTTP-2-WG, in part because I would rather see a new method like DISCON to convey the logical disconnect and in part because this group is supposed to finish sometime soon. 
-Dave Morris 
-I never tried to claim that I had the perfect solution. 
-My understanding was that the http-wg would discuss issues and hopefully come up with acceptable solutions. 
-The HTTP-WG is currently primarily discussing those issues that have arisen in the interpretation of the HTTP/1.1 spec we delivered and the implementation of HTTP/1.1, or those few issues which we decided to leave on our agenda. 
-It's an open mailing list, and of course people post interesting problems and we discuss them a bit, but I feel some responsibility for cutting off discussion on "new" issues if we're not getting anywhere on them. 
-We're currently considering a new draft of PEP, a Protocol Extension Protocol. 
-Could your session ending state be implemented with PEP? 
+<s> I have reviewed the current proposal for State Management, and would like to suggest one additional cookie attribute that would be extremely useful for inTRAnet environments.  </s>
+<s> Specifically, I would like to suggest a new attribute that will specify a URL to be submitted if the user closes the browser while the cookie is still valid.  </s>
+<s> This new attribute would be used to make sure that server resources are freed if the user terminates the browser without logging off from the application.  </s>
+<s> The situation I am addressing is the case where an application is implemented on a mainframe or very large Unix server.  </s>
+<s> The application requires a logon, and maintains some context between interactions with the browser.  </s>
+<s> The cookie allows the application to select the correct context.  </s>
+<s> The following issues will exist in such an application.  </s>
+<s> 1. 10,000 or more users connected.  </s>
+<s> 2. The application *WILL* contain a logout button that users *should* press when disconnecting. 3. The application *WILL* have a timeout mechanism to expire sessions that  </s>
+<s> have not been active.  </s>
+<s> 4. All users are behind corporate firewall, and employees of the company.  </s>
+<s> The problem that occurs is that some users do not press the logout button.  </s>
+<s> When this occurs, the mainframe must hold the resources associated with the context until the timeout occurs.  </s>
+<s> In some cases, this involves holding database resources and memory resources that impact overall system performance.  </s>
+<s> A malicious user might even mount a denial of service attack by starting many sessions.  </s>
+<s> In order to notify the server that the browser has terminated, and consequently will not be sending a logout anytime soon, I would like to  </s>
+<s> propose a new cookie attribute that would be processed by the browser during shutdown.  </s>
+<s> The attribute would specify a URL to be submitted that would tell the mainframe server to terminate the session and free associated resources.  </s>
+<s> I recognize that such a mechanism will not be acceptable to users in general.  </s>
+<s> However, for the corporate inTRAnet environment, it is important to be able to manage resources, and the availability of such an attribute would significantly improve availability and performance of a server.  </s>
+<s> As corporations replace 3270 terminals with browsers, this type of mechanism will become more important.  </s>
+<s> There are a number of very good reasons why one might not want the browser executing such a cookie.  </s>
+<s> Privacy issues, connection statistics, and many more.  </s>
+<s> Performance is another factor.  </s>
+<s> If a browser collected several of these cookies, it could take a while to shut down.  </s>
+<s> Recognizing these issues, I suggest that the user have full control over the proposed EndSession attribute.  </s>
+<s> The user should be able to configure a browser to act on this attribute in any number of optional ways: a. ignore the attribute completely b.  </s>
+<s> notify user when EndSession attribute is received c. notify user when EndSession is about to be executed during browser shutdown d. process EndSession only for specific "trusted" sites, thus allowing corporate applications to use EndSession, while rejecting the attribute from general internet sites.  </s>
+<s> There may be other optional modes of processing as well.  </s>
+<s> Summary: The EndSession attribute would allow a site to *ask* the browser to execute a logoff url if the browser is shut down.  </s>
+<s> This attribute attempts to solve a very specific problem for large scale corporate inTRAnet applications.  </s>
+<s> I would hope that this attribute is executed very rarely.  </s>
+<s> Normally, users will end a session explicitly by using an application LOGOFF button.  </s>
+<s> The user should have full control over how a browser processes such an attribute.  </s>
+<s> Finally, the attribute name "EndSession" is only a suggestion.  </s>
+<s> The working group may have a much better name.  </s>
+<s> The proposed user controls at the browser level are also only suggestions.  </s>
+<s> The wg may have a better solution for user management.  </s>
+<s> Michael Giroux  </s>
+<s> On Monday, April 28, 1997 7:37 AM, Scott Lawrence [SMTP:lawrence@agranat.com]  </s>
+<s> "MG" == Michael Giroux mgiroux@worldnet.att.net :  </s>
+<s> This is precisely why the browser needs to have configuration options for processing.  </s>
+<s> I fail to see how adding an attribute to the specification causes the problems that you envision.  </s>
+<s> First, the browser is not required to implement support.  </s>
+<s> Second, this is for inTRAnet applications where sites will have considerable  </s>
+<s> control over user configurations.  </s>
+<s> Finally, if the specification suggests that browsers should ignore such an attribute by default, then it seems tough to make any assumptions about it.  </s>
+<s> In addition, because you can't assume among other things that: - the users browser is up to date enough to support this - the user has not configured the browser to disable this - the client system will not crash  </s>
+<s> This feature is intended for inTRAnet applications.  </s>
+<s> In this case, the browsers *will* be up to date, and the site will dictate how to configure the browsers.  </s>
+<s> Again, inTRAnet.  </s>
+<s> These are corporate applications, behind the firewall, inside the glass house, ... Corporate policy will mandate that the proper browser is installed, and that it is configured appropriately.  </s>
+<s> As I said, the intent is for inTRAnet applications where the site administration has considerable control over the user environment.  </s>
+<s> True that the server will have to program for timeouts, but this should not preclude the workgroup from considering features that allow a site to improve on the situation.  </s>
+<s> It seems a bit shortsighted to leave a feature out of the specification just because it might cause a security problem.  </s>
+<s> If all specs took potential risks into account, we would never have been able to do file io or dereference pointers in C. Michael Giroux  </s>
+<s> On Tuesday, April 29, 1997 12:02 AM, Josh Cohen [SMTP:josh@netscape.com]  </s>
+<s> Hi Mike, I understand the problme you are trying to solve, but I see a large number of difficulties with the method which you are trying to solve it.  </s>
+<s> button.  </s>
+<s> 1 On the D.O.S. attack, I dont really see how this helps.  </s>
+<s> In mounting any serious attack, the attacker would be smart to write a small client program to produce many sessions, assuming it could defeat a duplicate IP addr check ( multi session same client ), it could simply choose never to honor your endsession url..  </s>
+<s> I agree, a clever programmer will write a program.  </s>
+<s> This would only stop beginners.  </s>
+<s> 2 What about people like me who leave their browsers running forever, I just lock my screen at night, etc..  </s>
+<s> The endession would never get executed.  </s>
+<s> The server will be required to have a timeout on the sessions.  </s>
+<s> I tried to explain that in the initial post.  </s>
+<s> However, always relying on the timeout will force servers to hold resources longer than necessary.  </s>
+<s> One sure event that could be trapped is browser shutdown.  </s>
+<s> Any sessions that are terminated prior to the server defined timeout will help.  </s>
+<s> 3 Dont cookies often persist longer than the 'browser session' ?  </s>
+<s> ie stored in the cookie file?  </s>
+<s> SHould the browser delete the cookie on shutdown ?  </s>
+<s> Some cookies can persist longer than the browser session, but the State Management spec states that the DISCARD attribute, and Max-Age attributes will control this.  </s>
+<s> 4. What is the method which the endsession URL should be submitted?  </s>
+<s> POST, GET?  </s>
+<s> What is the browser to do with the response?  </s>
+<s> This could be specified in the EndSession attribute.  </s>
+<s> However, I suspect it should be a POST.  </s>
+<s> 5. Security.  </s>
+<s> Gee, this sounds like a nice way for a site to induce a client to access an abritrary URL at shutdown.  </s>
+<s> What if the URL is a file containing Java, ActiveX or the like ?  </s>
+<s> I agree this is a concern.  </s>
+<s> This concern is exactly why the browser needs to implement user control over whether this attribute is processed.  </s>
+<s> For the inTRAnet case, the server would be trusted, and this is not a concern.  </s>
+<s> I suggest that the browser be configurable to specify a set of trusted servers that this attribute will be accepted from.  </s>
+<s> Michael Giroux  </s>
+<s> The suggestion that  </s>
+<s> - the users browser is up to date enough to support this  </s>
+<s> Does not seem to apply.  </s>
+<s> This is a specification for a new type of cookie, defined by Set-Cookie2, and there is no guarantee that the browser will support the Set-Cookie2, least of all one of the attributes.  </s>
+<s> For those browsers that do support Set-Cookie2, the EndSession attribute would be entirely optional.  </s>
+<s> The specification would only define how the attribute is processed *if* implemented.  </s>
+<s> As for  </s>
+<s> - the client system will not crash  </s>
+<s> Any brwoser that crashes is coded incorrectly.  </s>
+<s> Browsers are supposed to ignore headers they do not recognize.  </s>
+<s> From the draft for HTTP State Management Mechanism (Rev 1) dated March 19, 1997 "The user agent should ignore attribute-values pairs whos attribute it does not recognize."  </s>
+<s> On the issue of security, here again, the draft is fairly clear "This state management specification therefore requires that a user agent give the user control over such a possible intrusion, although the interface through which the user is given this control is left unspecified."  </s>
+<s> On Monday, April 28, 1997 7:37 AM, Scott Lawrence [SMTP:lawrence@agranat.com]  </s>
+<s> "MG" == Michael Giroux mgiroux@worldnet.att.net :  </s>
+<s> Hi Mike, I understand the problme you are trying to solve, but I see a large number of difficulties with the method which you are trying to solve it.  </s>
+<s> 1 On the D.O.S. attack, I dont really see how this helps.  </s>
+<s> In mounting any serious attack, the attacker would be smart to write a small client program to produce many sessions, assuming it could defeat a duplicate IP addr check ( multi session same client ), it could simply choose never to honor your endsession url.. 2 What about people like me who leave their browsers running forever, I just lock my screen at night, etc..  </s>
+<s> The endession would never get executed.  </s>
+<s> 3 Dont cookies often persist longer than the 'browser session' ?  </s>
+<s> ie stored in the cookie file?  </s>
+<s> SHould the browser delete the cookie on shutdown ?  </s>
+<s> 4. What is the method which the endsession URL should be submitted?  </s>
+<s> POST, GET?  </s>
+<s> What is the browser to do with the response?  </s>
+<s> 5. Security.  </s>
+<s> Gee, this sounds like a nice way for a site to induce a client to access an abritrary URL at shutdown.  </s>
+<s> What if the URL is a file containing Java, ActiveX or the like ?  </s>
+<s> Josh Cohen Netscape Communications Corp. Netscape Fire Department "Mighty Morphin' Proxy Ranger" Server Engineering josh@netscape.com http://home.netscape.com/people/josh/  </s>
+<s> Michael, It is putting it perhaps to strongly to say that the IETF is the "Internet Engineering Task Force" and not the "InTRAnet Engineering Task Force", but in general there's very little sympathy for the point of view that Internet Standards need not take into account the security considerations necessary for deployment across the Internet.  </s>
+<s> This is true in general, but seems even more applicable in this particular case, where your proposal is motivated primarily by a desire to close off a security problem in the first place.  </s>
+<s> What we've learned is that non-beginners share their hacks with beginners so that everyone on alt.cool.hack.warez  </s>
+<s> knows how to crack the system.  </s>
+<s> In short: there's some sympathy that you've identified a 'problem', but your 'proposal' to solve the problem doesn't do so effectively.  </s>
+<s> In lieu of a more effective proposal, I don't think we're going to make progress on this issue.  </s>
+<s> Regards, Larry  </s>
+<s> On Wed, 30 Apr 1997 21:35:06 -0700, Michael Giroux  </s>
+<s> offering alternatives.  </s>
+<s> As you indicated, I have identified a problem.  </s>
+<s> It would be nice to get some discussion on it.  </s>
+<s> Seems to me the problem is a social one, not a technological one, so use a social solution.  </s>
+<s> Find a way to more strongly encourage end-users to logout.  </s>
+<s> For instance, automatically send them warning emails if they time-out instead of logout.  </s>
+<s> Flash big warning messages to them at next logon.  </s>
+<s> Cut their pay.  </s>
+<s> Whatever.  </s>
+<s> Daniel DuBois ddubois@pobox.com  </s>
+<s> Software Engineer (415) 917-1126  </s>
+<s> offering alternatives.  </s>
+<s> As you indicated, I have identified a problem.  </s>
+<s> It would be nice to get some discussion on it.  </s>
+<s> Surely you jest!  </s>
+<s> We have a technologically flawed protocol and you propose that a social solution be applied.  </s>
+<s> The stateless nature of HTTP has some positive implications and some negative implications.  </s>
+<s> The complete lack of any potential for automatic detection of user disconnect is a major negative problem for folks building interactive applications on top of HTTP.  </s>
+<s> I really don't see any security issue with a server registering a disconnect URL with a user agent.  </s>
+<s> I think a GET method should be used to keep the protocol simple and stress the restriction on side-effects.  </s>
+<s> If the URL can only be sent back to the server which registered it and if the registration can only arrive with an explicit user initiated transaction and not an indirect transaction.  </s>
+<s> Furthermore, define the URL as having a 'don't care' response ... as in send on a best effort basis and close after the status is received or whatever but ignore the response content, etc. Define some conditions which represent session termination ... UA is exited, user backs up in the history list and starts down a new path, perhaps the user types a new URL manually.  </s>
+<s> Essentially, a 'session' is over when the user can no longer click on links/buttons within the application context.  </s>
+<s> My perspective is that there is certainly a problem here.  </s>
+<s> There are safe technological approaches for improving the situation but I'm not really motivated to spend group time working on a solution given the large list of pressing issues.  </s>
+<s> A good topic for HTTP-2-WG, in part because I would rather see a new method like DISCON to convey the logical disconnect and in part because this group is supposed to finish sometime soon.  </s>
+<s> Dave Morris  </s>
+<s> I never tried to claim that I had the perfect solution.  </s>
+<s> My understanding was that the http-wg would discuss issues and hopefully come up with acceptable solutions.  </s>
+<s> The HTTP-WG is currently primarily discussing those issues that have arisen in the interpretation of the HTTP/1.1 spec we delivered and the implementation of HTTP/1.1, or those few issues which we decided to leave on our agenda.  </s>
+<s> It's an open mailing list, and of course people post interesting problems and we discuss them a bit, but I feel some responsibility for cutting off discussion on "new" issues if we're not getting anywhere on them.  </s>
+<s> We're currently considering a new draft of PEP, a Protocol Extension Protocol.  </s>
+<s> Could your session ending state be implemented with PEP?  </s>

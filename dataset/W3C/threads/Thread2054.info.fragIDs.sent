@@ -1,280 +1,280 @@
-Below is a paper that I have put together proposing a method for making the WWW a truly international information repository. 
-It is submitted in the hope that it will raise discussion of the issues involved, and perhaps to serve as a goal for which we should all strive. 
-Certainly, the architecture outlined will not come to pass overnight, but both client and server implementors could start implementing the changes now, and as the tools spread, so the architecture will too. 
-I would appreciate any and all comments. 
-All errors of language or fact are solely my responsibility (ie. 
-if I am making a fool of anyone, I am making it of myself ;-)), and I would appreciate correction. 
-An HTML version of this paper is available upon request. 
-Merry Christmas to all! 
-HANDLING MULTILINGUAL DOCUMENTS IN THE WWW Gavin T. Nicol Electronic Book Technologies, Japan 1-29-9 Tsurumaki, Setagaya-ku, Tokyo 154, Japan gtn@ebt.com ABSTRACT. 
-The World Wide Web has enjoyed explosive growth in recent years, and there are now millions of people using it all around the world. 
-Despite the fact that the Internet, and the World Wide Web, span the globe, there is, as yet, no well-defined way of handling documents that contain multiple languages, character sets, or encodings thereof. 
-In this document, a method is proposed for cleanly handling such multilingual text on the WWW. 1. Requirements for multilingual applications 
-There are many issues facing a system claiming to be multilingual, though all issues fall into one of 3 categories: 1. 
-Data representation issues 2. Data manipulation issues 3. Data display issues 
-This document is primarily concerned with data representation, though display issues are also discussed in some detail. 
-Data manipulation is little discussed. 
-1.1 DATA REPRESENTATION ISSUES In general, the major data representation issues are character set selection, and character set encoding. 
-The biggest problem with 
-character set selection is that most are standards, and as Andy Tanenbaum once noted: The nice thing about standards is that there are so many to choose from. 
-Character set encodings suffer in much the same way. 
-There are a large number of character set encodings, and the number is *not* decreasing. 
-For any application that claims to be multilingual, it must obviously support the character sets, and encodings, used to represent the information it is processing. 
-It should be noted that multilingual data could conceivably contain multiple languages, character sets, and encodings, further complicating the problem. 
-1.2 DATA DISPLAY ISSUES Quite obviously, for a viewing application to be considered multilingual, it must be able to present multilingual data to the reader in a sensible manner. 
-The common problem to overcome here is obviously font mapping, however, languages around the world have different writing directions as well, and some languages have mixed writing directions, which should also be handled "correctly." 
-Note that in the above paragraph "in a sensible manner" does not necessarily mean "be able to rendered in it's native format." 
-One other possiblilty would be to render the multilingual document as a phonetic rendering in ASCII. 
-For example, if some Japanese text was sent to a person that cannot read Kanji, Hiragana, or Katakana, the browser could conceivably map the Japanese text into something like the following: Nihongo, tokuni Kanji, wa totemo muzukashii desu. 
-possibly with some extra text indicating that this is Japanese. 
-Another possibility is machine translation (which is becoming more viable year by year). 
-1.3 DATA MANIPULATION ISSUES In order to be multilingual, the application must be able to manipulate multilingual data (including such issues as collation, though this is not currently needed for browsing the WWW). 
-One major issue here is the representation of a character within the application, and the representation of strings. 
-In some applications, multibyte formats are used throughout, in others, fixed width, wide characters are used throughout. 
-In others, a combination is used. 
-1.4 SUMMARY OF REQUIREMENTS A multilingual application must be able to: 1. Support the character sets and encodings used to represent the information being manipulated. 
-2. Present the data meaningfully if the application is required to display the data. 
-3. Manipulate multilingual data internally. 
-2. Bringing multilingual capabilities to the WWW Having established some basic requirements, it is now time to look at how the above fits into the World Wide Web. 
-2.1 MIME ISSUES One of the problems with representing multilingual documents in the WWW is that MIME explicitly merges the character set and character set encodings together. 
-In fact, it is probably more accurate to say that MIME specifies only the character set encoding, which in turn defines a character set by implication. 
-For example: actually specifies the UTF-7 encoding of Unicode explicitly, but only specifies Unicode implicitly. 
-In addition, the MIME specification states that for the text/* data types, all line breaks must be indicated by a CRLF pair. 
-This implies that certain encodings cannot be used within the text/* data types if the WWW is to be strictly MIME conformant. 
-2.2 SGML ISSUES SGML does not define the representation of characters. 
-ISO 8879 defines a code set as a set of bit combinations of equal size, a character as an atom of information, a character repetoire as a group of characters, and a character set as a mapping of a character repetoire onto a code set such that each character is represented by a unique bit combination within the code set. 
-As such, an SGML parser is independent of the physical representation of the data, and there is often an internal representation of characters that could be quite different to that used in data storage. 
-ISO 8879 also defines some methods for handling things like ISO-2022, but some encodings for languages such a Thai cannot be handled by SGML, even if the SGML declaration is altered (though, it is possible for the application to deal with this within, or before, the entity manager). 
-2.3 BROWSERS ISSUES Basic requirements for a multilingual WWW browser were listed in section 1.4. 
-Let's now look at each as they apply to WWW browser like Mosaic. 
-2.3.1 Support the character sets and encodings As noted above, there are a huge number of character sets, and encodings. 
-If the above requirement is taken literally, it means that in order to have a multilingual WWW, each browser must potentially be able to understand this huge number of character sets and encodings. 
-Taken at face value it also means that the SGML parser would need to handle a large number of character sets, and one would not be able to have multiple character sets within a document (or to be precise, SGML provides no way for the parser to handle a given bit combination representing more than one character within a given document). 
-As such, the brute force approach would almost certainly have to map the multiple character sets and encodings to a single internal representation (though it is conceivable that character sets could be paged in and out, this approach would be very complicated to implement). 
-This internal representation would almost certainly have to be 16 bits wide, or wider. 
-SGML working group 8 has stated that multilingual systems should map data storage encodings to wide characters before, on in the entity manager (and the sp parser from James Clark serves as a good model of thier recommendations). 
-2.3.2 Present the data meaningfully One of the great benefits of SGML (and HTML to a lesser degree), is that it is independent of the display technology. 
-As such, the presentation issue depends very much on the application (for example, rendering multilingual documents on a TTY might require the aforementioned phonetic rendering, while GUI based systems require font mapping). 
-A common thread running through all display technologies is the need for some mapping from the character codes to some output representation. 
-While not required, using 16 bit (or greater) codes will probably simplify the mapping task as it requires only a single lookup table. 
-2.3.3 Internal multilingual data manipulation There are a large number of issues here, but in general, having a fixed width character eases the task of manipulating that data, especially in languages such as C, because it makes memory management and indexing easier. 
-In addition, fixed width codes require no sychronisation. 
-3. Is Unicode the answer? 
-In a word, YES! 
-Though there are a number of issues that need to be resolved in order for it to be used effectively. 
-3.1 WHAT ARE THE BENEFITS? 
-First, let's step back and look at the overall architecture The desired features in a multilingual WWW system are: 1. Allow publishers to create and manipulate documents in the local character set and character encoding scheme 2. Allow readers to follow a URL to a document, and expect to be able to read it irrespective of the character set and encoding used for document creation. 
-3. Allow readers to save the document in their preferred local encoding. 
-4. Scalability. 
-Will the solution work even when large numbers of languages, character sets, and encodings are used within a single document? 
-5. Keep implementations as simple as possible. 
-Unicode solves most if these items quite nicely. 
-The second and fourth points are covered because Unicode provides codes for most languages of the world. 
-It does not cover all languages completely, but it certainly contains enough for most common uses, and there are ways for handling the uncommon cases. 
-The last point is covered because the UCS-2 encoding of Unicode is a 16 bit wide, fixed width encoding. 
-As pointed out above, using such fixed width characters simplifies SGML parsing, display, and data manipulation. 
-The first and third points are not covered directly, but simple translation techniques can be used to achieve them as outlined below. 
-3.2 INCORPORATING UNICODE INTO THE WWW The following outlines a proposal for incorporating Unicode into the WWW in such a way that all of the above points are solved. 
-Where the word server is used, it should be taken to mean a HyperText Transfer Protocol (HTTP) server unless specifically qualified otherwise. 
-3.2.1 Unicode incorportation architecture 
-In order to make multilingual support as painless as possible, it is proposed that all HTTP servers for multilingual documents *should* be able to convert documents from the local character set encoding to UCS-2, UTF-8, and UTF-7 (16, 8 and 7 bit encodings of Unicode). 
-It is also proposed that all HTTP clients *should* be able to parse UCS-2, UTF-8 and UTF-7. 
-It is *recommended* that browsers allow the data to be saved as UTF-7, UTF-8, or UCS-2 (similar to the current ftp interface). 
-If possible, a browser *should* also allow the data to be saved in the local character set encoding, but that might not always be possible (for example, saving a document containing Arabic on an ASCII based system). 
-Documents sent from servers would then use a content type of: Though UTF-8 and UCS-2 will need some additional encoding applied to them in order to be strictly MIME compliant. 
-An alternative is to use an application/* type specifier instead. 
-This architecture has the following benefits: Conceptual Simplicity The model is very clear conceptually: a document is created in the local encoding, which is then converted into a commonly understood form. 
-Client-side processing occurs using this representation. 
-Ease of client implementation The number of clients far exceeds that of servers. 
-Thus, forcing clients to deal with a large number of characters sets and encodings requires more effort, and the lag in update period will be greater. 
-Imagine for example, if someone wants to add support for some new character set encoding they invented. 
-In order for support to be added to clients, one would have to update all clients that could potentially access such data. 
-Compare this to having to update only the servers working with that encoding directly. 
-In addition, because Unicode and UCS-2 are already well defined, it is possible to write an SGML parser, display subsystem, and data manipulation functions optimised for that representation, realising significant performance gains. 
-While initial implementations will need to write the code for handling Unicode, and the encodings thereof, it is expected that freely distributable libraries for such things will appear MIME and ASCII compatibility UTF-7 and UTF-8 are largely ASCII compatible. 
-In addition UTF-7 was designed as a method for encoding Unicode in MIME, so it is perfect for WWW and MIME uses HTML compatability Recent drafts of the HTML specification state that a MIME charset parameter will override the default IS0-8859-1, so this presents no problem. 
-In addition, it should not require large changes to current HTML parsers. 
-Truly multilingual As noted, this proposal uses Unicode. 
-All languages defined within ISO-10646 can be used within a single document. 
-SGML (HTML) parsers will work with UCS-2 directly, so different languages would be treated identically at the parsing level. 
-While the cost of performing translations from the local encoding to one of the Unicode encodings might appear prohibitive, it is believed that intelligent servers will cache translated documents in a manner similar to current proxy caches. 
-Between this, and the fact that most WWW documents are small, the performance hit should not be overly significant. 
-3.2.2 Extension to the basic architecture Requiring that *all* non-ASCII documents be converted to Unicode is probably a very poor idea as it would incur significant overhead. 
-Instead, HTTP clients can indicate encoding preferences via the Accept: field in the request header. 
-For example: If a server is able to deliver the document in one of the preferred encodings, it should do so. 
-This will allow clients and servers sharing a common local encoding to transfer documents without the overhead of Unicode translation. 
-Note that most encodings will need additional encoding to strictly conform to the text/* MIME types. 
-Assuming that all clients are indeed able to parser UTF-7, UTF-8, and UCS-2, the server should default to delivering multilingual documents in one of these encodings as it will provide the greatest probability that the client recieves something it can meaningfully process. 
-3.2.3 Accept-charset While the charset parameter is sufficient for implementing the extended architecture, it requires that for each MIME type in which character set encoding negotiation is desired, a charset parameter must be defined. 
-Also the server must be able to parse all the type specifications, and make meaningful decisions based upon them. 
-As the number of deliverable types increases, so does the complexity of the server format negotiation subsystem. 
-It seems desirable to be able to say to the server "for all data in which charset is meaningful, send me it encoded as xxxxx", as it would tend to simplify decoding the data into the applications' internal character representation. 
-This can be accomplished via wildcarding the Accept: field, but a somewhat cleaner alternative would be to have an addition field Accept-charset: which sets the default encoding; requests like: could be used to decide the next best encoding if that of Accept-charset: cannot be delivered. 
-Such cases would probably be uncommon if one assumes that multilingual data will be sent as Unicode. 
-3.2.4 Presentational hints for Unicode While Unicode certainly serves as an excellent lowest common denominator for multilingual documents, systems using Unicode require more information than that contained in the character codes themselves. 
-Probably the most well known example of this is in the Han unification used in Unicode. 
-Unicode defines codes for characters that are shared between Chinese, Korean, and Japanese, but the glyph images used in each language are different. 
-Hence, we need to know the language in which the character code occurred in order to display it "correctly". 
-Another interesting case occurs in corporate names in Japan. 
-It is common for Japanese corporations to use a slightly different glyph image for the characters that make up the company name as a way of distinguishing themselves. 
-Again, we need extra information to map the base code onto the correct glyph image. 
-Such data are referred to as presentational hints within this document. 
-Given that a conversion from the local character set to Unicode is 
-being performed by the server, and that this conversion is automatic, it seems possible for the conversion process to automatically include presentation hints in the converted output. 
-Applications that understand the hints can use them to improve the conversion resolution where necessary, while other applications can simply ignore them, or remove them from the data stream. 
-(Strictly speaking, presentational hints are not necessary as in most (perhaps all) cases, the text will be legible, even if the glyph image is not quite correct. 
-Rather, they are desirable for top quality, and especially, typograhic quality, output.) 
-The problem of representing presentational hints is a difficult one. 
-Obviously, it is better to represent such data as tags, rather than as codes, and HTML 3.0 includes a LANG tag in the DTD specifically for this. 
-However, high-level tag use (eg. 
-defining them in a DTD) fails for the following reasons: 1. 
-It is not transparent. 
-The application processing the data stream must be able to parse the tags, even if it can not do anything with them. 
-This necessarily complicates the parser. 
-2. There are probably a huge number of presentation hints that could be used, and the list is dynamic as societal trends tend to alter languages. 
-Good examples can be found by comparing almost any current written form of a language to that used 100 years ago. 
-Some languages have even changed dramatically in the last 50 years. 
-This argues for a low-level tag which is basically transparent to anything parsing the input data stream. 
-This in turn implies that the presentational hints either take effect before the parser, or that they can be manipulated unambiguously as data (or that they can unambiguously be removed from the data stream). 
-This paper will not attempt to define a format for presentation hints. 
-Rather, 3 methods are outlined below, and it is hoped that subsequent discussion will lead to a decision as to which is more applicable to the WWWW. 
-Method 1: Code-based presentation hints 
-Here, codes from the Private Use Area are allocated to represent presentational hints. 
-The advantages of this method is that hints and data can be treated identically, and that hints can be removed transparently. 
-The disadvantages are that it stops other applications from using the Private Use Area, and also, the Private Use Area has a limited range. 
-In addition, this "pollutes" the character set with non-character data. 
-Method 2: Encoding-based presentation hints Here, an encoding is used which has space for presentation hints. 
-An example of this is the ICODE encoding proposed by Masataka Ohta which uses 21 bits. 
-Mr. Ohta also defines an encoding called IUTF which is upwardly compatible with UTF-2. 
-This method has all of the advantages of method 1, but would require at least 21 bits of storage per character. 
-Method 3: Tag-based presentation hints Here, tags are defined to represent presentational hints. 
-One tag might potentially serve multiple purposes (for example, a LANG tag can serve to specify any language). 
-The key difference between this method, and the high-level tag method is that tag interpretation here occurs before the application proper sees the data. 
-As such, the tags can be removed transparently. 
-This method would require a certain amount of API for handling tags: probably based on callbacks. 
-In addition, it would appear that one code from the private use area will be needed in order to make tag identification completely unambiguous, for all data streams. 
-4. Summary To summarise, this document proposes the following: 1. 
-All servers of multilingual documents should be able to convert documents from their local encoding into UCS-2, UTF-8, and UTF-7. 
-2. All clients should be able to at least parse such data. 
-3. Clients and servers should also be able to directly transfer data if they share local encodings 4. A method should be decided upon which allows presentational hints to be inserted into the data stream to aid in glyph image disambiguation. 
-It is beleived that given such an architecture, the World Wide Web will become truly multilingual, and truly, a World Wide Web. 5. Discussion The following are a few notes on recent developments which have some bearing on the contents of this document. 
-5.1 NOTES ON RELAXED CONTENT PARSING IN HTTP A recent development is that the HTTP Working Group has basically decided that HTTP will not require strict MIME conformance for textual data types. 
-In effect, the recent decision says that the parsing of the message data should be done in accordance with the specified character set encoding. 
-This thereby allows multilngual servers to send any encoding the client claims to understand, including UCS-2, the 16 bit encoding of Unicode. 
-This should simplify data processing enormously. 
-5.2 EXTENDED REFERENCE CONCRETE SYNTAX Recently, a proposal for an extended reference concrete syntax for SGML was sent to SGML Open. 
-In this ERCS, the SGML declaration defines that the BASESET is "ISO 10646:199?//CHARSET 
-UCS-2//EN", and that the DECSET parameter gives 16 bits for each character. 
-5.3 ISOLATING APPLICATIONS FROM LANGUAGE AND CHARACTER REPRESENTATION ISSUES The author beleives that most applications, and especially those based on SGML, are basically independent of the underlying language and character representations. 
-Obviously, characters needs to be assigned to sets for parsing purposes (like LCNMSTRT for example), but most applications should never need to know anything more about a character until the glyph image, or information about the glyph image, is required. 
-In other words, most parsers and processors needn't be language-aware, but a text display system probably does. 
-This proposal tries to emphasise this as much as possible by trying to provide a uniform character code stream for the application to process. 
-5.3 Unicode data: data manipulation and font handling. 
-For an excellect look at the issues involved, and one possible solution to them, it is well worth reading the papers about the Plan 9 system from Bell Laboratories. 
-6. Bibliography The Plan 9 Papers ftp://research.att.com/ 
-East Asian Character Set Issues: A Proposal For An Extended Reference Concrete Syntax Rick Jelliffe Allette Systems Sydney, Australia The SGML Handbook Oxford University Press Written by Charles Goldfarb ISBN 0-19-853737-9 The Unicode Standard, Version 1.1 Version 1.0, Volume 1, ISBN 0-201-56788-1 Version 1.0, Volume 2, ISBN 0-201-60845-6 Using Unicode with MIME D. Goldsmith UTF-7: A Mail Safe Transformation Format of Unicode D. Goldsmith and M. Davis MIME (Multipurpose Internet Mail Extensions) Part 1 N. Borenstein and N. Freed MIME (Multipurpose Internet Mail Extensions) Part 2 K. Moore Hypertext Transfer Protocol -- HTTP/1.0 T. Berners-Lee, R. T. Fielding, H. Frystyk Nielsen ftp://ds.internic.net/internet-drafts/draft-fielding-http-spec-01.txt 
-This document in no way reflects the opinions of Electronic Book Technologies. 
-All opinions contained herein are solely those of the author. 
-I agree wholeheartedly that Unicode is The Answer. 
-(it may not be 
-perfect, but it solves a whole pile of problems). 
-In the argument over who should do the conversions, the client or the server, I would vote for the client: if only because it limits translation to the very last step, where the true target is known. 
-Your paper deals mostly with transport issues (things that http 
-could help with), but there are a pile of issues that are related: 
-4. Data entry issues? 
-What about entering data into forms? 
-This is essentially the dual of 1&amp;2. 
-Some of the issues are mostly browser specific (like "how do I type this Kanji character") but some are not. 
-Some are more universal, like "what character sets will the server accept in POSTed data??". 
-Some are a real quagmire, like "I expect a date to be entered here and it's value returned to me using the ISO conventions". 
-Other things get represented in a document besides characters. 
-This is almost certainly outside of the realm of http, but might fit in with html-42.0. 
-For example, dates and measures. 
-A hypthetical document might contain: 
-I vow to lose measure 10 pounds this year. 
-Which when read by someone in the US could come out something like: I vow to lose 10 pounds this year. 
-And when read by someone in Canada could come out something like: I vow to lose 4.54 kilograms this year. 
-Or when read by someone in the UK could come out something like: I vow to lose .71 
-stone this year. 
-But http isn't strictly MIME compliant. 
-In particular, the full 8 bit nature of UTF8 fits in well with http. 
-While UTF7 makes sense in the 
-MIME mail world of corrosive transport mechanisms, it is not needed 
-in http. 
-For simiplicity I'd recommend a really limited set of allowed encodings: ISO-8859-1 and UTF8. 
-These problems affect even low-level tags such as those you proposed. 
-This whole area should be left to standards above http. 
-The big problem with the use of the private use area in this way is that it is "syntax without semantics". 
-These numbers are meaningless unless there is some mechanism for defining how they should be interpreted. 
-Something higher-level is required if, for example, a document using one of these extended characters is ever to be displayed. 
-I'd suggest that (to interoperate well with the MIME software community) HTTP should allow the same ISO-8859-X codes as MIME (as I recall, X=1 to 9). 
-Still, advocating something like UTF8 as a preferred transport for stuff that would otherwise be in multiple character sets seems reasonable. 
-(I get the impression that Unicode is not universally loved ... would anyone care to comment more on the down side?) 
-At what point do char set issues get handed off to the HTML standard? 
-It seems like some of the alternative glyph rendering issues could get mixed in with things like font changes and presentation control (which are possible, though controversial, issues for HTML). 
-Of course text/html is not the only text/* type we might have to transport.... 
-Undoubtedly. 
-I don't claim to be an expert in this field either. 
-Rather, I am just basing things on my practical experience. 
-Yes. I'd forgotten about those ;-) Seriously though, these are primarily outside the scope of the paper, except to not that the proposed method for data exchange should also be used for data a client generates. 
-ie. 
-All servers *should* be able to accept data in UTF-[78] and UCS-2. 
-Some are a real quagmire, like "I expect a date to be entered here and it's value returned to me using the ISO conventions". 
-For this, other work will need to be done, but this is outside the scope of my paper. 
-True. Again, my proposal is only about establishing a multilingual document exchange foundation. 
-If the different systems cannot interoperate at the lowest level, the higher level doesn't stand a chance :-) 
-I thought about this. 
-I think that UTF-7 and UCS-2 are so trivial to parse (and to to convert to in most cases), that the mail-safety of UTF-7, and the compactness of UCS-2 for Asian languages offer enough benfit that they should also be included. 
-To a degree, you are correct. 
-However, most (and especially SGML) parsing takes place at an abstract level somewhat above the actual character codes. 
-The choice between low-level and high-level is driven by the choice of complicating the upper layers, and having to modify them at the slightest change, or to complicate the lower layers, and have the higher layers work irrespective (because they do not *require* that the presentational hints even be present). 
-High level tags (or attributes) *might* be useful for things like deciding data and measurement formats, but I am not convinced of that yet. 
-The presentation hints I talk about are primarily useful for glyph image disambiguation, not data display format decisions. 
-Note that in Method 3. "tag" does not mean "SGMl tag". 
-I think you misunderstand what I mean. 
-In this method, the private use area codes do *not* represent characters, but rather presentation hint data. 
-As such, applications can safely ignore this data entirely (ie. it would be thrown away at the lowest level) if they are simple minded. 
-The results will be legible, and the higher level parser will work with, or without them. 
-In my opinion, HTML should not be concerned with character sets at all. 
-If the parser assigns a characters' class based on Unicode, and the lowest level of the application passes Unicode characters up to the parser proper, then the parser is totally divorced from data storage format. 
-The ERCS proposal goes into more detail, and proposes basically the above. 
-Surely most parsers for other textual data types need not grovel around at the data storage format level? 
-Most can surely be abstracted enough that they can deal with a character as an atom of information rather than as a sequence of bytes? 
-This is a reasonable assumption, I'm not sure if it is a safe assumption. 
-SGML seems to take a more abstract view of text than an average software package. 
-Though it does seem like there aren't many text/* types actually registered so far to give us a guide as to what to expect. 
-Some of the potential text-like hard cases (i.e. postscript) are registered as application types. 
-According to the list at: registered text types are: text plain [RFC1521,NSB] richtext [RFC1521,NSB] enriched [RFC1563] tab-separated-values [Paul Lindner] The comp.mail.mime 
-FAQ lists unregistered text types in actual use (by some mail software) as: Text types: text/html MHonArc: WWW HTML text/unknown Worldtalk text/x-html MHonArc: WWW HTML text/x-setext MHonArc: setext text/x-usenet-faq Ohio State WWW FAQ document format Albert Lunde Albert-Lunde@nwu.edu 
-Date: Sun, 25 Dec 1994 10:56:45 -0500 From: Gavin Nicol gtn@ebt.com 
-For example, if some Japanese text was sent to a person that cannot read Kanji, Hiragana, or Katakana, the browser could conceivably map the Japanese text into something like the following: Nihongo, tokuni Kanji, wa totemo muzukashii desu. 
-Unless you store bunsetsu boundaries and yomi (phonetic reading) along with the original text, you can pretty much forget about automatic transliteration of Japanese (or Chinese for that matter). 
-3. Is Unicode the answer? 
-In a word, YES! 
-Though there are a number of issues that need to be resolved in order for it to be used effectively. 
-Unless one has a strong masochistic streak, Unicode (or ISO/IEC 10646) will certainly be part of the answer. 
-However, Unicode wasn't designed to solve every problem facing designers of multilingual systems. 
-Never- theless, it makes a great foundation upon which to build such systems. 
-[Like HTML, Unicode's designers knew they couldn't solve every problem if they wanted an implementable standard; the emphasis on a plain text encoding which intentionally disregarded certain higher-level language specific issues was an explicit design decision to aid in achieving an implementable result.] 
-Folks should be aware the Unicode (as a profile of ISO/IEC 10646) is essentially becoming a national standard in many countries: e.g., Japan expects to publish JIS X 0221 this coming year which will be a national standard version of ISO/IEC 10646; China has already published GB 13000, also a national standard version of 10646. 
-I wouldn't be surprised to see Korea do the same in the not too distant future. 
-Date: Fri, 30 Dec 1994 07:44:26 -0500 From: Gavin Nicol gtn@ebt.com 
-Just out of curiosity, what is so special about Thai? 
-One encoding is very complicated: variable length, and no canonical order for certain bytes. 
-In practise, various groups define a local "standard". 
-I'm afraid I have to disagree with Gavin's original statement. 
-There is nothing difficult about employing Thai in SGML. 
-The encoding is actually not complicated at all, is not variable length, and the fact there is no canonical order for certain combining characters is irrelevant since they have a fixed position on the base consonant irregardless of their coding order in a sequence of multiple combining marks after a base consonant. 
-Further, there is a standard Thai encoding, TIS 620, which is now commonly used. 
-Keep in mind that the Unicode Thai character block is based on TIS 620. 
-Gavin, please note that a variable length encoding (in the context you were speaking of, i.e., vis-a-vis ISO 2022) means that a variable number of bytes are used to encode one coded character element. 
-In the case of the Thai character set TIS 620 (and Unicode), a fixed number of bytes is used to encode each coded character element (1 byte for TIS 620, and 2 bytes for a canonical UCS-2 Unicode character). 
-The fact that multiple coded character elements in TIS 620 (and Unicode) can combine graphically to fill a single display cell does not mean that either of these character sets are "variable length encodings". 
-The units of processing for transmission of information are still fixed length regardless of number of display cells used to display character data. 
-Glenn Adams 
-Well, 100% accurate transliteration, or transcription, like 100% accurate machine translation, is one of those "hard" problems. 
-I have seen systems that can take a paragraph of kana and convert it into kanji, or take a paragraph of kanji, and convert it into kana. 
-The accuracy is about 98%. 
-I have also seen machine translation systems working on PC's that can achieve readable, if not grammatically correct English and Japanese. 
-Resource usage for the above systems is still fairly high: about on par with a typical Microsoft application in fact :-) Not impossible, not impractical, but not 100% perfect either. 
-Hmm, sounds familiar... 
+<s> Below is a paper that I have put together proposing a method for making the WWW a truly international information repository.  </s>
+<s> It is submitted in the hope that it will raise discussion of the issues involved, and perhaps to serve as a goal for which we should all strive.  </s>
+<s> Certainly, the architecture outlined will not come to pass overnight, but both client and server implementors could start implementing the changes now, and as the tools spread, so the architecture will too.  </s>
+<s> I would appreciate any and all comments.  </s>
+<s> All errors of language or fact are solely my responsibility (ie.  </s>
+<s> if I am making a fool of anyone, I am making it of myself ;-)), and I would appreciate correction.  </s>
+<s> An HTML version of this paper is available upon request.  </s>
+<s> Merry Christmas to all!  </s>
+<s> HANDLING MULTILINGUAL DOCUMENTS IN THE WWW Gavin T. Nicol Electronic Book Technologies, Japan 1-29-9 Tsurumaki, Setagaya-ku, Tokyo 154, Japan gtn@ebt.com ABSTRACT.  </s>
+<s> The World Wide Web has enjoyed explosive growth in recent years, and there are now millions of people using it all around the world.  </s>
+<s> Despite the fact that the Internet, and the World Wide Web, span the globe, there is, as yet, no well-defined way of handling documents that contain multiple languages, character sets, or encodings thereof.  </s>
+<s> In this document, a method is proposed for cleanly handling such multilingual text on the WWW. 1. Requirements for multilingual applications  </s>
+<s> There are many issues facing a system claiming to be multilingual, though all issues fall into one of 3 categories: 1.  </s>
+<s> Data representation issues 2. Data manipulation issues 3. Data display issues  </s>
+<s> This document is primarily concerned with data representation, though display issues are also discussed in some detail.  </s>
+<s> Data manipulation is little discussed.  </s>
+<s> 1.1 DATA REPRESENTATION ISSUES In general, the major data representation issues are character set selection, and character set encoding.  </s>
+<s> The biggest problem with  </s>
+<s> character set selection is that most are standards, and as Andy Tanenbaum once noted: The nice thing about standards is that there are so many to choose from.  </s>
+<s> Character set encodings suffer in much the same way.  </s>
+<s> There are a large number of character set encodings, and the number is *not* decreasing.  </s>
+<s> For any application that claims to be multilingual, it must obviously support the character sets, and encodings, used to represent the information it is processing.  </s>
+<s> It should be noted that multilingual data could conceivably contain multiple languages, character sets, and encodings, further complicating the problem.  </s>
+<s> 1.2 DATA DISPLAY ISSUES Quite obviously, for a viewing application to be considered multilingual, it must be able to present multilingual data to the reader in a sensible manner.  </s>
+<s> The common problem to overcome here is obviously font mapping, however, languages around the world have different writing directions as well, and some languages have mixed writing directions, which should also be handled "correctly."  </s>
+<s> Note that in the above paragraph "in a sensible manner" does not necessarily mean "be able to rendered in it's native format."  </s>
+<s> One other possiblilty would be to render the multilingual document as a phonetic rendering in ASCII.  </s>
+<s> For example, if some Japanese text was sent to a person that cannot read Kanji, Hiragana, or Katakana, the browser could conceivably map the Japanese text into something like the following: Nihongo, tokuni Kanji, wa totemo muzukashii desu.  </s>
+<s> possibly with some extra text indicating that this is Japanese.  </s>
+<s> Another possibility is machine translation (which is becoming more viable year by year).  </s>
+<s> 1.3 DATA MANIPULATION ISSUES In order to be multilingual, the application must be able to manipulate multilingual data (including such issues as collation, though this is not currently needed for browsing the WWW).  </s>
+<s> One major issue here is the representation of a character within the application, and the representation of strings.  </s>
+<s> In some applications, multibyte formats are used throughout, in others, fixed width, wide characters are used throughout.  </s>
+<s> In others, a combination is used.  </s>
+<s> 1.4 SUMMARY OF REQUIREMENTS A multilingual application must be able to: 1. Support the character sets and encodings used to represent the information being manipulated.  </s>
+<s> 2. Present the data meaningfully if the application is required to display the data.  </s>
+<s> 3. Manipulate multilingual data internally.  </s>
+<s> 2. Bringing multilingual capabilities to the WWW Having established some basic requirements, it is now time to look at how the above fits into the World Wide Web.  </s>
+<s> 2.1 MIME ISSUES One of the problems with representing multilingual documents in the WWW is that MIME explicitly merges the character set and character set encodings together.  </s>
+<s> In fact, it is probably more accurate to say that MIME specifies only the character set encoding, which in turn defines a character set by implication.  </s>
+<s> For example: actually specifies the UTF-7 encoding of Unicode explicitly, but only specifies Unicode implicitly.  </s>
+<s> In addition, the MIME specification states that for the text/* data types, all line breaks must be indicated by a CRLF pair.  </s>
+<s> This implies that certain encodings cannot be used within the text/* data types if the WWW is to be strictly MIME conformant.  </s>
+<s> 2.2 SGML ISSUES SGML does not define the representation of characters.  </s>
+<s> ISO 8879 defines a code set as a set of bit combinations of equal size, a character as an atom of information, a character repetoire as a group of characters, and a character set as a mapping of a character repetoire onto a code set such that each character is represented by a unique bit combination within the code set.  </s>
+<s> As such, an SGML parser is independent of the physical representation of the data, and there is often an internal representation of characters that could be quite different to that used in data storage.  </s>
+<s> ISO 8879 also defines some methods for handling things like ISO-2022, but some encodings for languages such a Thai cannot be handled by SGML, even if the SGML declaration is altered (though, it is possible for the application to deal with this within, or before, the entity manager).  </s>
+<s> 2.3 BROWSERS ISSUES Basic requirements for a multilingual WWW browser were listed in section 1.4.  </s>
+<s> Let's now look at each as they apply to WWW browser like Mosaic.  </s>
+<s> 2.3.1 Support the character sets and encodings As noted above, there are a huge number of character sets, and encodings.  </s>
+<s> If the above requirement is taken literally, it means that in order to have a multilingual WWW, each browser must potentially be able to understand this huge number of character sets and encodings.  </s>
+<s> Taken at face value it also means that the SGML parser would need to handle a large number of character sets, and one would not be able to have multiple character sets within a document (or to be precise, SGML provides no way for the parser to handle a given bit combination representing more than one character within a given document).  </s>
+<s> As such, the brute force approach would almost certainly have to map the multiple character sets and encodings to a single internal representation (though it is conceivable that character sets could be paged in and out, this approach would be very complicated to implement).  </s>
+<s> This internal representation would almost certainly have to be 16 bits wide, or wider.  </s>
+<s> SGML working group 8 has stated that multilingual systems should map data storage encodings to wide characters before, on in the entity manager (and the sp parser from James Clark serves as a good model of thier recommendations).  </s>
+<s> 2.3.2 Present the data meaningfully One of the great benefits of SGML (and HTML to a lesser degree), is that it is independent of the display technology.  </s>
+<s> As such, the presentation issue depends very much on the application (for example, rendering multilingual documents on a TTY might require the aforementioned phonetic rendering, while GUI based systems require font mapping).  </s>
+<s> A common thread running through all display technologies is the need for some mapping from the character codes to some output representation.  </s>
+<s> While not required, using 16 bit (or greater) codes will probably simplify the mapping task as it requires only a single lookup table.  </s>
+<s> 2.3.3 Internal multilingual data manipulation There are a large number of issues here, but in general, having a fixed width character eases the task of manipulating that data, especially in languages such as C, because it makes memory management and indexing easier.  </s>
+<s> In addition, fixed width codes require no sychronisation.  </s>
+<s> 3. Is Unicode the answer?  </s>
+<s> In a word, YES!  </s>
+<s> Though there are a number of issues that need to be resolved in order for it to be used effectively.  </s>
+<s> 3.1 WHAT ARE THE BENEFITS?  </s>
+<s> First, let's step back and look at the overall architecture The desired features in a multilingual WWW system are: 1. Allow publishers to create and manipulate documents in the local character set and character encoding scheme 2. Allow readers to follow a URL to a document, and expect to be able to read it irrespective of the character set and encoding used for document creation.  </s>
+<s> 3. Allow readers to save the document in their preferred local encoding.  </s>
+<s> 4. Scalability.  </s>
+<s> Will the solution work even when large numbers of languages, character sets, and encodings are used within a single document?  </s>
+<s> 5. Keep implementations as simple as possible.  </s>
+<s> Unicode solves most if these items quite nicely.  </s>
+<s> The second and fourth points are covered because Unicode provides codes for most languages of the world.  </s>
+<s> It does not cover all languages completely, but it certainly contains enough for most common uses, and there are ways for handling the uncommon cases.  </s>
+<s> The last point is covered because the UCS-2 encoding of Unicode is a 16 bit wide, fixed width encoding.  </s>
+<s> As pointed out above, using such fixed width characters simplifies SGML parsing, display, and data manipulation.  </s>
+<s> The first and third points are not covered directly, but simple translation techniques can be used to achieve them as outlined below.  </s>
+<s> 3.2 INCORPORATING UNICODE INTO THE WWW The following outlines a proposal for incorporating Unicode into the WWW in such a way that all of the above points are solved.  </s>
+<s> Where the word server is used, it should be taken to mean a HyperText Transfer Protocol (HTTP) server unless specifically qualified otherwise.  </s>
+<s> 3.2.1 Unicode incorportation architecture  </s>
+<s> In order to make multilingual support as painless as possible, it is proposed that all HTTP servers for multilingual documents *should* be able to convert documents from the local character set encoding to UCS-2, UTF-8, and UTF-7 (16, 8 and 7 bit encodings of Unicode).  </s>
+<s> It is also proposed that all HTTP clients *should* be able to parse UCS-2, UTF-8 and UTF-7.  </s>
+<s> It is *recommended* that browsers allow the data to be saved as UTF-7, UTF-8, or UCS-2 (similar to the current ftp interface).  </s>
+<s> If possible, a browser *should* also allow the data to be saved in the local character set encoding, but that might not always be possible (for example, saving a document containing Arabic on an ASCII based system).  </s>
+<s> Documents sent from servers would then use a content type of: Though UTF-8 and UCS-2 will need some additional encoding applied to them in order to be strictly MIME compliant.  </s>
+<s> An alternative is to use an application/* type specifier instead.  </s>
+<s> This architecture has the following benefits: Conceptual Simplicity The model is very clear conceptually: a document is created in the local encoding, which is then converted into a commonly understood form.  </s>
+<s> Client-side processing occurs using this representation.  </s>
+<s> Ease of client implementation The number of clients far exceeds that of servers.  </s>
+<s> Thus, forcing clients to deal with a large number of characters sets and encodings requires more effort, and the lag in update period will be greater.  </s>
+<s> Imagine for example, if someone wants to add support for some new character set encoding they invented.  </s>
+<s> In order for support to be added to clients, one would have to update all clients that could potentially access such data.  </s>
+<s> Compare this to having to update only the servers working with that encoding directly.  </s>
+<s> In addition, because Unicode and UCS-2 are already well defined, it is possible to write an SGML parser, display subsystem, and data manipulation functions optimised for that representation, realising significant performance gains.  </s>
+<s> While initial implementations will need to write the code for handling Unicode, and the encodings thereof, it is expected that freely distributable libraries for such things will appear MIME and ASCII compatibility UTF-7 and UTF-8 are largely ASCII compatible.  </s>
+<s> In addition UTF-7 was designed as a method for encoding Unicode in MIME, so it is perfect for WWW and MIME uses HTML compatability Recent drafts of the HTML specification state that a MIME charset parameter will override the default IS0-8859-1, so this presents no problem.  </s>
+<s> In addition, it should not require large changes to current HTML parsers.  </s>
+<s> Truly multilingual As noted, this proposal uses Unicode.  </s>
+<s> All languages defined within ISO-10646 can be used within a single document.  </s>
+<s> SGML (HTML) parsers will work with UCS-2 directly, so different languages would be treated identically at the parsing level.  </s>
+<s> While the cost of performing translations from the local encoding to one of the Unicode encodings might appear prohibitive, it is believed that intelligent servers will cache translated documents in a manner similar to current proxy caches.  </s>
+<s> Between this, and the fact that most WWW documents are small, the performance hit should not be overly significant.  </s>
+<s> 3.2.2 Extension to the basic architecture Requiring that *all* non-ASCII documents be converted to Unicode is probably a very poor idea as it would incur significant overhead.  </s>
+<s> Instead, HTTP clients can indicate encoding preferences via the Accept: field in the request header.  </s>
+<s> For example: If a server is able to deliver the document in one of the preferred encodings, it should do so.  </s>
+<s> This will allow clients and servers sharing a common local encoding to transfer documents without the overhead of Unicode translation.  </s>
+<s> Note that most encodings will need additional encoding to strictly conform to the text/* MIME types.  </s>
+<s> Assuming that all clients are indeed able to parser UTF-7, UTF-8, and UCS-2, the server should default to delivering multilingual documents in one of these encodings as it will provide the greatest probability that the client recieves something it can meaningfully process.  </s>
+<s> 3.2.3 Accept-charset While the charset parameter is sufficient for implementing the extended architecture, it requires that for each MIME type in which character set encoding negotiation is desired, a charset parameter must be defined.  </s>
+<s> Also the server must be able to parse all the type specifications, and make meaningful decisions based upon them.  </s>
+<s> As the number of deliverable types increases, so does the complexity of the server format negotiation subsystem.  </s>
+<s> It seems desirable to be able to say to the server "for all data in which charset is meaningful, send me it encoded as xxxxx", as it would tend to simplify decoding the data into the applications' internal character representation.  </s>
+<s> This can be accomplished via wildcarding the Accept: field, but a somewhat cleaner alternative would be to have an addition field Accept-charset: which sets the default encoding; requests like: could be used to decide the next best encoding if that of Accept-charset: cannot be delivered.  </s>
+<s> Such cases would probably be uncommon if one assumes that multilingual data will be sent as Unicode.  </s>
+<s> 3.2.4 Presentational hints for Unicode While Unicode certainly serves as an excellent lowest common denominator for multilingual documents, systems using Unicode require more information than that contained in the character codes themselves.  </s>
+<s> Probably the most well known example of this is in the Han unification used in Unicode.  </s>
+<s> Unicode defines codes for characters that are shared between Chinese, Korean, and Japanese, but the glyph images used in each language are different.  </s>
+<s> Hence, we need to know the language in which the character code occurred in order to display it "correctly".  </s>
+<s> Another interesting case occurs in corporate names in Japan.  </s>
+<s> It is common for Japanese corporations to use a slightly different glyph image for the characters that make up the company name as a way of distinguishing themselves.  </s>
+<s> Again, we need extra information to map the base code onto the correct glyph image.  </s>
+<s> Such data are referred to as presentational hints within this document.  </s>
+<s> Given that a conversion from the local character set to Unicode is  </s>
+<s> being performed by the server, and that this conversion is automatic, it seems possible for the conversion process to automatically include presentation hints in the converted output.  </s>
+<s> Applications that understand the hints can use them to improve the conversion resolution where necessary, while other applications can simply ignore them, or remove them from the data stream.  </s>
+<s> (Strictly speaking, presentational hints are not necessary as in most (perhaps all) cases, the text will be legible, even if the glyph image is not quite correct.  </s>
+<s> Rather, they are desirable for top quality, and especially, typograhic quality, output.)  </s>
+<s> The problem of representing presentational hints is a difficult one.  </s>
+<s> Obviously, it is better to represent such data as tags, rather than as codes, and HTML 3.0 includes a LANG tag in the DTD specifically for this.  </s>
+<s> However, high-level tag use (eg.  </s>
+<s> defining them in a DTD) fails for the following reasons: 1.  </s>
+<s> It is not transparent.  </s>
+<s> The application processing the data stream must be able to parse the tags, even if it can not do anything with them.  </s>
+<s> This necessarily complicates the parser.  </s>
+<s> 2. There are probably a huge number of presentation hints that could be used, and the list is dynamic as societal trends tend to alter languages.  </s>
+<s> Good examples can be found by comparing almost any current written form of a language to that used 100 years ago.  </s>
+<s> Some languages have even changed dramatically in the last 50 years.  </s>
+<s> This argues for a low-level tag which is basically transparent to anything parsing the input data stream.  </s>
+<s> This in turn implies that the presentational hints either take effect before the parser, or that they can be manipulated unambiguously as data (or that they can unambiguously be removed from the data stream).  </s>
+<s> This paper will not attempt to define a format for presentation hints.  </s>
+<s> Rather, 3 methods are outlined below, and it is hoped that subsequent discussion will lead to a decision as to which is more applicable to the WWWW.  </s>
+<s> Method 1: Code-based presentation hints  </s>
+<s> Here, codes from the Private Use Area are allocated to represent presentational hints.  </s>
+<s> The advantages of this method is that hints and data can be treated identically, and that hints can be removed transparently.  </s>
+<s> The disadvantages are that it stops other applications from using the Private Use Area, and also, the Private Use Area has a limited range.  </s>
+<s> In addition, this "pollutes" the character set with non-character data.  </s>
+<s> Method 2: Encoding-based presentation hints Here, an encoding is used which has space for presentation hints.  </s>
+<s> An example of this is the ICODE encoding proposed by Masataka Ohta which uses 21 bits.  </s>
+<s> Mr. Ohta also defines an encoding called IUTF which is upwardly compatible with UTF-2.  </s>
+<s> This method has all of the advantages of method 1, but would require at least 21 bits of storage per character.  </s>
+<s> Method 3: Tag-based presentation hints Here, tags are defined to represent presentational hints.  </s>
+<s> One tag might potentially serve multiple purposes (for example, a LANG tag can serve to specify any language).  </s>
+<s> The key difference between this method, and the high-level tag method is that tag interpretation here occurs before the application proper sees the data.  </s>
+<s> As such, the tags can be removed transparently.  </s>
+<s> This method would require a certain amount of API for handling tags: probably based on callbacks.  </s>
+<s> In addition, it would appear that one code from the private use area will be needed in order to make tag identification completely unambiguous, for all data streams.  </s>
+<s> 4. Summary To summarise, this document proposes the following: 1.  </s>
+<s> All servers of multilingual documents should be able to convert documents from their local encoding into UCS-2, UTF-8, and UTF-7.  </s>
+<s> 2. All clients should be able to at least parse such data.  </s>
+<s> 3. Clients and servers should also be able to directly transfer data if they share local encodings 4. A method should be decided upon which allows presentational hints to be inserted into the data stream to aid in glyph image disambiguation.  </s>
+<s> It is beleived that given such an architecture, the World Wide Web will become truly multilingual, and truly, a World Wide Web. 5. Discussion The following are a few notes on recent developments which have some bearing on the contents of this document.  </s>
+<s> 5.1 NOTES ON RELAXED CONTENT PARSING IN HTTP A recent development is that the HTTP Working Group has basically decided that HTTP will not require strict MIME conformance for textual data types.  </s>
+<s> In effect, the recent decision says that the parsing of the message data should be done in accordance with the specified character set encoding.  </s>
+<s> This thereby allows multilngual servers to send any encoding the client claims to understand, including UCS-2, the 16 bit encoding of Unicode.  </s>
+<s> This should simplify data processing enormously.  </s>
+<s> 5.2 EXTENDED REFERENCE CONCRETE SYNTAX Recently, a proposal for an extended reference concrete syntax for SGML was sent to SGML Open.  </s>
+<s> In this ERCS, the SGML declaration defines that the BASESET is "ISO 10646:199?//CHARSET  </s>
+<s> UCS-2//EN", and that the DECSET parameter gives 16 bits for each character.  </s>
+<s> 5.3 ISOLATING APPLICATIONS FROM LANGUAGE AND CHARACTER REPRESENTATION ISSUES The author beleives that most applications, and especially those based on SGML, are basically independent of the underlying language and character representations.  </s>
+<s> Obviously, characters needs to be assigned to sets for parsing purposes (like LCNMSTRT for example), but most applications should never need to know anything more about a character until the glyph image, or information about the glyph image, is required.  </s>
+<s> In other words, most parsers and processors needn't be language-aware, but a text display system probably does.  </s>
+<s> This proposal tries to emphasise this as much as possible by trying to provide a uniform character code stream for the application to process.  </s>
+<s> 5.3 Unicode data: data manipulation and font handling.  </s>
+<s> For an excellect look at the issues involved, and one possible solution to them, it is well worth reading the papers about the Plan 9 system from Bell Laboratories.  </s>
+<s> 6. Bibliography The Plan 9 Papers ftp://research.att.com/  </s>
+<s> East Asian Character Set Issues: A Proposal For An Extended Reference Concrete Syntax Rick Jelliffe Allette Systems Sydney, Australia The SGML Handbook Oxford University Press Written by Charles Goldfarb ISBN 0-19-853737-9 The Unicode Standard, Version 1.1 Version 1.0, Volume 1, ISBN 0-201-56788-1 Version 1.0, Volume 2, ISBN 0-201-60845-6 Using Unicode with MIME D. Goldsmith UTF-7: A Mail Safe Transformation Format of Unicode D. Goldsmith and M. Davis MIME (Multipurpose Internet Mail Extensions) Part 1 N. Borenstein and N. Freed MIME (Multipurpose Internet Mail Extensions) Part 2 K. Moore Hypertext Transfer Protocol -- HTTP/1.0 T. Berners-Lee, R. T. Fielding, H. Frystyk Nielsen ftp://ds.internic.net/internet-drafts/draft-fielding-http-spec-01.txt  </s>
+<s> This document in no way reflects the opinions of Electronic Book Technologies.  </s>
+<s> All opinions contained herein are solely those of the author.  </s>
+<s> I agree wholeheartedly that Unicode is The Answer.  </s>
+<s> (it may not be  </s>
+<s> perfect, but it solves a whole pile of problems).  </s>
+<s> In the argument over who should do the conversions, the client or the server, I would vote for the client: if only because it limits translation to the very last step, where the true target is known.  </s>
+<s> Your paper deals mostly with transport issues (things that http  </s>
+<s> could help with), but there are a pile of issues that are related:  </s>
+<s> 4. Data entry issues?  </s>
+<s> What about entering data into forms?  </s>
+<s> This is essentially the dual of 1&amp;2.  </s>
+<s> Some of the issues are mostly browser specific (like "how do I type this Kanji character") but some are not.  </s>
+<s> Some are more universal, like "what character sets will the server accept in POSTed data??".  </s>
+<s> Some are a real quagmire, like "I expect a date to be entered here and it's value returned to me using the ISO conventions".  </s>
+<s> Other things get represented in a document besides characters.  </s>
+<s> This is almost certainly outside of the realm of http, but might fit in with html-42.0.  </s>
+<s> For example, dates and measures.  </s>
+<s> A hypthetical document might contain:  </s>
+<s> I vow to lose measure 10 pounds this year.  </s>
+<s> Which when read by someone in the US could come out something like: I vow to lose 10 pounds this year.  </s>
+<s> And when read by someone in Canada could come out something like: I vow to lose 4.54 kilograms this year.  </s>
+<s> Or when read by someone in the UK could come out something like: I vow to lose .71  </s>
+<s> stone this year.  </s>
+<s> But http isn't strictly MIME compliant.  </s>
+<s> In particular, the full 8 bit nature of UTF8 fits in well with http.  </s>
+<s> While UTF7 makes sense in the  </s>
+<s> MIME mail world of corrosive transport mechanisms, it is not needed  </s>
+<s> in http.  </s>
+<s> For simiplicity I'd recommend a really limited set of allowed encodings: ISO-8859-1 and UTF8.  </s>
+<s> These problems affect even low-level tags such as those you proposed.  </s>
+<s> This whole area should be left to standards above http.  </s>
+<s> The big problem with the use of the private use area in this way is that it is "syntax without semantics".  </s>
+<s> These numbers are meaningless unless there is some mechanism for defining how they should be interpreted.  </s>
+<s> Something higher-level is required if, for example, a document using one of these extended characters is ever to be displayed.  </s>
+<s> I'd suggest that (to interoperate well with the MIME software community) HTTP should allow the same ISO-8859-X codes as MIME (as I recall, X=1 to 9).  </s>
+<s> Still, advocating something like UTF8 as a preferred transport for stuff that would otherwise be in multiple character sets seems reasonable.  </s>
+<s> (I get the impression that Unicode is not universally loved ... would anyone care to comment more on the down side?)  </s>
+<s> At what point do char set issues get handed off to the HTML standard?  </s>
+<s> It seems like some of the alternative glyph rendering issues could get mixed in with things like font changes and presentation control (which are possible, though controversial, issues for HTML).  </s>
+<s> Of course text/html is not the only text/* type we might have to transport....  </s>
+<s> Undoubtedly.  </s>
+<s> I don't claim to be an expert in this field either.  </s>
+<s> Rather, I am just basing things on my practical experience.  </s>
+<s> Yes. I'd forgotten about those ;-) Seriously though, these are primarily outside the scope of the paper, except to not that the proposed method for data exchange should also be used for data a client generates.  </s>
+<s> ie.  </s>
+<s> All servers *should* be able to accept data in UTF-[78] and UCS-2.  </s>
+<s> Some are a real quagmire, like "I expect a date to be entered here and it's value returned to me using the ISO conventions".  </s>
+<s> For this, other work will need to be done, but this is outside the scope of my paper.  </s>
+<s> True. Again, my proposal is only about establishing a multilingual document exchange foundation.  </s>
+<s> If the different systems cannot interoperate at the lowest level, the higher level doesn't stand a chance :-)  </s>
+<s> I thought about this.  </s>
+<s> I think that UTF-7 and UCS-2 are so trivial to parse (and to to convert to in most cases), that the mail-safety of UTF-7, and the compactness of UCS-2 for Asian languages offer enough benfit that they should also be included.  </s>
+<s> To a degree, you are correct.  </s>
+<s> However, most (and especially SGML) parsing takes place at an abstract level somewhat above the actual character codes.  </s>
+<s> The choice between low-level and high-level is driven by the choice of complicating the upper layers, and having to modify them at the slightest change, or to complicate the lower layers, and have the higher layers work irrespective (because they do not *require* that the presentational hints even be present).  </s>
+<s> High level tags (or attributes) *might* be useful for things like deciding data and measurement formats, but I am not convinced of that yet.  </s>
+<s> The presentation hints I talk about are primarily useful for glyph image disambiguation, not data display format decisions.  </s>
+<s> Note that in Method 3. "tag" does not mean "SGMl tag".  </s>
+<s> I think you misunderstand what I mean.  </s>
+<s> In this method, the private use area codes do *not* represent characters, but rather presentation hint data.  </s>
+<s> As such, applications can safely ignore this data entirely (ie. it would be thrown away at the lowest level) if they are simple minded.  </s>
+<s> The results will be legible, and the higher level parser will work with, or without them.  </s>
+<s> In my opinion, HTML should not be concerned with character sets at all.  </s>
+<s> If the parser assigns a characters' class based on Unicode, and the lowest level of the application passes Unicode characters up to the parser proper, then the parser is totally divorced from data storage format.  </s>
+<s> The ERCS proposal goes into more detail, and proposes basically the above.  </s>
+<s> Surely most parsers for other textual data types need not grovel around at the data storage format level?  </s>
+<s> Most can surely be abstracted enough that they can deal with a character as an atom of information rather than as a sequence of bytes?  </s>
+<s> This is a reasonable assumption, I'm not sure if it is a safe assumption.  </s>
+<s> SGML seems to take a more abstract view of text than an average software package.  </s>
+<s> Though it does seem like there aren't many text/* types actually registered so far to give us a guide as to what to expect.  </s>
+<s> Some of the potential text-like hard cases (i.e. postscript) are registered as application types.  </s>
+<s> According to the list at: registered text types are: text plain [RFC1521,NSB] richtext [RFC1521,NSB] enriched [RFC1563] tab-separated-values [Paul Lindner] The comp.mail.mime  </s>
+<s> FAQ lists unregistered text types in actual use (by some mail software) as: Text types: text/html MHonArc: WWW HTML text/unknown Worldtalk text/x-html MHonArc: WWW HTML text/x-setext MHonArc: setext text/x-usenet-faq Ohio State WWW FAQ document format Albert Lunde Albert-Lunde@nwu.edu  </s>
+<s> Date: Sun, 25 Dec 1994 10:56:45 -0500 From: Gavin Nicol gtn@ebt.com  </s>
+<s> For example, if some Japanese text was sent to a person that cannot read Kanji, Hiragana, or Katakana, the browser could conceivably map the Japanese text into something like the following: Nihongo, tokuni Kanji, wa totemo muzukashii desu.  </s>
+<s> Unless you store bunsetsu boundaries and yomi (phonetic reading) along with the original text, you can pretty much forget about automatic transliteration of Japanese (or Chinese for that matter).  </s>
+<s> 3. Is Unicode the answer?  </s>
+<s> In a word, YES!  </s>
+<s> Though there are a number of issues that need to be resolved in order for it to be used effectively.  </s>
+<s> Unless one has a strong masochistic streak, Unicode (or ISO/IEC 10646) will certainly be part of the answer.  </s>
+<s> However, Unicode wasn't designed to solve every problem facing designers of multilingual systems.  </s>
+<s> Never- theless, it makes a great foundation upon which to build such systems.  </s>
+<s> [Like HTML, Unicode's designers knew they couldn't solve every problem if they wanted an implementable standard; the emphasis on a plain text encoding which intentionally disregarded certain higher-level language specific issues was an explicit design decision to aid in achieving an implementable result.]  </s>
+<s> Folks should be aware the Unicode (as a profile of ISO/IEC 10646) is essentially becoming a national standard in many countries: e.g., Japan expects to publish JIS X 0221 this coming year which will be a national standard version of ISO/IEC 10646; China has already published GB 13000, also a national standard version of 10646.  </s>
+<s> I wouldn't be surprised to see Korea do the same in the not too distant future.  </s>
+<s> Date: Fri, 30 Dec 1994 07:44:26 -0500 From: Gavin Nicol gtn@ebt.com  </s>
+<s> Just out of curiosity, what is so special about Thai?  </s>
+<s> One encoding is very complicated: variable length, and no canonical order for certain bytes.  </s>
+<s> In practise, various groups define a local "standard".  </s>
+<s> I'm afraid I have to disagree with Gavin's original statement.  </s>
+<s> There is nothing difficult about employing Thai in SGML.  </s>
+<s> The encoding is actually not complicated at all, is not variable length, and the fact there is no canonical order for certain combining characters is irrelevant since they have a fixed position on the base consonant irregardless of their coding order in a sequence of multiple combining marks after a base consonant.  </s>
+<s> Further, there is a standard Thai encoding, TIS 620, which is now commonly used.  </s>
+<s> Keep in mind that the Unicode Thai character block is based on TIS 620.  </s>
+<s> Gavin, please note that a variable length encoding (in the context you were speaking of, i.e., vis-a-vis ISO 2022) means that a variable number of bytes are used to encode one coded character element.  </s>
+<s> In the case of the Thai character set TIS 620 (and Unicode), a fixed number of bytes is used to encode each coded character element (1 byte for TIS 620, and 2 bytes for a canonical UCS-2 Unicode character).  </s>
+<s> The fact that multiple coded character elements in TIS 620 (and Unicode) can combine graphically to fill a single display cell does not mean that either of these character sets are "variable length encodings".  </s>
+<s> The units of processing for transmission of information are still fixed length regardless of number of display cells used to display character data.  </s>
+<s> Glenn Adams  </s>
+<s> Well, 100% accurate transliteration, or transcription, like 100% accurate machine translation, is one of those "hard" problems.  </s>
+<s> I have seen systems that can take a paragraph of kana and convert it into kanji, or take a paragraph of kanji, and convert it into kana.  </s>
+<s> The accuracy is about 98%.  </s>
+<s> I have also seen machine translation systems working on PC's that can achieve readable, if not grammatically correct English and Japanese.  </s>
+<s> Resource usage for the above systems is still fairly high: about on par with a typical Microsoft application in fact :-) Not impossible, not impractical, but not 100% perfect either.  </s>
+<s> Hmm, sounds familiar...  </s>

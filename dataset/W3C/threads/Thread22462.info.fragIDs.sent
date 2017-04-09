@@ -1,260 +1,260 @@
-The latest Level 1 DOM specification has just been released, at There have been significant changes since the last public draft. 
-Amongst others: There is no separate XML document; all the XML interfaces are in the Core document. 
-We took the DTD stuff out, pending work on schemas in a future version of XML (what we had will shortly be released as a separate WD). 
-We took out NodeIterator. 
-The Java and OMG IDL bindings now validate. 
-The DOM WG thinks the DOM specification is nearly finished and almost ready to go to PR. The remaining issues are mostly listed in the spec, so feedback on these (to this mailing list) would be welcome. 
-regards, Lauren Wood, Chair, W3C DOM WG 
-On the whole the new DOM specification seems to be a great improvement, but 
-I'm sorry to see the DTD stuff go. 
-My group has been spending the last several months building a large document-processing application using the DOM as its basis; we had to make several extensions to the core to get it to handle generic SGML. 
-I think it's very important to be able to represent _any_ SGML document using the DOM core. 
-The reason for this is simple: if any SGML document can be represented by the core, extending the DOM for specific document types (e.g. HTML) becomes a convenience rather than a necessity. 
-(And by the way, this appears to be why the core is now sufficient to represent XML.) It would mean that _any_ document would be representable without having to create a new, extended API for it, and would make it much easier to produce SGML-to-XML conversion utilities (for example). 
-The main missing node type, I believe, is Declaration. 
-A few more specific notes: 
-o There is no type-safe way to convert a Node to any of its major subclasses. 
-The newly-added nodeName, nodeValue, and attributes attributes help a great deal, but it would be good to have conversion methods as well. 
-We have, e.g., "asElement", which returns the node if it is an Element, null otherwise. 
-This is _much_ more efficient than casting, which involves run-time type checking in Java. 
-o I'm very sorry to see NodeIterator, TreeIterator, and their create methods 
-disappear. 
-It's easier to create iterators when you know the type (and 
-hence the implementation details) of the objects you're iterating over; the resulting type-specific iterator can much more efficient than a generic one, and its class need not be exposed to the programmer. 
-o If the nodeName of an Element is the tagname, why do you need the getTagName method? 
-(One possible justification is for HTMLElement, where the tag name is supposed to be returned in uppercase.) o There doesn't seem to be any way to distinguish an HTMLCollection indexed by name from one indexed by ID. 
-In any case, shouldn't the item and namedItem methods return HTMLElement rather than Node? 
-o This is closely related to the more generic problem of NamedNodeMap not 
-permitting what the specification calls `aliasing'. 
-You probably need both NamedNodeMap and a more generic associative array. 
-o Making the parent of an Attribute refer to the Element that contains it is almost certainly a mistake when coupled with the idea that the value of the attribute is its children. 
-We tried it. 
-The problem is that when an attribute has a default value, you have to copy the entire tree from the DTD to each Element where the attribute appears. 
-The best solution would be to return the effective value of an Attribute as a NodeList rather than as a wstring. 
-o A similar (but worse) problem occurs with EntityReference. 
-o Because of the previous two problems, it would be best if there were two different ways of getting a node's value: as a wstring and as a NodeList. 
-(Perhaps two attributes: nodeValue (the NodeList) and nodeData (the String). 
-This would even make sense for Text; the nodelist could have character entity references unexpanded, which would significantly simplify output conversion of Text nodes.) 
-Finally, I note that there are no comments in the Java bindings. 
-While this is well-optimized for the appendix to the specification, it would be best if 
-the compiled version (javabindings.zip) had the comments, so that JavaDoc 
-and other documentation-extraction and source-code-browsing software could make use of them. 
-Stephen R. Savitzky Chief Software Scientist, Ricoh Silicon Valley, Inc., steve@rsv.ricoh.com 
-California Research Center home: steve@starport.com 
-URL: http://www.starport.com/people/steve/ 
-Thanks very much for your detailed and useful comments; some responses below: 
-For better or worse, that's not in our charter, XML and HTML is. 
-It would 
-be reasonable for those wishing to use the DOM for processing full SGML to 
-collaborate on some sort of working draft that would keep others from having to re-invent this wheel, and to provide a basis for informal interoperability and perhaps guide a future working group chartered to extend the DOM to SGML. 
-You are not alone in lamenting the loss of support in the DOM for Declarations, validation, and other DTD-related matters. 
-It was simply a matter of *having* to get a Core/HTML draft out now or miss the ability to 
-prescribe a standard API that could be supported by the NS/MS 5.0 browser releases, and this did not allow time for full analysis and debate of the XML DTD issues. 
-We *will* try to get a W3C Working Draft describing our tentative solution out ASAP. 
-I don't understand; we could specify an interface, but I don't see how the implementation of that could be much faster than a Java cast. 
-Sigh. 
-Another much-lamented feature that had to be dropped because of time 
-pressure (and because it would be overkill for many HTML users). 
-Expect to 
-see iterators back in Level 2, and perhaps in a Working Draft before then, but they will probably be an optional package built on top of the DOM core rather than a fundamental part of the API. 
-Interesting point; this may require re-consideration. 
-As for Nodelists as the value of attributes, remember that anything other than a string as an attribute value is massive overkill for HTML users and probably most XML users as well. 
-The Java bindings are automatically generated from the XML source; it may 
-be possible to do what you ask, or perhaps to emit JavaDoc descriptions as 
-well as the Java bindings. 
-Gavin ??? 
-Mike Champion 
-Point taken. 
-I'd be happy to assist with such a draft. 
-Perhaps a couple of place-holder nodetype constants would do. 
-A Java cast hides a very inefficient implementation: Element bar = (Element)foo is roughly equivalent to: if (foo.getClass().implements(Element.getClass()) { bar = foo; } else { throw new ClassCastException...} and the ``implements'' operator requires comparing each interface mentioned in foo's Class object and all of its parents against Element. 
-Nasty. 
-On the other hand, the implementation of asElement is: class NodeImpl implements org.w3c.dom.Node { public Element asElement() { return null; } class ElementImpl implements org.w3c.dom.Element extends NodeImpl { public Element asElement() { return this; } All the necessary type-checking is done at compile time, so the implementation is as fast as possible. 
-I'll be looking forward to it. 
-Actually, the full glory of TreeIterator turned out to be overkill for us, too; we needed a single forward-only traversal. 
-It was the fact that value returned a NodeList that sold me on the original DOM spec. 
-Even for HTML users, the fact that you have to convert characters back to entities on the output end turns out to be quite painful, and means that you can't just use "value" to convert a Text to a String -- you have to examine each character and do a table lookup to get its output equivalent. 
-I had that in mind, in fact. 
-We've discovered that _absolutely_ the best way to develop a framework is to make the source code browsable as a website, and to make sure that all code and its documentation come from a single source (typically this means extracting the documentation from the code, but of course in your case it means generating both the code and its documentation from the XML original). 
-Stephen R. Savitzky Chief Software Scientist, Ricoh Silicon Valley, Inc., steve@rsv.ricoh.com 
-California Research Center home: steve@starport.com 
-URL: http://www.starport.com/people/steve/ 
-The latest spec has a 'delete' member function on the Data 
-interface. 
-This clashes with the C++ delete operator (and presumably the Java delete too). 
-I don't know if this is 
-strictly legal but MSVC++ definitely doesn't like it... 
-Any chance we can change the name to 'remove', the semantics might actually be slightly better? 
-Thanks, Alfie. 
-Hi folks 
-which is named finalize() ;-) I didn't look on the new DOM spec yet, but DOM should definitely make no assumptions on memory management! 
-not only slightly if it implies the removing of objects from a container object (as counterpart to add()) 
-Bye, Axel 
-It *should* have been renamed deleteData(); this fell thru the cracks, but will be fixed before the release to the W3C. 
-Thanks for the reminder. 
-The WG's informal rule of thumb, which we may not have adhered to strictly, is that the method name "remove" will be used when changing the structural model, and the method name "delete" will be used when to get rid of something (e.g. Data). 
-The thing that is deleted is not returned. 
-The thing that is removed may be returned, when it makes sense to return it. 
-This should be in the spec somewhere ... also will be fixed before the final release. 
-Mike Champion 
-methods 
-Iterators will probably come back in the next level of the specification. 
-would 
-be best if the compiled version (javabindings.zip) had the comments, so 
-that JavaDoc 
-Good point! 
-When I have time I'll tweak the scripts to generate the descriptions as comments. 
-would 
-to 
-As soon as this level heads to PR, expect to see a flurry of drafts that you can comment on/participate in. 
-time 
-This is generally true: for most uses simple depth-first and breadth-first traversal are sufficient. 
-Here again, we have a note that we can use as the basis for a future WD. 
-may 
-as 
-As I said, once I get more time, I'll certainly add this into the generation scripts (shouldn't be very hard even!) 
-We're discussing changing all of these to make them less likely to clash with anything, e.g. deleteData. 
-We're also discussing changing Data to something like CharData, since the interface is designed for text, and one day we might want to do an interface for other types of data. 
-Lauren 
-I would think that this API would be an extension useful in an implementation that optimized specifically for Java runtime speed. 
-However I'm guessing that the average consumer of the DOM is probably going to be happy enough with their language's default type checking mechanism. 
-The only reason I object to having it in the core spec is that from an OO point of view it is kind of ugly to have base classes A) know about all or even any of their subclasses B) have to be modified when a new subclass comes along. 
-PS. I too am sad that there isn't at least an attempt at a Declaration node for us to give feedback on. 
-It seems like a pretty "core" part of an XML object model. 
-However, I am glad we have what we have now... 
-ted 
-There will be a DTD/validation Working Draft out as soon as we have Level 1 finished. 
-We know we need it. 
-We'll be looking forward to feedback then. 
-cheers, Lauren 
-Some languages don't _have_ a type-checking mechanism -- C++ is an example. 
-Also, the construct in question allows the user to skip the extra step of 
-checking the nodeType in many cases, so it's a speedup in _any_ language. 
-I agree that it's ugly, and I wouldn't have suggested it except that the set of core node type interfaces is small and fixed (or, rather, it would be fixed if there were a Declaration subclass), and that the Document interface already has a corresponding set of "create" operations. 
-The latter is the most telling -- the DOM has already started down that path; one might as well do it right. 
-Unfortunately, none of the common strongly-typed languages have constructs that allow one to do this kind of thing correctly. 
-Stephen R. Savitzky Chief Software Scientist, Ricoh Silicon Valley, Inc., steve@rsv.ricoh.com 
-California Research Center home: steve@starport.com 
-URL: http://www.starport.com/people/steve/ 
-I wouldn't say that having to update a factory class (Document) to accommodate a new subclass violates OO principles to the same degree as having to update a base class to accommodate a new subclass. 
-Eh? Did someone delete RTTI after the ANSI committee finally added it? 
-Admittedly there are many implementations that don't support it (or make it a "default off" option, same effect). 
-Oops. 
-I have to admit that most of my C++ experience predates RTTI, but I should have remembered that. 
-It's still less efficient than a set of conversion methods, but I'll admit that the latter is ugly and not particularly extensible. 
-Stephen R. Savitzky Chief Software Scientist, Ricoh Silicon Valley, Inc., steve@rsv.ricoh.com 
-California Research Center home: steve@starport.com 
-URL: http://www.starport.com/people/steve/ 
-There are many who would say that it's the cast operator that violates OO principles, and many others who would say it's a bad idea to migrate operations (like getAttributes) into a base class in order to avoid it. 
-I've actually been down that route; an earlier version of our software had a single Node-like class that could represent any SGML object. 
-The DOM seems to be moving in that direction, come to think of it. 
-I believe it may be possible at this point to represent an entire document using only an implementation of Node, with the "attributes" attribute containing any subclass-specific attributes (in the IDL sense). 
-There's still a certain amount of merit to such an approach; it essentially lets you emulate the kind of weakly-typed language (like Lisp or Smalltalk) that SGML systems have traditionally been built with. 
-The correct solution to the casting problem is probably to put all the implementation-specific knowledge into specialized iterators (which can be built knowing the implementation classes rather than just the interfaces). 
-Oh, well; that's exactly the course I took about a month ago. 
-My version of a NodeIterator has a ``current Node'' and methods that return it as any of the relevant subtypes. 
-Stephen R. Savitzky Chief Software Scientist, Ricoh Silicon Valley, Inc., steve@rsv.ricoh.com 
-California Research Center home: steve@starport.com 
-URL: http://www.starport.com/people/steve/ 
-With all this talk of quickly casting to subclasses from a base class reference, I wonder if anyone has ever thought of putting Visitor design pattern 
-functionality into Node? 
-I have also heard the Visitor pattern referred to as 
-"double dispatch". 
-It would look something like this (in pseudo-Java): 
-public interface Node { // rest of node methods and stuff public void visit(NodeVisitor v); public interface NodeVisitor { public void visitNode(Node n); public void visitElement(Element e); public void visitAttribute(Attribute a); public void visitData(Data d); And then in the actual implementation: public class Foo { public void bar() { // Somehow this thing gets a Node: Node n = getTheNode(); MyNodeVisitor visitor = v; n.visit(v); public class MyNodeVisitor implements NodeVisitor { public void visitNode(Node n) { // do the right thing for plain nodes public void visitElement(Element e) { // do the right thing for elements public void visitAttribute(Attribute a) { // do the right thing for attributes public void visitData(Data d) { // do the right thing for data public class MyElement extends MyNode implements Element { // ... other element methods ... public void visit(NodeVisitor v) { v.visitElement(this); public class MyData extends MyNode implements Data { // ... other data methods ... public void visit(NodeVisitor v) { v.visitNode(this); The implementations of Node and the descendants of those implementations each override the visit(NodeVisitor); method and call the appropriate NodeVisitor method, passing themselves in as parameters. 
-This pattern obviates the need for any casting; all the type checking is done by the compiler and any internal type checking mechanisms. 
-To extend this pattern to encompass the HTML specific classes, you just extend the NodeVisitor interface to take more 
-methods. 
-To avoid type checking what kind of NodeVisitor a Node has received, you might make NodeVisitor an abstract base class with an Enumerated type field which contains an int (or bitfield, maybe) which specifies its type. 
-That way, subclasses which the base NodeVisitor doesn't cover could check the type of visitors without doing an instanceof test (which, I believe, does not exist in 
-C++ anyway; however, I could be wrong, it's been a long time since I did any C++ programming) and cast as appropriate. 
-The Visitor pattern really excels at quickly and efficiently digesting structures like the DOM's Node hierarchy, where a program needs to differentiate by their subclasses a tree of objects which all inheret from the same base class. 
-It is far more effcient than instanceof/casting tests with big if-then-else statements, and faster again than checking something like a string which contains the "name"of the subclass in it (up to 8x faster than the latter, according to some tests I ran under JDK1.1.6 on my Solaris box). 
-The only structure that approached it in speed was a switch() statement off of an Enumerated int field in the object. 
-Throwing my hat in the ring, 
-Michael Allen 
-pattern 
-as 
-Yes. DOM WG and IG has many design pattern nuts, er, experts and we will make sure that the Visitor pattern is, well, 'revisited' in level 2. Don Park 
-[excellent discussion of the pattern snipped. 
-See also p. 331 in the Gang of Four book] It still has the problem of having to be extended whenever you add a subclass to Node, but at least it's better than adding conversion methods to Node. 
-Something like the HTMLNodeVisitor could get pretty ugly. 
-I think it would be better to extend NodeVisitor at the same time as you specialize Node (which, by the way, I notice that the HTML application doesn't do -- that's a problem): interface HTMLNode: Node { readonly attribute HTMLNode parentHTMLNode; void visit(in HTMLVisitor v) 
-Nice hat. 
-Stephen R. Savitzky Chief Software Scientist, Ricoh Silicon Valley, Inc., steve@rsv.ricoh.com 
-California Research Center home: steve@starport.com 
-URL: http://www.starport.com/people/steve/ 
-Ahhhh, yes! 
-Very nice, by parameterizing the same method name, you let the runtime type checking system take care of calling the right one for you! 
-Brilliant! 
-And HTMLNode can do something vaguely appropriate when it gets a plain old NodeVisitor as well. 
-Sometimes the ol' thinking cap pulls through. 
-Michael Allen 
-pattern 
-to as 
-Very briefly; we'll probably look at this more carefully in Level 2 as part of the effort to define higher-level convenient navigation interfaces. 
-I'll file your message for careful consideration then, since at the moment we're focussed on nit-picking the Level 1 spec. 
-Thanks for the good suggestion! 
-Mike Champion 
-o It's unfortunate that attributes is an attribute of Node when it is null for all subclasses except Element. 
-I suppose this was to avoid having to cast an Element object that is gotten from a NodeList :-( (Even if there is an attributes in future Declaration subtypes, I don't really think it belongs in the base interface.) 
-o Why "nodeName", "nodeValue", "nodeType" attributes of Node and not just name, value, type? 
-All Node subclasses have a attribute that could reasonably be refered to as "name" and many have a "value". 
-Programmers can make use of the convenience methods with signatures like Element.getTagName() and ProcessingInstruction.getTarget() to access the name variable with more semantic if they want to. 
-That brings up what I believe is a typo in the ECMA script interface. 
-It states that Object Attribute has all the properties and methods of Node as well as the properties defined below, and "name" is defined below. 
-This suggests that Attribute has both the property nodeName and name. 
-I don't think scripts can alias two variable names for a single variable in its object model, or are there supposed to be two different variables? 
-(Same thing for Element, etc.) 
-o You specify that the NodeList returned by Node.childNodes() must be live. 
-Is this true of all NodeLists? 
-What about NamedNodeMaps, is it required that they are static (I ask because they allow enumeration)? 
-o What were the objections to having a single NodeList interface providing both an an index accessor and a name accessor (and not have NamedNodeMap)? 
-It's my understanding that all Nodes in the DOM will normally have a non-null name, so all collection types should be able to handle name access (however inefficiently). 
-Of course smart implementations should use appropriate collection types for the various collections based on "liveness" and ordering requirements and predicted use patterns, but it seems they could all use the same NodeList interface. 
-o I am trying to understand the exceptions in Data. 
-The "data" attribute specifies that "If the character data of node cannot fit into the length of a wstring a DOM exception is raised." 
-Does this mean that append, insert, and replace raise this exception even though they don't say they do? 
-The comment seems to suggest that 
-the exception is raised during a property setter operation. 
-If so, isn't the character data already in a wstring before assignment? 
-What does the following statement mean, "If this exception is raised, the user may call substring to retrieve the data in manageable chunks"? 
-I don't understand where the character data was put such that it is now accessible via this object's substring. 
-Then in the substring method, "a DOMException is thrown if the specified range of text will not fit in a wstring." 
-How could a substring of a wstring not fit in a wstring? 
-Is substring() capable of pulling data 
-from adjacent or child Text nodes? 
-That's the only way I could think of getting this exception. 
-Also, shouldn't substring thow an invalid offset exception? 
-Cheers. 
-ted 
-You're right as to why this was added; we had to come to grips with the fact that "casting" is fairly expensive in Java and COM, and some wish to use the DOM in performance-critical environments. 
-So, we allow full functionality using just the Node interface, but still support the higher-level interfaces for those who prefer a more object-oriented API. 
-ECMAScript in particular is rather limited in its name scoping rules, and "simple" names will tend to clash with legacy APIs, so we have used the naming convention of using the interface name in the methods to minimize the chances for name clashes. 
-That will be fixed in the next release. 
-We'll apparently have to clarify this in the spec. 
-As I understand it, NamedNodeMaps are static (which is why they're not derived from NodeList). 
-There was much feeling in and outside of the WG that this would confuse more people than it enlightened. 
-Hmmmm ... they SHOULD say they do ... I'll double-check and fix if necessary. 
-The comment seems to suggest that 
-The scenario here is to imagine that a DOM document has some Data object that is larger than the size of a wstring on some platform (it presumably would not be stored internally using the data type that wstring maps onto!). 
-We added a means of telling the user that extracting the entire Data object would cause an overflow, and give them a means of extracting the Data in manageable chunks. 
-Could you point to something in the text that gives you the impression that the value of a Data object is a wstring (as opposed to an arbitrarily large collection of character data)? 
-We need to dispel that misconception. 
-Thanks, Mike Champion 
-I would like to strongly suggest that "value" should return a NodeList, and "data" should return a wstring (which is the way things were a couple of revs ago). 
-This makes the decision of whether to represent attribute and entity values as children an implementation decision, and allows values (which might be quite large in the case of entities) to be shared. 
-It also makes a lot more sense to call the string associated with a Text node its "data" than to call it its "value". 
-Would it avoid these conflicts by defining getName, getValue, setName, and setValue as methods instead of making them attributes? 
-It sounds to me as if you may need two kinds of NodeList, one that's ``live'' and one that isn't. 
-You need _something_ to return as the value of an operation that returns multiple nodes from different places in a document. 
-I suspect this may have been the original motivation behind DocumentFragment, but to use it you would have to move the nodes out of their original places in the document, which misses the point. 
-If this is the case, you probably have to define getData and setData as separate methods rather than defining data as an attribute. 
-Stephen R. Savitzky Chief Software Scientist, Ricoh Silicon Valley, Inc., steve@rsv.ricoh.com 
-California Research Center home: steve@starport.com 
-URL: http://www.starport.com/people/steve/ 
-I realize now that if, for instance, Element.childNodes() returned a NodeList with a by name accessor, it would be ambiguous which child node should be returned if the Element had two children with the same name. 
-It all makes much more sense with this explaination, I'm a bit slow. 
-You might need to define another exception type for the setter methods, something like INTERNAL_DATA_OVERFLOW_ERR, (I would call it DATA_SIZE_ERR but that is already taken for the offset errors). 
-However, if the internal data storage space is assumed to be infinite then this error code would not be needed. 
-ted 
+<s> The latest Level 1 DOM specification has just been released, at There have been significant changes since the last public draft.  </s>
+<s> Amongst others: There is no separate XML document; all the XML interfaces are in the Core document.  </s>
+<s> We took the DTD stuff out, pending work on schemas in a future version of XML (what we had will shortly be released as a separate WD).  </s>
+<s> We took out NodeIterator.  </s>
+<s> The Java and OMG IDL bindings now validate.  </s>
+<s> The DOM WG thinks the DOM specification is nearly finished and almost ready to go to PR. The remaining issues are mostly listed in the spec, so feedback on these (to this mailing list) would be welcome.  </s>
+<s> regards, Lauren Wood, Chair, W3C DOM WG  </s>
+<s> On the whole the new DOM specification seems to be a great improvement, but  </s>
+<s> I'm sorry to see the DTD stuff go.  </s>
+<s> My group has been spending the last several months building a large document-processing application using the DOM as its basis; we had to make several extensions to the core to get it to handle generic SGML.  </s>
+<s> I think it's very important to be able to represent _any_ SGML document using the DOM core.  </s>
+<s> The reason for this is simple: if any SGML document can be represented by the core, extending the DOM for specific document types (e.g. HTML) becomes a convenience rather than a necessity.  </s>
+<s> (And by the way, this appears to be why the core is now sufficient to represent XML.) It would mean that _any_ document would be representable without having to create a new, extended API for it, and would make it much easier to produce SGML-to-XML conversion utilities (for example).  </s>
+<s> The main missing node type, I believe, is Declaration.  </s>
+<s> A few more specific notes:  </s>
+<s> o There is no type-safe way to convert a Node to any of its major subclasses.  </s>
+<s> The newly-added nodeName, nodeValue, and attributes attributes help a great deal, but it would be good to have conversion methods as well.  </s>
+<s> We have, e.g., "asElement", which returns the node if it is an Element, null otherwise.  </s>
+<s> This is _much_ more efficient than casting, which involves run-time type checking in Java.  </s>
+<s> o I'm very sorry to see NodeIterator, TreeIterator, and their create methods  </s>
+<s> disappear.  </s>
+<s> It's easier to create iterators when you know the type (and  </s>
+<s> hence the implementation details) of the objects you're iterating over; the resulting type-specific iterator can much more efficient than a generic one, and its class need not be exposed to the programmer.  </s>
+<s> o If the nodeName of an Element is the tagname, why do you need the getTagName method?  </s>
+<s> (One possible justification is for HTMLElement, where the tag name is supposed to be returned in uppercase.) o There doesn't seem to be any way to distinguish an HTMLCollection indexed by name from one indexed by ID.  </s>
+<s> In any case, shouldn't the item and namedItem methods return HTMLElement rather than Node?  </s>
+<s> o This is closely related to the more generic problem of NamedNodeMap not  </s>
+<s> permitting what the specification calls `aliasing'.  </s>
+<s> You probably need both NamedNodeMap and a more generic associative array.  </s>
+<s> o Making the parent of an Attribute refer to the Element that contains it is almost certainly a mistake when coupled with the idea that the value of the attribute is its children.  </s>
+<s> We tried it.  </s>
+<s> The problem is that when an attribute has a default value, you have to copy the entire tree from the DTD to each Element where the attribute appears.  </s>
+<s> The best solution would be to return the effective value of an Attribute as a NodeList rather than as a wstring.  </s>
+<s> o A similar (but worse) problem occurs with EntityReference.  </s>
+<s> o Because of the previous two problems, it would be best if there were two different ways of getting a node's value: as a wstring and as a NodeList.  </s>
+<s> (Perhaps two attributes: nodeValue (the NodeList) and nodeData (the String).  </s>
+<s> This would even make sense for Text; the nodelist could have character entity references unexpanded, which would significantly simplify output conversion of Text nodes.)  </s>
+<s> Finally, I note that there are no comments in the Java bindings.  </s>
+<s> While this is well-optimized for the appendix to the specification, it would be best if  </s>
+<s> the compiled version (javabindings.zip) had the comments, so that JavaDoc  </s>
+<s> and other documentation-extraction and source-code-browsing software could make use of them.  </s>
+<s> Stephen R. Savitzky Chief Software Scientist, Ricoh Silicon Valley, Inc., steve@rsv.ricoh.com  </s>
+<s> California Research Center home: steve@starport.com  </s>
+<s> URL: http://www.starport.com/people/steve/  </s>
+<s> Thanks very much for your detailed and useful comments; some responses below:  </s>
+<s> For better or worse, that's not in our charter, XML and HTML is.  </s>
+<s> It would  </s>
+<s> be reasonable for those wishing to use the DOM for processing full SGML to  </s>
+<s> collaborate on some sort of working draft that would keep others from having to re-invent this wheel, and to provide a basis for informal interoperability and perhaps guide a future working group chartered to extend the DOM to SGML.  </s>
+<s> You are not alone in lamenting the loss of support in the DOM for Declarations, validation, and other DTD-related matters.  </s>
+<s> It was simply a matter of *having* to get a Core/HTML draft out now or miss the ability to  </s>
+<s> prescribe a standard API that could be supported by the NS/MS 5.0 browser releases, and this did not allow time for full analysis and debate of the XML DTD issues.  </s>
+<s> We *will* try to get a W3C Working Draft describing our tentative solution out ASAP.  </s>
+<s> I don't understand; we could specify an interface, but I don't see how the implementation of that could be much faster than a Java cast.  </s>
+<s> Sigh.  </s>
+<s> Another much-lamented feature that had to be dropped because of time  </s>
+<s> pressure (and because it would be overkill for many HTML users).  </s>
+<s> Expect to  </s>
+<s> see iterators back in Level 2, and perhaps in a Working Draft before then, but they will probably be an optional package built on top of the DOM core rather than a fundamental part of the API.  </s>
+<s> Interesting point; this may require re-consideration.  </s>
+<s> As for Nodelists as the value of attributes, remember that anything other than a string as an attribute value is massive overkill for HTML users and probably most XML users as well.  </s>
+<s> The Java bindings are automatically generated from the XML source; it may  </s>
+<s> be possible to do what you ask, or perhaps to emit JavaDoc descriptions as  </s>
+<s> well as the Java bindings.  </s>
+<s> Gavin ???  </s>
+<s> Mike Champion  </s>
+<s> Point taken.  </s>
+<s> I'd be happy to assist with such a draft.  </s>
+<s> Perhaps a couple of place-holder nodetype constants would do.  </s>
+<s> A Java cast hides a very inefficient implementation: Element bar = (Element)foo is roughly equivalent to: if (foo.getClass().implements(Element.getClass()) { bar = foo; } else { throw new ClassCastException...} and the ``implements'' operator requires comparing each interface mentioned in foo's Class object and all of its parents against Element.  </s>
+<s> Nasty.  </s>
+<s> On the other hand, the implementation of asElement is: class NodeImpl implements org.w3c.dom.Node { public Element asElement() { return null; } class ElementImpl implements org.w3c.dom.Element extends NodeImpl { public Element asElement() { return this; } All the necessary type-checking is done at compile time, so the implementation is as fast as possible.  </s>
+<s> I'll be looking forward to it.  </s>
+<s> Actually, the full glory of TreeIterator turned out to be overkill for us, too; we needed a single forward-only traversal.  </s>
+<s> It was the fact that value returned a NodeList that sold me on the original DOM spec.  </s>
+<s> Even for HTML users, the fact that you have to convert characters back to entities on the output end turns out to be quite painful, and means that you can't just use "value" to convert a Text to a String -- you have to examine each character and do a table lookup to get its output equivalent.  </s>
+<s> I had that in mind, in fact.  </s>
+<s> We've discovered that _absolutely_ the best way to develop a framework is to make the source code browsable as a website, and to make sure that all code and its documentation come from a single source (typically this means extracting the documentation from the code, but of course in your case it means generating both the code and its documentation from the XML original).  </s>
+<s> Stephen R. Savitzky Chief Software Scientist, Ricoh Silicon Valley, Inc., steve@rsv.ricoh.com  </s>
+<s> California Research Center home: steve@starport.com  </s>
+<s> URL: http://www.starport.com/people/steve/  </s>
+<s> The latest spec has a 'delete' member function on the Data  </s>
+<s> interface.  </s>
+<s> This clashes with the C++ delete operator (and presumably the Java delete too).  </s>
+<s> I don't know if this is  </s>
+<s> strictly legal but MSVC++ definitely doesn't like it...  </s>
+<s> Any chance we can change the name to 'remove', the semantics might actually be slightly better?  </s>
+<s> Thanks, Alfie.  </s>
+<s> Hi folks  </s>
+<s> which is named finalize() ;-) I didn't look on the new DOM spec yet, but DOM should definitely make no assumptions on memory management!  </s>
+<s> not only slightly if it implies the removing of objects from a container object (as counterpart to add())  </s>
+<s> Bye, Axel  </s>
+<s> It *should* have been renamed deleteData(); this fell thru the cracks, but will be fixed before the release to the W3C.  </s>
+<s> Thanks for the reminder.  </s>
+<s> The WG's informal rule of thumb, which we may not have adhered to strictly, is that the method name "remove" will be used when changing the structural model, and the method name "delete" will be used when to get rid of something (e.g. Data).  </s>
+<s> The thing that is deleted is not returned.  </s>
+<s> The thing that is removed may be returned, when it makes sense to return it.  </s>
+<s> This should be in the spec somewhere ... also will be fixed before the final release.  </s>
+<s> Mike Champion  </s>
+<s> methods  </s>
+<s> Iterators will probably come back in the next level of the specification.  </s>
+<s> would  </s>
+<s> be best if the compiled version (javabindings.zip) had the comments, so  </s>
+<s> that JavaDoc  </s>
+<s> Good point!  </s>
+<s> When I have time I'll tweak the scripts to generate the descriptions as comments.  </s>
+<s> would  </s>
+<s> to  </s>
+<s> As soon as this level heads to PR, expect to see a flurry of drafts that you can comment on/participate in.  </s>
+<s> time  </s>
+<s> This is generally true: for most uses simple depth-first and breadth-first traversal are sufficient.  </s>
+<s> Here again, we have a note that we can use as the basis for a future WD.  </s>
+<s> may  </s>
+<s> as  </s>
+<s> As I said, once I get more time, I'll certainly add this into the generation scripts (shouldn't be very hard even!)  </s>
+<s> We're discussing changing all of these to make them less likely to clash with anything, e.g. deleteData.  </s>
+<s> We're also discussing changing Data to something like CharData, since the interface is designed for text, and one day we might want to do an interface for other types of data.  </s>
+<s> Lauren  </s>
+<s> I would think that this API would be an extension useful in an implementation that optimized specifically for Java runtime speed.  </s>
+<s> However I'm guessing that the average consumer of the DOM is probably going to be happy enough with their language's default type checking mechanism.  </s>
+<s> The only reason I object to having it in the core spec is that from an OO point of view it is kind of ugly to have base classes A) know about all or even any of their subclasses B) have to be modified when a new subclass comes along.  </s>
+<s> PS. I too am sad that there isn't at least an attempt at a Declaration node for us to give feedback on.  </s>
+<s> It seems like a pretty "core" part of an XML object model.  </s>
+<s> However, I am glad we have what we have now...  </s>
+<s> ted  </s>
+<s> There will be a DTD/validation Working Draft out as soon as we have Level 1 finished.  </s>
+<s> We know we need it.  </s>
+<s> We'll be looking forward to feedback then.  </s>
+<s> cheers, Lauren  </s>
+<s> Some languages don't _have_ a type-checking mechanism -- C++ is an example.  </s>
+<s> Also, the construct in question allows the user to skip the extra step of  </s>
+<s> checking the nodeType in many cases, so it's a speedup in _any_ language.  </s>
+<s> I agree that it's ugly, and I wouldn't have suggested it except that the set of core node type interfaces is small and fixed (or, rather, it would be fixed if there were a Declaration subclass), and that the Document interface already has a corresponding set of "create" operations.  </s>
+<s> The latter is the most telling -- the DOM has already started down that path; one might as well do it right.  </s>
+<s> Unfortunately, none of the common strongly-typed languages have constructs that allow one to do this kind of thing correctly.  </s>
+<s> Stephen R. Savitzky Chief Software Scientist, Ricoh Silicon Valley, Inc., steve@rsv.ricoh.com  </s>
+<s> California Research Center home: steve@starport.com  </s>
+<s> URL: http://www.starport.com/people/steve/  </s>
+<s> I wouldn't say that having to update a factory class (Document) to accommodate a new subclass violates OO principles to the same degree as having to update a base class to accommodate a new subclass.  </s>
+<s> Eh? Did someone delete RTTI after the ANSI committee finally added it?  </s>
+<s> Admittedly there are many implementations that don't support it (or make it a "default off" option, same effect).  </s>
+<s> Oops.  </s>
+<s> I have to admit that most of my C++ experience predates RTTI, but I should have remembered that.  </s>
+<s> It's still less efficient than a set of conversion methods, but I'll admit that the latter is ugly and not particularly extensible.  </s>
+<s> Stephen R. Savitzky Chief Software Scientist, Ricoh Silicon Valley, Inc., steve@rsv.ricoh.com  </s>
+<s> California Research Center home: steve@starport.com  </s>
+<s> URL: http://www.starport.com/people/steve/  </s>
+<s> There are many who would say that it's the cast operator that violates OO principles, and many others who would say it's a bad idea to migrate operations (like getAttributes) into a base class in order to avoid it.  </s>
+<s> I've actually been down that route; an earlier version of our software had a single Node-like class that could represent any SGML object.  </s>
+<s> The DOM seems to be moving in that direction, come to think of it.  </s>
+<s> I believe it may be possible at this point to represent an entire document using only an implementation of Node, with the "attributes" attribute containing any subclass-specific attributes (in the IDL sense).  </s>
+<s> There's still a certain amount of merit to such an approach; it essentially lets you emulate the kind of weakly-typed language (like Lisp or Smalltalk) that SGML systems have traditionally been built with.  </s>
+<s> The correct solution to the casting problem is probably to put all the implementation-specific knowledge into specialized iterators (which can be built knowing the implementation classes rather than just the interfaces).  </s>
+<s> Oh, well; that's exactly the course I took about a month ago.  </s>
+<s> My version of a NodeIterator has a ``current Node'' and methods that return it as any of the relevant subtypes.  </s>
+<s> Stephen R. Savitzky Chief Software Scientist, Ricoh Silicon Valley, Inc., steve@rsv.ricoh.com  </s>
+<s> California Research Center home: steve@starport.com  </s>
+<s> URL: http://www.starport.com/people/steve/  </s>
+<s> With all this talk of quickly casting to subclasses from a base class reference, I wonder if anyone has ever thought of putting Visitor design pattern  </s>
+<s> functionality into Node?  </s>
+<s> I have also heard the Visitor pattern referred to as  </s>
+<s> "double dispatch".  </s>
+<s> It would look something like this (in pseudo-Java):  </s>
+<s> public interface Node { // rest of node methods and stuff public void visit(NodeVisitor v); public interface NodeVisitor { public void visitNode(Node n); public void visitElement(Element e); public void visitAttribute(Attribute a); public void visitData(Data d); And then in the actual implementation: public class Foo { public void bar() { // Somehow this thing gets a Node: Node n = getTheNode(); MyNodeVisitor visitor = v; n.visit(v); public class MyNodeVisitor implements NodeVisitor { public void visitNode(Node n) { // do the right thing for plain nodes public void visitElement(Element e) { // do the right thing for elements public void visitAttribute(Attribute a) { // do the right thing for attributes public void visitData(Data d) { // do the right thing for data public class MyElement extends MyNode implements Element { // ... other element methods ... public void visit(NodeVisitor v) { v.visitElement(this); public class MyData extends MyNode implements Data { // ... other data methods ... public void visit(NodeVisitor v) { v.visitNode(this); The implementations of Node and the descendants of those implementations each override the visit(NodeVisitor); method and call the appropriate NodeVisitor method, passing themselves in as parameters.  </s>
+<s> This pattern obviates the need for any casting; all the type checking is done by the compiler and any internal type checking mechanisms.  </s>
+<s> To extend this pattern to encompass the HTML specific classes, you just extend the NodeVisitor interface to take more  </s>
+<s> methods.  </s>
+<s> To avoid type checking what kind of NodeVisitor a Node has received, you might make NodeVisitor an abstract base class with an Enumerated type field which contains an int (or bitfield, maybe) which specifies its type.  </s>
+<s> That way, subclasses which the base NodeVisitor doesn't cover could check the type of visitors without doing an instanceof test (which, I believe, does not exist in  </s>
+<s> C++ anyway; however, I could be wrong, it's been a long time since I did any C++ programming) and cast as appropriate.  </s>
+<s> The Visitor pattern really excels at quickly and efficiently digesting structures like the DOM's Node hierarchy, where a program needs to differentiate by their subclasses a tree of objects which all inheret from the same base class.  </s>
+<s> It is far more effcient than instanceof/casting tests with big if-then-else statements, and faster again than checking something like a string which contains the "name"of the subclass in it (up to 8x faster than the latter, according to some tests I ran under JDK1.1.6 on my Solaris box).  </s>
+<s> The only structure that approached it in speed was a switch() statement off of an Enumerated int field in the object.  </s>
+<s> Throwing my hat in the ring,  </s>
+<s> Michael Allen  </s>
+<s> pattern  </s>
+<s> as  </s>
+<s> Yes. DOM WG and IG has many design pattern nuts, er, experts and we will make sure that the Visitor pattern is, well, 'revisited' in level 2. Don Park  </s>
+<s> [excellent discussion of the pattern snipped.  </s>
+<s> See also p. 331 in the Gang of Four book] It still has the problem of having to be extended whenever you add a subclass to Node, but at least it's better than adding conversion methods to Node.  </s>
+<s> Something like the HTMLNodeVisitor could get pretty ugly.  </s>
+<s> I think it would be better to extend NodeVisitor at the same time as you specialize Node (which, by the way, I notice that the HTML application doesn't do -- that's a problem): interface HTMLNode: Node { readonly attribute HTMLNode parentHTMLNode; void visit(in HTMLVisitor v)  </s>
+<s> Nice hat.  </s>
+<s> Stephen R. Savitzky Chief Software Scientist, Ricoh Silicon Valley, Inc., steve@rsv.ricoh.com  </s>
+<s> California Research Center home: steve@starport.com  </s>
+<s> URL: http://www.starport.com/people/steve/  </s>
+<s> Ahhhh, yes!  </s>
+<s> Very nice, by parameterizing the same method name, you let the runtime type checking system take care of calling the right one for you!  </s>
+<s> Brilliant!  </s>
+<s> And HTMLNode can do something vaguely appropriate when it gets a plain old NodeVisitor as well.  </s>
+<s> Sometimes the ol' thinking cap pulls through.  </s>
+<s> Michael Allen  </s>
+<s> pattern  </s>
+<s> to as  </s>
+<s> Very briefly; we'll probably look at this more carefully in Level 2 as part of the effort to define higher-level convenient navigation interfaces.  </s>
+<s> I'll file your message for careful consideration then, since at the moment we're focussed on nit-picking the Level 1 spec.  </s>
+<s> Thanks for the good suggestion!  </s>
+<s> Mike Champion  </s>
+<s> o It's unfortunate that attributes is an attribute of Node when it is null for all subclasses except Element.  </s>
+<s> I suppose this was to avoid having to cast an Element object that is gotten from a NodeList :-( (Even if there is an attributes in future Declaration subtypes, I don't really think it belongs in the base interface.)  </s>
+<s> o Why "nodeName", "nodeValue", "nodeType" attributes of Node and not just name, value, type?  </s>
+<s> All Node subclasses have a attribute that could reasonably be refered to as "name" and many have a "value".  </s>
+<s> Programmers can make use of the convenience methods with signatures like Element.getTagName() and ProcessingInstruction.getTarget() to access the name variable with more semantic if they want to.  </s>
+<s> That brings up what I believe is a typo in the ECMA script interface.  </s>
+<s> It states that Object Attribute has all the properties and methods of Node as well as the properties defined below, and "name" is defined below.  </s>
+<s> This suggests that Attribute has both the property nodeName and name.  </s>
+<s> I don't think scripts can alias two variable names for a single variable in its object model, or are there supposed to be two different variables?  </s>
+<s> (Same thing for Element, etc.)  </s>
+<s> o You specify that the NodeList returned by Node.childNodes() must be live.  </s>
+<s> Is this true of all NodeLists?  </s>
+<s> What about NamedNodeMaps, is it required that they are static (I ask because they allow enumeration)?  </s>
+<s> o What were the objections to having a single NodeList interface providing both an an index accessor and a name accessor (and not have NamedNodeMap)?  </s>
+<s> It's my understanding that all Nodes in the DOM will normally have a non-null name, so all collection types should be able to handle name access (however inefficiently).  </s>
+<s> Of course smart implementations should use appropriate collection types for the various collections based on "liveness" and ordering requirements and predicted use patterns, but it seems they could all use the same NodeList interface.  </s>
+<s> o I am trying to understand the exceptions in Data.  </s>
+<s> The "data" attribute specifies that "If the character data of node cannot fit into the length of a wstring a DOM exception is raised."  </s>
+<s> Does this mean that append, insert, and replace raise this exception even though they don't say they do?  </s>
+<s> The comment seems to suggest that  </s>
+<s> the exception is raised during a property setter operation.  </s>
+<s> If so, isn't the character data already in a wstring before assignment?  </s>
+<s> What does the following statement mean, "If this exception is raised, the user may call substring to retrieve the data in manageable chunks"?  </s>
+<s> I don't understand where the character data was put such that it is now accessible via this object's substring.  </s>
+<s> Then in the substring method, "a DOMException is thrown if the specified range of text will not fit in a wstring."  </s>
+<s> How could a substring of a wstring not fit in a wstring?  </s>
+<s> Is substring() capable of pulling data  </s>
+<s> from adjacent or child Text nodes?  </s>
+<s> That's the only way I could think of getting this exception.  </s>
+<s> Also, shouldn't substring thow an invalid offset exception?  </s>
+<s> Cheers.  </s>
+<s> ted  </s>
+<s> You're right as to why this was added; we had to come to grips with the fact that "casting" is fairly expensive in Java and COM, and some wish to use the DOM in performance-critical environments.  </s>
+<s> So, we allow full functionality using just the Node interface, but still support the higher-level interfaces for those who prefer a more object-oriented API.  </s>
+<s> ECMAScript in particular is rather limited in its name scoping rules, and "simple" names will tend to clash with legacy APIs, so we have used the naming convention of using the interface name in the methods to minimize the chances for name clashes.  </s>
+<s> That will be fixed in the next release.  </s>
+<s> We'll apparently have to clarify this in the spec.  </s>
+<s> As I understand it, NamedNodeMaps are static (which is why they're not derived from NodeList).  </s>
+<s> There was much feeling in and outside of the WG that this would confuse more people than it enlightened.  </s>
+<s> Hmmmm ... they SHOULD say they do ... I'll double-check and fix if necessary.  </s>
+<s> The comment seems to suggest that  </s>
+<s> The scenario here is to imagine that a DOM document has some Data object that is larger than the size of a wstring on some platform (it presumably would not be stored internally using the data type that wstring maps onto!).  </s>
+<s> We added a means of telling the user that extracting the entire Data object would cause an overflow, and give them a means of extracting the Data in manageable chunks.  </s>
+<s> Could you point to something in the text that gives you the impression that the value of a Data object is a wstring (as opposed to an arbitrarily large collection of character data)?  </s>
+<s> We need to dispel that misconception.  </s>
+<s> Thanks, Mike Champion  </s>
+<s> I would like to strongly suggest that "value" should return a NodeList, and "data" should return a wstring (which is the way things were a couple of revs ago).  </s>
+<s> This makes the decision of whether to represent attribute and entity values as children an implementation decision, and allows values (which might be quite large in the case of entities) to be shared.  </s>
+<s> It also makes a lot more sense to call the string associated with a Text node its "data" than to call it its "value".  </s>
+<s> Would it avoid these conflicts by defining getName, getValue, setName, and setValue as methods instead of making them attributes?  </s>
+<s> It sounds to me as if you may need two kinds of NodeList, one that's ``live'' and one that isn't.  </s>
+<s> You need _something_ to return as the value of an operation that returns multiple nodes from different places in a document.  </s>
+<s> I suspect this may have been the original motivation behind DocumentFragment, but to use it you would have to move the nodes out of their original places in the document, which misses the point.  </s>
+<s> If this is the case, you probably have to define getData and setData as separate methods rather than defining data as an attribute.  </s>
+<s> Stephen R. Savitzky Chief Software Scientist, Ricoh Silicon Valley, Inc., steve@rsv.ricoh.com  </s>
+<s> California Research Center home: steve@starport.com  </s>
+<s> URL: http://www.starport.com/people/steve/  </s>
+<s> I realize now that if, for instance, Element.childNodes() returned a NodeList with a by name accessor, it would be ambiguous which child node should be returned if the Element had two children with the same name.  </s>
+<s> It all makes much more sense with this explaination, I'm a bit slow.  </s>
+<s> You might need to define another exception type for the setter methods, something like INTERNAL_DATA_OVERFLOW_ERR, (I would call it DATA_SIZE_ERR but that is already taken for the offset errors).  </s>
+<s> However, if the internal data storage space is assumed to be infinite then this error code would not be needed.  </s>
+<s> ted  </s>

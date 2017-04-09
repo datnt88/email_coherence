@@ -1,118 +1,118 @@
-The SKOS API appears to me to be pitched at a very low level. 
-What I mean is that the client has to do a great deal of work, and send out many atomic 
-requests to be able to do certain kinds of required tasks, e.g. build a 
-useful hierarchical display format to allow an end user to browse a 
-thesaurus. 
-Hierarchical displays are used in a wide number of thesauri of 
-different styles. 
-Let me provide an example. 
-Suppose we want to build a browsable hierarchical display like found in the AAT hierarchy display for Chairs [1]. 
-(Incidentally similar kinds of displays are also provided for other kinds of thesauri, for instance see Plant products in AGROVOC [2]). 
-My math skills are not very strong, but if I understand the SKOS API correctly, I think this requires 53 separate calls to getConceptRelatives (and what is worse probably the equivalent of 53 separate SQL queries in the underlying thesaurus system). 
-Contrast the SKOS API with the ADL API [3], where calls can return a large quantity of information to the client in a single network request. 
-More importantly, a compound call like that can probably be supported with two SQL statements on the thesaurus system side. 
-Why? 
-In thesauri that support hierarchical displays, it is common that a notational system is used (at least internally) which is expressive of not only place in the hierarchy but number of levels, or alternatively that level information is stored explicitly within the record for each concept. 
-If the thesaurus server has this thesaurus-specific knowledge, supplying all the terms lower in the hierarchy to five levels, for example, could conceivably be done with a single SQL statement. 
-By relying on more processing on the server and using a higher level API, the performance in terms of the time required to return the information to build the hierarchical display could, I think, be vastly reduced. 
-See also the comments of Binney and Tudhope [4] when looking at this problem of hierarchical displays in the AAT supporting the notion of compound API calls. 
-Now, there may be very good reasons for this low-level API approach of which I am not aware. 
-My question is this: will this not result in some extremely slow response in certain important contexts relative to what a composite API could provide? 
-Ron [1] AAT hierarchy for "chairs" [2] AGROVOC http://www.fao.org/agrovoc/ [3] ADL Thesaurus Protocol [4] See Binney and Tudhope's comments on a Service oriented approach in Ron Davies Information and documentation systems consultant Av. Baden-Powell 1 Bte 2, 1200 Brussels, Belgium GSM: +32 (0)484 502 393 
-Hi Ron I am working as a technical developer on the SKOS API and a demo implementation of it and very much welcome your input. 
-A couple of initial points (in lieu of giving your references [1] and [3] a proper read): "the client has to do a great deal of work, and send out many 
-1) We do provide (see methods such as getConceptRelativesByPath(Concept concept, Relation relation, URI thesaurus, int distance) Which we describe as 'Get a list of concept relatives for a particular thesaurus up to some distance.' 
-And by 'up to some distance' we mean 'number of levels' in the sense that I 
-believe you to be talking about below. 
-So this avoids the need for repetitive calls to the service to retrieve concepts 'clustered' around some concept in the concept hierarchy. 
-Instead, in response to these sorts of service requests we intend to return sets of concepts. 
-We haven't finalised our strategy for indicating exactly how distant each result-set concept is from a given point in the graph ... (And I note that this issue relates to the syntax we use for encoding the response data the service can send to the client. 
-For our initial SOAP service implementation we are using the soap data encoding syntax and will likely move on to include support for XML as well as RDF/XML). 
-2) You may well have already seen the use cases we're developing at (in need of updating shortly, since I've received more contributions from the community). 
-I hadn't really imagined that client applications would want to build extensive, browsable displays of concept hierarchies via the network and 'on the fly' as it were. 
-But this is an interesting point and I wonder if we need to provide some harvesting capability on the service as well.... 
-As I say, an initial response, thank you for your query, regards Nikki --On Tuesday, May 11, 2004 16:03:39 +0200 Ron Davies ron@rondavies.be 
-NJ Rogers, Technical Researcher (Semantic Web Applications Developer) Institute for Learning and Research Technology (ILRT) 
-In message 6.0.0.22.2.20040511155617.01c6c768@pop.skynet.be on Tue, 11 
-I agree with Ron, though I would be interested to know the views of the folk closer to the mechanics of how this would work. 
-Perhaps there is a difference depending on whether you are retrieving a display for a human to look at or specific terms for a machine to use. 
-It would certainly seem more efficient for a server to return a complete hierarchy in response to a single request; most standard thesaurus management software can display such hierarchies, constructing them when needed by following the chain of BT/NT links. 
-I don't think that it should be necessary to store "level" information to achieve this, and indeed I think that doing so would complicate matters, because if a concept is inserted to create a new level of grouping then the "levels" of all the subordinate concepts would change. 
-Leonard Will Willpower Information (Partners: Dr Leonard D Will, Sheena E Will) L.Will@Willpowerinfo.co.uk Sheena.Will@Willpowerinfo.co.uk ---------------- URL:http://www.willpowerinfo.co.uk/ ----------------- 
-Hi Leonard 
-Yes, skos takes the approach of expressing broader/narrower/related relationships between concepts. 
-If we are to add what is effectively harvesting functionality to the thesaurus, then we would likely return skos encoded data as is, from which some client app would be able to build a thesaurus browser if required. 
-If time permits we may demonstrate how this would work against our own demo thesaurus service implementation. 
-For example either by layering Protege on top of our service for browser-based views on the data, or developing prototype viewer implementations that we already have. 
-Nikki 
-NJ Rogers, Technical Researcher (Semantic Web Applications Developer) Institute for Learning and Research Technology (ILRT) 
-Leonard 
-I think Ron was referring to a "number of levels" parameter in the API call 
-(ie in SKOS getConceptRelativesByPath) - a relative number of levels (or relationship traversals) from the given concept. 
-It could include the whole hierarchy but might not necessarily in some large thesaurus applications where you wanted a local context display centred around the given concept. 
-Thus 'Level no'. 
-would not need to be stored in the thesaurus representation. 
-As Ron mentions, this was something we explored in the JoDI paper, where the web system's browsing interface is constructed dynamically by calls to an API (in that case a bespoke API). 
-Doug 
-In message EF1C49A3F569D41186C900508B6DDC990C5690B1@ems3.glam.ac.uk on 
-Ah, right, that makes sense. 
-You might want to specify separately "number of levels up" and "number 
-of levels down", or "up to the top of the tree and down three levels" from the given concept. 
-I wanted to make sure that people were not trying to impose some scheme of absolute levels (though this what the biologists do, labelling levels as kingdom - phylum - class - order - family . 
-. 
-etc., which necessitates awkward interpolations like sub-order and so on). 
-Leonard Willpower Information (Partners: Dr Leonard D Will, Sheena E Will) L.Will@Willpowerinfo.co.uk Sheena.Will@Willpowerinfo.co.uk ---------------- URL:http://www.willpowerinfo.co.uk/ ----------------- 
-e.g. build a useful hierarchical display format to allow an 
-browse a thesaurus. 
-Hierarchical displays are used in a wide 
-thesauri of different styles. 
-The SKOS API suffers from the same problem that previous API's like ASDL suffer from. 
-When dealing with Web services you need to be careful about your interface. 
-It's not efficient for a server to return a complete hierarcy. 
-This could amount to a lot of data being returned to the client. 
-Just like its not a good idea to have a "return the top terms of the thesaurus" request, which could wind up sending you the whole thesaurus. 
-In either case, before you could build the XML for the SOAP response your underlying TCP/IP connection would most likely timeout. 
-From what I can see the SKOS API will not scale. 
-There was a good 
-recently published paper on this subject in Cataloging &amp; Classification Quaterly, volumne 37, Issue 3/4. 
-Matter of fact this whole issue is a good read, due to the wealth of thesaurus topics: Distributed Thesaurus Web Services Eric H. Johnson HTML-based information services provide access to online information sources but do not make them useful for much more than viewing in a Web browser. 
-There is also no cohesive cataloging or subject access scheme for the Internet. 
-XML and Web services provide the framework for enhancing the information content of all types of data delivered over the Internet and for enhancing the functionality of specialized yet interoperable networked information retrieval applications. 
-The Thesauro-Web, a proposed network of thesaurus access and navigation services, could provide enhanced subject access for the World Wide Web and enhance the functionality of information retrieval applications. 
-The idea behind the Thesauro-Web is described here in detail, with examples of applicable XMLprotocols and descriptions of possible uses. 
-Another good article I read recently was in JoDI volume 4, issue 4 -- New Applications of KOS http://jodi.ecs.soton.ac.uk/Articles/v04/i04/Binding/ C. Binding, D. Tudhope: KOS at your Service: Programmatic Access to Knowledge Organisation Systems An interesting API approach to thesauri can been seen in Microsoft's Research services available in Office 2003, see: Here the API is limited to a basic query but the message returned could be an XHTML document which opens up the possibility to follow BT/NT/RT relationship in your thesaurus, but this is outside the scope of the Research services API. 
-Wouldn't it be great to have your favorite thesaurus available to put quality metadata into your research paper? 
-I realize that many are anti-Microsoft but the Research services API could be lifted and put into OpenOffice and/or other products, after all a Web service API is just that an API regardless of who created it. 
-The interesting aspect of this API is that it moves quality metadata creation down to the author. 
-Wouldn't it also be great to have your favorite SKOS encoded vocabulary appear in the Research task pane? 
-The Research services API provides a working vechicle for how the Semantic Web could actually be useful. 
-Andy. 
-Andrew Houghton, OCLC Online Computer Library Center, Inc. 
-Hi Andy 
-Thanks for the information in this email - I'll have a look at these references you cite. 
-I'd like to mention here (as earlier in this thread) that the SKOS API is use case driven. 
-I believe that the SKOS API provides a good initial attempt at defining the basis of functionality for some thesaurus service. 
-Now that service might be a web service, or it might not - it might instead represent a programmatic interface for some application. 
-So we are not necessarily constrained by network considerations (&amp; I would also perhaps throw in the word "Grid" in at this point :-)). 
-Should some application require a service's complete thesaurus hierarchy it could potentially harvest the data periodically, and store it locally in order to use it for whatever functionality its client app (e.g. browser-based thesaurus viewer) might require. 
-[and that client app itself might well adhere to the SKOS API specification]. 
-There are harvesting protocols that could apply here e.g. OAI (http://www.openarchives.org/). 
-In a different scenario, suppose some client application did not wish to be potentially overloaded by large response data sets from a thesaurus web service, well, this situation has been tackled before in the sphere of network search and retrieval. 
-For example see service that can handle some notion of state such that a client may negotiate with the service how large a result set it is prepared to receive. 
-And so on .... Regards, Nikki 
-NJ Rogers, Technical Researcher (Semantic Web Applications Developer) Institute for Learning and Research Technology (ILRT) 
-Nikki, 1) Oops. 
-I guess the getConceptRelativesByPath didn't register with me when I was working my way through the API, since it returns only an array of Concepts, which (as you point out) doesn't help much since there is no indication of distance or structure. 
-I'm intrigued by your notion of supporting another XML format (which I wonder?) and will stayed tuned for further updates... 2) As for the use cases, Dan Brickley wrote : 
-I doubt we can specify the human-readable offerings of thesaurus providers in such detail, beyond noting best practice conventions and common useful UI conventions. 
-What we can do, though, is take these as use cases for evaluating the _machine_ interface defined in the SKOS API. 
-We can ask ourselves whether such a UI could be built against any/all SKOS servers that meet the API. 
-This opens up the prospect of write-once, re-use elsewhere thesaurus browsing tools... 
-Dan's first point, about specifying the human-readable offerings of thesaurus providers is not a problem, that's been done (and is being revised) in the appropriate national and international standards and in best practices. 
-What I was trying to help do was what Dan was suggesting in his second point, that is, evaluating the appropriateness of the SKOS API for building some of those common UIs. 
-My comments are not intended as a criticism of your work, this is complex stuff, but I think there have been a number of problem areas mentioned where the machine interface is not yet up to this task. 
-IMHO this is (or should be) an important issue for SWAD, because it will affect adoption of the SKOS API. 
-If thesaurus publishers have to support one API to interact with the Semantic Web, and another interface to interact with fully functioned thesaurus clients, then they will be inclined to implement _neither_. 
-Having a single interface that will support a reasonably complete set of functionality (and there is a huge overlap) means everyone wins. 
-For one thing, the API would be a machine interface that those national and international thesaurus standards (now in the process of being revised) would be able to endorse. 
-Ron Ron Davies Information and documentation systems consultant Av. Baden-Powell 1 Bte 2, 1200 Brussels, Belgium GSM: +32 (0)484 502 393 
+<s> The SKOS API appears to me to be pitched at a very low level.  </s>
+<s> What I mean is that the client has to do a great deal of work, and send out many atomic  </s>
+<s> requests to be able to do certain kinds of required tasks, e.g. build a  </s>
+<s> useful hierarchical display format to allow an end user to browse a  </s>
+<s> thesaurus.  </s>
+<s> Hierarchical displays are used in a wide number of thesauri of  </s>
+<s> different styles.  </s>
+<s> Let me provide an example.  </s>
+<s> Suppose we want to build a browsable hierarchical display like found in the AAT hierarchy display for Chairs [1].  </s>
+<s> (Incidentally similar kinds of displays are also provided for other kinds of thesauri, for instance see Plant products in AGROVOC [2]).  </s>
+<s> My math skills are not very strong, but if I understand the SKOS API correctly, I think this requires 53 separate calls to getConceptRelatives (and what is worse probably the equivalent of 53 separate SQL queries in the underlying thesaurus system).  </s>
+<s> Contrast the SKOS API with the ADL API [3], where calls can return a large quantity of information to the client in a single network request.  </s>
+<s> More importantly, a compound call like that can probably be supported with two SQL statements on the thesaurus system side.  </s>
+<s> Why?  </s>
+<s> In thesauri that support hierarchical displays, it is common that a notational system is used (at least internally) which is expressive of not only place in the hierarchy but number of levels, or alternatively that level information is stored explicitly within the record for each concept.  </s>
+<s> If the thesaurus server has this thesaurus-specific knowledge, supplying all the terms lower in the hierarchy to five levels, for example, could conceivably be done with a single SQL statement.  </s>
+<s> By relying on more processing on the server and using a higher level API, the performance in terms of the time required to return the information to build the hierarchical display could, I think, be vastly reduced.  </s>
+<s> See also the comments of Binney and Tudhope [4] when looking at this problem of hierarchical displays in the AAT supporting the notion of compound API calls.  </s>
+<s> Now, there may be very good reasons for this low-level API approach of which I am not aware.  </s>
+<s> My question is this: will this not result in some extremely slow response in certain important contexts relative to what a composite API could provide?  </s>
+<s> Ron [1] AAT hierarchy for "chairs" [2] AGROVOC http://www.fao.org/agrovoc/ [3] ADL Thesaurus Protocol [4] See Binney and Tudhope's comments on a Service oriented approach in Ron Davies Information and documentation systems consultant Av. Baden-Powell 1 Bte 2, 1200 Brussels, Belgium GSM: +32 (0)484 502 393  </s>
+<s> Hi Ron I am working as a technical developer on the SKOS API and a demo implementation of it and very much welcome your input.  </s>
+<s> A couple of initial points (in lieu of giving your references [1] and [3] a proper read): "the client has to do a great deal of work, and send out many  </s>
+<s> 1) We do provide (see methods such as getConceptRelativesByPath(Concept concept, Relation relation, URI thesaurus, int distance) Which we describe as 'Get a list of concept relatives for a particular thesaurus up to some distance.'  </s>
+<s> And by 'up to some distance' we mean 'number of levels' in the sense that I  </s>
+<s> believe you to be talking about below.  </s>
+<s> So this avoids the need for repetitive calls to the service to retrieve concepts 'clustered' around some concept in the concept hierarchy.  </s>
+<s> Instead, in response to these sorts of service requests we intend to return sets of concepts.  </s>
+<s> We haven't finalised our strategy for indicating exactly how distant each result-set concept is from a given point in the graph ... (And I note that this issue relates to the syntax we use for encoding the response data the service can send to the client.  </s>
+<s> For our initial SOAP service implementation we are using the soap data encoding syntax and will likely move on to include support for XML as well as RDF/XML).  </s>
+<s> 2) You may well have already seen the use cases we're developing at (in need of updating shortly, since I've received more contributions from the community).  </s>
+<s> I hadn't really imagined that client applications would want to build extensive, browsable displays of concept hierarchies via the network and 'on the fly' as it were.  </s>
+<s> But this is an interesting point and I wonder if we need to provide some harvesting capability on the service as well....  </s>
+<s> As I say, an initial response, thank you for your query, regards Nikki --On Tuesday, May 11, 2004 16:03:39 +0200 Ron Davies ron@rondavies.be  </s>
+<s> NJ Rogers, Technical Researcher (Semantic Web Applications Developer) Institute for Learning and Research Technology (ILRT)  </s>
+<s> In message 6.0.0.22.2.20040511155617.01c6c768@pop.skynet.be on Tue, 11  </s>
+<s> I agree with Ron, though I would be interested to know the views of the folk closer to the mechanics of how this would work.  </s>
+<s> Perhaps there is a difference depending on whether you are retrieving a display for a human to look at or specific terms for a machine to use.  </s>
+<s> It would certainly seem more efficient for a server to return a complete hierarchy in response to a single request; most standard thesaurus management software can display such hierarchies, constructing them when needed by following the chain of BT/NT links.  </s>
+<s> I don't think that it should be necessary to store "level" information to achieve this, and indeed I think that doing so would complicate matters, because if a concept is inserted to create a new level of grouping then the "levels" of all the subordinate concepts would change.  </s>
+<s> Leonard Will Willpower Information (Partners: Dr Leonard D Will, Sheena E Will) L.Will@Willpowerinfo.co.uk Sheena.Will@Willpowerinfo.co.uk ---------------- URL:http://www.willpowerinfo.co.uk/ -----------------  </s>
+<s> Hi Leonard  </s>
+<s> Yes, skos takes the approach of expressing broader/narrower/related relationships between concepts.  </s>
+<s> If we are to add what is effectively harvesting functionality to the thesaurus, then we would likely return skos encoded data as is, from which some client app would be able to build a thesaurus browser if required.  </s>
+<s> If time permits we may demonstrate how this would work against our own demo thesaurus service implementation.  </s>
+<s> For example either by layering Protege on top of our service for browser-based views on the data, or developing prototype viewer implementations that we already have.  </s>
+<s> Nikki  </s>
+<s> NJ Rogers, Technical Researcher (Semantic Web Applications Developer) Institute for Learning and Research Technology (ILRT)  </s>
+<s> Leonard  </s>
+<s> I think Ron was referring to a "number of levels" parameter in the API call  </s>
+<s> (ie in SKOS getConceptRelativesByPath) - a relative number of levels (or relationship traversals) from the given concept.  </s>
+<s> It could include the whole hierarchy but might not necessarily in some large thesaurus applications where you wanted a local context display centred around the given concept.  </s>
+<s> Thus 'Level no'.  </s>
+<s> would not need to be stored in the thesaurus representation.  </s>
+<s> As Ron mentions, this was something we explored in the JoDI paper, where the web system's browsing interface is constructed dynamically by calls to an API (in that case a bespoke API).  </s>
+<s> Doug  </s>
+<s> In message EF1C49A3F569D41186C900508B6DDC990C5690B1@ems3.glam.ac.uk on  </s>
+<s> Ah, right, that makes sense.  </s>
+<s> You might want to specify separately "number of levels up" and "number  </s>
+<s> of levels down", or "up to the top of the tree and down three levels" from the given concept.  </s>
+<s> I wanted to make sure that people were not trying to impose some scheme of absolute levels (though this what the biologists do, labelling levels as kingdom - phylum - class - order - family .  </s>
+<s> .  </s>
+<s> etc., which necessitates awkward interpolations like sub-order and so on).  </s>
+<s> Leonard Willpower Information (Partners: Dr Leonard D Will, Sheena E Will) L.Will@Willpowerinfo.co.uk Sheena.Will@Willpowerinfo.co.uk ---------------- URL:http://www.willpowerinfo.co.uk/ -----------------  </s>
+<s> e.g. build a useful hierarchical display format to allow an  </s>
+<s> browse a thesaurus.  </s>
+<s> Hierarchical displays are used in a wide  </s>
+<s> thesauri of different styles.  </s>
+<s> The SKOS API suffers from the same problem that previous API's like ASDL suffer from.  </s>
+<s> When dealing with Web services you need to be careful about your interface.  </s>
+<s> It's not efficient for a server to return a complete hierarcy.  </s>
+<s> This could amount to a lot of data being returned to the client.  </s>
+<s> Just like its not a good idea to have a "return the top terms of the thesaurus" request, which could wind up sending you the whole thesaurus.  </s>
+<s> In either case, before you could build the XML for the SOAP response your underlying TCP/IP connection would most likely timeout.  </s>
+<s> From what I can see the SKOS API will not scale.  </s>
+<s> There was a good  </s>
+<s> recently published paper on this subject in Cataloging &amp; Classification Quaterly, volumne 37, Issue 3/4.  </s>
+<s> Matter of fact this whole issue is a good read, due to the wealth of thesaurus topics: Distributed Thesaurus Web Services Eric H. Johnson HTML-based information services provide access to online information sources but do not make them useful for much more than viewing in a Web browser.  </s>
+<s> There is also no cohesive cataloging or subject access scheme for the Internet.  </s>
+<s> XML and Web services provide the framework for enhancing the information content of all types of data delivered over the Internet and for enhancing the functionality of specialized yet interoperable networked information retrieval applications.  </s>
+<s> The Thesauro-Web, a proposed network of thesaurus access and navigation services, could provide enhanced subject access for the World Wide Web and enhance the functionality of information retrieval applications.  </s>
+<s> The idea behind the Thesauro-Web is described here in detail, with examples of applicable XMLprotocols and descriptions of possible uses.  </s>
+<s> Another good article I read recently was in JoDI volume 4, issue 4 -- New Applications of KOS http://jodi.ecs.soton.ac.uk/Articles/v04/i04/Binding/ C. Binding, D. Tudhope: KOS at your Service: Programmatic Access to Knowledge Organisation Systems An interesting API approach to thesauri can been seen in Microsoft's Research services available in Office 2003, see: Here the API is limited to a basic query but the message returned could be an XHTML document which opens up the possibility to follow BT/NT/RT relationship in your thesaurus, but this is outside the scope of the Research services API.  </s>
+<s> Wouldn't it be great to have your favorite thesaurus available to put quality metadata into your research paper?  </s>
+<s> I realize that many are anti-Microsoft but the Research services API could be lifted and put into OpenOffice and/or other products, after all a Web service API is just that an API regardless of who created it.  </s>
+<s> The interesting aspect of this API is that it moves quality metadata creation down to the author.  </s>
+<s> Wouldn't it also be great to have your favorite SKOS encoded vocabulary appear in the Research task pane?  </s>
+<s> The Research services API provides a working vechicle for how the Semantic Web could actually be useful.  </s>
+<s> Andy.  </s>
+<s> Andrew Houghton, OCLC Online Computer Library Center, Inc.  </s>
+<s> Hi Andy  </s>
+<s> Thanks for the information in this email - I'll have a look at these references you cite.  </s>
+<s> I'd like to mention here (as earlier in this thread) that the SKOS API is use case driven.  </s>
+<s> I believe that the SKOS API provides a good initial attempt at defining the basis of functionality for some thesaurus service.  </s>
+<s> Now that service might be a web service, or it might not - it might instead represent a programmatic interface for some application.  </s>
+<s> So we are not necessarily constrained by network considerations (&amp; I would also perhaps throw in the word "Grid" in at this point :-)).  </s>
+<s> Should some application require a service's complete thesaurus hierarchy it could potentially harvest the data periodically, and store it locally in order to use it for whatever functionality its client app (e.g. browser-based thesaurus viewer) might require.  </s>
+<s> [and that client app itself might well adhere to the SKOS API specification].  </s>
+<s> There are harvesting protocols that could apply here e.g. OAI (http://www.openarchives.org/).  </s>
+<s> In a different scenario, suppose some client application did not wish to be potentially overloaded by large response data sets from a thesaurus web service, well, this situation has been tackled before in the sphere of network search and retrieval.  </s>
+<s> For example see service that can handle some notion of state such that a client may negotiate with the service how large a result set it is prepared to receive.  </s>
+<s> And so on .... Regards, Nikki  </s>
+<s> NJ Rogers, Technical Researcher (Semantic Web Applications Developer) Institute for Learning and Research Technology (ILRT)  </s>
+<s> Nikki, 1) Oops.  </s>
+<s> I guess the getConceptRelativesByPath didn't register with me when I was working my way through the API, since it returns only an array of Concepts, which (as you point out) doesn't help much since there is no indication of distance or structure.  </s>
+<s> I'm intrigued by your notion of supporting another XML format (which I wonder?) and will stayed tuned for further updates... 2) As for the use cases, Dan Brickley wrote :  </s>
+<s> I doubt we can specify the human-readable offerings of thesaurus providers in such detail, beyond noting best practice conventions and common useful UI conventions.  </s>
+<s> What we can do, though, is take these as use cases for evaluating the _machine_ interface defined in the SKOS API.  </s>
+<s> We can ask ourselves whether such a UI could be built against any/all SKOS servers that meet the API.  </s>
+<s> This opens up the prospect of write-once, re-use elsewhere thesaurus browsing tools...  </s>
+<s> Dan's first point, about specifying the human-readable offerings of thesaurus providers is not a problem, that's been done (and is being revised) in the appropriate national and international standards and in best practices.  </s>
+<s> What I was trying to help do was what Dan was suggesting in his second point, that is, evaluating the appropriateness of the SKOS API for building some of those common UIs.  </s>
+<s> My comments are not intended as a criticism of your work, this is complex stuff, but I think there have been a number of problem areas mentioned where the machine interface is not yet up to this task.  </s>
+<s> IMHO this is (or should be) an important issue for SWAD, because it will affect adoption of the SKOS API.  </s>
+<s> If thesaurus publishers have to support one API to interact with the Semantic Web, and another interface to interact with fully functioned thesaurus clients, then they will be inclined to implement _neither_.  </s>
+<s> Having a single interface that will support a reasonably complete set of functionality (and there is a huge overlap) means everyone wins.  </s>
+<s> For one thing, the API would be a machine interface that those national and international thesaurus standards (now in the process of being revised) would be able to endorse.  </s>
+<s> Ron Ron Davies Information and documentation systems consultant Av. Baden-Powell 1 Bte 2, 1200 Brussels, Belgium GSM: +32 (0)484 502 393  </s>

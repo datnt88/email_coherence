@@ -1,120 +1,120 @@
-Formatting on the ascii version leaves something to be desired; I assume the editors will fix this before moving the document forward. 
-(DL lists don't indent reasonably, the table of contents is useless, etc.) 
-2.1 Augmented BNF 
-I went through lots of machinations on BNF for the URL document, and wound up with: This is a BNF-like description of the Uniform Resource Locator syntax, using the conventions of RFC822, except that "|" is used to designate alternatives, and brackets [] are used around optional or repeated elements. 
-Briefly, literals are quoted with "", optional elements are enclosed in [brackets], and elements may be preceded with n * to designate n or more repetitions of the following element; n defaults to 0. 
-The formatting wound up working better to put comments on separate lines; even though the result was longer, it was easier to read. 
-It seems like the addition of the # construct doesn't make the BNF easier to read or interpret at all. 
-4.1 Date/Time Format 
-I think you should define HTTP as using RFC 822/1123 date formats, and make the "strong recommendation" be to accept other formats, rather than the way you have this worded. 
-4.2 Content Types 
-In what way is the HTTP content-type a superset of the MIME BNF? 
-If you must repeat some BNF that occurs in another RFC, you must identify how this is either just a repeat, or a modification, and if it is a modification, how it is different from the source. 
-4.2.1 Multipart Types 
-The BNF for multipart types is very confusing, since it isn't at all clear whether this is just supplying BNF for MIME or something new that is MIME-like. 
-I'd appreciate it if you would consider mentioning multipart/form-data as proposed in draft-ietf-html-fileupload-00.txt. 
-4.2.1.1 multipart/alternative The "multipart/alternative" content-type is used in MIME to send content-type variants of a single entity when the receiver's capabilities are not known. 
-This is not the case with HTTP. 
-Multipart/alternative can be used to provide metainformation of many instances of an object, 
-This is really annoying if it is current practice (to redefine what "alternative" might mean). 
-4.3 General Message Header Fields 
-You're really recommending that HTTP servers send a "MIME-Version" field? 
-But the MIME committee has basically recommended that there not be any MIME-Version other than 1.0. 
-You might as well tie MIME-Version: 1.0 into HTTP/1.0 and suppose that any new MIME-Version will imply a new HTTP version. 
-4.3.3 
-Message-ID 
-Do you care to comment on message-id vs. URN? 
-(more later) 
-Ack! I failed to notice that Dave listed the CERN location. 
-That is not the main distribution site for the IETF version, and the copy there is one day old (and what a difference a day makes!). 
-The version being submitted to the IETF as an I-D is available at ftp://www.ics.uci.edu/pub/ietf/http/ it is currently available in compressed postscript as: draft-fielding-http-spec-00.ps.Z 
-The above I-D name will be used until the HTTP-WG becomes official. 
-Text and HTML versions will follow as soon as I can generate them, and both the text and PS versions will (eventually) be available from all the Internet-Draft shadow directories. 
-Larry, your comments are appreciated and will be addressed as soon as Henrik and I can get our heads above water. 
-......Roy Fielding ICS Grad Student, University of California, Irvine USA 
-Is use of MIME or MIME-like multi-part types a current practice supported by either clients or servers? 
-(My impression was that it was not used and it could confuse a lot of clients.) 
-If not, I'd suggest removing it from this version of the specification. 
-I note the disclaimer that this specification may not reflect current practice, but still, codifying current practice is a main aim of the HTTP/1.0 spec. 
-Albert Lunde Albert-Lunde@nwu.edu 
-MIME multipart types have been in the old spec for over a year. 
-Although the major public servers and clients have not implemented them, some private implementations have. 
-It is possible (and anticipated) that some of what is in the current draft will be considered "not compatible with current practice" and be shoved over to HTTP/1.1. 
-Henrik and I decided that we needed to include everything necessary to implement what was incompletely specified in the old draft. 
-For example, support for PUT requires a bunch of stuff which has not yet been implemented within a public web server, and yet which is known to be necessary to support group annotation. 
-Since it is much better for committees to decide "what needs to be removed" than it is for them to decide "what needs to be included", I think this is the best route to take. 
-I anticipate this will be a large part of the discussion in San Jose. 
-......Roy Fielding ICS Grad Student, University of California, Irvine USA 
-Hi I have been away, but now the CERN page is up to date and provides information on ongoing work on HTTP and HTTP-NG. 
-Just to be sure, the address is: -- cheers -- Henrik BOX-Line: From fielding@avron.ICS.UCI.EDU Wed Nov 30 01:03:31 1994 Received: from cuckoo.hpl.hp.com by hplb.hpl.hp.com; Wed, 30 Nov 1994 09:00:19 GMT Received: from http-wg (list exploder) by cuckoo.hpl.hp.com (1.37.109.8/15.6+ISC) 
-id AA11737; Wed, 30 Nov 1994 09:01:20 GMT Subject: Re: A few semantic points for HTTP/1.0 draft Date: Wed, 30 Nov 1994 01:00:38 -0800 From: "Roy T. Fielding" fielding@avron.ICS.UCI.EDU Message-Id: 9411300100.aa14886@paris.ics.uci.edu 
-Sender: http-wg-request@cuckoo.hpl.hp.com 
-As a solution, I'd like to propose an additional response-header for the 503 error response that specifies a time at which the client may expect the server to be able to handle requests again. 
-This time should be relative to the Date: header sent by the client. 
-I propose that this time be specified as a delta from this date in terms of hours, minutes, and seconds until availability. 
-The client should not attempt to resend its request before this delta period of time has elapsed. 
-Yes. In fact, Henrik had proposed the same while we were in the process of writing it, but it didn't find its way into the spec. 
-The problem was was that neither of us were sure of what the format should be, and I see from the ensuing discussion on this list that others are having that problem as well. 
-The way I see it, there are three viable options: Retry-After = "Retry-After" ":" delta-seconds or Retry-After = "Retry-After" ":" HTTP-date or Retry-After = "Retry-After" ":" delta-seconds / HTTP-date where delta-seconds = 1*DIGIT There is no point in dealing with milliseconds -- that level of accuracy is just not necessary. 
-Also, the reason for the delay can be explained via the Reason-Phrase on the Status-Line or in the object body (if any) returned by the error response. 
-For the case of a busy server, this could be a delta of a few seconds from the present (or a delta value calculated on the load of the server, depth of the request queue, etc.) 
-Yes, and that is most efficiently handled by a delta-seconds -- formatted dates are very expensive to parse. 
-For an "off-line" server, this could be a delta supplied by administration (i.e. the server will be back up in 30 minutes) or an arbitrarily longer value (10 seconds, a few minutes) that would prevent rapid client retries. 
-Yes, and that is why a formatted date would be nice. 
-I would not make this a delta, since large time deltas are hard for people to grok. 
-Perhaps the third alternative is best then, since it is trivial for the receiver to differentiate between an HTTP-date and a delta-seconds. 
-Comments? 
-With regard to comment number 2, the encoding of object-body parts, there is a non-trivial ambiguity in RFC 1630 regarding the encoding of spaces as "+", and where this is allowed. 
-For WWW clients that encode object-bodies using the URL-encoding scheme, behavior is inconsistent. 
-Some clients encode specials in the object-body text using %xx hex encodings exclusively. 
-Others use %xx encodings for all specials except space, and encode spaces as "+". 
-According to 1630, "+" may be used as a shorthand for space in the search portion of a URI. 
-Unfortunately, the BNF for URIs is ambiguous in that the definition of the non-terminal "xpalphas" includes separating "xalphas" with "+", implying that spaces can be encoded as "+" anywhere. 
-No, actually that only indicates that "+" is allowed in http URI path segments. 
-In the path, the "+" should never be interpreted as a space. 
-In my opinion, the object-body of a HTTP request is not the search portion of a URI. 
-Therefore, spaces should only be encoded using %xx encodings and not "+" encodings. 
-This ambiguity has never been resolved and a definitive statement regarding appropriate encoding of object-bodies using URL-encoding in this draft of the HTTP standard would be helpful. 
-It may be a moot point, since many clients encode POST arguments using both techniques, and many gateway apps parse pluses as space. 
-Nonetheless, an appropriate "ruling" should be made in the HTTP standard. 
-Yes, good point. 
-Since the IETF URL spec does not itself give a full specification of HTTP URLs, it will probably have to be included here so that the URL RFC can eventually include a proper reference. 
-One problem then is how to handle the conflict between WWW URI's and IETF URLs. 
-On the other hand, somebody (perhaps the HTML-WG) may wish to define the application/www-url-encoded-form as a real media type for use in other protocols, in which case it should not be in the HTTP spec. 
-Does anyone think that is likely? 
-It seems unlikely to me that anyone would want to standardize a hack like that. 
-......Roy Fielding ICS Grad Student, University of California, Irvine USA 
-2.1 Augmented BNF 
-I seriously considered using your syntax instead of rfc822's, but we decided that since HTTP, RFC 822, and MIME were so closely intertwined, we should stick with the original syntax. 
-I agree (for most cases) and will fix that in the next version. 
-4.1 Date/Time Format 
-Sounds reasonable. 
-4.2 Content Types 
-It is a superset because it does not restrict itself to the official MIME types and x-token types, as does the MIME spec. 
-Thus, the parsing is the same but without restricting the token values. 
-This is equivalent to the RFC 1590 decision to not constrain media types. 
-4.2.1 Multipart Types 
-It is equivalent to that in MIME. 
-I don't know if that should go into HTTP/1.0 or HTTP/1.1. 
-We should discuss this in San Jose. 
-4.2.1.1 multipart/alternative The "multipart/alternative" content-type is used in MIME to send content-type variants of a single entity when the receiver's capabilities are not known. 
-This is not the case with HTTP. 
-Multipart/alternative can be used to provide metainformation of many instances of an object, 
-Right, we should probably just delete this section, as it is not in current practice and there may be better ways of handling URC alternatives. 
-Henrik, what was the reason for including this in the spec? 
-I can't remember. 
-4.3 General Message Header Fields 
-I'd rather include the generic syntax, just in case the MIME people change their minds. 
-I am tempted to just remove MIME-Version altogether (except for gateways), but that will have to be a group decision. 
-4.3.3 
-Message-ID 
-Nope. ;-) ......Roy Fielding ICS Grad Student, University of California, Irvine USA 
-4.2 Content Types 
-I'm sorry, I don't see this difference is meaningful. 
-MIME defines some types, a system for registering them, and says that unregistered types should have x- labeling. 
-1590 improves the registration process and changes the terminology to reduce email-centrisms, but changing the grammar hardly seems necessary. 
-Are you saying HTTP should not call for unregistered media types to employ the x-token convention? 
-Mind you, there are aspects of media type procedures I'd like to see changed to increase HTTP-friendliness. 
-I'd like to see an easier way to revisit media type definitions, and I'd really like to see more liberal guidelines for optional parameters (since in HTTP, unlike Email, you sometimes have the C-T without the object itself.) 
-But that's for another day. 
-Given that we're picking and choosing which portions of MIME to include and which to ignore, tying to 1.0 seems as sensible as anything else. - Marc Marc VanHeyningen URL:http://www.cs.indiana.edu/hyplan/mvanheyn.html 
+<s> Formatting on the ascii version leaves something to be desired; I assume the editors will fix this before moving the document forward.  </s>
+<s> (DL lists don't indent reasonably, the table of contents is useless, etc.)  </s>
+<s> 2.1 Augmented BNF  </s>
+<s> I went through lots of machinations on BNF for the URL document, and wound up with: This is a BNF-like description of the Uniform Resource Locator syntax, using the conventions of RFC822, except that "|" is used to designate alternatives, and brackets [] are used around optional or repeated elements.  </s>
+<s> Briefly, literals are quoted with "", optional elements are enclosed in [brackets], and elements may be preceded with n * to designate n or more repetitions of the following element; n defaults to 0.  </s>
+<s> The formatting wound up working better to put comments on separate lines; even though the result was longer, it was easier to read.  </s>
+<s> It seems like the addition of the # construct doesn't make the BNF easier to read or interpret at all.  </s>
+<s> 4.1 Date/Time Format  </s>
+<s> I think you should define HTTP as using RFC 822/1123 date formats, and make the "strong recommendation" be to accept other formats, rather than the way you have this worded.  </s>
+<s> 4.2 Content Types  </s>
+<s> In what way is the HTTP content-type a superset of the MIME BNF?  </s>
+<s> If you must repeat some BNF that occurs in another RFC, you must identify how this is either just a repeat, or a modification, and if it is a modification, how it is different from the source.  </s>
+<s> 4.2.1 Multipart Types  </s>
+<s> The BNF for multipart types is very confusing, since it isn't at all clear whether this is just supplying BNF for MIME or something new that is MIME-like.  </s>
+<s> I'd appreciate it if you would consider mentioning multipart/form-data as proposed in draft-ietf-html-fileupload-00.txt.  </s>
+<s> 4.2.1.1 multipart/alternative The "multipart/alternative" content-type is used in MIME to send content-type variants of a single entity when the receiver's capabilities are not known.  </s>
+<s> This is not the case with HTTP.  </s>
+<s> Multipart/alternative can be used to provide metainformation of many instances of an object,  </s>
+<s> This is really annoying if it is current practice (to redefine what "alternative" might mean).  </s>
+<s> 4.3 General Message Header Fields  </s>
+<s> You're really recommending that HTTP servers send a "MIME-Version" field?  </s>
+<s> But the MIME committee has basically recommended that there not be any MIME-Version other than 1.0.  </s>
+<s> You might as well tie MIME-Version: 1.0 into HTTP/1.0 and suppose that any new MIME-Version will imply a new HTTP version.  </s>
+<s> 4.3.3  </s>
+<s> Message-ID  </s>
+<s> Do you care to comment on message-id vs. URN?  </s>
+<s> (more later)  </s>
+<s> Ack! I failed to notice that Dave listed the CERN location.  </s>
+<s> That is not the main distribution site for the IETF version, and the copy there is one day old (and what a difference a day makes!).  </s>
+<s> The version being submitted to the IETF as an I-D is available at ftp://www.ics.uci.edu/pub/ietf/http/ it is currently available in compressed postscript as: draft-fielding-http-spec-00.ps.Z  </s>
+<s> The above I-D name will be used until the HTTP-WG becomes official.  </s>
+<s> Text and HTML versions will follow as soon as I can generate them, and both the text and PS versions will (eventually) be available from all the Internet-Draft shadow directories.  </s>
+<s> Larry, your comments are appreciated and will be addressed as soon as Henrik and I can get our heads above water.  </s>
+<s> ......Roy Fielding ICS Grad Student, University of California, Irvine USA  </s>
+<s> Is use of MIME or MIME-like multi-part types a current practice supported by either clients or servers?  </s>
+<s> (My impression was that it was not used and it could confuse a lot of clients.)  </s>
+<s> If not, I'd suggest removing it from this version of the specification.  </s>
+<s> I note the disclaimer that this specification may not reflect current practice, but still, codifying current practice is a main aim of the HTTP/1.0 spec.  </s>
+<s> Albert Lunde Albert-Lunde@nwu.edu  </s>
+<s> MIME multipart types have been in the old spec for over a year.  </s>
+<s> Although the major public servers and clients have not implemented them, some private implementations have.  </s>
+<s> It is possible (and anticipated) that some of what is in the current draft will be considered "not compatible with current practice" and be shoved over to HTTP/1.1.  </s>
+<s> Henrik and I decided that we needed to include everything necessary to implement what was incompletely specified in the old draft.  </s>
+<s> For example, support for PUT requires a bunch of stuff which has not yet been implemented within a public web server, and yet which is known to be necessary to support group annotation.  </s>
+<s> Since it is much better for committees to decide "what needs to be removed" than it is for them to decide "what needs to be included", I think this is the best route to take.  </s>
+<s> I anticipate this will be a large part of the discussion in San Jose.  </s>
+<s> ......Roy Fielding ICS Grad Student, University of California, Irvine USA  </s>
+<s> Hi I have been away, but now the CERN page is up to date and provides information on ongoing work on HTTP and HTTP-NG.  </s>
+<s> Just to be sure, the address is: -- cheers -- Henrik BOX-Line: From fielding@avron.ICS.UCI.EDU Wed Nov 30 01:03:31 1994 Received: from cuckoo.hpl.hp.com by hplb.hpl.hp.com; Wed, 30 Nov 1994 09:00:19 GMT Received: from http-wg (list exploder) by cuckoo.hpl.hp.com (1.37.109.8/15.6+ISC)  </s>
+<s> id AA11737; Wed, 30 Nov 1994 09:01:20 GMT Subject: Re: A few semantic points for HTTP/1.0 draft Date: Wed, 30 Nov 1994 01:00:38 -0800 From: "Roy T. Fielding" fielding@avron.ICS.UCI.EDU Message-Id: 9411300100.aa14886@paris.ics.uci.edu  </s>
+<s> Sender: http-wg-request@cuckoo.hpl.hp.com  </s>
+<s> As a solution, I'd like to propose an additional response-header for the 503 error response that specifies a time at which the client may expect the server to be able to handle requests again.  </s>
+<s> This time should be relative to the Date: header sent by the client.  </s>
+<s> I propose that this time be specified as a delta from this date in terms of hours, minutes, and seconds until availability.  </s>
+<s> The client should not attempt to resend its request before this delta period of time has elapsed.  </s>
+<s> Yes. In fact, Henrik had proposed the same while we were in the process of writing it, but it didn't find its way into the spec.  </s>
+<s> The problem was was that neither of us were sure of what the format should be, and I see from the ensuing discussion on this list that others are having that problem as well.  </s>
+<s> The way I see it, there are three viable options: Retry-After = "Retry-After" ":" delta-seconds or Retry-After = "Retry-After" ":" HTTP-date or Retry-After = "Retry-After" ":" delta-seconds / HTTP-date where delta-seconds = 1*DIGIT There is no point in dealing with milliseconds -- that level of accuracy is just not necessary.  </s>
+<s> Also, the reason for the delay can be explained via the Reason-Phrase on the Status-Line or in the object body (if any) returned by the error response.  </s>
+<s> For the case of a busy server, this could be a delta of a few seconds from the present (or a delta value calculated on the load of the server, depth of the request queue, etc.)  </s>
+<s> Yes, and that is most efficiently handled by a delta-seconds -- formatted dates are very expensive to parse.  </s>
+<s> For an "off-line" server, this could be a delta supplied by administration (i.e. the server will be back up in 30 minutes) or an arbitrarily longer value (10 seconds, a few minutes) that would prevent rapid client retries.  </s>
+<s> Yes, and that is why a formatted date would be nice.  </s>
+<s> I would not make this a delta, since large time deltas are hard for people to grok.  </s>
+<s> Perhaps the third alternative is best then, since it is trivial for the receiver to differentiate between an HTTP-date and a delta-seconds.  </s>
+<s> Comments?  </s>
+<s> With regard to comment number 2, the encoding of object-body parts, there is a non-trivial ambiguity in RFC 1630 regarding the encoding of spaces as "+", and where this is allowed.  </s>
+<s> For WWW clients that encode object-bodies using the URL-encoding scheme, behavior is inconsistent.  </s>
+<s> Some clients encode specials in the object-body text using %xx hex encodings exclusively.  </s>
+<s> Others use %xx encodings for all specials except space, and encode spaces as "+".  </s>
+<s> According to 1630, "+" may be used as a shorthand for space in the search portion of a URI.  </s>
+<s> Unfortunately, the BNF for URIs is ambiguous in that the definition of the non-terminal "xpalphas" includes separating "xalphas" with "+", implying that spaces can be encoded as "+" anywhere.  </s>
+<s> No, actually that only indicates that "+" is allowed in http URI path segments.  </s>
+<s> In the path, the "+" should never be interpreted as a space.  </s>
+<s> In my opinion, the object-body of a HTTP request is not the search portion of a URI.  </s>
+<s> Therefore, spaces should only be encoded using %xx encodings and not "+" encodings.  </s>
+<s> This ambiguity has never been resolved and a definitive statement regarding appropriate encoding of object-bodies using URL-encoding in this draft of the HTTP standard would be helpful.  </s>
+<s> It may be a moot point, since many clients encode POST arguments using both techniques, and many gateway apps parse pluses as space.  </s>
+<s> Nonetheless, an appropriate "ruling" should be made in the HTTP standard.  </s>
+<s> Yes, good point.  </s>
+<s> Since the IETF URL spec does not itself give a full specification of HTTP URLs, it will probably have to be included here so that the URL RFC can eventually include a proper reference.  </s>
+<s> One problem then is how to handle the conflict between WWW URI's and IETF URLs.  </s>
+<s> On the other hand, somebody (perhaps the HTML-WG) may wish to define the application/www-url-encoded-form as a real media type for use in other protocols, in which case it should not be in the HTTP spec.  </s>
+<s> Does anyone think that is likely?  </s>
+<s> It seems unlikely to me that anyone would want to standardize a hack like that.  </s>
+<s> ......Roy Fielding ICS Grad Student, University of California, Irvine USA  </s>
+<s> 2.1 Augmented BNF  </s>
+<s> I seriously considered using your syntax instead of rfc822's, but we decided that since HTTP, RFC 822, and MIME were so closely intertwined, we should stick with the original syntax.  </s>
+<s> I agree (for most cases) and will fix that in the next version.  </s>
+<s> 4.1 Date/Time Format  </s>
+<s> Sounds reasonable.  </s>
+<s> 4.2 Content Types  </s>
+<s> It is a superset because it does not restrict itself to the official MIME types and x-token types, as does the MIME spec.  </s>
+<s> Thus, the parsing is the same but without restricting the token values.  </s>
+<s> This is equivalent to the RFC 1590 decision to not constrain media types.  </s>
+<s> 4.2.1 Multipart Types  </s>
+<s> It is equivalent to that in MIME.  </s>
+<s> I don't know if that should go into HTTP/1.0 or HTTP/1.1.  </s>
+<s> We should discuss this in San Jose.  </s>
+<s> 4.2.1.1 multipart/alternative The "multipart/alternative" content-type is used in MIME to send content-type variants of a single entity when the receiver's capabilities are not known.  </s>
+<s> This is not the case with HTTP.  </s>
+<s> Multipart/alternative can be used to provide metainformation of many instances of an object,  </s>
+<s> Right, we should probably just delete this section, as it is not in current practice and there may be better ways of handling URC alternatives.  </s>
+<s> Henrik, what was the reason for including this in the spec?  </s>
+<s> I can't remember.  </s>
+<s> 4.3 General Message Header Fields  </s>
+<s> I'd rather include the generic syntax, just in case the MIME people change their minds.  </s>
+<s> I am tempted to just remove MIME-Version altogether (except for gateways), but that will have to be a group decision.  </s>
+<s> 4.3.3  </s>
+<s> Message-ID  </s>
+<s> Nope. ;-) ......Roy Fielding ICS Grad Student, University of California, Irvine USA  </s>
+<s> 4.2 Content Types  </s>
+<s> I'm sorry, I don't see this difference is meaningful.  </s>
+<s> MIME defines some types, a system for registering them, and says that unregistered types should have x- labeling.  </s>
+<s> 1590 improves the registration process and changes the terminology to reduce email-centrisms, but changing the grammar hardly seems necessary.  </s>
+<s> Are you saying HTTP should not call for unregistered media types to employ the x-token convention?  </s>
+<s> Mind you, there are aspects of media type procedures I'd like to see changed to increase HTTP-friendliness.  </s>
+<s> I'd like to see an easier way to revisit media type definitions, and I'd really like to see more liberal guidelines for optional parameters (since in HTTP, unlike Email, you sometimes have the C-T without the object itself.)  </s>
+<s> But that's for another day.  </s>
+<s> Given that we're picking and choosing which portions of MIME to include and which to ignore, tying to 1.0 seems as sensible as anything else. - Marc Marc VanHeyningen URL:http://www.cs.indiana.edu/hyplan/mvanheyn.html  </s>
