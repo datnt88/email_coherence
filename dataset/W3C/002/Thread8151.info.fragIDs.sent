@@ -1,47 +1,47 @@
-All, Dan and Lisa have suggested that we need to more clearly define either the use of the lockowner field or that we need a way to identify the owner of the lock. 
-says... 
-(Especially because the spec provides no way to reliably determine who owns a lock.) 
-This is a good point -- and this is already a failing of WebDAV, with or without UNLOCK_BY_NON_LOCK_OWNER. 
-Clients that crash or miss the 
-response 
-from the server need to make sure that the lock is theirs before grabbing the lock token using PROPFIND. 
-Can lockowner be used for this purpose? 
-This should be a separate RFC2518 issue. 
-How about "HOW_TO_IDENTIFY_LOCK_OWNER". 
-Just as a point of information, I'd like to point out we have an issue on the issues list that is somewhat related: DEFINE_PRINCIPAL. 
-In that issue Mark D Anderson says: The term "principal" is never defined in the WebDAV specification, or the HTTP or Digest specifications. 
-It should be defined. 
-Lisa and Dan, Could you define the requirement before we start the discussion? 
-For example, is it for the server or the client that we need to make the clarification below? 
-(I'll reference your clarfication from the issues list.) 
-J. 
-From: Daniel Brotsky [mailto:dbrotsky@adobe.com] I think there are a variety of client needs here. 
-These are probably a little too fuzzy to be called requirements :^), but it's the best I can do right now. 
-1. 
-This came up at the first interop, and most servers seemed to be compliant by the second interop: The owner part of a lock is to be completely controlled by the client. 
-The server MUST not alter it (i.e., lock discovery, if it returns the owner information, must return exactly equivalent XML to that in the LOCK request). 
-There's a lot of discussion of why this is needed in the archives; the gist is that it's the only client-controlled XML that's always 
-associated with a LOCK, so clients of a given ilk can use it to exchange conventional information with each other about the lock. 
-I agree. 
-2. There's some well-known specification of "principal" in the sense of "authenticated user ID whose authorization is being used for the current request." 
-Probably this is a string of some kind, and probably there are localization issues so we will want this string to be in a known encoding (e.g., UTF-8) or else all mechanisms that return this string must be able to return the encoding. 
-In general, the user will not map 1-1 with a "principal", but rather a user will "match" one or more principals. 
-Therefore I do not see that it is feasible or desireable to try to identify a particular principal for the current user. 
-3. Clients need to know/be able to discover which "principal" they are. 
-I don't really know enough about the range of authentication schemes to understand whether clients can always know for sure what "principal" the server is associating with them based on the client-generated authentication header, or whether the client might simply have been given some set of opaque credentials and need the server to tell it which "principal" those credentials make it. 
-I believe this is the same as (2), and the same counter-arguments apply. 
-4. Clients need to know/be able to discover which "principal" owns a given lock, that is, which principal made the original lock request. 
-We did agree in an earlier thread that a "DAV:can-lock" and a "DAV:can-unlock" privilege should be supported, so that an ACL can indicate who can lock or unlock a resource. 
-But I disagree that it is necessary or useful to identify a principal that "owns" the lock, since it is the DAV:can-lock and DAV:can-unlock ACL that matters, and that is not determinable from the "principal" that created the lock. 
-5. Clients need to know/be able to discover where the "root resource" of a lock is; that is, the resource on which the lock owner can do an UNLOCK of the right depth and get the lock released. 
-I agree. 
-So my set of requirements would be: A) The DAV:owner field of the lock is under client control. 
-B) A DAV:can-lock and DAV:can-unlock privilege should be defined. 
-C) The root resource of a lock should be discoverable. 
-I do not fully understand. 
-There is always a principal for a request (and be it {DAV:}anonymous), so it would be easy for a server to keep this information with an active lock. 
-When there is a ACL privilege {DAV:}can-unlock and this is granted to a particular principal on the locked resource, the usualy ACL matching of principals would apply. 
-So, I do not see the problem with reporting a locking-principal as part of an active lock. 
-What am I missing? 
-Servers without ACL? 
-//Stefan 
+<s> All, Dan and Lisa have suggested that we need to more clearly define either the use of the lockowner field or that we need a way to identify the owner of the lock.  </s>
+<s> says...  </s>
+<s> (Especially because the spec provides no way to reliably determine who owns a lock.)  </s>
+<s> This is a good point -- and this is already a failing of WebDAV, with or without UNLOCK_BY_NON_LOCK_OWNER.  </s>
+<s> Clients that crash or miss the  </s>
+<s> response  </s>
+<s> from the server need to make sure that the lock is theirs before grabbing the lock token using PROPFIND.  </s>
+<s> Can lockowner be used for this purpose?  </s>
+<s> This should be a separate RFC2518 issue.  </s>
+<s> How about "HOW_TO_IDENTIFY_LOCK_OWNER".  </s>
+<s> Just as a point of information, I'd like to point out we have an issue on the issues list that is somewhat related: DEFINE_PRINCIPAL.  </s>
+<s> In that issue Mark D Anderson says: The term "principal" is never defined in the WebDAV specification, or the HTTP or Digest specifications.  </s>
+<s> It should be defined.  </s>
+<s> Lisa and Dan, Could you define the requirement before we start the discussion?  </s>
+<s> For example, is it for the server or the client that we need to make the clarification below?  </s>
+<s> (I'll reference your clarfication from the issues list.)  </s>
+<s> J.  </s>
+<s> From: Daniel Brotsky [mailto:dbrotsky@adobe.com] I think there are a variety of client needs here.  </s>
+<s> These are probably a little too fuzzy to be called requirements :^), but it's the best I can do right now.  </s>
+<s> 1.  </s>
+<s> This came up at the first interop, and most servers seemed to be compliant by the second interop: The owner part of a lock is to be completely controlled by the client.  </s>
+<s> The server MUST not alter it (i.e., lock discovery, if it returns the owner information, must return exactly equivalent XML to that in the LOCK request).  </s>
+<s> There's a lot of discussion of why this is needed in the archives; the gist is that it's the only client-controlled XML that's always  </s>
+<s> associated with a LOCK, so clients of a given ilk can use it to exchange conventional information with each other about the lock.  </s>
+<s> I agree.  </s>
+<s> 2. There's some well-known specification of "principal" in the sense of "authenticated user ID whose authorization is being used for the current request."  </s>
+<s> Probably this is a string of some kind, and probably there are localization issues so we will want this string to be in a known encoding (e.g., UTF-8) or else all mechanisms that return this string must be able to return the encoding.  </s>
+<s> In general, the user will not map 1-1 with a "principal", but rather a user will "match" one or more principals.  </s>
+<s> Therefore I do not see that it is feasible or desireable to try to identify a particular principal for the current user.  </s>
+<s> 3. Clients need to know/be able to discover which "principal" they are.  </s>
+<s> I don't really know enough about the range of authentication schemes to understand whether clients can always know for sure what "principal" the server is associating with them based on the client-generated authentication header, or whether the client might simply have been given some set of opaque credentials and need the server to tell it which "principal" those credentials make it.  </s>
+<s> I believe this is the same as (2), and the same counter-arguments apply.  </s>
+<s> 4. Clients need to know/be able to discover which "principal" owns a given lock, that is, which principal made the original lock request.  </s>
+<s> We did agree in an earlier thread that a "DAV:can-lock" and a "DAV:can-unlock" privilege should be supported, so that an ACL can indicate who can lock or unlock a resource.  </s>
+<s> But I disagree that it is necessary or useful to identify a principal that "owns" the lock, since it is the DAV:can-lock and DAV:can-unlock ACL that matters, and that is not determinable from the "principal" that created the lock.  </s>
+<s> 5. Clients need to know/be able to discover where the "root resource" of a lock is; that is, the resource on which the lock owner can do an UNLOCK of the right depth and get the lock released.  </s>
+<s> I agree.  </s>
+<s> So my set of requirements would be: A) The DAV:owner field of the lock is under client control.  </s>
+<s> B) A DAV:can-lock and DAV:can-unlock privilege should be defined.  </s>
+<s> C) The root resource of a lock should be discoverable.  </s>
+<s> I do not fully understand.  </s>
+<s> There is always a principal for a request (and be it {DAV:}anonymous), so it would be easy for a server to keep this information with an active lock.  </s>
+<s> When there is a ACL privilege {DAV:}can-unlock and this is granted to a particular principal on the locked resource, the usualy ACL matching of principals would apply.  </s>
+<s> So, I do not see the problem with reporting a locking-principal as part of an active lock.  </s>
+<s> What am I missing?  </s>
+<s> Servers without ACL?  </s>
+<s> //Stefan  </s>

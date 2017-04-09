@@ -1,166 +1,166 @@
-I would like to point out some problematic aspects of the WebDAV protocol as it is formulated in RFC 2518. 
-The main problem I would like to address involves the PUT and DELETE methods. 
-These methods are defined in HTTP/1.1 (RFC 2068) and are currently fairly widely implemented and used (although PUT is probably more widely used than DELETE). 
-The problem is: 1) WebDAV redefines these methods in a way which is essentially incompatible with HTTP/1.1. 
-Thus putting itself in conflict with HTTP/1.1. 
-2) WebDAV does not seem to provide a way for servers to differentiate WebDAV clients from other HTTP/1.1 clients (at least not in the context of clients using these request methods). 
-This seems to create a problematic situation in which adding WebDAV compliance to a server necessarily involves breaking some 
-(potentially important) HTTP/1.1 compliant functionality as well as compliance with the HTTP/1.1 protocol itself. 
-IMHO, this is unacceptable. 
-The more concrete aspects of this problem are as follows: 
-1) RFC 2068 says about PUT: "If the Request-URI does not point to an existing resource, and that URI is capable of being defined as a new resource by the requesting user agent, the origin server can create the resource with that URI." There is nothing in RFC 2068 forbidding 
-the creation of additional resources in this process or otherwise restricting the server in what it may or may not do in order to create the resource with the appropriate URI. 
-While HTTP/1.1 has no explicit notion of collections, implementations of it certainly do (typically, servers match URI's to an hierarchical file system or something equivalent), and in most cases a PUT request into a collection (directory) that does not exist can only succeed by the creation of one or more intermediate collections. 
-While a server may clearly forbid such PUT operations (it may impose whatever restrictions it wants on its name space), a friendly PUT implementation (which tries to maximize its functionality) should transparently create missing collections (since HTTP/1.1 has no MKCOL method or an equivalent). 
-Since the most popular method for implementing 'PUT' is "write your own script" (see http://www.apacheweek.com/features/put), it is hard to say how many servers actually allow transparent creation of missing collections using PUT. 
-However, there are certainly some servers that do that (concrete examples include Jigsaw, the W3C's testbed server, available from http://www.w3c.org/Jigsaw/, and Lyonel Vincent's 'mod_put' for Apache, available from allows many existing clients (Amaya, Netscape composer, AOLpress, etc., non of which knows anything about MKCOL) to create collections by PUTing files to appropriate URI's. 
-RFC 2518, on the other hand, explicitly says: "When the PUT operation creates a new non-collection resource all ancestors MUST already exist. 
-If all ancestors do not exist, the method MUST fail with a 409 (Conflict) status code." 
-So, if I have a server on which people can now create collections by using existing HTTP/1.1 compliant clients (namely, with PUT), and I will go and make it strictly WebDAV compliant, this important functionality will be broken. 
-This is a problem. 
-2) The main problem with DELETE doesn't so much effect functionality as it effects compliance with HTTP/1.1 and has the potential of confusing HTTP/1.1 compliant clients. 
-In connection with DELETE for collections, RFC 2518 says: "If an error occurs with a resource other than the resource identified in the Request-URI then the response MUST be a 207 (Multi-Status)." 
-Since 207 is not a valid HTTP/1.1 response, HTTP/1.1 clients are not supposed to be able to understand it. 
-They are likely to consider it as a success code (it's a 2xx) even though in this particular case it actually indicates failure. 
-So how can these issues be resolved? 
-There seem to be at least three basic ways: 1) WebDAV can withdraw from redefining existing HTTP/1.1 methods, and reassign to these methods their original HTTP/1.1 requirements without new restrictions and without allowing the use of status codes that do not exist in HTTP/1.1. 
-The restriction on PUT seems totally artificial anyway. 
-A server that has a problem to create missing collections is always allowed to forbid it. 
-But what is the point in forbidding all servers from doing that? 
-If one wants to encourage clients to implement and use MKCOL, it is enough to make it a requirement on the client, while permitting the server to maintain its support for legacy clients. 
-The DELETE issue is a bit more complicated, since some functionality is clearly lost if one is restricted to HTTP/1.1 responses. 
-Note that nothing prevents an XML response from still being sent, except that WebDAV seems to tie the interpretation of such responses to a 207 code. 
-In any event, it would be better than breaking HTTP/1.1. 
-2) WebDAV can introduce new methods to implement its favorable PUT and DELETE variants, while leaving PUT and DELETE (untouched) in the realm of HTTP/1.1. 
-It is interesting to note that Netscape's "DISTRIBUTED AUTHORING AND VERSIONING PROTOCOL" (which is implemented by their Enterprise server) defines its own EDIT, SAVE, and DESTROY methods which are very similar to the normal HTTP/1.1 GET, PUT, and DELETE methods. 
-By implementing new methods, they become free to define the behavior, headers, etc., of these methods as they wish, without running into a conflict with any existing protocol. 
-WebDAV can also adopt this approach. 
-3) WebDAV can implement a way for both clients and servers to identify themselves as WebDAV compliant, and make the implementation details of existing HTTP/1.1 methods dependent on this identification. 
-I think that a reasonable way of doing that can be to use the already defined DAV header. 
-Instead of just sending this header in response to OPTIONS requests, it can be made an integral part of any request-response cycle. 
-Namely, a client should be required to supply it in every request, and a server should supply it in any response (to such a request) involving a WebDAV compliant resource. 
-The DAV header can then be used and understood in a similar way to the protocol (HTTP/1.x) 
-designation in HTTP exchanges. 
-That is, indicating to both sides the capabilities of the other one. 
-Furthermore, the DAV header in a request would be interpreted as requesting the server to comply with the WebDAV protocol, leaving the server free to behave otherwise in response to requests that do not contain this header. 
-In particular, PUT and DELETE without a DAV header would be interpreted as HTTP/1.1 requests coming from HTTP/1.1 clients, and other methods need not even be defined. 
-Note that this mechanism can have further usage. 
-In particular, the behavior of other existing HTTP/1.x methods can be legitimately modified, and future WebDAV development may use it to fine-tune responses and/or to change the semantics of current methods (in the context of new compliance classes) while maintaining backward compatibility. 
-Out of these three, I tend to vote for number 3. In any event, one way or the other, I think the current situation needs to be fixed. 
-Another (not related) problem with the current protocol is the requirement that servers must respect PROPFIND with Depth=infinity queries for collections. 
-Consider a site like ftp.cdrom.com, and suppose they would want to enable WebDAV-based access to their site (say, in order to enable people to browse 
-their site with the new Microsoft web folders feature). 
-The size of the ls-lR 
-file for their site is around 75 MB (yes MegaBytes) and the size of a proper 
-response to a PROPFIND with Depth=infinity to it would probably be at least 
-500 MB. 
-It would take at least two days to transmit over a dial-up connection, 
-and would probably require a super computer to parse it. 
-Do you seriously think they should (or would) supply such responses? 
-The protocol can say what it will, but it is totally crazy to think that servers would universally implement something like this. 
-The current requirement in the protocol may lead to naive client implementations that would rely on getting info on the entire tree in a single request, even though not all servers would allow it. 
-I propose making it legitimate for the server to respond to PROPFIND requests with Depth=infinity with a Depth=1 response. 
-In order to prevent confusion, the Depth header can be included in responses as well as in requests. 
-That is, if a server gets a PROPFIND request with any given Depth, it may choose to respond to a lower Depth, and in such case it MUST supply a suitable Depth header in the response which indicates the actual Depth to which the response corresponds. 
-Absence of a Depth header in the response would indicate that it corresponds to the requested Depth. 
-Sounds reasonable? 
-Sincerely, Yoram Last 
-*snip* 
-The rationale for the extra constraints on PUT in WebDAV is: * Prevention of creation of intermediate collections on user error. 
-Say I'm authoring a resource with URL: And suppose that the server supports PUT, and does actually create intermediate collections as needed (as allowed by HTTP/1.1): 
-Now, what happens if, when I go to save a backup of this report, I type in the URL: (That is, the "_" in "1999_reports" is now a "-") Now, instead of getting an error, my server has gone ahead and made two new collections for me (1999-reports, and "q1_report"), a behavior I did not want. 
-* Not *requiring* the creation of intermediate collections to support namespace consistency As far as HTTP/1.1 is concerned, a server is free to have what I term "free 
-floating URLs", URLs that, if you remove the last path segment, do not 
-resolve to a resource. 
-For example: This URL would be free floating if you removed the "bar.html" 
-path segment 
-to create: AND if this URL is not mapped to a resource. 
-In WebDAV, we wanted to prevent free-floating resources, since they would violate namespace consistency (that, ideally, every URL for a DAV-compliant resource must belong to a collection). 
-This would have required us to add a requirement that a PUT to a URL would have to create all intermediate collections. 
-But, this seemed to us to be adding excessive side-effects to PUT, especially since a user might not even want those extra collections to be created (i.e., they might have just committed an error). 
-So, while you may not agree with this rationale, the requirement was not added arbitrarily. 
-OK, so given that WebDAV has this extra requirement on PUT that HTTP/1.1 does not have, you are assering that a downlevel HTTP/1.1 authoring client would experience interoperability problems authoring against a DAV server (or a DAV-capable portion of a server's namespace). 
-It seems to me that, if users of these downlevel clients depend on the side-effect behavior of PUT to create intermediate collections, they might indeed have some difficulty authoring against a DAV-capable server. 
-So, having agreed to your main point, we are now left to argue over the severity of this interoperability problem. 
-I assert that it is minor, since there are several existing workarounds. 
-Workaround #1: Use an existing DAV client as a helper to create the intermediate collections. 
-This addresses your question: 
-And how do I do a MKCOL if I use Amaya, Netscape composer, AOLpress, 
-etc.,...? Use the helper to do the MKCOL (or create the collections in the underlying repository, if you have access). 
-Workaround #2: Don't author in spaces where you don't already have an existing collection. 
-Since my personal use of HTTP/1.1 authoring tools has always been in an existing collection, it seems to me that these workarounds would be satisfactory. 
-Do you have real-world use scenarios in which these scenarios would not work? 
-If so, are these common use cases, or rare use cases? 
-Since RFC 2518 is now a Proposed Standard, you would have to provide an extremely compelling argument, backed up with significant documentation, that this document is causing common and widespread interoperability problems for it to be modified, and re-issued. 
-At present, it is my opinion that you have not done so. 
-collections. 
-browse 
-ls-lR 
-proper 
-least 
-As a result, a conservative client should never perform a PROPFIND, depth infinity unless it knows the namespace it is issuing the PROPFIND against, and a server should be free to refuse to process a PROPFIND, depth infinity if it would result in too large a response (since this could easily be used to implement a denial of service attack). 
-Both of these approaches are allowed by the specification. 
-- Jim 
-IMO, it seems out of bounce to impose a MUST requirement in order to prevent a "user error" - especially because the "error" doesn't break anything in the protocol or leads to interoperability problems. 
-This is why it is stated as it is in HTTP/1.1 - it is left to the server to 
-decide whether it wants to create the new location or not. 
-As Yoram points out, some servers already do that and others don't. 
-Removing the MUST requirement would also eliminate any problem with HTTP/1.1 clients - removing their capability of creating resources is in my mind not a good transition strategy. 
-But what if "http://example.com/foo/fuzz/" exists but isn't accessible to me because I don't have the right permissions. 
-In that case, I may get a 403 (Forbidden) when accessing "http://example.com/foo/fuzz/" but still be able to create the document "http://example.com/foo/fuzz/bar.html". 
-According to your definition, "http://example.com/foo/fuzz/bar.html" 
-floats from my perspective so I have to do a MKCOL on "http://example.com/foo/fuzz/" - which of course I can't, because I am not allowed. 
-This is the same as you often see on "incoming" folders on FTP servers where you can stick in a new file but not get a folder listing. 
-Removing the MUST requirement would also take away this problem. 
-In any case, 409 is not the appropriate status code to use - the two URIs you have in your example really aren't the same and the problem is not that 
-there are any conflicts. 
-Henrik Henrik Frystyk Nielsen, World Wide Web Consortium 
-In *my* opinion, the PUT and DELETE methods never should have been added to HTTP without also adding locking support. 
-I consider it a signficant bug that a user-agent can issue a PUT (without If-*-Match headers) and overwrite someone else's work. 
-Therefore, as an author of the HTTP specification, could you please take an action item to have PUT removed from RFC 2068 and successors since it is so dangerous? 
-A transition strategy for what? 
-If someone can provide hard data (instead of opinion and personal conjecture) that this is a serious interoperability problem, I could be convinced that some action needs to be taken. 
-But, given that there is, to the best of my knowledge, *very* limited HTTP/1.1 authoring in practise, and given that these clients have to have been designed to work against servers which do not support the creation of intermediate collections (the DAV semantics), and since there are workarounds to address the need to create intermediate collections, I am finding it hard to believe that there is, indeed, a problem here. 
-a) Access control policy is not addressed by the WebDAV specification. 
-b) If this scenario is a problem for DAV, it seems to me it's also a problem for downlevel HTTP/1.1 clients too, since what you're alluding to is a general problem having to do with the implications a restriction on one end of a containment relationship has on the other end. 
-that 
-We chose 409 because when the conditional in the If header evaluates to false, it returns a 412 (the only other status code which makes sense here). 
-Since If would frequently be passed on a PUT in WebDAV (to pass the lock token), we wanted to make sure the two error conditions would be distinguishable by a client. 
-Given this objective, we could have either (a) used 409 (b) used another, less appropriate status code, or (c) created a new status code. 
-Since the status code namespace is rapidly filling, we didn't want to make a new one if we could help it. 
-Use of other status codes: 400, 401, 402, 404, 405, 406, 407, 408, 410, 411, 413, 414, 415: Not appropriate due to definition of the status code. 
-This leaves: 403: While this may seem appealing, and perhaps could have been made to work, it didn't seem right since if a user agent creates the intermediate collection, they could and should resubmit the PUT request. 
-It didn't seem to us that this was a case where, "the server does not want to reveal exactly why the request has been refused" 409 &amp; 412: see above 
-- Jim 
-Nope, it works just fine - many applications do not need anymore. 
-Furthermore, a server is always welcome to deny accepting a PUT operation without a precondition. 
-Always start with the simple stuff first and then layer more complex things on top. 
-Only real problem was that client couldn't force acceptance of new attributes in the PUT request like for example support for PUT with byte ranges but HTTP extensions makes that much simpler through mandatory extension declarations. 
-The notion that interoperability problems can be solved if people just upgrade their application is often used as incentive for buying commercial software but it doesn't apply here. 
-Especially because the problem that DAV solves is not a correctness problem but a usability issue (not by mistake to create a resource with a unintended URI). 
-According to the current set who claim to implement HTTP/1.1 and have filled out the feature form: more than half of the clients and half of the servers support PUT. 
-Note that authoring in the strict sense of editing web pages is only one application of PUT - it can just as well be used for "copy" type operations. 
-The fact that the example uses access authentication is not important - what is important is that it is fairly easy to create an example where a WedDAV client can't determine whether a server fulfilled the MUST or not - the term "exist" is relative to who is asking with the "incoming" FTP folder being the example. 
-No, as HTTP/1.1 doesn't have the requirement that "all ancestors MUST already exist" then it can create the resource "http://example.com/foo/fuzz/bar.html" 
-just fine without caring about whether /foo and /foo/fuzz exist or not. 
-as well as 417-499. 
-As the constraint you have imposed is not in HTTP/1.1 it is not surprising that none of the existing HTTP/1.1 status codes match very well. 
-A new code would have been appropriate. 
-Henrik Henrik Frystyk Nielsen, World Wide Web Consortium 
-You're putting words in my mouth. 
-I never suggested that people need to upgrade their application. 
-In fact, existing PUT capable HTTP/1.1 authoring tools will work against a DAV server just fine. 
-I also provided more rationale for the decision than just the user interface concerns you have latched onto. 
-But, while we're at it, here's a third rationale: * Prevention of side-effects by PUT To foster better separation of concerns in the protocol, once the MKCOL method was introduced, we did not want to have two methods capable of creating collections. 
-operations. 
-OK, now you're 1/4 of the way to a compelling argument. 
-What I need to see beyond this is evidence that actual use of PUT in these downlevel clients depends on the collection-creating side-effect capabilities of PUT. 
-Since this ability to create collections as a side-effect is not guaranteed by the protocol, the coding of these clients cannot depend on this capability. 
-But, though I am skeptical, there might be compellingly large numbers of people using HTTP/1.1 PUT authoring with specific client/server pairs who do depend on this capability. 
-I am willing to be convinced, but I need to see some numbers. 
-As a counter-example, I know that at UCI, one of the ways that instructors and teaching assistants update the web pages for their classes is by using HTTP PUT, typically in conjunction with the authoring capabilities of Navigator. 
-However, to the best of my knowledge, this use of PUT does not depend on the side-effect capabilities of PUT to create collections. 
-Following this path gets quickly into arguments about whether namespace consistency is or is not a good thing. 
-We've argued this before without convincing each other -- shall we go another couple rounds? 
-So, why wasn't this brought up during one of the *three* working group last call for comments periods on RFC 2518? 
-- Jim 
+<s> I would like to point out some problematic aspects of the WebDAV protocol as it is formulated in RFC 2518.  </s>
+<s> The main problem I would like to address involves the PUT and DELETE methods.  </s>
+<s> These methods are defined in HTTP/1.1 (RFC 2068) and are currently fairly widely implemented and used (although PUT is probably more widely used than DELETE).  </s>
+<s> The problem is: 1) WebDAV redefines these methods in a way which is essentially incompatible with HTTP/1.1.  </s>
+<s> Thus putting itself in conflict with HTTP/1.1.  </s>
+<s> 2) WebDAV does not seem to provide a way for servers to differentiate WebDAV clients from other HTTP/1.1 clients (at least not in the context of clients using these request methods).  </s>
+<s> This seems to create a problematic situation in which adding WebDAV compliance to a server necessarily involves breaking some  </s>
+<s> (potentially important) HTTP/1.1 compliant functionality as well as compliance with the HTTP/1.1 protocol itself.  </s>
+<s> IMHO, this is unacceptable.  </s>
+<s> The more concrete aspects of this problem are as follows:  </s>
+<s> 1) RFC 2068 says about PUT: "If the Request-URI does not point to an existing resource, and that URI is capable of being defined as a new resource by the requesting user agent, the origin server can create the resource with that URI." There is nothing in RFC 2068 forbidding  </s>
+<s> the creation of additional resources in this process or otherwise restricting the server in what it may or may not do in order to create the resource with the appropriate URI.  </s>
+<s> While HTTP/1.1 has no explicit notion of collections, implementations of it certainly do (typically, servers match URI's to an hierarchical file system or something equivalent), and in most cases a PUT request into a collection (directory) that does not exist can only succeed by the creation of one or more intermediate collections.  </s>
+<s> While a server may clearly forbid such PUT operations (it may impose whatever restrictions it wants on its name space), a friendly PUT implementation (which tries to maximize its functionality) should transparently create missing collections (since HTTP/1.1 has no MKCOL method or an equivalent).  </s>
+<s> Since the most popular method for implementing 'PUT' is "write your own script" (see http://www.apacheweek.com/features/put), it is hard to say how many servers actually allow transparent creation of missing collections using PUT.  </s>
+<s> However, there are certainly some servers that do that (concrete examples include Jigsaw, the W3C's testbed server, available from http://www.w3c.org/Jigsaw/, and Lyonel Vincent's 'mod_put' for Apache, available from allows many existing clients (Amaya, Netscape composer, AOLpress, etc., non of which knows anything about MKCOL) to create collections by PUTing files to appropriate URI's.  </s>
+<s> RFC 2518, on the other hand, explicitly says: "When the PUT operation creates a new non-collection resource all ancestors MUST already exist.  </s>
+<s> If all ancestors do not exist, the method MUST fail with a 409 (Conflict) status code."  </s>
+<s> So, if I have a server on which people can now create collections by using existing HTTP/1.1 compliant clients (namely, with PUT), and I will go and make it strictly WebDAV compliant, this important functionality will be broken.  </s>
+<s> This is a problem.  </s>
+<s> 2) The main problem with DELETE doesn't so much effect functionality as it effects compliance with HTTP/1.1 and has the potential of confusing HTTP/1.1 compliant clients.  </s>
+<s> In connection with DELETE for collections, RFC 2518 says: "If an error occurs with a resource other than the resource identified in the Request-URI then the response MUST be a 207 (Multi-Status)."  </s>
+<s> Since 207 is not a valid HTTP/1.1 response, HTTP/1.1 clients are not supposed to be able to understand it.  </s>
+<s> They are likely to consider it as a success code (it's a 2xx) even though in this particular case it actually indicates failure.  </s>
+<s> So how can these issues be resolved?  </s>
+<s> There seem to be at least three basic ways: 1) WebDAV can withdraw from redefining existing HTTP/1.1 methods, and reassign to these methods their original HTTP/1.1 requirements without new restrictions and without allowing the use of status codes that do not exist in HTTP/1.1.  </s>
+<s> The restriction on PUT seems totally artificial anyway.  </s>
+<s> A server that has a problem to create missing collections is always allowed to forbid it.  </s>
+<s> But what is the point in forbidding all servers from doing that?  </s>
+<s> If one wants to encourage clients to implement and use MKCOL, it is enough to make it a requirement on the client, while permitting the server to maintain its support for legacy clients.  </s>
+<s> The DELETE issue is a bit more complicated, since some functionality is clearly lost if one is restricted to HTTP/1.1 responses.  </s>
+<s> Note that nothing prevents an XML response from still being sent, except that WebDAV seems to tie the interpretation of such responses to a 207 code.  </s>
+<s> In any event, it would be better than breaking HTTP/1.1.  </s>
+<s> 2) WebDAV can introduce new methods to implement its favorable PUT and DELETE variants, while leaving PUT and DELETE (untouched) in the realm of HTTP/1.1.  </s>
+<s> It is interesting to note that Netscape's "DISTRIBUTED AUTHORING AND VERSIONING PROTOCOL" (which is implemented by their Enterprise server) defines its own EDIT, SAVE, and DESTROY methods which are very similar to the normal HTTP/1.1 GET, PUT, and DELETE methods.  </s>
+<s> By implementing new methods, they become free to define the behavior, headers, etc., of these methods as they wish, without running into a conflict with any existing protocol.  </s>
+<s> WebDAV can also adopt this approach.  </s>
+<s> 3) WebDAV can implement a way for both clients and servers to identify themselves as WebDAV compliant, and make the implementation details of existing HTTP/1.1 methods dependent on this identification.  </s>
+<s> I think that a reasonable way of doing that can be to use the already defined DAV header.  </s>
+<s> Instead of just sending this header in response to OPTIONS requests, it can be made an integral part of any request-response cycle.  </s>
+<s> Namely, a client should be required to supply it in every request, and a server should supply it in any response (to such a request) involving a WebDAV compliant resource.  </s>
+<s> The DAV header can then be used and understood in a similar way to the protocol (HTTP/1.x)  </s>
+<s> designation in HTTP exchanges.  </s>
+<s> That is, indicating to both sides the capabilities of the other one.  </s>
+<s> Furthermore, the DAV header in a request would be interpreted as requesting the server to comply with the WebDAV protocol, leaving the server free to behave otherwise in response to requests that do not contain this header.  </s>
+<s> In particular, PUT and DELETE without a DAV header would be interpreted as HTTP/1.1 requests coming from HTTP/1.1 clients, and other methods need not even be defined.  </s>
+<s> Note that this mechanism can have further usage.  </s>
+<s> In particular, the behavior of other existing HTTP/1.x methods can be legitimately modified, and future WebDAV development may use it to fine-tune responses and/or to change the semantics of current methods (in the context of new compliance classes) while maintaining backward compatibility.  </s>
+<s> Out of these three, I tend to vote for number 3. In any event, one way or the other, I think the current situation needs to be fixed.  </s>
+<s> Another (not related) problem with the current protocol is the requirement that servers must respect PROPFIND with Depth=infinity queries for collections.  </s>
+<s> Consider a site like ftp.cdrom.com, and suppose they would want to enable WebDAV-based access to their site (say, in order to enable people to browse  </s>
+<s> their site with the new Microsoft web folders feature).  </s>
+<s> The size of the ls-lR  </s>
+<s> file for their site is around 75 MB (yes MegaBytes) and the size of a proper  </s>
+<s> response to a PROPFIND with Depth=infinity to it would probably be at least  </s>
+<s> 500 MB.  </s>
+<s> It would take at least two days to transmit over a dial-up connection,  </s>
+<s> and would probably require a super computer to parse it.  </s>
+<s> Do you seriously think they should (or would) supply such responses?  </s>
+<s> The protocol can say what it will, but it is totally crazy to think that servers would universally implement something like this.  </s>
+<s> The current requirement in the protocol may lead to naive client implementations that would rely on getting info on the entire tree in a single request, even though not all servers would allow it.  </s>
+<s> I propose making it legitimate for the server to respond to PROPFIND requests with Depth=infinity with a Depth=1 response.  </s>
+<s> In order to prevent confusion, the Depth header can be included in responses as well as in requests.  </s>
+<s> That is, if a server gets a PROPFIND request with any given Depth, it may choose to respond to a lower Depth, and in such case it MUST supply a suitable Depth header in the response which indicates the actual Depth to which the response corresponds.  </s>
+<s> Absence of a Depth header in the response would indicate that it corresponds to the requested Depth.  </s>
+<s> Sounds reasonable?  </s>
+<s> Sincerely, Yoram Last  </s>
+<s> *snip*  </s>
+<s> The rationale for the extra constraints on PUT in WebDAV is: * Prevention of creation of intermediate collections on user error.  </s>
+<s> Say I'm authoring a resource with URL: And suppose that the server supports PUT, and does actually create intermediate collections as needed (as allowed by HTTP/1.1):  </s>
+<s> Now, what happens if, when I go to save a backup of this report, I type in the URL: (That is, the "_" in "1999_reports" is now a "-") Now, instead of getting an error, my server has gone ahead and made two new collections for me (1999-reports, and "q1_report"), a behavior I did not want.  </s>
+<s> * Not *requiring* the creation of intermediate collections to support namespace consistency As far as HTTP/1.1 is concerned, a server is free to have what I term "free  </s>
+<s> floating URLs", URLs that, if you remove the last path segment, do not  </s>
+<s> resolve to a resource.  </s>
+<s> For example: This URL would be free floating if you removed the "bar.html"  </s>
+<s> path segment  </s>
+<s> to create: AND if this URL is not mapped to a resource.  </s>
+<s> In WebDAV, we wanted to prevent free-floating resources, since they would violate namespace consistency (that, ideally, every URL for a DAV-compliant resource must belong to a collection).  </s>
+<s> This would have required us to add a requirement that a PUT to a URL would have to create all intermediate collections.  </s>
+<s> But, this seemed to us to be adding excessive side-effects to PUT, especially since a user might not even want those extra collections to be created (i.e., they might have just committed an error).  </s>
+<s> So, while you may not agree with this rationale, the requirement was not added arbitrarily.  </s>
+<s> OK, so given that WebDAV has this extra requirement on PUT that HTTP/1.1 does not have, you are assering that a downlevel HTTP/1.1 authoring client would experience interoperability problems authoring against a DAV server (or a DAV-capable portion of a server's namespace).  </s>
+<s> It seems to me that, if users of these downlevel clients depend on the side-effect behavior of PUT to create intermediate collections, they might indeed have some difficulty authoring against a DAV-capable server.  </s>
+<s> So, having agreed to your main point, we are now left to argue over the severity of this interoperability problem.  </s>
+<s> I assert that it is minor, since there are several existing workarounds.  </s>
+<s> Workaround #1: Use an existing DAV client as a helper to create the intermediate collections.  </s>
+<s> This addresses your question:  </s>
+<s> And how do I do a MKCOL if I use Amaya, Netscape composer, AOLpress,  </s>
+<s> etc.,...? Use the helper to do the MKCOL (or create the collections in the underlying repository, if you have access).  </s>
+<s> Workaround #2: Don't author in spaces where you don't already have an existing collection.  </s>
+<s> Since my personal use of HTTP/1.1 authoring tools has always been in an existing collection, it seems to me that these workarounds would be satisfactory.  </s>
+<s> Do you have real-world use scenarios in which these scenarios would not work?  </s>
+<s> If so, are these common use cases, or rare use cases?  </s>
+<s> Since RFC 2518 is now a Proposed Standard, you would have to provide an extremely compelling argument, backed up with significant documentation, that this document is causing common and widespread interoperability problems for it to be modified, and re-issued.  </s>
+<s> At present, it is my opinion that you have not done so.  </s>
+<s> collections.  </s>
+<s> browse  </s>
+<s> ls-lR  </s>
+<s> proper  </s>
+<s> least  </s>
+<s> As a result, a conservative client should never perform a PROPFIND, depth infinity unless it knows the namespace it is issuing the PROPFIND against, and a server should be free to refuse to process a PROPFIND, depth infinity if it would result in too large a response (since this could easily be used to implement a denial of service attack).  </s>
+<s> Both of these approaches are allowed by the specification.  </s>
+<s> - Jim  </s>
+<s> IMO, it seems out of bounce to impose a MUST requirement in order to prevent a "user error" - especially because the "error" doesn't break anything in the protocol or leads to interoperability problems.  </s>
+<s> This is why it is stated as it is in HTTP/1.1 - it is left to the server to  </s>
+<s> decide whether it wants to create the new location or not.  </s>
+<s> As Yoram points out, some servers already do that and others don't.  </s>
+<s> Removing the MUST requirement would also eliminate any problem with HTTP/1.1 clients - removing their capability of creating resources is in my mind not a good transition strategy.  </s>
+<s> But what if "http://example.com/foo/fuzz/" exists but isn't accessible to me because I don't have the right permissions.  </s>
+<s> In that case, I may get a 403 (Forbidden) when accessing "http://example.com/foo/fuzz/" but still be able to create the document "http://example.com/foo/fuzz/bar.html".  </s>
+<s> According to your definition, "http://example.com/foo/fuzz/bar.html"  </s>
+<s> floats from my perspective so I have to do a MKCOL on "http://example.com/foo/fuzz/" - which of course I can't, because I am not allowed.  </s>
+<s> This is the same as you often see on "incoming" folders on FTP servers where you can stick in a new file but not get a folder listing.  </s>
+<s> Removing the MUST requirement would also take away this problem.  </s>
+<s> In any case, 409 is not the appropriate status code to use - the two URIs you have in your example really aren't the same and the problem is not that  </s>
+<s> there are any conflicts.  </s>
+<s> Henrik Henrik Frystyk Nielsen, World Wide Web Consortium  </s>
+<s> In *my* opinion, the PUT and DELETE methods never should have been added to HTTP without also adding locking support.  </s>
+<s> I consider it a signficant bug that a user-agent can issue a PUT (without If-*-Match headers) and overwrite someone else's work.  </s>
+<s> Therefore, as an author of the HTTP specification, could you please take an action item to have PUT removed from RFC 2068 and successors since it is so dangerous?  </s>
+<s> A transition strategy for what?  </s>
+<s> If someone can provide hard data (instead of opinion and personal conjecture) that this is a serious interoperability problem, I could be convinced that some action needs to be taken.  </s>
+<s> But, given that there is, to the best of my knowledge, *very* limited HTTP/1.1 authoring in practise, and given that these clients have to have been designed to work against servers which do not support the creation of intermediate collections (the DAV semantics), and since there are workarounds to address the need to create intermediate collections, I am finding it hard to believe that there is, indeed, a problem here.  </s>
+<s> a) Access control policy is not addressed by the WebDAV specification.  </s>
+<s> b) If this scenario is a problem for DAV, it seems to me it's also a problem for downlevel HTTP/1.1 clients too, since what you're alluding to is a general problem having to do with the implications a restriction on one end of a containment relationship has on the other end.  </s>
+<s> that  </s>
+<s> We chose 409 because when the conditional in the If header evaluates to false, it returns a 412 (the only other status code which makes sense here).  </s>
+<s> Since If would frequently be passed on a PUT in WebDAV (to pass the lock token), we wanted to make sure the two error conditions would be distinguishable by a client.  </s>
+<s> Given this objective, we could have either (a) used 409 (b) used another, less appropriate status code, or (c) created a new status code.  </s>
+<s> Since the status code namespace is rapidly filling, we didn't want to make a new one if we could help it.  </s>
+<s> Use of other status codes: 400, 401, 402, 404, 405, 406, 407, 408, 410, 411, 413, 414, 415: Not appropriate due to definition of the status code.  </s>
+<s> This leaves: 403: While this may seem appealing, and perhaps could have been made to work, it didn't seem right since if a user agent creates the intermediate collection, they could and should resubmit the PUT request.  </s>
+<s> It didn't seem to us that this was a case where, "the server does not want to reveal exactly why the request has been refused" 409 &amp; 412: see above  </s>
+<s> - Jim  </s>
+<s> Nope, it works just fine - many applications do not need anymore.  </s>
+<s> Furthermore, a server is always welcome to deny accepting a PUT operation without a precondition.  </s>
+<s> Always start with the simple stuff first and then layer more complex things on top.  </s>
+<s> Only real problem was that client couldn't force acceptance of new attributes in the PUT request like for example support for PUT with byte ranges but HTTP extensions makes that much simpler through mandatory extension declarations.  </s>
+<s> The notion that interoperability problems can be solved if people just upgrade their application is often used as incentive for buying commercial software but it doesn't apply here.  </s>
+<s> Especially because the problem that DAV solves is not a correctness problem but a usability issue (not by mistake to create a resource with a unintended URI).  </s>
+<s> According to the current set who claim to implement HTTP/1.1 and have filled out the feature form: more than half of the clients and half of the servers support PUT.  </s>
+<s> Note that authoring in the strict sense of editing web pages is only one application of PUT - it can just as well be used for "copy" type operations.  </s>
+<s> The fact that the example uses access authentication is not important - what is important is that it is fairly easy to create an example where a WedDAV client can't determine whether a server fulfilled the MUST or not - the term "exist" is relative to who is asking with the "incoming" FTP folder being the example.  </s>
+<s> No, as HTTP/1.1 doesn't have the requirement that "all ancestors MUST already exist" then it can create the resource "http://example.com/foo/fuzz/bar.html"  </s>
+<s> just fine without caring about whether /foo and /foo/fuzz exist or not.  </s>
+<s> as well as 417-499.  </s>
+<s> As the constraint you have imposed is not in HTTP/1.1 it is not surprising that none of the existing HTTP/1.1 status codes match very well.  </s>
+<s> A new code would have been appropriate.  </s>
+<s> Henrik Henrik Frystyk Nielsen, World Wide Web Consortium  </s>
+<s> You're putting words in my mouth.  </s>
+<s> I never suggested that people need to upgrade their application.  </s>
+<s> In fact, existing PUT capable HTTP/1.1 authoring tools will work against a DAV server just fine.  </s>
+<s> I also provided more rationale for the decision than just the user interface concerns you have latched onto.  </s>
+<s> But, while we're at it, here's a third rationale: * Prevention of side-effects by PUT To foster better separation of concerns in the protocol, once the MKCOL method was introduced, we did not want to have two methods capable of creating collections.  </s>
+<s> operations.  </s>
+<s> OK, now you're 1/4 of the way to a compelling argument.  </s>
+<s> What I need to see beyond this is evidence that actual use of PUT in these downlevel clients depends on the collection-creating side-effect capabilities of PUT.  </s>
+<s> Since this ability to create collections as a side-effect is not guaranteed by the protocol, the coding of these clients cannot depend on this capability.  </s>
+<s> But, though I am skeptical, there might be compellingly large numbers of people using HTTP/1.1 PUT authoring with specific client/server pairs who do depend on this capability.  </s>
+<s> I am willing to be convinced, but I need to see some numbers.  </s>
+<s> As a counter-example, I know that at UCI, one of the ways that instructors and teaching assistants update the web pages for their classes is by using HTTP PUT, typically in conjunction with the authoring capabilities of Navigator.  </s>
+<s> However, to the best of my knowledge, this use of PUT does not depend on the side-effect capabilities of PUT to create collections.  </s>
+<s> Following this path gets quickly into arguments about whether namespace consistency is or is not a good thing.  </s>
+<s> We've argued this before without convincing each other -- shall we go another couple rounds?  </s>
+<s> So, why wasn't this brought up during one of the *three* working group last call for comments periods on RFC 2518?  </s>
+<s> - Jim  </s>

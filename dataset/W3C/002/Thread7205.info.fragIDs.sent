@@ -1,154 +1,154 @@
-'Discussion on this issue at Irvine was mostly concerning the development of "yet another range identification scheme," rather than "we should remove range locking from the requirements." 
-In fact, this has been a requirement since last October, and has passed several reviews. 
-In a nutshell, the rationale for this requirement is that certain application programs (typically word processors) which perform range management within a file (typically using a table with fixed width entries, located at the beginning of the file, each entry containing range information), would find sub-resource locking to be very useful.' Jim's memory of this discussion differs from mine. 
-I remember the flavor being much more at the level of saying that range locking was incompatible with one of the stated design principles (that resources are the lockable entities). 
-Further, range locking seemed to be a hack to accommodate legacy clients, rather than being part of a coherent design for how distributed authoring and versioning works on the Internet. 
-I had the impression in Irvine that there was rough consensus that the group's purpose was to devise a good design for the Internet going forward, not just a web veneer for existing servers and clients. 
-BTW, I find it dubious that "having passed several reviews" would somehow 
-make a requirement more correct or virtuous. 
-I thought the whole point of having further meetings and reviews was to discover problems not previously exposed. 
---Mark Mark_Day@lotus.com 
-We managed to get range retrieval into HTTP by justifying it for operations that weren't tied to proprietary formats, even though the initial motivation for HTTP range retrieval was Adobe's desire to do range access to (yet to be documented) extensions to PDF. We'll probably need the same to justify range locking: a compelling non-proprietary case for why a standard client might want to range-lock anything. 
-The argument for most web revisable content (HTML, GIF, PNG, even PDF) isn't compelling, and the proprietary capabilities can be handled by private extensions. 
-Well, there's a tension here. 
-Much of the benefit from creating a requirements document derives from creating consensus on what features should and should not be in the final protocol specification. 
-Based on this consensus, we can determine whether our specification meets the requirements, and we can discard features which go beyond the requirements. 
-Having worked hard to achieve consensus on the original requirements document, I do feel justified in pushing back when features which were originally agreed upon now suddenly are in question. 
-However, this is definitely at odds with the notion (that I also agree with) that any bad requirement or feature should be removed, no matter how much agreement there existed upon it. 
-Plus, we're also now in a period of reexamination of the original requirements documents. 
-That's why in my explanation I also gave a thumbnail rationale for the requirement, because I don't feel that precedent alone is sufficient. 
-I do disagree with the characterization of range locking as a hack. 
-Another rationale for range locking is as a complimentary capability to the range reads and range writes which are in either the HTTP/1.1 spec. 
-or the requirements document. 
-Since locking is designed to address the lost update problem, a range lock would prevent lost updates resulting from multiple people performing range writes to the same range. 
-While a full resource lock could also prevent the same overwrite scenario, it is more than is needed. 
-This is definitely true. 
-Since I cannot remember the technical problems identified in range locking at the Irvine meeting, would you (or someone) care to summarize them for the list? 
-- Jim 
-So, Mark, you vote that we abandon all legacy clients and design the *pure* protocol for WebDAV? 
--src 
-Mark_Day/CAM/Lotus@lotus.com 02/20/97 11:52AM 
-'Discussion on this issue at Irvine was mostly concerning the development of "yet another range identification scheme," rather than "we should remove range locking from the requirements." 
-In fact, this has been a requirement since last October, and has passed several reviews. 
-In a nutshell, the rationale for this requirement is that certain application programs (typically word processors) which perform range management within a file (typically using a table with fixed width entries, located at the beginning of the file, each entry containing range information), would find sub-resource locking to be very useful.' Jim's memory of this discussion differs from mine. 
-I remember the flavor being much more at the level of saying that range locking was incompatible with one of the stated design principles (that resources are the lockable entities). 
-Further, range locking seemed to be a hack to accommodate legacy clients, rather than being part of a coherent design for how distributed authoring and versioning works on the Internet. 
-I had the impression in Irvine that there was rough consensus that the group's purpose was to devise a good design for the Internet going forward, not just a web veneer for existing servers and clients. 
-BTW, I find it dubious that "having passed several reviews" would somehow make a requirement more correct or virtuous. 
-I thought the whole point of having further meetings and reviews was to discover problems not previously exposed. 
---Mark Mark_Day@lotus.com 
-The overall requirement of WEBDAV is that we create a way that (web) authoring tools can interact with (web) (versioning) servers in an interoperable way. 
-The technical requirements in the requirements document need to be justified in terms of how they help in accomplishing the overall requirement. 
-In the case of range locking, this justification has not been made. 
-That is, while range locking might help some web authoring tools interact with some versioning servers, it is not in support of any particular interoperable method. 
-If there is consensus, it must be on the fact that the linkage is there. 
-Larry 
-I am wondering if the issue here is over the locking of a portion of a document or over the use of a range header to specify the portion of the document to be locked. 
-However, first, to the justification. 
-The reason we need to be able to lock a portion of a document is because many people tend to share the same document and the ability to specify a section of the document as "locked", rather than locking the entire document, enhances the interaction of users. 
-If one can only lock the entire document then sharing is hobbled. 
-However experience with document management systems have demonstrated that users often only need to lock a small portion of a document, thus allowing other users full access to the remaining sections of the document. 
-Hence locking of portions of a document is a necessary minimum feature for a real world distributed authoring and 
-versioning system. 
-To the question of implementation, the main argument against the current spec is that our design principals require us to only operate on URIs and we were using the range header to modify what the URI pointed to. 
-The now standard "Fielding Compromise" in such situations is to gain permission from the server to munge the URI to point to a particular section of the resource. 
-I support this compromise as it allows us to stick to our design principal but still provide a vital feature. 
-Yaron 
-Was there (is there) a scenario that involves range locking? 
-Range locking doesn't make sense for mutual editing of any of the document formats that I'm familiar with that are in common use on the Internet, even including Microsoft proprietary formats. 
-# The reason we need to be able to # lock a portion of a document is because many people tend to share the # same document and the ability to specify a section of the document as # "locked", rather than locking the entire document, enhances the # interaction of users. 
-This would justify "section" locking, but not "byte range" locking, since in word, powerpoint, HTML, PDF, GIF, JPEG, tiff, and most other formats, editing a section of a document generally changes all of the byte ranges. 
-Larry 
-It a'int necessarily so. 
-Much like a LOCK is a way of breaking ties among users w/equivalent access rights, so range locks help to break ties for people trying to edit the same section of a document. 
-Yaron 
-I'd like to understand this comment, because I don't. 
-Document in MS Word, chapter 2 is bytes 30-50 and bytes 80-90. 
-User A wants to edit chapter 2 User B wants to edit chapter 1 User C wants to edit chapter 2 A locks bytes 30-50, bytes 80-90 B locks bytes 10-20 B edits chapter 1, adds 20 bytes. 
-Can B check this in? 
-Create a new version? 
-Increases the size of the existing version? 
-How does this work? 
-Larry 
-I'm slightly amused by this discussion, because it is beginning to prove what I deeply think (and have never failed to show in this group): that locking is inherently evil. 
-Byte locking is evil because the byte count may change outside the scope of the lock, thereby voiding the addresses we hold in the lock. 
-So an extremely fine-grained lock won't work. 
-But a middle-grained lock won't work either, as Mark Day hints without really stressing: we are simply rarefying the troublesome situations, not removing them: if sections are counted, instead of named, there will be the 
-situation in which, after I obtained a lock on version 5, someone comes and 
-creates a new section 3, and my lock is void. 
-BTW, what are sections in HTML? 
-So we are coming to the conclusion that locking something based on a relative address (such as byte count) is bad anyway, because the base on which addresses are related to may change, thereby voiding the address we hold. 
-Relying on names is the only solution we can rely on, because locks on named entities will exist as long as the *name* is valid, and not the position. 
-What are the named entities? 
-And how can I be sure that the names won't be changed while I have a lock on them? 
-Should I provide a different lock for changing names, which can only be issued when no content lock exists on the whole entity? 
-Or should we allow owners of locks on named objects to act on names? 
-And in this case, how do we handle name clashes? 
-(e.g.: I have a lock on section 3, which is an object named "Section3". 
-Someone comes and adds a new section between 2 and 3, and would like to call it "Section3" and update all the names in the following sections. 
-What happens now?) Middle-grained locking won't work either. 
-Would large-grained lock work? 
-Not quite. 
-Again, the bad situations rarefy, but never disappear. 
-URLs *can be* position-dependent, because they most often are placed in a hierarchical space. 
-With WebDAV we are introducing client-controlled server-side operations on namespaces, such as MOVE. 
-For instance, what happens if I have a document lock on http://host.com/dir/file.html, and someone MOVEs /dir/ to something else? 
-Should owning a lock on an entity also block all the hierarchically superior containers? 
-Should a lock on http://host.com/a/b/c/.../z/tiny.html 
-also imply a lock on a, b, c, ..., and z? 
-And would a lock on /a/ also block all the hierarchically dependent namespaces b, b1, b2, and c, c1, c2, etc. ? 
-The ONLY reliable solution for fine-, middle- or large- grained objects to work is change-tracking. 
-It must be implemented by the client for the changes that are performed on the client (e.g. insertions and modifications), or by the server for the operations that are performed on the server (e.g. creations, deletions and moves). 
-VTML is an example of change-tracking language for the client. 
-At this point keeping locks are just an easy trick not to mess with multiple change logs and multiple parallel variants of the same entity, i.e. to avoid having to deal with tree-shaped versions. 
-Which is a legitimate decision, but adds complexity instead of simplifying the situation. 
-Alternatively, you can impose locks only on named entities, and request a different type of lock for the modification of names, so that changing the name of a section requires a lock on the entire document, and changing a directory requires a lock on the entire namespace, and locks can be as finely-grained as the names you specify. 
-Fabio Fabio Vitali Tiger got to hunt, bird got to fly, Dept of Computer Science Man got to sit and wonder "Why, why, why?' Univ. 
-of Bologna ITALY Tiger got to sleep, bird got to land, e-mail: fabio@cs.unibo.it 
-Man got to tell himself he understand. 
-Kurt Vonnegut 
-Everyone is focusing on the monolithic model of data management. 
-Simply keep a fixed-length index of the "sections" that are lockable. 
-When the document is open break each lockable entity into a separate piece (the index helps keep track of each piece). 
-Now put the document back together when it is saved, closed, etc. Don't worry about the index, we won't change byte ranges in it either, even though we have locked a range. 
-If something changes in the index we will mark the current instantiation out and create a new one at the end. 
-I see a lot of conversation about examples that can not work in the proposed model. 
-Range locking has value, we don't need to tie it to various fictitious implementations. 
--src 
-Fabio Vitali fabio@CS.UniBO.IT 
-02/21/97 01:07PM 
-I'm slightly amused by this discussion, because it is beginning to prove what I deeply think (and have never failed to show in this group): that locking is inherently evil. 
-Byte locking is evil because the byte count may change outside the scope of the lock, thereby voiding the addresses we hold in the lock. 
-So an extremely fine-grained lock won't work. 
-But a middle-grained lock won't work either, as Mark Day hints without really stressing: we are simply rarefying the troublesome situations, not removing them: if sections are counted, instead of named, there will be the situation in which, after I obtained a lock on version 5, someone comes and creates a new section 3, and my lock is void. 
-BTW, what are sections in HTML? 
-So we are coming to the conclusion that locking something based on a relative address (such as byte count) is bad anyway, because the base on which addresses are related to may change, thereby voiding the address we hold. 
-Relying on names is the only solution we can rely on, because locks on named entities will exist as long as the *name* is valid, and not the position. 
-What are the named entities? 
-And how can I be sure that the names won't be changed while I have a lock on them? 
-Should I provide a different lock for changing names, which can only be issued when no content lock exists on the whole entity? 
-Or should we allow owners of locks on named objects to act on names? 
-And in this case, how do we handle name clashes? 
-(e.g.: I have a lock on section 3, which is an object named "Section3". 
-Someone comes and adds a new section between 2 and 3, and would like to call it "Section3" and update all the names in the following sections. 
-What happens now?) Middle-grained locking won't work either. 
-Would large-grained lock work? 
-Not quite. 
-Again, the bad situations rarefy, but never disappear. 
-URLs *can be* position-dependent, because they most often are placed in a hierarchical space. 
-With WebDAV we are introducing client-controlled server-side operations on namespaces, such as MOVE. 
-For instance, what happens if I have a document lock on http://host.com/dir/file.html, and someone MOVEs /dir/ to something else? 
-Should owning a lock on an entity also block all the hierarchically superior containers? 
-Should a lock on http://host.com/a/b/c/.../z/tiny.html 
-also imply a lock on a, b, c, ..., and z? 
-And would a lock on /a/ also block all the hierarchically dependent namespaces b, b1, b2, and c, c1, c2, etc. ? 
-The ONLY reliable solution for fine-, middle- or large- grained objects to work is change-tracking. 
-It must be implemented by the client for the changes that are performed on the client (e.g. insertions and modifications), or by the server for the operations that are performed on the server (e.g. creations, deletions and moves). 
-VTML is an example of change-tracking language for the client. 
-At this point keeping locks are just an easy trick not to mess with multiple change logs and multiple parallel variants of the same entity, i.e. to avoid having to deal with tree-shaped versions. 
-Which is a legitimate decision, but adds complexity instead of simplifying the situation. 
-Alternatively, you can impose locks only on named entities, and request a different type of lock for the modification of names, so that changing the name of a section requires a lock on the entire document, and changing a directory requires a lock on the entire namespace, and locks can be as finely-grained as the names you specify. 
-Fabio Fabio Vitali Tiger got to hunt, bird got to fly, Dept of Computer Science Man got to sit and wonder "Why, why, why?' Univ. 
-of Bologna ITALY Tiger got to sleep, bird got to land, e-mail: fabio@cs.unibo.it 
-Man got to tell himself he understand. 
-Kurt Vonnegut 
+<s> 'Discussion on this issue at Irvine was mostly concerning the development of "yet another range identification scheme," rather than "we should remove range locking from the requirements."  </s>
+<s> In fact, this has been a requirement since last October, and has passed several reviews.  </s>
+<s> In a nutshell, the rationale for this requirement is that certain application programs (typically word processors) which perform range management within a file (typically using a table with fixed width entries, located at the beginning of the file, each entry containing range information), would find sub-resource locking to be very useful.' Jim's memory of this discussion differs from mine.  </s>
+<s> I remember the flavor being much more at the level of saying that range locking was incompatible with one of the stated design principles (that resources are the lockable entities).  </s>
+<s> Further, range locking seemed to be a hack to accommodate legacy clients, rather than being part of a coherent design for how distributed authoring and versioning works on the Internet.  </s>
+<s> I had the impression in Irvine that there was rough consensus that the group's purpose was to devise a good design for the Internet going forward, not just a web veneer for existing servers and clients.  </s>
+<s> BTW, I find it dubious that "having passed several reviews" would somehow  </s>
+<s> make a requirement more correct or virtuous.  </s>
+<s> I thought the whole point of having further meetings and reviews was to discover problems not previously exposed.  </s>
+<s> --Mark Mark_Day@lotus.com  </s>
+<s> We managed to get range retrieval into HTTP by justifying it for operations that weren't tied to proprietary formats, even though the initial motivation for HTTP range retrieval was Adobe's desire to do range access to (yet to be documented) extensions to PDF. We'll probably need the same to justify range locking: a compelling non-proprietary case for why a standard client might want to range-lock anything.  </s>
+<s> The argument for most web revisable content (HTML, GIF, PNG, even PDF) isn't compelling, and the proprietary capabilities can be handled by private extensions.  </s>
+<s> Well, there's a tension here.  </s>
+<s> Much of the benefit from creating a requirements document derives from creating consensus on what features should and should not be in the final protocol specification.  </s>
+<s> Based on this consensus, we can determine whether our specification meets the requirements, and we can discard features which go beyond the requirements.  </s>
+<s> Having worked hard to achieve consensus on the original requirements document, I do feel justified in pushing back when features which were originally agreed upon now suddenly are in question.  </s>
+<s> However, this is definitely at odds with the notion (that I also agree with) that any bad requirement or feature should be removed, no matter how much agreement there existed upon it.  </s>
+<s> Plus, we're also now in a period of reexamination of the original requirements documents.  </s>
+<s> That's why in my explanation I also gave a thumbnail rationale for the requirement, because I don't feel that precedent alone is sufficient.  </s>
+<s> I do disagree with the characterization of range locking as a hack.  </s>
+<s> Another rationale for range locking is as a complimentary capability to the range reads and range writes which are in either the HTTP/1.1 spec.  </s>
+<s> or the requirements document.  </s>
+<s> Since locking is designed to address the lost update problem, a range lock would prevent lost updates resulting from multiple people performing range writes to the same range.  </s>
+<s> While a full resource lock could also prevent the same overwrite scenario, it is more than is needed.  </s>
+<s> This is definitely true.  </s>
+<s> Since I cannot remember the technical problems identified in range locking at the Irvine meeting, would you (or someone) care to summarize them for the list?  </s>
+<s> - Jim  </s>
+<s> So, Mark, you vote that we abandon all legacy clients and design the *pure* protocol for WebDAV?  </s>
+<s> -src  </s>
+<s> Mark_Day/CAM/Lotus@lotus.com 02/20/97 11:52AM  </s>
+<s> 'Discussion on this issue at Irvine was mostly concerning the development of "yet another range identification scheme," rather than "we should remove range locking from the requirements."  </s>
+<s> In fact, this has been a requirement since last October, and has passed several reviews.  </s>
+<s> In a nutshell, the rationale for this requirement is that certain application programs (typically word processors) which perform range management within a file (typically using a table with fixed width entries, located at the beginning of the file, each entry containing range information), would find sub-resource locking to be very useful.' Jim's memory of this discussion differs from mine.  </s>
+<s> I remember the flavor being much more at the level of saying that range locking was incompatible with one of the stated design principles (that resources are the lockable entities).  </s>
+<s> Further, range locking seemed to be a hack to accommodate legacy clients, rather than being part of a coherent design for how distributed authoring and versioning works on the Internet.  </s>
+<s> I had the impression in Irvine that there was rough consensus that the group's purpose was to devise a good design for the Internet going forward, not just a web veneer for existing servers and clients.  </s>
+<s> BTW, I find it dubious that "having passed several reviews" would somehow make a requirement more correct or virtuous.  </s>
+<s> I thought the whole point of having further meetings and reviews was to discover problems not previously exposed.  </s>
+<s> --Mark Mark_Day@lotus.com  </s>
+<s> The overall requirement of WEBDAV is that we create a way that (web) authoring tools can interact with (web) (versioning) servers in an interoperable way.  </s>
+<s> The technical requirements in the requirements document need to be justified in terms of how they help in accomplishing the overall requirement.  </s>
+<s> In the case of range locking, this justification has not been made.  </s>
+<s> That is, while range locking might help some web authoring tools interact with some versioning servers, it is not in support of any particular interoperable method.  </s>
+<s> If there is consensus, it must be on the fact that the linkage is there.  </s>
+<s> Larry  </s>
+<s> I am wondering if the issue here is over the locking of a portion of a document or over the use of a range header to specify the portion of the document to be locked.  </s>
+<s> However, first, to the justification.  </s>
+<s> The reason we need to be able to lock a portion of a document is because many people tend to share the same document and the ability to specify a section of the document as "locked", rather than locking the entire document, enhances the interaction of users.  </s>
+<s> If one can only lock the entire document then sharing is hobbled.  </s>
+<s> However experience with document management systems have demonstrated that users often only need to lock a small portion of a document, thus allowing other users full access to the remaining sections of the document.  </s>
+<s> Hence locking of portions of a document is a necessary minimum feature for a real world distributed authoring and  </s>
+<s> versioning system.  </s>
+<s> To the question of implementation, the main argument against the current spec is that our design principals require us to only operate on URIs and we were using the range header to modify what the URI pointed to.  </s>
+<s> The now standard "Fielding Compromise" in such situations is to gain permission from the server to munge the URI to point to a particular section of the resource.  </s>
+<s> I support this compromise as it allows us to stick to our design principal but still provide a vital feature.  </s>
+<s> Yaron  </s>
+<s> Was there (is there) a scenario that involves range locking?  </s>
+<s> Range locking doesn't make sense for mutual editing of any of the document formats that I'm familiar with that are in common use on the Internet, even including Microsoft proprietary formats.  </s>
+<s> # The reason we need to be able to # lock a portion of a document is because many people tend to share the # same document and the ability to specify a section of the document as # "locked", rather than locking the entire document, enhances the # interaction of users.  </s>
+<s> This would justify "section" locking, but not "byte range" locking, since in word, powerpoint, HTML, PDF, GIF, JPEG, tiff, and most other formats, editing a section of a document generally changes all of the byte ranges.  </s>
+<s> Larry  </s>
+<s> It a'int necessarily so.  </s>
+<s> Much like a LOCK is a way of breaking ties among users w/equivalent access rights, so range locks help to break ties for people trying to edit the same section of a document.  </s>
+<s> Yaron  </s>
+<s> I'd like to understand this comment, because I don't.  </s>
+<s> Document in MS Word, chapter 2 is bytes 30-50 and bytes 80-90.  </s>
+<s> User A wants to edit chapter 2 User B wants to edit chapter 1 User C wants to edit chapter 2 A locks bytes 30-50, bytes 80-90 B locks bytes 10-20 B edits chapter 1, adds 20 bytes.  </s>
+<s> Can B check this in?  </s>
+<s> Create a new version?  </s>
+<s> Increases the size of the existing version?  </s>
+<s> How does this work?  </s>
+<s> Larry  </s>
+<s> I'm slightly amused by this discussion, because it is beginning to prove what I deeply think (and have never failed to show in this group): that locking is inherently evil.  </s>
+<s> Byte locking is evil because the byte count may change outside the scope of the lock, thereby voiding the addresses we hold in the lock.  </s>
+<s> So an extremely fine-grained lock won't work.  </s>
+<s> But a middle-grained lock won't work either, as Mark Day hints without really stressing: we are simply rarefying the troublesome situations, not removing them: if sections are counted, instead of named, there will be the  </s>
+<s> situation in which, after I obtained a lock on version 5, someone comes and  </s>
+<s> creates a new section 3, and my lock is void.  </s>
+<s> BTW, what are sections in HTML?  </s>
+<s> So we are coming to the conclusion that locking something based on a relative address (such as byte count) is bad anyway, because the base on which addresses are related to may change, thereby voiding the address we hold.  </s>
+<s> Relying on names is the only solution we can rely on, because locks on named entities will exist as long as the *name* is valid, and not the position.  </s>
+<s> What are the named entities?  </s>
+<s> And how can I be sure that the names won't be changed while I have a lock on them?  </s>
+<s> Should I provide a different lock for changing names, which can only be issued when no content lock exists on the whole entity?  </s>
+<s> Or should we allow owners of locks on named objects to act on names?  </s>
+<s> And in this case, how do we handle name clashes?  </s>
+<s> (e.g.: I have a lock on section 3, which is an object named "Section3".  </s>
+<s> Someone comes and adds a new section between 2 and 3, and would like to call it "Section3" and update all the names in the following sections.  </s>
+<s> What happens now?) Middle-grained locking won't work either.  </s>
+<s> Would large-grained lock work?  </s>
+<s> Not quite.  </s>
+<s> Again, the bad situations rarefy, but never disappear.  </s>
+<s> URLs *can be* position-dependent, because they most often are placed in a hierarchical space.  </s>
+<s> With WebDAV we are introducing client-controlled server-side operations on namespaces, such as MOVE.  </s>
+<s> For instance, what happens if I have a document lock on http://host.com/dir/file.html, and someone MOVEs /dir/ to something else?  </s>
+<s> Should owning a lock on an entity also block all the hierarchically superior containers?  </s>
+<s> Should a lock on http://host.com/a/b/c/.../z/tiny.html  </s>
+<s> also imply a lock on a, b, c, ..., and z?  </s>
+<s> And would a lock on /a/ also block all the hierarchically dependent namespaces b, b1, b2, and c, c1, c2, etc. ?  </s>
+<s> The ONLY reliable solution for fine-, middle- or large- grained objects to work is change-tracking.  </s>
+<s> It must be implemented by the client for the changes that are performed on the client (e.g. insertions and modifications), or by the server for the operations that are performed on the server (e.g. creations, deletions and moves).  </s>
+<s> VTML is an example of change-tracking language for the client.  </s>
+<s> At this point keeping locks are just an easy trick not to mess with multiple change logs and multiple parallel variants of the same entity, i.e. to avoid having to deal with tree-shaped versions.  </s>
+<s> Which is a legitimate decision, but adds complexity instead of simplifying the situation.  </s>
+<s> Alternatively, you can impose locks only on named entities, and request a different type of lock for the modification of names, so that changing the name of a section requires a lock on the entire document, and changing a directory requires a lock on the entire namespace, and locks can be as finely-grained as the names you specify.  </s>
+<s> Fabio Fabio Vitali Tiger got to hunt, bird got to fly, Dept of Computer Science Man got to sit and wonder "Why, why, why?' Univ.  </s>
+<s> of Bologna ITALY Tiger got to sleep, bird got to land, e-mail: fabio@cs.unibo.it  </s>
+<s> Man got to tell himself he understand.  </s>
+<s> Kurt Vonnegut  </s>
+<s> Everyone is focusing on the monolithic model of data management.  </s>
+<s> Simply keep a fixed-length index of the "sections" that are lockable.  </s>
+<s> When the document is open break each lockable entity into a separate piece (the index helps keep track of each piece).  </s>
+<s> Now put the document back together when it is saved, closed, etc. Don't worry about the index, we won't change byte ranges in it either, even though we have locked a range.  </s>
+<s> If something changes in the index we will mark the current instantiation out and create a new one at the end.  </s>
+<s> I see a lot of conversation about examples that can not work in the proposed model.  </s>
+<s> Range locking has value, we don't need to tie it to various fictitious implementations.  </s>
+<s> -src  </s>
+<s> Fabio Vitali fabio@CS.UniBO.IT  </s>
+<s> 02/21/97 01:07PM  </s>
+<s> I'm slightly amused by this discussion, because it is beginning to prove what I deeply think (and have never failed to show in this group): that locking is inherently evil.  </s>
+<s> Byte locking is evil because the byte count may change outside the scope of the lock, thereby voiding the addresses we hold in the lock.  </s>
+<s> So an extremely fine-grained lock won't work.  </s>
+<s> But a middle-grained lock won't work either, as Mark Day hints without really stressing: we are simply rarefying the troublesome situations, not removing them: if sections are counted, instead of named, there will be the situation in which, after I obtained a lock on version 5, someone comes and creates a new section 3, and my lock is void.  </s>
+<s> BTW, what are sections in HTML?  </s>
+<s> So we are coming to the conclusion that locking something based on a relative address (such as byte count) is bad anyway, because the base on which addresses are related to may change, thereby voiding the address we hold.  </s>
+<s> Relying on names is the only solution we can rely on, because locks on named entities will exist as long as the *name* is valid, and not the position.  </s>
+<s> What are the named entities?  </s>
+<s> And how can I be sure that the names won't be changed while I have a lock on them?  </s>
+<s> Should I provide a different lock for changing names, which can only be issued when no content lock exists on the whole entity?  </s>
+<s> Or should we allow owners of locks on named objects to act on names?  </s>
+<s> And in this case, how do we handle name clashes?  </s>
+<s> (e.g.: I have a lock on section 3, which is an object named "Section3".  </s>
+<s> Someone comes and adds a new section between 2 and 3, and would like to call it "Section3" and update all the names in the following sections.  </s>
+<s> What happens now?) Middle-grained locking won't work either.  </s>
+<s> Would large-grained lock work?  </s>
+<s> Not quite.  </s>
+<s> Again, the bad situations rarefy, but never disappear.  </s>
+<s> URLs *can be* position-dependent, because they most often are placed in a hierarchical space.  </s>
+<s> With WebDAV we are introducing client-controlled server-side operations on namespaces, such as MOVE.  </s>
+<s> For instance, what happens if I have a document lock on http://host.com/dir/file.html, and someone MOVEs /dir/ to something else?  </s>
+<s> Should owning a lock on an entity also block all the hierarchically superior containers?  </s>
+<s> Should a lock on http://host.com/a/b/c/.../z/tiny.html  </s>
+<s> also imply a lock on a, b, c, ..., and z?  </s>
+<s> And would a lock on /a/ also block all the hierarchically dependent namespaces b, b1, b2, and c, c1, c2, etc. ?  </s>
+<s> The ONLY reliable solution for fine-, middle- or large- grained objects to work is change-tracking.  </s>
+<s> It must be implemented by the client for the changes that are performed on the client (e.g. insertions and modifications), or by the server for the operations that are performed on the server (e.g. creations, deletions and moves).  </s>
+<s> VTML is an example of change-tracking language for the client.  </s>
+<s> At this point keeping locks are just an easy trick not to mess with multiple change logs and multiple parallel variants of the same entity, i.e. to avoid having to deal with tree-shaped versions.  </s>
+<s> Which is a legitimate decision, but adds complexity instead of simplifying the situation.  </s>
+<s> Alternatively, you can impose locks only on named entities, and request a different type of lock for the modification of names, so that changing the name of a section requires a lock on the entire document, and changing a directory requires a lock on the entire namespace, and locks can be as finely-grained as the names you specify.  </s>
+<s> Fabio Fabio Vitali Tiger got to hunt, bird got to fly, Dept of Computer Science Man got to sit and wonder "Why, why, why?' Univ.  </s>
+<s> of Bologna ITALY Tiger got to sleep, bird got to land, e-mail: fabio@cs.unibo.it  </s>
+<s> Man got to tell himself he understand.  </s>
+<s> Kurt Vonnegut  </s>

@@ -1,131 +1,131 @@
-I was wondering if there exists any version or variant or configuration of Tidy which could deal with an XML/HTML hybrid? 
-More specifically I need to just deal with the stuff that would appear inside the BODY tag, without adding the HTML, HEAD, and TITLE tags. 
-I have tried a lot of configuration options for HTML Tidy, but have had no success so far. 
-If anyone could point me in the right direction it would be much appreciated. 
-Ignacio Vazquez-Abrams ignacio@openservices.net 
-You can either use the -xml option to only process the fragment as an XML fragment, however this will not do any of the usual HTML cleanup. 
-Or, run the fragment through tidy using the -asxml option, then extract everything between body and /body . 
-Klaus Johannes Rusch KlausRusch@atmedia.net 
-The problem is that I need to do the HTML cleanup; I need to clean up a pseudoHTML document entered by the user, and this document will only contain a piece of an HTML page. 
-While that works for the output stage (Oh no! select="html/body"! 
-The horror! 
-:P ), I would also like to provide entry-time verification and cleanup of code. 
-Having to search for /line ([0-9]+) / and subtracting when displaying errors to the user, while not difficult, is something I'd like to avoid. 
-Ignacio Vazquez-Abrams ignacio@openservices.net 
-I have the same type of thing in mind. 
-It is the kind of thing you should be able to accomplish with a library version of Tidy. 
-In the meantime, if you preserve the original input, you should be able to 
-simply subtract N lines from the _reported_ line numbers - that is, I am assuming, the N lines of header you put in front of the user's input. 
-take it easy, 
-Charlie 
-In Pine.LNX.4.33.0106181025230.30759-100000@terbidium.openservices.net , 
-The problem is that I need to do the HTML cleanup; I need to clean up a pseudoHTML document entered by the user, and this document will only contain a piece of an HTML page. 
-While that works for the output stage (Oh no! select="html/body"! 
-The 
-horror! :P ), I would also like to provide entry-time verification and cleanup of code. 
-Having to search for /line ([0-9]+) / and subtracting when displaying errors to the user, while not difficult, is something I'd like to avoid. 
-Ignacio Vazquez-Abrams ignacio@openservices.net 
-In Pine.LNX.4.33.0106181025230.30759-100000@terbidium.openservices.net , 
-Submitted for refinement is a patch for doing almost exactly the original requirements. 
-It defines another configuration option ("body-only") that skips generation of the html node and all header tags in parser.c. 
-The only problem seems to be that if it actually encounters html and/or header tags, well, it dies a horrible death. 
-If somebody could take a look at the patch and clean it up that would be much appreciated. 
-Me take it easy? 
-Riiight... :) Ignacio Vazquez-Abrams ignacio@openservices.net 
-Great idea. 
-I'd try a somewhat different tact, tho. 
-Rather than mess w/ the parser _or_ your input. 
-I'd just feed the prospective body contents to Tidy as is. 
-Let the parser merrily add head title /title /head body your stuff! 
-/body . 
-Then, if the --body-only option is set, call a new PPrintContent() function in pprint.c. 
-This function will call PPrintTree() for each member of the body- content node list. 
-The important point here is you can safely add functionality without changing w/ the inner workings of the parser. 
-Even better, it will report the line numbers correctly for any errors/warnings it emits. 
-take it as easy as you can stand it (which is qualified by noting that I am 
-an uptight east coaster. 
-It's one those "do as I say, not as I do" kind of 
-things), Charlie 
-Pine.LNX.4.33.0106181025230.30759-100000@terbidium.openservices.net , 
-Submitted for refinement is a patch for doing almost exactly the original requirements. 
-It defines another configuration option ("body-only") that skips generation of the html node and all header tags in parser.c. 
-The only problem seems to be that if it actually encounters html and/or header tags, well, it dies a horrible death. 
-If somebody could take a look at the patch and clean it up that would be much appreciated. 
-Me take it easy? 
-Riiight... :) Ignacio Vazquez-Abrams ignacio@openservices.net 
-This one should do it then. 
-No more segfaults, but I did have to muck with the parser in order to suppress the "no title" error. 
-A nice side bonus is that it will gladly take a normal HTML page and chop out everything but the body, which means I can get rid of the part in the applcation that does it manually when importing a file. 
-Ignacio Vazquez-Abrams ignacio@openservices.net 
-Looks good. 
-Looks like the pretty printer theory worked out ok. 
-I put this into the "Feature request" tracker on the SourceForge project (and attached your diff), so it's in the queue. 
-For all interested parties, you can view the feature list Terry has culled from this mailing list at The more feedback we get about these items, the better (including priority, sanity checking, potential conflicts, refinements, "You want it to do what?", etc. etc.). 
-Question: given the input -- INPUT -- Do you want -- OUTPUT A -- or b) -- OUTPUT B -- Your diffs look like you want b). 
-If so, why? 
-I'd think you'd want to drop the body itself so that the document contents, for example, could be dropped into a cell in a layout table. 
-Charlie 
-pprint.c. 
-am 
-of 
-This one should do it then. 
-No more segfaults, but I did have to muck with the parser in order to suppress the "no title" error. 
-A nice side bonus is that it will gladly take a normal HTML page and chop out everything but the body, which means I can get rid of the part in the applcation that does it manually when importing a file. 
-Ignacio Vazquez-Abrams ignacio@openservices.net 
-In all actuality, it doesn't matter to me whether a) or b) happens. 
-I use XSLT in the front end so it's all good. 
-However, I do believe that having the ability to omit or even rename the body tag is a good feature. 
-I'll start work on it tonight. 
-How does this sound: A new configuration option, "body-tag", a string that can have either "OMIT" or the actual tag you want to output in place of body and /body . 
-This feature will only be available when "body-only" is active (because that's probably the only time it would make sense). 
-Ignacio Vazquez-Abrams ignacio@openservices.net 
-How about we just go w/ a)? Because, in practice, it's much easier to add a body (or any other) wrapper than it is to remove it. 
-If removed, one doesn't need XSLT (which is slow at run-time) to do a lot of things. 
-Regular, old server side includes will do the trick. 
-On the flip side, since you are using XSLT, you don't need the new option at all. 
-What's wrong w/ select="html/body" at the output stage? 
-All you need to do is have Tidy emit well-formed xhtml. 
-Skip the wrapper on input and let tidy do it's thing. 
-Rather than supress the "no title" warning, have users submit full documents ( html ... /html ) and just use XSLT to pull out the body contents. 
-This way, documents can stand on their own as well. 
-Charlie 
-In all actuality, it doesn't matter to me whether a) or b) happens. 
-I use XSLT in the front end so it's all good. 
-However, I do believe that having the ability to omit or even rename the body tag is a good feature. 
-I'll start work on it tonight. 
-How does this sound: A new configuration option, "body-tag", a string that can have either "OMIT" or the actual tag you want to output in place of body and /body . 
-This feature will only be available when "body-only" is active (because that's probably the only time it would make sense). 
-Ignacio Vazquez-Abrams ignacio@openservices.net 
-a) it is. 
-The problem with XSLT on the output stage is that it still doesn't cover the problems at the input stage. 
-The users of this application are... uh, how do I put this nicely... NOT the most computer-literate people in the world. 
-While they might (?) be willing to learn a little HTML, it can't be reasonably accepted that they will follow the W3 specs to the letter. 
-That's where HTML Tidy comes in. 
-I intend to have a verification feature that uses HTML Tidy, but I don't want to concern them with all the nitty-gritty of the specs (i.e., header and body tags). 
-On top of all that, the users don't really need the pages to stand on their own. 
-Why would they want that when they're paying someone else to host the compound pages? 
-;) Ignacio Vazquez-Abrams ignacio@openservices.net 
-I appreciate your flexibility. 
-Hopefully, less will be more in this case. 
-It would also be good to here +1/-1 from others on the list - on the feature as a whole and on the details of extraction. 
-I can also relate to your concerns about users' knowledge of HTML. 
-I have the same exact issue here at my workplace. 
-I have actually tried to keep folks using MS Word, because Word2000-to-HTML-plus-Tidy works very well and avoids most of these issues. 
-But they keep wanting to work with HTML. 
-So I give them templates, which they copy to a new file and fill in by pasting text from Word. 
-In my experience, they quickly learn to just copy the header boilerplate, change the title. 
-The complicated stuff is setting the odd class name. 
-By making the document stand alone, they can view the document directly to verify their changes have been applied. 
-Likewise, it gives my system a document to verify w/ Tidy. 
-This is important if you're going to use XSLT. 
-If any little thing is out of place, XSLT will just choke. 
-Charlie 
-a) it is. 
-The problem with XSLT on the output stage is that it still doesn't cover the problems at the input stage. 
-The users of this application are... uh, how do I put this nicely... NOT the most computer-literate people in the world. 
-While they might (?) be willing to learn a little HTML, it can't be reasonably accepted that they will follow the W3 specs to the letter. 
-That's where HTML Tidy comes in. 
-I intend to have a verification feature that uses HTML Tidy, but I don't want to concern them with all the nitty-gritty of the specs (i.e., header and body tags). 
-On top of all that, the users don't really need the pages to stand on their own. 
-Why would they want that when they're paying someone else to host the compound pages? 
-;) Ignacio Vazquez-Abrams ignacio@openservices.net 
+<s> I was wondering if there exists any version or variant or configuration of Tidy which could deal with an XML/HTML hybrid?  </s>
+<s> More specifically I need to just deal with the stuff that would appear inside the BODY tag, without adding the HTML, HEAD, and TITLE tags.  </s>
+<s> I have tried a lot of configuration options for HTML Tidy, but have had no success so far.  </s>
+<s> If anyone could point me in the right direction it would be much appreciated.  </s>
+<s> Ignacio Vazquez-Abrams ignacio@openservices.net  </s>
+<s> You can either use the -xml option to only process the fragment as an XML fragment, however this will not do any of the usual HTML cleanup.  </s>
+<s> Or, run the fragment through tidy using the -asxml option, then extract everything between body and /body .  </s>
+<s> Klaus Johannes Rusch KlausRusch@atmedia.net  </s>
+<s> The problem is that I need to do the HTML cleanup; I need to clean up a pseudoHTML document entered by the user, and this document will only contain a piece of an HTML page.  </s>
+<s> While that works for the output stage (Oh no! select="html/body"!  </s>
+<s> The horror!  </s>
+<s> :P ), I would also like to provide entry-time verification and cleanup of code.  </s>
+<s> Having to search for /line ([0-9]+) / and subtracting when displaying errors to the user, while not difficult, is something I'd like to avoid.  </s>
+<s> Ignacio Vazquez-Abrams ignacio@openservices.net  </s>
+<s> I have the same type of thing in mind.  </s>
+<s> It is the kind of thing you should be able to accomplish with a library version of Tidy.  </s>
+<s> In the meantime, if you preserve the original input, you should be able to  </s>
+<s> simply subtract N lines from the _reported_ line numbers - that is, I am assuming, the N lines of header you put in front of the user's input.  </s>
+<s> take it easy,  </s>
+<s> Charlie  </s>
+<s> In Pine.LNX.4.33.0106181025230.30759-100000@terbidium.openservices.net ,  </s>
+<s> The problem is that I need to do the HTML cleanup; I need to clean up a pseudoHTML document entered by the user, and this document will only contain a piece of an HTML page.  </s>
+<s> While that works for the output stage (Oh no! select="html/body"!  </s>
+<s> The  </s>
+<s> horror! :P ), I would also like to provide entry-time verification and cleanup of code.  </s>
+<s> Having to search for /line ([0-9]+) / and subtracting when displaying errors to the user, while not difficult, is something I'd like to avoid.  </s>
+<s> Ignacio Vazquez-Abrams ignacio@openservices.net  </s>
+<s> In Pine.LNX.4.33.0106181025230.30759-100000@terbidium.openservices.net ,  </s>
+<s> Submitted for refinement is a patch for doing almost exactly the original requirements.  </s>
+<s> It defines another configuration option ("body-only") that skips generation of the html node and all header tags in parser.c.  </s>
+<s> The only problem seems to be that if it actually encounters html and/or header tags, well, it dies a horrible death.  </s>
+<s> If somebody could take a look at the patch and clean it up that would be much appreciated.  </s>
+<s> Me take it easy?  </s>
+<s> Riiight... :) Ignacio Vazquez-Abrams ignacio@openservices.net  </s>
+<s> Great idea.  </s>
+<s> I'd try a somewhat different tact, tho.  </s>
+<s> Rather than mess w/ the parser _or_ your input.  </s>
+<s> I'd just feed the prospective body contents to Tidy as is.  </s>
+<s> Let the parser merrily add head title /title /head body your stuff!  </s>
+<s> /body .  </s>
+<s> Then, if the --body-only option is set, call a new PPrintContent() function in pprint.c.  </s>
+<s> This function will call PPrintTree() for each member of the body- content node list.  </s>
+<s> The important point here is you can safely add functionality without changing w/ the inner workings of the parser.  </s>
+<s> Even better, it will report the line numbers correctly for any errors/warnings it emits.  </s>
+<s> take it as easy as you can stand it (which is qualified by noting that I am  </s>
+<s> an uptight east coaster.  </s>
+<s> It's one those "do as I say, not as I do" kind of  </s>
+<s> things), Charlie  </s>
+<s> Pine.LNX.4.33.0106181025230.30759-100000@terbidium.openservices.net ,  </s>
+<s> Submitted for refinement is a patch for doing almost exactly the original requirements.  </s>
+<s> It defines another configuration option ("body-only") that skips generation of the html node and all header tags in parser.c.  </s>
+<s> The only problem seems to be that if it actually encounters html and/or header tags, well, it dies a horrible death.  </s>
+<s> If somebody could take a look at the patch and clean it up that would be much appreciated.  </s>
+<s> Me take it easy?  </s>
+<s> Riiight... :) Ignacio Vazquez-Abrams ignacio@openservices.net  </s>
+<s> This one should do it then.  </s>
+<s> No more segfaults, but I did have to muck with the parser in order to suppress the "no title" error.  </s>
+<s> A nice side bonus is that it will gladly take a normal HTML page and chop out everything but the body, which means I can get rid of the part in the applcation that does it manually when importing a file.  </s>
+<s> Ignacio Vazquez-Abrams ignacio@openservices.net  </s>
+<s> Looks good.  </s>
+<s> Looks like the pretty printer theory worked out ok.  </s>
+<s> I put this into the "Feature request" tracker on the SourceForge project (and attached your diff), so it's in the queue.  </s>
+<s> For all interested parties, you can view the feature list Terry has culled from this mailing list at The more feedback we get about these items, the better (including priority, sanity checking, potential conflicts, refinements, "You want it to do what?", etc. etc.).  </s>
+<s> Question: given the input -- INPUT -- Do you want -- OUTPUT A -- or b) -- OUTPUT B -- Your diffs look like you want b).  </s>
+<s> If so, why?  </s>
+<s> I'd think you'd want to drop the body itself so that the document contents, for example, could be dropped into a cell in a layout table.  </s>
+<s> Charlie  </s>
+<s> pprint.c.  </s>
+<s> am  </s>
+<s> of  </s>
+<s> This one should do it then.  </s>
+<s> No more segfaults, but I did have to muck with the parser in order to suppress the "no title" error.  </s>
+<s> A nice side bonus is that it will gladly take a normal HTML page and chop out everything but the body, which means I can get rid of the part in the applcation that does it manually when importing a file.  </s>
+<s> Ignacio Vazquez-Abrams ignacio@openservices.net  </s>
+<s> In all actuality, it doesn't matter to me whether a) or b) happens.  </s>
+<s> I use XSLT in the front end so it's all good.  </s>
+<s> However, I do believe that having the ability to omit or even rename the body tag is a good feature.  </s>
+<s> I'll start work on it tonight.  </s>
+<s> How does this sound: A new configuration option, "body-tag", a string that can have either "OMIT" or the actual tag you want to output in place of body and /body .  </s>
+<s> This feature will only be available when "body-only" is active (because that's probably the only time it would make sense).  </s>
+<s> Ignacio Vazquez-Abrams ignacio@openservices.net  </s>
+<s> How about we just go w/ a)? Because, in practice, it's much easier to add a body (or any other) wrapper than it is to remove it.  </s>
+<s> If removed, one doesn't need XSLT (which is slow at run-time) to do a lot of things.  </s>
+<s> Regular, old server side includes will do the trick.  </s>
+<s> On the flip side, since you are using XSLT, you don't need the new option at all.  </s>
+<s> What's wrong w/ select="html/body" at the output stage?  </s>
+<s> All you need to do is have Tidy emit well-formed xhtml.  </s>
+<s> Skip the wrapper on input and let tidy do it's thing.  </s>
+<s> Rather than supress the "no title" warning, have users submit full documents ( html ... /html ) and just use XSLT to pull out the body contents.  </s>
+<s> This way, documents can stand on their own as well.  </s>
+<s> Charlie  </s>
+<s> In all actuality, it doesn't matter to me whether a) or b) happens.  </s>
+<s> I use XSLT in the front end so it's all good.  </s>
+<s> However, I do believe that having the ability to omit or even rename the body tag is a good feature.  </s>
+<s> I'll start work on it tonight.  </s>
+<s> How does this sound: A new configuration option, "body-tag", a string that can have either "OMIT" or the actual tag you want to output in place of body and /body .  </s>
+<s> This feature will only be available when "body-only" is active (because that's probably the only time it would make sense).  </s>
+<s> Ignacio Vazquez-Abrams ignacio@openservices.net  </s>
+<s> a) it is.  </s>
+<s> The problem with XSLT on the output stage is that it still doesn't cover the problems at the input stage.  </s>
+<s> The users of this application are... uh, how do I put this nicely... NOT the most computer-literate people in the world.  </s>
+<s> While they might (?) be willing to learn a little HTML, it can't be reasonably accepted that they will follow the W3 specs to the letter.  </s>
+<s> That's where HTML Tidy comes in.  </s>
+<s> I intend to have a verification feature that uses HTML Tidy, but I don't want to concern them with all the nitty-gritty of the specs (i.e., header and body tags).  </s>
+<s> On top of all that, the users don't really need the pages to stand on their own.  </s>
+<s> Why would they want that when they're paying someone else to host the compound pages?  </s>
+<s> ;) Ignacio Vazquez-Abrams ignacio@openservices.net  </s>
+<s> I appreciate your flexibility.  </s>
+<s> Hopefully, less will be more in this case.  </s>
+<s> It would also be good to here +1/-1 from others on the list - on the feature as a whole and on the details of extraction.  </s>
+<s> I can also relate to your concerns about users' knowledge of HTML.  </s>
+<s> I have the same exact issue here at my workplace.  </s>
+<s> I have actually tried to keep folks using MS Word, because Word2000-to-HTML-plus-Tidy works very well and avoids most of these issues.  </s>
+<s> But they keep wanting to work with HTML.  </s>
+<s> So I give them templates, which they copy to a new file and fill in by pasting text from Word.  </s>
+<s> In my experience, they quickly learn to just copy the header boilerplate, change the title.  </s>
+<s> The complicated stuff is setting the odd class name.  </s>
+<s> By making the document stand alone, they can view the document directly to verify their changes have been applied.  </s>
+<s> Likewise, it gives my system a document to verify w/ Tidy.  </s>
+<s> This is important if you're going to use XSLT.  </s>
+<s> If any little thing is out of place, XSLT will just choke.  </s>
+<s> Charlie  </s>
+<s> a) it is.  </s>
+<s> The problem with XSLT on the output stage is that it still doesn't cover the problems at the input stage.  </s>
+<s> The users of this application are... uh, how do I put this nicely... NOT the most computer-literate people in the world.  </s>
+<s> While they might (?) be willing to learn a little HTML, it can't be reasonably accepted that they will follow the W3 specs to the letter.  </s>
+<s> That's where HTML Tidy comes in.  </s>
+<s> I intend to have a verification feature that uses HTML Tidy, but I don't want to concern them with all the nitty-gritty of the specs (i.e., header and body tags).  </s>
+<s> On top of all that, the users don't really need the pages to stand on their own.  </s>
+<s> Why would they want that when they're paying someone else to host the compound pages?  </s>
+<s> ;) Ignacio Vazquez-Abrams ignacio@openservices.net  </s>

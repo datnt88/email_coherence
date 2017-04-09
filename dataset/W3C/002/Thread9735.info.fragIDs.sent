@@ -1,62 +1,62 @@
-Hi folks, 
-I've been chewing on the representation of typed literal nodes in NTriples in a manner that is both consistent for non-XML and XML literals and which is more compatable with use of qnames rather than URIrefs, both by N3 as well as in our own examples, since it is common practice by the editors to use qnames in the NTriples in the specs. 
-What I propose is that we keep the current representation of literals in NTriples, and that the datatype be separated from the literal by a comma. 
-Thus: 
-non-XML literal "25" non-XML literal with lang "25"-en URIref typed non-XML literal http://...#integer ,"25" URIref typed non-XML literal with lang http://...#integer ,"25"-en qname typed non-XML literal xsd:integer,"25" qname typed non-XML literal with lang xsd:integer,"25"-en XML literal xml" h1 Foo /h1 " XML literal with lang xml" h1 Foo /h1 "-en URIref typed XML literal http://...#h1 ,xml" h1 Foo /h1 " URIref typed XML literal with lang http://...#h1 ,xml" h1 Foo /h1 "-en qname typed XML literal xhtml:h1,xml" h1 Foo /h1 " qname typed XML literal with lang xhtml:h1,xml" h1 Foo /h1 "-en 
-Since a comma is not a legal XML NAME character, when joining a qname with an XML literal, there is no ambiguity regarding the partitioning between the qname and the XML flag 'xml'. 
-This keeps both non-XML and XML literals delimited by double quotes, and no changes to the current NTriples syntax (other than the prefixing of the datatype). 
-It also reinforces, IMO, the fact that the typed literal node is a pairing of a datatype and a literal, the latter having its own three-part structure of XML bit, string, and language code. 
-So, we can use qnames in examples and N3 can adopt typed literal nodes without any syntactic ambiguity. 
-Eh? Patrick 
-Patrick.Stickler@nokia.com 
-said: 
-Sorry, I doubt that'll fly - , is already used extensively in N3 to separate terms and the lexers may split "a,b" into three tokens. 
-I avoided added or using any more punctuation since there is a lot already used or probably going to be. 
-It does look better though :) 
-Actually I was half wondering about that. 
-If there was a type URI for XML itself, could we not use uri-for-xml " h1 Foo /h1 " rather than xml" h1 Foo /h1 " 
-I'll try to get the main N3 developers - Tim and DanC to think about this, but I should note N3 doesn't handle "foo"-en or xml"foo"-en so I'm not sure what to suggest next. 
-However we still don't need qnames in N-Triples - it is syntax sugar, and a simple test format doesn't need it. 
-Dave 
-Oops. 
-My bad. 
-If untyped literals are untidy, I guess we need some distinct names for them ... 
-The question, of course, is how to incorporate them into the untyped literal node label. 
-Perhaps in a similar fashion to the datatype? 
-E.g. 
-untyped non-XML literal _:a,"25" 
-untyped non-XML literal with lang _:b,"25"-en URIref typed non-XML literal http://...#integer ,"25" URIref typed non-XML literal with lang http://...#integer ,"25"-en qname typed non-XML literal xsd:integer,"25" qname typed non-XML literal with lang xsd:integer,"25"-en untyped XML literal _:c,xml" h1 Foo /h1 " untyped XML literal with lang _:d,xml" h1 Foo /h1 "-en URIref typed XML literal http://...#h1 ,xml" h1 Foo /h1 " URIref typed XML literal with lang http://...#h1 ,xml" h1 Foo /h1 "-en qname typed XML literal xhtml:h1,xml" h1 Foo /h1 " qname typed XML literal with lang xhtml:h1,xml" h1 Foo /h1 "-en Other suggestions? 
-[Note: locally typed literal nodes are tidy, and have globally consistent meaning, only the untyped literals are untidy] As for the comma delimiter, Dave has already pointed out that it will be problemmatic for N3 since it already is used for something, but I'll keep using it for now, until a better punctuation character can be found, or some other denotation of the XML literal versus non-XML literal. 
-Patrick 
-Patrick.Stickler@nokia.com 
-said: 
-Well, no actually. 
-If literals are untidy and only in the object position, then you don't need to give them ids in N-Triples. 
-If at some point literals were allowed in the subject position, then you will have to give them ids. 
-We haven't made that decision yet, and N-Triples only needs to change when that happens, not before. 
-And delete the qnames. 
-I thought the group already agreed that a document convention of using 'xsd:decimal', 'rdf:type' and so on for the appropriate URI is OK. 
-It happens the primer and MT use that in N-Triples, the syntax WD doesn't. 
-Dave 
-Oh, and in case it wasn't clear ;-) that local name does in fact denote "some" datatype. 
-I.e., an untyped literal denotes a datatype value that has that particular lexical representation, only we don't know from the literal node itself which datatype is meant. 
-Given global datatyping, via rdfs:range, the particular datatype may be determined. 
-Thus, one could say IF ?p rdfs:range ?d . 
-?d rdf:type rdfs:Datatype . 
-?s ?p _:a,"LLL" . 
-THEN _:a daml:equivalentTo ?d . 
-Interestingly, even if the datatype is not a local name, but a URIref, the above rule still is usable, and datatype clashes can be treated as invalid equivalence assertions for incompatable datatypes. 
-Thus the inference IF ?p rdfs:range xsd:integer . 
-?s ?p xsd:string,"LLL" . 
-THEN xsd:string daml:equivalentTo xsd:integer . is a valid inference, per the semantics of rdfs:range, but reflects a datatype clash between the global and local datatypes, since xsd:integer is in fact not equivalent to xsd:string. 
-etc. 
-Since the generation of the local datatype name for untyped literals (i.e. _:a) is done by the parser (usually) and will be unique for every untyped literal, triples stores can pretend that all nodes are tidy by label, and do merging without having to be concerned about the type of node. 
-The untidyness of untyped literals is thus captured in the unique local name. 
-Patrick 
-Patrick.Stickler@nokia.com 
-said: 
-We did, but I think we refer to them as "triples" (or some other generic reference), not "N-triples", since we didn't want to go to the trouble of changing the "N-triples" definition. 
---Frank Frank Manola The MITRE Corporation 202 Burlington Road, MS A345 Bedford, MA 01730-1420 
-I'm not convinced that this is a "fact". 
-jan grant, ILRT, University of Bristol. 
-http://www.ilrt.bris.ac.uk/ Axioms speak louder than words. 
+<s> Hi folks,  </s>
+<s> I've been chewing on the representation of typed literal nodes in NTriples in a manner that is both consistent for non-XML and XML literals and which is more compatable with use of qnames rather than URIrefs, both by N3 as well as in our own examples, since it is common practice by the editors to use qnames in the NTriples in the specs.  </s>
+<s> What I propose is that we keep the current representation of literals in NTriples, and that the datatype be separated from the literal by a comma.  </s>
+<s> Thus:  </s>
+<s> non-XML literal "25" non-XML literal with lang "25"-en URIref typed non-XML literal http://...#integer ,"25" URIref typed non-XML literal with lang http://...#integer ,"25"-en qname typed non-XML literal xsd:integer,"25" qname typed non-XML literal with lang xsd:integer,"25"-en XML literal xml" h1 Foo /h1 " XML literal with lang xml" h1 Foo /h1 "-en URIref typed XML literal http://...#h1 ,xml" h1 Foo /h1 " URIref typed XML literal with lang http://...#h1 ,xml" h1 Foo /h1 "-en qname typed XML literal xhtml:h1,xml" h1 Foo /h1 " qname typed XML literal with lang xhtml:h1,xml" h1 Foo /h1 "-en  </s>
+<s> Since a comma is not a legal XML NAME character, when joining a qname with an XML literal, there is no ambiguity regarding the partitioning between the qname and the XML flag 'xml'.  </s>
+<s> This keeps both non-XML and XML literals delimited by double quotes, and no changes to the current NTriples syntax (other than the prefixing of the datatype).  </s>
+<s> It also reinforces, IMO, the fact that the typed literal node is a pairing of a datatype and a literal, the latter having its own three-part structure of XML bit, string, and language code.  </s>
+<s> So, we can use qnames in examples and N3 can adopt typed literal nodes without any syntactic ambiguity.  </s>
+<s> Eh? Patrick  </s>
+<s> Patrick.Stickler@nokia.com  </s>
+<s> said:  </s>
+<s> Sorry, I doubt that'll fly - , is already used extensively in N3 to separate terms and the lexers may split "a,b" into three tokens.  </s>
+<s> I avoided added or using any more punctuation since there is a lot already used or probably going to be.  </s>
+<s> It does look better though :)  </s>
+<s> Actually I was half wondering about that.  </s>
+<s> If there was a type URI for XML itself, could we not use uri-for-xml " h1 Foo /h1 " rather than xml" h1 Foo /h1 "  </s>
+<s> I'll try to get the main N3 developers - Tim and DanC to think about this, but I should note N3 doesn't handle "foo"-en or xml"foo"-en so I'm not sure what to suggest next.  </s>
+<s> However we still don't need qnames in N-Triples - it is syntax sugar, and a simple test format doesn't need it.  </s>
+<s> Dave  </s>
+<s> Oops.  </s>
+<s> My bad.  </s>
+<s> If untyped literals are untidy, I guess we need some distinct names for them ...  </s>
+<s> The question, of course, is how to incorporate them into the untyped literal node label.  </s>
+<s> Perhaps in a similar fashion to the datatype?  </s>
+<s> E.g.  </s>
+<s> untyped non-XML literal _:a,"25"  </s>
+<s> untyped non-XML literal with lang _:b,"25"-en URIref typed non-XML literal http://...#integer ,"25" URIref typed non-XML literal with lang http://...#integer ,"25"-en qname typed non-XML literal xsd:integer,"25" qname typed non-XML literal with lang xsd:integer,"25"-en untyped XML literal _:c,xml" h1 Foo /h1 " untyped XML literal with lang _:d,xml" h1 Foo /h1 "-en URIref typed XML literal http://...#h1 ,xml" h1 Foo /h1 " URIref typed XML literal with lang http://...#h1 ,xml" h1 Foo /h1 "-en qname typed XML literal xhtml:h1,xml" h1 Foo /h1 " qname typed XML literal with lang xhtml:h1,xml" h1 Foo /h1 "-en Other suggestions?  </s>
+<s> [Note: locally typed literal nodes are tidy, and have globally consistent meaning, only the untyped literals are untidy] As for the comma delimiter, Dave has already pointed out that it will be problemmatic for N3 since it already is used for something, but I'll keep using it for now, until a better punctuation character can be found, or some other denotation of the XML literal versus non-XML literal.  </s>
+<s> Patrick  </s>
+<s> Patrick.Stickler@nokia.com  </s>
+<s> said:  </s>
+<s> Well, no actually.  </s>
+<s> If literals are untidy and only in the object position, then you don't need to give them ids in N-Triples.  </s>
+<s> If at some point literals were allowed in the subject position, then you will have to give them ids.  </s>
+<s> We haven't made that decision yet, and N-Triples only needs to change when that happens, not before.  </s>
+<s> And delete the qnames.  </s>
+<s> I thought the group already agreed that a document convention of using 'xsd:decimal', 'rdf:type' and so on for the appropriate URI is OK.  </s>
+<s> It happens the primer and MT use that in N-Triples, the syntax WD doesn't.  </s>
+<s> Dave  </s>
+<s> Oh, and in case it wasn't clear ;-) that local name does in fact denote "some" datatype.  </s>
+<s> I.e., an untyped literal denotes a datatype value that has that particular lexical representation, only we don't know from the literal node itself which datatype is meant.  </s>
+<s> Given global datatyping, via rdfs:range, the particular datatype may be determined.  </s>
+<s> Thus, one could say IF ?p rdfs:range ?d .  </s>
+<s> ?d rdf:type rdfs:Datatype .  </s>
+<s> ?s ?p _:a,"LLL" .  </s>
+<s> THEN _:a daml:equivalentTo ?d .  </s>
+<s> Interestingly, even if the datatype is not a local name, but a URIref, the above rule still is usable, and datatype clashes can be treated as invalid equivalence assertions for incompatable datatypes.  </s>
+<s> Thus the inference IF ?p rdfs:range xsd:integer .  </s>
+<s> ?s ?p xsd:string,"LLL" .  </s>
+<s> THEN xsd:string daml:equivalentTo xsd:integer . is a valid inference, per the semantics of rdfs:range, but reflects a datatype clash between the global and local datatypes, since xsd:integer is in fact not equivalent to xsd:string.  </s>
+<s> etc.  </s>
+<s> Since the generation of the local datatype name for untyped literals (i.e. _:a) is done by the parser (usually) and will be unique for every untyped literal, triples stores can pretend that all nodes are tidy by label, and do merging without having to be concerned about the type of node.  </s>
+<s> The untidyness of untyped literals is thus captured in the unique local name.  </s>
+<s> Patrick  </s>
+<s> Patrick.Stickler@nokia.com  </s>
+<s> said:  </s>
+<s> We did, but I think we refer to them as "triples" (or some other generic reference), not "N-triples", since we didn't want to go to the trouble of changing the "N-triples" definition.  </s>
+<s> --Frank Frank Manola The MITRE Corporation 202 Burlington Road, MS A345 Bedford, MA 01730-1420  </s>
+<s> I'm not convinced that this is a "fact".  </s>
+<s> jan grant, ILRT, University of Bristol.  </s>
+<s> http://www.ilrt.bris.ac.uk/ Axioms speak louder than words.  </s>

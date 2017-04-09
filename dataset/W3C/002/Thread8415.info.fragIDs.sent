@@ -1,200 +1,200 @@
-Hi, rfc2518bis currently states: 
-12.1 Responses requiring Location in Multi-Status 
-The 300-303, 305 and 307 responses defined in HTTP 1.1 normally take 
-a Location header to indicate where the client should make the 
-request. 
-The Multi-Status response syntax does not allow for the 
-Location header information to be included in an unambiguous way, so servers MAY choose not to use these status codes in Multi-Status responses. 
-If a clients receives this status code in Multi-Status, the client MAY reissue the request to the individual resource, so 
-that the server can issue a response with a Location header for each 
-resource. 
-There are two issues here that I'd like to be resolved both in rfc2518bis 
-and draft-ietf-webdav-redirect-ref: 1) Are servers allowed not to report redirects as 3xx? 
-I think I myself made 
-the proposal to allow this because in practice returning 3xx responses in 
-multistatus breaks a lot of clients (for instance, the Microsoft Webfolder 
-client). 
-However, if we allow this, there should be an explicit way for a 
-client to force the server to return 3xx responses (that would then be 
-defined in draft-ietf-webdav-redirect-ref). 
-2) I think we also should say that if a 3xx is returned, that the Location 
-information must be returned as well. 
-draft-ietf-webdav-redirect-ref uses a 
-pseudo-property for that, but during Last Call in 2000 this was already discussed and it seems that there was a consensus to just extend the DAV:response element instead. 
-So here's my proposal: a) Allow servers to report redirects with a 200 status. 
-Thus will cause redirects to appear as regular resources, however an attempt to GET them 
-will result in a HTTP redirect (which indeed will work fine with the MS 
-webfolder client). 
-b) In draft-ietf-webdav-redirect-ref, extend "Apply-To-Redirect-Ref" to have 
-the values "T" or "F". 
-In presence of this header, require the server not do 
-to the 2xx workaround described in a). ("F" would mean that the server MUST 
-NOT apply the request to the redirect target but also signals that the client knows about the various extensions in the redirect spec) c) In both RFC2518bis and draft-ietf-webdav-redirect-ref, define an 
-extension element for DAV:response holding the Location header for the redirect, such as: 
-!ELEMENT response (href, ((href*, status)|(propstat+)), responsedescription?, location) (this takes care of the various issues inherent in "pseudo" properties). 
-Julian 
-For (1), I could go either way on this, but if we did give a client 
-a way to say this, I suggest that it be in the form of a request DAV 
-header, and that we introduce a symbol that means "the redirect-ref 
-standard", e.g. something like: DAV: 1, 2, redirect 
-Note that I am bundling this into the general "I understand the 
-redirect spec" token, since I'd rather not introduce a new token for 
-each detailed bit of functionality. 
-For (2), Julian's suggestion is fine, but shouldn't the Location 
-node be optional (i.e. "Location?"). 
-Cheers, Geoff 
-Julian wrote on 10/09/2003 11:31:29 AM: 
-rfc2518bis 
-made 
-in 
-Webfolder 
-a 
-Location 
-uses a 
-have 
-not do 
-MUST 
-properties). 
-Well, I'd rather not do that unless it's in the base spec (RFC2518bis). 
-The 
-redirect draft already defines a new header, so that one can easily be 
-used.... 
-Of course :-) Julian 
-My first choice is to get this in the base spec, since I think it is a bug that the server can register what options it supports, but a client cannot. 
-I could live with Julian's approach, but I'd rather not, since I think 
-this is a general problem that merits a clean extensible solution (as opposed to a one-off hack :-). 
-Cheers, Geoff "Julian Reschke" julian.reschke@gmx.de 
-wrote on 10/09/2003 12:54:58 PM: 
-The 
-OK, 
-so we probably should put it onto the issues list (so that it doesn't get 
-lost). 
-Julian 
-lost). 
-Here's a proposal for the issues list: Issue DAV_REQUEST_HEADER 
-RFC 2518 provides a mechanism (the "DAV" response header) for a server to 
-indicate to a client that it supports a specific WebDAV option (e.g. "1", 
-"2", "version-control", etc.), but there is no complementary mechanism for a 
-client to indicate to a server that it understands a specific WebDAV option. 
-This becomes an issue when a WebDAV extension (or revision) needs to change 
-response formats in a way that possibly break existing clients. 
-Detecting 
-client features based on a single, well-defined request header will work 
-better than (for instance) relying on custom headers (specified by each 
-extension) or "User-Agent". 
-Suggested resolution: allow the use of the "DAV" header as a request header, 
-with the same set of values that are defined for the "DAV" response header. 
-Regards, Julian 
-I support this addition to RFC2518bis. 
-I believe it is a key mechanism needed for servers to properly support 
-the various current (and future) WebDAV extensions. 
-Cheers, Geoff Julian wrote on 10/14/2003 09:53:30 AM: 
-get 
-to 
-"1", 
-for a 
-option. 
-change 
-Detecting 
-header, 
-Am Dienstag, 14.10.03, 
-um 19:23 Uhr (Europe/Berlin) schrieb Geoffrey M Clemm: 
-I agree, let's add this to 2518bis - the proposed mechnism is simple and easy for developers to understand. 
-Elias 
-I would like to see it added specifically to 2518bis. 
-I believe that there will be plenty of time between now and when 
-2518bis goes to the IESG for a sufficient number of clients and servers to add in the DAV request header (and if there is one feature that is unlikely to introduce an interoperability problem, this is probably it :-). 
-Cheers, Geoff Lisa wrote on 10/18/2003 03:26:38 AM: 
-doesn't get 
-to 
-"1", 
-for a 
-option. 
-change 
-Detecting 
-work 
-each 
-header, 
-Please remove me from your list. 
-Christopher Gentile, Ph.D. Executive Director, Sagemont Virtual School Office: 305-867-8825 Toll Free: 877-357-0109 Cell: 954-410-8011 
-This proposal clearly has a lot of support. 
-I too favour a single 
-client-feature-advertisement header. 
-However, I'd like to caution the 
-group that we won't be able to demonstrate the interoperability of this header, and thus we take the risk that this won't be considered a suitable feature to take to the next standards phase (draft standard). 
-I see no problem with defining the exact same header in the redirect spec (or another), with a note that other extensions are encouraged to use the same header. 
-Since this community is very good about reusing 
-this kind of solution, I'm not worried that its location will be a 
-problem. 
-It's much like the DeltaV preconditions/postconditions framework which has already been reused by ACL and others without needing to modify 2518. 
-If there's still consensus to add to 2518bis specifically, let me know (individually is fine) and I'll add it to the document. 
-Lisa -----Original Message----- [mailto:w3c-dist-auth-request@w3.org] 
-On Behalf Of Elias Sinderson 
-I agree, let's add this to 2518bis - the proposed mechnism is simple and easy for developers to understand. 
-Elias I support this addition to RFC2518bis. 
-I believe it is a key mechanism needed for servers to properly support the various current (and future) WebDAV extensions. 
-Cheers, Geoff Julian wrote on 10/14/2003 09:53:30 AM: 
-it doesn't get 
-a server to 
-(e.g. "1", 
-mechanism for a 
-WebDAV option. 
-needs to change 
-clients. 
-Detecting 
-will work 
-(specified by each 
-request header, 
-I agree, the best approach would be to specify the basic DAV request header mechanism in 2518bis. 
-The other WebDAV specs can then define additional values, thereby indicating other client capabilities. 
-The logic behind the DAV request header seems straightforward enough to allow for interoperable implementations before 2518 moves to the draft standard phase. 
-Regards, Elias 
-This proposal clearly has a lot of support. 
-I too favour a single 
-client-feature-advertisement header. 
-However, I'd like to caution the group 
-that we won't be able to demonstrate the interoperability of this header, and thus we take the risk that this won't be considered a suitable feature to take to the next standards phase (draft standard). 
-I see no problem with defining the exact same header in the redirect spec (or another), with a note that other extensions are encouraged to use the same header. 
-Since this community is very good about reusing this kind of 
-solution, I'm not worried that its location will be a problem. 
-It's much 
-like the DeltaV preconditions/postconditions framework which has already been reused by ACL and others without needing to modify 2518. 
-If there's still consensus to add to 2518bis specifically, let me know (individually is fine) and I'll add it to the document. 
-Lisa Behalf Of Elias Sinderson I agree, let's add this to 2518bis - the proposed mechnism is simple and easy for developers to understand. 
-Elias I support this addition to RFC2518bis. 
-I believe it is a key mechanism needed for servers to properly support the various current (and future) WebDAV extensions. 
-Cheers, Geoff Julian wrote on 10/14/2003 09:53:30 AM: 
-get 
-a 
-option. 
-change 
-header, 
-Lisa, 
-group 
-If we define the following: - A DAV: request header MAY be sent by the client indicating compliance to a specific WebDAV feature (in the same syntax as defined for the DAV: response header) *and* 
-- Each protocol extension must explicitly declare what sending a specific 
-feature token indicates *and* 
-- If there's no such definition, clients MUST not send that token (thus we 
-can avoid the situation where clients start enumerating all kinds of 
-extensions although this info is completely useless to the server) then there shouldn't be an issue at all. 
-RFC2518bis would just provide the marshalling framework for other specs, and *those* would need to show interoperability. 
-The first canditates for actually *using* this IMHO are - binding spec (client indicates that it knows about new bind-loop-detected condition in multistatus response) and - redirect ref spec (client indicates that it knows how to deal with Location info in multistatus) (side note: interestingly, both use cases are about PROPFIND response formats). 
-Julian 
-Hi. 
-Another thing we'll have to keep in mind is the possible interaction between 
-this header and responses that are both cacheable and vary on the value of 
-this request header... Ideas: 
-- we could just forbid that (the value of the "Dav" request header must not 
-affect cacheable responses) - clarify that whenever the "Dav" request header *does* affect a cacheable 
-response, the server will have to list in the "Vary" response header. 
-Julian 
-I see no reason to forbid the value of the Dav request header from 
-affecting cacheable responses, so if we do anything in this regard, 
-I'd do the clarification. 
-Cheers, Geoff Julian wrote on 10/20/2003 10:52:11 AM: 
-between 
-of 
-not 
-cacheable 
-If this header can affect caching, then I think we should add "This header MAY affect caching, therefore this header SHOULD NOT be used on GET requests where response caching is most important." 
-Lisa 
+<s> Hi, rfc2518bis currently states:  </s>
+<s> 12.1 Responses requiring Location in Multi-Status  </s>
+<s> The 300-303, 305 and 307 responses defined in HTTP 1.1 normally take  </s>
+<s> a Location header to indicate where the client should make the  </s>
+<s> request.  </s>
+<s> The Multi-Status response syntax does not allow for the  </s>
+<s> Location header information to be included in an unambiguous way, so servers MAY choose not to use these status codes in Multi-Status responses.  </s>
+<s> If a clients receives this status code in Multi-Status, the client MAY reissue the request to the individual resource, so  </s>
+<s> that the server can issue a response with a Location header for each  </s>
+<s> resource.  </s>
+<s> There are two issues here that I'd like to be resolved both in rfc2518bis  </s>
+<s> and draft-ietf-webdav-redirect-ref: 1) Are servers allowed not to report redirects as 3xx?  </s>
+<s> I think I myself made  </s>
+<s> the proposal to allow this because in practice returning 3xx responses in  </s>
+<s> multistatus breaks a lot of clients (for instance, the Microsoft Webfolder  </s>
+<s> client).  </s>
+<s> However, if we allow this, there should be an explicit way for a  </s>
+<s> client to force the server to return 3xx responses (that would then be  </s>
+<s> defined in draft-ietf-webdav-redirect-ref).  </s>
+<s> 2) I think we also should say that if a 3xx is returned, that the Location  </s>
+<s> information must be returned as well.  </s>
+<s> draft-ietf-webdav-redirect-ref uses a  </s>
+<s> pseudo-property for that, but during Last Call in 2000 this was already discussed and it seems that there was a consensus to just extend the DAV:response element instead.  </s>
+<s> So here's my proposal: a) Allow servers to report redirects with a 200 status.  </s>
+<s> Thus will cause redirects to appear as regular resources, however an attempt to GET them  </s>
+<s> will result in a HTTP redirect (which indeed will work fine with the MS  </s>
+<s> webfolder client).  </s>
+<s> b) In draft-ietf-webdav-redirect-ref, extend "Apply-To-Redirect-Ref" to have  </s>
+<s> the values "T" or "F".  </s>
+<s> In presence of this header, require the server not do  </s>
+<s> to the 2xx workaround described in a). ("F" would mean that the server MUST  </s>
+<s> NOT apply the request to the redirect target but also signals that the client knows about the various extensions in the redirect spec) c) In both RFC2518bis and draft-ietf-webdav-redirect-ref, define an  </s>
+<s> extension element for DAV:response holding the Location header for the redirect, such as:  </s>
+<s> !ELEMENT response (href, ((href*, status)|(propstat+)), responsedescription?, location) (this takes care of the various issues inherent in "pseudo" properties).  </s>
+<s> Julian  </s>
+<s> For (1), I could go either way on this, but if we did give a client  </s>
+<s> a way to say this, I suggest that it be in the form of a request DAV  </s>
+<s> header, and that we introduce a symbol that means "the redirect-ref  </s>
+<s> standard", e.g. something like: DAV: 1, 2, redirect  </s>
+<s> Note that I am bundling this into the general "I understand the  </s>
+<s> redirect spec" token, since I'd rather not introduce a new token for  </s>
+<s> each detailed bit of functionality.  </s>
+<s> For (2), Julian's suggestion is fine, but shouldn't the Location  </s>
+<s> node be optional (i.e. "Location?").  </s>
+<s> Cheers, Geoff  </s>
+<s> Julian wrote on 10/09/2003 11:31:29 AM:  </s>
+<s> rfc2518bis  </s>
+<s> made  </s>
+<s> in  </s>
+<s> Webfolder  </s>
+<s> a  </s>
+<s> Location  </s>
+<s> uses a  </s>
+<s> have  </s>
+<s> not do  </s>
+<s> MUST  </s>
+<s> properties).  </s>
+<s> Well, I'd rather not do that unless it's in the base spec (RFC2518bis).  </s>
+<s> The  </s>
+<s> redirect draft already defines a new header, so that one can easily be  </s>
+<s> used....  </s>
+<s> Of course :-) Julian  </s>
+<s> My first choice is to get this in the base spec, since I think it is a bug that the server can register what options it supports, but a client cannot.  </s>
+<s> I could live with Julian's approach, but I'd rather not, since I think  </s>
+<s> this is a general problem that merits a clean extensible solution (as opposed to a one-off hack :-).  </s>
+<s> Cheers, Geoff "Julian Reschke" julian.reschke@gmx.de  </s>
+<s> wrote on 10/09/2003 12:54:58 PM:  </s>
+<s> The  </s>
+<s> OK,  </s>
+<s> so we probably should put it onto the issues list (so that it doesn't get  </s>
+<s> lost).  </s>
+<s> Julian  </s>
+<s> lost).  </s>
+<s> Here's a proposal for the issues list: Issue DAV_REQUEST_HEADER  </s>
+<s> RFC 2518 provides a mechanism (the "DAV" response header) for a server to  </s>
+<s> indicate to a client that it supports a specific WebDAV option (e.g. "1",  </s>
+<s> "2", "version-control", etc.), but there is no complementary mechanism for a  </s>
+<s> client to indicate to a server that it understands a specific WebDAV option.  </s>
+<s> This becomes an issue when a WebDAV extension (or revision) needs to change  </s>
+<s> response formats in a way that possibly break existing clients.  </s>
+<s> Detecting  </s>
+<s> client features based on a single, well-defined request header will work  </s>
+<s> better than (for instance) relying on custom headers (specified by each  </s>
+<s> extension) or "User-Agent".  </s>
+<s> Suggested resolution: allow the use of the "DAV" header as a request header,  </s>
+<s> with the same set of values that are defined for the "DAV" response header.  </s>
+<s> Regards, Julian  </s>
+<s> I support this addition to RFC2518bis.  </s>
+<s> I believe it is a key mechanism needed for servers to properly support  </s>
+<s> the various current (and future) WebDAV extensions.  </s>
+<s> Cheers, Geoff Julian wrote on 10/14/2003 09:53:30 AM:  </s>
+<s> get  </s>
+<s> to  </s>
+<s> "1",  </s>
+<s> for a  </s>
+<s> option.  </s>
+<s> change  </s>
+<s> Detecting  </s>
+<s> header,  </s>
+<s> Am Dienstag, 14.10.03,  </s>
+<s> um 19:23 Uhr (Europe/Berlin) schrieb Geoffrey M Clemm:  </s>
+<s> I agree, let's add this to 2518bis - the proposed mechnism is simple and easy for developers to understand.  </s>
+<s> Elias  </s>
+<s> I would like to see it added specifically to 2518bis.  </s>
+<s> I believe that there will be plenty of time between now and when  </s>
+<s> 2518bis goes to the IESG for a sufficient number of clients and servers to add in the DAV request header (and if there is one feature that is unlikely to introduce an interoperability problem, this is probably it :-).  </s>
+<s> Cheers, Geoff Lisa wrote on 10/18/2003 03:26:38 AM:  </s>
+<s> doesn't get  </s>
+<s> to  </s>
+<s> "1",  </s>
+<s> for a  </s>
+<s> option.  </s>
+<s> change  </s>
+<s> Detecting  </s>
+<s> work  </s>
+<s> each  </s>
+<s> header,  </s>
+<s> Please remove me from your list.  </s>
+<s> Christopher Gentile, Ph.D. Executive Director, Sagemont Virtual School Office: 305-867-8825 Toll Free: 877-357-0109 Cell: 954-410-8011  </s>
+<s> This proposal clearly has a lot of support.  </s>
+<s> I too favour a single  </s>
+<s> client-feature-advertisement header.  </s>
+<s> However, I'd like to caution the  </s>
+<s> group that we won't be able to demonstrate the interoperability of this header, and thus we take the risk that this won't be considered a suitable feature to take to the next standards phase (draft standard).  </s>
+<s> I see no problem with defining the exact same header in the redirect spec (or another), with a note that other extensions are encouraged to use the same header.  </s>
+<s> Since this community is very good about reusing  </s>
+<s> this kind of solution, I'm not worried that its location will be a  </s>
+<s> problem.  </s>
+<s> It's much like the DeltaV preconditions/postconditions framework which has already been reused by ACL and others without needing to modify 2518.  </s>
+<s> If there's still consensus to add to 2518bis specifically, let me know (individually is fine) and I'll add it to the document.  </s>
+<s> Lisa -----Original Message----- [mailto:w3c-dist-auth-request@w3.org]  </s>
+<s> On Behalf Of Elias Sinderson  </s>
+<s> I agree, let's add this to 2518bis - the proposed mechnism is simple and easy for developers to understand.  </s>
+<s> Elias I support this addition to RFC2518bis.  </s>
+<s> I believe it is a key mechanism needed for servers to properly support the various current (and future) WebDAV extensions.  </s>
+<s> Cheers, Geoff Julian wrote on 10/14/2003 09:53:30 AM:  </s>
+<s> it doesn't get  </s>
+<s> a server to  </s>
+<s> (e.g. "1",  </s>
+<s> mechanism for a  </s>
+<s> WebDAV option.  </s>
+<s> needs to change  </s>
+<s> clients.  </s>
+<s> Detecting  </s>
+<s> will work  </s>
+<s> (specified by each  </s>
+<s> request header,  </s>
+<s> I agree, the best approach would be to specify the basic DAV request header mechanism in 2518bis.  </s>
+<s> The other WebDAV specs can then define additional values, thereby indicating other client capabilities.  </s>
+<s> The logic behind the DAV request header seems straightforward enough to allow for interoperable implementations before 2518 moves to the draft standard phase.  </s>
+<s> Regards, Elias  </s>
+<s> This proposal clearly has a lot of support.  </s>
+<s> I too favour a single  </s>
+<s> client-feature-advertisement header.  </s>
+<s> However, I'd like to caution the group  </s>
+<s> that we won't be able to demonstrate the interoperability of this header, and thus we take the risk that this won't be considered a suitable feature to take to the next standards phase (draft standard).  </s>
+<s> I see no problem with defining the exact same header in the redirect spec (or another), with a note that other extensions are encouraged to use the same header.  </s>
+<s> Since this community is very good about reusing this kind of  </s>
+<s> solution, I'm not worried that its location will be a problem.  </s>
+<s> It's much  </s>
+<s> like the DeltaV preconditions/postconditions framework which has already been reused by ACL and others without needing to modify 2518.  </s>
+<s> If there's still consensus to add to 2518bis specifically, let me know (individually is fine) and I'll add it to the document.  </s>
+<s> Lisa Behalf Of Elias Sinderson I agree, let's add this to 2518bis - the proposed mechnism is simple and easy for developers to understand.  </s>
+<s> Elias I support this addition to RFC2518bis.  </s>
+<s> I believe it is a key mechanism needed for servers to properly support the various current (and future) WebDAV extensions.  </s>
+<s> Cheers, Geoff Julian wrote on 10/14/2003 09:53:30 AM:  </s>
+<s> get  </s>
+<s> a  </s>
+<s> option.  </s>
+<s> change  </s>
+<s> header,  </s>
+<s> Lisa,  </s>
+<s> group  </s>
+<s> If we define the following: - A DAV: request header MAY be sent by the client indicating compliance to a specific WebDAV feature (in the same syntax as defined for the DAV: response header) *and*  </s>
+<s> - Each protocol extension must explicitly declare what sending a specific  </s>
+<s> feature token indicates *and*  </s>
+<s> - If there's no such definition, clients MUST not send that token (thus we  </s>
+<s> can avoid the situation where clients start enumerating all kinds of  </s>
+<s> extensions although this info is completely useless to the server) then there shouldn't be an issue at all.  </s>
+<s> RFC2518bis would just provide the marshalling framework for other specs, and *those* would need to show interoperability.  </s>
+<s> The first canditates for actually *using* this IMHO are - binding spec (client indicates that it knows about new bind-loop-detected condition in multistatus response) and - redirect ref spec (client indicates that it knows how to deal with Location info in multistatus) (side note: interestingly, both use cases are about PROPFIND response formats).  </s>
+<s> Julian  </s>
+<s> Hi.  </s>
+<s> Another thing we'll have to keep in mind is the possible interaction between  </s>
+<s> this header and responses that are both cacheable and vary on the value of  </s>
+<s> this request header... Ideas:  </s>
+<s> - we could just forbid that (the value of the "Dav" request header must not  </s>
+<s> affect cacheable responses) - clarify that whenever the "Dav" request header *does* affect a cacheable  </s>
+<s> response, the server will have to list in the "Vary" response header.  </s>
+<s> Julian  </s>
+<s> I see no reason to forbid the value of the Dav request header from  </s>
+<s> affecting cacheable responses, so if we do anything in this regard,  </s>
+<s> I'd do the clarification.  </s>
+<s> Cheers, Geoff Julian wrote on 10/20/2003 10:52:11 AM:  </s>
+<s> between  </s>
+<s> of  </s>
+<s> not  </s>
+<s> cacheable  </s>
+<s> If this header can affect caching, then I think we should add "This header MAY affect caching, therefore this header SHOULD NOT be used on GET requests where response caching is most important."  </s>
+<s> Lisa  </s>

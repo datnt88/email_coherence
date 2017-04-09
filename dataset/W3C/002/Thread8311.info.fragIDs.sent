@@ -1,62 +1,62 @@
-My apologies, as I am not entirely sure this question belongs here. 
-I am quite new to WebDAV, and have run into a few problems. 
-I've been staring at this particular problem for quite some time, and am hoping I can get a fresh set of eyes to have a look. 
-Basically, when I attempt to open a web folder (using Davenport as the DAV server), I get the message 'Internet Explorer could not open .Would you like to use the default view instead?'. 
-I have tried a slew of changes to the Davenport source code with varying degrees of success. 
-In this example, the 'shares' share will not display properly in a Web Folder view. 
-If I attempt to view a subdirectory as a Web Folder however, the subdirectory will display properly in Web Folders view. 
-I am using Windows XP with IE6 (both fully patched) for the DAV client. 
-See the listing below for the request/response. 
-PROPFIND /davenport/server/shares HTTP/1.1 Content-Language: en-us 
-Accept-Language: en-us Content-Type: text/xml Translate: f Depth: 0 Content-Length: 0 User-Agent: Microsoft Data Access Internet Publishing Provider DAV Host: host Connection: Keep-Alive HTTP/1.1 207 Multi Status Date: Fri, 06 Feb 2004 15:57:25 GMT Server: Jetty/4.2.14 (Windows 2000/5.0 x86 java/1.4.2_03) Content-Length: 826 multistatus xmlns="DAV:" xmlns:w="urn:uuid:c2f41010-65b3-11d1-a29f-00aa00c14882/" getlastmodified w:dt="dateTime.rfc1123" 
-Thu, 01 Jan 1970 00:00:00 GMT /getlastmodified creationdate w:dt="dateTime.tz" 
-1970-01-01T00:00:00.000Z /creationdate 
-getcontentlength w:dt="int" 98626961408 /getcontentlength Thanks, 
-Mike 
-1) You may want to check which version you have, see details at 2) Regarding the response... I'd start by removinf everything that's not required or not plain DAV, notably 
-In particular, having non-zero content lengths may be confusing for the webfolder client. 
-Regards, Julian 
-Well one nit is that Multistatus is usually 207, not 200, as in the body. 
-Normally collections don't have getcontenttype, getcontentlength, or getetag. 
-I don't know if that's what's throwing off Web Folders. 
-There are examples of PROPFIND responses that work with Internet Explorer in my book :) -1/ref=sr_1_1/103-3410589-6207009?v=glance http://www.amazon.com/exec/obidos/tg/detail/-/0130652083/qid=1076106098/sr= 
-1-1/ref=sr_1_1/103-3410589-6207009?v=glance&amp;s=books &amp;s=books You can also try comparing to the PROPFIND responses you get querying directories on www.sharemation.com 
-(where you can sign up for a free account). 
-Sharemation runs Xythos software. 
-Similarly there are other servers running other DAV implementations that are known to work well with Web Folders - e.g. anything running mod_dav. 
-You might be able to PROPFIND www.webdav.org. 
-Lisa D. Behalf Of Mike McDonald My apologies, as I am not entirely sure this question belongs here. 
-I am quite new to WebDAV, and have run into a few problems. 
-I've been staring at this particular problem for quite some time, and am hoping I can get a fresh set of eyes to have a look. 
-Basically, when I attempt to open a web folder (using Davenport as the DAV server), I get the message 'Internet Explorer could not open .Would you like to use the default view instead?'. 
-I have tried a slew of changes to the Davenport source code with varying degrees of success. 
-In this example, the 'shares' share will not display properly in a Web Folder view. 
-If I attempt to view a subdirectory as a Web Folder however, the subdirectory will display properly in Web Folders view. 
-I am using Windows XP with IE6 (both fully patched) for the DAV client. 
-See the listing below for the request/response. 
-PROPFIND /davenport/server/shares HTTP/1.1 Content-Language: en-us Accept-Language: en-us Content-Type: text/xml Translate: f Depth: 0 Content-Length: 0 User-Agent: Microsoft Data Access Internet Publishing Provider DAV Host: host Connection: Keep-Alive HTTP/1.1 207 Multi Status Server: Jetty/4.2.14 (Windows 2000/5.0 x86 java/1.4.2_03) Content-Length: 826 multistatus xmlns="DAV:" xmlns:w="urn:uuid:c2f41010-65b3-11d1-a29f-00aa00c14882/" getlastmodified w:dt="dateTime.rfc1123" 
-Thu, 01 Jan 1970 00:00:00 GMT /getlastmodified creationdate w:dt="dateTime.tz" 
-1970-01-01T00:00:00.000Z /creationdate getcontentlength w:dt="int" 98626961408 /getcontentlength Thanks, Mike 
-The status *inside* the body correctly is a 200, it's just mislabeled as "multistatus" (that should be irrelevant, only the numeric code matters). 
-Julian 
-Just an FYI for anyone interested... 
-I worked through this problem with the help of the jCIFS list. 
-We identified a couple potential problem areas, so I updated Davenport with some suggestions there: I made the following updates to Davenport as per Julian's suggestions (on the jCIFS list): - Removed Microsoft proprietary properties. 
-- Does not return unknown timestamps (0 value) - Does not return unknown eTags. 
-- Does not return a content length (where the resource is a Share) These changes allow the web folder to open properly in my XP client. 
-It was in fact the getcontentlength property that 'broke' the client. 
-Thanks for your help. 
-Mike Behalf Of Mike McDonald My apologies, as I am not entirely sure this question belongs here. 
-I am quite new to WebDAV, and have run into a few problems. 
-I've been staring at this particular problem for quite some time, and am hoping I can get a fresh set of eyes to have a look. 
-Basically, when I attempt to open a web folder (using Davenport as the DAV server), I get the message 'Internet Explorer could not open .Would you like to use the default view instead?'. 
-I have tried a slew of changes to the Davenport source code with varying degrees of success. 
-In this example, the 'shares' share will not display properly in a Web Folder view. 
-If I attempt to view a subdirectory as a Web Folder however, the subdirectory will display properly in Web Folders view. 
-I am using Windows XP with IE6 (both fully patched) for the DAV client. 
-See the listing below for the request/response. 
-PROPFIND /davenport/server/shares HTTP/1.1 Content-Language: en-us Accept-Language: en-us Content-Type: text/xml Translate: f Depth: 0 Content-Length: 0 User-Agent: Microsoft Data Access Internet Publishing Provider DAV Host: host Connection: Keep-Alive HTTP/1.1 207 Multi Status Server: Jetty/4.2.14 (Windows 2000/5.0 x86 java/1.4.2_03) Content-Length: 826 multistatus xmlns="DAV:" xmlns:w="urn:uuid:c2f41010-65b3-11d1-a29f-00aa00c14882/" getlastmodified w:dt="dateTime.rfc1123" 
-Thu, 01 Jan 1970 00:00:00 GMT /getlastmodified creationdate w:dt="dateTime.tz" 
-1970-01-01T00:00:00.000Z /creationdate getcontentlength w:dt="int" 98626961408 /getcontentlength Thanks, Mike 
-Great. 
-And thanks for the nice servlet! 
+<s> My apologies, as I am not entirely sure this question belongs here.  </s>
+<s> I am quite new to WebDAV, and have run into a few problems.  </s>
+<s> I've been staring at this particular problem for quite some time, and am hoping I can get a fresh set of eyes to have a look.  </s>
+<s> Basically, when I attempt to open a web folder (using Davenport as the DAV server), I get the message 'Internet Explorer could not open .Would you like to use the default view instead?'.  </s>
+<s> I have tried a slew of changes to the Davenport source code with varying degrees of success.  </s>
+<s> In this example, the 'shares' share will not display properly in a Web Folder view.  </s>
+<s> If I attempt to view a subdirectory as a Web Folder however, the subdirectory will display properly in Web Folders view.  </s>
+<s> I am using Windows XP with IE6 (both fully patched) for the DAV client.  </s>
+<s> See the listing below for the request/response.  </s>
+<s> PROPFIND /davenport/server/shares HTTP/1.1 Content-Language: en-us  </s>
+<s> Accept-Language: en-us Content-Type: text/xml Translate: f Depth: 0 Content-Length: 0 User-Agent: Microsoft Data Access Internet Publishing Provider DAV Host: host Connection: Keep-Alive HTTP/1.1 207 Multi Status Date: Fri, 06 Feb 2004 15:57:25 GMT Server: Jetty/4.2.14 (Windows 2000/5.0 x86 java/1.4.2_03) Content-Length: 826 multistatus xmlns="DAV:" xmlns:w="urn:uuid:c2f41010-65b3-11d1-a29f-00aa00c14882/" getlastmodified w:dt="dateTime.rfc1123"  </s>
+<s> Thu, 01 Jan 1970 00:00:00 GMT /getlastmodified creationdate w:dt="dateTime.tz"  </s>
+<s> 1970-01-01T00:00:00.000Z /creationdate  </s>
+<s> getcontentlength w:dt="int" 98626961408 /getcontentlength Thanks,  </s>
+<s> Mike  </s>
+<s> 1) You may want to check which version you have, see details at 2) Regarding the response... I'd start by removinf everything that's not required or not plain DAV, notably  </s>
+<s> In particular, having non-zero content lengths may be confusing for the webfolder client.  </s>
+<s> Regards, Julian  </s>
+<s> Well one nit is that Multistatus is usually 207, not 200, as in the body.  </s>
+<s> Normally collections don't have getcontenttype, getcontentlength, or getetag.  </s>
+<s> I don't know if that's what's throwing off Web Folders.  </s>
+<s> There are examples of PROPFIND responses that work with Internet Explorer in my book :) -1/ref=sr_1_1/103-3410589-6207009?v=glance http://www.amazon.com/exec/obidos/tg/detail/-/0130652083/qid=1076106098/sr=  </s>
+<s> 1-1/ref=sr_1_1/103-3410589-6207009?v=glance&amp;s=books &amp;s=books You can also try comparing to the PROPFIND responses you get querying directories on www.sharemation.com  </s>
+<s> (where you can sign up for a free account).  </s>
+<s> Sharemation runs Xythos software.  </s>
+<s> Similarly there are other servers running other DAV implementations that are known to work well with Web Folders - e.g. anything running mod_dav.  </s>
+<s> You might be able to PROPFIND www.webdav.org.  </s>
+<s> Lisa D. Behalf Of Mike McDonald My apologies, as I am not entirely sure this question belongs here.  </s>
+<s> I am quite new to WebDAV, and have run into a few problems.  </s>
+<s> I've been staring at this particular problem for quite some time, and am hoping I can get a fresh set of eyes to have a look.  </s>
+<s> Basically, when I attempt to open a web folder (using Davenport as the DAV server), I get the message 'Internet Explorer could not open .Would you like to use the default view instead?'.  </s>
+<s> I have tried a slew of changes to the Davenport source code with varying degrees of success.  </s>
+<s> In this example, the 'shares' share will not display properly in a Web Folder view.  </s>
+<s> If I attempt to view a subdirectory as a Web Folder however, the subdirectory will display properly in Web Folders view.  </s>
+<s> I am using Windows XP with IE6 (both fully patched) for the DAV client.  </s>
+<s> See the listing below for the request/response.  </s>
+<s> PROPFIND /davenport/server/shares HTTP/1.1 Content-Language: en-us Accept-Language: en-us Content-Type: text/xml Translate: f Depth: 0 Content-Length: 0 User-Agent: Microsoft Data Access Internet Publishing Provider DAV Host: host Connection: Keep-Alive HTTP/1.1 207 Multi Status Server: Jetty/4.2.14 (Windows 2000/5.0 x86 java/1.4.2_03) Content-Length: 826 multistatus xmlns="DAV:" xmlns:w="urn:uuid:c2f41010-65b3-11d1-a29f-00aa00c14882/" getlastmodified w:dt="dateTime.rfc1123"  </s>
+<s> Thu, 01 Jan 1970 00:00:00 GMT /getlastmodified creationdate w:dt="dateTime.tz"  </s>
+<s> 1970-01-01T00:00:00.000Z /creationdate getcontentlength w:dt="int" 98626961408 /getcontentlength Thanks, Mike  </s>
+<s> The status *inside* the body correctly is a 200, it's just mislabeled as "multistatus" (that should be irrelevant, only the numeric code matters).  </s>
+<s> Julian  </s>
+<s> Just an FYI for anyone interested...  </s>
+<s> I worked through this problem with the help of the jCIFS list.  </s>
+<s> We identified a couple potential problem areas, so I updated Davenport with some suggestions there: I made the following updates to Davenport as per Julian's suggestions (on the jCIFS list): - Removed Microsoft proprietary properties.  </s>
+<s> - Does not return unknown timestamps (0 value) - Does not return unknown eTags.  </s>
+<s> - Does not return a content length (where the resource is a Share) These changes allow the web folder to open properly in my XP client.  </s>
+<s> It was in fact the getcontentlength property that 'broke' the client.  </s>
+<s> Thanks for your help.  </s>
+<s> Mike Behalf Of Mike McDonald My apologies, as I am not entirely sure this question belongs here.  </s>
+<s> I am quite new to WebDAV, and have run into a few problems.  </s>
+<s> I've been staring at this particular problem for quite some time, and am hoping I can get a fresh set of eyes to have a look.  </s>
+<s> Basically, when I attempt to open a web folder (using Davenport as the DAV server), I get the message 'Internet Explorer could not open .Would you like to use the default view instead?'.  </s>
+<s> I have tried a slew of changes to the Davenport source code with varying degrees of success.  </s>
+<s> In this example, the 'shares' share will not display properly in a Web Folder view.  </s>
+<s> If I attempt to view a subdirectory as a Web Folder however, the subdirectory will display properly in Web Folders view.  </s>
+<s> I am using Windows XP with IE6 (both fully patched) for the DAV client.  </s>
+<s> See the listing below for the request/response.  </s>
+<s> PROPFIND /davenport/server/shares HTTP/1.1 Content-Language: en-us Accept-Language: en-us Content-Type: text/xml Translate: f Depth: 0 Content-Length: 0 User-Agent: Microsoft Data Access Internet Publishing Provider DAV Host: host Connection: Keep-Alive HTTP/1.1 207 Multi Status Server: Jetty/4.2.14 (Windows 2000/5.0 x86 java/1.4.2_03) Content-Length: 826 multistatus xmlns="DAV:" xmlns:w="urn:uuid:c2f41010-65b3-11d1-a29f-00aa00c14882/" getlastmodified w:dt="dateTime.rfc1123"  </s>
+<s> Thu, 01 Jan 1970 00:00:00 GMT /getlastmodified creationdate w:dt="dateTime.tz"  </s>
+<s> 1970-01-01T00:00:00.000Z /creationdate getcontentlength w:dt="int" 98626961408 /getcontentlength Thanks, Mike  </s>
+<s> Great.  </s>
+<s> And thanks for the nice servlet!  </s>

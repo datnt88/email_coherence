@@ -1,69 +1,69 @@
-Hi, Some questions have arisen about in the XML Encryption activity the handling of white space in the content of the KeyName element. 
-There was substantial feeling there that leading and trailing whitespace should be stripped from KeyName content. 
-I think this would be an improvement but since it is in the XMLDSIG namespace, this list is the right place for discussion. 
-What do others think? 
-Thanks, Donald Donald E. Eastlake 3rd dee3@torque.pothole.com 
-155 Beaver Street +1 508-634-2066(h) Milford, MA 01757 USA +1 508-261-5434(w) 
-Agreed. DNames already have this property (from RFC 2253 I think), 
-and I believe so do base-64 coded data as well as integers, so this would unify pretty much all of our text handling. 
-merlin r/dee3@torque.pothole.com/2001.05.14/14:35:23 
-Baltimore Technologies plc will not be liable for direct, special, indirect or consequential damages arising from alteration of the contents of this message by a third party or as a result of any virus being passed on. 
-In addition, certain Marketing collateral may be added from time to time to promote Baltimore Technologies products, services, Global e-Security or appearance at trade shows and conferences. 
-This footnote confirms that this email message has been swept by Baltimore MIMEsweeper for Content Security threats, including computer viruses. 
-Merlin, 
-What do you mean? 
-Currently XML-Signature does not say anything about stripping the white space, nor is there a requirement in RFC 2253 to be tolerant regarding whitespace at the beginning or at the end of a DName string. 
-We currently make a trim() prior to parsing the DName string in our implementation, but I would like to see an appropriate sentence in XML-Signature. 
-Liebe Gruesse/Regards, DI Gregor Karlinger Phone +43 316 873 5541 Institute for Applied Information Processing and Communications Austria 
-Actually, section 4 of RFC 2253 does lay some clear requirements on the parsing application. 
-Spaces must be ignored if they are immediately before the comma, the plus sign, or the equal sign, and unescaped semicolons must be treated as equal to commas. 
-There's no requirement explicit in that section for the beginning or end of the full DN, however. 
-It's just that the creator of the DN is required not to end a given value with unescaped whitespace. 
-Since the format of attribute type seems to 
-require it to start with an alphanumeric, trimming any leading whitespace would be safest. 
-So I think considering unescaped spaces at either end of a DN to be part of it is actually in violation of RFC 2253. 
-However, and very strangely, no similar requirement exists for horizontal tab or line feed, while carriage return must be escaped according to RFC 1779 but not 2253. 
-Should we require that XMLDSIG implementations escape all ASCII control characters as well? 
-Tom Gindin merlin merlin@baltimore.ie 
-@w3.org on 05/15/2001 05:49:55 AM Sent by: w3c-ietf-xmldsig-request@w3.org 
-Subject: Re: AW: KeyName white space Hi Gregor, 
-I qualified RFC 2253 with 'I think' because I did not have documentation in front of me.. You're right, it is not explicit, but I think it is in the spirit of the document and its requirements of flexibility in the handling of whitespace. 
-In particular, spaces at the end of attribute values must be escaped, which suggests (to me) that unescaped spaces at the end may be ignored. 
-But you are right, an XMLDSIG statement would be in order, and would appear to be compatible with RFC2253. 
-It should probably state that escaped spaces at the end must be preserved. 
-Merlin 
-r/gregor.karlinger@iaik.at/2001.05.15/11:25:32 
-Baltimore Technologies plc will not be liable for direct, special, indirect or consequential damages arising from alteration of the contents of this message by a third party or as a result of any virus being passed on. 
-In addition, certain Marketing collateral may be added from time to time to promote Baltimore Technologies products, services, Global e-Security or appearance at trade shows and conferences. 
-This footnote confirms that this email message has been swept by Baltimore MIMEsweeper for Content Security threats, including computer viruses. 
-Tom, 
-Yes, and this requirement should be stated in XML-Signature. 
-Why would you like to require such an escaping? 
-Liebe Gruesse/Regards, DI Gregor Karlinger Phone +43 316 873 5541 Institute for Applied Information Processing and Communications Austria 
-I would like to require the escaping of all ASCII controls in DN's in XMLDSIG (I was not precise enough last time, and what I said could have been interpreted as having wider scope) because otherwise standard trimming routines may eliminate characters which somebody left in a DN intentionally, as is permitted by RFC 2253. 
-It is my impression that standard trimming routines tend to remove horizontal tab, for example, in the same positions where they remove space. 
-Tom Gindin "Gregor Karlinger" gregor.karlinger@iaik.at on 05/15/2001 07:10:53 AM Subject: AW: AW: KeyName white space Tom, 
-Yes, and this requirement should be stated in XML-Signature. 
-Why would you like to require such an escaping? 
-Liebe Gruesse/Regards, DI Gregor Karlinger Phone +43 316 873 5541 Institute for Applied Information Processing and Communications Austria 
-There's another issue that seems relevant. 
-RFC 2253 states that strings must be converted to UTF-8 and then the escaping rules must be applied. 
-Do we honour this, or should we UTF-8 decode the RFC2253 string before embedding it in the text node. 
-Essentially, should the final example in RFC 2253 be encoded in XML as: UTF-8 encode and require ASCII escaping of high-bit-set chars: SN=Lu\C4\8Di\C4\87 UTF-8 encode and embed the result directly: SN=Lu??i?? (where ? is a high-bit UTF-8 byte directly embedded) (Here the meaning is confusing because the UTF-8 encoded text will correspond to some other Unicode charactes, e.g. ?) De-UTF-8 and embed the Unicode original: SN=Lu?i? (where ? is the original character) The last seems like the best option to me. 
-Plus require escaping of all ASCII controls. 
-Merlin 
-r/tgindin@us.ibm.com/2001.05.15/07:36:47 
-Baltimore Technologies plc will not be liable for direct, special, indirect or consequential damages arising from alteration of the contents of this message by a third party or as a result of any virus being passed on. 
-In addition, certain Marketing collateral may be added from time to time to promote Baltimore Technologies products, services, Global e-Security or appearance at trade shows and conferences. 
-This footnote confirms that this email message has been swept by Baltimore MIMEsweeper for Content Security threats, including computer viruses. 
-Merlin, 
-Doesn't this mean that you MUST use UTF-8 encoding for the XML document, i. e. that it is impossible to use ASCII or ISO_8859* since you insert a text node (the DN) which characters are Unicode? 
-If so, should we really introduce such a restriction? 
-Liebe Gruesse/Regards, DI Gregor Karlinger Phone +43 316 873 5541 Institute for Applied Information Processing and Communications Austria 
-Hi Gregor, If you choose to write a document using a lossy encoding then all nonrepresentable characters will be corrupt - dnames, key names, signed data, attributes, etc. - I suspect that lost dnames would be the least of your worries. 
-Indeed, if it is reasonable to use a lossy encoding, then it is probably reasonable to assert that any dnames in the signature should be representable in that encoding too. 
-The benefits of encoding dnames in unicode (human readability of signed documents for all, rather than just the US-ASCII) I think far outweigh the alternative. 
-Merlin r/gregor.karlinger@iaik.at/2001.05.15/15:14:22 
-Baltimore Technologies plc will not be liable for direct, special, indirect or consequential damages arising from alteration of the contents of this message by a third party or as a result of any virus being passed on. 
-In addition, certain Marketing collateral may be added from time to time to promote Baltimore Technologies products, services, Global e-Security or appearance at trade shows and conferences. 
-This footnote confirms that this email message has been swept by Baltimore MIMEsweeper for Content Security threats, including computer viruses. 
+<s> Hi, Some questions have arisen about in the XML Encryption activity the handling of white space in the content of the KeyName element.  </s>
+<s> There was substantial feeling there that leading and trailing whitespace should be stripped from KeyName content.  </s>
+<s> I think this would be an improvement but since it is in the XMLDSIG namespace, this list is the right place for discussion.  </s>
+<s> What do others think?  </s>
+<s> Thanks, Donald Donald E. Eastlake 3rd dee3@torque.pothole.com  </s>
+<s> 155 Beaver Street +1 508-634-2066(h) Milford, MA 01757 USA +1 508-261-5434(w)  </s>
+<s> Agreed. DNames already have this property (from RFC 2253 I think),  </s>
+<s> and I believe so do base-64 coded data as well as integers, so this would unify pretty much all of our text handling.  </s>
+<s> merlin r/dee3@torque.pothole.com/2001.05.14/14:35:23  </s>
+<s> Baltimore Technologies plc will not be liable for direct, special, indirect or consequential damages arising from alteration of the contents of this message by a third party or as a result of any virus being passed on.  </s>
+<s> In addition, certain Marketing collateral may be added from time to time to promote Baltimore Technologies products, services, Global e-Security or appearance at trade shows and conferences.  </s>
+<s> This footnote confirms that this email message has been swept by Baltimore MIMEsweeper for Content Security threats, including computer viruses.  </s>
+<s> Merlin,  </s>
+<s> What do you mean?  </s>
+<s> Currently XML-Signature does not say anything about stripping the white space, nor is there a requirement in RFC 2253 to be tolerant regarding whitespace at the beginning or at the end of a DName string.  </s>
+<s> We currently make a trim() prior to parsing the DName string in our implementation, but I would like to see an appropriate sentence in XML-Signature.  </s>
+<s> Liebe Gruesse/Regards, DI Gregor Karlinger Phone +43 316 873 5541 Institute for Applied Information Processing and Communications Austria  </s>
+<s> Actually, section 4 of RFC 2253 does lay some clear requirements on the parsing application.  </s>
+<s> Spaces must be ignored if they are immediately before the comma, the plus sign, or the equal sign, and unescaped semicolons must be treated as equal to commas.  </s>
+<s> There's no requirement explicit in that section for the beginning or end of the full DN, however.  </s>
+<s> It's just that the creator of the DN is required not to end a given value with unescaped whitespace.  </s>
+<s> Since the format of attribute type seems to  </s>
+<s> require it to start with an alphanumeric, trimming any leading whitespace would be safest.  </s>
+<s> So I think considering unescaped spaces at either end of a DN to be part of it is actually in violation of RFC 2253.  </s>
+<s> However, and very strangely, no similar requirement exists for horizontal tab or line feed, while carriage return must be escaped according to RFC 1779 but not 2253.  </s>
+<s> Should we require that XMLDSIG implementations escape all ASCII control characters as well?  </s>
+<s> Tom Gindin merlin merlin@baltimore.ie  </s>
+<s> @w3.org on 05/15/2001 05:49:55 AM Sent by: w3c-ietf-xmldsig-request@w3.org  </s>
+<s> Subject: Re: AW: KeyName white space Hi Gregor,  </s>
+<s> I qualified RFC 2253 with 'I think' because I did not have documentation in front of me.. You're right, it is not explicit, but I think it is in the spirit of the document and its requirements of flexibility in the handling of whitespace.  </s>
+<s> In particular, spaces at the end of attribute values must be escaped, which suggests (to me) that unescaped spaces at the end may be ignored.  </s>
+<s> But you are right, an XMLDSIG statement would be in order, and would appear to be compatible with RFC2253.  </s>
+<s> It should probably state that escaped spaces at the end must be preserved.  </s>
+<s> Merlin  </s>
+<s> r/gregor.karlinger@iaik.at/2001.05.15/11:25:32  </s>
+<s> Baltimore Technologies plc will not be liable for direct, special, indirect or consequential damages arising from alteration of the contents of this message by a third party or as a result of any virus being passed on.  </s>
+<s> In addition, certain Marketing collateral may be added from time to time to promote Baltimore Technologies products, services, Global e-Security or appearance at trade shows and conferences.  </s>
+<s> This footnote confirms that this email message has been swept by Baltimore MIMEsweeper for Content Security threats, including computer viruses.  </s>
+<s> Tom,  </s>
+<s> Yes, and this requirement should be stated in XML-Signature.  </s>
+<s> Why would you like to require such an escaping?  </s>
+<s> Liebe Gruesse/Regards, DI Gregor Karlinger Phone +43 316 873 5541 Institute for Applied Information Processing and Communications Austria  </s>
+<s> I would like to require the escaping of all ASCII controls in DN's in XMLDSIG (I was not precise enough last time, and what I said could have been interpreted as having wider scope) because otherwise standard trimming routines may eliminate characters which somebody left in a DN intentionally, as is permitted by RFC 2253.  </s>
+<s> It is my impression that standard trimming routines tend to remove horizontal tab, for example, in the same positions where they remove space.  </s>
+<s> Tom Gindin "Gregor Karlinger" gregor.karlinger@iaik.at on 05/15/2001 07:10:53 AM Subject: AW: AW: KeyName white space Tom,  </s>
+<s> Yes, and this requirement should be stated in XML-Signature.  </s>
+<s> Why would you like to require such an escaping?  </s>
+<s> Liebe Gruesse/Regards, DI Gregor Karlinger Phone +43 316 873 5541 Institute for Applied Information Processing and Communications Austria  </s>
+<s> There's another issue that seems relevant.  </s>
+<s> RFC 2253 states that strings must be converted to UTF-8 and then the escaping rules must be applied.  </s>
+<s> Do we honour this, or should we UTF-8 decode the RFC2253 string before embedding it in the text node.  </s>
+<s> Essentially, should the final example in RFC 2253 be encoded in XML as: UTF-8 encode and require ASCII escaping of high-bit-set chars: SN=Lu\C4\8Di\C4\87 UTF-8 encode and embed the result directly: SN=Lu??i?? (where ? is a high-bit UTF-8 byte directly embedded) (Here the meaning is confusing because the UTF-8 encoded text will correspond to some other Unicode charactes, e.g. ?) De-UTF-8 and embed the Unicode original: SN=Lu?i? (where ? is the original character) The last seems like the best option to me.  </s>
+<s> Plus require escaping of all ASCII controls.  </s>
+<s> Merlin  </s>
+<s> r/tgindin@us.ibm.com/2001.05.15/07:36:47  </s>
+<s> Baltimore Technologies plc will not be liable for direct, special, indirect or consequential damages arising from alteration of the contents of this message by a third party or as a result of any virus being passed on.  </s>
+<s> In addition, certain Marketing collateral may be added from time to time to promote Baltimore Technologies products, services, Global e-Security or appearance at trade shows and conferences.  </s>
+<s> This footnote confirms that this email message has been swept by Baltimore MIMEsweeper for Content Security threats, including computer viruses.  </s>
+<s> Merlin,  </s>
+<s> Doesn't this mean that you MUST use UTF-8 encoding for the XML document, i. e. that it is impossible to use ASCII or ISO_8859* since you insert a text node (the DN) which characters are Unicode?  </s>
+<s> If so, should we really introduce such a restriction?  </s>
+<s> Liebe Gruesse/Regards, DI Gregor Karlinger Phone +43 316 873 5541 Institute for Applied Information Processing and Communications Austria  </s>
+<s> Hi Gregor, If you choose to write a document using a lossy encoding then all nonrepresentable characters will be corrupt - dnames, key names, signed data, attributes, etc. - I suspect that lost dnames would be the least of your worries.  </s>
+<s> Indeed, if it is reasonable to use a lossy encoding, then it is probably reasonable to assert that any dnames in the signature should be representable in that encoding too.  </s>
+<s> The benefits of encoding dnames in unicode (human readability of signed documents for all, rather than just the US-ASCII) I think far outweigh the alternative.  </s>
+<s> Merlin r/gregor.karlinger@iaik.at/2001.05.15/15:14:22  </s>
+<s> Baltimore Technologies plc will not be liable for direct, special, indirect or consequential damages arising from alteration of the contents of this message by a third party or as a result of any virus being passed on.  </s>
+<s> In addition, certain Marketing collateral may be added from time to time to promote Baltimore Technologies products, services, Global e-Security or appearance at trade shows and conferences.  </s>
+<s> This footnote confirms that this email message has been swept by Baltimore MIMEsweeper for Content Security threats, including computer viruses.  </s>

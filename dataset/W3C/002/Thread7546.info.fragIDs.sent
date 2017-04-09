@@ -1,73 +1,73 @@
-Could someone set me straight on whether WebDAV makes any committment about 
-whether I can do a PROPPATCH on a URI for an empty resource? 
-I mean, of 
-course, without an error. 
-Is the proper term 'empty' resource or 'null' resource, by the way? 
-And where is it defined? 
-In RFC 2068? 
-On Tuesday, March 10, 1998 3:50 PM, Jim Davis [SMTP:jdavis@parc.xerox.com] 
-about 
-We don't explicitly permit this operation in the -07 spec. 
-because if you 
-create properties on a null resource, that resource becomes non-null, and 
-then has a body as well. 
-This creates an awkward situation where there is 
-a non-null resource without a content type. 
-To set properties on a null resource, first do a PUT with a Content-Type header and a zero length body, 
-creating a resource with a known content type, and an empty body. 
-Then, perform a PROPPATCH on this empty resource. 
-We've been trying to distinguish between an empty resource (zero length), and a null resource (what happens after a delete). 
-This is not defined primarily to avoid stepping into the pit called "defining the HTTP object model". 
-I don't believe RFC 2068 defines "null" resource. 
-One awkward question that would need to be addressed to define "null resource" is this: since methods are invoked on resources, what entity 
-generates a 404 (Not Found) message for a particular URI when that URI 
-identifies a non-existent (or null) resource? 
-Also, what entity returns a 200 (OK) after a successful DELETE? 
-These are interesting questions, however, I don't think the DA spec. is well-served by trying to answer them, since these answers do not generate extra interoperability. 
-However, I do think that someone should address these concerns, but in a different forum than an interoperability specification. 
-Perhaps Roy Fielding will in his Ph.D. dissertation. 
-- Jim 
-I would like you to clarify this, so there is no doubt. 
-It should be either explicitly forbidden, explicitly allowed ('may'), or explicitly required. 
-At the very least, it should explicitly be left undefined, which 
-would serve as a warning to the cautious not to rely upon it. 
-I had been assuming for weeks that it *was* supported, because LOCK seems to rely on it. 
-My server supports it, and I've written client code that relies on it. 
-Naturally I'll change my code to comply with the standard, but I want the standard to be clear on the point. 
-So. Are you saying that a PROPPATCH on a null resource MUST fail (with a 404)? 
-I would be the first to admint that making such support mandatory would be 
-a burden on implementors, at least those implementing on a file system. 
-It 
-was a pain for me, that's for sure. 
-Another clarifiction question: 6.3 says that a write lock on a null resource makes the resource act "in all ways as a null resource, except that it MUST respond to a PROPFIND request". 
-This raises two questions 
-1. What about the collection that contains it? 
-In particular does the null resource appear in its list of members if one does a PROPFIND of non-zero Depth? 
-2. What about PROPPATCH? 
-Does that work? 
-Oh, and I know it's picky, but shouldn't UNLOCK also be included in the list of requests it must support? 
-yours in seeking clarity 
-Jim 
-Again, my apologies for the slow response. 
-These are excellent questions, thank you for posting them! 
-On Thursday, March 12, 1998 8:52 AM, Jim Davis [SMTP:jdavis@parc.xerox.com] 
-you 
-and 
-is 
-body, 
-which 
-Yes. We need to add language to Section 7.2.1 to explicitly state that a 404 response MUST be returned after performing a PROPPATCH on a null resource. 
-It is my understanding that Yaron is also working on a definition of a null resource for inclusion in the draft to help avoid confusion about what constitutes a null resource. 
-I believe the definition will be mostly operational to avoid some of the definitional difficulties I mentioned in a previous email. 
-be 
-It 
-Sounds like a good reason not to have it in the spec. 
-:-) 
-I just knew questions like this were lurking beneath this seemingly innocent-looking feature :-) 
-Yes, a locked, null resource does appear in the list of members if one does a PROPFIND of non-zero depth on a parent resource, to provide a discovery mechanism to find locked, null resources. 
-Section 6.3 will be amended to explicitly mention this behavior. 
-No, because if you were allowed to PROPPATCH, this would add state to the resource beyond that state automatically created by the LOCK. 
-This non-LOCK-created state should presumably be kept around after an UNLOCK, which is at odds with the current definition that an UNLOCK of a locked null resource reverts the resource back to its null state. 
-Yes. 
-Hopefully yours in providing clarity. 
-- Jim 
+<s> Could someone set me straight on whether WebDAV makes any committment about  </s>
+<s> whether I can do a PROPPATCH on a URI for an empty resource?  </s>
+<s> I mean, of  </s>
+<s> course, without an error.  </s>
+<s> Is the proper term 'empty' resource or 'null' resource, by the way?  </s>
+<s> And where is it defined?  </s>
+<s> In RFC 2068?  </s>
+<s> On Tuesday, March 10, 1998 3:50 PM, Jim Davis [SMTP:jdavis@parc.xerox.com]  </s>
+<s> about  </s>
+<s> We don't explicitly permit this operation in the -07 spec.  </s>
+<s> because if you  </s>
+<s> create properties on a null resource, that resource becomes non-null, and  </s>
+<s> then has a body as well.  </s>
+<s> This creates an awkward situation where there is  </s>
+<s> a non-null resource without a content type.  </s>
+<s> To set properties on a null resource, first do a PUT with a Content-Type header and a zero length body,  </s>
+<s> creating a resource with a known content type, and an empty body.  </s>
+<s> Then, perform a PROPPATCH on this empty resource.  </s>
+<s> We've been trying to distinguish between an empty resource (zero length), and a null resource (what happens after a delete).  </s>
+<s> This is not defined primarily to avoid stepping into the pit called "defining the HTTP object model".  </s>
+<s> I don't believe RFC 2068 defines "null" resource.  </s>
+<s> One awkward question that would need to be addressed to define "null resource" is this: since methods are invoked on resources, what entity  </s>
+<s> generates a 404 (Not Found) message for a particular URI when that URI  </s>
+<s> identifies a non-existent (or null) resource?  </s>
+<s> Also, what entity returns a 200 (OK) after a successful DELETE?  </s>
+<s> These are interesting questions, however, I don't think the DA spec. is well-served by trying to answer them, since these answers do not generate extra interoperability.  </s>
+<s> However, I do think that someone should address these concerns, but in a different forum than an interoperability specification.  </s>
+<s> Perhaps Roy Fielding will in his Ph.D. dissertation.  </s>
+<s> - Jim  </s>
+<s> I would like you to clarify this, so there is no doubt.  </s>
+<s> It should be either explicitly forbidden, explicitly allowed ('may'), or explicitly required.  </s>
+<s> At the very least, it should explicitly be left undefined, which  </s>
+<s> would serve as a warning to the cautious not to rely upon it.  </s>
+<s> I had been assuming for weeks that it *was* supported, because LOCK seems to rely on it.  </s>
+<s> My server supports it, and I've written client code that relies on it.  </s>
+<s> Naturally I'll change my code to comply with the standard, but I want the standard to be clear on the point.  </s>
+<s> So. Are you saying that a PROPPATCH on a null resource MUST fail (with a 404)?  </s>
+<s> I would be the first to admint that making such support mandatory would be  </s>
+<s> a burden on implementors, at least those implementing on a file system.  </s>
+<s> It  </s>
+<s> was a pain for me, that's for sure.  </s>
+<s> Another clarifiction question: 6.3 says that a write lock on a null resource makes the resource act "in all ways as a null resource, except that it MUST respond to a PROPFIND request".  </s>
+<s> This raises two questions  </s>
+<s> 1. What about the collection that contains it?  </s>
+<s> In particular does the null resource appear in its list of members if one does a PROPFIND of non-zero Depth?  </s>
+<s> 2. What about PROPPATCH?  </s>
+<s> Does that work?  </s>
+<s> Oh, and I know it's picky, but shouldn't UNLOCK also be included in the list of requests it must support?  </s>
+<s> yours in seeking clarity  </s>
+<s> Jim  </s>
+<s> Again, my apologies for the slow response.  </s>
+<s> These are excellent questions, thank you for posting them!  </s>
+<s> On Thursday, March 12, 1998 8:52 AM, Jim Davis [SMTP:jdavis@parc.xerox.com]  </s>
+<s> you  </s>
+<s> and  </s>
+<s> is  </s>
+<s> body,  </s>
+<s> which  </s>
+<s> Yes. We need to add language to Section 7.2.1 to explicitly state that a 404 response MUST be returned after performing a PROPPATCH on a null resource.  </s>
+<s> It is my understanding that Yaron is also working on a definition of a null resource for inclusion in the draft to help avoid confusion about what constitutes a null resource.  </s>
+<s> I believe the definition will be mostly operational to avoid some of the definitional difficulties I mentioned in a previous email.  </s>
+<s> be  </s>
+<s> It  </s>
+<s> Sounds like a good reason not to have it in the spec.  </s>
+<s> :-)  </s>
+<s> I just knew questions like this were lurking beneath this seemingly innocent-looking feature :-)  </s>
+<s> Yes, a locked, null resource does appear in the list of members if one does a PROPFIND of non-zero depth on a parent resource, to provide a discovery mechanism to find locked, null resources.  </s>
+<s> Section 6.3 will be amended to explicitly mention this behavior.  </s>
+<s> No, because if you were allowed to PROPPATCH, this would add state to the resource beyond that state automatically created by the LOCK.  </s>
+<s> This non-LOCK-created state should presumably be kept around after an UNLOCK, which is at odds with the current definition that an UNLOCK of a locked null resource reverts the resource back to its null state.  </s>
+<s> Yes.  </s>
+<s> Hopefully yours in providing clarity.  </s>
+<s> - Jim  </s>

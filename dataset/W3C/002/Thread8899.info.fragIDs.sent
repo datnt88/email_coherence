@@ -1,78 +1,78 @@
-This should be fixed in XML Schema, not in Signatures, I guess. 
-On the other hand, it's not a bad idea to have line breaks in the Base64, just streaming out something as a very long line (e.g. 1000000 chars) doesn't seem like a good idea. 
-It will cause problems sooner or later. 
-For example, SOAP may be used over mail, and what happens then? 
-Regards, Martin. 
-Folks-- Currently, XMLDSIG references RFC 2045 (one of the MIME RFCs) for a definition of Base64 encoding/decoding. 
-(See section 6.8 of [1].) It has been pointed out to me that RFC 2045 *requires* that Base64-encoded content have line breaks at least every 76 characters. 
-Paragraph 6 reads as follows: The encoded output stream must be represented in lines of no more than 76 characters each. 
-All line breaks or other characters not found in Table 1 must be ignored by decoding software. 
-In base64 data, characters other than those in Table 1, line breaks, and other white space probably indicate a transmission error, about which a warning message or even a message rejection might be appropriate under some circumstances. 
-I can't see any reason for XMLDSIG to inherit a line-length limitation that appears to have been there for mail-specific reasons. 
-The SOAP 1.1 submission [2] removes the line length limitation in their use of Base64; Section 5.4.3 of SOAP reads as follows: The recommended representation of an opaque array of bytes is the 'base64' encoding defined in XML Schemas [10][11], which uses the base64 encoding algorithm defined in 2045 [13]. 
-However, the line length restrictions that normally apply to base64 data in MIME do not apply in SOAP. 
-A "SOAP-ENC:base64" subtype is supplied for use with SOAP. 
-I propose that XMLDSIG adopt language similar to SOAP and not require applications to insert line breaks at least every 76 characters. 
-(Conforming implementation will still accept line-limited encodings since they have to ignore any found whitespace in the Base64 string.) --bal [1] http://www.ietf.org/rfc/rfc2045.txt 
-[2] http://www.w3.org/TR/SOAP/ 
-Given the way we are going, this line break requirement should be removed as Brian suggests. 
-Afterall, Canonical XML removes all new lines inside tags so, unless you have new lines in content, you get one line out no matter how long. 
-I belive the email limit is 1000 characters (actually 998 not counter the CR-LF) but in any case if you try to mail "text" that doesn't meet the requirements of your email transport, it just gets QuotedPrintable or Base64 encoded. 
-(Yes, a 10,000 character long line of "Base64" would get Base64'ed a second level if sent over normal text email.) Thanks, Donald From: Martin Duerst duerst@w3.org 
-Message-Id: 4.2.0.58.J.20010523094402.03db42d0@sh.w3.mag.keio.ac.jp Date: Wed, 23 May 2001 09:46:52 +0900 corp.microsoft.com 
-Folks-- Currently, XMLDSIG references RFC 2045 (one of the MIME RFCs) for a definition of Base64 encoding/decoding. 
-(See section 6.8 of [1].) It has been pointed out to me that RFC 2045 *requires* that Base64-encoded content have line breaks at least every 76 characters. 
-Paragraph 6 reads as follows: The encoded output stream must be represented in lines of no more than 76 characters each. 
-All line breaks or other characters not found in Table 1 must be ignored by decoding software. 
-In base64 data, characters other than those in Table 1, line breaks, and other white space probably indicate a transmission error, about which a warning message or even a message rejection might be appropriate under some circumstances. 
-I can't see any reason for XMLDSIG to inherit a line-length limitation that appears to have been there for mail-specific reasons. 
-The SOAP 1.1 submission [2] removes the line length limitation in their use of Base64; Section 5.4.3 of SOAP reads as follows: The recommended representation of an opaque array of bytes is the 'base64' encoding defined in XML Schemas [10][11], which uses the base64 encoding algorithm defined in 2045 [13]. 
-However, the line length restrictions that normally apply to base64 data in MIME do not apply in SOAP. 
-A "SOAP-ENC:base64" subtype is supplied for use with SOAP. 
-I propose that XMLDSIG adopt language similar to SOAP and not require applications to insert line breaks at least every 76 characters. 
-(Conforming implementation will still accept line-limited encodings since they have to ignore any found whitespace in the Base64 string.) --bal [1] http://www.ietf.org/rfc/rfc2045.txt 
-[2] http://www.w3.org/TR/SOAP/ 
-I agree with Brian and Donald that we should remove the 76 character linebreak requirement. 
-r/dee3@torque.pothole.com/2001.05.22/22:41:36 Baltimore Technologies plc will not be liable for direct, special, indirect or consequential damages arising from alteration of the contents of this message by a third party or as a result of any virus being passed on. 
-In addition, certain Marketing collateral may be added from time to time to promote Baltimore Technologies products, services, Global e-Security or appearance at trade shows and conferences. 
-This footnote confirms that this email message has been swept by Baltimore MIMEsweeper for Content Security threats, including computer viruses. 
-After seeing all the discussion, I'm okay with long lines as such. 
-But there is still the problem that XML Schema doesn't allow that, because it references RFC 2045 directly, without anything else. 
-This is a problem on both sides: - XML Signature cannot use the XML Schema datatype as it stands (and extension or restriction won't work here) - XML Schema should consider changing their definition of Base64 to include longer lines, because it seems that that's widely used in practice. 
-Whether that can be done as a corrigendum to Schema 1.0 or whether that has to go into Schema 1.1, I don't know. 
-I have copied www-xml-schema-comments. 
-Schema experts, please see the other messages in this thread (http://lists.w3.org/Archives/Public/w3c-ietf-xmldsig/2001AprJun/0183.html). 
-Regards, Martin. 
-Folks-- Currently, XMLDSIG references RFC 2045 (one of the MIME RFCs) for a definition of Base64 encoding/decoding. 
-(See section 6.8 of [1].) It has been pointed out to me that RFC 2045 *requires* that Base64-encoded content have line breaks at least every 76 characters. 
-Paragraph 6 reads as follows: The encoded output stream must be represented in lines of no more than 76 characters each. 
-All line breaks or other characters not found in Table 1 must be ignored by decoding software. 
-In base64 data, characters other than those in Table 1, line breaks, and other white space probably indicate a transmission error, about which a warning message or even a message rejection might be appropriate under some circumstances. 
-I can't see any reason for XMLDSIG to inherit a line-length limitation that appears to have been there for mail-specific reasons. 
-The SOAP 1.1 submission [2] removes the line length limitation in their use of Base64; Section 5.4.3 of SOAP reads as follows: The recommended representation of an opaque array of bytes is the 'base64' encoding defined in XML Schemas [10][11], which uses the base64 encoding algorithm defined in 2045 [13]. 
-However, the line length restrictions that normally apply to base64 data in MIME do not apply in SOAP. 
-A "SOAP-ENC:base64" subtype is supplied for use with SOAP. 
-I propose that XMLDSIG adopt language similar to SOAP and not require applications to insert line breaks at least every 76 characters. 
-(Conforming implementation will still accept line-limited encodings since they have to ignore any found whitespace in the Base64 string.) --bal [1] http://www.ietf.org/rfc/rfc2045.txt 
-[2] http://www.w3.org/TR/SOAP/ 
-I spoke to Michael Sperberg-McQueen about this (as co-Chair of Schema, and as Chair of XMLCG on the the canonical definition of DTD [a]) at EuropeXML and he agreed to round up a response on both questions. 
-[a] http://lists.w3.org/Archives/Public/w3c-ietf-xmldsig/2001AprJun/0103.html 
-Michael, as discussed, can/should [b] be read as defined by SOAP? 
-The SOAP 1.1 submission [2] removes the line length limitation in their use of Base64; Section 5.4.3 of SOAP reads as follows: The recommended representation of an opaque array of bytes is the 'base64' encoding defined in XML Schemas [10][11], which uses the base64 encoding algorithm defined in 2045 [13]. 
-However, the line length restrictions that normally apply to base64 data in MIME do not apply in SOAP. 
-A "SOAP-ENC:base64" subtype is supplied for use with SOAP. 
-[b] http://www.w3.org/TR/xmlschema-2/#base64Binary 
-Folks-- Currently, XMLDSIG references RFC 2045 (one of the MIME RFCs) for a definition of Base64 encoding/decoding. 
-(See section 6.8 of [1].) It has been pointed out to me that RFC 2045 *requires* that Base64-encoded content have line breaks at least every 76 characters. 
-Paragraph 6 reads as follows: The encoded output stream must be represented in lines of no more than 76 characters each. 
-All line breaks or other characters not found in Table 1 must be ignored by decoding software. 
-In base64 data, characters other than those in Table 1, line breaks, and other white space probably indicate a transmission error, about which a warning message or even a message rejection might be appropriate under some circumstances. 
-I can't see any reason for XMLDSIG to inherit a line-length limitation that appears to have been there for mail-specific reasons. 
-The SOAP 1.1 submission [2] removes the line length limitation in their use of Base64; Section 5.4.3 of SOAP reads as follows: The recommended representation of an opaque array of bytes is the 'base64' encoding defined in XML Schemas [10][11], which uses the base64 encoding algorithm defined in 2045 [13]. 
-However, the line length restrictions that normally apply to base64 data in MIME do not apply in SOAP. 
-A "SOAP-ENC:base64" subtype is supplied for use with SOAP. 
-I propose that XMLDSIG adopt language similar to SOAP and not require applications to insert line breaks at least every 76 characters. 
-(Conforming implementation will still accept line-limited encodings since they have to ignore any found whitespace in the Base64 string.) --bal [1] http://www.ietf.org/rfc/rfc2045.txt 
-[2] http://www.w3.org/TR/SOAP/ 
-Joseph Reagle Jr. http://www.w3.org/People/Reagle/ W3C Policy Analyst mailto:reagle@w3.org 
-IETF/W3C XML-Signature Co-Chair http://www.w3.org/Signature W3C XML Encryption Chair http://www.w3.org/Encryption/2001/ 
+<s> This should be fixed in XML Schema, not in Signatures, I guess.  </s>
+<s> On the other hand, it's not a bad idea to have line breaks in the Base64, just streaming out something as a very long line (e.g. 1000000 chars) doesn't seem like a good idea.  </s>
+<s> It will cause problems sooner or later.  </s>
+<s> For example, SOAP may be used over mail, and what happens then?  </s>
+<s> Regards, Martin.  </s>
+<s> Folks-- Currently, XMLDSIG references RFC 2045 (one of the MIME RFCs) for a definition of Base64 encoding/decoding.  </s>
+<s> (See section 6.8 of [1].) It has been pointed out to me that RFC 2045 *requires* that Base64-encoded content have line breaks at least every 76 characters.  </s>
+<s> Paragraph 6 reads as follows: The encoded output stream must be represented in lines of no more than 76 characters each.  </s>
+<s> All line breaks or other characters not found in Table 1 must be ignored by decoding software.  </s>
+<s> In base64 data, characters other than those in Table 1, line breaks, and other white space probably indicate a transmission error, about which a warning message or even a message rejection might be appropriate under some circumstances.  </s>
+<s> I can't see any reason for XMLDSIG to inherit a line-length limitation that appears to have been there for mail-specific reasons.  </s>
+<s> The SOAP 1.1 submission [2] removes the line length limitation in their use of Base64; Section 5.4.3 of SOAP reads as follows: The recommended representation of an opaque array of bytes is the 'base64' encoding defined in XML Schemas [10][11], which uses the base64 encoding algorithm defined in 2045 [13].  </s>
+<s> However, the line length restrictions that normally apply to base64 data in MIME do not apply in SOAP.  </s>
+<s> A "SOAP-ENC:base64" subtype is supplied for use with SOAP.  </s>
+<s> I propose that XMLDSIG adopt language similar to SOAP and not require applications to insert line breaks at least every 76 characters.  </s>
+<s> (Conforming implementation will still accept line-limited encodings since they have to ignore any found whitespace in the Base64 string.) --bal [1] http://www.ietf.org/rfc/rfc2045.txt  </s>
+<s> [2] http://www.w3.org/TR/SOAP/  </s>
+<s> Given the way we are going, this line break requirement should be removed as Brian suggests.  </s>
+<s> Afterall, Canonical XML removes all new lines inside tags so, unless you have new lines in content, you get one line out no matter how long.  </s>
+<s> I belive the email limit is 1000 characters (actually 998 not counter the CR-LF) but in any case if you try to mail "text" that doesn't meet the requirements of your email transport, it just gets QuotedPrintable or Base64 encoded.  </s>
+<s> (Yes, a 10,000 character long line of "Base64" would get Base64'ed a second level if sent over normal text email.) Thanks, Donald From: Martin Duerst duerst@w3.org  </s>
+<s> Message-Id: 4.2.0.58.J.20010523094402.03db42d0@sh.w3.mag.keio.ac.jp Date: Wed, 23 May 2001 09:46:52 +0900 corp.microsoft.com  </s>
+<s> Folks-- Currently, XMLDSIG references RFC 2045 (one of the MIME RFCs) for a definition of Base64 encoding/decoding.  </s>
+<s> (See section 6.8 of [1].) It has been pointed out to me that RFC 2045 *requires* that Base64-encoded content have line breaks at least every 76 characters.  </s>
+<s> Paragraph 6 reads as follows: The encoded output stream must be represented in lines of no more than 76 characters each.  </s>
+<s> All line breaks or other characters not found in Table 1 must be ignored by decoding software.  </s>
+<s> In base64 data, characters other than those in Table 1, line breaks, and other white space probably indicate a transmission error, about which a warning message or even a message rejection might be appropriate under some circumstances.  </s>
+<s> I can't see any reason for XMLDSIG to inherit a line-length limitation that appears to have been there for mail-specific reasons.  </s>
+<s> The SOAP 1.1 submission [2] removes the line length limitation in their use of Base64; Section 5.4.3 of SOAP reads as follows: The recommended representation of an opaque array of bytes is the 'base64' encoding defined in XML Schemas [10][11], which uses the base64 encoding algorithm defined in 2045 [13].  </s>
+<s> However, the line length restrictions that normally apply to base64 data in MIME do not apply in SOAP.  </s>
+<s> A "SOAP-ENC:base64" subtype is supplied for use with SOAP.  </s>
+<s> I propose that XMLDSIG adopt language similar to SOAP and not require applications to insert line breaks at least every 76 characters.  </s>
+<s> (Conforming implementation will still accept line-limited encodings since they have to ignore any found whitespace in the Base64 string.) --bal [1] http://www.ietf.org/rfc/rfc2045.txt  </s>
+<s> [2] http://www.w3.org/TR/SOAP/  </s>
+<s> I agree with Brian and Donald that we should remove the 76 character linebreak requirement.  </s>
+<s> r/dee3@torque.pothole.com/2001.05.22/22:41:36 Baltimore Technologies plc will not be liable for direct, special, indirect or consequential damages arising from alteration of the contents of this message by a third party or as a result of any virus being passed on.  </s>
+<s> In addition, certain Marketing collateral may be added from time to time to promote Baltimore Technologies products, services, Global e-Security or appearance at trade shows and conferences.  </s>
+<s> This footnote confirms that this email message has been swept by Baltimore MIMEsweeper for Content Security threats, including computer viruses.  </s>
+<s> After seeing all the discussion, I'm okay with long lines as such.  </s>
+<s> But there is still the problem that XML Schema doesn't allow that, because it references RFC 2045 directly, without anything else.  </s>
+<s> This is a problem on both sides: - XML Signature cannot use the XML Schema datatype as it stands (and extension or restriction won't work here) - XML Schema should consider changing their definition of Base64 to include longer lines, because it seems that that's widely used in practice.  </s>
+<s> Whether that can be done as a corrigendum to Schema 1.0 or whether that has to go into Schema 1.1, I don't know.  </s>
+<s> I have copied www-xml-schema-comments.  </s>
+<s> Schema experts, please see the other messages in this thread (http://lists.w3.org/Archives/Public/w3c-ietf-xmldsig/2001AprJun/0183.html).  </s>
+<s> Regards, Martin.  </s>
+<s> Folks-- Currently, XMLDSIG references RFC 2045 (one of the MIME RFCs) for a definition of Base64 encoding/decoding.  </s>
+<s> (See section 6.8 of [1].) It has been pointed out to me that RFC 2045 *requires* that Base64-encoded content have line breaks at least every 76 characters.  </s>
+<s> Paragraph 6 reads as follows: The encoded output stream must be represented in lines of no more than 76 characters each.  </s>
+<s> All line breaks or other characters not found in Table 1 must be ignored by decoding software.  </s>
+<s> In base64 data, characters other than those in Table 1, line breaks, and other white space probably indicate a transmission error, about which a warning message or even a message rejection might be appropriate under some circumstances.  </s>
+<s> I can't see any reason for XMLDSIG to inherit a line-length limitation that appears to have been there for mail-specific reasons.  </s>
+<s> The SOAP 1.1 submission [2] removes the line length limitation in their use of Base64; Section 5.4.3 of SOAP reads as follows: The recommended representation of an opaque array of bytes is the 'base64' encoding defined in XML Schemas [10][11], which uses the base64 encoding algorithm defined in 2045 [13].  </s>
+<s> However, the line length restrictions that normally apply to base64 data in MIME do not apply in SOAP.  </s>
+<s> A "SOAP-ENC:base64" subtype is supplied for use with SOAP.  </s>
+<s> I propose that XMLDSIG adopt language similar to SOAP and not require applications to insert line breaks at least every 76 characters.  </s>
+<s> (Conforming implementation will still accept line-limited encodings since they have to ignore any found whitespace in the Base64 string.) --bal [1] http://www.ietf.org/rfc/rfc2045.txt  </s>
+<s> [2] http://www.w3.org/TR/SOAP/  </s>
+<s> I spoke to Michael Sperberg-McQueen about this (as co-Chair of Schema, and as Chair of XMLCG on the the canonical definition of DTD [a]) at EuropeXML and he agreed to round up a response on both questions.  </s>
+<s> [a] http://lists.w3.org/Archives/Public/w3c-ietf-xmldsig/2001AprJun/0103.html  </s>
+<s> Michael, as discussed, can/should [b] be read as defined by SOAP?  </s>
+<s> The SOAP 1.1 submission [2] removes the line length limitation in their use of Base64; Section 5.4.3 of SOAP reads as follows: The recommended representation of an opaque array of bytes is the 'base64' encoding defined in XML Schemas [10][11], which uses the base64 encoding algorithm defined in 2045 [13].  </s>
+<s> However, the line length restrictions that normally apply to base64 data in MIME do not apply in SOAP.  </s>
+<s> A "SOAP-ENC:base64" subtype is supplied for use with SOAP.  </s>
+<s> [b] http://www.w3.org/TR/xmlschema-2/#base64Binary  </s>
+<s> Folks-- Currently, XMLDSIG references RFC 2045 (one of the MIME RFCs) for a definition of Base64 encoding/decoding.  </s>
+<s> (See section 6.8 of [1].) It has been pointed out to me that RFC 2045 *requires* that Base64-encoded content have line breaks at least every 76 characters.  </s>
+<s> Paragraph 6 reads as follows: The encoded output stream must be represented in lines of no more than 76 characters each.  </s>
+<s> All line breaks or other characters not found in Table 1 must be ignored by decoding software.  </s>
+<s> In base64 data, characters other than those in Table 1, line breaks, and other white space probably indicate a transmission error, about which a warning message or even a message rejection might be appropriate under some circumstances.  </s>
+<s> I can't see any reason for XMLDSIG to inherit a line-length limitation that appears to have been there for mail-specific reasons.  </s>
+<s> The SOAP 1.1 submission [2] removes the line length limitation in their use of Base64; Section 5.4.3 of SOAP reads as follows: The recommended representation of an opaque array of bytes is the 'base64' encoding defined in XML Schemas [10][11], which uses the base64 encoding algorithm defined in 2045 [13].  </s>
+<s> However, the line length restrictions that normally apply to base64 data in MIME do not apply in SOAP.  </s>
+<s> A "SOAP-ENC:base64" subtype is supplied for use with SOAP.  </s>
+<s> I propose that XMLDSIG adopt language similar to SOAP and not require applications to insert line breaks at least every 76 characters.  </s>
+<s> (Conforming implementation will still accept line-limited encodings since they have to ignore any found whitespace in the Base64 string.) --bal [1] http://www.ietf.org/rfc/rfc2045.txt  </s>
+<s> [2] http://www.w3.org/TR/SOAP/  </s>
+<s> Joseph Reagle Jr. http://www.w3.org/People/Reagle/ W3C Policy Analyst mailto:reagle@w3.org  </s>
+<s> IETF/W3C XML-Signature Co-Chair http://www.w3.org/Signature W3C XML Encryption Chair http://www.w3.org/Encryption/2001/  </s>

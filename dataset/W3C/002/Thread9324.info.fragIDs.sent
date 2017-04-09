@@ -1,79 +1,79 @@
-Art Barstow said: [Brian McBride] 
-Someone, I think it might have been Graham, suggested recently that attributes in the xml namespace should not generate properties. 
-Any thoughts? 
-[Jan Grant] 
-This looks like it might be a good idea; it occurred to me too and I remember someone mentioning it, but couldn't find the message when I went looking for it. 
-[Art Barstow] 
-Why would it be a good idea to not generate triples for these attributes? 
-It seems like the language should have as few execeptions as possible. 
-I worried about that too. 
-But there are some current facts that we can't ignore: 0) If you attempt to simply apply RDF rules to the current xml:base and xml:lang, you get nonsense. 
-1) It is quite possible that future working groups will discover general 
-needs, such as setting base URIs, and propose solutions to those problems. 
-We can't anticipate how many of those will happen in the future. 
-"Not many, but probably some" is all I would be willing to venture. 
-2) It is easy for those groups to propose those solutions in arbitrary XML, 
-and to specify rules like "applies to all contained content" (which both xml:base and xml:lang do). 
-3) All of the above operates in the XML syntax domain. 
-Defining a property in RDF whose meaning is "applies to all contained content in XML serialization" is ... non-trivial. 
-Setting a requirement on all future groups that any new entries in the xml namespace must fit the current RDF syntax is a non-starter - they are doing XML, not RDF. 
-So, It seems to me that things making it into the xml namespace are going to be considered special, and of enough importance that all XML processors going forward are expected to adopt them. 
-RDF's syntax convention is there so parsers can do something reasonable with stuff they know nothing about. 
-The special case rules need to take precedence over the general case. 
-Change the 'attributes in the xml namespace shall not generate triples' to 'unknown attributes...' and I'm OK with it. 
-Regards, Ron Daniel Jr. Standards Architect Visit www.interwoven.com 
-Moving Business to the Web In fact, this is my biggest concern about RDF, based on my experiences so far. 
-It is VERY hard to hack in little extensions in a way that makes sense according to RDF's model. 
-XML is pretty easy, the RDF syntax conventions are not obvious to the average (or even above-average) production programmer. 
-They see a need, they hack a new element or attribute into the file format, and they are done. 
-Too bad it breaks somebody else's stuff later down the line. 
-In today's conference call, Aaron pointed out that the XML Base spec[BASE] states that it is not retroactive, it is something that developers of new XML formats have to decide whether to use. 
-More specifically, it says: The deployment of XML Base is through normative reference by new specifications [...] The behavior of xml:base attributes in applications based on specifications that do not have direct or indirect normative reference to XML Base is undefined. 
-Our Charter[CHART] says that "The RDF Core WG is neither chartered to develop a new RDF syntax, nor to reformulate the RDF model". 
-It also says that "Backwards compatibility with existing RDF applications is a priority for the RDF Core Working Group". 
-Given those statements, it is pretty clear that the WG has to leave xml:base untouched for now. 
-I suggest a resolution such as: On 2001-06-?? the WG decided that the behavior of the xml:base attribute must remain undefined for the 1.0 RDF Model and Syntax specification. 
-Creators of documents following the 1.0 RDF syntax SHOULD NOT use the xml:base attribute. 
-Those of us who would like to see it available for use in RDF will have to do it somewhere other than in the syntax part of a clarified M&amp;S spec. 
-Regards, Ron [BASE] http://www.w3.org/TR/xmlbase/ [CHART] http://www.w3.org/2001/sw/RDFCoreWGCharter 
-Well said... 
-Seconded. 
-If the group agrees to this, please include the justification above in any record of the decision too. 
-Dan Connolly, W3C http://www.w3.org/People/Connolly/ 
-I've become more sympathetic to this view over the week, and feel I may have been over enthusiastic for adding xml:base support during last week's call. 
-That said, I remain very concerned about the deployment implications should we say that the interaction of xml:base and rdf:RDF be 'undefined', specifically in mixed-namespace XML documents. 
-The M&amp;S syntax defines some XML structures that can be used either stand-alone (with RDF:RDF as the root XML element), or else as part of a larger mixed-namespace document (eg. 
-in HTML/XHTML). 
-In the latter scenario, the RDF syntax specification has to play well with other specs (which may want to or need to use xml:base; XML Protocols for eg. come to mind...). 
-In this situation, I wonder if we might explore the idea of revising our syntax spec so that it distinguishes more clearly between (i) "pure RDF" XML documents and (ii) "mixed in" documents that include RDF. 
-The former we have complete control over; the latter are composed according to two or more specs. 
-I would be happy outlawing xml:base for (i), but in the context of (ii) we have to accept that xml:base is likely to be used: these things are beyond our control. 
-TimBL has also (@@ref) previously raised the need for more clarity regarding the meaning of an XML document that embeds RDF down inside some other XML elements (eg: in html/head or html/body/quoted...), so there may be other reasons for sharpening this distinction. 
-If we simply say "don't use xml:base" this could be taken as implicitly telling implementors never to use RDF in a mixed-namespace context since its interaction with other namespaces in the same doc is undefined. 
-If the latter is what we mean, I'd like to say that explicitly... Dan 
-My last word on this, I promise. 
-I'd rather put the energy into something more productive (!) 
-However, we ARE clearing up issues on rdf syntax, and there has been some (radical) discussion about changing the RDF model, some of which has rightly been punted to the "for RDF 2" pile. 
-I wasn't proposing a new syntax (not really, especially since the grammar of M+S section 6 is far from normative) nor a change to the model, since xml:base wouldn't operate at that level. 
-RDF documents without xml:base are interpreted as always by old and new (post-revision) parsers. 
-RDF documents with xml:base are interpreted correctly by new parsers. 
-RDF documents with xml:base are interpreted incorrectly by old parsers. 
-This is breaking backwards compatibility, true. 
-However, from a pragmatic point of view, the outcomes of our presenting test cases to this list give rise to the following (I think, fair) observations: 1. 
-No two existing RDF parsers actually agree on what some quite simple RDF documents "mean" in terms of triples emitted. 
-2. By specifying correct behaviour with test cases, we're breaking "backwards (in)compatibility" in those parsers anyway, since they have to change their behaviour. 
-In other words, I'm inclined to consider recourse to BC concerns to be somewhat spurious in this case. 
-I've already said everything else I have to say about this: paragraph 204 of M+S talks about resolving absolute URIs relative to the base URI of the document containing the RDF, so I suppose if (say) xhtml adopts xml-base (which I'm led to believe is not guaranteed(?)) then I could always wrap my embedded RDF in a set of xhtml tags with an xml:base on them (if that proves important). 
-Since we've got somewhere fixed to put our test cases now, I don't actually _need_ this functionality to actually prepare working TCs any more. 
-And since I try to stay as far away from RDF syntax as possible during my day job, I'd be happy with Ron's proposal. 
-I just want to reiterate my objection to the BC-based arguments given here. 
-jan jan grant, ILRT, University of Bristol. 
-http://www.ilrt.bris.ac.uk/ YKYBPTMRogueW... you try to move diagonally in vi. 
-Agreed. 
-I think this was the meaning of my garbled comments during the conf call a couple of weeks back. 
-Surely, XML:Base will come at us as part of the underlying XML base even though we can argue against recommending it for stand-alone RDF. 
-I wouldn't vote for the last option if it denies embedding in a `mixed-namespace context'. 
-We do need to recognize those things which are `beyond our control'. 
-Martyn Horner martyn.horner@profium.com 
-Profium (former name Pro Solutions), Les Espaces de Sophia, Immeuble Delta, B.P. 037, F-06901 Sophia-Antipolis, France Mob. 
-+33 (0)6.21.01.54.56 Internet: http://www.profium.com 
+<s> Art Barstow said: [Brian McBride]  </s>
+<s> Someone, I think it might have been Graham, suggested recently that attributes in the xml namespace should not generate properties.  </s>
+<s> Any thoughts?  </s>
+<s> [Jan Grant]  </s>
+<s> This looks like it might be a good idea; it occurred to me too and I remember someone mentioning it, but couldn't find the message when I went looking for it.  </s>
+<s> [Art Barstow]  </s>
+<s> Why would it be a good idea to not generate triples for these attributes?  </s>
+<s> It seems like the language should have as few execeptions as possible.  </s>
+<s> I worried about that too.  </s>
+<s> But there are some current facts that we can't ignore: 0) If you attempt to simply apply RDF rules to the current xml:base and xml:lang, you get nonsense.  </s>
+<s> 1) It is quite possible that future working groups will discover general  </s>
+<s> needs, such as setting base URIs, and propose solutions to those problems.  </s>
+<s> We can't anticipate how many of those will happen in the future.  </s>
+<s> "Not many, but probably some" is all I would be willing to venture.  </s>
+<s> 2) It is easy for those groups to propose those solutions in arbitrary XML,  </s>
+<s> and to specify rules like "applies to all contained content" (which both xml:base and xml:lang do).  </s>
+<s> 3) All of the above operates in the XML syntax domain.  </s>
+<s> Defining a property in RDF whose meaning is "applies to all contained content in XML serialization" is ... non-trivial.  </s>
+<s> Setting a requirement on all future groups that any new entries in the xml namespace must fit the current RDF syntax is a non-starter - they are doing XML, not RDF.  </s>
+<s> So, It seems to me that things making it into the xml namespace are going to be considered special, and of enough importance that all XML processors going forward are expected to adopt them.  </s>
+<s> RDF's syntax convention is there so parsers can do something reasonable with stuff they know nothing about.  </s>
+<s> The special case rules need to take precedence over the general case.  </s>
+<s> Change the 'attributes in the xml namespace shall not generate triples' to 'unknown attributes...' and I'm OK with it.  </s>
+<s> Regards, Ron Daniel Jr. Standards Architect Visit www.interwoven.com  </s>
+<s> Moving Business to the Web In fact, this is my biggest concern about RDF, based on my experiences so far.  </s>
+<s> It is VERY hard to hack in little extensions in a way that makes sense according to RDF's model.  </s>
+<s> XML is pretty easy, the RDF syntax conventions are not obvious to the average (or even above-average) production programmer.  </s>
+<s> They see a need, they hack a new element or attribute into the file format, and they are done.  </s>
+<s> Too bad it breaks somebody else's stuff later down the line.  </s>
+<s> In today's conference call, Aaron pointed out that the XML Base spec[BASE] states that it is not retroactive, it is something that developers of new XML formats have to decide whether to use.  </s>
+<s> More specifically, it says: The deployment of XML Base is through normative reference by new specifications [...] The behavior of xml:base attributes in applications based on specifications that do not have direct or indirect normative reference to XML Base is undefined.  </s>
+<s> Our Charter[CHART] says that "The RDF Core WG is neither chartered to develop a new RDF syntax, nor to reformulate the RDF model".  </s>
+<s> It also says that "Backwards compatibility with existing RDF applications is a priority for the RDF Core Working Group".  </s>
+<s> Given those statements, it is pretty clear that the WG has to leave xml:base untouched for now.  </s>
+<s> I suggest a resolution such as: On 2001-06-?? the WG decided that the behavior of the xml:base attribute must remain undefined for the 1.0 RDF Model and Syntax specification.  </s>
+<s> Creators of documents following the 1.0 RDF syntax SHOULD NOT use the xml:base attribute.  </s>
+<s> Those of us who would like to see it available for use in RDF will have to do it somewhere other than in the syntax part of a clarified M&amp;S spec.  </s>
+<s> Regards, Ron [BASE] http://www.w3.org/TR/xmlbase/ [CHART] http://www.w3.org/2001/sw/RDFCoreWGCharter  </s>
+<s> Well said...  </s>
+<s> Seconded.  </s>
+<s> If the group agrees to this, please include the justification above in any record of the decision too.  </s>
+<s> Dan Connolly, W3C http://www.w3.org/People/Connolly/  </s>
+<s> I've become more sympathetic to this view over the week, and feel I may have been over enthusiastic for adding xml:base support during last week's call.  </s>
+<s> That said, I remain very concerned about the deployment implications should we say that the interaction of xml:base and rdf:RDF be 'undefined', specifically in mixed-namespace XML documents.  </s>
+<s> The M&amp;S syntax defines some XML structures that can be used either stand-alone (with RDF:RDF as the root XML element), or else as part of a larger mixed-namespace document (eg.  </s>
+<s> in HTML/XHTML).  </s>
+<s> In the latter scenario, the RDF syntax specification has to play well with other specs (which may want to or need to use xml:base; XML Protocols for eg. come to mind...).  </s>
+<s> In this situation, I wonder if we might explore the idea of revising our syntax spec so that it distinguishes more clearly between (i) "pure RDF" XML documents and (ii) "mixed in" documents that include RDF.  </s>
+<s> The former we have complete control over; the latter are composed according to two or more specs.  </s>
+<s> I would be happy outlawing xml:base for (i), but in the context of (ii) we have to accept that xml:base is likely to be used: these things are beyond our control.  </s>
+<s> TimBL has also (@@ref) previously raised the need for more clarity regarding the meaning of an XML document that embeds RDF down inside some other XML elements (eg: in html/head or html/body/quoted...), so there may be other reasons for sharpening this distinction.  </s>
+<s> If we simply say "don't use xml:base" this could be taken as implicitly telling implementors never to use RDF in a mixed-namespace context since its interaction with other namespaces in the same doc is undefined.  </s>
+<s> If the latter is what we mean, I'd like to say that explicitly... Dan  </s>
+<s> My last word on this, I promise.  </s>
+<s> I'd rather put the energy into something more productive (!)  </s>
+<s> However, we ARE clearing up issues on rdf syntax, and there has been some (radical) discussion about changing the RDF model, some of which has rightly been punted to the "for RDF 2" pile.  </s>
+<s> I wasn't proposing a new syntax (not really, especially since the grammar of M+S section 6 is far from normative) nor a change to the model, since xml:base wouldn't operate at that level.  </s>
+<s> RDF documents without xml:base are interpreted as always by old and new (post-revision) parsers.  </s>
+<s> RDF documents with xml:base are interpreted correctly by new parsers.  </s>
+<s> RDF documents with xml:base are interpreted incorrectly by old parsers.  </s>
+<s> This is breaking backwards compatibility, true.  </s>
+<s> However, from a pragmatic point of view, the outcomes of our presenting test cases to this list give rise to the following (I think, fair) observations: 1.  </s>
+<s> No two existing RDF parsers actually agree on what some quite simple RDF documents "mean" in terms of triples emitted.  </s>
+<s> 2. By specifying correct behaviour with test cases, we're breaking "backwards (in)compatibility" in those parsers anyway, since they have to change their behaviour.  </s>
+<s> In other words, I'm inclined to consider recourse to BC concerns to be somewhat spurious in this case.  </s>
+<s> I've already said everything else I have to say about this: paragraph 204 of M+S talks about resolving absolute URIs relative to the base URI of the document containing the RDF, so I suppose if (say) xhtml adopts xml-base (which I'm led to believe is not guaranteed(?)) then I could always wrap my embedded RDF in a set of xhtml tags with an xml:base on them (if that proves important).  </s>
+<s> Since we've got somewhere fixed to put our test cases now, I don't actually _need_ this functionality to actually prepare working TCs any more.  </s>
+<s> And since I try to stay as far away from RDF syntax as possible during my day job, I'd be happy with Ron's proposal.  </s>
+<s> I just want to reiterate my objection to the BC-based arguments given here.  </s>
+<s> jan jan grant, ILRT, University of Bristol.  </s>
+<s> http://www.ilrt.bris.ac.uk/ YKYBPTMRogueW... you try to move diagonally in vi.  </s>
+<s> Agreed.  </s>
+<s> I think this was the meaning of my garbled comments during the conf call a couple of weeks back.  </s>
+<s> Surely, XML:Base will come at us as part of the underlying XML base even though we can argue against recommending it for stand-alone RDF.  </s>
+<s> I wouldn't vote for the last option if it denies embedding in a `mixed-namespace context'.  </s>
+<s> We do need to recognize those things which are `beyond our control'.  </s>
+<s> Martyn Horner martyn.horner@profium.com  </s>
+<s> Profium (former name Pro Solutions), Les Espaces de Sophia, Immeuble Delta, B.P. 037, F-06901 Sophia-Antipolis, France Mob.  </s>
+<s> +33 (0)6.21.01.54.56 Internet: http://www.profium.com  </s>

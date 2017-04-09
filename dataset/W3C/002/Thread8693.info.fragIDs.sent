@@ -1,191 +1,191 @@
-Hi Joseph, 
-Attached is an updated copy of the c14n spec. 
-It has the following changes: 
-1) Encoding of  with  in text nodes. 
-2) Linefeeds for PIs and comments; slight difference from old spec. 
-3) Elimination of comments as default. 
-4) New way for document subsets to handle attributes in xml namespace. 
-5) Better description of node-set processing. 
-6) Additional note about node-set as set of nodes, not list of subtrees. 
-7) Tweaks to document date, Status, Resolutions and Acknowledgements. 
-The Resolutions section contains the few differences between the past c14n and the current c14n. 
-I am away next Monday to Thursday, but on Friday I should be able to send an updated XPath transform that simply refers to the c14n rather than repeating the c14n material. 
-John Boyer Software Development Manager PureEdge Solutions Inc. (formerly UWI.Com) Creating Binding E-Commerce jboyer@PureEdge.com 
-The current XPath canonicalization is starting to look quite nice. 
-However, the namespace canonicalization process is one thing I would like to 
-discuss. 
-My suggestion is that we define the spec to be a combination of the old C14N 
-spec and the current XPath spec, so that we drop namespace rewriting and also drop the requirement for the "namespace::" axis functionality. 
-My main motivation is performance: the namespace axis approach requires one 
-to walk the parent nodes of a element when canonicalizing and keep track of 
-inherited namespaces etc., the old C14N spec is very simple to implement in 
-one single pass. 
-Other motivations are that the original C14N approach (even without 
-namespace rewriting) is simpler to implement and that many XML processors do 
-not implement the namespace axis functionality. 
-This is a part from the sample in [1]: Canonicalized by this suggestion: Canonicalized by the current XPath spec: 
-The idea is that an element always declares only those namespaces that 
-appear on the element itself and on the element's attributes. 
-The default 
-namespace is only declared when the element belongs to the default namespace. 
-No namespace prefix rewriting is necessary. 
-The namespaces can well be declared in the order given in chapter A.4 of [2]. 
-Petteri 
-[1] http://www.w3.org/TR/2000/WD-xml-c14n-20000119.html [2] xml-c14n.htm 
-I need to read the attributes of a element anyway, and I also need to sort 
-them using the attribute name and the namespace uri as sort keys. 
-This is 
-the minimum requirement in all cases. 
-What I would like to avoid is walking the parent elements of a node looking for inherited namespace declarations. 
-Petteri 
-From: David Blondeau [mailto:blondeau@intalio.com] Sent: Monday, June 12, 2000 9:38 PM Subject: Re: Updated c14n Spec Hi Petteri, 
-I agree except the optional XPath expression that in my opinion prevent non-XPath implementation. 
-[move this part] 
-IMO, the namespace axis functionality is really simple to implement using SAX, maybe more complex in DOM, but the attribute values parsing is really not a good option. 
-David 
-I just wanted to show that your suggestion was worst than the one in the draft because you have to be carefull about namespace prefixes used in attributes values. 
-Your suggestion was to put namespaces only when they are used, my question is then: how do you know a prefix is used in an attribute value? 
-For that, you need to know all the prefixes in scope so you need to walk on the tree to get the namespaces prefixes, and then do a really difficult parsing job... No matter how you are doing it, you need all the namespace declarations in scope for each element. 
-The january draft of C14n was easier on this point since it didn't care about prefixes in attribute values. 
-David 
-You assume that the XML document constructor has properly declared all namespaces that appear in XML attribute values. 
-Of course there is nothing an XML processor can do to verify this. 
-A short sample: This is completely valid XML and the namespaces axis of the 'reference' element is empty even if the attribute value refers to a namespace. 
-One does 
-not have to declare the namespace at the 'doc' element level, and if this document was constructed using DOM then the above XML representation would most likely be the result. 
-Petteri 
-From: David Blondeau [mailto:blondeau@intalio.com] Sent: Thursday, June 15, 2000 12:06 AM Subject: Re: Updated c14n Spec 
-Hi Petteri and David, To be honest, my current acceptance of the namespace propagation as done by 
-XPath was not based on simply accepting default behavior. 
-I gave it a very 
-great deal of thought. 
-Moreover, in accepting the current behavior, I was mindful of the desire to perform whole-document serialization in a one-pass 
-fashion, so I would be quite interested to know why you (Petteri) think the 
-XPath version of namespace context identification cannot be serialized in a 
-single pass. 
-To me, this seems to me to be as easy as following the namespace rules in the January c14n spec, which you say can be serialized in 
-a single pass. 
-But before I get into that any further... 
-I would point out that, in David's statement about the January spec being easier because it didn't care about prefixes in attribute values, I believe 
-he means easier than Petteri's suggestion, not easier than the current c14n. 
-The January spec did not care about prefixes in attribute values and did things that sometimes broke them. 
-The new spec does not break them, but it 
-also does not really care about them, i.e. attempt to detect their existence, which would be quite impossible without an application context. 
-In both the January spec and the current specs, namespace prefix references 
-that appear in attribute values or element character content are simply more 
-character data to be written out. 
-Also, Petteri, in the example you gave below, yes it is true that the expr value both is valid XML and does make reference to an undefined namespace prefix. 
-However, an Xpath with an undefined namespace prefix would generate 
-an error within the application attempting to use it. 
-More to the point, though, the example does not seem to be a counterexample of David's point. 
-David's point is about namespaces that are in scope, yet there would be no way to identify that its declaration is needed. 
-In other words, the point is about attribute values that carry XPath expressions that used to work before canonicalization and don't work after canonicalization. 
-It is a non-goal of the current c14n to say d1 and d2 are logically equivalent if and only if c14n(d1)==c14n(d2). 
-However, it is the intent of 
-the current c14n is to say: if c14n(d1)==c14n(d2), then d1 is logically equivalent to d2. 
-Otherwise, there would be no point to c14n, especially for dsig. 
-Let d1 be a document containing a working XPath that no longer works in c14n(d1) because we omitted a namespace declaration that did not appear to be used. 
-Let d2=c14n(d1). 
-Now, clearly c14n(d1) == c14n(d2), so 
-we expect that d1 and d2 are logically equivalent, but they aren't because the Xpath works in d1 but not d2. 
-This is the same argument against namespace prefix rewriting. 
-I will add a section to the appendix to explain 
-why this change was made, too. 
-Despite this problem with your particular proposal, I am quite sympathetic to your cause, Petteri, and thought about other alternatives that would work. 
-Let's begin with just doing something that works for a whole document 
-(sans comments of course). 
-So, ignore the notion of document subsets for a 
-moment. 
-Also, ignore the default namespace declaration for the moment, and 
-let's focus on actual namespace declarations. 
-If a given element and its parent both have the same namespace declared to be equal to the same URI, then the namespace declaration could be omitted from the child. 
-Since we perform a standard depth first descent of the parse tree, this means that we 
-could retain all relevant namespace declarations, but still only use local operations-- we need only consider the namespace context of an element and its parent. 
-The problem is not much harder when you add the complexity of the default namespace declaration. 
-Whether it's empty or not, the namespace context indicates its value in some way, so if the default namespace of an element differs from its parent (whether empty or not), then render a default namespace declaration for the element. 
-The case for document subsets is not much harder, except we would replace the notion of parent with the notion of ancestor *in the node set* with Finally, when dealing with document subsets, one is certainly using XPath, and the problem is not really too hard. 
-For example, given a namespace node 
-N in the resultant node-set, we could do the following: 1) Find the element E that owns N (even if it is not in the node-set, however weird that might be). 
-2) Find the nearest ancestor A of E that is in the node-set. 
-If A doesn't exist, then output N. If A exists in the node-set and it has a namespace node N(A) *that is in the node-set* which declares the same namespace AND assigns it to the same URI, then omit N from the output. 
-Otherwise, output 
-N. So, as you can see, I've been trying to think about getting rid of unnecessary namespace declarations. 
-However, there seems to be enough work 
-involved in trying to figure out whether to print a namespace node (esp. 
-in 
-the document subset case) that it did not seem to worthwhile to complicate the spec. 
-In particular, one must still maintain the whole namespace context for each element as one passes through a document. 
-I will reassert 
-that this can be done in a one-pass fashion given space linear in the size of the namespace context, which should not be a problem even for the most rudimentary of devices capable of processing XML. 
-This is why I've retained 
-the default XPath namespace propagation feature. 
-This is not actually a complete account of my thinking on this issue, but I'll end this now unless there is an expressed need for me to continue. 
-John Boyer Software Development Manager PureEdge Solutions Inc. (formerly UWI.Com) Creating Binding E-Commerce jboyer@PureEdge.com 
-[mailto:w3c-ietf-xmldsig-request@w3.org]On 
-Behalf Of Petteri Stenius You assume that the XML document constructor has properly declared all namespaces that appear in XML attribute values. 
-Of course there is nothing an XML processor can do to verify this. 
-A short sample: This is completely valid XML and the namespaces axis of the 'reference' element is empty even if the attribute value refers to a namespace. 
-One does 
-not have to declare the namespace at the 'doc' element level, and if this document was constructed using DOM then the above XML representation would most likely be the result. 
-Petteri 
------Original Message----- From: David Blondeau [mailto:blondeau@intalio.com] Sent: Thursday, June 15, 2000 12:06 AM Subject: Re: Updated c14n Spec 
-Hi John and Petteri, I just thought to something that annoy me and maybe it was what Petteri was thinking about. 
-With the new c14n draft, the canonicalization of the SignedInfo element is highly context dependant, that is, when generating a signature, you need to know where the Signature element will be in the final document before doing the canonicalization because you need to have the namespaces in scope for the SignedInfo element. 
-This problem is especially visible for enveloped signatures. 
-So you need to put the Signature in the document before doing any canonicalization. 
-I agree with the need of context when doing subset canonicalization but IMO, this is really a problem in the context of Signature generation. 
-With that, a signature cannot be moved without a lot of precaution and creation of composite document can be tricky. 
-This was not the case with the 20000119 draft since an element declared only those namespaces that appear on the element itself and on the element's attributes and then the SignedInfo element was canonicalized the same way wherever the Signature element was in the document.. David 
-by 
-very 
-one-pass 
-the 
-a 
-in 
-believe 
-c14n. 
-it 
-references 
-more 
-generate 
-of 
-so 
-explain 
-document 
-a 
-and 
-we 
-node 
-output 
-work 
-in 
-reassert 
-retained 
-does 
------Original Message----- From: David Blondeau [mailto:blondeau@intalio.com] Sent: Thursday, June 15, 2000 12:06 AM Subject: Re: Updated c14n Spec 
-Hi David, [mailto:w3c-ietf-xmldsig-request@w3.org]On 
-Behalf Of David Blondeau Hi John and Petteri, I just thought to something that annoy me and maybe it was what Petteri was thinking about. 
-With the new c14n draft, the canonicalization of the SignedInfo element is highly context dependant, that is, when generating a signature, you need to know where the Signature element will be in the final document before doing the canonicalization because you need to have the namespaces in scope for the SignedInfo element. 
-The most important thing to realize is that the Signature element is typically placed in the document before any kind of canonicalization occurs. 
-Before the creation of the signature, the Signature element stands as a specification for the signature to be created. 
-This problem is especially visible for enveloped signatures. 
-I do not understand why this problem is more prevalent for enveloped signatures. 
-The term 'enveloped' refers to a property of calculating a DigestValue, whereas the canonicalization of SignedInfo is necessary for the calculation of a SignatureValue. 
-All signatures undergo SignatureValue calculation. 
-So you need to put the Signature in the document before doing any canonicalization. 
-I agree with the need of context when doing subset canonicalization but IMO, this is really a problem in the context of Signature generation. 
-With that, a signature cannot be moved without a lot of precaution and creation of composite document can be tricky. 
-This was not the case with the 20000119 draft since an element declared only those namespaces that appear on the element itself and on the element's attributes and then the SignedInfo element was canonicalized the same way wherever the Signature element was in the document.. Actually, the 20000119 c14n draft has a similar problem in addition to the prior problems we discussed. 
-SignedInfo is a special case that we have grouped into the larger category of what we should be doing when signing an element from a document, e.g. what do we sign when an element has been indicated by URI="#E"? 
-If we cut an element E and then paste it someplace else that has a different namespace context, should the signature break? 
-In general, the answer is that the signature should break because the change of context may change the interpretation of E. Returning to the SignedInfo example, if the dsig namespace is declared as the default for the Signature element, we would expect that default to propagate down to the SignedInfo. 
-If someone changes the dsig namespace URI to point to a newer version of the spec, then the hash on the SignedInfo should break because the signature on SignedInfo is governed by the rules set forth in a spec other than the one indicated by the newer URI. 
-Note that this is in addition to the problem that it is not realistically possible to assess whether an element E is using a namespace declaration. 
-Again, in the case of SignedInfo, it is certainly possible to generate an XPath transform such that the omission of namespace context from SignedInfo would ultimately allow changes to the referenced resource that were not intended by the XPath transform author. 
-Specifically, if the transform tries to omit data based on evaluating a certain expression, then changing the namespace declarations can allow additions to the referenced resource that are omitted (and hence do not break the signature despite the intent of the XPath transform author). 
-Thus, we do not achieve full security unless the namespace declarations used to evaluate transforms and compute DigestValue results is identical to the namespace context used when generating the signature, which means that we have to sign the full namespace context of SignedInfo. 
-In conclusion, it seems that most applications are not going to have a problem with this, and the ones that must move signatures out of the originating document must indeed use more care in pasting the signatures into the same context. 
-Still, this has to be one of the best points of interest raised during this process! 
-John Boyer, Software Development Manager PureEdge Solutions (formerly UWI.Com) Creating Binding E-Commerce v:250-479-8334, ext. 
-143 f:250-479-3772 1-888-517-2675 http://www.PureEdge.com 
-David 
+<s> Hi Joseph,  </s>
+<s> Attached is an updated copy of the c14n spec.  </s>
+<s> It has the following changes:  </s>
+<s> 1) Encoding of  with  in text nodes.  </s>
+<s> 2) Linefeeds for PIs and comments; slight difference from old spec.  </s>
+<s> 3) Elimination of comments as default.  </s>
+<s> 4) New way for document subsets to handle attributes in xml namespace.  </s>
+<s> 5) Better description of node-set processing.  </s>
+<s> 6) Additional note about node-set as set of nodes, not list of subtrees.  </s>
+<s> 7) Tweaks to document date, Status, Resolutions and Acknowledgements.  </s>
+<s> The Resolutions section contains the few differences between the past c14n and the current c14n.  </s>
+<s> I am away next Monday to Thursday, but on Friday I should be able to send an updated XPath transform that simply refers to the c14n rather than repeating the c14n material.  </s>
+<s> John Boyer Software Development Manager PureEdge Solutions Inc. (formerly UWI.Com) Creating Binding E-Commerce jboyer@PureEdge.com  </s>
+<s> The current XPath canonicalization is starting to look quite nice.  </s>
+<s> However, the namespace canonicalization process is one thing I would like to  </s>
+<s> discuss.  </s>
+<s> My suggestion is that we define the spec to be a combination of the old C14N  </s>
+<s> spec and the current XPath spec, so that we drop namespace rewriting and also drop the requirement for the "namespace::" axis functionality.  </s>
+<s> My main motivation is performance: the namespace axis approach requires one  </s>
+<s> to walk the parent nodes of a element when canonicalizing and keep track of  </s>
+<s> inherited namespaces etc., the old C14N spec is very simple to implement in  </s>
+<s> one single pass.  </s>
+<s> Other motivations are that the original C14N approach (even without  </s>
+<s> namespace rewriting) is simpler to implement and that many XML processors do  </s>
+<s> not implement the namespace axis functionality.  </s>
+<s> This is a part from the sample in [1]: Canonicalized by this suggestion: Canonicalized by the current XPath spec:  </s>
+<s> The idea is that an element always declares only those namespaces that  </s>
+<s> appear on the element itself and on the element's attributes.  </s>
+<s> The default  </s>
+<s> namespace is only declared when the element belongs to the default namespace.  </s>
+<s> No namespace prefix rewriting is necessary.  </s>
+<s> The namespaces can well be declared in the order given in chapter A.4 of [2].  </s>
+<s> Petteri  </s>
+<s> [1] http://www.w3.org/TR/2000/WD-xml-c14n-20000119.html [2] xml-c14n.htm  </s>
+<s> I need to read the attributes of a element anyway, and I also need to sort  </s>
+<s> them using the attribute name and the namespace uri as sort keys.  </s>
+<s> This is  </s>
+<s> the minimum requirement in all cases.  </s>
+<s> What I would like to avoid is walking the parent elements of a node looking for inherited namespace declarations.  </s>
+<s> Petteri  </s>
+<s> From: David Blondeau [mailto:blondeau@intalio.com] Sent: Monday, June 12, 2000 9:38 PM Subject: Re: Updated c14n Spec Hi Petteri,  </s>
+<s> I agree except the optional XPath expression that in my opinion prevent non-XPath implementation.  </s>
+<s> [move this part]  </s>
+<s> IMO, the namespace axis functionality is really simple to implement using SAX, maybe more complex in DOM, but the attribute values parsing is really not a good option.  </s>
+<s> David  </s>
+<s> I just wanted to show that your suggestion was worst than the one in the draft because you have to be carefull about namespace prefixes used in attributes values.  </s>
+<s> Your suggestion was to put namespaces only when they are used, my question is then: how do you know a prefix is used in an attribute value?  </s>
+<s> For that, you need to know all the prefixes in scope so you need to walk on the tree to get the namespaces prefixes, and then do a really difficult parsing job... No matter how you are doing it, you need all the namespace declarations in scope for each element.  </s>
+<s> The january draft of C14n was easier on this point since it didn't care about prefixes in attribute values.  </s>
+<s> David  </s>
+<s> You assume that the XML document constructor has properly declared all namespaces that appear in XML attribute values.  </s>
+<s> Of course there is nothing an XML processor can do to verify this.  </s>
+<s> A short sample: This is completely valid XML and the namespaces axis of the 'reference' element is empty even if the attribute value refers to a namespace.  </s>
+<s> One does  </s>
+<s> not have to declare the namespace at the 'doc' element level, and if this document was constructed using DOM then the above XML representation would most likely be the result.  </s>
+<s> Petteri  </s>
+<s> From: David Blondeau [mailto:blondeau@intalio.com] Sent: Thursday, June 15, 2000 12:06 AM Subject: Re: Updated c14n Spec  </s>
+<s> Hi Petteri and David, To be honest, my current acceptance of the namespace propagation as done by  </s>
+<s> XPath was not based on simply accepting default behavior.  </s>
+<s> I gave it a very  </s>
+<s> great deal of thought.  </s>
+<s> Moreover, in accepting the current behavior, I was mindful of the desire to perform whole-document serialization in a one-pass  </s>
+<s> fashion, so I would be quite interested to know why you (Petteri) think the  </s>
+<s> XPath version of namespace context identification cannot be serialized in a  </s>
+<s> single pass.  </s>
+<s> To me, this seems to me to be as easy as following the namespace rules in the January c14n spec, which you say can be serialized in  </s>
+<s> a single pass.  </s>
+<s> But before I get into that any further...  </s>
+<s> I would point out that, in David's statement about the January spec being easier because it didn't care about prefixes in attribute values, I believe  </s>
+<s> he means easier than Petteri's suggestion, not easier than the current c14n.  </s>
+<s> The January spec did not care about prefixes in attribute values and did things that sometimes broke them.  </s>
+<s> The new spec does not break them, but it  </s>
+<s> also does not really care about them, i.e. attempt to detect their existence, which would be quite impossible without an application context.  </s>
+<s> In both the January spec and the current specs, namespace prefix references  </s>
+<s> that appear in attribute values or element character content are simply more  </s>
+<s> character data to be written out.  </s>
+<s> Also, Petteri, in the example you gave below, yes it is true that the expr value both is valid XML and does make reference to an undefined namespace prefix.  </s>
+<s> However, an Xpath with an undefined namespace prefix would generate  </s>
+<s> an error within the application attempting to use it.  </s>
+<s> More to the point, though, the example does not seem to be a counterexample of David's point.  </s>
+<s> David's point is about namespaces that are in scope, yet there would be no way to identify that its declaration is needed.  </s>
+<s> In other words, the point is about attribute values that carry XPath expressions that used to work before canonicalization and don't work after canonicalization.  </s>
+<s> It is a non-goal of the current c14n to say d1 and d2 are logically equivalent if and only if c14n(d1)==c14n(d2).  </s>
+<s> However, it is the intent of  </s>
+<s> the current c14n is to say: if c14n(d1)==c14n(d2), then d1 is logically equivalent to d2.  </s>
+<s> Otherwise, there would be no point to c14n, especially for dsig.  </s>
+<s> Let d1 be a document containing a working XPath that no longer works in c14n(d1) because we omitted a namespace declaration that did not appear to be used.  </s>
+<s> Let d2=c14n(d1).  </s>
+<s> Now, clearly c14n(d1) == c14n(d2), so  </s>
+<s> we expect that d1 and d2 are logically equivalent, but they aren't because the Xpath works in d1 but not d2.  </s>
+<s> This is the same argument against namespace prefix rewriting.  </s>
+<s> I will add a section to the appendix to explain  </s>
+<s> why this change was made, too.  </s>
+<s> Despite this problem with your particular proposal, I am quite sympathetic to your cause, Petteri, and thought about other alternatives that would work.  </s>
+<s> Let's begin with just doing something that works for a whole document  </s>
+<s> (sans comments of course).  </s>
+<s> So, ignore the notion of document subsets for a  </s>
+<s> moment.  </s>
+<s> Also, ignore the default namespace declaration for the moment, and  </s>
+<s> let's focus on actual namespace declarations.  </s>
+<s> If a given element and its parent both have the same namespace declared to be equal to the same URI, then the namespace declaration could be omitted from the child.  </s>
+<s> Since we perform a standard depth first descent of the parse tree, this means that we  </s>
+<s> could retain all relevant namespace declarations, but still only use local operations-- we need only consider the namespace context of an element and its parent.  </s>
+<s> The problem is not much harder when you add the complexity of the default namespace declaration.  </s>
+<s> Whether it's empty or not, the namespace context indicates its value in some way, so if the default namespace of an element differs from its parent (whether empty or not), then render a default namespace declaration for the element.  </s>
+<s> The case for document subsets is not much harder, except we would replace the notion of parent with the notion of ancestor *in the node set* with Finally, when dealing with document subsets, one is certainly using XPath, and the problem is not really too hard.  </s>
+<s> For example, given a namespace node  </s>
+<s> N in the resultant node-set, we could do the following: 1) Find the element E that owns N (even if it is not in the node-set, however weird that might be).  </s>
+<s> 2) Find the nearest ancestor A of E that is in the node-set.  </s>
+<s> If A doesn't exist, then output N. If A exists in the node-set and it has a namespace node N(A) *that is in the node-set* which declares the same namespace AND assigns it to the same URI, then omit N from the output.  </s>
+<s> Otherwise, output  </s>
+<s> N. So, as you can see, I've been trying to think about getting rid of unnecessary namespace declarations.  </s>
+<s> However, there seems to be enough work  </s>
+<s> involved in trying to figure out whether to print a namespace node (esp.  </s>
+<s> in  </s>
+<s> the document subset case) that it did not seem to worthwhile to complicate the spec.  </s>
+<s> In particular, one must still maintain the whole namespace context for each element as one passes through a document.  </s>
+<s> I will reassert  </s>
+<s> that this can be done in a one-pass fashion given space linear in the size of the namespace context, which should not be a problem even for the most rudimentary of devices capable of processing XML.  </s>
+<s> This is why I've retained  </s>
+<s> the default XPath namespace propagation feature.  </s>
+<s> This is not actually a complete account of my thinking on this issue, but I'll end this now unless there is an expressed need for me to continue.  </s>
+<s> John Boyer Software Development Manager PureEdge Solutions Inc. (formerly UWI.Com) Creating Binding E-Commerce jboyer@PureEdge.com  </s>
+<s> [mailto:w3c-ietf-xmldsig-request@w3.org]On  </s>
+<s> Behalf Of Petteri Stenius You assume that the XML document constructor has properly declared all namespaces that appear in XML attribute values.  </s>
+<s> Of course there is nothing an XML processor can do to verify this.  </s>
+<s> A short sample: This is completely valid XML and the namespaces axis of the 'reference' element is empty even if the attribute value refers to a namespace.  </s>
+<s> One does  </s>
+<s> not have to declare the namespace at the 'doc' element level, and if this document was constructed using DOM then the above XML representation would most likely be the result.  </s>
+<s> Petteri  </s>
+<s> -----Original Message----- From: David Blondeau [mailto:blondeau@intalio.com] Sent: Thursday, June 15, 2000 12:06 AM Subject: Re: Updated c14n Spec  </s>
+<s> Hi John and Petteri, I just thought to something that annoy me and maybe it was what Petteri was thinking about.  </s>
+<s> With the new c14n draft, the canonicalization of the SignedInfo element is highly context dependant, that is, when generating a signature, you need to know where the Signature element will be in the final document before doing the canonicalization because you need to have the namespaces in scope for the SignedInfo element.  </s>
+<s> This problem is especially visible for enveloped signatures.  </s>
+<s> So you need to put the Signature in the document before doing any canonicalization.  </s>
+<s> I agree with the need of context when doing subset canonicalization but IMO, this is really a problem in the context of Signature generation.  </s>
+<s> With that, a signature cannot be moved without a lot of precaution and creation of composite document can be tricky.  </s>
+<s> This was not the case with the 20000119 draft since an element declared only those namespaces that appear on the element itself and on the element's attributes and then the SignedInfo element was canonicalized the same way wherever the Signature element was in the document.. David  </s>
+<s> by  </s>
+<s> very  </s>
+<s> one-pass  </s>
+<s> the  </s>
+<s> a  </s>
+<s> in  </s>
+<s> believe  </s>
+<s> c14n.  </s>
+<s> it  </s>
+<s> references  </s>
+<s> more  </s>
+<s> generate  </s>
+<s> of  </s>
+<s> so  </s>
+<s> explain  </s>
+<s> document  </s>
+<s> a  </s>
+<s> and  </s>
+<s> we  </s>
+<s> node  </s>
+<s> output  </s>
+<s> work  </s>
+<s> in  </s>
+<s> reassert  </s>
+<s> retained  </s>
+<s> does  </s>
+<s> -----Original Message----- From: David Blondeau [mailto:blondeau@intalio.com] Sent: Thursday, June 15, 2000 12:06 AM Subject: Re: Updated c14n Spec  </s>
+<s> Hi David, [mailto:w3c-ietf-xmldsig-request@w3.org]On  </s>
+<s> Behalf Of David Blondeau Hi John and Petteri, I just thought to something that annoy me and maybe it was what Petteri was thinking about.  </s>
+<s> With the new c14n draft, the canonicalization of the SignedInfo element is highly context dependant, that is, when generating a signature, you need to know where the Signature element will be in the final document before doing the canonicalization because you need to have the namespaces in scope for the SignedInfo element.  </s>
+<s> The most important thing to realize is that the Signature element is typically placed in the document before any kind of canonicalization occurs.  </s>
+<s> Before the creation of the signature, the Signature element stands as a specification for the signature to be created.  </s>
+<s> This problem is especially visible for enveloped signatures.  </s>
+<s> I do not understand why this problem is more prevalent for enveloped signatures.  </s>
+<s> The term 'enveloped' refers to a property of calculating a DigestValue, whereas the canonicalization of SignedInfo is necessary for the calculation of a SignatureValue.  </s>
+<s> All signatures undergo SignatureValue calculation.  </s>
+<s> So you need to put the Signature in the document before doing any canonicalization.  </s>
+<s> I agree with the need of context when doing subset canonicalization but IMO, this is really a problem in the context of Signature generation.  </s>
+<s> With that, a signature cannot be moved without a lot of precaution and creation of composite document can be tricky.  </s>
+<s> This was not the case with the 20000119 draft since an element declared only those namespaces that appear on the element itself and on the element's attributes and then the SignedInfo element was canonicalized the same way wherever the Signature element was in the document.. Actually, the 20000119 c14n draft has a similar problem in addition to the prior problems we discussed.  </s>
+<s> SignedInfo is a special case that we have grouped into the larger category of what we should be doing when signing an element from a document, e.g. what do we sign when an element has been indicated by URI="#E"?  </s>
+<s> If we cut an element E and then paste it someplace else that has a different namespace context, should the signature break?  </s>
+<s> In general, the answer is that the signature should break because the change of context may change the interpretation of E. Returning to the SignedInfo example, if the dsig namespace is declared as the default for the Signature element, we would expect that default to propagate down to the SignedInfo.  </s>
+<s> If someone changes the dsig namespace URI to point to a newer version of the spec, then the hash on the SignedInfo should break because the signature on SignedInfo is governed by the rules set forth in a spec other than the one indicated by the newer URI.  </s>
+<s> Note that this is in addition to the problem that it is not realistically possible to assess whether an element E is using a namespace declaration.  </s>
+<s> Again, in the case of SignedInfo, it is certainly possible to generate an XPath transform such that the omission of namespace context from SignedInfo would ultimately allow changes to the referenced resource that were not intended by the XPath transform author.  </s>
+<s> Specifically, if the transform tries to omit data based on evaluating a certain expression, then changing the namespace declarations can allow additions to the referenced resource that are omitted (and hence do not break the signature despite the intent of the XPath transform author).  </s>
+<s> Thus, we do not achieve full security unless the namespace declarations used to evaluate transforms and compute DigestValue results is identical to the namespace context used when generating the signature, which means that we have to sign the full namespace context of SignedInfo.  </s>
+<s> In conclusion, it seems that most applications are not going to have a problem with this, and the ones that must move signatures out of the originating document must indeed use more care in pasting the signatures into the same context.  </s>
+<s> Still, this has to be one of the best points of interest raised during this process!  </s>
+<s> John Boyer, Software Development Manager PureEdge Solutions (formerly UWI.Com) Creating Binding E-Commerce v:250-479-8334, ext.  </s>
+<s> 143 f:250-479-3772 1-888-517-2675 http://www.PureEdge.com  </s>
+<s> David  </s>

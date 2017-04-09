@@ -1,56 +1,56 @@
-The spec (RFC 2518) is inconsistent about the expected contents of the src and dst XML elements. 
-In particular are they supposed to contain an href XML element, or a 'raw' URI. 1. 
-The description of the link XML element (12.4) says: The values in the href XML elements inside the src and dst XML elements of the link XML element MUST NOT be rejected if they point to resources which do not exist." which implies the former. 
-2. The definition of dst (12.4.1) and src (12.4.2) say that the value is a URI and the contents is PCDATA, which implies the latter. 
-3. The example of the source property (13.10.1) 
-shows src without an href So which is it? 
-One reason I ask is that someone asked me how to express anchors with smaller granularity than an entire resource, for example byte ranges or Xpointers. 
-Could I write, e.g. 
-Jim, the source of your confusion is that the spec doesn't do a good job of 
-defining how we use the value argument in defining XML elements. 
-XML DTDs 
-fail to provide sufficient granularity for us to define the exact syntax of the character content of an XML element. 
-Therefore we use the value argument to provide BNF which should be used to define the contents of the XML element. 
-Sections 12.4.1 and 12.4.2 both clearly define their values as URI. 
-Following the same BNF rules used in RFC 2068 once we define a BNF element we do not redefine it for subsequent use. 
-The BNF token URI was defined in section 12.3, the definition of HREF. 
-Therefore the value of src and dst elements should be the same as the value of an HREF, a URI. 
-Thus the example in 13.10.1 is correct. 
-To address your particular example your friend should use src http://foo.bar/program 
-byte-range start 100 /start length 255 /length 
-/byte-range /src . 
-According to the WebDAV XML ignore rules defined in 
-section 14 and discussed further in section 23.3 any existing WebDAV system handed that src element MUST ignore the byte-range element and its content. 
-Thus an existing WebDAV system handed the previous MUST treat it as if it received src http://foo.bar/program 
-/src or it is in gross violation of the most basic extensibility mechanism in WebDAV. 
-Yaron 
-No, the source of my confusion is that the spec uses inconsistent language. 
-The description of the link XML element clearly says the src and dest XML elements contain href XML elements, not PCDATA. 
-Description: The link XML element is used to provide the sources and destinations of a link. 
-The name of the property containing the link XML element provides the type of the link. 
-Link is a multi-valued element, so multiple links may be used together to indicate multiple links with the same type. 
-The values in the href XML elements inside the src and dst XML elements of the link XML element MUST NOT be rejected if they point to resources which do not exist. 
-If you agree that this is inconsistent, then why not change it? 
-I suggest we just drop the last sentence altogether. 
-We don't need the prohibition about not rejecting the property if the resources don't exist because: 1. 
-It's just common sense. 
-WebDAV applications shouldn't routinely dereference these URIs (in order to check whether they exist), and indeed there might be bad security implications if they did. 
-2. The prohibition applies to all places src and dst might be used, not just in link. 
-3. It applies in general to other properties whose value is a URI. 
-Lock tokens are URIs one can't dereference. 
-If you insist on keeping it, then move it to the descriptions of src and dst, to read: The src/dst XML elements MUST NOT be rejected if the URI they point to does not exist. 
-unless there really is some reason that this applies only to their use within a link element, and not elsewhere. 
-Yup.... definitely inconsistent. 
-I remember the argument about this, I just don't remember which side I was on. 
-=) Basically the argument was that any time we have a URI we should have an HREF element wrapping it. 
-The counter argument is that adding more and more layers of layering (src- href- uri) made it more difficult to parse and more difficult to implement. 
-At various points the spec got edited one way and then the other. 
-I would use the space shuttle logic here. 
-You have three votes (the value element, the example and the text), majority wins. 
-The majority choose using URI not HREF so we should just use URI. 
-I have added this issue to my list of issues to be considered when WebDAV goes to draft status. 
-I'm sure Jim Whitehead will do the same. 
-His list, unlike mine, is actually published. 
-Yaron 
-From: Jim Davis [mailto:jdavis@parc.xerox.com] 
-Sent: Wednesday, February 10, 1999 12:55 PM Subject: RE: contents of src and dst XML elements 
+<s> The spec (RFC 2518) is inconsistent about the expected contents of the src and dst XML elements.  </s>
+<s> In particular are they supposed to contain an href XML element, or a 'raw' URI. 1.  </s>
+<s> The description of the link XML element (12.4) says: The values in the href XML elements inside the src and dst XML elements of the link XML element MUST NOT be rejected if they point to resources which do not exist." which implies the former.  </s>
+<s> 2. The definition of dst (12.4.1) and src (12.4.2) say that the value is a URI and the contents is PCDATA, which implies the latter.  </s>
+<s> 3. The example of the source property (13.10.1)  </s>
+<s> shows src without an href So which is it?  </s>
+<s> One reason I ask is that someone asked me how to express anchors with smaller granularity than an entire resource, for example byte ranges or Xpointers.  </s>
+<s> Could I write, e.g.  </s>
+<s> Jim, the source of your confusion is that the spec doesn't do a good job of  </s>
+<s> defining how we use the value argument in defining XML elements.  </s>
+<s> XML DTDs  </s>
+<s> fail to provide sufficient granularity for us to define the exact syntax of the character content of an XML element.  </s>
+<s> Therefore we use the value argument to provide BNF which should be used to define the contents of the XML element.  </s>
+<s> Sections 12.4.1 and 12.4.2 both clearly define their values as URI.  </s>
+<s> Following the same BNF rules used in RFC 2068 once we define a BNF element we do not redefine it for subsequent use.  </s>
+<s> The BNF token URI was defined in section 12.3, the definition of HREF.  </s>
+<s> Therefore the value of src and dst elements should be the same as the value of an HREF, a URI.  </s>
+<s> Thus the example in 13.10.1 is correct.  </s>
+<s> To address your particular example your friend should use src http://foo.bar/program  </s>
+<s> byte-range start 100 /start length 255 /length  </s>
+<s> /byte-range /src .  </s>
+<s> According to the WebDAV XML ignore rules defined in  </s>
+<s> section 14 and discussed further in section 23.3 any existing WebDAV system handed that src element MUST ignore the byte-range element and its content.  </s>
+<s> Thus an existing WebDAV system handed the previous MUST treat it as if it received src http://foo.bar/program  </s>
+<s> /src or it is in gross violation of the most basic extensibility mechanism in WebDAV.  </s>
+<s> Yaron  </s>
+<s> No, the source of my confusion is that the spec uses inconsistent language.  </s>
+<s> The description of the link XML element clearly says the src and dest XML elements contain href XML elements, not PCDATA.  </s>
+<s> Description: The link XML element is used to provide the sources and destinations of a link.  </s>
+<s> The name of the property containing the link XML element provides the type of the link.  </s>
+<s> Link is a multi-valued element, so multiple links may be used together to indicate multiple links with the same type.  </s>
+<s> The values in the href XML elements inside the src and dst XML elements of the link XML element MUST NOT be rejected if they point to resources which do not exist.  </s>
+<s> If you agree that this is inconsistent, then why not change it?  </s>
+<s> I suggest we just drop the last sentence altogether.  </s>
+<s> We don't need the prohibition about not rejecting the property if the resources don't exist because: 1.  </s>
+<s> It's just common sense.  </s>
+<s> WebDAV applications shouldn't routinely dereference these URIs (in order to check whether they exist), and indeed there might be bad security implications if they did.  </s>
+<s> 2. The prohibition applies to all places src and dst might be used, not just in link.  </s>
+<s> 3. It applies in general to other properties whose value is a URI.  </s>
+<s> Lock tokens are URIs one can't dereference.  </s>
+<s> If you insist on keeping it, then move it to the descriptions of src and dst, to read: The src/dst XML elements MUST NOT be rejected if the URI they point to does not exist.  </s>
+<s> unless there really is some reason that this applies only to their use within a link element, and not elsewhere.  </s>
+<s> Yup.... definitely inconsistent.  </s>
+<s> I remember the argument about this, I just don't remember which side I was on.  </s>
+<s> =) Basically the argument was that any time we have a URI we should have an HREF element wrapping it.  </s>
+<s> The counter argument is that adding more and more layers of layering (src- href- uri) made it more difficult to parse and more difficult to implement.  </s>
+<s> At various points the spec got edited one way and then the other.  </s>
+<s> I would use the space shuttle logic here.  </s>
+<s> You have three votes (the value element, the example and the text), majority wins.  </s>
+<s> The majority choose using URI not HREF so we should just use URI.  </s>
+<s> I have added this issue to my list of issues to be considered when WebDAV goes to draft status.  </s>
+<s> I'm sure Jim Whitehead will do the same.  </s>
+<s> His list, unlike mine, is actually published.  </s>
+<s> Yaron  </s>
+<s> From: Jim Davis [mailto:jdavis@parc.xerox.com]  </s>
+<s> Sent: Wednesday, February 10, 1999 12:55 PM Subject: RE: contents of src and dst XML elements  </s>

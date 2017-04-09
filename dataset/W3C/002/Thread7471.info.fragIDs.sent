@@ -1,72 +1,72 @@
-I'd like to propose that WebDav include support for collections that support external resources, but only if the resources in the collection are named and/or numbered. 
-This allows links, and allows the same external resource to appear multiple times under different names and/or index values (i.e. numbers). 
-If there is general agreement, I'll be happy to turn this into a formal document. 
-A somewhat informal version of the proposal appears below. 
--- Ellis 
-Collections that Support Naming/Numbering 1. Optional support for External References As an option, collections can support external references. 
-A collection that supports external resources must 
-support naming and/or numbering of collection resources. 
-2. A collection can optionally support naming 
-In a collection that supports naming, all resources in the collections have names. 
-Internal resources always have names, of course, but the naming of external resources allows links. 
-The relevant WebDav operations are: ADDREF: Adds an external resource. 
-The name is provided in a Member-Name header. 
-The resource is named in a Collection-Member header. 
-DELREF: Deletes an external resource. 
-The name is provided in a Member-Name header, which must name an external reference. 
-As an alternative, DELREF could take a Collection-Member header, in which case all matching external resources are deleted (Note that an external resource could actually name a resource which is internal to the collection; DELREF in this case would just delete the external resources(s), not the internal one.) 
-GETREF: Returns the resource given its name (in the Member-Name header). 
-Could work for both internal and external resources. 
-PROPFIND: includes only the name for internal resources; includes the name and resource for external resources. 
-3. A collection can optionally support numbering A collection that supports numbering acts like a (Java) vector. 
-Each resource has an index; inserting or deleting a resource moves the resources below it up or down in the vector. 
-The relevant WebDav operations are: ADDREF: In addition to the Collection-Member header, this takes a Position header, of the form "Position:" followed by "First" | "Last" "At" index ("Before" | "After") ( "Name" name | "Resource" resource ) The Before Resource form inserts the member before the first entry with the specified resource, After Resource inserts it after the last such entry. 
-If the collection is named, the Position header is used as well as the Member-Name header. 
-PUT: Takes a Position header as well. 
-DELREF: Must take a Position header unless a Collection-Member header or (if it's named as well) a Member-Name header is provided instead. 
-Could limit the Position header to First/Last/At. 
-GETREF: Must take a Position header, unless (if it's named as well) a a Member-Name header is provided instead. 
-Could limit the Position header to First/Last/At. 
-PROPFIND: Must return the collection in numeric order. 
-Not clear if the index of each entry actually needs to be returned. 
-Note that the intent here is that the client specify the ordering explicitly through inserts and deletes. 
-Two other ways of thinking about ordering have been discussed: -- Ordering based on properties or names: I believe this should be left to DASL -- Other explicit complete or partial orders. 
-I believe this can be handled (eventually) by associating properties with collection entries (not with the resources they name). 
-This should be left to a separate proposal. 
-4. Operations on named and numbered external resources Naming or numbering external resources gives us links. 
-The advantage of links is that they can be followed to the named resource. 
-For example, if "http://x.com/A/B/C" 
-names a collection, and it contains an external reference named "foo" for "http://y.com/D/E/yuk", then doing a GET on "http://x.com/A/B/C/foo" 
-should actually result in a GET on "http://y.com/D/E/yuk". 
-I'm proposing that we use a new Redirection response, "306: External Resource" to support following links: If C is the URI of a collection that supports naming, and N is the name of an external resource R in the collection, then any request with the Request-URI C/N must respond with a Redirection response -- 306: External Resource. 
-The Location field of the response contains R. If C is the URI of a collection that supports numbering, and N is the index of an external resource R in the collection, then any request with the Request-URI C/N must respond with a Redirection response -- 306: External Resource. 
-The Location field of the response contains R. Clients that receive a 306: external Resource response are expected to repeat the request with the URI returned in the Location field. 
-If a collection supports both naming and numbering, then names must not be interpretable as non-negative integers. 
-While naming/numbering support is generally desirable, I think this should be deferred until DAV more directly addresses versioning. 
-There's a whole minefield of problems relating to the naming of branches, numeric labels, subversions, etc., that should be considered in this context. 
-Amen. Yaron 
-Reactions to Ellis Cohen's proposal (of 17 Dec 1997). 
-I am mostly in support of this. 
-It adds power at low cost, in a fully compatible way. 
-I have just a few questions/comments. 
-We've already been over this point, so I'm merely repeating what I think is now agreed upon by all: change the word "must" to "may". 
-(I'd be fine with "should" but doubt we could reach concensus on it.) 
-Just to be clear, must the names be unique? 
-If so, what status code is 
-returned if one attempts to ADDREF or PUT with a name that already exists? 
-Can an external resource be present twice, with two different names? 
-Why do we need this, given that the semantics of GET are defined (below) to use the name? 
-That is, for collection 'http://foo.com/zippy' that has an external member http://quux.com/pinhead.html 
-with name fish.html, GET What is GETREF doing besides this? 
-The link idea is cool, but it's not clear to me what are the intended semantics of the other methods (PROPFIND, PROPPATCH, LOCK) on external members when accessed via a link. 
-Ellis can you elaborate? 
-Yup; may is OK with me 
-Yes 
-In ADDREF, if the Member-Name is the same as an existing name, then I think the collection resource should be replaced (consistent with PUT) PUT is only extended to support numbering, so I don't think it's an issue 
-Yes 
-GETREF on http://foo.com/zippy with Member-Name: fish.html just returns the text "http://quux.com/pinhead.html" 
-with status OK GET http://foo.com/zippy/fish.html 
-returns a redirection response with Location: 
-The semantics of the redirection, so if http://foo.com/zippy has an external member http://quux.com/pincushion 
-(itself a collection) with name whoopee, then PROPFIND http://foo.com/zippy/whoopee returns a redirection response with Location: http://quux.com/pincushion 
-which should result in the new request PROPFIND http://quux.com/pincushion -- Ellis 
+<s> I'd like to propose that WebDav include support for collections that support external resources, but only if the resources in the collection are named and/or numbered.  </s>
+<s> This allows links, and allows the same external resource to appear multiple times under different names and/or index values (i.e. numbers).  </s>
+<s> If there is general agreement, I'll be happy to turn this into a formal document.  </s>
+<s> A somewhat informal version of the proposal appears below.  </s>
+<s> -- Ellis  </s>
+<s> Collections that Support Naming/Numbering 1. Optional support for External References As an option, collections can support external references.  </s>
+<s> A collection that supports external resources must  </s>
+<s> support naming and/or numbering of collection resources.  </s>
+<s> 2. A collection can optionally support naming  </s>
+<s> In a collection that supports naming, all resources in the collections have names.  </s>
+<s> Internal resources always have names, of course, but the naming of external resources allows links.  </s>
+<s> The relevant WebDav operations are: ADDREF: Adds an external resource.  </s>
+<s> The name is provided in a Member-Name header.  </s>
+<s> The resource is named in a Collection-Member header.  </s>
+<s> DELREF: Deletes an external resource.  </s>
+<s> The name is provided in a Member-Name header, which must name an external reference.  </s>
+<s> As an alternative, DELREF could take a Collection-Member header, in which case all matching external resources are deleted (Note that an external resource could actually name a resource which is internal to the collection; DELREF in this case would just delete the external resources(s), not the internal one.)  </s>
+<s> GETREF: Returns the resource given its name (in the Member-Name header).  </s>
+<s> Could work for both internal and external resources.  </s>
+<s> PROPFIND: includes only the name for internal resources; includes the name and resource for external resources.  </s>
+<s> 3. A collection can optionally support numbering A collection that supports numbering acts like a (Java) vector.  </s>
+<s> Each resource has an index; inserting or deleting a resource moves the resources below it up or down in the vector.  </s>
+<s> The relevant WebDav operations are: ADDREF: In addition to the Collection-Member header, this takes a Position header, of the form "Position:" followed by "First" | "Last" "At" index ("Before" | "After") ( "Name" name | "Resource" resource ) The Before Resource form inserts the member before the first entry with the specified resource, After Resource inserts it after the last such entry.  </s>
+<s> If the collection is named, the Position header is used as well as the Member-Name header.  </s>
+<s> PUT: Takes a Position header as well.  </s>
+<s> DELREF: Must take a Position header unless a Collection-Member header or (if it's named as well) a Member-Name header is provided instead.  </s>
+<s> Could limit the Position header to First/Last/At.  </s>
+<s> GETREF: Must take a Position header, unless (if it's named as well) a a Member-Name header is provided instead.  </s>
+<s> Could limit the Position header to First/Last/At.  </s>
+<s> PROPFIND: Must return the collection in numeric order.  </s>
+<s> Not clear if the index of each entry actually needs to be returned.  </s>
+<s> Note that the intent here is that the client specify the ordering explicitly through inserts and deletes.  </s>
+<s> Two other ways of thinking about ordering have been discussed: -- Ordering based on properties or names: I believe this should be left to DASL -- Other explicit complete or partial orders.  </s>
+<s> I believe this can be handled (eventually) by associating properties with collection entries (not with the resources they name).  </s>
+<s> This should be left to a separate proposal.  </s>
+<s> 4. Operations on named and numbered external resources Naming or numbering external resources gives us links.  </s>
+<s> The advantage of links is that they can be followed to the named resource.  </s>
+<s> For example, if "http://x.com/A/B/C"  </s>
+<s> names a collection, and it contains an external reference named "foo" for "http://y.com/D/E/yuk", then doing a GET on "http://x.com/A/B/C/foo"  </s>
+<s> should actually result in a GET on "http://y.com/D/E/yuk".  </s>
+<s> I'm proposing that we use a new Redirection response, "306: External Resource" to support following links: If C is the URI of a collection that supports naming, and N is the name of an external resource R in the collection, then any request with the Request-URI C/N must respond with a Redirection response -- 306: External Resource.  </s>
+<s> The Location field of the response contains R. If C is the URI of a collection that supports numbering, and N is the index of an external resource R in the collection, then any request with the Request-URI C/N must respond with a Redirection response -- 306: External Resource.  </s>
+<s> The Location field of the response contains R. Clients that receive a 306: external Resource response are expected to repeat the request with the URI returned in the Location field.  </s>
+<s> If a collection supports both naming and numbering, then names must not be interpretable as non-negative integers.  </s>
+<s> While naming/numbering support is generally desirable, I think this should be deferred until DAV more directly addresses versioning.  </s>
+<s> There's a whole minefield of problems relating to the naming of branches, numeric labels, subversions, etc., that should be considered in this context.  </s>
+<s> Amen. Yaron  </s>
+<s> Reactions to Ellis Cohen's proposal (of 17 Dec 1997).  </s>
+<s> I am mostly in support of this.  </s>
+<s> It adds power at low cost, in a fully compatible way.  </s>
+<s> I have just a few questions/comments.  </s>
+<s> We've already been over this point, so I'm merely repeating what I think is now agreed upon by all: change the word "must" to "may".  </s>
+<s> (I'd be fine with "should" but doubt we could reach concensus on it.)  </s>
+<s> Just to be clear, must the names be unique?  </s>
+<s> If so, what status code is  </s>
+<s> returned if one attempts to ADDREF or PUT with a name that already exists?  </s>
+<s> Can an external resource be present twice, with two different names?  </s>
+<s> Why do we need this, given that the semantics of GET are defined (below) to use the name?  </s>
+<s> That is, for collection 'http://foo.com/zippy' that has an external member http://quux.com/pinhead.html  </s>
+<s> with name fish.html, GET What is GETREF doing besides this?  </s>
+<s> The link idea is cool, but it's not clear to me what are the intended semantics of the other methods (PROPFIND, PROPPATCH, LOCK) on external members when accessed via a link.  </s>
+<s> Ellis can you elaborate?  </s>
+<s> Yup; may is OK with me  </s>
+<s> Yes  </s>
+<s> In ADDREF, if the Member-Name is the same as an existing name, then I think the collection resource should be replaced (consistent with PUT) PUT is only extended to support numbering, so I don't think it's an issue  </s>
+<s> Yes  </s>
+<s> GETREF on http://foo.com/zippy with Member-Name: fish.html just returns the text "http://quux.com/pinhead.html"  </s>
+<s> with status OK GET http://foo.com/zippy/fish.html  </s>
+<s> returns a redirection response with Location:  </s>
+<s> The semantics of the redirection, so if http://foo.com/zippy has an external member http://quux.com/pincushion  </s>
+<s> (itself a collection) with name whoopee, then PROPFIND http://foo.com/zippy/whoopee returns a redirection response with Location: http://quux.com/pincushion  </s>
+<s> which should result in the new request PROPFIND http://quux.com/pincushion -- Ellis  </s>

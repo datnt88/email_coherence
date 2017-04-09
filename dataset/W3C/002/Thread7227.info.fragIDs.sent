@@ -1,80 +1,80 @@
-1LINK Method 1.1Request-URI 
-The Request-URI is the resource where the link will be recorded. 
-1.2Link Header 
-Link = "Link" ":" #(" " URI " " *(";" DAV-link-param) 
-DAV-link-param = (Source | Destination | Type | link-param) 
-Source = "Source" "=" URI Destination = "Destination" "=" URI Type = "Type" "=" Token 
-This definition is adapted from section 19.6.2.4 of RFC 2068. 
-Link-param 
-is defined in that section. 
-Please note that the above is not a 
-redefinition of the link header. 
-The syntax specified above is 100% in 
-compliance with the link header given in RFC 2068. 
-Rather the above simply specifies the fields and extensions of particular interest to DAV. 
-A link header must contain exactly one Source or Destination attribute. 
-The URI included at the beginning of the header then takes upon itself 
-the unspecified value. 
-Link: http://foo ; Destination = http://bar; Type = DAV.Versioning.History 
-In the previous case http://foo is the source as destination is 
-specified as http://bar. 
-In addition all link headers MUST include a Type attribute. 
-A DAV server is only required to record Source, Destination, and Type. 
-It may drop all other attributes if it so chooses. 
-In addition a DAV server may not record two links which have the same source, destination, 
-and type but differ on other attributes. 
-A link is uniquely identified 
-by the source/destination/type triple. 
-2UNLINK Method 2.1Request-URI The Request-URI is the resource from where the link will be removed. 
-2.2Link Header The link header included in UNLINK is only required to have the Source/Destination/Type triple. 
-I like this proposal. 
-There are, however, a few issues with it that need to be ironed out before it can be finalized. 
-1. Flawed BNF. 
-Well Yaron, it looks like you've been writing BNF at midnight (again :-), since there are two flaws with your BNF: - There is no way to distinguish between another DAV-link-param and a ";" 
-in a URI -- for example, a ";" parameter in a URL. 
-This is why we always 
-escaped URIs at the design team meetings, and why they're escaped (with quotes) in the HTTP spec's definition of the Link header. 
-- You repeat the HTTP spec's error of omitting the trailing ), so the scope of the # operator is ambiguous. 
-My proposal for the BNF for a DAV Link header is given below. 
-The BNF from the Link specification in Section 19.6.2.4 of the HTTP specification is as follows: Link = "Link" ":" #(" " URI " " *( ";" link-param ) link-param = ( ( "rel" "=" relationship ) 
-( "rev" "=" relationship ) ( "title" "=" quoted-string ) ( "anchor" "=" " URI " ) ( link-extension ) ) 
-link-extension = token [ "=" ( token | quoted-string ) ] relationship = sgml-name 
-( " sgml-name *( SP sgml-name) " ) 
-sgml-name = ALPHA *( ALPHA | DIGIT | "." | "-" ) I propose that the syntax for the DAV Link header be defined as follows: Link = "Link" ":" #(" " URI " " *( ";" dav-link-param ) ) 
-dav-link-param = ( source | destination | type | link-param ) 
-source = "source" "=" " URI " destination = "destination" "=" " URI " type = "type" "=" token link-param, relationship, link-extension are as defined in Section 19.6.2.4 of the HTTP specification. 
-However, since this Appendix may be deleted from a future (next) revision of the HTTP/1.1 RFC, they need to be restated in the DAV specification: link-param = ( ( "rel" "=" relationship ) 
-( "rev" "=" relationship ) ( "title" "=" quoted-string ) ( "anchor" "=" " URI " ) ( link-extension ) ) 
-link-extension = token [ "=" ( token | quoted-string ) ] relationship = sgml-name 
-( " sgml-name *( SP sgml-name) " ) 
-sgml-name = ALPHA *( ALPHA | DIGIT | "." | "-" ) This also raises the issue of how much we need to support the existing LINK method, if it is slated to be phased out. 
-Roy? 2. Interactions between existing link parameters and DAV link parameters. 
-- If a DAV TYPE parameter is defined, should REL be allowed? 
-Or should DAV simply use the existing REL parameter as its type? 
-Or are are REL and TYPE two names for the same concept? 
-- an ANCHOR parameter can be used to indicate a source other than the URI on which the Link header is stored. 
-If a SOURCE parameter is present, does 
-it override an ANCHOR parameter? 
-- should a DAV Type be a "relationship" rather than a "token"? 
-There are 
-fairly minor differences between them, the largest one being that a token can start with a number. 
-This would allow us to write: type = ("type" | "rel") "=" relationship 
-Or should the unspecified URI always be the destination, like it is in the HTTP spec.? 
-I agree with this. - Jim 
-Actually Jim, URIs are tokens and thus do not have spaces. 
-As the HTTP spec requires spaces between all tokens (please see section 2.1 of RFC 2068), your quotes are unnecessary. 
-For example, link:  http://blah  ; destination = http://;;;;;;;;;;;;; ; type = http://blah ,  http://foo  ; destination = http:/;;;;; ; type = http://dervenersnitzel 
-Also if the Link header is going to be dumped from the HTTP spec then there is no backwards compatibility to be worried about and we can format the header properly, which should be: Link = "Link" ":" Source Destination Type *(";" link-param) 
-Also, if the link header is going away then we can forget all the non-dav parameters. 
-After all, no need to define the relationship with non-existent parameters. 
-If it isn't in the HTTP 1.1 spec, it isn't our problem. 
-Yaron 
-From:Jim Whitehead [SMTP:ejw@ics.uci.edu] 
-Sent:Wednesday, March 26, 1997 7:10 PM Subject:Re: LINK &amp; UNLINK Methods 
-Huh? URIs are not tokens and whitespace is not a reliable separator in header fields. 
-I must have said that a couple thousand times on http-wg, and one was just last week. 
-If you want to separate URIs from parameters in a header field, you must surround the URI with angle brackets or "double-quotes", since they are the only characters that will never appear within a URI even if it is broken across more than one line. 
-If you are going to redefine the syntax, then Link = "Link" ":" 1#( link-type *(";" link-param) ) link-type = token link-param = ( "from" "=" " URI " ) 
-otherwise, the HTTP/1.1 spec defines it as if rel=type first URI is destination anchor="URI" is source (current document if elided) else if rev=type first URI is source anchor="URI" is destination (current document if elided) I don't like that model, but it was inherited from HTML. 
-Extensibility is a WEBDAV problem. 
-....Roy 
+<s> 1LINK Method 1.1Request-URI  </s>
+<s> The Request-URI is the resource where the link will be recorded.  </s>
+<s> 1.2Link Header  </s>
+<s> Link = "Link" ":" #(" " URI " " *(";" DAV-link-param)  </s>
+<s> DAV-link-param = (Source | Destination | Type | link-param)  </s>
+<s> Source = "Source" "=" URI Destination = "Destination" "=" URI Type = "Type" "=" Token  </s>
+<s> This definition is adapted from section 19.6.2.4 of RFC 2068.  </s>
+<s> Link-param  </s>
+<s> is defined in that section.  </s>
+<s> Please note that the above is not a  </s>
+<s> redefinition of the link header.  </s>
+<s> The syntax specified above is 100% in  </s>
+<s> compliance with the link header given in RFC 2068.  </s>
+<s> Rather the above simply specifies the fields and extensions of particular interest to DAV.  </s>
+<s> A link header must contain exactly one Source or Destination attribute.  </s>
+<s> The URI included at the beginning of the header then takes upon itself  </s>
+<s> the unspecified value.  </s>
+<s> Link: http://foo ; Destination = http://bar; Type = DAV.Versioning.History  </s>
+<s> In the previous case http://foo is the source as destination is  </s>
+<s> specified as http://bar.  </s>
+<s> In addition all link headers MUST include a Type attribute.  </s>
+<s> A DAV server is only required to record Source, Destination, and Type.  </s>
+<s> It may drop all other attributes if it so chooses.  </s>
+<s> In addition a DAV server may not record two links which have the same source, destination,  </s>
+<s> and type but differ on other attributes.  </s>
+<s> A link is uniquely identified  </s>
+<s> by the source/destination/type triple.  </s>
+<s> 2UNLINK Method 2.1Request-URI The Request-URI is the resource from where the link will be removed.  </s>
+<s> 2.2Link Header The link header included in UNLINK is only required to have the Source/Destination/Type triple.  </s>
+<s> I like this proposal.  </s>
+<s> There are, however, a few issues with it that need to be ironed out before it can be finalized.  </s>
+<s> 1. Flawed BNF.  </s>
+<s> Well Yaron, it looks like you've been writing BNF at midnight (again :-), since there are two flaws with your BNF: - There is no way to distinguish between another DAV-link-param and a ";"  </s>
+<s> in a URI -- for example, a ";" parameter in a URL.  </s>
+<s> This is why we always  </s>
+<s> escaped URIs at the design team meetings, and why they're escaped (with quotes) in the HTTP spec's definition of the Link header.  </s>
+<s> - You repeat the HTTP spec's error of omitting the trailing ), so the scope of the # operator is ambiguous.  </s>
+<s> My proposal for the BNF for a DAV Link header is given below.  </s>
+<s> The BNF from the Link specification in Section 19.6.2.4 of the HTTP specification is as follows: Link = "Link" ":" #(" " URI " " *( ";" link-param ) link-param = ( ( "rel" "=" relationship )  </s>
+<s> ( "rev" "=" relationship ) ( "title" "=" quoted-string ) ( "anchor" "=" " URI " ) ( link-extension ) )  </s>
+<s> link-extension = token [ "=" ( token | quoted-string ) ] relationship = sgml-name  </s>
+<s> ( " sgml-name *( SP sgml-name) " )  </s>
+<s> sgml-name = ALPHA *( ALPHA | DIGIT | "." | "-" ) I propose that the syntax for the DAV Link header be defined as follows: Link = "Link" ":" #(" " URI " " *( ";" dav-link-param ) )  </s>
+<s> dav-link-param = ( source | destination | type | link-param )  </s>
+<s> source = "source" "=" " URI " destination = "destination" "=" " URI " type = "type" "=" token link-param, relationship, link-extension are as defined in Section 19.6.2.4 of the HTTP specification.  </s>
+<s> However, since this Appendix may be deleted from a future (next) revision of the HTTP/1.1 RFC, they need to be restated in the DAV specification: link-param = ( ( "rel" "=" relationship )  </s>
+<s> ( "rev" "=" relationship ) ( "title" "=" quoted-string ) ( "anchor" "=" " URI " ) ( link-extension ) )  </s>
+<s> link-extension = token [ "=" ( token | quoted-string ) ] relationship = sgml-name  </s>
+<s> ( " sgml-name *( SP sgml-name) " )  </s>
+<s> sgml-name = ALPHA *( ALPHA | DIGIT | "." | "-" ) This also raises the issue of how much we need to support the existing LINK method, if it is slated to be phased out.  </s>
+<s> Roy? 2. Interactions between existing link parameters and DAV link parameters.  </s>
+<s> - If a DAV TYPE parameter is defined, should REL be allowed?  </s>
+<s> Or should DAV simply use the existing REL parameter as its type?  </s>
+<s> Or are are REL and TYPE two names for the same concept?  </s>
+<s> - an ANCHOR parameter can be used to indicate a source other than the URI on which the Link header is stored.  </s>
+<s> If a SOURCE parameter is present, does  </s>
+<s> it override an ANCHOR parameter?  </s>
+<s> - should a DAV Type be a "relationship" rather than a "token"?  </s>
+<s> There are  </s>
+<s> fairly minor differences between them, the largest one being that a token can start with a number.  </s>
+<s> This would allow us to write: type = ("type" | "rel") "=" relationship  </s>
+<s> Or should the unspecified URI always be the destination, like it is in the HTTP spec.?  </s>
+<s> I agree with this. - Jim  </s>
+<s> Actually Jim, URIs are tokens and thus do not have spaces.  </s>
+<s> As the HTTP spec requires spaces between all tokens (please see section 2.1 of RFC 2068), your quotes are unnecessary.  </s>
+<s> For example, link:  http://blah  ; destination = http://;;;;;;;;;;;;; ; type = http://blah ,  http://foo  ; destination = http:/;;;;; ; type = http://dervenersnitzel  </s>
+<s> Also if the Link header is going to be dumped from the HTTP spec then there is no backwards compatibility to be worried about and we can format the header properly, which should be: Link = "Link" ":" Source Destination Type *(";" link-param)  </s>
+<s> Also, if the link header is going away then we can forget all the non-dav parameters.  </s>
+<s> After all, no need to define the relationship with non-existent parameters.  </s>
+<s> If it isn't in the HTTP 1.1 spec, it isn't our problem.  </s>
+<s> Yaron  </s>
+<s> From:Jim Whitehead [SMTP:ejw@ics.uci.edu]  </s>
+<s> Sent:Wednesday, March 26, 1997 7:10 PM Subject:Re: LINK &amp; UNLINK Methods  </s>
+<s> Huh? URIs are not tokens and whitespace is not a reliable separator in header fields.  </s>
+<s> I must have said that a couple thousand times on http-wg, and one was just last week.  </s>
+<s> If you want to separate URIs from parameters in a header field, you must surround the URI with angle brackets or "double-quotes", since they are the only characters that will never appear within a URI even if it is broken across more than one line.  </s>
+<s> If you are going to redefine the syntax, then Link = "Link" ":" 1#( link-type *(";" link-param) ) link-type = token link-param = ( "from" "=" " URI " )  </s>
+<s> otherwise, the HTTP/1.1 spec defines it as if rel=type first URI is destination anchor="URI" is source (current document if elided) else if rev=type first URI is source anchor="URI" is destination (current document if elided) I don't like that model, but it was inherited from HTML.  </s>
+<s> Extensibility is a WEBDAV problem.  </s>
+<s> ....Roy  </s>

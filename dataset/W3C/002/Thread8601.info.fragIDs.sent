@@ -1,48 +1,48 @@
-DSig folks-- Assume the following situation: a DSIG verifier receives a detached signature. 
-When the verifier de-references the URL in the Reference .. /Reference block, the result is an HTTP Redirect (HTTP status code 302), and the HTTP headers on the response include the redirected location of the URL. 
-There's also some content on the page (say a notice from the server that the page was redirected, typically to support old clients that don't natively understand redirect). 
-What should the verifier do in this case? 
-Should it: a) follow the redirect URL to get the content to feed into the set of transforms? 
-b) use the content of the response (the server notice) as the input to the set of transforms? 
-c) return an error? 
-Here's a concrete example: the URL http://www.farcaster.com/bal-home.html is redirected to http://www.farcaster.com/. 
-Here are two signatures on redirect and the second did not. 
-Section 3.2.1 (Reference Validation) is silent on this issue. 
-Thoughts? 
---bal 
-begin 600 detached-rsa-redirect.xml 
-M/%-I9VYA='5R92!X;6QN STB:'1T #HO+W=W=RYW,RYO F O,C`P,"\P-R]X M;6QD VEG(R(^/%-I9VYE9$EN9F\^/$-A;F]N:6-A;&amp;EZ871I;VY-971H;V0@ M06QG;W)I=&amp;AM/2)H='1P.B\O=W=W+G S+F]R9R]44B\R,#`P+U=$+7AM;"UC M,31N+3(P,#`P-S$P(B\^/%-I9VYA='5R94UE=&amp;AO9"!!;&amp;=O FET:&amp;T](FAT M='`Z+R]W=W N=S,N;W)G+S(P,#`O,# O &amp;UL9'-I9R-R V$M VAA,2(O/CQ2 M969E F5N8V4@55))/2)H='1P.B\O=W=W+F9A F-A W1E BYC;VTO8F%L+6AO M;64N:'1M;"(^/$1I9V5S=$UE=&amp;AO9"!!;&amp;=O FET:&amp;T](FAT='`Z+R]W=W N M=S,N;W)G+S(P,#`O,# O &amp;UL9'-I9R-S:&amp;$Q(B\^/$1I9V5S=%9A;'5E/EDU M4TQ.,3=( $Q,371497591V99;$)&amp;;4YL53T\+T1I9V5S=%9A;'5E/CPO4F5F M97)E;F-E/CPO4VEG;F5D26YF;SX\4VEG;F%T=7)E5F%L=64^9EA01D-V4C1U M8BM&amp;.6DY,RM8.4ET=VPO;4QB 
-DU13W)O04%L4S8V1S)(9G@W=T5R4&amp;-I4V=I M13)J3S!L FM5-7@Q2&amp;1Q2V].,#E3 F=T67I05UAB.' ]/3PO4VEG;F%T=7)E M5F%L=64^/$ME 4EN9F\^/$ME 59A;'5E/CQ24T%+97E686QU93X\36]D=6QU M SYT9E%42F-Z039-175*4'!A9VI! 
-U-1:6EB1D-G G-Z4D8O:%(R $ Q:$E# M8W9*3' W.#). &amp;]8;6)I DXW84=4:6-*3T1Z3'I"9$I.;4%6455I44U#=ST] M/"]-;V1U;'5S/CQ% '!O;F5N=#Y!44%"/"]% '!O;F5N=#X\+U)304ME 59A E;'5E/CPO2V5Y5F%L=64^/"]+97E);F9O/CPO4VEG;F%T=7)E/@== end begin 600 detached-rsa-noredirect.xml M/%-I9VYA='5R92!X;6QN STB:'1T #HO+W=W=RYW,RYO F O,C`P,"\P-R]X M;6QD VEG(R(^/%-I9VYE9$EN9F\^/$-A;F]N:6-A;&amp;EZ871I;VY-971H;V0@ M06QG;W)I=&amp;AM/2)H='1P.B\O=W=W+G S+F]R9R]44B\R,#`P+U=$+7AM;"UC M,31N+3(P,#`P-S$P(B\^/%-I9VYA='5R94UE=&amp;AO9"!!;&amp;=O FET:&amp;T](FAT M='`Z+R]W=W N=S,N;W)G+S(P,#`O,# O &amp;UL9'-I9R-R V$M VAA,2(O/CQ2 M969E F5N8V4@55))/2)H='1P.B\O=W=W+F9A F-A W1E BYC;VTO8F%L+6AO M;64N:'1M;"(^/$1I9V5S=$UE=&amp;AO9"!!;&amp;=O FET:&amp;T](FAT='`Z+R]W=W N M=S,N;W)G+S(P,#`O,# O &amp;UL9'-I9R-S:&amp;$Q(B\^/$1I9V5S=%9A;'5E/DU4 M8FQY1TE0-5)+1&amp;MP2G4X;71* $%X 7HW53T\+T1I9V5S=%9A;'5E/CPO4F5F M97)E;F-E/CPO4VEG;F5D26YF;SX\4VEG;F%T=7)E5F%L=64^27(K,4-E:&amp;(K M-757,&amp;EW9E1K=C)6 E!: $-)2%E:;'(X8G(T:SAO3'-B96$T1GAU9')(;&amp;UN M0DE9.4]Z %)*54]S07-( DUL44YG-69B1VTP4$A62%$]/3PO4VEG;F%T=7)E M5F%L=64^/$ME 4EN9F\^/$ME 59A;'5E/CQ24T%+97E686QU93X\36]D=6QU M SXW8TU(*VY..&amp;,W2$)Y,7965E%X2U)I2S9Z8C=W;G4Q,C%F5%%(8WI/14U* M:34X3U!V8W502E0X,DEO9F4S;C-64DQF.3=!3WAH S!(.6@S;#-29U)6=ST] M/"]-;V1U;'5S/CQ% '!O;F5N=#Y!44%"/"]% '!O;F5N=#X\+U)304ME 59A E;'5E/CPO2V5Y5F%L=64^/"]+97E);F9O/CPO4VEG;F%T=7)E/@== end 
-Yes. Since the signature includes a digest of the eventual body content I don't see that following a redirect introduces significant security risks that aren't inherent in, say, using DNS to find the origin server in the first place. 
-(well... beware of bonehead plays like looping redirects, but that's just an operational risk, not anything terribly subtle) I take 
-to refer to the body of an authorized 200 HTTP response from http://www.farcaster.com/bal-home.html , provided that body's sha1 digest is MTblyGI... ; And if two HTTP transactions occur ala: C- www.farcaster.com 
-GET /bal-home.html - C 302 Found Location: http://example.org/xyz.html 
-C- example.org 
-GET /xyz.html - C 200 ... then I consider the second response to be an authorized 200 response from http://www.farcaster.com/bal-home.html as well. 
-cf similarly for 307 Temporary Redirect, 305 Use Proxy, but not 303 See Other, since "The new URI is not a substitute reference for the originally requested resource." 
--- http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.3.4). 
-That doesn't seem appropriate. 
-I think the spec should allow that, but I would consider an implementation that signals an error in this case to be low quality. 
-Thanks for the details; I hope my reply is as clear as your question. 
-p.s. Get a Real Mailer; who uses uuencoded attachments any more? 
-;-) I decoded and re-attached them using MIME so our HTTP archive gizmo will grok. 
-Dan Connolly, W3C http://www.w3.org/People/Connolly/ 
-I don't think that DNS makes a difference. 
-Consider the case in which you have DNSSEC (or equivalent) and so you have a trusted binding to the IP address and you also run IPSEC keying off an a DNSSEC secured key. 
-It still makes sense to follow the redirect since you are being told authoritatively to 'go somewhere else'. 
-Brians point may have been that the spec needs to make the intention clear on this point. 
-The digest does not make a difference in practice since the relying party has to decide whether to trust the key, not the document signer. 
-Thus the validation information may well be different for different relying parties. 
-(Have a look at the Federal Bridge CA for examples :-) Phill 
-Yes, the spec need to be clear on this point. 
-(And I agree that if a validating client can do so it should chase redirected URIs to get the right bucket of bits.) --bal Brians point may have been that the spec needs to make the intention clear on this point. 
-Ok, I added a sentence in section 4.3.3; the paragraph now reads: XML Signature applications MUST be able to parse URI syntax. 
-We RECOMMEND they be able to dereference URIs in the HTTP scheme. 
-Dereferencing a URI in the HTTP scheme MUST comply with the Status Code Definitions of [HTTP] (e.g., 302, 305 and 307 redirects are followed to obtain the entity-body of a 200 status code response). 
-Martin, you suggested the following: If a resource is identified by more than one URI, the most specific should be used (e.g. http://www.w3.org/2000/06/interop-pressrelease.html.en 
-instead of http://www.w3.org/2000/06/interop-pressrelease). 
-(See the section 3.2.1:Reference 
-Validation for a further information on reference processing.) but given the above, is this where a few URLs are known by the application, or where this is an HTTP 300 Mutliple Choices response? 
-Joseph Reagle Jr. W3C Policy Analyst mailto:reagle@w3.org 
-IETF/W3C XML-Signature Co-Chair http://www.w3.org/People/Reagle/ 
+<s> DSig folks-- Assume the following situation: a DSIG verifier receives a detached signature.  </s>
+<s> When the verifier de-references the URL in the Reference .. /Reference block, the result is an HTTP Redirect (HTTP status code 302), and the HTTP headers on the response include the redirected location of the URL.  </s>
+<s> There's also some content on the page (say a notice from the server that the page was redirected, typically to support old clients that don't natively understand redirect).  </s>
+<s> What should the verifier do in this case?  </s>
+<s> Should it: a) follow the redirect URL to get the content to feed into the set of transforms?  </s>
+<s> b) use the content of the response (the server notice) as the input to the set of transforms?  </s>
+<s> c) return an error?  </s>
+<s> Here's a concrete example: the URL http://www.farcaster.com/bal-home.html is redirected to http://www.farcaster.com/.  </s>
+<s> Here are two signatures on redirect and the second did not.  </s>
+<s> Section 3.2.1 (Reference Validation) is silent on this issue.  </s>
+<s> Thoughts?  </s>
+<s> --bal  </s>
+<s> begin 600 detached-rsa-redirect.xml  </s>
+<s> M/%-I9VYA='5R92!X;6QN STB:'1T #HO+W=W=RYW,RYO F O,C`P,"\P-R]X M;6QD VEG(R(^/%-I9VYE9$EN9F\^/$-A;F]N:6-A;&amp;EZ871I;VY-971H;V0@ M06QG;W)I=&amp;AM/2)H='1P.B\O=W=W+G S+F]R9R]44B\R,#`P+U=$+7AM;"UC M,31N+3(P,#`P-S$P(B\^/%-I9VYA='5R94UE=&amp;AO9"!!;&amp;=O FET:&amp;T](FAT M='`Z+R]W=W N=S,N;W)G+S(P,#`O,# O &amp;UL9'-I9R-R V$M VAA,2(O/CQ2 M969E F5N8V4@55))/2)H='1P.B\O=W=W+F9A F-A W1E BYC;VTO8F%L+6AO M;64N:'1M;"(^/$1I9V5S=$UE=&amp;AO9"!!;&amp;=O FET:&amp;T](FAT='`Z+R]W=W N M=S,N;W)G+S(P,#`O,# O &amp;UL9'-I9R-S:&amp;$Q(B\^/$1I9V5S=%9A;'5E/EDU M4TQ.,3=( $Q,371497591V99;$)&amp;;4YL53T\+T1I9V5S=%9A;'5E/CPO4F5F M97)E;F-E/CPO4VEG;F5D26YF;SX\4VEG;F%T=7)E5F%L=64^9EA01D-V4C1U M8BM&amp;.6DY,RM8.4ET=VPO;4QB  </s>
+<s> DU13W)O04%L4S8V1S)(9G@W=T5R4&amp;-I4V=I M13)J3S!L FM5-7@Q2&amp;1Q2V].,#E3 F=T67I05UAB.' ]/3PO4VEG;F%T=7)E M5F%L=64^/$ME 4EN9F\^/$ME 59A;'5E/CQ24T%+97E686QU93X\36]D=6QU M SYT9E%42F-Z039-175*4'!A9VI!  </s>
+<s> U-1:6EB1D-G G-Z4D8O:%(R $ Q:$E# M8W9*3' W.#). &amp;]8;6)I DXW84=4:6-*3T1Z3'I"9$I.;4%6455I44U#=ST] M/"]-;V1U;'5S/CQ% '!O;F5N=#Y!44%"/"]% '!O;F5N=#X\+U)304ME 59A E;'5E/CPO2V5Y5F%L=64^/"]+97E);F9O/CPO4VEG;F%T=7)E/@== end begin 600 detached-rsa-noredirect.xml M/%-I9VYA='5R92!X;6QN STB:'1T #HO+W=W=RYW,RYO F O,C`P,"\P-R]X M;6QD VEG(R(^/%-I9VYE9$EN9F\^/$-A;F]N:6-A;&amp;EZ871I;VY-971H;V0@ M06QG;W)I=&amp;AM/2)H='1P.B\O=W=W+G S+F]R9R]44B\R,#`P+U=$+7AM;"UC M,31N+3(P,#`P-S$P(B\^/%-I9VYA='5R94UE=&amp;AO9"!!;&amp;=O FET:&amp;T](FAT M='`Z+R]W=W N=S,N;W)G+S(P,#`O,# O &amp;UL9'-I9R-R V$M VAA,2(O/CQ2 M969E F5N8V4@55))/2)H='1P.B\O=W=W+F9A F-A W1E BYC;VTO8F%L+6AO M;64N:'1M;"(^/$1I9V5S=$UE=&amp;AO9"!!;&amp;=O FET:&amp;T](FAT='`Z+R]W=W N M=S,N;W)G+S(P,#`O,# O &amp;UL9'-I9R-S:&amp;$Q(B\^/$1I9V5S=%9A;'5E/DU4 M8FQY1TE0-5)+1&amp;MP2G4X;71* $%X 7HW53T\+T1I9V5S=%9A;'5E/CPO4F5F M97)E;F-E/CPO4VEG;F5D26YF;SX\4VEG;F%T=7)E5F%L=64^27(K,4-E:&amp;(K M-757,&amp;EW9E1K=C)6 E!: $-)2%E:;'(X8G(T:SAO3'-B96$T1GAU9')(;&amp;UN M0DE9.4]Z %)*54]S07-( DUL44YG-69B1VTP4$A62%$]/3PO4VEG;F%T=7)E M5F%L=64^/$ME 4EN9F\^/$ME 59A;'5E/CQ24T%+97E686QU93X\36]D=6QU M SXW8TU(*VY..&amp;,W2$)Y,7965E%X2U)I2S9Z8C=W;G4Q,C%F5%%(8WI/14U* M:34X3U!V8W502E0X,DEO9F4S;C-64DQF.3=!3WAH S!(.6@S;#-29U)6=ST] M/"]-;V1U;'5S/CQ% '!O;F5N=#Y!44%"/"]% '!O;F5N=#X\+U)304ME 59A E;'5E/CPO2V5Y5F%L=64^/"]+97E);F9O/CPO4VEG;F%T=7)E/@== end  </s>
+<s> Yes. Since the signature includes a digest of the eventual body content I don't see that following a redirect introduces significant security risks that aren't inherent in, say, using DNS to find the origin server in the first place.  </s>
+<s> (well... beware of bonehead plays like looping redirects, but that's just an operational risk, not anything terribly subtle) I take  </s>
+<s> to refer to the body of an authorized 200 HTTP response from http://www.farcaster.com/bal-home.html , provided that body's sha1 digest is MTblyGI... ; And if two HTTP transactions occur ala: C- www.farcaster.com  </s>
+<s> GET /bal-home.html - C 302 Found Location: http://example.org/xyz.html  </s>
+<s> C- example.org  </s>
+<s> GET /xyz.html - C 200 ... then I consider the second response to be an authorized 200 response from http://www.farcaster.com/bal-home.html as well.  </s>
+<s> cf similarly for 307 Temporary Redirect, 305 Use Proxy, but not 303 See Other, since "The new URI is not a substitute reference for the originally requested resource."  </s>
+<s> -- http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.3.4).  </s>
+<s> That doesn't seem appropriate.  </s>
+<s> I think the spec should allow that, but I would consider an implementation that signals an error in this case to be low quality.  </s>
+<s> Thanks for the details; I hope my reply is as clear as your question.  </s>
+<s> p.s. Get a Real Mailer; who uses uuencoded attachments any more?  </s>
+<s> ;-) I decoded and re-attached them using MIME so our HTTP archive gizmo will grok.  </s>
+<s> Dan Connolly, W3C http://www.w3.org/People/Connolly/  </s>
+<s> I don't think that DNS makes a difference.  </s>
+<s> Consider the case in which you have DNSSEC (or equivalent) and so you have a trusted binding to the IP address and you also run IPSEC keying off an a DNSSEC secured key.  </s>
+<s> It still makes sense to follow the redirect since you are being told authoritatively to 'go somewhere else'.  </s>
+<s> Brians point may have been that the spec needs to make the intention clear on this point.  </s>
+<s> The digest does not make a difference in practice since the relying party has to decide whether to trust the key, not the document signer.  </s>
+<s> Thus the validation information may well be different for different relying parties.  </s>
+<s> (Have a look at the Federal Bridge CA for examples :-) Phill  </s>
+<s> Yes, the spec need to be clear on this point.  </s>
+<s> (And I agree that if a validating client can do so it should chase redirected URIs to get the right bucket of bits.) --bal Brians point may have been that the spec needs to make the intention clear on this point.  </s>
+<s> Ok, I added a sentence in section 4.3.3; the paragraph now reads: XML Signature applications MUST be able to parse URI syntax.  </s>
+<s> We RECOMMEND they be able to dereference URIs in the HTTP scheme.  </s>
+<s> Dereferencing a URI in the HTTP scheme MUST comply with the Status Code Definitions of [HTTP] (e.g., 302, 305 and 307 redirects are followed to obtain the entity-body of a 200 status code response).  </s>
+<s> Martin, you suggested the following: If a resource is identified by more than one URI, the most specific should be used (e.g. http://www.w3.org/2000/06/interop-pressrelease.html.en  </s>
+<s> instead of http://www.w3.org/2000/06/interop-pressrelease).  </s>
+<s> (See the section 3.2.1:Reference  </s>
+<s> Validation for a further information on reference processing.) but given the above, is this where a few URLs are known by the application, or where this is an HTTP 300 Mutliple Choices response?  </s>
+<s> Joseph Reagle Jr. W3C Policy Analyst mailto:reagle@w3.org  </s>
+<s> IETF/W3C XML-Signature Co-Chair http://www.w3.org/People/Reagle/  </s>

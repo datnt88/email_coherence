@@ -1,263 +1,263 @@
-Hello All, There is something that I have been pondering about XML Signatures. 
-Specifically, the current Candidate Rec allows for the use of Canonical XML as a transform in the "transformation pipeline" above and beyond the use of C14N to convert any node-set to octets. 
-Consider this Argument: 1. 
-If a Reference is to be processed as "XML" (node-set), it will be canonicalized implicitly when the node-set is converted to octets at the end of the transformation pipeline. 
-2. If a Reference is to be processed as octets, canonicalization is meaningless, since we don't know what the file format is anyhow 3. C14N, when used as a part of the transformation pipeline is redundant. 
-Is there some exception to my argument here? 
-What is missing? 
-Kind Regards, Blake Dournaee Toolkit Applications Engineer RSA Security "The only thing I know is that I know nothing" - Socrates 
-Hi Blake, It could be useful, now or in the future, to put another transform after c14n. 
-John Boyer Senior Product Architect, Software Development Internet Commerce System (ICS) Team PureEdge Solutions Inc. Trusted Digital Relationships 
-v: 250-708-8047 f: 250-708-8010 1-888-517-2675 http://www.PureEdge.com 
-http://www.pureedge.com/ 
-Hello All, There is something that I have been pondering about XML Signatures. 
-Specifically, the current Candidate Rec allows for the use of Canonical XML as a transform in the "transformation pipeline" above and beyond the use of C14N to convert any node-set to octets. 
-Consider this Argument: 1. 
-If a Reference is to be processed as "XML" (node-set), it will be canonicalized implicitly when the node-set is converted to octets at the end of the transformation pipeline. 
-2. If a Reference is to be processed as octets, canonicalization is meaningless, since we don't know what the file format is anyhow 3. C14N, when used as a part of the transformation pipeline is redundant. 
-Is there some exception to my argument here? 
-What is missing? 
-Kind Regards, Blake Dournaee Toolkit Applications Engineer RSA Security "The only thing I know is that I know nothing" - Socrates 
-John, Can you think of a possible example? 
-I'm not even sure where this would fit in at this point. 
-Canonicalization is a very expensive operation for XML Signatures, and if it is left as an acceptable transform without much further explanation I am guessing that it will be used unnecessarily, further slowing down practical implementations. 
-Blake Dournaee Toolkit Applications Engineer RSA Security "The only thing I know is that I know nothing" - Socrates 
-Hi Blake, It could be useful, now or in the future, to put another transform after c14n. 
-John Boyer Senior Product Architect, Software Development Internet Commerce System (ICS) Team PureEdge Solutions Inc. Trusted Digital Relationships 
-v: 250-708-8047 f: 250-708-8010 1-888-517-2675 http://www.PureEdge.com 
-http://www.pureedge.com/ 
------Original Message----- Hello All, There is something that I have been pondering about XML Signatures. 
-Specifically, the current Candidate Rec allows for the use of Canonical XML as a transform in the "transformation pipeline" above and beyond the use of C14N to convert any node-set to octets. 
-Consider this Argument: 1. 
-If a Reference is to be processed as "XML" (node-set), it will be canonicalized implicitly when the node-set is converted to octets at the end of the transformation pipeline. 
-2. If a Reference is to be processed as octets, canonicalization is meaningless, since we don't know what the file format is anyhow 3. C14N, when used as a part of the transformation pipeline is redundant. 
-Is there some exception to my argument here? 
-What is missing? 
-Kind Regards, Blake Dournaee Toolkit Applications Engineer RSA Security "The only thing I know is that I know nothing" - Socrates 
-John, I belive your example is redundant. 
-If we decode something that is expected to be XML and we process it as XML the first thing we would do would be to convert it into a node-set. 
-From here, no matter what we did to it, it would be canonicalized as part of the node-set to binary conversion. 
-Any additonal canonicalization is redundant - this is the nature of my argument. 
-For example Base64 Blob - Base64 Decode - octets-to-node-set - XSLT/XPath/etc - node-set to octets - hash function. 
-In my version above, canonicalization happens *once*. 
-Here is your version Bas64 Blob - Base64 Decode - octets-to-node-set - C14N - XSLT/XPath/etc - node-set to octets - hash function. 
-In this version, canonicalization happens twice. 
-Once explicitly, and once implicitly when the node-set gets transformed into octets. 
-This is redundant canonicalization because shouldn't the XSLT and XPath transformations behave the same over canonicalized or non-canonicalized XML? 
-Further, you said: "Note that C14N is not run again at the end of the transform pipeline if the output is already an octet stream, see Section 4.3.3.5:" 
-This is correct, I agree with you. 
-I think you are implying that I would need canonicalization if I had a node-set previously that was converted into an octet stream and then digested. 
-But, my argument still holds because canonicalization would be used to convert the node-set to an octet stream anyhow, so it shouldn't ever be used explicitly. 
-The only possibility that I can see is if a node-set should be canonicalized *before* it is used in an XPath or XSLT transform. 
-Is this the case? 
-If so, it will beat my argument and provide a reason for canonicalizing twice. 
-Kind Regards, Blake Dournaee Toolkit Applications Engineer RSA Security "The only thing I know is that I know nothing" - Socrates 
-Hi Blake, Base-64 decode something that is expected to be a chunk of XML. 
-C14N XSLT Also, I don't understand how it would slow anything down. 
-I find it cleaner that it is possible to express the implicit behaviors. 
-But, expressing that a step should perform C14N versus implicitly performing a C14N still results in a C14N, so there is no real cost saving derived from leaving out the 
-declaration of the C14N transform. 
-Note that C14N is not run again at the end of the transform pipeline if the output is already an octet stream, see Section 4.3.3.5: 
-"If the result of the URI dereference and application of Transforms is an XPath node-set (or sufficiently functional replacement implemented by the application) then it must be converted as described in the Reference Processing Model (section 4.3.3.2). 
-If the result of URI dereference and application of Transforms is an octet stream, then no conversion occurs..." Cheers, John Boyer Senior Product Architect, Software Development Internet Commerce System (ICS) Team PureEdge Solutions Inc. Trusted Digital Relationships v: 250-708-8047 f: 250-708-8010 1-888-517-2675 http://www.PureEdge.com 
-http://www.PureEdge.com 
------Original Message----- mailto:bdournaee@rsasecurity.com ] John, Can you think of a possible example? 
-I'm not even sure where this would fit in at this point. 
-Canonicalization is a very expensive operation for XML Signatures, and if it is left as an acceptable transform without much further explanation I am guessing that it will be used unnecessarily, further slowing down practical implementations. 
-Blake Dournaee Toolkit Applications Engineer RSA Security "The only thing I know is that I know nothing" - Socrates -----Original Message----- Hi Blake, It could be useful, now or in the future, to put another transform after c14n. 
-John Boyer Senior Product Architect, Software Development Internet Commerce System (ICS) Team PureEdge Solutions Inc. Trusted Digital Relationships v: 250-708-8047 f: 250-708-8010 1-888-517-2675 http://www.PureEdge.com 
-http://www.PureEdge.com 
------Original Message----- mailto:bdournaee@rsasecurity.com ] Hello All, There is something that I have been pondering about XML Signatures. 
-Specifically, the current Candidate Rec allows for the use of Canonical XML as a transform in the "transformation pipeline" above and beyond the use 
-of C14N to convert any node-set to octets. 
-Consider this Argument: 1. 
-If a Reference is to be processed as "XML" (node-set), it will be canonicalized implicitly when the node-set is converted to octets at the end of the transformation pipeline. 
-2. If a Reference is to be processed as octets, canonicalization is meaningless, since we don't know what the file format is anyhow 3. C14N, when used as a part of the transformation pipeline is redundant. 
-Is there some exception to my argument here? 
-What is missing? 
-Kind Regards, Blake Dournaee Toolkit Applications Engineer RSA Security "The only thing I know is that I know nothing" - Socrates 
-Hi, I think your argument works only for the default Canonical XML that strips comments. 
-If you want to retain comments or to use Exclusive XML Canonicalization, or use some other canonicalization/serialization some place where you are going from a node set to an octet stream then you need to specify it explicitly. 
-Donald From: "Dournaee, Blake" bdournaee@rsasecurity.com 
-Message-ID: E7B6CB80230AD31185AD0008C7EBC4D2DAEFCC@exrsa01.rsa.com "Joseph M. Reagle Jr." Date: Wed, 25 Jul 2001 17:17:01 -0700 
-Another use for explicit c14n is after an XSLT transform (whose output is an implementation-dependent stream). 
-Here, an explicit C14n transform is also necessary. 
-Merlin r/dee3@torque.pothole.com/2001.07.25/23:47:47 
-Baltimore Technologies plc will not be liable for direct, special, indirect or consequential damages arising from alteration of the contents of this message by a third party or as a result of any virus being passed on. 
-In addition, certain Marketing collateral may be added from time to time to promote Baltimore Technologies products, services, Global e-Security or appearance at trade shows and conferences. 
-This footnote confirms that this email message has been swept by Baltimore MIMEsweeper for Content Security threats, including computer viruses. 
-Hi Blake, I had to be brief yesterday and yet still ran out of time. 
-Fortunately, Donald and Merlin nailed much of the essential points I had wanted to say about the issue. 
-1) We used to have minimal c14n, but that got thrown out. 
-However, we still have two c14n variations, one with and the other without comments, and we have another 'exclusive' c14n on the way to deal with unwanted inheritance of namespace. 
-Each c14n algorithm appears as a different Algorithm attribute to a Transform. 
-It seems prudent to include comment-less c14n in the list of recognized algorithm identifiers. 
-2) Anytime the output of a transform is an octet stream that is XML, it may be necessary to c14n the result before subsequent processing. 
-The example I gave is not redundant because the results of an XSLT (or even an XPath) can change between a document and the c14n of a document (admittedly many of the reasons for this that come to my mind quickly are also things that should perhaps not be done, but we have little control over that). 
-However, I think the archives are littered with concern from many of us regarding the output of XSLT. 
-Indeed, so great is the concern that in Section 6.6.5, "we further RECOMMEND inserting a transform after the XSLT transform to canonicalize the output". 
-Naturally, many will want to express the regular comment-less version in addition to the other kinds of c14n. 
-Cheers, John Boyer Senior Product Architect, Software Development Internet Commerce System (ICS) Team PureEdge Solutions Inc. Trusted Digital Relationships v: 250-708-8047 f: 250-708-8010 1-888-517-2675 http://www.PureEdge.com 
-John, I belive your example is redundant. 
-If we decode something that is expected to be XML and we process it as XML the first thing we would do would be to convert it into a node-set. 
-From here, no matter what we did to it, it would be canonicalized as part of the node-set to binary conversion. 
-Any additonal canonicalization is redundant - this is the nature of my argument. 
-For example Base64 Blob - Base64 Decode - octets-to-node-set - XSLT/XPath/etc - node-set to octets - hash function. 
-In my version above, canonicalization happens *once*. 
-Here is your version Bas64 Blob - Base64 Decode - octets-to-node-set - C14N - XSLT/XPath/etc - node-set to octets - hash function. 
-In this version, canonicalization happens twice. 
-Once explicitly, and once implicitly when the node-set gets transformed into octets. 
-This is redundant canonicalization because shouldn't the XSLT and XPath transformations behave the same over canonicalized or non-canonicalized XML? 
-Further, you said: "Note that C14N is not run again at the end of the transform pipeline if the output is already an octet stream, see Section 4.3.3.5:" 
-This is correct, I agree with you. 
-I think you are implying that I would need canonicalization if I had a node-set previously that was converted into an octet stream and then digested. 
-But, my argument still holds because canonicalization would be used to convert the node-set to an octet stream anyhow, so it shouldn't ever be used explicitly. 
-The only possibility that I can see is if a node-set should be canonicalized *before* it is used in an XPath or XSLT transform. 
-Is this the case? 
-If so, it will beat my argument and provide a reason for canonicalizing twice. 
-Kind Regards, Blake Dournaee Toolkit Applications Engineer RSA Security "The only thing I know is that I know nothing" - Socrates -----Original Message----- Hi Blake, Base-64 decode something that is expected to be a chunk of XML. 
-C14N XSLT Also, I don't understand how it would slow anything down. 
-I find it cleaner that it is possible to express the implicit behaviors. 
-But, expressing that a step should perform C14N versus implicitly performing a C14N still results in a C14N, so there is no real cost saving derived from leaving out the declaration of the C14N transform. 
-Note that C14N is not run again at the end of the transform pipeline if the output is already an octet stream, see Section 4.3.3.5: 
-"If the result of the URI dereference and application of Transforms is an XPath node-set (or sufficiently functional replacement implemented by the application) then it must be converted as described in the Reference Processing Model (section 4.3.3.2). 
-If the result of URI dereference and application of Transforms is an octet stream, then no conversion occurs..." Cheers, John Boyer Senior Product Architect, Software Development Internet Commerce System (ICS) Team PureEdge Solutions Inc. Trusted Digital Relationships v: 250-708-8047 f: 250-708-8010 1-888-517-2675 http://www.PureEdge.com 
-http://www.pureedge.com/ 
------Original Message----- John, Can you think of a possible example? 
-I'm not even sure where this would fit in at this point. 
-Canonicalization is a very expensive operation for XML Signatures, and if it is left as an acceptable transform without much further explanation I am guessing that it will be used unnecessarily, further slowing down practical implementations. 
-Blake Dournaee Toolkit Applications Engineer RSA Security "The only thing I know is that I know nothing" - Socrates -----Original Message----- Hi Blake, It could be useful, now or in the future, to put another transform after c14n. 
-John Boyer Senior Product Architect, Software Development Internet Commerce System (ICS) Team PureEdge Solutions Inc. Trusted Digital Relationships v: 250-708-8047 f: 250-708-8010 1-888-517-2675 http://www.PureEdge.com 
-http://www.pureedge.com/ 
------Original Message----- Hello All, There is something that I have been pondering about XML Signatures. 
-Specifically, the current Candidate Rec allows for the use of Canonical 
-XML as a transform in the "transformation pipeline" above and beyond the use of C14N to convert any node-set to octets. 
-Consider this Argument: 1. 
-If a Reference is to be processed as "XML" (node-set), it will be canonicalized implicitly when the node-set is converted to octets at the end of the transformation pipeline. 
-2. If a Reference is to be processed as octets, canonicalization is meaningless, since we don't know what the file format is anyhow 3. C14N, when used as a part of the transformation pipeline is redundant. 
-Is there some exception to my argument here? 
-What is missing? 
-Kind Regards, Blake Dournaee Toolkit Applications Engineer RSA Security "The only thing I know is that I know nothing" - Socrates 
-John, 
-Thanks for your detailed explanation. 
-The reason why I am concerned about where C14N is/should be used is because it will be important for developers to know when they must use canonicalization and when they can omit it. 
-Canonicalization is one of the most time-consuming operations in most Java implementations of XML Signatures, and developers are going to want to omit C14N when it is redundant. 
-Stating very clearly where C14N is required and where it is redundant will be helpful and will clear up confusion regarding the issue. 
-If it is easy for developers to misunderstand canonicalization and use it in a redundant manner, the practical performance of XML signing will be slow. 
-Perhaps we should add some guidelines that state more clearly when canonicalization *would be* redundant? 
-A few sentences (something along the lines of what John said) would be helpful. 
-Blake Dournaee Toolkit Applications Engineer RSA Security "The only thing I know is that I know nothing" - Socrates Hi Blake, I had to be brief yesterday and yet still ran out of time. 
-Fortunately, Donald and Merlin nailed much of the essential points I had wanted to say about the issue. 
-1) We used to have minimal c14n, but that got thrown out. 
-However, we still have two c14n variations, one with and the other without comments, and we have another 'exclusive' c14n on the way to deal with unwanted inheritance of namespace. 
-Each c14n algorithm appears as a different Algorithm attribute to a Transform. 
-It seems prudent to include comment-less c14n in the list of recognized algorithm identifiers. 
-2) Anytime the output of a transform is an octet stream that is XML, it may be necessary to c14n the result before subsequent processing. 
-The example I gave is not redundant because the results of an XSLT (or even an XPath) can change between a document and the c14n of a document (admittedly many of the reasons for this that come to my mind quickly are also things that should perhaps not be done, but we have little control over that). 
-However, I think the archives are littered with concern from many of us regarding the output of XSLT. 
-Indeed, so great is the concern that in Section 6.6.5, "we further RECOMMEND inserting a transform after the XSLT transform to canonicalize the output". 
-Naturally, many will want to express the regular comment-less version in addition to the other kinds of c14n. 
-Cheers, John Boyer Senior Product Architect, Software Development Internet Commerce System (ICS) Team PureEdge Solutions Inc. Trusted Digital Relationships v: 250-708-8047 f: 250-708-8010 1-888-517-2675 http://www.PureEdge.com 
------Original Message----- John, I belive your example is redundant. 
-If we decode something that is expected to be XML and we process it as XML the first thing we would do would be to convert it into a node-set. 
-From here, no matter what we did to it, it would be canonicalized as part of the node-set to binary conversion. 
-Any additonal canonicalization is redundant - this is the nature of my argument. 
-For example Base64 Blob - Base64 Decode - octets-to-node-set - XSLT/XPath/etc - node-set to octets - hash function. 
-In my version above, canonicalization happens *once*. 
-Here is your version Bas64 Blob - Base64 Decode - octets-to-node-set - C14N - XSLT/XPath/etc - node-set to octets - hash function. 
-In this version, canonicalization happens twice. 
-Once explicitly, and once implicitly when the node-set gets transformed into octets. 
-This is redundant canonicalization because shouldn't the XSLT and XPath transformations behave the same over canonicalized or non-canonicalized XML? 
-Further, you said: "Note that C14N is not run again at the end of the transform pipeline if the output is already an octet stream, see Section 4.3.3.5:" 
-This is correct, I agree with you. 
-I think you are implying that I would need canonicalization if I had a node-set previously that was converted into an octet stream and then digested. 
-But, my argument still holds because canonicalization would be used to convert the node-set to an octet stream anyhow, so it shouldn't ever be used explicitly. 
-The only possibility that I can see is if a node-set should be canonicalized *before* it is used in an XPath or XSLT transform. 
-Is this the case? 
-If so, it will beat my argument and provide a reason for canonicalizing twice. 
-Kind Regards, Blake Dournaee Toolkit Applications Engineer RSA Security "The only thing I know is that I know nothing" - Socrates -----Original Message----- Hi Blake, Base-64 decode something that is expected to be a chunk of XML. 
-C14N XSLT Also, I don't understand how it would slow anything down. 
-I find it cleaner that it is possible to express the implicit behaviors. 
-But, expressing that a step should perform C14N versus implicitly performing a C14N still results in a C14N, so there is no real cost saving derived from leaving out the declaration of the C14N transform. 
-Note that C14N is not run again at the end of the transform pipeline if the output is already an octet stream, see Section 4.3.3.5: 
-"If the result of the URI dereference and application of Transforms is an XPath node-set (or sufficiently functional replacement implemented by the application) then it must be converted as described in the Reference Processing Model (section 4.3.3.2). 
-If the result of URI dereference and application of Transforms is an octet stream, then no conversion occurs..." Cheers, John Boyer Senior Product Architect, Software Development Internet Commerce System (ICS) Team PureEdge Solutions Inc. Trusted Digital Relationships v: 250-708-8047 f: 250-708-8010 1-888-517-2675 http://www.PureEdge.com 
-http://www.pureedge.com/ 
------Original Message----- John, Can you think of a possible example? 
-I'm not even sure where this would fit in at this point. 
-Canonicalization is a very expensive operation for XML Signatures, and if it is left as an acceptable transform without much further explanation I am guessing that it will be used unnecessarily, further slowing down practical implementations. 
-Blake Dournaee Toolkit Applications Engineer RSA Security "The only thing I know is that I know nothing" - Socrates -----Original Message----- Hi Blake, It could be useful, now or in the future, to put another transform after c14n. 
-John Boyer Senior Product Architect, Software Development Internet Commerce System (ICS) Team PureEdge Solutions Inc. Trusted Digital Relationships v: 250-708-8047 f: 250-708-8010 1-888-517-2675 http://www.PureEdge.com 
-http://www.pureedge.com/ 
------Original Message----- Hello All, There is something that I have been pondering about XML Signatures. 
-Specifically, the current Candidate Rec allows for the use of Canonical 
-XML as a transform in the "transformation pipeline" above and beyond the use of C14N to convert any node-set to octets. 
-Consider this Argument: 1. 
-If a Reference is to be processed as "XML" (node-set), it will be canonicalized implicitly when the node-set is converted to octets at the end of the transformation pipeline. 
-2. If a Reference is to be processed as octets, canonicalization is meaningless, since we don't know what the file format is anyhow 3. C14N, when used as a part of the transformation pipeline is redundant. 
-Is there some exception to my argument here? 
-What is missing? 
-Kind Regards, Blake Dournaee Toolkit Applications Engineer RSA Security "The only thing I know is that I know nothing" - Socrates 
-Hi Blake, I'm a fan of explicit declarations, and try to avoid implicit processing where possible: I like things to be clear, even if verbose, and it allows algorithms to stay orthogonal; if some day we realize there's a huge problem c14n it's baked in to the dsig spec. 
-Others felt that it's baked in anyway (e.g., REQUIRED) and people can still be explicit if desired or required, and they carried the day on this point. 
-However, you're right that c14n is an expensive operation (at the Encryption F2F last week I think people estimated 100-1 more expensive than the crypto on small documents, and it gets worse for larger documents of course.) But I'm not sure how to directly reflect your concern in the text. 
-Should we add a sentence saying, "be careful not to have redundant c14n's as it's really expensive" or can something more specific be said? 
-Joseph Reagle Jr. http://www.w3.org/People/Reagle/ W3C Policy Analyst mailto:reagle@w3.org 
-IETF/W3C XML-Signature Co-Chair http://www.w3.org/Signature W3C XML Encryption Chair http://www.w3.org/Encryption/2001/ 
-Joesph, How about something like: 
-"Canonicalization is used implicitly when a node-set is converted to an octet stream in the transformation pipeline. 
-Care should be made not to include it unnecessarily as an explicit transform. 
-Doing so may affect core processing performance." 
-Blake Dournaee Toolkit Applications Engineer RSA Security "The only thing I know is that I know nothing" - Socrates 
-Hi Blake, I'm a fan of explicit declarations, and try to avoid implicit processing where possible: I like things to be clear, even if verbose, and it allows algorithms to stay orthogonal; if some day we realize there's a huge problem c14n it's baked in to the dsig spec. 
-Others felt that it's baked in anyway (e.g., REQUIRED) and people can still be explicit if desired or required, and they carried the day on this point. 
-However, you're right that c14n is an expensive operation (at the Encryption F2F last week I think people estimated 100-1 more expensive than the crypto on small documents, and it gets worse for larger documents of course.) But I'm not sure how to directly reflect your concern in the text. 
-Should we add a sentence saying, "be careful not to have redundant c14n's as it's really expensive" or can something more specific be said? 
-Joseph Reagle Jr. http://www.w3.org/People/Reagle/ W3C Policy Analyst mailto:reagle@w3.org 
-IETF/W3C XML-Signature Co-Chair http://www.w3.org/Signature W3C XML Encryption Chair http://www.w3.org/Encryption/2001/ 
-Hi Blake, I wasn't going to continue this thread yesterday because the discussion seemed pretty much over, but apparently one of the things you agreed to was not fully understood. 
-Could you please explain why your proposed text is true? 
-Joesph, How about something like: 
-"Canonicalization is used implicitly when a node-set is converted to an octet stream in the transformation pipeline. 
-Care should be made not to include it unnecessarily as an explicit transform. 
-Doing so may affect core 
-processing performance." 
-I do not believe this is true. 
-If you include it as an explicit transform, then the result is an octet stream, so a double canonicalization does not occur. 
-Hence there is no performance degradation resulting from stating the c14n explicitly. 
-John Boyer Senior Product Architect, Software Development Internet Commerce System (ICS) Team PureEdge Solutions Inc. Trusted Digital Relationships v: 250-708-8047 f: 250-708-8010 1-888-517-2675 http://www.PureEdge.com 
-http://www.pureedge.com/ 
-Hrmm... I don't want to encourage not using it explicitly. 
-If I have a Then exactly 1 canonicalization was done, the explicit one. 
-(Could you given an example of a mistaken double c14n (implicit/explicit)?) Joseph Reagle Jr. http://www.w3.org/People/Reagle/ W3C Policy Analyst mailto:reagle@w3.org 
-IETF/W3C XML-Signature Co-Chair http://www.w3.org/Signature W3C XML Encryption Chair http://www.w3.org/Encryption/2001/ 
-Joseph, John, All, The way I understand the spec is as follows. 
-Consider the given Reference element: When this is processed, the URI reference produces a node-set (I'll call this "N"). 
-Further, define two functions XPATH() and Convert(). 
-XPATH() accepts a node-set and produces a node-set and Convert() is the "conversion" from node-set to octet stream, using the "specified canonicalization algorithm." 
-Convert() is really equivalent to one run of C14N. 
-N - XPATH(N) - Convert(N)- SHA1() Now, I would say that Canonicalization happens a single time here. 
-Next, let's expand on the above example as follows: Now the processing looks like this: N - XPATH(B) - C14N(N) - Convert(N) - SHA1() Here, I would say that canonicalization happened *twice*, once explicitly and once implicitly. 
-This is where I think people will get confused, thinking that they must canonicalize when in reality they are just wasting processing power. 
-Is this clear?, or am I misunderstanding something here? 
-The crux of the problem is that it is stated that the "octet stream must be converted to a node-set", this means, really, "Canonical XML" because this is the way the algorithm is defined (to produce a physical representation). 
-This is what I mean by implicit canonicalization. 
-When you convert, you canonicalize. 
-You "convert" any time you operate on a node-set somewhere in the transformation pipeline, therefore, if you explicitly use C14N, the possibility is there for redundant processing. 
-Blake Dournaee Toolkit Applications Engineer RSA Security "The only thing I know is that I know nothing" - Socrates 
-Hrmm... I don't want to encourage not using it explicitly. 
-If I have a Then exactly 1 canonicalization was done, the explicit one. 
-(Could you given an example of a mistaken double c14n (implicit/explicit)?) Joseph Reagle Jr. http://www.w3.org/People/Reagle/ W3C Policy Analyst mailto:reagle@w3.org 
-IETF/W3C XML-Signature Co-Chair http://www.w3.org/Signature W3C XML Encryption Chair http://www.w3.org/Encryption/2001/ 
-Hi Blake, The spec does not need any clarification or change; the reference processing model is explicit about what is done, and when. 
-C14n will only be done implicitly if *required* (e.g., if we are attempting to digest a node set). 
-The following two are the same in effect and computational cost. 
-The obvious way to force a redundant c14n step to be performed is to have two *explicit* c14n transforms back to back. 
-In terms of your example below, N - XPATH(B) - C14N(N) - Convert(N) - SHA1(), you are not processing according to the spec. 
-See sections 4.3.3.2 and 4.3.3.5. 
-The output of C14N is an octet stream. 
-No implicit second canonicalization will be performed. 
-Merlin r/bdournaee@rsasecurity.com/2001.07.27/16:21:58 
-Baltimore Technologies plc will not be liable for direct, special, indirect or consequential damages arising from alteration of the contents of this message by a third party or as a result of any virus being passed on. 
-In addition, certain Marketing collateral may be added from time to time to promote Baltimore Technologies products, services, Global e-Security or appearance at trade shows and conferences. 
-This footnote confirms that this email message has been swept by Baltimore MIMEsweeper for Content Security threats, including computer viruses. 
+<s> Hello All, There is something that I have been pondering about XML Signatures.  </s>
+<s> Specifically, the current Candidate Rec allows for the use of Canonical XML as a transform in the "transformation pipeline" above and beyond the use of C14N to convert any node-set to octets.  </s>
+<s> Consider this Argument: 1.  </s>
+<s> If a Reference is to be processed as "XML" (node-set), it will be canonicalized implicitly when the node-set is converted to octets at the end of the transformation pipeline.  </s>
+<s> 2. If a Reference is to be processed as octets, canonicalization is meaningless, since we don't know what the file format is anyhow 3. C14N, when used as a part of the transformation pipeline is redundant.  </s>
+<s> Is there some exception to my argument here?  </s>
+<s> What is missing?  </s>
+<s> Kind Regards, Blake Dournaee Toolkit Applications Engineer RSA Security "The only thing I know is that I know nothing" - Socrates  </s>
+<s> Hi Blake, It could be useful, now or in the future, to put another transform after c14n.  </s>
+<s> John Boyer Senior Product Architect, Software Development Internet Commerce System (ICS) Team PureEdge Solutions Inc. Trusted Digital Relationships  </s>
+<s> v: 250-708-8047 f: 250-708-8010 1-888-517-2675 http://www.PureEdge.com  </s>
+<s> http://www.pureedge.com/  </s>
+<s> Hello All, There is something that I have been pondering about XML Signatures.  </s>
+<s> Specifically, the current Candidate Rec allows for the use of Canonical XML as a transform in the "transformation pipeline" above and beyond the use of C14N to convert any node-set to octets.  </s>
+<s> Consider this Argument: 1.  </s>
+<s> If a Reference is to be processed as "XML" (node-set), it will be canonicalized implicitly when the node-set is converted to octets at the end of the transformation pipeline.  </s>
+<s> 2. If a Reference is to be processed as octets, canonicalization is meaningless, since we don't know what the file format is anyhow 3. C14N, when used as a part of the transformation pipeline is redundant.  </s>
+<s> Is there some exception to my argument here?  </s>
+<s> What is missing?  </s>
+<s> Kind Regards, Blake Dournaee Toolkit Applications Engineer RSA Security "The only thing I know is that I know nothing" - Socrates  </s>
+<s> John, Can you think of a possible example?  </s>
+<s> I'm not even sure where this would fit in at this point.  </s>
+<s> Canonicalization is a very expensive operation for XML Signatures, and if it is left as an acceptable transform without much further explanation I am guessing that it will be used unnecessarily, further slowing down practical implementations.  </s>
+<s> Blake Dournaee Toolkit Applications Engineer RSA Security "The only thing I know is that I know nothing" - Socrates  </s>
+<s> Hi Blake, It could be useful, now or in the future, to put another transform after c14n.  </s>
+<s> John Boyer Senior Product Architect, Software Development Internet Commerce System (ICS) Team PureEdge Solutions Inc. Trusted Digital Relationships  </s>
+<s> v: 250-708-8047 f: 250-708-8010 1-888-517-2675 http://www.PureEdge.com  </s>
+<s> http://www.pureedge.com/  </s>
+<s> -----Original Message----- Hello All, There is something that I have been pondering about XML Signatures.  </s>
+<s> Specifically, the current Candidate Rec allows for the use of Canonical XML as a transform in the "transformation pipeline" above and beyond the use of C14N to convert any node-set to octets.  </s>
+<s> Consider this Argument: 1.  </s>
+<s> If a Reference is to be processed as "XML" (node-set), it will be canonicalized implicitly when the node-set is converted to octets at the end of the transformation pipeline.  </s>
+<s> 2. If a Reference is to be processed as octets, canonicalization is meaningless, since we don't know what the file format is anyhow 3. C14N, when used as a part of the transformation pipeline is redundant.  </s>
+<s> Is there some exception to my argument here?  </s>
+<s> What is missing?  </s>
+<s> Kind Regards, Blake Dournaee Toolkit Applications Engineer RSA Security "The only thing I know is that I know nothing" - Socrates  </s>
+<s> John, I belive your example is redundant.  </s>
+<s> If we decode something that is expected to be XML and we process it as XML the first thing we would do would be to convert it into a node-set.  </s>
+<s> From here, no matter what we did to it, it would be canonicalized as part of the node-set to binary conversion.  </s>
+<s> Any additonal canonicalization is redundant - this is the nature of my argument.  </s>
+<s> For example Base64 Blob - Base64 Decode - octets-to-node-set - XSLT/XPath/etc - node-set to octets - hash function.  </s>
+<s> In my version above, canonicalization happens *once*.  </s>
+<s> Here is your version Bas64 Blob - Base64 Decode - octets-to-node-set - C14N - XSLT/XPath/etc - node-set to octets - hash function.  </s>
+<s> In this version, canonicalization happens twice.  </s>
+<s> Once explicitly, and once implicitly when the node-set gets transformed into octets.  </s>
+<s> This is redundant canonicalization because shouldn't the XSLT and XPath transformations behave the same over canonicalized or non-canonicalized XML?  </s>
+<s> Further, you said: "Note that C14N is not run again at the end of the transform pipeline if the output is already an octet stream, see Section 4.3.3.5:"  </s>
+<s> This is correct, I agree with you.  </s>
+<s> I think you are implying that I would need canonicalization if I had a node-set previously that was converted into an octet stream and then digested.  </s>
+<s> But, my argument still holds because canonicalization would be used to convert the node-set to an octet stream anyhow, so it shouldn't ever be used explicitly.  </s>
+<s> The only possibility that I can see is if a node-set should be canonicalized *before* it is used in an XPath or XSLT transform.  </s>
+<s> Is this the case?  </s>
+<s> If so, it will beat my argument and provide a reason for canonicalizing twice.  </s>
+<s> Kind Regards, Blake Dournaee Toolkit Applications Engineer RSA Security "The only thing I know is that I know nothing" - Socrates  </s>
+<s> Hi Blake, Base-64 decode something that is expected to be a chunk of XML.  </s>
+<s> C14N XSLT Also, I don't understand how it would slow anything down.  </s>
+<s> I find it cleaner that it is possible to express the implicit behaviors.  </s>
+<s> But, expressing that a step should perform C14N versus implicitly performing a C14N still results in a C14N, so there is no real cost saving derived from leaving out the  </s>
+<s> declaration of the C14N transform.  </s>
+<s> Note that C14N is not run again at the end of the transform pipeline if the output is already an octet stream, see Section 4.3.3.5:  </s>
+<s> "If the result of the URI dereference and application of Transforms is an XPath node-set (or sufficiently functional replacement implemented by the application) then it must be converted as described in the Reference Processing Model (section 4.3.3.2).  </s>
+<s> If the result of URI dereference and application of Transforms is an octet stream, then no conversion occurs..." Cheers, John Boyer Senior Product Architect, Software Development Internet Commerce System (ICS) Team PureEdge Solutions Inc. Trusted Digital Relationships v: 250-708-8047 f: 250-708-8010 1-888-517-2675 http://www.PureEdge.com  </s>
+<s> http://www.PureEdge.com  </s>
+<s> -----Original Message----- mailto:bdournaee@rsasecurity.com ] John, Can you think of a possible example?  </s>
+<s> I'm not even sure where this would fit in at this point.  </s>
+<s> Canonicalization is a very expensive operation for XML Signatures, and if it is left as an acceptable transform without much further explanation I am guessing that it will be used unnecessarily, further slowing down practical implementations.  </s>
+<s> Blake Dournaee Toolkit Applications Engineer RSA Security "The only thing I know is that I know nothing" - Socrates -----Original Message----- Hi Blake, It could be useful, now or in the future, to put another transform after c14n.  </s>
+<s> John Boyer Senior Product Architect, Software Development Internet Commerce System (ICS) Team PureEdge Solutions Inc. Trusted Digital Relationships v: 250-708-8047 f: 250-708-8010 1-888-517-2675 http://www.PureEdge.com  </s>
+<s> http://www.PureEdge.com  </s>
+<s> -----Original Message----- mailto:bdournaee@rsasecurity.com ] Hello All, There is something that I have been pondering about XML Signatures.  </s>
+<s> Specifically, the current Candidate Rec allows for the use of Canonical XML as a transform in the "transformation pipeline" above and beyond the use  </s>
+<s> of C14N to convert any node-set to octets.  </s>
+<s> Consider this Argument: 1.  </s>
+<s> If a Reference is to be processed as "XML" (node-set), it will be canonicalized implicitly when the node-set is converted to octets at the end of the transformation pipeline.  </s>
+<s> 2. If a Reference is to be processed as octets, canonicalization is meaningless, since we don't know what the file format is anyhow 3. C14N, when used as a part of the transformation pipeline is redundant.  </s>
+<s> Is there some exception to my argument here?  </s>
+<s> What is missing?  </s>
+<s> Kind Regards, Blake Dournaee Toolkit Applications Engineer RSA Security "The only thing I know is that I know nothing" - Socrates  </s>
+<s> Hi, I think your argument works only for the default Canonical XML that strips comments.  </s>
+<s> If you want to retain comments or to use Exclusive XML Canonicalization, or use some other canonicalization/serialization some place where you are going from a node set to an octet stream then you need to specify it explicitly.  </s>
+<s> Donald From: "Dournaee, Blake" bdournaee@rsasecurity.com  </s>
+<s> Message-ID: E7B6CB80230AD31185AD0008C7EBC4D2DAEFCC@exrsa01.rsa.com "Joseph M. Reagle Jr." Date: Wed, 25 Jul 2001 17:17:01 -0700  </s>
+<s> Another use for explicit c14n is after an XSLT transform (whose output is an implementation-dependent stream).  </s>
+<s> Here, an explicit C14n transform is also necessary.  </s>
+<s> Merlin r/dee3@torque.pothole.com/2001.07.25/23:47:47  </s>
+<s> Baltimore Technologies plc will not be liable for direct, special, indirect or consequential damages arising from alteration of the contents of this message by a third party or as a result of any virus being passed on.  </s>
+<s> In addition, certain Marketing collateral may be added from time to time to promote Baltimore Technologies products, services, Global e-Security or appearance at trade shows and conferences.  </s>
+<s> This footnote confirms that this email message has been swept by Baltimore MIMEsweeper for Content Security threats, including computer viruses.  </s>
+<s> Hi Blake, I had to be brief yesterday and yet still ran out of time.  </s>
+<s> Fortunately, Donald and Merlin nailed much of the essential points I had wanted to say about the issue.  </s>
+<s> 1) We used to have minimal c14n, but that got thrown out.  </s>
+<s> However, we still have two c14n variations, one with and the other without comments, and we have another 'exclusive' c14n on the way to deal with unwanted inheritance of namespace.  </s>
+<s> Each c14n algorithm appears as a different Algorithm attribute to a Transform.  </s>
+<s> It seems prudent to include comment-less c14n in the list of recognized algorithm identifiers.  </s>
+<s> 2) Anytime the output of a transform is an octet stream that is XML, it may be necessary to c14n the result before subsequent processing.  </s>
+<s> The example I gave is not redundant because the results of an XSLT (or even an XPath) can change between a document and the c14n of a document (admittedly many of the reasons for this that come to my mind quickly are also things that should perhaps not be done, but we have little control over that).  </s>
+<s> However, I think the archives are littered with concern from many of us regarding the output of XSLT.  </s>
+<s> Indeed, so great is the concern that in Section 6.6.5, "we further RECOMMEND inserting a transform after the XSLT transform to canonicalize the output".  </s>
+<s> Naturally, many will want to express the regular comment-less version in addition to the other kinds of c14n.  </s>
+<s> Cheers, John Boyer Senior Product Architect, Software Development Internet Commerce System (ICS) Team PureEdge Solutions Inc. Trusted Digital Relationships v: 250-708-8047 f: 250-708-8010 1-888-517-2675 http://www.PureEdge.com  </s>
+<s> John, I belive your example is redundant.  </s>
+<s> If we decode something that is expected to be XML and we process it as XML the first thing we would do would be to convert it into a node-set.  </s>
+<s> From here, no matter what we did to it, it would be canonicalized as part of the node-set to binary conversion.  </s>
+<s> Any additonal canonicalization is redundant - this is the nature of my argument.  </s>
+<s> For example Base64 Blob - Base64 Decode - octets-to-node-set - XSLT/XPath/etc - node-set to octets - hash function.  </s>
+<s> In my version above, canonicalization happens *once*.  </s>
+<s> Here is your version Bas64 Blob - Base64 Decode - octets-to-node-set - C14N - XSLT/XPath/etc - node-set to octets - hash function.  </s>
+<s> In this version, canonicalization happens twice.  </s>
+<s> Once explicitly, and once implicitly when the node-set gets transformed into octets.  </s>
+<s> This is redundant canonicalization because shouldn't the XSLT and XPath transformations behave the same over canonicalized or non-canonicalized XML?  </s>
+<s> Further, you said: "Note that C14N is not run again at the end of the transform pipeline if the output is already an octet stream, see Section 4.3.3.5:"  </s>
+<s> This is correct, I agree with you.  </s>
+<s> I think you are implying that I would need canonicalization if I had a node-set previously that was converted into an octet stream and then digested.  </s>
+<s> But, my argument still holds because canonicalization would be used to convert the node-set to an octet stream anyhow, so it shouldn't ever be used explicitly.  </s>
+<s> The only possibility that I can see is if a node-set should be canonicalized *before* it is used in an XPath or XSLT transform.  </s>
+<s> Is this the case?  </s>
+<s> If so, it will beat my argument and provide a reason for canonicalizing twice.  </s>
+<s> Kind Regards, Blake Dournaee Toolkit Applications Engineer RSA Security "The only thing I know is that I know nothing" - Socrates -----Original Message----- Hi Blake, Base-64 decode something that is expected to be a chunk of XML.  </s>
+<s> C14N XSLT Also, I don't understand how it would slow anything down.  </s>
+<s> I find it cleaner that it is possible to express the implicit behaviors.  </s>
+<s> But, expressing that a step should perform C14N versus implicitly performing a C14N still results in a C14N, so there is no real cost saving derived from leaving out the declaration of the C14N transform.  </s>
+<s> Note that C14N is not run again at the end of the transform pipeline if the output is already an octet stream, see Section 4.3.3.5:  </s>
+<s> "If the result of the URI dereference and application of Transforms is an XPath node-set (or sufficiently functional replacement implemented by the application) then it must be converted as described in the Reference Processing Model (section 4.3.3.2).  </s>
+<s> If the result of URI dereference and application of Transforms is an octet stream, then no conversion occurs..." Cheers, John Boyer Senior Product Architect, Software Development Internet Commerce System (ICS) Team PureEdge Solutions Inc. Trusted Digital Relationships v: 250-708-8047 f: 250-708-8010 1-888-517-2675 http://www.PureEdge.com  </s>
+<s> http://www.pureedge.com/  </s>
+<s> -----Original Message----- John, Can you think of a possible example?  </s>
+<s> I'm not even sure where this would fit in at this point.  </s>
+<s> Canonicalization is a very expensive operation for XML Signatures, and if it is left as an acceptable transform without much further explanation I am guessing that it will be used unnecessarily, further slowing down practical implementations.  </s>
+<s> Blake Dournaee Toolkit Applications Engineer RSA Security "The only thing I know is that I know nothing" - Socrates -----Original Message----- Hi Blake, It could be useful, now or in the future, to put another transform after c14n.  </s>
+<s> John Boyer Senior Product Architect, Software Development Internet Commerce System (ICS) Team PureEdge Solutions Inc. Trusted Digital Relationships v: 250-708-8047 f: 250-708-8010 1-888-517-2675 http://www.PureEdge.com  </s>
+<s> http://www.pureedge.com/  </s>
+<s> -----Original Message----- Hello All, There is something that I have been pondering about XML Signatures.  </s>
+<s> Specifically, the current Candidate Rec allows for the use of Canonical  </s>
+<s> XML as a transform in the "transformation pipeline" above and beyond the use of C14N to convert any node-set to octets.  </s>
+<s> Consider this Argument: 1.  </s>
+<s> If a Reference is to be processed as "XML" (node-set), it will be canonicalized implicitly when the node-set is converted to octets at the end of the transformation pipeline.  </s>
+<s> 2. If a Reference is to be processed as octets, canonicalization is meaningless, since we don't know what the file format is anyhow 3. C14N, when used as a part of the transformation pipeline is redundant.  </s>
+<s> Is there some exception to my argument here?  </s>
+<s> What is missing?  </s>
+<s> Kind Regards, Blake Dournaee Toolkit Applications Engineer RSA Security "The only thing I know is that I know nothing" - Socrates  </s>
+<s> John,  </s>
+<s> Thanks for your detailed explanation.  </s>
+<s> The reason why I am concerned about where C14N is/should be used is because it will be important for developers to know when they must use canonicalization and when they can omit it.  </s>
+<s> Canonicalization is one of the most time-consuming operations in most Java implementations of XML Signatures, and developers are going to want to omit C14N when it is redundant.  </s>
+<s> Stating very clearly where C14N is required and where it is redundant will be helpful and will clear up confusion regarding the issue.  </s>
+<s> If it is easy for developers to misunderstand canonicalization and use it in a redundant manner, the practical performance of XML signing will be slow.  </s>
+<s> Perhaps we should add some guidelines that state more clearly when canonicalization *would be* redundant?  </s>
+<s> A few sentences (something along the lines of what John said) would be helpful.  </s>
+<s> Blake Dournaee Toolkit Applications Engineer RSA Security "The only thing I know is that I know nothing" - Socrates Hi Blake, I had to be brief yesterday and yet still ran out of time.  </s>
+<s> Fortunately, Donald and Merlin nailed much of the essential points I had wanted to say about the issue.  </s>
+<s> 1) We used to have minimal c14n, but that got thrown out.  </s>
+<s> However, we still have two c14n variations, one with and the other without comments, and we have another 'exclusive' c14n on the way to deal with unwanted inheritance of namespace.  </s>
+<s> Each c14n algorithm appears as a different Algorithm attribute to a Transform.  </s>
+<s> It seems prudent to include comment-less c14n in the list of recognized algorithm identifiers.  </s>
+<s> 2) Anytime the output of a transform is an octet stream that is XML, it may be necessary to c14n the result before subsequent processing.  </s>
+<s> The example I gave is not redundant because the results of an XSLT (or even an XPath) can change between a document and the c14n of a document (admittedly many of the reasons for this that come to my mind quickly are also things that should perhaps not be done, but we have little control over that).  </s>
+<s> However, I think the archives are littered with concern from many of us regarding the output of XSLT.  </s>
+<s> Indeed, so great is the concern that in Section 6.6.5, "we further RECOMMEND inserting a transform after the XSLT transform to canonicalize the output".  </s>
+<s> Naturally, many will want to express the regular comment-less version in addition to the other kinds of c14n.  </s>
+<s> Cheers, John Boyer Senior Product Architect, Software Development Internet Commerce System (ICS) Team PureEdge Solutions Inc. Trusted Digital Relationships v: 250-708-8047 f: 250-708-8010 1-888-517-2675 http://www.PureEdge.com  </s>
+<s> -----Original Message----- John, I belive your example is redundant.  </s>
+<s> If we decode something that is expected to be XML and we process it as XML the first thing we would do would be to convert it into a node-set.  </s>
+<s> From here, no matter what we did to it, it would be canonicalized as part of the node-set to binary conversion.  </s>
+<s> Any additonal canonicalization is redundant - this is the nature of my argument.  </s>
+<s> For example Base64 Blob - Base64 Decode - octets-to-node-set - XSLT/XPath/etc - node-set to octets - hash function.  </s>
+<s> In my version above, canonicalization happens *once*.  </s>
+<s> Here is your version Bas64 Blob - Base64 Decode - octets-to-node-set - C14N - XSLT/XPath/etc - node-set to octets - hash function.  </s>
+<s> In this version, canonicalization happens twice.  </s>
+<s> Once explicitly, and once implicitly when the node-set gets transformed into octets.  </s>
+<s> This is redundant canonicalization because shouldn't the XSLT and XPath transformations behave the same over canonicalized or non-canonicalized XML?  </s>
+<s> Further, you said: "Note that C14N is not run again at the end of the transform pipeline if the output is already an octet stream, see Section 4.3.3.5:"  </s>
+<s> This is correct, I agree with you.  </s>
+<s> I think you are implying that I would need canonicalization if I had a node-set previously that was converted into an octet stream and then digested.  </s>
+<s> But, my argument still holds because canonicalization would be used to convert the node-set to an octet stream anyhow, so it shouldn't ever be used explicitly.  </s>
+<s> The only possibility that I can see is if a node-set should be canonicalized *before* it is used in an XPath or XSLT transform.  </s>
+<s> Is this the case?  </s>
+<s> If so, it will beat my argument and provide a reason for canonicalizing twice.  </s>
+<s> Kind Regards, Blake Dournaee Toolkit Applications Engineer RSA Security "The only thing I know is that I know nothing" - Socrates -----Original Message----- Hi Blake, Base-64 decode something that is expected to be a chunk of XML.  </s>
+<s> C14N XSLT Also, I don't understand how it would slow anything down.  </s>
+<s> I find it cleaner that it is possible to express the implicit behaviors.  </s>
+<s> But, expressing that a step should perform C14N versus implicitly performing a C14N still results in a C14N, so there is no real cost saving derived from leaving out the declaration of the C14N transform.  </s>
+<s> Note that C14N is not run again at the end of the transform pipeline if the output is already an octet stream, see Section 4.3.3.5:  </s>
+<s> "If the result of the URI dereference and application of Transforms is an XPath node-set (or sufficiently functional replacement implemented by the application) then it must be converted as described in the Reference Processing Model (section 4.3.3.2).  </s>
+<s> If the result of URI dereference and application of Transforms is an octet stream, then no conversion occurs..." Cheers, John Boyer Senior Product Architect, Software Development Internet Commerce System (ICS) Team PureEdge Solutions Inc. Trusted Digital Relationships v: 250-708-8047 f: 250-708-8010 1-888-517-2675 http://www.PureEdge.com  </s>
+<s> http://www.pureedge.com/  </s>
+<s> -----Original Message----- John, Can you think of a possible example?  </s>
+<s> I'm not even sure where this would fit in at this point.  </s>
+<s> Canonicalization is a very expensive operation for XML Signatures, and if it is left as an acceptable transform without much further explanation I am guessing that it will be used unnecessarily, further slowing down practical implementations.  </s>
+<s> Blake Dournaee Toolkit Applications Engineer RSA Security "The only thing I know is that I know nothing" - Socrates -----Original Message----- Hi Blake, It could be useful, now or in the future, to put another transform after c14n.  </s>
+<s> John Boyer Senior Product Architect, Software Development Internet Commerce System (ICS) Team PureEdge Solutions Inc. Trusted Digital Relationships v: 250-708-8047 f: 250-708-8010 1-888-517-2675 http://www.PureEdge.com  </s>
+<s> http://www.pureedge.com/  </s>
+<s> -----Original Message----- Hello All, There is something that I have been pondering about XML Signatures.  </s>
+<s> Specifically, the current Candidate Rec allows for the use of Canonical  </s>
+<s> XML as a transform in the "transformation pipeline" above and beyond the use of C14N to convert any node-set to octets.  </s>
+<s> Consider this Argument: 1.  </s>
+<s> If a Reference is to be processed as "XML" (node-set), it will be canonicalized implicitly when the node-set is converted to octets at the end of the transformation pipeline.  </s>
+<s> 2. If a Reference is to be processed as octets, canonicalization is meaningless, since we don't know what the file format is anyhow 3. C14N, when used as a part of the transformation pipeline is redundant.  </s>
+<s> Is there some exception to my argument here?  </s>
+<s> What is missing?  </s>
+<s> Kind Regards, Blake Dournaee Toolkit Applications Engineer RSA Security "The only thing I know is that I know nothing" - Socrates  </s>
+<s> Hi Blake, I'm a fan of explicit declarations, and try to avoid implicit processing where possible: I like things to be clear, even if verbose, and it allows algorithms to stay orthogonal; if some day we realize there's a huge problem c14n it's baked in to the dsig spec.  </s>
+<s> Others felt that it's baked in anyway (e.g., REQUIRED) and people can still be explicit if desired or required, and they carried the day on this point.  </s>
+<s> However, you're right that c14n is an expensive operation (at the Encryption F2F last week I think people estimated 100-1 more expensive than the crypto on small documents, and it gets worse for larger documents of course.) But I'm not sure how to directly reflect your concern in the text.  </s>
+<s> Should we add a sentence saying, "be careful not to have redundant c14n's as it's really expensive" or can something more specific be said?  </s>
+<s> Joseph Reagle Jr. http://www.w3.org/People/Reagle/ W3C Policy Analyst mailto:reagle@w3.org  </s>
+<s> IETF/W3C XML-Signature Co-Chair http://www.w3.org/Signature W3C XML Encryption Chair http://www.w3.org/Encryption/2001/  </s>
+<s> Joesph, How about something like:  </s>
+<s> "Canonicalization is used implicitly when a node-set is converted to an octet stream in the transformation pipeline.  </s>
+<s> Care should be made not to include it unnecessarily as an explicit transform.  </s>
+<s> Doing so may affect core processing performance."  </s>
+<s> Blake Dournaee Toolkit Applications Engineer RSA Security "The only thing I know is that I know nothing" - Socrates  </s>
+<s> Hi Blake, I'm a fan of explicit declarations, and try to avoid implicit processing where possible: I like things to be clear, even if verbose, and it allows algorithms to stay orthogonal; if some day we realize there's a huge problem c14n it's baked in to the dsig spec.  </s>
+<s> Others felt that it's baked in anyway (e.g., REQUIRED) and people can still be explicit if desired or required, and they carried the day on this point.  </s>
+<s> However, you're right that c14n is an expensive operation (at the Encryption F2F last week I think people estimated 100-1 more expensive than the crypto on small documents, and it gets worse for larger documents of course.) But I'm not sure how to directly reflect your concern in the text.  </s>
+<s> Should we add a sentence saying, "be careful not to have redundant c14n's as it's really expensive" or can something more specific be said?  </s>
+<s> Joseph Reagle Jr. http://www.w3.org/People/Reagle/ W3C Policy Analyst mailto:reagle@w3.org  </s>
+<s> IETF/W3C XML-Signature Co-Chair http://www.w3.org/Signature W3C XML Encryption Chair http://www.w3.org/Encryption/2001/  </s>
+<s> Hi Blake, I wasn't going to continue this thread yesterday because the discussion seemed pretty much over, but apparently one of the things you agreed to was not fully understood.  </s>
+<s> Could you please explain why your proposed text is true?  </s>
+<s> Joesph, How about something like:  </s>
+<s> "Canonicalization is used implicitly when a node-set is converted to an octet stream in the transformation pipeline.  </s>
+<s> Care should be made not to include it unnecessarily as an explicit transform.  </s>
+<s> Doing so may affect core  </s>
+<s> processing performance."  </s>
+<s> I do not believe this is true.  </s>
+<s> If you include it as an explicit transform, then the result is an octet stream, so a double canonicalization does not occur.  </s>
+<s> Hence there is no performance degradation resulting from stating the c14n explicitly.  </s>
+<s> John Boyer Senior Product Architect, Software Development Internet Commerce System (ICS) Team PureEdge Solutions Inc. Trusted Digital Relationships v: 250-708-8047 f: 250-708-8010 1-888-517-2675 http://www.PureEdge.com  </s>
+<s> http://www.pureedge.com/  </s>
+<s> Hrmm... I don't want to encourage not using it explicitly.  </s>
+<s> If I have a Then exactly 1 canonicalization was done, the explicit one.  </s>
+<s> (Could you given an example of a mistaken double c14n (implicit/explicit)?) Joseph Reagle Jr. http://www.w3.org/People/Reagle/ W3C Policy Analyst mailto:reagle@w3.org  </s>
+<s> IETF/W3C XML-Signature Co-Chair http://www.w3.org/Signature W3C XML Encryption Chair http://www.w3.org/Encryption/2001/  </s>
+<s> Joseph, John, All, The way I understand the spec is as follows.  </s>
+<s> Consider the given Reference element: When this is processed, the URI reference produces a node-set (I'll call this "N").  </s>
+<s> Further, define two functions XPATH() and Convert().  </s>
+<s> XPATH() accepts a node-set and produces a node-set and Convert() is the "conversion" from node-set to octet stream, using the "specified canonicalization algorithm."  </s>
+<s> Convert() is really equivalent to one run of C14N.  </s>
+<s> N - XPATH(N) - Convert(N)- SHA1() Now, I would say that Canonicalization happens a single time here.  </s>
+<s> Next, let's expand on the above example as follows: Now the processing looks like this: N - XPATH(B) - C14N(N) - Convert(N) - SHA1() Here, I would say that canonicalization happened *twice*, once explicitly and once implicitly.  </s>
+<s> This is where I think people will get confused, thinking that they must canonicalize when in reality they are just wasting processing power.  </s>
+<s> Is this clear?, or am I misunderstanding something here?  </s>
+<s> The crux of the problem is that it is stated that the "octet stream must be converted to a node-set", this means, really, "Canonical XML" because this is the way the algorithm is defined (to produce a physical representation).  </s>
+<s> This is what I mean by implicit canonicalization.  </s>
+<s> When you convert, you canonicalize.  </s>
+<s> You "convert" any time you operate on a node-set somewhere in the transformation pipeline, therefore, if you explicitly use C14N, the possibility is there for redundant processing.  </s>
+<s> Blake Dournaee Toolkit Applications Engineer RSA Security "The only thing I know is that I know nothing" - Socrates  </s>
+<s> Hrmm... I don't want to encourage not using it explicitly.  </s>
+<s> If I have a Then exactly 1 canonicalization was done, the explicit one.  </s>
+<s> (Could you given an example of a mistaken double c14n (implicit/explicit)?) Joseph Reagle Jr. http://www.w3.org/People/Reagle/ W3C Policy Analyst mailto:reagle@w3.org  </s>
+<s> IETF/W3C XML-Signature Co-Chair http://www.w3.org/Signature W3C XML Encryption Chair http://www.w3.org/Encryption/2001/  </s>
+<s> Hi Blake, The spec does not need any clarification or change; the reference processing model is explicit about what is done, and when.  </s>
+<s> C14n will only be done implicitly if *required* (e.g., if we are attempting to digest a node set).  </s>
+<s> The following two are the same in effect and computational cost.  </s>
+<s> The obvious way to force a redundant c14n step to be performed is to have two *explicit* c14n transforms back to back.  </s>
+<s> In terms of your example below, N - XPATH(B) - C14N(N) - Convert(N) - SHA1(), you are not processing according to the spec.  </s>
+<s> See sections 4.3.3.2 and 4.3.3.5.  </s>
+<s> The output of C14N is an octet stream.  </s>
+<s> No implicit second canonicalization will be performed.  </s>
+<s> Merlin r/bdournaee@rsasecurity.com/2001.07.27/16:21:58  </s>
+<s> Baltimore Technologies plc will not be liable for direct, special, indirect or consequential damages arising from alteration of the contents of this message by a third party or as a result of any virus being passed on.  </s>
+<s> In addition, certain Marketing collateral may be added from time to time to promote Baltimore Technologies products, services, Global e-Security or appearance at trade shows and conferences.  </s>
+<s> This footnote confirms that this email message has been swept by Baltimore MIMEsweeper for Content Security threats, including computer viruses.  </s>

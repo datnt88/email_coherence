@@ -1,105 +1,105 @@
-I haven't seen this mentioned, but in section 9 it would be helpful to classify the new headers as general-header, response-header, or entity-header. 
-Also, I want to make sure the trailing slash for collections issue (section 5.2) isn't forgotten. 
-Julian suggested that it be added to the issues list in http://lists.w3.org/Archives/Public/w3c-dist-auth/2002AprJun/ 0201.html . 
-- Jim 
-
-I haven't seen this mentioned, but in section 9 it would be helpful to classify the new headers as general-header, response-header, or entity-header. 
-Lisa, let me know if you need an issue added for this. 
-
-Also, I want to make sure the trailing slash for collections issue (section 5.2) isn't forgotten. 
-Julian suggested that it be added to the issues list in Wow. 
-Right you are. 
-I just added an issue for it: HOW_ARE_TRAILING_SLASHES_USED 
-(see also issue LOCKS_SHOULD_THEY_USE_AN_IF_HEADER_TO_VERIFY) Proposed syntax: 12.1 activelock XML Element Name: activelock Namespace: DAV: Purpose: Describes a lock on a resource. 
-!ELEMENT activelock (lockscope, locktype, depth, owner?, timeout?, locktoken?, lockroot?) 12.1.x 
-lockroot XML Element Name: lockroot Namespace: DAV: Purpose: For locks with depth infinity, servers SHOULD report the root of the lock using the DAV:lockroot element. 
-This enables clients to know the scope of resources affected by a subsequent UNLOCK with the given lock token. 
-For lock with depth 0, the DAV:lockroot element MUST NOT be present. 
-Note: I made it a "SHOULD" in order not to break existing implementations. 
-Hi, 12.1.2 ([1]) states: "Purpose: The lock token associated with a lock. 
-Description: The href contains one or more opaque lock token URIs which all refer to the same lock (i.e., the OpaqueLockToken-URI production in section 6.4). 
-!ELEMENT locktoken (href+)  " Question: why would multiple lock tokens refer to the same lock? 
-And *if* there are multiple URIs referring to the same lock (a consequence of BINDs???), what's the point in reporting more than one? 
-Is anybody using this? 
-Has interoperability been tested? 
-[1] http://greenbytes.de/tech/webdav/rfc2518.html#ELEMENT_locktoken 
-I agree that the lock discovery should report on the root of a depth lock. 
-Cheers, Geoff (see also issue LOCKS_SHOULD_THEY_USE_AN_IF_HEADER_TO_VERIFY) Proposed syntax: 12.1 activelock XML Element Name: activelock Namespace: DAV: Purpose: Describes a lock on a resource. 
-!ELEMENT activelock (lockscope, locktype, depth, owner?, timeout?, locktoken?, lockroot?) 12.1.x 
-lockroot XML Element Name: lockroot Namespace: DAV: Purpose: For locks with depth infinity, servers SHOULD report the root of the lock using the DAV:lockroot element. 
-This enables clients to know the scope of resources affected by a subsequent UNLOCK with the given lock token. 
-For lock with depth 0, the DAV:lockroot element MUST NOT be present. 
-Note: I made it a "SHOULD" in order not to break existing implementations. 
-A dav:lockroot as proposed is fine with me. 
-Do we have one more person that will endorse this? 
-I will endorse it as well. 
-dan 
-
-Question: why would multiple lock tokens refer to the same lock? 
-And *if* there are multiple URIs referring to the same lock (a consequence of BINDs???), what's the point in reporting more than one? 
-Is anybody using this? 
-Has interoperability been tested? 
-That caught me by surprise. 
-But you made me read a bit and I did uncover the following. 
-Apparently in the case of a shared lock it's considered the same lock, just different tokens. 
-It's not clear they actually mean that with the following wording, but the following is just one of several places where they use the same sort of wording. 
-7.2 Write Locks and Lock Tokens A successful request for an exclusive or shared write lock MUST result in the generation of a unique lock token associated with the requesting principal. 
-Thus if five principals have a shared write lock on the same resource there will be five lock tokens, one for each principal. 
-This leaves me perplexed about how UNLOCK works for shared locks. 
-I suggest we (1) check with Yaron if this was intentional and get an explanation and (2) make it clear that each lock has one token and a shared lock means that multiple locks are acting on a resource, not just multiple tokens. 
-(Does anyone know how to contact Yaron?) J. 
-Jason, a few thoughts. 
-- a lock is a resource (by definition: it's identified by a URI) - a lock token is a URI - one could identify LOCK with BINDing the lock token to the lock resource and UNLOCK with deleting the lock token, and that wouldn't affect the basic functionality of shared locks However, the difference is that if we have a 1-1 relation between lock tokens and lock resources, each lock will have it's own timeout value and owner, and I think this is what's implemented in moddav and IIS. 
-So I think the spec should reflect that. 
-Julian Behalf Of Jason Crawford 
-
-Question: why would multiple lock tokens refer to the same lock? 
-And *if* there are multiple URIs referring to the same lock (a consequence of BINDs???), what's the point in reporting more than one? 
-Is anybody using this? 
-Has interoperability been tested? 
-That caught me by surprise. 
-But you made me read a bit and I did uncover the following. 
-Apparently in the case of a shared lock it's considered the same lock, just different tokens. 
-It's not clear they actually mean that with the following wording, but the following is just one of several places where they use the same sort of wording. 
-7.2 Write Locks and Lock Tokens A successful request for an exclusive or shared write lock MUST result in the generation of a unique lock token associated with the requesting principal. 
-Thus if five principals have a shared write lock on the same resource there will be five lock tokens, one for each principal. 
-This leaves me perplexed about how UNLOCK works for shared locks. 
-I suggest we (1) check with Yaron if this was intentional and get an explanation and (2) make it clear that each lock has one token and a shared lock means that multiple locks are acting on a resource, not just multiple tokens. 
-(Does anyone know how to contact Yaron?) J. 
-I agree with Julian that it makes more sense to have each instance of a shared lock have its own timeout value and lockowner, so I also vote to limit the number of URI's for a given lock to be exactly one. 
-Cheers, Geoff Jason, a few thoughts. 
-- a lock is a resource (by definition: it's identified by a URI) - a lock token is a URI - one could identify LOCK with BINDing the lock token to the lock resource and UNLOCK with deleting the lock token, and that wouldn't affect the basic functionality of shared locks However, the difference is that if we have a 1-1 relation between lock tokens and lock resources, each lock will have it's own timeout value and owner, and I think this is what's implemented in moddav and IIS. 
-So I think the spec should reflect that. 
-Julian -----Original Message----- Behalf Of Jason Crawford 
-
-Question: why would multiple lock tokens refer to the same lock? 
-And *if* there are multiple URIs referring to the same lock (a consequence of BINDs???), what's the point in reporting more than one? 
-Is anybody using this? 
-Has interoperability been tested? 
-That caught me by surprise. 
-But you made me read a bit and I did uncover the following. 
-Apparently in the case of a shared lock it's considered the same lock, just different tokens. 
-It's not clear they actually mean that with the following wording, but the following is just one of several places where they use the same sort of wording. 
-7.2 Write Locks and Lock Tokens A successful request for an exclusive or shared write lock MUST result in the generation of a unique lock token associated with the requesting principal. 
-Thus if five principals have a shared write lock on the same resource there will be five lock tokens, one for each principal. 
-This leaves me perplexed about how UNLOCK works for shared locks. 
-I suggest we (1) check with Yaron if this was intentional and get an explanation and (2) make it clear that each lock has one token and a shared lock means that multiple locks are acting on a resource, not just multiple tokens. 
-(Does anyone know how to contact Yaron?) J. 
-
-I agree with Julian that it makes more sense to have each instance of a shared lock have its own timeout value and lockowner, so I also vote to limit the number of URI's for a given lock to be exactly one. 
-I agree. 
-OK, seems that we had consensus on this protocol extension (got OKs from: Geoff 
-Clemm, Dan Brotsky and Jason Crawford, and no negative feedback). 
-This should close issue #89 (FINDING_THE_ROOT_OF_A_DEPTH_LOCK). 
-Lisa, is there any chance that we may be able to get this into the RFC2518 
-revision? 
-I'm happy to provide a URL of a test server implementing this in 
-time before the interop meeting. 
-Regards, Julian 
-On Monday, 09/02/2002 at 03:18 ZE2, "Julian Reschke" nnjulian. 
-Geoff 
-RFC2518 
-in 
-I've moved the state of that issue to Edit although I think we need to test some interop. 
-Let's get a few of the folks that will be at the interop to implement this. 
-J. 
+<s> I haven't seen this mentioned, but in section 9 it would be helpful to classify the new headers as general-header, response-header, or entity-header.  </s>
+<s> Also, I want to make sure the trailing slash for collections issue (section 5.2) isn't forgotten.  </s>
+<s> Julian suggested that it be added to the issues list in http://lists.w3.org/Archives/Public/w3c-dist-auth/2002AprJun/ 0201.html .  </s>
+<s> - Jim  </s>
+<s>  </s>
+<s> I haven't seen this mentioned, but in section 9 it would be helpful to classify the new headers as general-header, response-header, or entity-header.  </s>
+<s> Lisa, let me know if you need an issue added for this.  </s>
+<s>  </s>
+<s> Also, I want to make sure the trailing slash for collections issue (section 5.2) isn't forgotten.  </s>
+<s> Julian suggested that it be added to the issues list in Wow.  </s>
+<s> Right you are.  </s>
+<s> I just added an issue for it: HOW_ARE_TRAILING_SLASHES_USED  </s>
+<s> (see also issue LOCKS_SHOULD_THEY_USE_AN_IF_HEADER_TO_VERIFY) Proposed syntax: 12.1 activelock XML Element Name: activelock Namespace: DAV: Purpose: Describes a lock on a resource.  </s>
+<s> !ELEMENT activelock (lockscope, locktype, depth, owner?, timeout?, locktoken?, lockroot?) 12.1.x  </s>
+<s> lockroot XML Element Name: lockroot Namespace: DAV: Purpose: For locks with depth infinity, servers SHOULD report the root of the lock using the DAV:lockroot element.  </s>
+<s> This enables clients to know the scope of resources affected by a subsequent UNLOCK with the given lock token.  </s>
+<s> For lock with depth 0, the DAV:lockroot element MUST NOT be present.  </s>
+<s> Note: I made it a "SHOULD" in order not to break existing implementations.  </s>
+<s> Hi, 12.1.2 ([1]) states: "Purpose: The lock token associated with a lock.  </s>
+<s> Description: The href contains one or more opaque lock token URIs which all refer to the same lock (i.e., the OpaqueLockToken-URI production in section 6.4).  </s>
+<s> !ELEMENT locktoken (href+)  " Question: why would multiple lock tokens refer to the same lock?  </s>
+<s> And *if* there are multiple URIs referring to the same lock (a consequence of BINDs???), what's the point in reporting more than one?  </s>
+<s> Is anybody using this?  </s>
+<s> Has interoperability been tested?  </s>
+<s> [1] http://greenbytes.de/tech/webdav/rfc2518.html#ELEMENT_locktoken  </s>
+<s> I agree that the lock discovery should report on the root of a depth lock.  </s>
+<s> Cheers, Geoff (see also issue LOCKS_SHOULD_THEY_USE_AN_IF_HEADER_TO_VERIFY) Proposed syntax: 12.1 activelock XML Element Name: activelock Namespace: DAV: Purpose: Describes a lock on a resource.  </s>
+<s> !ELEMENT activelock (lockscope, locktype, depth, owner?, timeout?, locktoken?, lockroot?) 12.1.x  </s>
+<s> lockroot XML Element Name: lockroot Namespace: DAV: Purpose: For locks with depth infinity, servers SHOULD report the root of the lock using the DAV:lockroot element.  </s>
+<s> This enables clients to know the scope of resources affected by a subsequent UNLOCK with the given lock token.  </s>
+<s> For lock with depth 0, the DAV:lockroot element MUST NOT be present.  </s>
+<s> Note: I made it a "SHOULD" in order not to break existing implementations.  </s>
+<s> A dav:lockroot as proposed is fine with me.  </s>
+<s> Do we have one more person that will endorse this?  </s>
+<s> I will endorse it as well.  </s>
+<s> dan  </s>
+<s>  </s>
+<s> Question: why would multiple lock tokens refer to the same lock?  </s>
+<s> And *if* there are multiple URIs referring to the same lock (a consequence of BINDs???), what's the point in reporting more than one?  </s>
+<s> Is anybody using this?  </s>
+<s> Has interoperability been tested?  </s>
+<s> That caught me by surprise.  </s>
+<s> But you made me read a bit and I did uncover the following.  </s>
+<s> Apparently in the case of a shared lock it's considered the same lock, just different tokens.  </s>
+<s> It's not clear they actually mean that with the following wording, but the following is just one of several places where they use the same sort of wording.  </s>
+<s> 7.2 Write Locks and Lock Tokens A successful request for an exclusive or shared write lock MUST result in the generation of a unique lock token associated with the requesting principal.  </s>
+<s> Thus if five principals have a shared write lock on the same resource there will be five lock tokens, one for each principal.  </s>
+<s> This leaves me perplexed about how UNLOCK works for shared locks.  </s>
+<s> I suggest we (1) check with Yaron if this was intentional and get an explanation and (2) make it clear that each lock has one token and a shared lock means that multiple locks are acting on a resource, not just multiple tokens.  </s>
+<s> (Does anyone know how to contact Yaron?) J.  </s>
+<s> Jason, a few thoughts.  </s>
+<s> - a lock is a resource (by definition: it's identified by a URI) - a lock token is a URI - one could identify LOCK with BINDing the lock token to the lock resource and UNLOCK with deleting the lock token, and that wouldn't affect the basic functionality of shared locks However, the difference is that if we have a 1-1 relation between lock tokens and lock resources, each lock will have it's own timeout value and owner, and I think this is what's implemented in moddav and IIS.  </s>
+<s> So I think the spec should reflect that.  </s>
+<s> Julian Behalf Of Jason Crawford  </s>
+<s>  </s>
+<s> Question: why would multiple lock tokens refer to the same lock?  </s>
+<s> And *if* there are multiple URIs referring to the same lock (a consequence of BINDs???), what's the point in reporting more than one?  </s>
+<s> Is anybody using this?  </s>
+<s> Has interoperability been tested?  </s>
+<s> That caught me by surprise.  </s>
+<s> But you made me read a bit and I did uncover the following.  </s>
+<s> Apparently in the case of a shared lock it's considered the same lock, just different tokens.  </s>
+<s> It's not clear they actually mean that with the following wording, but the following is just one of several places where they use the same sort of wording.  </s>
+<s> 7.2 Write Locks and Lock Tokens A successful request for an exclusive or shared write lock MUST result in the generation of a unique lock token associated with the requesting principal.  </s>
+<s> Thus if five principals have a shared write lock on the same resource there will be five lock tokens, one for each principal.  </s>
+<s> This leaves me perplexed about how UNLOCK works for shared locks.  </s>
+<s> I suggest we (1) check with Yaron if this was intentional and get an explanation and (2) make it clear that each lock has one token and a shared lock means that multiple locks are acting on a resource, not just multiple tokens.  </s>
+<s> (Does anyone know how to contact Yaron?) J.  </s>
+<s> I agree with Julian that it makes more sense to have each instance of a shared lock have its own timeout value and lockowner, so I also vote to limit the number of URI's for a given lock to be exactly one.  </s>
+<s> Cheers, Geoff Jason, a few thoughts.  </s>
+<s> - a lock is a resource (by definition: it's identified by a URI) - a lock token is a URI - one could identify LOCK with BINDing the lock token to the lock resource and UNLOCK with deleting the lock token, and that wouldn't affect the basic functionality of shared locks However, the difference is that if we have a 1-1 relation between lock tokens and lock resources, each lock will have it's own timeout value and owner, and I think this is what's implemented in moddav and IIS.  </s>
+<s> So I think the spec should reflect that.  </s>
+<s> Julian -----Original Message----- Behalf Of Jason Crawford  </s>
+<s>  </s>
+<s> Question: why would multiple lock tokens refer to the same lock?  </s>
+<s> And *if* there are multiple URIs referring to the same lock (a consequence of BINDs???), what's the point in reporting more than one?  </s>
+<s> Is anybody using this?  </s>
+<s> Has interoperability been tested?  </s>
+<s> That caught me by surprise.  </s>
+<s> But you made me read a bit and I did uncover the following.  </s>
+<s> Apparently in the case of a shared lock it's considered the same lock, just different tokens.  </s>
+<s> It's not clear they actually mean that with the following wording, but the following is just one of several places where they use the same sort of wording.  </s>
+<s> 7.2 Write Locks and Lock Tokens A successful request for an exclusive or shared write lock MUST result in the generation of a unique lock token associated with the requesting principal.  </s>
+<s> Thus if five principals have a shared write lock on the same resource there will be five lock tokens, one for each principal.  </s>
+<s> This leaves me perplexed about how UNLOCK works for shared locks.  </s>
+<s> I suggest we (1) check with Yaron if this was intentional and get an explanation and (2) make it clear that each lock has one token and a shared lock means that multiple locks are acting on a resource, not just multiple tokens.  </s>
+<s> (Does anyone know how to contact Yaron?) J.  </s>
+<s>  </s>
+<s> I agree with Julian that it makes more sense to have each instance of a shared lock have its own timeout value and lockowner, so I also vote to limit the number of URI's for a given lock to be exactly one.  </s>
+<s> I agree.  </s>
+<s> OK, seems that we had consensus on this protocol extension (got OKs from: Geoff  </s>
+<s> Clemm, Dan Brotsky and Jason Crawford, and no negative feedback).  </s>
+<s> This should close issue #89 (FINDING_THE_ROOT_OF_A_DEPTH_LOCK).  </s>
+<s> Lisa, is there any chance that we may be able to get this into the RFC2518  </s>
+<s> revision?  </s>
+<s> I'm happy to provide a URL of a test server implementing this in  </s>
+<s> time before the interop meeting.  </s>
+<s> Regards, Julian  </s>
+<s> On Monday, 09/02/2002 at 03:18 ZE2, "Julian Reschke" nnjulian.  </s>
+<s> Geoff  </s>
+<s> RFC2518  </s>
+<s> in  </s>
+<s> I've moved the state of that issue to Edit although I think we need to test some interop.  </s>
+<s> Let's get a few of the folks that will be at the interop to implement this.  </s>
+<s> J.  </s>

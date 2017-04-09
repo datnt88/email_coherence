@@ -1,228 +1,228 @@
-Ora - I erred in creating a system more general than I had intended. 
-I 
-have rewritten my meta-data proposal. 
-I wrote the introduction to 
-specifically address your points. 
-Mr. Mealling - Do you honest believe that insulting this group by asserting that we are not dealing with "REAL" meta-data is going to incline anyone to consider your proposals? 
-Ron - Generic object model based meta-data handling is the holy grail of 
-distributed systems. 
-I propose we adopt the Pythonian approach to holy grail related matters and RUN AWAY!!!! As such my rewritten proposal now suggests that we only provide for the absolute minimum interoperability. 
-I feel that questions of packages, structures, and frameworks is best left to other groups. 
-Terry Allen - I am actually a big believer in XML. 
-However, while I do believe that leveraging XML would make for a great meta-data system, I 
-do not believe that this group should deal with that issue. 
-There are a 
-lot of arguments on both sides and I do not believe that the win for 
-this group is sufficiently large to justify the group's investment of 
-time. 
-Many groups have attempted to solve the generic meta-data problem, the current proposals I am familiar with include: XML, Web Collections 
-(sub-setting XML), Warwick Framework, MIMEDIR, and PICS. 
-I am sure you can imagine what life will be like if this group tries to pick a winner. 
-I say we do the minimum needed for interoperability, declare victory, and publish the standard. 
-=) 
-1Why Meta Data 
-I propose that DAV's goals in regard to meta-data should be two fold: 
-1.To provide for a mechanism for clients to place, delete and discover relationships between resources. 
-2.To provide for a mechanism for clients to place, delete and 
-discover simple meta-data consisting of a name and a short non-content 
-negotiable byte field. 
-I believe that the first goal is important because the ability to link resources has been consistently proven to be of critical importance in versioning and of high utility for distributed authoring. 
-As such I feel the group should provide for such a mechanism. 
-I further believe that the current LINK proposal, if modified with the removal of the restriction requiring the source or destination to be equal to the 
-resource the link is recorded on, meets those needs in full and as such the LINK and UNLINK methods should be maintained. 
-The second goal is meant only to provide for the absolute minimum, useful, meta-data interoperability. 
-I believe that this minimum is the ability of a client to 1.Submit an opaque token and receive back a string of bytes that are not subject to content negotiation. 
-2.Assign a string of bytes of non-content negotiated bytes to an opaque token. 
-3.Remove the assignment of an opaque token and its value from a resource. 
-From this point on I will use the term attribute name to refer to the opaque token. 
-This goal is not to provide for a meta-data object model. 
-The goal is not to try to compete with or adopt PICS, Web Collections, MIMEDIR, the Warwick framework, or any of the other proposals for generic meta data handling. 
-I additionally propose that we intentionally leave undefined where attribute names and associated values are recorded. 
-This leaves the implementer free to choose whichever meta-data management scheme they desire. 
-In fact, it leaves the implementer free to choose multiple meta-data management schemes. 
-2Attribute Name Space and Value I propose that the attribute name space be opaque to a DAV client. 
-However, in order to prevent name collisions and to ensure the proper management of the name space, I propose that attribute names be URIs. 
-I further propose that servers not be allowed to accept attributes whose syntax or semantics they do not support. 
-One can, of course, always define a URI namespace whose semantics is "The server should accept any attribute from this namespace and blindly record its value." 
-Finally, I propose that the value of an attribute be limited to a quoted string or token. 
-This restriction is to allow for the inclusion of multiple attribute-specify headers in a request. 
-3METAPOST Method 3.1Attribute-Specify Header AttributeSpecify = "Attribute-Specify" ":" #("name" "=" AttributeName "," "value" "=" AttributeValue) CRLF AttributeName = URI AttributeValue = quoted-string | token 3.2Atomic Header AtomicHeader = "Atomic" ":" CRLF 3.3Explanation The METAPOST method is used to define a value for an attribute. 
-If the attribute does not exist then it will be created. 
-If the attribute does exist then the attribute value will be replaced. 
-Of course this behavior is subject to the semantic and syntactic rules of the attribute. 
-The Atomic header specifies the request should only go through if all the entries can be assigned as requested. 
-If not, the entire request should fail. 
-3.4Example METAPOST http:\\foo HTTP/1.1 
-Attribute-Specify: Name = 29348x, Value = "Jim Whitehead", Name = Xyz, 
-Value = Ooooga! 
-Atomic: This message requests that the quoted string "Jim Whitehead" be assigned to the attribute 29348x and that the token Ooooga! 
-be assigned to the Xyz attribute. 
-However, the request should only go through if all the entries can be successfully assigned. 
-3.5Response Codes A server may reject entries because they are not consistent with the definition of the attribute. 
-In that case a 406 Not Acceptable should be returned. 
-If the atomic header is included then all indicated assignments must succeed or all must be rejected with a 412 Precondition Failed. 
-If the atomic header is not included then a 200 may be returned if at least one entry was successfully assigned. 
-A web collection returned in the response will indicate which entries where successfully assigned. 
-I recommend that the atomic header not be required by a server in order to be considered DAV compliant. 
-Implementing atomic is extremely difficult and not absolutely necessary for interoperability. 
-4METADELETE Method The METADELETE method is used to remove an attribute from a resource. 
-If 
-a value is included in the attribute-specify header then the attribute should only be removed if its value equals that specified in the header. 
-The atomic header may be used with METADELETE and has the same semantics as with METAPOST. 
-4.1Example METADELETE http://foo HTTP/1.1 Attribute-Specify: Name = blah, Value = x98 The previous will delete the attribute blah if its value equals x98. 
-METADELETE http://foo HTTP/1.1 Attribute-specify: blah The previous will remove the attribute blah, regardless of value. 
-4.2Response Codes Same as METAPOST. 
-5METAGET Method The METAGET method is used to retrieve the value of an attribute. 
-If a value is included in the attribute-specify header then the attribute will only be returned if its value is equal to that given in the attribute-specify header. 
-The atomic header may be used with the METAGET method. 
-5.1Example METAGET http:\\foo HTTP/1.1 Attribute-Specify: name = ydfh, name = blah, value = foobar The server is being asked to return the value associated with the ydfh attribute and to return the blah attribute's value if it equals foobar. 
-5.2Response Codes Same as METAPOST with the exception of atomic related errors. 
-Yaron, 
-If this was the interpretation of my message then I am 
-indeed sorry and I apologize. 
-By using the term REAL I simply meant extremely complex. 
-Instead I should have used the terms complex and simple (or large and small chunk as Jim did). 
--MM 
-As an active memeber of the XML WG and interested party in Web Collections 
-and meta-data in general I would hope that this assesment is wrong. 
-XML is not in competition with Web Collections or MIMEDIR, etc. 
-For useful meta-data interoperability this group must choose (not invent) a syntax. 
-XML is about syntax. 
-Dave Hollander 
-I suggested nothing of the sort. 
-Nor that either. 
-XML is not an attempt to solve the generic metadata (one word) problem, and in fact that group is shying away from facing the issue. 
-I concurred with Ron in approbating multipart/related. 
-On the basis of precisely parallel issues that have arisen in the XML discussion, I think the minimum structure required to relate metadata and documents is something like multipart/related. 
-As MIME is an existing, implemented technology, it makes sense to use it. 
-Alternately, you can define the semantics necessary to use multipart/related or any other syntax, and let implementors try out various syntaxes. 
-Regards, Terry Allen Electronic Publishing Consultant tallen[at]sonic.net 
-specializing in Web publishing, SGML, and the DocBook DTD A Davenport Group Sponsor: http://www.ora.com/davenport/index.html 
-Is not what I am suggesting. 
-You seem very concerned that "overly general" solutions will take too much time and require too much invention. 
-You seem to think that by 
-"keeping it simple", namely using attribute/value headers, that the 
-group will be able to accomplish its task more quickly. 
-This certainly 
-sounds reasonable, however, I believe it is wrong on several counts. 
-First, the approach I suggest does not require a massive amount of invention. 
-LINKs, multipart/related, media types, and existing metadata formats can all be used. 
-Second, I think the attribute/value approach is going to lead you directly into one of the IETF's most infamous ratholes - metadata hell. 
-Here is a rather detailed explanation of how. 
-Although the functionality of getting, setting, and deleting headers is useful, it is not the minimum work that has to be accomplished for 
-interoperability. 
-At some point this group is going to have to decide on a minimal set of headers. 
-Some of them, such as Content-type, Content-length, 
-etc. are already well-known and standardized already. 
-Some, dealing with distributed authoring and versioning, are unavoidably in the remit of this group. 
-No matter how much we wish they would go away, they are going to come back again and again until the group reaches rough consensus. 
-Some of these "headers" look simple. 
-What's so hard about "Author"? 
-Why not just use a comma-delimited list of strings and declare victory? 
-Take a look at the return address of this message. 
-If I put my name into a comma delimited list, it breaks. 
-You get two authors, one of whom is my father. 
-Changing the delimiter character doesn't help. 
-One of my friends has a middle name with a ':' in it. 
-No kidding. 
-No doubt there are people who have ';' or any other character you want to use in their names. 
-(Honesty compels me to admit that I don't usually use the ',' in my name, but others do.) 
-The point of that example is not to discuss "Author", it is to warn you that if you get into a discussion of "Author" it will not reach consensus for a long time. 
-This is not the first IETF group that has thought about headers like "Author". 
-Every time they do, all sorts of fun sub-topics, like direct vs. sorted order, international character sets, culture-dependent name orderings, etc. get raised. 
-Then we get to talk about Title and discover that there are all sorts of titles out there (former title, translated title, main title, continued title, working title, ...); Subject (a *total* nightmare), other forms of contribution (Editor, Illustrator, Compiler, Translator, ...) and on and on and on. 
-I18N and the use of non-English attribute names will probably put in yet another appearance during all these discussions, because they always have. 
-Talk about a total time sink. 
-Or, just maybe, we can avoid that particular rathole by acknowledging its presence and taking a different tack. 
-We don't specify those sorts of headers. 
-Instead we state that bibliographic descriptions, while of great interest to this group, are really SEP, and we merely want to use the product of the deliberations of those other parties. 
-What we do is agree on one label, perhaps "DAV.bibliographic-description", and use it in LINKs to external resources. 
-With multipart/related, we can send the source document and the external description around together if we need. 
-We agree on a typing mechanism, namely IMTs, to allow people to use different descriptive formats. 
-Let the librarians define and use application/marc, while newspapers use application/whatever-the-heck- standard-newspapers-use. 
-For broad interoperability in relatively simple situations, this group "blesses" one format and schema. 
-It might be SOIF, it might be Dublin Core, it might be IAFA, it might be MARC for all I know. 
-The vendors then get to go off and do their proprietary schemes, in order to improve on the "blessed" on in various ways. 
-Great. 
-Just as long as ths group doesn't roll its own. 
-The attempt to do so is where the real time sink for this group lies. 
-With that background, let me reiterate what I said yesterday: 
-1) Neither headers or separate resources meet all the requirements on metadata in WEB-DAV, so we will need a combined solution. 
-Do you agree or disagee with that statement? 
-Ron Daniel Jr. voice:+1 505 665 0597 Los Alamos National Lab http://www.acl.lanl.gov/~rdaniel 
-Los Alamos, NM, USA, 87545 
-This issue has been previously discussed on this list. 
-Back in late 
-October, early November, Yaron Goland posted that this group needed to develop a "fairly robust set of attributes," [1] to which Larry Masinter wisely replied, "Danger! 
-Here Be Dragons!" before explaining his assessment 
-of the issue as a rathole based on his experience with the Dublin Core [2]. 
-I followed up [3] with a post where I gave two criteria an attribute must meet to be included in the WEBDAV specification: 
-An attribute may be included in the distributed authoring and versioning specification if it meets one of the following two conditions: 1) The attribute must be integral to the technical approach described in the specification OR must be required to directly satisfy a distributed authoring and versioning requirement. 
-2) The data format of the attribute must be specified to ensure interoperability of distributed authoring tools AND the data format for the attribute must not have been previously defined in an open specification AND the attribute must be in use in an existing Configuration Management or Document Management system. 
-Of these two criteria, the only one I still think we should still adhere to is criteria #1. 
-The second criteria is too tightly limited to just DMS and CM systems, and I don't think we should define any attribute semantics beyond those we absolutely need to implement the WEBDAV requirements, which is criteria #1. 
-However, criteria #1 has been very effective to date in providing reasonable bounds to the scope of WEBDAV definition of attribute semantics, and I am very much in favor of its continuation. 
-For example, by this criteria, defining the semantics of an "Author attribute in the WEBDAV spec. is out of bounds, because it is not directly needed to implement any of the WEBDAV requirements. 
-Its consideration by other groups, such as Dublin Core, also clearly delimits it as out of scope for WEBDAV, since we have a policy, stated in our Charter, of leveraging off of related work, where it is applicable. 
-Finally, our Charter clearly states that the definition of core attribute sets (beyond those necessary to implement the WEBDAV requirements) is out of scope. 
-So, as a group we have recognized the difficulty inherent in the core metadata definition issue space, and have chosen ways to limit our exposure to it. 
-To date we have been successful at limiting the scope of metadata definition arguments. 
-What we are focusing on in WEBDAV are mechanisms for creating, modifying, deleting, and searching metadata, emphasizing the mechanics of how the metadata is manipulated without considering the semantics of that metadata once it exists. 
-As a soundbite, WEBDAV is about "How" not "What". 
-How: how is the metadata created, modified, deleted, searched. 
-What: what does it mean to have a particular piece or collection of metadata. 
-[1] http://lists.w3.org/Archives/Public/w3c-dist-auth/msg00339.html [2] http://lists.w3.org/Archives/Public/w3c-dist-auth/msg00341.html [3] http://lists.w3.org/Archives/Public/w3c-dist-auth/msg00350.html - Jim 
-1) Neither headers or separate resources meet all the requirements on metadata in WEB-DAV, so we will need a combined solution. 
-Do you agree or disagree with that statement? 
-I disagree. 
-I believe that my proposal, which handles what Jim Whitehead 
-has called "small chunk" meta-data, will completely meet the DAV group's 
-needs. 
-While I do believe that there is a strong need for a richer meta-data system I also believe that this group can produce a useful, fully interoperable standard, with nothing more than LINK/UNLINK and the 
-META* methods. 
-Yaron 
-From:Ron Daniel, Jr. [SMTP:rdaniel@acl.lanl.gov] 
-Sent:Wednesday, March 19, 1997 10:00 AM Subject:Re: Meta Data Redux 
-1) Neither headers or separate resources meet all the requirements on metadata in WEB-DAV, so we will need a combined solution. 
-1) Neither headers or separate resources meet all the requirements on metadata in WEB-DAV, so we will need a combined solution. 
-Do you agree or disagree with that statement? 
-Um, I'm confused. 
-Just what are you planning to LINK to if not separate resources? 
-Using LINK suggests to me that you do agree with my statement. 
-If attribute/value headers can do everything, you don't need LINK. 
-Ron Daniel Jr. voice:+1 505 665 0597 Los Alamos National Lab http://www.acl.lanl.gov/~rdaniel 
-Los Alamos, NM, USA, 87545 
-The main sentence in my response is "..I also believe that this group can produce a useful, fully interoperable standard, with nothing more than LINK/UNLINK and the META* methods." 
-Yaron 
-From:Ron Daniel, Jr. [SMTP:rdaniel@acl.lanl.gov] 
-Sent:Wednesday, March 19, 1997 2:53 PM Subject:RE: Meta Data Redux 
-1) Neither headers or separate resources meet all the requirements 
-metadata in WEB-DAV, so we will need a combined solution. 
-Do you agree or disagree with that statement? 
-Metadata, as specified in my proposals, is attached to a resource. 
-So data attached to a versioned resource is attached to that resource alone. 
-If one wishes to place meta data on the whole tree then one should attach meta data to the tree handle resource. 
-Of course, individual pieces of meta-data are free to override this behavior. 
-The values accessible via meta* have behavior that is defined on a meta-data by meta-data basis. 
-The client only knows about tokens and values, that is it. 
-So, for example, let us say the dublin:author meta-data token existed and a client tries to change it on a versioned resource. 
-If the server accepts the token then it also accepts responsibility for enforcing its behavior, which would probably be defined that once the resource is versioned, this value can not be changed. 
-However that is an issue for Dublin Core to solve. 
-The same logic applies to links. 
-It is up to the person defining the link type to specify its behavior. 
-Thus a server would probably not allow someone to delete a DAV.Versioning.NextResource 
-link from a versioned resource, but that is the server's business. 
-Repositories would actually be fine with this behavior. 
-So your question will be answered on a meta-data by meta-data basis. 
-Since DAV isn't really in the meta-data defining business, these issues are largely out of scope. 
-Yaron 
-From:Stephen Martin [SMTP:smartin@mks.com] 
-Sent:Thursday, March 27, 1997 11:00 AM Subject:Re: Meta Data Redux 
-I believe that there are a few things missing from your proposal. 
-In particular, how does metadata interact with versions? 
-Is a piece of metadata attached to a specific version of a document or is it attached to the document tree? 
-Is the metadata versioned? 
-If the metadata is versioned, how are versions of the attributes associated to versions of the document? 
-WebDav should clearly define these sorts of things. 
-Steve Stephen Martin _ _ | /_ \ MORTICE KERN SYSTEMS INC. smartin@mks.com 
-,/ \ / \ | / |( | 185 Columbia Street West (519)883-3215 | | | |/ | \ / Waterloo, Ontario 
+<s> Ora - I erred in creating a system more general than I had intended.  </s>
+<s> I  </s>
+<s> have rewritten my meta-data proposal.  </s>
+<s> I wrote the introduction to  </s>
+<s> specifically address your points.  </s>
+<s> Mr. Mealling - Do you honest believe that insulting this group by asserting that we are not dealing with "REAL" meta-data is going to incline anyone to consider your proposals?  </s>
+<s> Ron - Generic object model based meta-data handling is the holy grail of  </s>
+<s> distributed systems.  </s>
+<s> I propose we adopt the Pythonian approach to holy grail related matters and RUN AWAY!!!! As such my rewritten proposal now suggests that we only provide for the absolute minimum interoperability.  </s>
+<s> I feel that questions of packages, structures, and frameworks is best left to other groups.  </s>
+<s> Terry Allen - I am actually a big believer in XML.  </s>
+<s> However, while I do believe that leveraging XML would make for a great meta-data system, I  </s>
+<s> do not believe that this group should deal with that issue.  </s>
+<s> There are a  </s>
+<s> lot of arguments on both sides and I do not believe that the win for  </s>
+<s> this group is sufficiently large to justify the group's investment of  </s>
+<s> time.  </s>
+<s> Many groups have attempted to solve the generic meta-data problem, the current proposals I am familiar with include: XML, Web Collections  </s>
+<s> (sub-setting XML), Warwick Framework, MIMEDIR, and PICS.  </s>
+<s> I am sure you can imagine what life will be like if this group tries to pick a winner.  </s>
+<s> I say we do the minimum needed for interoperability, declare victory, and publish the standard.  </s>
+<s> =)  </s>
+<s> 1Why Meta Data  </s>
+<s> I propose that DAV's goals in regard to meta-data should be two fold:  </s>
+<s> 1.To provide for a mechanism for clients to place, delete and discover relationships between resources.  </s>
+<s> 2.To provide for a mechanism for clients to place, delete and  </s>
+<s> discover simple meta-data consisting of a name and a short non-content  </s>
+<s> negotiable byte field.  </s>
+<s> I believe that the first goal is important because the ability to link resources has been consistently proven to be of critical importance in versioning and of high utility for distributed authoring.  </s>
+<s> As such I feel the group should provide for such a mechanism.  </s>
+<s> I further believe that the current LINK proposal, if modified with the removal of the restriction requiring the source or destination to be equal to the  </s>
+<s> resource the link is recorded on, meets those needs in full and as such the LINK and UNLINK methods should be maintained.  </s>
+<s> The second goal is meant only to provide for the absolute minimum, useful, meta-data interoperability.  </s>
+<s> I believe that this minimum is the ability of a client to 1.Submit an opaque token and receive back a string of bytes that are not subject to content negotiation.  </s>
+<s> 2.Assign a string of bytes of non-content negotiated bytes to an opaque token.  </s>
+<s> 3.Remove the assignment of an opaque token and its value from a resource.  </s>
+<s> From this point on I will use the term attribute name to refer to the opaque token.  </s>
+<s> This goal is not to provide for a meta-data object model.  </s>
+<s> The goal is not to try to compete with or adopt PICS, Web Collections, MIMEDIR, the Warwick framework, or any of the other proposals for generic meta data handling.  </s>
+<s> I additionally propose that we intentionally leave undefined where attribute names and associated values are recorded.  </s>
+<s> This leaves the implementer free to choose whichever meta-data management scheme they desire.  </s>
+<s> In fact, it leaves the implementer free to choose multiple meta-data management schemes.  </s>
+<s> 2Attribute Name Space and Value I propose that the attribute name space be opaque to a DAV client.  </s>
+<s> However, in order to prevent name collisions and to ensure the proper management of the name space, I propose that attribute names be URIs.  </s>
+<s> I further propose that servers not be allowed to accept attributes whose syntax or semantics they do not support.  </s>
+<s> One can, of course, always define a URI namespace whose semantics is "The server should accept any attribute from this namespace and blindly record its value."  </s>
+<s> Finally, I propose that the value of an attribute be limited to a quoted string or token.  </s>
+<s> This restriction is to allow for the inclusion of multiple attribute-specify headers in a request.  </s>
+<s> 3METAPOST Method 3.1Attribute-Specify Header AttributeSpecify = "Attribute-Specify" ":" #("name" "=" AttributeName "," "value" "=" AttributeValue) CRLF AttributeName = URI AttributeValue = quoted-string | token 3.2Atomic Header AtomicHeader = "Atomic" ":" CRLF 3.3Explanation The METAPOST method is used to define a value for an attribute.  </s>
+<s> If the attribute does not exist then it will be created.  </s>
+<s> If the attribute does exist then the attribute value will be replaced.  </s>
+<s> Of course this behavior is subject to the semantic and syntactic rules of the attribute.  </s>
+<s> The Atomic header specifies the request should only go through if all the entries can be assigned as requested.  </s>
+<s> If not, the entire request should fail.  </s>
+<s> 3.4Example METAPOST http:\\foo HTTP/1.1  </s>
+<s> Attribute-Specify: Name = 29348x, Value = "Jim Whitehead", Name = Xyz,  </s>
+<s> Value = Ooooga!  </s>
+<s> Atomic: This message requests that the quoted string "Jim Whitehead" be assigned to the attribute 29348x and that the token Ooooga!  </s>
+<s> be assigned to the Xyz attribute.  </s>
+<s> However, the request should only go through if all the entries can be successfully assigned.  </s>
+<s> 3.5Response Codes A server may reject entries because they are not consistent with the definition of the attribute.  </s>
+<s> In that case a 406 Not Acceptable should be returned.  </s>
+<s> If the atomic header is included then all indicated assignments must succeed or all must be rejected with a 412 Precondition Failed.  </s>
+<s> If the atomic header is not included then a 200 may be returned if at least one entry was successfully assigned.  </s>
+<s> A web collection returned in the response will indicate which entries where successfully assigned.  </s>
+<s> I recommend that the atomic header not be required by a server in order to be considered DAV compliant.  </s>
+<s> Implementing atomic is extremely difficult and not absolutely necessary for interoperability.  </s>
+<s> 4METADELETE Method The METADELETE method is used to remove an attribute from a resource.  </s>
+<s> If  </s>
+<s> a value is included in the attribute-specify header then the attribute should only be removed if its value equals that specified in the header.  </s>
+<s> The atomic header may be used with METADELETE and has the same semantics as with METAPOST.  </s>
+<s> 4.1Example METADELETE http://foo HTTP/1.1 Attribute-Specify: Name = blah, Value = x98 The previous will delete the attribute blah if its value equals x98.  </s>
+<s> METADELETE http://foo HTTP/1.1 Attribute-specify: blah The previous will remove the attribute blah, regardless of value.  </s>
+<s> 4.2Response Codes Same as METAPOST.  </s>
+<s> 5METAGET Method The METAGET method is used to retrieve the value of an attribute.  </s>
+<s> If a value is included in the attribute-specify header then the attribute will only be returned if its value is equal to that given in the attribute-specify header.  </s>
+<s> The atomic header may be used with the METAGET method.  </s>
+<s> 5.1Example METAGET http:\\foo HTTP/1.1 Attribute-Specify: name = ydfh, name = blah, value = foobar The server is being asked to return the value associated with the ydfh attribute and to return the blah attribute's value if it equals foobar.  </s>
+<s> 5.2Response Codes Same as METAPOST with the exception of atomic related errors.  </s>
+<s> Yaron,  </s>
+<s> If this was the interpretation of my message then I am  </s>
+<s> indeed sorry and I apologize.  </s>
+<s> By using the term REAL I simply meant extremely complex.  </s>
+<s> Instead I should have used the terms complex and simple (or large and small chunk as Jim did).  </s>
+<s> -MM  </s>
+<s> As an active memeber of the XML WG and interested party in Web Collections  </s>
+<s> and meta-data in general I would hope that this assesment is wrong.  </s>
+<s> XML is not in competition with Web Collections or MIMEDIR, etc.  </s>
+<s> For useful meta-data interoperability this group must choose (not invent) a syntax.  </s>
+<s> XML is about syntax.  </s>
+<s> Dave Hollander  </s>
+<s> I suggested nothing of the sort.  </s>
+<s> Nor that either.  </s>
+<s> XML is not an attempt to solve the generic metadata (one word) problem, and in fact that group is shying away from facing the issue.  </s>
+<s> I concurred with Ron in approbating multipart/related.  </s>
+<s> On the basis of precisely parallel issues that have arisen in the XML discussion, I think the minimum structure required to relate metadata and documents is something like multipart/related.  </s>
+<s> As MIME is an existing, implemented technology, it makes sense to use it.  </s>
+<s> Alternately, you can define the semantics necessary to use multipart/related or any other syntax, and let implementors try out various syntaxes.  </s>
+<s> Regards, Terry Allen Electronic Publishing Consultant tallen[at]sonic.net  </s>
+<s> specializing in Web publishing, SGML, and the DocBook DTD A Davenport Group Sponsor: http://www.ora.com/davenport/index.html  </s>
+<s> Is not what I am suggesting.  </s>
+<s> You seem very concerned that "overly general" solutions will take too much time and require too much invention.  </s>
+<s> You seem to think that by  </s>
+<s> "keeping it simple", namely using attribute/value headers, that the  </s>
+<s> group will be able to accomplish its task more quickly.  </s>
+<s> This certainly  </s>
+<s> sounds reasonable, however, I believe it is wrong on several counts.  </s>
+<s> First, the approach I suggest does not require a massive amount of invention.  </s>
+<s> LINKs, multipart/related, media types, and existing metadata formats can all be used.  </s>
+<s> Second, I think the attribute/value approach is going to lead you directly into one of the IETF's most infamous ratholes - metadata hell.  </s>
+<s> Here is a rather detailed explanation of how.  </s>
+<s> Although the functionality of getting, setting, and deleting headers is useful, it is not the minimum work that has to be accomplished for  </s>
+<s> interoperability.  </s>
+<s> At some point this group is going to have to decide on a minimal set of headers.  </s>
+<s> Some of them, such as Content-type, Content-length,  </s>
+<s> etc. are already well-known and standardized already.  </s>
+<s> Some, dealing with distributed authoring and versioning, are unavoidably in the remit of this group.  </s>
+<s> No matter how much we wish they would go away, they are going to come back again and again until the group reaches rough consensus.  </s>
+<s> Some of these "headers" look simple.  </s>
+<s> What's so hard about "Author"?  </s>
+<s> Why not just use a comma-delimited list of strings and declare victory?  </s>
+<s> Take a look at the return address of this message.  </s>
+<s> If I put my name into a comma delimited list, it breaks.  </s>
+<s> You get two authors, one of whom is my father.  </s>
+<s> Changing the delimiter character doesn't help.  </s>
+<s> One of my friends has a middle name with a ':' in it.  </s>
+<s> No kidding.  </s>
+<s> No doubt there are people who have ';' or any other character you want to use in their names.  </s>
+<s> (Honesty compels me to admit that I don't usually use the ',' in my name, but others do.)  </s>
+<s> The point of that example is not to discuss "Author", it is to warn you that if you get into a discussion of "Author" it will not reach consensus for a long time.  </s>
+<s> This is not the first IETF group that has thought about headers like "Author".  </s>
+<s> Every time they do, all sorts of fun sub-topics, like direct vs. sorted order, international character sets, culture-dependent name orderings, etc. get raised.  </s>
+<s> Then we get to talk about Title and discover that there are all sorts of titles out there (former title, translated title, main title, continued title, working title, ...); Subject (a *total* nightmare), other forms of contribution (Editor, Illustrator, Compiler, Translator, ...) and on and on and on.  </s>
+<s> I18N and the use of non-English attribute names will probably put in yet another appearance during all these discussions, because they always have.  </s>
+<s> Talk about a total time sink.  </s>
+<s> Or, just maybe, we can avoid that particular rathole by acknowledging its presence and taking a different tack.  </s>
+<s> We don't specify those sorts of headers.  </s>
+<s> Instead we state that bibliographic descriptions, while of great interest to this group, are really SEP, and we merely want to use the product of the deliberations of those other parties.  </s>
+<s> What we do is agree on one label, perhaps "DAV.bibliographic-description", and use it in LINKs to external resources.  </s>
+<s> With multipart/related, we can send the source document and the external description around together if we need.  </s>
+<s> We agree on a typing mechanism, namely IMTs, to allow people to use different descriptive formats.  </s>
+<s> Let the librarians define and use application/marc, while newspapers use application/whatever-the-heck- standard-newspapers-use.  </s>
+<s> For broad interoperability in relatively simple situations, this group "blesses" one format and schema.  </s>
+<s> It might be SOIF, it might be Dublin Core, it might be IAFA, it might be MARC for all I know.  </s>
+<s> The vendors then get to go off and do their proprietary schemes, in order to improve on the "blessed" on in various ways.  </s>
+<s> Great.  </s>
+<s> Just as long as ths group doesn't roll its own.  </s>
+<s> The attempt to do so is where the real time sink for this group lies.  </s>
+<s> With that background, let me reiterate what I said yesterday:  </s>
+<s> 1) Neither headers or separate resources meet all the requirements on metadata in WEB-DAV, so we will need a combined solution.  </s>
+<s> Do you agree or disagee with that statement?  </s>
+<s> Ron Daniel Jr. voice:+1 505 665 0597 Los Alamos National Lab http://www.acl.lanl.gov/~rdaniel  </s>
+<s> Los Alamos, NM, USA, 87545  </s>
+<s> This issue has been previously discussed on this list.  </s>
+<s> Back in late  </s>
+<s> October, early November, Yaron Goland posted that this group needed to develop a "fairly robust set of attributes," [1] to which Larry Masinter wisely replied, "Danger!  </s>
+<s> Here Be Dragons!" before explaining his assessment  </s>
+<s> of the issue as a rathole based on his experience with the Dublin Core [2].  </s>
+<s> I followed up [3] with a post where I gave two criteria an attribute must meet to be included in the WEBDAV specification:  </s>
+<s> An attribute may be included in the distributed authoring and versioning specification if it meets one of the following two conditions: 1) The attribute must be integral to the technical approach described in the specification OR must be required to directly satisfy a distributed authoring and versioning requirement.  </s>
+<s> 2) The data format of the attribute must be specified to ensure interoperability of distributed authoring tools AND the data format for the attribute must not have been previously defined in an open specification AND the attribute must be in use in an existing Configuration Management or Document Management system.  </s>
+<s> Of these two criteria, the only one I still think we should still adhere to is criteria #1.  </s>
+<s> The second criteria is too tightly limited to just DMS and CM systems, and I don't think we should define any attribute semantics beyond those we absolutely need to implement the WEBDAV requirements, which is criteria #1.  </s>
+<s> However, criteria #1 has been very effective to date in providing reasonable bounds to the scope of WEBDAV definition of attribute semantics, and I am very much in favor of its continuation.  </s>
+<s> For example, by this criteria, defining the semantics of an "Author attribute in the WEBDAV spec. is out of bounds, because it is not directly needed to implement any of the WEBDAV requirements.  </s>
+<s> Its consideration by other groups, such as Dublin Core, also clearly delimits it as out of scope for WEBDAV, since we have a policy, stated in our Charter, of leveraging off of related work, where it is applicable.  </s>
+<s> Finally, our Charter clearly states that the definition of core attribute sets (beyond those necessary to implement the WEBDAV requirements) is out of scope.  </s>
+<s> So, as a group we have recognized the difficulty inherent in the core metadata definition issue space, and have chosen ways to limit our exposure to it.  </s>
+<s> To date we have been successful at limiting the scope of metadata definition arguments.  </s>
+<s> What we are focusing on in WEBDAV are mechanisms for creating, modifying, deleting, and searching metadata, emphasizing the mechanics of how the metadata is manipulated without considering the semantics of that metadata once it exists.  </s>
+<s> As a soundbite, WEBDAV is about "How" not "What".  </s>
+<s> How: how is the metadata created, modified, deleted, searched.  </s>
+<s> What: what does it mean to have a particular piece or collection of metadata.  </s>
+<s> [1] http://lists.w3.org/Archives/Public/w3c-dist-auth/msg00339.html [2] http://lists.w3.org/Archives/Public/w3c-dist-auth/msg00341.html [3] http://lists.w3.org/Archives/Public/w3c-dist-auth/msg00350.html - Jim  </s>
+<s> 1) Neither headers or separate resources meet all the requirements on metadata in WEB-DAV, so we will need a combined solution.  </s>
+<s> Do you agree or disagree with that statement?  </s>
+<s> I disagree.  </s>
+<s> I believe that my proposal, which handles what Jim Whitehead  </s>
+<s> has called "small chunk" meta-data, will completely meet the DAV group's  </s>
+<s> needs.  </s>
+<s> While I do believe that there is a strong need for a richer meta-data system I also believe that this group can produce a useful, fully interoperable standard, with nothing more than LINK/UNLINK and the  </s>
+<s> META* methods.  </s>
+<s> Yaron  </s>
+<s> From:Ron Daniel, Jr. [SMTP:rdaniel@acl.lanl.gov]  </s>
+<s> Sent:Wednesday, March 19, 1997 10:00 AM Subject:Re: Meta Data Redux  </s>
+<s> 1) Neither headers or separate resources meet all the requirements on metadata in WEB-DAV, so we will need a combined solution.  </s>
+<s> 1) Neither headers or separate resources meet all the requirements on metadata in WEB-DAV, so we will need a combined solution.  </s>
+<s> Do you agree or disagree with that statement?  </s>
+<s> Um, I'm confused.  </s>
+<s> Just what are you planning to LINK to if not separate resources?  </s>
+<s> Using LINK suggests to me that you do agree with my statement.  </s>
+<s> If attribute/value headers can do everything, you don't need LINK.  </s>
+<s> Ron Daniel Jr. voice:+1 505 665 0597 Los Alamos National Lab http://www.acl.lanl.gov/~rdaniel  </s>
+<s> Los Alamos, NM, USA, 87545  </s>
+<s> The main sentence in my response is "..I also believe that this group can produce a useful, fully interoperable standard, with nothing more than LINK/UNLINK and the META* methods."  </s>
+<s> Yaron  </s>
+<s> From:Ron Daniel, Jr. [SMTP:rdaniel@acl.lanl.gov]  </s>
+<s> Sent:Wednesday, March 19, 1997 2:53 PM Subject:RE: Meta Data Redux  </s>
+<s> 1) Neither headers or separate resources meet all the requirements  </s>
+<s> metadata in WEB-DAV, so we will need a combined solution.  </s>
+<s> Do you agree or disagree with that statement?  </s>
+<s> Metadata, as specified in my proposals, is attached to a resource.  </s>
+<s> So data attached to a versioned resource is attached to that resource alone.  </s>
+<s> If one wishes to place meta data on the whole tree then one should attach meta data to the tree handle resource.  </s>
+<s> Of course, individual pieces of meta-data are free to override this behavior.  </s>
+<s> The values accessible via meta* have behavior that is defined on a meta-data by meta-data basis.  </s>
+<s> The client only knows about tokens and values, that is it.  </s>
+<s> So, for example, let us say the dublin:author meta-data token existed and a client tries to change it on a versioned resource.  </s>
+<s> If the server accepts the token then it also accepts responsibility for enforcing its behavior, which would probably be defined that once the resource is versioned, this value can not be changed.  </s>
+<s> However that is an issue for Dublin Core to solve.  </s>
+<s> The same logic applies to links.  </s>
+<s> It is up to the person defining the link type to specify its behavior.  </s>
+<s> Thus a server would probably not allow someone to delete a DAV.Versioning.NextResource  </s>
+<s> link from a versioned resource, but that is the server's business.  </s>
+<s> Repositories would actually be fine with this behavior.  </s>
+<s> So your question will be answered on a meta-data by meta-data basis.  </s>
+<s> Since DAV isn't really in the meta-data defining business, these issues are largely out of scope.  </s>
+<s> Yaron  </s>
+<s> From:Stephen Martin [SMTP:smartin@mks.com]  </s>
+<s> Sent:Thursday, March 27, 1997 11:00 AM Subject:Re: Meta Data Redux  </s>
+<s> I believe that there are a few things missing from your proposal.  </s>
+<s> In particular, how does metadata interact with versions?  </s>
+<s> Is a piece of metadata attached to a specific version of a document or is it attached to the document tree?  </s>
+<s> Is the metadata versioned?  </s>
+<s> If the metadata is versioned, how are versions of the attributes associated to versions of the document?  </s>
+<s> WebDav should clearly define these sorts of things.  </s>
+<s> Steve Stephen Martin _ _ | /_ \ MORTICE KERN SYSTEMS INC. smartin@mks.com  </s>
+<s> ,/ \ / \ | / |( | 185 Columbia Street West (519)883-3215 | | | |/ | \ / Waterloo, Ontario  </s>

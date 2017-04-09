@@ -1,72 +1,72 @@
-Dear URI experts, Looking through the URI syntax in detail, I became aware of the following 'anomaly': parameters are not allowed 
-in the first segment of a relative URI (if it doesn't start 
-with a slash). 
-The relevant rules are: relativeURI = ( net_path | abs_path | rel_path ) [ "?" query ] net_path = "//" authority [ abs_path ] abs_path = "/" path_segments rel_path = rel_segment [ abs_path ] rel_segment = 1*( unreserved | escaped | ";" | "@" | "&amp;" | "=" | "+" | "$" | "," ) path_segments = segment *( "/" segment ) segment = *pchar *( ";" param ) param = *pchar pchar = unreserved | escaped | ":" | "@" | "&amp;" | "=" | "+" | "$" | "," So in "abc;def/ghi;jkl", 'jkl' is a parameter, but 'def' isn't. 
-On the other hand, in "/abc;def/ghi;jkl", both 'def' and 'jkl' are parameters. 
-Is this an error in the syntax, or can somebody explain this? 
-Regards, Martin. 
-Section 3.3 says: The parameters are not significant to the parsing of relative references. 
-That would explain the production. 
-However, when a relative uri ref is resolved to a uri, you'd get your parameter again. 
-I think the production in the 
-syntax should be changed. 
-While looking at it, I see that segment and rel_segment have different sets of allowed characters. 
-Noticeably, ':' is allowed in a (absolute) path segment and forbidden in the rel_segment. 
-Isn't that calling for trouble? 
-I'd imagine that there is plenty of code around which converts absolute uris to uri references without looking if the starting rel_segment will be free of ':' chars. 
-Should'nt the ':' in path segments be discouraged? 
-//Stefan Am Freitag, 11.10.02, 
-um 08:29 Uhr (Europe/Berlin) schrieb Martin 
-Duerst: 
-This seems to make sense. 
-Thanks a lot. 
-Well, yes, but if there is a ':', then the part before it is interpreted as a scheme, and it's an absolute URI. 
-Regards, Martin. 
-"Stefan Eissing" asked: 
-I believe it is increasingly being used in constructs involving name spaces. 
-I, for one, use it for that purpose and checked the RFC 2366 URI syntax carefully to make sure it was 'legal' in the way I was using it 
-If there is a discrepancy between relative and absolute forms, I'd recommend including ':' in both forms unless it breaks something. 
-I believe that, providing the initial 'scheme:' part can be parsed OK (or determined to be absent if/where permitted) there should be no other problems - but I've not done a rigorous check. 
-Chris Haynes 
-Am Freitag, 11.10.02, 
-um 13:54 Uhr (Europe/Berlin) schrieb Chris Haynes: 
-In which hierarchical uri scheme is that used? 
-(curious) 
-Given base http://example.com/ 
-what does the relative uri point to a) http://another.com 
-b) http://example.com/http:/another.com 
-Am Freitag, 11.10.02, 
-um 11:16 Uhr (Europe/Berlin) schrieb Martin Duerst: 
-Exactly my concern. 
-If ':' is allowed in path segments, a URI like is a valid http URI. 
-My (imaginary) HTML editor now creates relative URIs whenever it can and generates: Oops. 
-//Stefan 
-Stefan Eissing wrote, 
-Err ... then your editor is broken: that's not a correct relativisation of the URI. 
-Cheers, Miles 
-Am Freitag, 11.10.02, 
-um 16:52 Uhr (Europe/Berlin) schrieb Miles Sabin: 
-But without the ':' in the name, it would have been, right? 
-//Stefan 
-Stefan Eissing wrote, 
-Oh, sure. 
-But so what? 
-Two and two doesn't make five, but if one of the twos had been a three it would ;-) Cheers, Miles 
-Am Freitag, 11.10.02, 
-um 18:10 Uhr (Europe/Berlin) schrieb Miles Sabin: 
-My point is that allowing ':' in path segments makes life more complicated than it needs to be. 
-Unless there is a compelling reason for allowing unescaped ':' in path segments of *hierarchical* URIs, the spec should say that ':' needs to be escaped in these segments. 
-Then, generating correct relative URIs from absolute ones is much less painful and less error prone. 
-Currently, code that "reliativizes" URIs needs to carefully check that the first segment does not contain ':'. 
-If it does, it needs to prefix a './' to the relative URI. 
-I wonder how much code (other than mine :) did not see the need for this check at the time of implementation and is now widely deployed - its author hoping that ':' is never encountered... //Stefan 
-No, but I agree that it is confusing. 
-They are defined differently because rel_segment cannot be empty. 
-Syntactically they are equivalent. 
-I'll find a better way to write it. 
-There was some debate over whether the notion of parameters should just be removed completely. 
-....Roy 
-Existing practice is a compelling reason. 
-If I added your constraint to the syntax, then the code would still have to do the same thing, since it isn't safe to assume the URI was revised according to the new spec and it isn't valid to automatically percent-encode the ":". 
-Either way, the code remains the same, and we just piss-off the authors by demanding changes for no purpose. 
-....Roy 
+<s> Dear URI experts, Looking through the URI syntax in detail, I became aware of the following 'anomaly': parameters are not allowed  </s>
+<s> in the first segment of a relative URI (if it doesn't start  </s>
+<s> with a slash).  </s>
+<s> The relevant rules are: relativeURI = ( net_path | abs_path | rel_path ) [ "?" query ] net_path = "//" authority [ abs_path ] abs_path = "/" path_segments rel_path = rel_segment [ abs_path ] rel_segment = 1*( unreserved | escaped | ";" | "@" | "&amp;" | "=" | "+" | "$" | "," ) path_segments = segment *( "/" segment ) segment = *pchar *( ";" param ) param = *pchar pchar = unreserved | escaped | ":" | "@" | "&amp;" | "=" | "+" | "$" | "," So in "abc;def/ghi;jkl", 'jkl' is a parameter, but 'def' isn't.  </s>
+<s> On the other hand, in "/abc;def/ghi;jkl", both 'def' and 'jkl' are parameters.  </s>
+<s> Is this an error in the syntax, or can somebody explain this?  </s>
+<s> Regards, Martin.  </s>
+<s> Section 3.3 says: The parameters are not significant to the parsing of relative references.  </s>
+<s> That would explain the production.  </s>
+<s> However, when a relative uri ref is resolved to a uri, you'd get your parameter again.  </s>
+<s> I think the production in the  </s>
+<s> syntax should be changed.  </s>
+<s> While looking at it, I see that segment and rel_segment have different sets of allowed characters.  </s>
+<s> Noticeably, ':' is allowed in a (absolute) path segment and forbidden in the rel_segment.  </s>
+<s> Isn't that calling for trouble?  </s>
+<s> I'd imagine that there is plenty of code around which converts absolute uris to uri references without looking if the starting rel_segment will be free of ':' chars.  </s>
+<s> Should'nt the ':' in path segments be discouraged?  </s>
+<s> //Stefan Am Freitag, 11.10.02,  </s>
+<s> um 08:29 Uhr (Europe/Berlin) schrieb Martin  </s>
+<s> Duerst:  </s>
+<s> This seems to make sense.  </s>
+<s> Thanks a lot.  </s>
+<s> Well, yes, but if there is a ':', then the part before it is interpreted as a scheme, and it's an absolute URI.  </s>
+<s> Regards, Martin.  </s>
+<s> "Stefan Eissing" asked:  </s>
+<s> I believe it is increasingly being used in constructs involving name spaces.  </s>
+<s> I, for one, use it for that purpose and checked the RFC 2366 URI syntax carefully to make sure it was 'legal' in the way I was using it  </s>
+<s> If there is a discrepancy between relative and absolute forms, I'd recommend including ':' in both forms unless it breaks something.  </s>
+<s> I believe that, providing the initial 'scheme:' part can be parsed OK (or determined to be absent if/where permitted) there should be no other problems - but I've not done a rigorous check.  </s>
+<s> Chris Haynes  </s>
+<s> Am Freitag, 11.10.02,  </s>
+<s> um 13:54 Uhr (Europe/Berlin) schrieb Chris Haynes:  </s>
+<s> In which hierarchical uri scheme is that used?  </s>
+<s> (curious)  </s>
+<s> Given base http://example.com/  </s>
+<s> what does the relative uri point to a) http://another.com  </s>
+<s> b) http://example.com/http:/another.com  </s>
+<s> Am Freitag, 11.10.02,  </s>
+<s> um 11:16 Uhr (Europe/Berlin) schrieb Martin Duerst:  </s>
+<s> Exactly my concern.  </s>
+<s> If ':' is allowed in path segments, a URI like is a valid http URI.  </s>
+<s> My (imaginary) HTML editor now creates relative URIs whenever it can and generates: Oops.  </s>
+<s> //Stefan  </s>
+<s> Stefan Eissing wrote,  </s>
+<s> Err ... then your editor is broken: that's not a correct relativisation of the URI.  </s>
+<s> Cheers, Miles  </s>
+<s> Am Freitag, 11.10.02,  </s>
+<s> um 16:52 Uhr (Europe/Berlin) schrieb Miles Sabin:  </s>
+<s> But without the ':' in the name, it would have been, right?  </s>
+<s> //Stefan  </s>
+<s> Stefan Eissing wrote,  </s>
+<s> Oh, sure.  </s>
+<s> But so what?  </s>
+<s> Two and two doesn't make five, but if one of the twos had been a three it would ;-) Cheers, Miles  </s>
+<s> Am Freitag, 11.10.02,  </s>
+<s> um 18:10 Uhr (Europe/Berlin) schrieb Miles Sabin:  </s>
+<s> My point is that allowing ':' in path segments makes life more complicated than it needs to be.  </s>
+<s> Unless there is a compelling reason for allowing unescaped ':' in path segments of *hierarchical* URIs, the spec should say that ':' needs to be escaped in these segments.  </s>
+<s> Then, generating correct relative URIs from absolute ones is much less painful and less error prone.  </s>
+<s> Currently, code that "reliativizes" URIs needs to carefully check that the first segment does not contain ':'.  </s>
+<s> If it does, it needs to prefix a './' to the relative URI.  </s>
+<s> I wonder how much code (other than mine :) did not see the need for this check at the time of implementation and is now widely deployed - its author hoping that ':' is never encountered... //Stefan  </s>
+<s> No, but I agree that it is confusing.  </s>
+<s> They are defined differently because rel_segment cannot be empty.  </s>
+<s> Syntactically they are equivalent.  </s>
+<s> I'll find a better way to write it.  </s>
+<s> There was some debate over whether the notion of parameters should just be removed completely.  </s>
+<s> ....Roy  </s>
+<s> Existing practice is a compelling reason.  </s>
+<s> If I added your constraint to the syntax, then the code would still have to do the same thing, since it isn't safe to assume the URI was revised according to the new spec and it isn't valid to automatically percent-encode the ":".  </s>
+<s> Either way, the code remains the same, and we just piss-off the authors by demanding changes for no purpose.  </s>
+<s> ....Roy  </s>

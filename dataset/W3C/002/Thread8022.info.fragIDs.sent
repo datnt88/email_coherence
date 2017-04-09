@@ -1,59 +1,59 @@
-RFC2616 defines the Expect: header for _any_ request method that normally takes a body. 
-Before today, I thought the Expect: header was just the client's way of advertising client support for the 100-Continue response. 
-(I've never seen 
-it sent by a client, BTW.) But RFC2616 says "The Expect request-header field is used to indicate that particular server behaviors are required by the client." 
-This is ambiguous, 
-but clearly the intention is that the server has some responsibility here and can't safely ignore the Expect header. 
-Krishnamurthy and Rexford, in "Web Protocols and Practice", give a cool example of how they think it's used with the "100-Continue" value. 
-The 
-client sends a request that normally has a body, but sends the Expect header instead of the body. 
-The server indicates with 100-Continue that the client should proceed with the request if it's likely to succeed, and the client sends the body in the second message. 
-But if the request is going to fail, the server responds with an error instead. 
-E.g. POST /foo/bar HTTP/1.1 Content-Length: 23248 Expect: 100-Continue The server would respond with an error of some kind if it doesn't have /foo/bar location, if /foo/bar doesn't allow POST, if the Content-Length is too long, or anything else. 
-If anybody's got any other expectation of how the header is supposed to 
-work, I'd love to hear it. 
-Now how it affects WebDAV... RFC2518 makes no mention of the Expect header, but RFC2518 servers are expected to be compliant HTTP 1.1 servers. 
-This would presumably mean they must support the Expect header. 
-So if I sent a server the following request: 
-PROPPATCH /~lisa HTTP/1.1 
-Content-Length: 1234 Depth: infinity Content-Type: text/xml Expect: 100-Continue The server should NOT wait for a body on this request, and it should respond with 100 Continue if it's going to allow me to do the PROPPATCH based on the information provided. 
-E.g. it tests to see if I have write permission on /~lisa and all its descendants. 
-Unless RFC 2518 were to explicitly state that methods defined there did not 
-use the Expect header... Then WebDAV implementors would only have to worry 
-about implementing it correctly for PUT and POST. 
-Hmm? 
-lisa 
-Accidentally caught by the spam filter. 
-I've added Joe's btconnect.com 
-address to the accept2 filter. 
-- Jim 
-seen 
-ambiguous, 
-Early version of my clients used "Expect: 100-continue" by default for large request bodies. 
-Problem is that if the next-hop server *doesn't* support the feature, you end up with a hung connection as both sides block waiting for the other, forcing the client to implement a "timeout" waiting for the interim 100 response/error. 
-(that's all covered in RFC2616) So if you turn this on by default you face the client "hanging" for X seconds until the timeout kicks in, if there is an HTTP/1.0 proxy in the way and you didn't know about it, or the HTTP/1.1 server doesn't support this correctly. 
-I turned it off in the end to prevent it causing weird interop problems. 
-not 
-worry 
-Not sure what you mean there - RFC2616 defines this behaviour, so, if a DAV server claims HTTP/1.1 compliance the header must be honoured regardless of method. 
-Regards, joe 
-Bits snipped 
-Thats how we understood it. 
-Er not to be too picky, but according to my interpretation, you cannot have a "Depth" header with PROPPATCH. 
-Sec 9.2 states Depth header is only supported if a method explicitly provides support for it. 
-Sec 8.2.x PROPPATCH doesn't mention Depth header at all. 
-Server should return 400 (as per sec 9.2). 
-If you removed Depth header from above example, server would only check /~lisa but no descendants. 
-Am I wrong ? 
-One interpretation is that any WebDAV method that takes a body should handle the Expect header i.e. COPY, MOVE, LOCK, PUT, POST, PROPPATCH, PROPFIND (and MKCOL if server supported body). 
-Granted some of these methods take XML as 
-the body, but the server could perform some checks before it needed the XML and thus return a response. 
-This meets RFC 2616 sec 8.2.3 "a server is willing to accept the request based on the request headers" and sec 10.1.1 "the initial part of the request has been received and has not been rejected by the server". 
-Obviously, if the client submitted the XML after it received a 100, and the XML was invalid etc, the server could then send a 400 or whatever is appropriate. 
-What do people think ? 
-Regards Shaun Hall Xerox Europe 
-As I said already - if a server claims HTTP/1.1 compliance, it is a MUST requirement that the server supports the Expect: 100-continue functionality, regardless of method used. 
-RFC2616 is quite clear about how origin servers should behave in section 8.2.3, and WebDAV doesn't affect that in any way or allow alternate interpretation. 
-Sure, I thought the best motiviation to use 100-continue in a DAV client was to prevent having to send a large request body with a PUT twice in the presence of authentication. 
-i.e. PUT (expecting 100-continue) - if authentication is required, the 401 response comes straight away before having to upload x mb to the server. 
-Regards, joe 
+<s> RFC2616 defines the Expect: header for _any_ request method that normally takes a body.  </s>
+<s> Before today, I thought the Expect: header was just the client's way of advertising client support for the 100-Continue response.  </s>
+<s> (I've never seen  </s>
+<s> it sent by a client, BTW.) But RFC2616 says "The Expect request-header field is used to indicate that particular server behaviors are required by the client."  </s>
+<s> This is ambiguous,  </s>
+<s> but clearly the intention is that the server has some responsibility here and can't safely ignore the Expect header.  </s>
+<s> Krishnamurthy and Rexford, in "Web Protocols and Practice", give a cool example of how they think it's used with the "100-Continue" value.  </s>
+<s> The  </s>
+<s> client sends a request that normally has a body, but sends the Expect header instead of the body.  </s>
+<s> The server indicates with 100-Continue that the client should proceed with the request if it's likely to succeed, and the client sends the body in the second message.  </s>
+<s> But if the request is going to fail, the server responds with an error instead.  </s>
+<s> E.g. POST /foo/bar HTTP/1.1 Content-Length: 23248 Expect: 100-Continue The server would respond with an error of some kind if it doesn't have /foo/bar location, if /foo/bar doesn't allow POST, if the Content-Length is too long, or anything else.  </s>
+<s> If anybody's got any other expectation of how the header is supposed to  </s>
+<s> work, I'd love to hear it.  </s>
+<s> Now how it affects WebDAV... RFC2518 makes no mention of the Expect header, but RFC2518 servers are expected to be compliant HTTP 1.1 servers.  </s>
+<s> This would presumably mean they must support the Expect header.  </s>
+<s> So if I sent a server the following request:  </s>
+<s> PROPPATCH /~lisa HTTP/1.1  </s>
+<s> Content-Length: 1234 Depth: infinity Content-Type: text/xml Expect: 100-Continue The server should NOT wait for a body on this request, and it should respond with 100 Continue if it's going to allow me to do the PROPPATCH based on the information provided.  </s>
+<s> E.g. it tests to see if I have write permission on /~lisa and all its descendants.  </s>
+<s> Unless RFC 2518 were to explicitly state that methods defined there did not  </s>
+<s> use the Expect header... Then WebDAV implementors would only have to worry  </s>
+<s> about implementing it correctly for PUT and POST.  </s>
+<s> Hmm?  </s>
+<s> lisa  </s>
+<s> Accidentally caught by the spam filter.  </s>
+<s> I've added Joe's btconnect.com  </s>
+<s> address to the accept2 filter.  </s>
+<s> - Jim  </s>
+<s> seen  </s>
+<s> ambiguous,  </s>
+<s> Early version of my clients used "Expect: 100-continue" by default for large request bodies.  </s>
+<s> Problem is that if the next-hop server *doesn't* support the feature, you end up with a hung connection as both sides block waiting for the other, forcing the client to implement a "timeout" waiting for the interim 100 response/error.  </s>
+<s> (that's all covered in RFC2616) So if you turn this on by default you face the client "hanging" for X seconds until the timeout kicks in, if there is an HTTP/1.0 proxy in the way and you didn't know about it, or the HTTP/1.1 server doesn't support this correctly.  </s>
+<s> I turned it off in the end to prevent it causing weird interop problems.  </s>
+<s> not  </s>
+<s> worry  </s>
+<s> Not sure what you mean there - RFC2616 defines this behaviour, so, if a DAV server claims HTTP/1.1 compliance the header must be honoured regardless of method.  </s>
+<s> Regards, joe  </s>
+<s> Bits snipped  </s>
+<s> Thats how we understood it.  </s>
+<s> Er not to be too picky, but according to my interpretation, you cannot have a "Depth" header with PROPPATCH.  </s>
+<s> Sec 9.2 states Depth header is only supported if a method explicitly provides support for it.  </s>
+<s> Sec 8.2.x PROPPATCH doesn't mention Depth header at all.  </s>
+<s> Server should return 400 (as per sec 9.2).  </s>
+<s> If you removed Depth header from above example, server would only check /~lisa but no descendants.  </s>
+<s> Am I wrong ?  </s>
+<s> One interpretation is that any WebDAV method that takes a body should handle the Expect header i.e. COPY, MOVE, LOCK, PUT, POST, PROPPATCH, PROPFIND (and MKCOL if server supported body).  </s>
+<s> Granted some of these methods take XML as  </s>
+<s> the body, but the server could perform some checks before it needed the XML and thus return a response.  </s>
+<s> This meets RFC 2616 sec 8.2.3 "a server is willing to accept the request based on the request headers" and sec 10.1.1 "the initial part of the request has been received and has not been rejected by the server".  </s>
+<s> Obviously, if the client submitted the XML after it received a 100, and the XML was invalid etc, the server could then send a 400 or whatever is appropriate.  </s>
+<s> What do people think ?  </s>
+<s> Regards Shaun Hall Xerox Europe  </s>
+<s> As I said already - if a server claims HTTP/1.1 compliance, it is a MUST requirement that the server supports the Expect: 100-continue functionality, regardless of method used.  </s>
+<s> RFC2616 is quite clear about how origin servers should behave in section 8.2.3, and WebDAV doesn't affect that in any way or allow alternate interpretation.  </s>
+<s> Sure, I thought the best motiviation to use 100-continue in a DAV client was to prevent having to send a large request body with a PUT twice in the presence of authentication.  </s>
+<s> i.e. PUT (expecting 100-continue) - if authentication is required, the 401 response comes straight away before having to upload x mb to the server.  </s>
+<s> Regards, joe  </s>

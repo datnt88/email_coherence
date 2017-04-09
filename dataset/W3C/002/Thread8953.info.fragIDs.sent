@@ -1,144 +1,144 @@
-John, Joseph pointed me to the XML-DSig WG comments and it seems that you're not aware of the latest changes in the Infoset From 
-Information Set provides for Entity and CDATA start and end mark information items. 
-This is no longer true. 
-Entity and CDATA start and end mark information items 
-were removed from the latest of the Infoset: 
-Yes.? Suppose I have an external entity of the following form: ?PI1? e ?PI2? /e ?PI3? such that substitution into a document of the form doc &amp;extEnt; ?PI4? /doc becomes doc ?PI1? e ?PI2? /e ?PI3? ?PI4? /doc I want to retain the original meaning of element 'e' as well as PI1, PI2 and PI3.? One way to do this is to add an xml:base attribute that preserves the base URI of the external entity in the replacement text.? Problem is, since xml:base is an attribute, it will cover PI2 by adding it to 'e', but it will not cover PI1 and PI3, which therefore experience a change in meaning when sustituted into the document if they use the base URI *and* if the document has a different base URI than the external entity (which is quite reasonable). 
-If I knew the start and end of the external entity substitution text, as well as its base URI, I could do something like the following: doc c14n:baseURI xmlns:c14n="..." xml:base="refer to extEnt" ?PI1? e ?PI2? /e ?PI3? /c14n:baseURI ?PI4? /doc The resulting XML may not be directly usable since the addition of such an element has made 'e' the grandchild of doc, where it used to be the child, so embedded self-referential XPaths may fail.? 
-However, this technique is useful for signatures since it generates an XML string that is 1) easily seen to mean the same thing as the source document because it is XML, and 2) is different based on whether a PI like PI3 or PI4 are in the external entity or in the main document. 
-The Infoset does no longer preserve the base URI of PIs if you serialize the document: 2.4. 
-Processing Instruction Information Items [base URI] The base URI of the PI, as computed by the method of XML Base [XML Base]. 
-If the PI appears directly in the document entity, and the URI of the document entity is not known, and there is no xml:base declaration in effect, then the value of this property is unknown. 
-Note that if an infoset is serialized as an XML document, it will not be possible to preserve the base URI of any PI that originally appeared at the top level of an external entity, since there is no syntax for PIs corresponding to the xml:base attribute on elements. 
--- XML Information Set Fri, 16 Mar 2001 22:42:59 GMT In your case, one solution would be to encapsulate each PI in a c14n:baseURI element: doc c14n:baseURI xmlns:c14n="..." xml:base="refer to extEnt" ?PI1? /c14:baseURI e ?PI2? /e c14n:baseURI xmlns:c14n="..." xml:base="refer to extEnt" ?PI3? /c14n:baseURI ?PI4? /doc Regards, Philippe 
-Hi Philippe, Thanks a lot for pointing that out. 
-My comments about the utility of start and end entity markers were made only 2 days before the newest draft came out. 
-It looks like they've decide to address our concern about the base URI 
-of PIs in external entities by saying simply "It can't be done!" (which is essentially the same thing I said in the C14N Rec due to the same limitations in the earlier xpath data model). 
-I am glad that they've spelled it out so well in the infoset document because at least it sets a clear precedent about not using relative URIs in PIs that appear in external entities (however inconvenient that might be to some people). 
-However, it is sort of unfortunate that obviously recoverable information is being lost, esp. 
-when we can point to *real* places where the information can be put to good use. 
-Editors: Is there some reason why entity ref (and cdata) markers got 
-yanked? 
-I can understand tweaking features in response to a last call, 
-but it seems uncommon to make such a substantive change without issuing 
-another last call. 
-John Boyer Senior Product Architect, Software Development Internet Commerce System (ICS) Team PureEdge Solutions Inc. Trusted Digital Relationships v: 250-708-8047 f: 250-708-8010 1-888-517-2675 http://www.PureEdge.com 
-http://www.pureedge.com/ 
-John, Joseph pointed me to the XML-DSig WG comments and it seems that you're not aware of the latest changes in the Infoset From /00-part 
-Information Set provides for Entity and CDATA start and end mark 
-information 
-This is no longer true. 
-Entity and CDATA start and end mark information items were removed from the latest of the Infoset: 
-Yes.? Suppose I have an external entity of the following form: ?PI1? e ?PI2? /e ?PI3? such that substitution into a document of the form doc &amp;extEnt; ?PI4? /doc becomes doc ?PI1? e ?PI2? /e ?PI3? ?PI4? /doc I want to retain the original meaning of element 'e' as well as PI1, 
-PI2 and PI3.? 
-One way to do this is to add an xml:base attribute that preserves the 
-base URI 
-of the external entity in the replacement text.? Problem is, since 
-xml:base is 
-an attribute, it will cover PI2 by adding it to 'e', but it will not 
-cover PI1 
-and PI3, which therefore experience a change in meaning when 
-sustituted into 
-the document if they use the base URI *and* if the document has a 
-different 
-base URI than the external entity (which is quite reasonable). 
-If I knew the start and end of the external entity substitution text, 
-as well 
-as its base URI, I could do something like the following: doc c14n:baseURI xmlns:c14n="..." xml:base="refer to extEnt" ?PI1? 
-The resulting XML may not be directly usable since the addition of 
-such an element 
-has made 'e' the grandchild of doc, where it used to be the child, so 
-embedded 
-self-referential XPaths may fail.? 
-However, this technique is useful 
-for signatures 
-since it generates an XML string that is 1) easily seen to mean the 
-same thing as 
-the source document because it is XML, and 2) is different based on 
-whether a PI 
-like PI3 or PI4 are in the external entity or in the main document. 
-The Infoset does no longer preserve the base URI of PIs if you serialize the document: 2.4. 
-Processing Instruction Information Items [base URI] The base URI of the PI, as computed by the method of XML Base [XML Base]. 
-If the PI appears directly in the document entity, and the URI of the document entity is not known, and there is no xml:base declaration in effect, then the value of this property is unknown. 
-Note that if an infoset is serialized as an XML document, it will not be possible to preserve the base URI of any PI that originally appeared at the top level of an external entity, since there is no syntax for PIs corresponding to the xml:base attribute on elements. 
--- XML Information Set Fri, 16 Mar 2001 22:42:59 GMT In your case, one solution would be to encapsulate each PI in a c14n:baseURI element: doc c14n:baseURI xmlns:c14n="..." xml:base="refer to extEnt" ?PI1? /c14:baseURI e ?PI2? /e c14n:baseURI xmlns:c14n="..." xml:base="refer to extEnt" ?PI3? /c14n:baseURI ?PI4? /doc Regards, Philippe 
-The document is back to working draft so there will be an other last call 
-in the future. 
-Philippe 
-Hi Philippe, Actually, the status of the document says it is the 'about to become CR' working draft that has been created to address the concerns raised in 
-last call. 
-There is no indication that another last call will occur 
-before infoset becomes a CR. 
-Thus, it would be helpful to know what aspect of last call feedback caused the editors to remove entity ref and cdata markers. 
-Thanks, John Boyer Senior Product Architect, Software Development Internet Commerce System (ICS) Team PureEdge Solutions Inc. Trusted Digital Relationships v: 250-708-8047 f: 250-708-8010 1-888-517-2675 http://www.PureEdge.com 
-http://www.pureedge.com/ 
-call, 
-issuing 
-The document is back to working draft so there will be an other last 
-call 
-in the future. 
-Philippe 
-That's indeed the current plan. 
-CDATA section markers were removed based primarily on feedback from the I18N WG, which stated that, because CDATA sections are limited to certain character sets (because one can't use character references in them), they cannot be considered as anything else than syntactic sugar. 
-Therefore they have no place in the infoset. 
-This same argument has been made by several reviewers and after due consideration the XML Core WG decided to go along with this. 
-The removal of entity ref markers also matches the current trend at W3C. 
-Most WGs work with a data model where entity references are expanded. 
-Because the XML Infoset is meant to serve as many other WGs as possible, and because it can be extended by anyone to carry extra information such as character refs, it seemed only normal to go along with the requests we received. 
-In addition, the XML Core WG was facing serious issues in XInclude with regard to markers. 
-Their removal made all these issues go away. 
-Arnaud Le Hors - Co-chair of XML Core WG 
-Hello Philippe, John, 
-It is not true in general, and it is not true in particular for the 
-Infoset, that going back to working draft means that there is another 
-last call. 
-An additional working draft is often used to confirm last 
-call resolutions just before going to CR. For details, please see http://www.w3.org/TR/xml-infoset/#status. 
-Regards, Martin. 
-Hi Martin, I know the status of infoset and I know that the WD publication is the usual procedure, and said as much in my response to Philippe. 
-However, in cases where the changes are substantive (e.g. whole sections were taken out of the infoset spec), documentation pertaining to who requested the change and why must be provided, also as a matter of 
-policy, and a second last call should be issued (for the reasons noted 
-by Joseph Reagle). 
-In the particular case of Infoset, it appears that entity reference markers were removed in order to support XInclude, which in my current opinion, should not be constructed as it is. 
-Moreover, regarding the removal of CDATA section markers, I'm told that I18N said they should be dumped. 
-I've asked for clarification because the reason, on the surface, didn't make sense. 
-To that end, you are a great guy to give such clarification... Thanks, John Boyer Senior Product Architect, Software Development Internet Commerce System (ICS) Team PureEdge Solutions Inc. Trusted Digital Relationships v: 250-708-8047 f: 250-708-8010 1-888-517-2675 http://www.PureEdge.com 
-http://www.pureedge.com/ 
-Hello Philippe, John, 
-It is not true in general, and it is not true in particular for the 
-Infoset, that going back to working draft means that there is another last call. 
-An additional working draft is often used to confirm last call resolutions just before going to CR. For details, please see http://www.w3.org/TR/xml-infoset/#status. 
-Regards, Martin. 
-got 
-call, 
-issuing 
-call 
-Hello John, 
-Hi Arnaud, Thanks for the quick response. 
-Is there an email feedback I could read regarding the I18N feedback on CDATA, because it sounds pretty bizarre. 
-There's nothing in the XML 1.0 specification to suggest that CDATA sections aren't applicable to all character encodings. 
-For example, if the document is UTF-8 encoded, and a CDATA section appears, I would assume that its internal contents are interpreted as UTF-8 with respect to reading them in. 
-This means that anything in the UCS domain can appear in a CDATA section. 
-The inability to make character references seems to have little to do with the argument being made. 
-The problem is not with UTF-8, but with restricted encodings, such as Latin-1. 
-You cannot convert a document in UTF-8 to a document in Latin-1 and guarantee to keep your CDATA sections. 
-It's well known that CDATA is syntax sugar in the sense that one can always find another way to do it without CDATA, but if I were using an XML authoring tool that is based on infoset, I would not want it to remove my CDATA sections because it would be equivalent to removing CDATA section from XML 1.0 (with respect to my use of that tool). 
-Please note that you most probably wouldn't want your XML authoring tool to mess with quite some other things, including whether you use single or double quotes for attributes, and so on. 
-The Infoset is not a collection of things that it would make sense to preserve by an authoring tool. 
-It is very clear that a good authoring tool will preserve more than the Infoset. 
-The Infoset is about what is really essential information in the XML document. 
-CDATA is not part of that. 
-As for entity reference markers, I was unaware that entities would not be expanded between the start and end marker. 
-I'm confused. 
-I thought the infoset expanded them. 
-If not, having both a start and an end marker wouldn't make sense at all. 
-Regards, Martin. 
-Hello John, Sorry, our mails crossed, several times. 
-I hope I have been able to explain why CDATA doesn't have to be (or actual should not be) in the Infoset. 
-I have followed some pointers and read some old mail, but I still don't understand why you think CDATA should be in the Infoset, or how this would relate to C14N and signatures. 
-Regards, Martin. 
-I dispute this but don't want to bother the WGs with questions of process -- I've moved that thread to chairs@w3.org . 
-Please feel free to continue substantive technical discussion on the xmldsig list. 
-Joseph Reagle Jr. http://www.w3.org/People/Reagle/ W3C Policy Analyst mailto:reagle@w3.org 
-IETF/W3C XML-Signature Co-Chair http://www.w3.org/Signature W3C XML Encryption Chair http://www.w3.org/Encryption/2001/ 
+<s> John, Joseph pointed me to the XML-DSig WG comments and it seems that you're not aware of the latest changes in the Infoset From  </s>
+<s> Information Set provides for Entity and CDATA start and end mark information items.  </s>
+<s> This is no longer true.  </s>
+<s> Entity and CDATA start and end mark information items  </s>
+<s> were removed from the latest of the Infoset:  </s>
+<s> Yes.? Suppose I have an external entity of the following form: ?PI1? e ?PI2? /e ?PI3? such that substitution into a document of the form doc &amp;extEnt; ?PI4? /doc becomes doc ?PI1? e ?PI2? /e ?PI3? ?PI4? /doc I want to retain the original meaning of element 'e' as well as PI1, PI2 and PI3.? One way to do this is to add an xml:base attribute that preserves the base URI of the external entity in the replacement text.? Problem is, since xml:base is an attribute, it will cover PI2 by adding it to 'e', but it will not cover PI1 and PI3, which therefore experience a change in meaning when sustituted into the document if they use the base URI *and* if the document has a different base URI than the external entity (which is quite reasonable).  </s>
+<s> If I knew the start and end of the external entity substitution text, as well as its base URI, I could do something like the following: doc c14n:baseURI xmlns:c14n="..." xml:base="refer to extEnt" ?PI1? e ?PI2? /e ?PI3? /c14n:baseURI ?PI4? /doc The resulting XML may not be directly usable since the addition of such an element has made 'e' the grandchild of doc, where it used to be the child, so embedded self-referential XPaths may fail.?  </s>
+<s> However, this technique is useful for signatures since it generates an XML string that is 1) easily seen to mean the same thing as the source document because it is XML, and 2) is different based on whether a PI like PI3 or PI4 are in the external entity or in the main document.  </s>
+<s> The Infoset does no longer preserve the base URI of PIs if you serialize the document: 2.4.  </s>
+<s> Processing Instruction Information Items [base URI] The base URI of the PI, as computed by the method of XML Base [XML Base].  </s>
+<s> If the PI appears directly in the document entity, and the URI of the document entity is not known, and there is no xml:base declaration in effect, then the value of this property is unknown.  </s>
+<s> Note that if an infoset is serialized as an XML document, it will not be possible to preserve the base URI of any PI that originally appeared at the top level of an external entity, since there is no syntax for PIs corresponding to the xml:base attribute on elements.  </s>
+<s> -- XML Information Set Fri, 16 Mar 2001 22:42:59 GMT In your case, one solution would be to encapsulate each PI in a c14n:baseURI element: doc c14n:baseURI xmlns:c14n="..." xml:base="refer to extEnt" ?PI1? /c14:baseURI e ?PI2? /e c14n:baseURI xmlns:c14n="..." xml:base="refer to extEnt" ?PI3? /c14n:baseURI ?PI4? /doc Regards, Philippe  </s>
+<s> Hi Philippe, Thanks a lot for pointing that out.  </s>
+<s> My comments about the utility of start and end entity markers were made only 2 days before the newest draft came out.  </s>
+<s> It looks like they've decide to address our concern about the base URI  </s>
+<s> of PIs in external entities by saying simply "It can't be done!" (which is essentially the same thing I said in the C14N Rec due to the same limitations in the earlier xpath data model).  </s>
+<s> I am glad that they've spelled it out so well in the infoset document because at least it sets a clear precedent about not using relative URIs in PIs that appear in external entities (however inconvenient that might be to some people).  </s>
+<s> However, it is sort of unfortunate that obviously recoverable information is being lost, esp.  </s>
+<s> when we can point to *real* places where the information can be put to good use.  </s>
+<s> Editors: Is there some reason why entity ref (and cdata) markers got  </s>
+<s> yanked?  </s>
+<s> I can understand tweaking features in response to a last call,  </s>
+<s> but it seems uncommon to make such a substantive change without issuing  </s>
+<s> another last call.  </s>
+<s> John Boyer Senior Product Architect, Software Development Internet Commerce System (ICS) Team PureEdge Solutions Inc. Trusted Digital Relationships v: 250-708-8047 f: 250-708-8010 1-888-517-2675 http://www.PureEdge.com  </s>
+<s> http://www.pureedge.com/  </s>
+<s> John, Joseph pointed me to the XML-DSig WG comments and it seems that you're not aware of the latest changes in the Infoset From /00-part  </s>
+<s> Information Set provides for Entity and CDATA start and end mark  </s>
+<s> information  </s>
+<s> This is no longer true.  </s>
+<s> Entity and CDATA start and end mark information items were removed from the latest of the Infoset:  </s>
+<s> Yes.? Suppose I have an external entity of the following form: ?PI1? e ?PI2? /e ?PI3? such that substitution into a document of the form doc &amp;extEnt; ?PI4? /doc becomes doc ?PI1? e ?PI2? /e ?PI3? ?PI4? /doc I want to retain the original meaning of element 'e' as well as PI1,  </s>
+<s> PI2 and PI3.?  </s>
+<s> One way to do this is to add an xml:base attribute that preserves the  </s>
+<s> base URI  </s>
+<s> of the external entity in the replacement text.? Problem is, since  </s>
+<s> xml:base is  </s>
+<s> an attribute, it will cover PI2 by adding it to 'e', but it will not  </s>
+<s> cover PI1  </s>
+<s> and PI3, which therefore experience a change in meaning when  </s>
+<s> sustituted into  </s>
+<s> the document if they use the base URI *and* if the document has a  </s>
+<s> different  </s>
+<s> base URI than the external entity (which is quite reasonable).  </s>
+<s> If I knew the start and end of the external entity substitution text,  </s>
+<s> as well  </s>
+<s> as its base URI, I could do something like the following: doc c14n:baseURI xmlns:c14n="..." xml:base="refer to extEnt" ?PI1?  </s>
+<s> The resulting XML may not be directly usable since the addition of  </s>
+<s> such an element  </s>
+<s> has made 'e' the grandchild of doc, where it used to be the child, so  </s>
+<s> embedded  </s>
+<s> self-referential XPaths may fail.?  </s>
+<s> However, this technique is useful  </s>
+<s> for signatures  </s>
+<s> since it generates an XML string that is 1) easily seen to mean the  </s>
+<s> same thing as  </s>
+<s> the source document because it is XML, and 2) is different based on  </s>
+<s> whether a PI  </s>
+<s> like PI3 or PI4 are in the external entity or in the main document.  </s>
+<s> The Infoset does no longer preserve the base URI of PIs if you serialize the document: 2.4.  </s>
+<s> Processing Instruction Information Items [base URI] The base URI of the PI, as computed by the method of XML Base [XML Base].  </s>
+<s> If the PI appears directly in the document entity, and the URI of the document entity is not known, and there is no xml:base declaration in effect, then the value of this property is unknown.  </s>
+<s> Note that if an infoset is serialized as an XML document, it will not be possible to preserve the base URI of any PI that originally appeared at the top level of an external entity, since there is no syntax for PIs corresponding to the xml:base attribute on elements.  </s>
+<s> -- XML Information Set Fri, 16 Mar 2001 22:42:59 GMT In your case, one solution would be to encapsulate each PI in a c14n:baseURI element: doc c14n:baseURI xmlns:c14n="..." xml:base="refer to extEnt" ?PI1? /c14:baseURI e ?PI2? /e c14n:baseURI xmlns:c14n="..." xml:base="refer to extEnt" ?PI3? /c14n:baseURI ?PI4? /doc Regards, Philippe  </s>
+<s> The document is back to working draft so there will be an other last call  </s>
+<s> in the future.  </s>
+<s> Philippe  </s>
+<s> Hi Philippe, Actually, the status of the document says it is the 'about to become CR' working draft that has been created to address the concerns raised in  </s>
+<s> last call.  </s>
+<s> There is no indication that another last call will occur  </s>
+<s> before infoset becomes a CR.  </s>
+<s> Thus, it would be helpful to know what aspect of last call feedback caused the editors to remove entity ref and cdata markers.  </s>
+<s> Thanks, John Boyer Senior Product Architect, Software Development Internet Commerce System (ICS) Team PureEdge Solutions Inc. Trusted Digital Relationships v: 250-708-8047 f: 250-708-8010 1-888-517-2675 http://www.PureEdge.com  </s>
+<s> http://www.pureedge.com/  </s>
+<s> call,  </s>
+<s> issuing  </s>
+<s> The document is back to working draft so there will be an other last  </s>
+<s> call  </s>
+<s> in the future.  </s>
+<s> Philippe  </s>
+<s> That's indeed the current plan.  </s>
+<s> CDATA section markers were removed based primarily on feedback from the I18N WG, which stated that, because CDATA sections are limited to certain character sets (because one can't use character references in them), they cannot be considered as anything else than syntactic sugar.  </s>
+<s> Therefore they have no place in the infoset.  </s>
+<s> This same argument has been made by several reviewers and after due consideration the XML Core WG decided to go along with this.  </s>
+<s> The removal of entity ref markers also matches the current trend at W3C.  </s>
+<s> Most WGs work with a data model where entity references are expanded.  </s>
+<s> Because the XML Infoset is meant to serve as many other WGs as possible, and because it can be extended by anyone to carry extra information such as character refs, it seemed only normal to go along with the requests we received.  </s>
+<s> In addition, the XML Core WG was facing serious issues in XInclude with regard to markers.  </s>
+<s> Their removal made all these issues go away.  </s>
+<s> Arnaud Le Hors - Co-chair of XML Core WG  </s>
+<s> Hello Philippe, John,  </s>
+<s> It is not true in general, and it is not true in particular for the  </s>
+<s> Infoset, that going back to working draft means that there is another  </s>
+<s> last call.  </s>
+<s> An additional working draft is often used to confirm last  </s>
+<s> call resolutions just before going to CR. For details, please see http://www.w3.org/TR/xml-infoset/#status.  </s>
+<s> Regards, Martin.  </s>
+<s> Hi Martin, I know the status of infoset and I know that the WD publication is the usual procedure, and said as much in my response to Philippe.  </s>
+<s> However, in cases where the changes are substantive (e.g. whole sections were taken out of the infoset spec), documentation pertaining to who requested the change and why must be provided, also as a matter of  </s>
+<s> policy, and a second last call should be issued (for the reasons noted  </s>
+<s> by Joseph Reagle).  </s>
+<s> In the particular case of Infoset, it appears that entity reference markers were removed in order to support XInclude, which in my current opinion, should not be constructed as it is.  </s>
+<s> Moreover, regarding the removal of CDATA section markers, I'm told that I18N said they should be dumped.  </s>
+<s> I've asked for clarification because the reason, on the surface, didn't make sense.  </s>
+<s> To that end, you are a great guy to give such clarification... Thanks, John Boyer Senior Product Architect, Software Development Internet Commerce System (ICS) Team PureEdge Solutions Inc. Trusted Digital Relationships v: 250-708-8047 f: 250-708-8010 1-888-517-2675 http://www.PureEdge.com  </s>
+<s> http://www.pureedge.com/  </s>
+<s> Hello Philippe, John,  </s>
+<s> It is not true in general, and it is not true in particular for the  </s>
+<s> Infoset, that going back to working draft means that there is another last call.  </s>
+<s> An additional working draft is often used to confirm last call resolutions just before going to CR. For details, please see http://www.w3.org/TR/xml-infoset/#status.  </s>
+<s> Regards, Martin.  </s>
+<s> got  </s>
+<s> call,  </s>
+<s> issuing  </s>
+<s> call  </s>
+<s> Hello John,  </s>
+<s> Hi Arnaud, Thanks for the quick response.  </s>
+<s> Is there an email feedback I could read regarding the I18N feedback on CDATA, because it sounds pretty bizarre.  </s>
+<s> There's nothing in the XML 1.0 specification to suggest that CDATA sections aren't applicable to all character encodings.  </s>
+<s> For example, if the document is UTF-8 encoded, and a CDATA section appears, I would assume that its internal contents are interpreted as UTF-8 with respect to reading them in.  </s>
+<s> This means that anything in the UCS domain can appear in a CDATA section.  </s>
+<s> The inability to make character references seems to have little to do with the argument being made.  </s>
+<s> The problem is not with UTF-8, but with restricted encodings, such as Latin-1.  </s>
+<s> You cannot convert a document in UTF-8 to a document in Latin-1 and guarantee to keep your CDATA sections.  </s>
+<s> It's well known that CDATA is syntax sugar in the sense that one can always find another way to do it without CDATA, but if I were using an XML authoring tool that is based on infoset, I would not want it to remove my CDATA sections because it would be equivalent to removing CDATA section from XML 1.0 (with respect to my use of that tool).  </s>
+<s> Please note that you most probably wouldn't want your XML authoring tool to mess with quite some other things, including whether you use single or double quotes for attributes, and so on.  </s>
+<s> The Infoset is not a collection of things that it would make sense to preserve by an authoring tool.  </s>
+<s> It is very clear that a good authoring tool will preserve more than the Infoset.  </s>
+<s> The Infoset is about what is really essential information in the XML document.  </s>
+<s> CDATA is not part of that.  </s>
+<s> As for entity reference markers, I was unaware that entities would not be expanded between the start and end marker.  </s>
+<s> I'm confused.  </s>
+<s> I thought the infoset expanded them.  </s>
+<s> If not, having both a start and an end marker wouldn't make sense at all.  </s>
+<s> Regards, Martin.  </s>
+<s> Hello John, Sorry, our mails crossed, several times.  </s>
+<s> I hope I have been able to explain why CDATA doesn't have to be (or actual should not be) in the Infoset.  </s>
+<s> I have followed some pointers and read some old mail, but I still don't understand why you think CDATA should be in the Infoset, or how this would relate to C14N and signatures.  </s>
+<s> Regards, Martin.  </s>
+<s> I dispute this but don't want to bother the WGs with questions of process -- I've moved that thread to chairs@w3.org .  </s>
+<s> Please feel free to continue substantive technical discussion on the xmldsig list.  </s>
+<s> Joseph Reagle Jr. http://www.w3.org/People/Reagle/ W3C Policy Analyst mailto:reagle@w3.org  </s>
+<s> IETF/W3C XML-Signature Co-Chair http://www.w3.org/Signature W3C XML Encryption Chair http://www.w3.org/Encryption/2001/  </s>

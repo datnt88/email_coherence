@@ -1,89 +1,89 @@
-I don't recall there being any discussion of Merlin's comments on RetrievalMethod below. 
-The main change suggested is to drop the 
-Method element as it is inherent in the Location URI. 
-Also, as far as I know, we have decided to make fields which are always URIs be attributes and have algorithms be elements with an Algorithm attribute... 
-This leads to the following as the most consistent with the rest of our syntax: On the other hand, the minimum change would be to simply amend the current definition by dropping the Method element. 
-How much implementation is there of RetrievalMethod at this point? 
-I.E., how much pain is involved in the larger change? 
-Thanks, 
-Donald 
-r/dee3@torque.pothole.com/2000.07.19/13:40:29 
-Making some of this stuff optional seems reasonable but I would think that a lot of implementations would just pass off the uri to some retrieval mechanism without looking inside it and still want a separate indication of type and encoding. 
-Donald 
-I agree. 
-I just don't grasp the reason for the current structure of the element. 
-It seems to me that a minimal specification would be [1]: RetrievalMethod Location="http://..." Type="foo#x509-certificate" Encoding="bar#base64" / A more pedantic specification would be [2]: RetrievalMethod Type="foo#x509-certificate Location http://... /Location Encoding Algorithm="bar#base64" / /RetrievalMethod Type could be expanded into an element, if desired. 
-However, I can't see how Type would be more than a URI, nor do I see the impact of Encoding on Type, as captured in the current spec: RetrievalMethod Location http://... /Location Method x:From-ASN1-To-Key-Info-Foo / /Method Type Encoding="bar#base64" x:Its-A-X509-Certificate-Foo / /Type /RetrievalMethod As I say, I just don't fully understand what would be a default implementation of the current element specification. 
-Merlin [1] element name='RetrievalMethod' complexType content='mixed' any namespace='##other' minOccurs='0' maxOccurs='unbounded'/ /complexType attribute name='Location' type='uriReference' use='required' attribute name='Type' type='uriReference' use='optional'/ attribute name='Encoding' type='uriReference' use='optional' /element [2] element name='RetrievalMethod' complexType content='elementOnly' sequence minOccurs='1' maxOccurs='1' element name='Location' type='uriReference' minOccurs='1' 
-maxOccurs='1'/ 
-element ref='ds:Encoding' minOccurs='0' maxOccurs='unbounded'/ /sequence attribute name='Type' type='uriReference' use='optional'/ /complexType /element element name='Encoding' complexType content='mixed' any namespace='##other' minOccurs='0' maxOccurs='unbounded'/ attribute name='Algorithm' type='uriReference' use='required'/ /complexType /element 
-From: merlin merlin@baltimore.ie 
-Message-Id: 200007182220.XAA10671@bobcat.baltimore.ie 
-In-reply-to: 3.0.5.32.20000718162839.00ad5e70@localhost 
-Date: Tue, 18 Jul 2000 23:20:57 +0100 
-r/reagle@w3.org/2000.07.18/16:28:39 
-The Schema has mandatory content for the Type element. 
-This seems wrong because it can't then be implemented interoperably without further specification. 
-Are you suggestion it be change to optional? 
-element name='Type' complexType content='mixed' any namespace='##other' minOccurs='0' maxOccurs='unbounded'/ 
-Something of that nature. 
-RetrievalMethod simply seems underspecified given that it "SHOULD" be implemented. 
-By making some of those parts optional, it could be read as minimally and sufficiently specified. 
-For example, it seems reasonable to present a RetrievalMethod with the Location: ldap://ldap.baltimore.ie/CN=merlin?userCertificate;binary 
-What, in this case, do I specify as the Method and Type, both of which are currently mandatory? 
-By making Method and Type optional I can, at the very least, assume that the recipient will determine the type of key information from the URI. 
-Merlin 
-Joseph Reagle Jr. W3C Policy Analyst mailto:reagle@w3.org 
-IETF/W3C XML-Signature Co-Chair http://www.w3.org/People/Reagle/ 
-------- End of Forwarded Message 
-Hi, I actually think that such a structure is slightly limiting; it cannot represent an HTTP POST location; e.g., [1]. 
-I personally prefer either no defined internal structure (completely flexible) or [0]. 
-Merlin [0] [1] r/dee3@torque.pothole.com/2000.08.17/09:40:17 
-r/dee3@torque.pothole.com/2000.07.19/13:40:29 
-maxOccurs='1'/ 
-From: merlin merlin@baltimore.ie 
-Message-Id: 200007182220.XAA10671@bobcat.baltimore.ie 
-In-reply-to: 3.0.5.32.20000718162839.00ad5e70@localhost 
-Date: Tue, 18 Jul 2000 23:20:57 +0100 
-r/reagle@w3.org/2000.07.18/16:28:39 
-The Schema has mandatory content for the Type element. 
-This seems wrong because it can't then be implemented interoperably without further specification. 
-Are you suggestion it be change to optional? 
-element name='Type' complexType content='mixed' any namespace='##other' minOccurs='0' maxOccurs='unbounded'/ 
-Joseph Reagle Jr. W3C Policy Analyst mailto:reagle@w3.org 
-IETF/W3C XML-Signature Co-Chair http://www.w3.org/People/Reagle/ 
-The consensus of those on the conference call yesterday was to try to re-use as much exiting mechanism as possible. 
-So what we came up with was (Transforms)? 
-that is, the syntax is the same as Reference. 
-*1 values for Type would be as in 4.3.3 except that in the "http://www.w3.org/2000/07/xmldsig#*2", *2 would be an element from KeyInfo other than RetrievalMethod. 
-See other comment below. 
-Thanks, Donald From: merlin merlin@baltimore.ie 
-Message-Id: 200008171417.PAA12758@cougar.baltimore.ie 
-In-reply-to: 200008171340.JAA15971@torque.pothole.com 
-Date: Thu, 17 Aug 2000 15:17:42 +0100 
-If the inability to do an HTTP POST is a problem here, which I'm not sure it is in a practical sense, then wouldn't we need to generalize Reference also? 
-And no internal structure menas giving up on interoperability. 
-r/dee3@torque.pothole.com/2000.07.19/13:40:29 
-maxOccurs='1'/ 
-From: merlin merlin@baltimore.ie 
-Message-Id: 200007182220.XAA10671@bobcat.baltimore.ie 
-In-reply-to: 3.0.5.32.20000718162839.00ad5e70@localhost 
-Date: Tue, 18 Jul 2000 23:20:57 +0100 
-r/reagle@w3.org/2000.07.18/16:28:39 
-The Schema has mandatory content for the Type element. 
-This seems wrong because it can't then be implemented interoperably without further specification. 
-Are you suggestion it be change to optional? 
-element name='Type' complexType content='mixed' any namespace='##other' minOccurs='0' maxOccurs='unbounded'/ 
-Joseph Reagle Jr. W3C Policy Analyst mailto:reagle@w3.org 
-IETF/W3C XML-Signature Co-Chair http://www.w3.org/People/Reagle/ 
-r/dee3@torque.pothole.com/2000.08.18/15:43:37 
-I think that the proposed solution is probably optimal; transform is known and supported and it covers most needs, subject to a definition of some standard types. 
-The only motivation for an extended URI element (e.g., POST) is that, for example, LDAP URIs can be quite expansive. 
-However, that can be solved in a particular implementation by a new KeyInfo element in just as interoperable a manner as an extended URI. 
-So, I disagree with you not at all. 
-Merlin 
-OK, I believe we have a consensus on the syntax I posted. 
-Thanks, Donald From: merlin merlin@baltimore.ie 
-Message-Id: 200008182051.VAA23000@cougar.baltimore.ie 
-In-reply-to: 200008181943.PAA18232@torque.pothole.com 
-Date: Fri, 18 Aug 2000 21:51:52 +0100 
+<s> I don't recall there being any discussion of Merlin's comments on RetrievalMethod below.  </s>
+<s> The main change suggested is to drop the  </s>
+<s> Method element as it is inherent in the Location URI.  </s>
+<s> Also, as far as I know, we have decided to make fields which are always URIs be attributes and have algorithms be elements with an Algorithm attribute...  </s>
+<s> This leads to the following as the most consistent with the rest of our syntax: On the other hand, the minimum change would be to simply amend the current definition by dropping the Method element.  </s>
+<s> How much implementation is there of RetrievalMethod at this point?  </s>
+<s> I.E., how much pain is involved in the larger change?  </s>
+<s> Thanks,  </s>
+<s> Donald  </s>
+<s> r/dee3@torque.pothole.com/2000.07.19/13:40:29  </s>
+<s> Making some of this stuff optional seems reasonable but I would think that a lot of implementations would just pass off the uri to some retrieval mechanism without looking inside it and still want a separate indication of type and encoding.  </s>
+<s> Donald  </s>
+<s> I agree.  </s>
+<s> I just don't grasp the reason for the current structure of the element.  </s>
+<s> It seems to me that a minimal specification would be [1]: RetrievalMethod Location="http://..." Type="foo#x509-certificate" Encoding="bar#base64" / A more pedantic specification would be [2]: RetrievalMethod Type="foo#x509-certificate Location http://... /Location Encoding Algorithm="bar#base64" / /RetrievalMethod Type could be expanded into an element, if desired.  </s>
+<s> However, I can't see how Type would be more than a URI, nor do I see the impact of Encoding on Type, as captured in the current spec: RetrievalMethod Location http://... /Location Method x:From-ASN1-To-Key-Info-Foo / /Method Type Encoding="bar#base64" x:Its-A-X509-Certificate-Foo / /Type /RetrievalMethod As I say, I just don't fully understand what would be a default implementation of the current element specification.  </s>
+<s> Merlin [1] element name='RetrievalMethod' complexType content='mixed' any namespace='##other' minOccurs='0' maxOccurs='unbounded'/ /complexType attribute name='Location' type='uriReference' use='required' attribute name='Type' type='uriReference' use='optional'/ attribute name='Encoding' type='uriReference' use='optional' /element [2] element name='RetrievalMethod' complexType content='elementOnly' sequence minOccurs='1' maxOccurs='1' element name='Location' type='uriReference' minOccurs='1'  </s>
+<s> maxOccurs='1'/  </s>
+<s> element ref='ds:Encoding' minOccurs='0' maxOccurs='unbounded'/ /sequence attribute name='Type' type='uriReference' use='optional'/ /complexType /element element name='Encoding' complexType content='mixed' any namespace='##other' minOccurs='0' maxOccurs='unbounded'/ attribute name='Algorithm' type='uriReference' use='required'/ /complexType /element  </s>
+<s> From: merlin merlin@baltimore.ie  </s>
+<s> Message-Id: 200007182220.XAA10671@bobcat.baltimore.ie  </s>
+<s> In-reply-to: 3.0.5.32.20000718162839.00ad5e70@localhost  </s>
+<s> Date: Tue, 18 Jul 2000 23:20:57 +0100  </s>
+<s> r/reagle@w3.org/2000.07.18/16:28:39  </s>
+<s> The Schema has mandatory content for the Type element.  </s>
+<s> This seems wrong because it can't then be implemented interoperably without further specification.  </s>
+<s> Are you suggestion it be change to optional?  </s>
+<s> element name='Type' complexType content='mixed' any namespace='##other' minOccurs='0' maxOccurs='unbounded'/  </s>
+<s> Something of that nature.  </s>
+<s> RetrievalMethod simply seems underspecified given that it "SHOULD" be implemented.  </s>
+<s> By making some of those parts optional, it could be read as minimally and sufficiently specified.  </s>
+<s> For example, it seems reasonable to present a RetrievalMethod with the Location: ldap://ldap.baltimore.ie/CN=merlin?userCertificate;binary  </s>
+<s> What, in this case, do I specify as the Method and Type, both of which are currently mandatory?  </s>
+<s> By making Method and Type optional I can, at the very least, assume that the recipient will determine the type of key information from the URI.  </s>
+<s> Merlin  </s>
+<s> Joseph Reagle Jr. W3C Policy Analyst mailto:reagle@w3.org  </s>
+<s> IETF/W3C XML-Signature Co-Chair http://www.w3.org/People/Reagle/  </s>
+<s> ------- End of Forwarded Message  </s>
+<s> Hi, I actually think that such a structure is slightly limiting; it cannot represent an HTTP POST location; e.g., [1].  </s>
+<s> I personally prefer either no defined internal structure (completely flexible) or [0].  </s>
+<s> Merlin [0] [1] r/dee3@torque.pothole.com/2000.08.17/09:40:17  </s>
+<s> r/dee3@torque.pothole.com/2000.07.19/13:40:29  </s>
+<s> maxOccurs='1'/  </s>
+<s> From: merlin merlin@baltimore.ie  </s>
+<s> Message-Id: 200007182220.XAA10671@bobcat.baltimore.ie  </s>
+<s> In-reply-to: 3.0.5.32.20000718162839.00ad5e70@localhost  </s>
+<s> Date: Tue, 18 Jul 2000 23:20:57 +0100  </s>
+<s> r/reagle@w3.org/2000.07.18/16:28:39  </s>
+<s> The Schema has mandatory content for the Type element.  </s>
+<s> This seems wrong because it can't then be implemented interoperably without further specification.  </s>
+<s> Are you suggestion it be change to optional?  </s>
+<s> element name='Type' complexType content='mixed' any namespace='##other' minOccurs='0' maxOccurs='unbounded'/  </s>
+<s> Joseph Reagle Jr. W3C Policy Analyst mailto:reagle@w3.org  </s>
+<s> IETF/W3C XML-Signature Co-Chair http://www.w3.org/People/Reagle/  </s>
+<s> The consensus of those on the conference call yesterday was to try to re-use as much exiting mechanism as possible.  </s>
+<s> So what we came up with was (Transforms)?  </s>
+<s> that is, the syntax is the same as Reference.  </s>
+<s> *1 values for Type would be as in 4.3.3 except that in the "http://www.w3.org/2000/07/xmldsig#*2", *2 would be an element from KeyInfo other than RetrievalMethod.  </s>
+<s> See other comment below.  </s>
+<s> Thanks, Donald From: merlin merlin@baltimore.ie  </s>
+<s> Message-Id: 200008171417.PAA12758@cougar.baltimore.ie  </s>
+<s> In-reply-to: 200008171340.JAA15971@torque.pothole.com  </s>
+<s> Date: Thu, 17 Aug 2000 15:17:42 +0100  </s>
+<s> If the inability to do an HTTP POST is a problem here, which I'm not sure it is in a practical sense, then wouldn't we need to generalize Reference also?  </s>
+<s> And no internal structure menas giving up on interoperability.  </s>
+<s> r/dee3@torque.pothole.com/2000.07.19/13:40:29  </s>
+<s> maxOccurs='1'/  </s>
+<s> From: merlin merlin@baltimore.ie  </s>
+<s> Message-Id: 200007182220.XAA10671@bobcat.baltimore.ie  </s>
+<s> In-reply-to: 3.0.5.32.20000718162839.00ad5e70@localhost  </s>
+<s> Date: Tue, 18 Jul 2000 23:20:57 +0100  </s>
+<s> r/reagle@w3.org/2000.07.18/16:28:39  </s>
+<s> The Schema has mandatory content for the Type element.  </s>
+<s> This seems wrong because it can't then be implemented interoperably without further specification.  </s>
+<s> Are you suggestion it be change to optional?  </s>
+<s> element name='Type' complexType content='mixed' any namespace='##other' minOccurs='0' maxOccurs='unbounded'/  </s>
+<s> Joseph Reagle Jr. W3C Policy Analyst mailto:reagle@w3.org  </s>
+<s> IETF/W3C XML-Signature Co-Chair http://www.w3.org/People/Reagle/  </s>
+<s> r/dee3@torque.pothole.com/2000.08.18/15:43:37  </s>
+<s> I think that the proposed solution is probably optimal; transform is known and supported and it covers most needs, subject to a definition of some standard types.  </s>
+<s> The only motivation for an extended URI element (e.g., POST) is that, for example, LDAP URIs can be quite expansive.  </s>
+<s> However, that can be solved in a particular implementation by a new KeyInfo element in just as interoperable a manner as an extended URI.  </s>
+<s> So, I disagree with you not at all.  </s>
+<s> Merlin  </s>
+<s> OK, I believe we have a consensus on the syntax I posted.  </s>
+<s> Thanks, Donald From: merlin merlin@baltimore.ie  </s>
+<s> Message-Id: 200008182051.VAA23000@cougar.baltimore.ie  </s>
+<s> In-reply-to: 200008181943.PAA18232@torque.pothole.com  </s>
+<s> Date: Fri, 18 Aug 2000 21:51:52 +0100  </s>

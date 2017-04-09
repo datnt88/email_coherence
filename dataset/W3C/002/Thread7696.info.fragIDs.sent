@@ -1,87 +1,87 @@
-RFC-2518 doesn't come right out and say so, but I think it implies 
-that a DELETE on a collection is on a "best effort" basis, where you 
-can deduce what got DELETEd versus what didn't (and why) from a possible multistatus response. 
-Suppose I request a DELETE of /zoo/, where /zoo/ contains /zoo/mammals 
-and /zoo/birds. 
-Suppose there is a problem with the DELETE of 
-/zoo/mammals (it's locked by my corporate rival, Snidely Whiplash). 
-Should the server, having discovered this, go ahead and attempt a DELETE of /zoo/birds? 
-Section 8.6.2 says that if you can't DELETE a resource, you shouldn't 
-DELETE its ancestors (for the sake of namespace consistency). 
-It is 
-silent on what you should do about the resource's siblings, though 
-(the example in 8.6.2 isn't bushy enough to show it). 
-There is a hint 
-that some of the DELETEs may be allowed to succeed while others fail 
-in that 204 response codes are to be omitted from the multistatus because they are the default success code. 
-Is DELETE intended to be "best effort"? 
-bill@carpenter.ORG 
-(WJCarpenter) PGP bill@bubblegum.net 
-0x91865119 38 95 1B 69 C9 C6 3D 25 73 46 32 04 69 D6 ED F3 
-Yes. 
-This topic is currently being hotly debated in the thread: "WebDAV Bindings - Issue Yaron.AtomicDelete" 
-Although 2518 currently implies "yes", the authors of the BIND protocol extension have proposed that the answer be changed to "no". 
-Stay tuned (:-). 
-Minimally, we shall insist that a server be *allowed* to leave all member collections unmodified if it cannot delete the collection specified in the DELETE request. 
-Cheers, Geoff From: Yaron Goland yarong@Exchange.Microsoft.com 
-Yes. 
-That was my interpretation. 
-bill@carpenter.ORG 
-(WJCarpenter)@w3.org on 01/27/2000 02:45:51 PM Sent by: w3c-dist-auth-request@w3.org 
-Subject: is DELETE "best effort"? 
-RFC-2518 doesn't come right out and say so, but I think it implies 
-that a DELETE on a collection is on a "best effort" basis, where you 
-can deduce what got DELETEd versus what didn't (and why) from a possible multistatus response. 
-Suppose I request a DELETE of /zoo/, where /zoo/ contains /zoo/mammals 
-and /zoo/birds. 
-Suppose there is a problem with the DELETE of 
-/zoo/mammals (it's locked by my corporate rival, Snidely Whiplash). 
-Should the server, having discovered this, go ahead and attempt a DELETE of /zoo/birds? 
-Section 8.6.2 says that if you can't DELETE a resource, you shouldn't 
-DELETE its ancestors (for the sake of namespace consistency). 
-It is 
-silent on what you should do about the resource's siblings, though 
-(the example in 8.6.2 isn't bushy enough to show it). 
-There is a hint 
-that some of the DELETEs may be allowed to succeed while others fail 
-in that 204 response codes are to be omitted from the multistatus because they are the default success code. 
-Is DELETE intended to be "best effort"? 
-bill@carpenter.ORG 
-(WJCarpenter) PGP bill@bubblegum.net 
-0x91865119 38 95 1B 69 C9 C6 3D 25 73 46 32 04 69 D6 ED F3 
-Bill the answer for RFC 2518 is an unequivocal YES. 
-What is being argued is if we should change that YES to a no. 
-This will require issuing a new version of RFC 2518. 
-Until such a new version is issued the answer is YES. 
-BTW, Geoff, RFC 2518 already supports having the server refuse to change any of the members if it can't delete the root. 
-Yaron 
-From: Yaron Goland yarong@Exchange.Microsoft.com Bill the answer for RFC 2518 is an unequivocal YES. 
-What concerns me is that the sequence: "Is DELETE best effort? 
-YES." will result in people believing that DELETE *must* be best effort, i.e. a server is required to delete everything it can, even if it actually knows (or could easily find out) that it cannot delete everything. 
-What is being argued is if we should change that YES to a no. 
-This will require issuing a new version of RFC 2518. 
-Until such a new version is issued the answer is YES. 
-BTW, Geoff, RFC 2518 already supports having the server refuse to change any of the members if it can't delete the root. 
-I agree that this behavior is not forbidden by rfc2518, but I also believe some implementors will misinterpret in one direction (i.e. DELETE must be all or nothing) or in the other direction (i.e. DELETE must be best effort), so whatever answer we arrive at, we should make sure it is clearly stated in the next rev of rfc2518. 
-Cheers, Geoff 
-I agree that there is an issue here that requires further clarification. 
-The key here is user expectation. 
-When a user issues a DELETE they need to know if the result is either going to be a best effort delete or an atomic delete. 
-They need to know this before they issue the command, without this knowledge then they can never be sure what the result of the command is. 
-For example, imagine a program that can walk a tree of source code, change all the ACLs so as not to give the current user write permission to those files and then start to compile the source code into various bits and pieces of code, inside the local collections, before linking them together. 
-When the final result is done the program will then issue a depth infinity DELETE in order to clean up. 
-Because the ACLs have been changed the program is counting on the fact that the only thing that will be deleted will be the code files. 
-However in a world where best effort isn't guaranteed the program's assumption can fail. 
-The server may refuse the DELETE because it can't successfully delete all the files atomically (due to the ACLs) This means, in practice, programs must ALWAYS assume the absence of best effort. 
-This means that WebDAV will be inefficient since clients will be required to issue individual deletes for all possible files. 
-The previous situation is the worst of both worlds. 
-Clients that need best-effort can't depend on getting it so they must do file by file deletes. 
-Additionally clients that really want atomic behavior can't depend on getting it so they will also have to do file by file deletes, although they could try a depth delete first and then follow up with file by file if there was an error. 
-The race conditions and performance problems introduced by file by file deletes (even with pipelining) are unacceptable. 
-Therefore I believe that the best effort issue identifies an interoperability problem with WebDAV. 
-We need to either guarantee best effort or guarantee atomicity. 
-But the current situation in which it could be either is just a mess. 
-For reasons that seem to have already gained consensus we can not mandate atomic delete. 
-Therefore we are left with mandating best effort. 
-Those clients who wish to guarantee atomic delete behavior will need to use the MAN mechanism with the DELETE method. 
-Therefore I propose that when we rev WebDAV we put in language mandating best effort deletes. 
+<s> RFC-2518 doesn't come right out and say so, but I think it implies  </s>
+<s> that a DELETE on a collection is on a "best effort" basis, where you  </s>
+<s> can deduce what got DELETEd versus what didn't (and why) from a possible multistatus response.  </s>
+<s> Suppose I request a DELETE of /zoo/, where /zoo/ contains /zoo/mammals  </s>
+<s> and /zoo/birds.  </s>
+<s> Suppose there is a problem with the DELETE of  </s>
+<s> /zoo/mammals (it's locked by my corporate rival, Snidely Whiplash).  </s>
+<s> Should the server, having discovered this, go ahead and attempt a DELETE of /zoo/birds?  </s>
+<s> Section 8.6.2 says that if you can't DELETE a resource, you shouldn't  </s>
+<s> DELETE its ancestors (for the sake of namespace consistency).  </s>
+<s> It is  </s>
+<s> silent on what you should do about the resource's siblings, though  </s>
+<s> (the example in 8.6.2 isn't bushy enough to show it).  </s>
+<s> There is a hint  </s>
+<s> that some of the DELETEs may be allowed to succeed while others fail  </s>
+<s> in that 204 response codes are to be omitted from the multistatus because they are the default success code.  </s>
+<s> Is DELETE intended to be "best effort"?  </s>
+<s> bill@carpenter.ORG  </s>
+<s> (WJCarpenter) PGP bill@bubblegum.net  </s>
+<s> 0x91865119 38 95 1B 69 C9 C6 3D 25 73 46 32 04 69 D6 ED F3  </s>
+<s> Yes.  </s>
+<s> This topic is currently being hotly debated in the thread: "WebDAV Bindings - Issue Yaron.AtomicDelete"  </s>
+<s> Although 2518 currently implies "yes", the authors of the BIND protocol extension have proposed that the answer be changed to "no".  </s>
+<s> Stay tuned (:-).  </s>
+<s> Minimally, we shall insist that a server be *allowed* to leave all member collections unmodified if it cannot delete the collection specified in the DELETE request.  </s>
+<s> Cheers, Geoff From: Yaron Goland yarong@Exchange.Microsoft.com  </s>
+<s> Yes.  </s>
+<s> That was my interpretation.  </s>
+<s> bill@carpenter.ORG  </s>
+<s> (WJCarpenter)@w3.org on 01/27/2000 02:45:51 PM Sent by: w3c-dist-auth-request@w3.org  </s>
+<s> Subject: is DELETE "best effort"?  </s>
+<s> RFC-2518 doesn't come right out and say so, but I think it implies  </s>
+<s> that a DELETE on a collection is on a "best effort" basis, where you  </s>
+<s> can deduce what got DELETEd versus what didn't (and why) from a possible multistatus response.  </s>
+<s> Suppose I request a DELETE of /zoo/, where /zoo/ contains /zoo/mammals  </s>
+<s> and /zoo/birds.  </s>
+<s> Suppose there is a problem with the DELETE of  </s>
+<s> /zoo/mammals (it's locked by my corporate rival, Snidely Whiplash).  </s>
+<s> Should the server, having discovered this, go ahead and attempt a DELETE of /zoo/birds?  </s>
+<s> Section 8.6.2 says that if you can't DELETE a resource, you shouldn't  </s>
+<s> DELETE its ancestors (for the sake of namespace consistency).  </s>
+<s> It is  </s>
+<s> silent on what you should do about the resource's siblings, though  </s>
+<s> (the example in 8.6.2 isn't bushy enough to show it).  </s>
+<s> There is a hint  </s>
+<s> that some of the DELETEs may be allowed to succeed while others fail  </s>
+<s> in that 204 response codes are to be omitted from the multistatus because they are the default success code.  </s>
+<s> Is DELETE intended to be "best effort"?  </s>
+<s> bill@carpenter.ORG  </s>
+<s> (WJCarpenter) PGP bill@bubblegum.net  </s>
+<s> 0x91865119 38 95 1B 69 C9 C6 3D 25 73 46 32 04 69 D6 ED F3  </s>
+<s> Bill the answer for RFC 2518 is an unequivocal YES.  </s>
+<s> What is being argued is if we should change that YES to a no.  </s>
+<s> This will require issuing a new version of RFC 2518.  </s>
+<s> Until such a new version is issued the answer is YES.  </s>
+<s> BTW, Geoff, RFC 2518 already supports having the server refuse to change any of the members if it can't delete the root.  </s>
+<s> Yaron  </s>
+<s> From: Yaron Goland yarong@Exchange.Microsoft.com Bill the answer for RFC 2518 is an unequivocal YES.  </s>
+<s> What concerns me is that the sequence: "Is DELETE best effort?  </s>
+<s> YES." will result in people believing that DELETE *must* be best effort, i.e. a server is required to delete everything it can, even if it actually knows (or could easily find out) that it cannot delete everything.  </s>
+<s> What is being argued is if we should change that YES to a no.  </s>
+<s> This will require issuing a new version of RFC 2518.  </s>
+<s> Until such a new version is issued the answer is YES.  </s>
+<s> BTW, Geoff, RFC 2518 already supports having the server refuse to change any of the members if it can't delete the root.  </s>
+<s> I agree that this behavior is not forbidden by rfc2518, but I also believe some implementors will misinterpret in one direction (i.e. DELETE must be all or nothing) or in the other direction (i.e. DELETE must be best effort), so whatever answer we arrive at, we should make sure it is clearly stated in the next rev of rfc2518.  </s>
+<s> Cheers, Geoff  </s>
+<s> I agree that there is an issue here that requires further clarification.  </s>
+<s> The key here is user expectation.  </s>
+<s> When a user issues a DELETE they need to know if the result is either going to be a best effort delete or an atomic delete.  </s>
+<s> They need to know this before they issue the command, without this knowledge then they can never be sure what the result of the command is.  </s>
+<s> For example, imagine a program that can walk a tree of source code, change all the ACLs so as not to give the current user write permission to those files and then start to compile the source code into various bits and pieces of code, inside the local collections, before linking them together.  </s>
+<s> When the final result is done the program will then issue a depth infinity DELETE in order to clean up.  </s>
+<s> Because the ACLs have been changed the program is counting on the fact that the only thing that will be deleted will be the code files.  </s>
+<s> However in a world where best effort isn't guaranteed the program's assumption can fail.  </s>
+<s> The server may refuse the DELETE because it can't successfully delete all the files atomically (due to the ACLs) This means, in practice, programs must ALWAYS assume the absence of best effort.  </s>
+<s> This means that WebDAV will be inefficient since clients will be required to issue individual deletes for all possible files.  </s>
+<s> The previous situation is the worst of both worlds.  </s>
+<s> Clients that need best-effort can't depend on getting it so they must do file by file deletes.  </s>
+<s> Additionally clients that really want atomic behavior can't depend on getting it so they will also have to do file by file deletes, although they could try a depth delete first and then follow up with file by file if there was an error.  </s>
+<s> The race conditions and performance problems introduced by file by file deletes (even with pipelining) are unacceptable.  </s>
+<s> Therefore I believe that the best effort issue identifies an interoperability problem with WebDAV.  </s>
+<s> We need to either guarantee best effort or guarantee atomicity.  </s>
+<s> But the current situation in which it could be either is just a mess.  </s>
+<s> For reasons that seem to have already gained consensus we can not mandate atomic delete.  </s>
+<s> Therefore we are left with mandating best effort.  </s>
+<s> Those clients who wish to guarantee atomic delete behavior will need to use the MAN mechanism with the DELETE method.  </s>
+<s> Therefore I propose that when we rev WebDAV we put in language mandating best effort deletes.  </s>

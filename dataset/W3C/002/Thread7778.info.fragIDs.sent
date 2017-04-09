@@ -1,317 +1,317 @@
-3) 8.10.5 says a DELETE destroys a lock at the destination. 
-I think this is not optimal. 
-A scenario is... /a/b exists and is a resource... not a collection. 
-We want to replace it with a new resource that is a collection. 
-But the spec says that MKCOL can not replace am existing resource (or collection). 
-It requires that a delete be performed first. 
-Now if one wants to accomplish this atomically (with LOCKS), right now one has several choices. 
-a) LOCK /a/. 
-It would probably be a depth 0 lock since there would be no point in locking at depth except possibly to prevent someone from tossing in another lock immediately after in the /a/b/... tree. 
-But if they did chose to use a depth lock, they'd also risk being unable to get the lock if someone for example has a conflicting lock somehwere in a /a/c/ tree. 
-It's a trade off. 
-Depth or not, the other disadvantage of it is that they are also locking out any operations on /a/. 
-The point is that if they decide to lock /a/, they are locking more than they need to and may interfere with other principles... or be blocked themselves. 
-b) LOCK /a/b. 
-But unfortunately with the current spec, the initial DELETE will destroy the lock. 
-So this isn't really a choice unless we want to reissue the lock... to create a null lock which is better, but still risks problems if another entity beats us to the punch. 
-It's a race condition. 
-Now if we altered 8.10.5 to allow support for not deleting the lock, we could act surgically to insure that we get exactly the safe atomic behavior we want. 
-(Ignoring a tangential caveat.) 
-We lock /a/b possibly at depth. 
-Do the delete specifying that we want the lock retained. 
-Then do the MKCOL /a/b/ and any other operations we require. 
-When done, release the lock. 
-Once again ignoring an unspecified caveat, we know that as soon as we get the lock that we're going to be able to acomplish what we set out to do without another principle interfering. 
-If we don't want this, then I think we need to evaluate why we support lock-null resources. 
-I'd think the arguments for each of these are the same. 
-There are a large number of situations in authoring environments where transaction semantics are required. 
-WebDAV doesn't (yet) support transactions, and I don't think we should attempt to come up with a lot of special cases (like lock-null resources) supported by the protocol to overcome this important missing function. 
-Rather let's propose an extension that does support transactions. 
-Might be pretty hard with a stateless server though. 
-So you're not a fan of lock-null resources either at this stage. 
-That seems consistent. 
-JimA and I have been doing all the talking for the last day. 
-Anyone else want to be heard? 
-:-) 
-There are a large number of situations in authoring environments where transaction semantics are required. 
-WebDAV doesn't (yet) support transactions, and I don't think we should attempt to come up with a lot of special cases (like lock-null resources) supported by the protocol to overcome this important missing function. 
-Rather let's propose an extension that does support transactions. 
-Might be pretty hard with a stateless server though. 
-So you're not a fan of lock-null resources either at this stage. 
-That seems consistent. 
-JimA and I have been doing all the talking for the last day. 
-Anyone else want to be heard? 
-:-) I don't really care that much one way or the other about lock-null resources. 
-I think they add a lot of complexity to the protocol for little functional gain and wouldn't be opposed to removing them. 
-But if they stay, that's OK too. 
-If lock-null stays, then I think it would be reasonable for delete on a locked resource to change the state of the resource to a lock-null resource. 
-To complete the delete, the client would have to do the unlock. 
-This is at least consistent semantics and allows the protocol to support symmetric resource life-times. 
-gmc/ After slightly wavering, I'm firmly back in the: "just say no to lock-null resources" camp. 
-We just don't need the complexity of a "non-resource resource" for the minimal gain it provides. 
-Cheers, Geoff From: jamsden@us.ibm.com 
-There are a large number of situations in authoring environments where transaction semantics are required. 
-WebDAV doesn't (yet) support transactions, and I don't think we should attempt to come up with a lot of special cases (like lock-null resources) supported by the protocol to overcome this important missing function. 
-Rather let's propose an extension that does support transactions. 
-Might be pretty hard with a stateless server though. 
-So you're not a fan of lock-null resources either at this stage. 
-That seems consistent. 
-JimA and I have been doing all the talking for the last day. 
-Anyone else want to be heard? 
-:-) I don't really care that much one way or the other about lock-null resources. 
-I think they add a lot of complexity to the protocol for little functional gain and wouldn't be opposed to removing them. 
-But if they stay, that's OK too. 
-If lock-null stays, then I think it would be reasonable for delete on a locked resource to change the state of the resource to a lock-null resource. 
-To complete the delete, the client would have to do the unlock. 
-This is at least consistent semantics and allows the protocol to support symmetric resource life-times. 
-gmc/ I agree with Yaron that we do not want to bite off general transactioning support as part of WebDAV. 
-/jlc I agree. 
-I also agree with his implying that NULL LOCKS aren't really a violation of this design philosophy. 
-yg/ BTW, in so far as what happens when you DELETE a locked resource I completely oppose the suggestion that DELETING a resource results in a lock-null resource. 
-That is absolutely contrary to the definition of DELETE. 
-DELETE deletes the resource not the name. 
-Since the lock is associated with the resources deleting a locked resource deletes both the resource and the lock. 
-gmc/ If lock were *really* just associated with the resource, I'd be a happy camper. 
-For one thing, it would mean that when multiple URL's are mapped to a single resource, you could issue the LOCK against any of those URL's and the result would be identical. 
-Similarly, you could later on issue on UNLOCK against any of those URL's and again, the result would be identical. 
-jlc/ I think if we say that locks are bound to URI's, I'm comfortable with a null lock resource being left after a delete. 
-At least optionally. 
-This can be very handy and leverages null lock resources well. 
-jlc/ OTOH, if we go with a model that locks are bound to resources and that DELETE deletes bindings, then something has to give. 
-(If not, DELETE may actually create a lock so that the null resource has a lock and so the original resource also has a lock at its other bindings. 
-Hmmm.) I think what has to give is that null locks go away. 
-At least for DELETE in this model. 
-jlc/ I think Yaron just posted that DELETE deletes resources, not bindings. 
-I prefer the "single UNBIND" model of DELETE. 
-A lot of discussion has already gone into this. 
-gmc/ I personally believe that the best answer is to fix the LOCK semantics so it *really* is just on the resource (and not on the name). 
-Then things are simpler and consistent, even in the case of multiple URL mappings to a resource. 
-Rather than "protecting" a URL to resource mapping, I'd propose that a locked resource be allowed to MOVE (this is just a change to the state of the parent collection, not to the state of the resource being moved), but that an attempt to access the MOVE'd resource with that lock just returns a 302 indicating where it has MOVE'd to. 
-jlc/ I agree in principle about that changing to a pure model should be easier. 
-(Pure URI or pure resource.) 
-I'm uneasy though about the mechanism suggested to find where resources have moved to. 
-Seems messy. 
-Less so without depth locks though. 
-More analysis later. 
-gmc/ So there are really multiple threads here: - Should locking be on a resource or also/instead on a URL-to-resource mapping? 
-(we know what it is now, but what *should* it be) * I vote "on a resource". 
-jlc/ I'll play along for now. 
-:-) - Does a DELETE delete all bindings to a resource, or just the one specified in the request-URL. 
-* I vote "just the one named by the request-URL". 
-jlc/ Sounds fine. 
-- Should a DELETE delete a LOCK? 
-* I vote, "no". 
-A DELETE modifies the state of the collection containing the binding, not that of the resource. 
-In particular, all other mappings to that resource will continue to exist and display the LOCK'ed semantics. 
-If you want to prevent a DELETE, you put the LOCK on the collection whose state is being modified. 
-jlc/ Sounds fine given the model. 
-I do think locking a collection is a rather fat approach but I still agree with your point. 
-es/ So a server could just remember lock tokens together with old and new URLs and keep this data until it is accessed by the locker or the lock expires. 
-ejw I'm not convinced this will work, since it only handles the case where the resource is moved just once. 
-What happens if a resource is locked, then moved, and moved again? 
-How many steps is the server required to remember? 
-Subsequent MOVE's are not relevant. 
-The server is responsible for retrieving the same resource whenever the client gives it a URL and a lock token (think of it as a private binding that the server keeps around). 
-Geoff, I think Jim's point was that the same lock could have been rooted at many places over the course of time as it has moved. 
-In fact due to multiple bindings and such... we've added even one more multiplier to the size of the list that needs to be maintained. 
-His question though was how long does the server need to maintain it. 
-I guess the server/lock would need to remember all of it's URI's until the resource is eventually UNLOCK'd. 
-The server could do this by just refusing to MOVE or DELETE the resource (as is required by the current 2518 draft), or by just remembering what resource is associated with that URL, lock-token pair. 
-All we are doing here is giving the server some additional flexibility in implementation that was constrained by the current language in 2518. 
-I see. 
-So the proposal is that a server either to protect the URI... or to maintain a way for a client to follow where it moved to... and you're proposing the mechanism to do the latter. 
-Interesting. 
-It could be a market differentiator. 
-It would mean a bit more complexity for the client to support either type of server though. 
-Not much though. 
-I think if the client supported what you're proposing, they'd also work with a system that does URI protection. 
-They'd just wouldn't execute the code that deals with what happens after a remapping. 
-Also note: in the presence of depth locks... zillions of resources can be locked. 
-I don't think this necessarily increases the size of the list of lock URI's maintained since I believe only the URI's of the root of the lock need to be maintained... but it does mean that the resolution algorithm has to be more sophisticated since it would also need to remap the URI of child resources also. 
-This means that a client must submit lock tokens with GETs and PROPFIND's just to insure it gets redirected when necessary. 
-No biggie I suppose. 
-I'm not sure this would work well with clients that seperate the lock action from subsequent actions on the locked resources. 
-That is, a human is running the client code. 
-The human requests the locks. 
-Then a human requests various actions on resources that "just happen to be locked". 
-I guess that whenever the human requests an action on a resource, the client application would just need to make a point of finding all locks that apply to a resource... even if inherited... and submit them with the request. 
-I guess this sort of client app often would have to do this anyway, but now they must also do it for PROPFIND and GET also. 
-Okay, no biggie. 
-It also means that I believe for the first time in WebDAV, it actually becomes functionally important to specify the URI at which we think a lock is rooted when we submit the lock token. 
-Note: all of this also needs to apply to DELETE (UNBIND) in addition to MOVE. 
-It also in turn applies to a COPY that deletes the destination due to the implicit DELETE phase. 
-It also applies to a BIND that deletes a previous binding. 
-Note: if a lock-token is included in a MOVE or DELETE request, it is used to satisfy any locks on the source and destination *collections*. 
-Locks on the resource being moved or deleted are not even inspected (since the state of the resource being moved or deleted is not being modified). 
-I don't think this is what you were trying to say, but what you just said inspired a thought. 
-If someone does a MOVE... and all the tokens of all the would-be protected URI's are submitted, the server doesn't need to maintain a remapping list because the client already knows which locks have lost those mappings. 
-It's only the URI's for locks for which no tokens were submitted that the server needs to remember the remapping. 
-This might provide for more efficient operation. 
-A lock can have many mappings and a single operation can delete multiple mappings of a lock. 
-Previously we said that each lock had a particular URI that was protected... and only when that URI was moved, did feel compelled to do any kind of lock remapping. 
-Although we could probably guess, t now claim to know what lock mapping(s) the client really cares about. 
-None are more privledged. 
-I think the previous paragraph has to be modified to state that if any of these locks have other mappings than the mappings submitted with the token, then all of those others that are broken by an operation need to go onto the remapping list for that lock. 
-Is this really *required*? 
-I think technically yes... but probably not in practice. 
-The client probably only knows a lock by one mapping... and it will be the one that the client will submit. 
-Protecting a URI is sounding easier. 
-:-) 
-OK, now that the new versioning protocol draft is out the door, time to get back to locking (:-). 
-I'll try out the: "Simplified RFC-2518 Locking, Version-2" proposal against the issues raised here. 
-From: ccjason@us.ibm.com .... 
-The server is responsible for retrieving the same resource whenever the client gives it a URL and a lock token (think of it as a private binding that the server keeps around). 
-jc/ Geoff, I think Jim's point was that the same lock could have been rooted at many places over the course of time as it has moved. 
-In fact due to multiple bindings and such... we've added even one more multiplier to the size of the list that needs to be maintained. 
-His question though was how long does the server need to maintain it. 
-I guess the server/lock would need to remember all of it's URI's until the resource is eventually UNLOCK'd. 
-gmc/ The server has to remember the association of a lock token with a particular resource. 
-Since this is the server, it doesn't need to use some URL ... it just keeps a handle on the resource that is independent of the http URL space. 
-The server could do this by just refusing to MOVE or DELETE the resource (as is required by the current 2518 draft), or by just remembering what resource is associated with that URL, lock-token pair. 
-All we are doing here is giving the server some additional flexibility in implementation that was constrained by the current language in 2518. 
-jc/ I see. 
-So the proposal is that a server either to protect the URI... or to maintain a way for a client to follow where it moved to... and you're proposing the mechanism to do the latter. 
-Interesting. 
-It could be a market differentiator. 
-It would mean a bit more complexity for the client to support either type of server though. 
-Not much though. 
-I think if the client supported what you're proposing, they'd also work with a system that does URI protection. 
-They'd just wouldn't execute the code that deals with what happens after a remapping. 
-Right. 
-jc/ Also note: in the presence of depth locks... zillions of resources can be locked. 
-I don't think this necessarily increases the size of the list of lock URI's maintained since I believe only the URI's of the root of the lock need to be maintained... but it does mean that the resolution algorithm has to be more sophisticated since it would also need to remap the URI of child resources also. 
-And if we do not support depth locks, the issue goes away completely (:-). 
-jc/ This means that a client must submit lock tokens with GETs and PROPFIND's just to insure it gets redirected when necessary. 
-No biggie I suppose. 
-gmc/ Right. 
-The client uses the lock token for all requests on a locked resource, rather than only using them for requests that might update the locked resource. 
-jc/ I'm not sure this would work well with clients that seperate the lock action from subsequent actions on the locked resources. 
-That is, a human is running the client code. 
-The human requests the locks. 
-Then a human requests various actions on resources that "just happen to be locked". 
-I guess that whenever the human requests an action on a resource, the client application would just need to make a point of finding all locks that apply to a resource... even if inherited... and submit them with the request. 
-I guess this sort of client app often would have to do this anyway, but now they must also do it for PROPFIND and GET also. 
-Okay, no biggie. 
-gmc/ Also note that a human would always need a client doing the real work in a locking context, since it is unlikely that a human ever would or could remember the lock token strings that are needed to work with a locked resource. 
-jc/ It also means that I believe for the first time in WebDAV, it actually becomes functionally important to specify the URI at which we think a lock is rooted when we submit the lock token. 
-gmc/ Without depth locking, the lock token is all that is needed. 
-jc/ If someone does a MOVE... and all the tokens of all the would-be protected URI's are submitted, the server doesn't need to maintain a remapping list because the client already knows which locks have lost those mappings. 
-It's only the URI's for locks for which no tokens were submitted that the server needs to remember the remapping. 
-This might provide for more efficient operation. 
-gmc/ If the server just keeps track of what resource is locked by a particular lock token, then remapping just consists of returning a valid URL to that resource in a 302. 
-jc/ A lock can have many mappings and a single operation can delete multiple mappings of a lock. 
-Previously we said that each lock had a particular URI that was protected... and only when that URI was moved, did feel compelled to do any kind of lock remapping. 
-Although we could probably guess, t now claim to know what lock mapping(s) the client really cares about. 
-None are more privledged. 
-I think the previous paragraph has to be modified to state that if any of these locks have other mappings than the mappings submitted with the token, then all of those others that are broken by an operation need to go onto the remapping list for that lock. 
-Is this really *required*? 
-I think technically yes... but probably not in practice. 
-The client probably only knows a lock by one mapping... and it will be the one that the client will submit. 
-Protecting a URI is sounding easier. 
-:-) gmc/ Associating a lock token with a single resource until it is unlocked is probably even easier (:-). 
-Cheers, Geoff 
-.... 
-The server is responsible for retrieving the same resource whenever the client gives it a URL and a lock token (think of it as a private binding that the server keeps around). 
-jc/ Geoff, I think Jim's point was that the same lock could have been rooted at many places over the course of time as it has moved. 
-In fact due to multiple bindings and such... we've added even one more multiplier to the size of the list that needs to be maintained. 
-His question though was how long does the server need to maintain it. 
-I guess the server/lock would need to remember all of it's URI's until the resource is eventually UNLOCK'd. 
-gmc/ The server has to remember the association of a lock token with a particular resource. 
-Since this is the server, it doesn't need to use some URL ... it just keeps a handle on the resource that is independent of the http URL space. 
-Geoff, you're "forgetting" about depth locks again. 
-:-) Multiple resource can have the same lock token. 
-So providing a lock token doesn't uniquely define what resource you're acting on. 
-The server needs a mapping for URI + token - resource. 
-My posting above predates your most recent proposal. 
-I believe it's the case in the recent proposal that the server only needs to remember one URI for a single resource/lock pairing. 
-Even if the resource moves, it's only the URI used when the lock was first created that needs to be remembered by the server. 
-But no... it's not that easy. 
-(1) If we say that, then it's up to the client to remember that original URI even if redirected... just in case it gets moved again. 
-If the server is unable to redirect after a second move, then I assume the client can detect (via etag-uri combination) that there's been a second movement, and will reinvoke a method based on the original URI and lock token... just to determine where it has moved to again. 
-Anyway, the point is that if the server doesn't remember a second URI, then the client must remember the first URI. 
-(2) If the server remembers all URI's, then the client is relieved of this burden. 
-(1&amp;2) BTW, in either case, the client has to use etags because in the presence of depth locks where multiple resources can have the same locktoken, and if namespace manipulation has occured, a URI+token to resource mapping may not be unique... and I don't think a client can trust a server to somehow detect a collision and somehow do "the right thing". 
-This is an admittedly rare thing... but if the client cares, they have to use uri-tagged etags. 
-whoops! 
-I don't mean etags... 
-I mean guid tags... but we don't have that yet. 
-It would need to be added to the spec. 
-BTW, after the URI+token- resource mapping is done within the server, it also needs to do a resource- URI mapping so that it knows what to return. 
-And of course if all bindings to the resource have been removed, the server will need to generate a binding/URI for that resource so that there is a URI to which to redirect the request. 
-The server could do this by just refusing to MOVE or DELETE the resource (as is required by the current 2518 draft), or by just remembering what resource is associated with that URL, lock-token pair. 
-All we are doing here is giving the server some additional flexibility in implementation that was constrained by the current language in 2518. 
-jc/ I see. 
-So the proposal is that a server either to protect the URI... or to maintain a way for a client to follow where it moved to... and you're proposing the mechanism to do the latter. 
-Interesting. 
-It could be a market differentiator. 
-It would mean a bit more complexity for the client to support either type of server though. 
-Not much though. 
-I think if the client supported what you're proposing, they'd also work with a system that does URI protection. 
-They'd just wouldn't execute the code that deals with what happens after a remapping. 
-gmc/ Right. 
-Given the exchange that I've heard between Yaron and company, I'd like to propose that the client also have some say over this. 
-If the client wants the URI protected, he can request it. 
-I suppose that would have to be a FLAG on the lock request. 
-If the server can't respect the request, it has to fail the lock. 
-I suppose we'd need an error code or something to express this so that a client could deal with that particular failure programaticly. 
-jc/ Also note: in the presence of depth locks... zillions of resources can be locked. 
-I don't think this necessarily increases the size of the list of lock URI's maintained since I believe only the URI's of the root of the lock need to be maintained... but it does mean that the resolution algorithm has to be more sophisticated since it would also need to remap the URI of child resources also. 
-And if we do not support depth locks, the issue goes away completely (:-). 
-I think you've mentioned that before. 
-:-) jc/ This means that a client must submit lock tokens with GETs and PROPFIND's just to insure it gets redirected when necessary. 
-No biggie I suppose. 
-gmc/ Right. 
-The client uses the lock token for all requests on a locked resource, rather than only using them for requests that might update the locked resource. 
-guid tags too I guess... as soon as we invent them. 
-It doesn't seem like a huge burden but it could be. 
-If a client cares enough about all this to do the guid tag stuff... then they also have to collect guids for all resource that it locked. 
-That's a bunch of state for the client to remember rather than just a single URI that is the root of his lock. 
-Especially in some of Yaron's scenarios. 
-jc/ I'm not sure this would work well with clients that seperate the lock action from subsequent actions on the locked resources. 
-That is, a human is running the client code. 
-The human requests the locks. 
-Then a human requests various actions on resources that "just happen to be locked". 
-I guess that whenever the human requests an action on a resource, the client application would just need to make a point of finding all locks that apply to a resource... even if inherited... and submit them with the request. 
-I guess this sort of client app often would have to do this anyway, but now they must also do it for PROPFIND and GET also. 
-Okay, no biggie. 
-gmc/ Also note that a human would always need a client doing the real work in a locking context, since it is unlikely that a human ever would or could remember the lock token strings that are needed to work with a locked resource. 
-jc/ It also means that I believe for the first time in WebDAV, it actually becomes functionally important to specify the URI at which we think a lock is rooted when we submit the lock token. 
-gmc/ Without depth locking, the lock token is all that is needed. 
-Yup. 
-jc/ If someone does a MOVE... and all the tokens of all the would-be protected URI's are submitted, the server doesn't need to maintain a remapping list because the client already knows which locks have lost those mappings. 
-It's only the URI's for locks for which no tokens were submitted that the server needs to remember the remapping. 
-This might provide for more efficient operation. 
-gmc/ If the server just keeps track of what resource is locked by a particular lock token, then remapping just consists of returning a valid URL to that resource in a 302. 
-Also correct. 
-jc/ A lock can have many mappings and a single operation can delete multiple mappings of a lock. 
-Previously we said that each lock had a particular URI that was protected... and only when that URI was moved, did feel compelled to do any kind of lock remapping. 
-Although we could probably guess, t now claim to know what lock mapping(s) the client really cares about. 
-None are more privledged. 
-I think the previous paragraph has to be modified to state that if any of these locks have other mappings than the mappings submitted with the token, then all of those others that are broken by an operation need to go onto the remapping list for that lock. 
-Is this really *required*? 
-I think technically yes... but probably not in practice. 
-The client probably only knows a lock by one mapping... and it will be the one that the client will submit. 
-Protecting a URI is sounding easier. 
-:-) gmc/ Associating a lock token with a single resource until it is unlocked is probably even easier (:-). 
-I think you missed my point. 
-It single resource can have multiple URI's so we need to do what I mentioned above, which is a pain, or we need to say that simply finding a resource (perhaps at a different URI) and doing lock discovery to get a token won't work because the person doing the lock discovery doesn't know the URI that the server is protecting (via remapping in this case). 
-No biggie. 
-We don't get this with protected URI's either. 
-I think we just need to remind clients of this. 
--- BTW, this could be done if lock discovery also provides a URI that supports the remapping. 
-But then a client that tries this lock discovery approach would be at the mercy the lock owner who could MOVE the resource and unlock it before the second entity finds out. 
-Anyway, this seems like another use of lock discovery that should be deprecated. 
-BTW, do we require that one be the lock owner to use the token for this purpose? 
-So if one application wants to pass the URI of a resource to another application... it also needs to pass a lock (and perhaps a guid). 
-But if the second application isn't logged on as the first person, then? 
-One other thing, the proposal would also have to clarify the target selector header. 
-Well, maybe not HAVE TO. 
-The problem I'm refering to is that for binding related requests like DELETE, BIND, MOVE, it isn't just the target that is important to be specified, but also the parent. 
-It's the binding between the two that we want to specify. 
-I had a target selector based solution to this in mind, but I think the real solution is to have guid tags for both parent and the resource in the request. 
-If the guid check fails on either the parent or target, the client can try to figure out what to do. 
--- Another approach is to lock both the parent and the child... but if the redirected URI for the DELETE isn't the one that uses the parent, then you'd not get the right affect, so you'd still want the guid check anyway. 
-That really seems to be the best approach in a server that lacks lock URI protection. 
-Anyway, I propose that the **client** be able to specify if it needs the server to protect the LOCK URI. 
-If the client specifies this and the server can't support it, it must reject the request with a new unique response code and the client figures out how to deal with that. 
-J. 
+<s> 3) 8.10.5 says a DELETE destroys a lock at the destination.  </s>
+<s> I think this is not optimal.  </s>
+<s> A scenario is... /a/b exists and is a resource... not a collection.  </s>
+<s> We want to replace it with a new resource that is a collection.  </s>
+<s> But the spec says that MKCOL can not replace am existing resource (or collection).  </s>
+<s> It requires that a delete be performed first.  </s>
+<s> Now if one wants to accomplish this atomically (with LOCKS), right now one has several choices.  </s>
+<s> a) LOCK /a/.  </s>
+<s> It would probably be a depth 0 lock since there would be no point in locking at depth except possibly to prevent someone from tossing in another lock immediately after in the /a/b/... tree.  </s>
+<s> But if they did chose to use a depth lock, they'd also risk being unable to get the lock if someone for example has a conflicting lock somehwere in a /a/c/ tree.  </s>
+<s> It's a trade off.  </s>
+<s> Depth or not, the other disadvantage of it is that they are also locking out any operations on /a/.  </s>
+<s> The point is that if they decide to lock /a/, they are locking more than they need to and may interfere with other principles... or be blocked themselves.  </s>
+<s> b) LOCK /a/b.  </s>
+<s> But unfortunately with the current spec, the initial DELETE will destroy the lock.  </s>
+<s> So this isn't really a choice unless we want to reissue the lock... to create a null lock which is better, but still risks problems if another entity beats us to the punch.  </s>
+<s> It's a race condition.  </s>
+<s> Now if we altered 8.10.5 to allow support for not deleting the lock, we could act surgically to insure that we get exactly the safe atomic behavior we want.  </s>
+<s> (Ignoring a tangential caveat.)  </s>
+<s> We lock /a/b possibly at depth.  </s>
+<s> Do the delete specifying that we want the lock retained.  </s>
+<s> Then do the MKCOL /a/b/ and any other operations we require.  </s>
+<s> When done, release the lock.  </s>
+<s> Once again ignoring an unspecified caveat, we know that as soon as we get the lock that we're going to be able to acomplish what we set out to do without another principle interfering.  </s>
+<s> If we don't want this, then I think we need to evaluate why we support lock-null resources.  </s>
+<s> I'd think the arguments for each of these are the same.  </s>
+<s> There are a large number of situations in authoring environments where transaction semantics are required.  </s>
+<s> WebDAV doesn't (yet) support transactions, and I don't think we should attempt to come up with a lot of special cases (like lock-null resources) supported by the protocol to overcome this important missing function.  </s>
+<s> Rather let's propose an extension that does support transactions.  </s>
+<s> Might be pretty hard with a stateless server though.  </s>
+<s> So you're not a fan of lock-null resources either at this stage.  </s>
+<s> That seems consistent.  </s>
+<s> JimA and I have been doing all the talking for the last day.  </s>
+<s> Anyone else want to be heard?  </s>
+<s> :-)  </s>
+<s> There are a large number of situations in authoring environments where transaction semantics are required.  </s>
+<s> WebDAV doesn't (yet) support transactions, and I don't think we should attempt to come up with a lot of special cases (like lock-null resources) supported by the protocol to overcome this important missing function.  </s>
+<s> Rather let's propose an extension that does support transactions.  </s>
+<s> Might be pretty hard with a stateless server though.  </s>
+<s> So you're not a fan of lock-null resources either at this stage.  </s>
+<s> That seems consistent.  </s>
+<s> JimA and I have been doing all the talking for the last day.  </s>
+<s> Anyone else want to be heard?  </s>
+<s> :-) I don't really care that much one way or the other about lock-null resources.  </s>
+<s> I think they add a lot of complexity to the protocol for little functional gain and wouldn't be opposed to removing them.  </s>
+<s> But if they stay, that's OK too.  </s>
+<s> If lock-null stays, then I think it would be reasonable for delete on a locked resource to change the state of the resource to a lock-null resource.  </s>
+<s> To complete the delete, the client would have to do the unlock.  </s>
+<s> This is at least consistent semantics and allows the protocol to support symmetric resource life-times.  </s>
+<s> gmc/ After slightly wavering, I'm firmly back in the: "just say no to lock-null resources" camp.  </s>
+<s> We just don't need the complexity of a "non-resource resource" for the minimal gain it provides.  </s>
+<s> Cheers, Geoff From: jamsden@us.ibm.com  </s>
+<s> There are a large number of situations in authoring environments where transaction semantics are required.  </s>
+<s> WebDAV doesn't (yet) support transactions, and I don't think we should attempt to come up with a lot of special cases (like lock-null resources) supported by the protocol to overcome this important missing function.  </s>
+<s> Rather let's propose an extension that does support transactions.  </s>
+<s> Might be pretty hard with a stateless server though.  </s>
+<s> So you're not a fan of lock-null resources either at this stage.  </s>
+<s> That seems consistent.  </s>
+<s> JimA and I have been doing all the talking for the last day.  </s>
+<s> Anyone else want to be heard?  </s>
+<s> :-) I don't really care that much one way or the other about lock-null resources.  </s>
+<s> I think they add a lot of complexity to the protocol for little functional gain and wouldn't be opposed to removing them.  </s>
+<s> But if they stay, that's OK too.  </s>
+<s> If lock-null stays, then I think it would be reasonable for delete on a locked resource to change the state of the resource to a lock-null resource.  </s>
+<s> To complete the delete, the client would have to do the unlock.  </s>
+<s> This is at least consistent semantics and allows the protocol to support symmetric resource life-times.  </s>
+<s> gmc/ I agree with Yaron that we do not want to bite off general transactioning support as part of WebDAV.  </s>
+<s> /jlc I agree.  </s>
+<s> I also agree with his implying that NULL LOCKS aren't really a violation of this design philosophy.  </s>
+<s> yg/ BTW, in so far as what happens when you DELETE a locked resource I completely oppose the suggestion that DELETING a resource results in a lock-null resource.  </s>
+<s> That is absolutely contrary to the definition of DELETE.  </s>
+<s> DELETE deletes the resource not the name.  </s>
+<s> Since the lock is associated with the resources deleting a locked resource deletes both the resource and the lock.  </s>
+<s> gmc/ If lock were *really* just associated with the resource, I'd be a happy camper.  </s>
+<s> For one thing, it would mean that when multiple URL's are mapped to a single resource, you could issue the LOCK against any of those URL's and the result would be identical.  </s>
+<s> Similarly, you could later on issue on UNLOCK against any of those URL's and again, the result would be identical.  </s>
+<s> jlc/ I think if we say that locks are bound to URI's, I'm comfortable with a null lock resource being left after a delete.  </s>
+<s> At least optionally.  </s>
+<s> This can be very handy and leverages null lock resources well.  </s>
+<s> jlc/ OTOH, if we go with a model that locks are bound to resources and that DELETE deletes bindings, then something has to give.  </s>
+<s> (If not, DELETE may actually create a lock so that the null resource has a lock and so the original resource also has a lock at its other bindings.  </s>
+<s> Hmmm.) I think what has to give is that null locks go away.  </s>
+<s> At least for DELETE in this model.  </s>
+<s> jlc/ I think Yaron just posted that DELETE deletes resources, not bindings.  </s>
+<s> I prefer the "single UNBIND" model of DELETE.  </s>
+<s> A lot of discussion has already gone into this.  </s>
+<s> gmc/ I personally believe that the best answer is to fix the LOCK semantics so it *really* is just on the resource (and not on the name).  </s>
+<s> Then things are simpler and consistent, even in the case of multiple URL mappings to a resource.  </s>
+<s> Rather than "protecting" a URL to resource mapping, I'd propose that a locked resource be allowed to MOVE (this is just a change to the state of the parent collection, not to the state of the resource being moved), but that an attempt to access the MOVE'd resource with that lock just returns a 302 indicating where it has MOVE'd to.  </s>
+<s> jlc/ I agree in principle about that changing to a pure model should be easier.  </s>
+<s> (Pure URI or pure resource.)  </s>
+<s> I'm uneasy though about the mechanism suggested to find where resources have moved to.  </s>
+<s> Seems messy.  </s>
+<s> Less so without depth locks though.  </s>
+<s> More analysis later.  </s>
+<s> gmc/ So there are really multiple threads here: - Should locking be on a resource or also/instead on a URL-to-resource mapping?  </s>
+<s> (we know what it is now, but what *should* it be) * I vote "on a resource".  </s>
+<s> jlc/ I'll play along for now.  </s>
+<s> :-) - Does a DELETE delete all bindings to a resource, or just the one specified in the request-URL.  </s>
+<s> * I vote "just the one named by the request-URL".  </s>
+<s> jlc/ Sounds fine.  </s>
+<s> - Should a DELETE delete a LOCK?  </s>
+<s> * I vote, "no".  </s>
+<s> A DELETE modifies the state of the collection containing the binding, not that of the resource.  </s>
+<s> In particular, all other mappings to that resource will continue to exist and display the LOCK'ed semantics.  </s>
+<s> If you want to prevent a DELETE, you put the LOCK on the collection whose state is being modified.  </s>
+<s> jlc/ Sounds fine given the model.  </s>
+<s> I do think locking a collection is a rather fat approach but I still agree with your point.  </s>
+<s> es/ So a server could just remember lock tokens together with old and new URLs and keep this data until it is accessed by the locker or the lock expires.  </s>
+<s> ejw I'm not convinced this will work, since it only handles the case where the resource is moved just once.  </s>
+<s> What happens if a resource is locked, then moved, and moved again?  </s>
+<s> How many steps is the server required to remember?  </s>
+<s> Subsequent MOVE's are not relevant.  </s>
+<s> The server is responsible for retrieving the same resource whenever the client gives it a URL and a lock token (think of it as a private binding that the server keeps around).  </s>
+<s> Geoff, I think Jim's point was that the same lock could have been rooted at many places over the course of time as it has moved.  </s>
+<s> In fact due to multiple bindings and such... we've added even one more multiplier to the size of the list that needs to be maintained.  </s>
+<s> His question though was how long does the server need to maintain it.  </s>
+<s> I guess the server/lock would need to remember all of it's URI's until the resource is eventually UNLOCK'd.  </s>
+<s> The server could do this by just refusing to MOVE or DELETE the resource (as is required by the current 2518 draft), or by just remembering what resource is associated with that URL, lock-token pair.  </s>
+<s> All we are doing here is giving the server some additional flexibility in implementation that was constrained by the current language in 2518.  </s>
+<s> I see.  </s>
+<s> So the proposal is that a server either to protect the URI... or to maintain a way for a client to follow where it moved to... and you're proposing the mechanism to do the latter.  </s>
+<s> Interesting.  </s>
+<s> It could be a market differentiator.  </s>
+<s> It would mean a bit more complexity for the client to support either type of server though.  </s>
+<s> Not much though.  </s>
+<s> I think if the client supported what you're proposing, they'd also work with a system that does URI protection.  </s>
+<s> They'd just wouldn't execute the code that deals with what happens after a remapping.  </s>
+<s> Also note: in the presence of depth locks... zillions of resources can be locked.  </s>
+<s> I don't think this necessarily increases the size of the list of lock URI's maintained since I believe only the URI's of the root of the lock need to be maintained... but it does mean that the resolution algorithm has to be more sophisticated since it would also need to remap the URI of child resources also.  </s>
+<s> This means that a client must submit lock tokens with GETs and PROPFIND's just to insure it gets redirected when necessary.  </s>
+<s> No biggie I suppose.  </s>
+<s> I'm not sure this would work well with clients that seperate the lock action from subsequent actions on the locked resources.  </s>
+<s> That is, a human is running the client code.  </s>
+<s> The human requests the locks.  </s>
+<s> Then a human requests various actions on resources that "just happen to be locked".  </s>
+<s> I guess that whenever the human requests an action on a resource, the client application would just need to make a point of finding all locks that apply to a resource... even if inherited... and submit them with the request.  </s>
+<s> I guess this sort of client app often would have to do this anyway, but now they must also do it for PROPFIND and GET also.  </s>
+<s> Okay, no biggie.  </s>
+<s> It also means that I believe for the first time in WebDAV, it actually becomes functionally important to specify the URI at which we think a lock is rooted when we submit the lock token.  </s>
+<s> Note: all of this also needs to apply to DELETE (UNBIND) in addition to MOVE.  </s>
+<s> It also in turn applies to a COPY that deletes the destination due to the implicit DELETE phase.  </s>
+<s> It also applies to a BIND that deletes a previous binding.  </s>
+<s> Note: if a lock-token is included in a MOVE or DELETE request, it is used to satisfy any locks on the source and destination *collections*.  </s>
+<s> Locks on the resource being moved or deleted are not even inspected (since the state of the resource being moved or deleted is not being modified).  </s>
+<s> I don't think this is what you were trying to say, but what you just said inspired a thought.  </s>
+<s> If someone does a MOVE... and all the tokens of all the would-be protected URI's are submitted, the server doesn't need to maintain a remapping list because the client already knows which locks have lost those mappings.  </s>
+<s> It's only the URI's for locks for which no tokens were submitted that the server needs to remember the remapping.  </s>
+<s> This might provide for more efficient operation.  </s>
+<s> A lock can have many mappings and a single operation can delete multiple mappings of a lock.  </s>
+<s> Previously we said that each lock had a particular URI that was protected... and only when that URI was moved, did feel compelled to do any kind of lock remapping.  </s>
+<s> Although we could probably guess, t now claim to know what lock mapping(s) the client really cares about.  </s>
+<s> None are more privledged.  </s>
+<s> I think the previous paragraph has to be modified to state that if any of these locks have other mappings than the mappings submitted with the token, then all of those others that are broken by an operation need to go onto the remapping list for that lock.  </s>
+<s> Is this really *required*?  </s>
+<s> I think technically yes... but probably not in practice.  </s>
+<s> The client probably only knows a lock by one mapping... and it will be the one that the client will submit.  </s>
+<s> Protecting a URI is sounding easier.  </s>
+<s> :-)  </s>
+<s> OK, now that the new versioning protocol draft is out the door, time to get back to locking (:-).  </s>
+<s> I'll try out the: "Simplified RFC-2518 Locking, Version-2" proposal against the issues raised here.  </s>
+<s> From: ccjason@us.ibm.com ....  </s>
+<s> The server is responsible for retrieving the same resource whenever the client gives it a URL and a lock token (think of it as a private binding that the server keeps around).  </s>
+<s> jc/ Geoff, I think Jim's point was that the same lock could have been rooted at many places over the course of time as it has moved.  </s>
+<s> In fact due to multiple bindings and such... we've added even one more multiplier to the size of the list that needs to be maintained.  </s>
+<s> His question though was how long does the server need to maintain it.  </s>
+<s> I guess the server/lock would need to remember all of it's URI's until the resource is eventually UNLOCK'd.  </s>
+<s> gmc/ The server has to remember the association of a lock token with a particular resource.  </s>
+<s> Since this is the server, it doesn't need to use some URL ... it just keeps a handle on the resource that is independent of the http URL space.  </s>
+<s> The server could do this by just refusing to MOVE or DELETE the resource (as is required by the current 2518 draft), or by just remembering what resource is associated with that URL, lock-token pair.  </s>
+<s> All we are doing here is giving the server some additional flexibility in implementation that was constrained by the current language in 2518.  </s>
+<s> jc/ I see.  </s>
+<s> So the proposal is that a server either to protect the URI... or to maintain a way for a client to follow where it moved to... and you're proposing the mechanism to do the latter.  </s>
+<s> Interesting.  </s>
+<s> It could be a market differentiator.  </s>
+<s> It would mean a bit more complexity for the client to support either type of server though.  </s>
+<s> Not much though.  </s>
+<s> I think if the client supported what you're proposing, they'd also work with a system that does URI protection.  </s>
+<s> They'd just wouldn't execute the code that deals with what happens after a remapping.  </s>
+<s> Right.  </s>
+<s> jc/ Also note: in the presence of depth locks... zillions of resources can be locked.  </s>
+<s> I don't think this necessarily increases the size of the list of lock URI's maintained since I believe only the URI's of the root of the lock need to be maintained... but it does mean that the resolution algorithm has to be more sophisticated since it would also need to remap the URI of child resources also.  </s>
+<s> And if we do not support depth locks, the issue goes away completely (:-).  </s>
+<s> jc/ This means that a client must submit lock tokens with GETs and PROPFIND's just to insure it gets redirected when necessary.  </s>
+<s> No biggie I suppose.  </s>
+<s> gmc/ Right.  </s>
+<s> The client uses the lock token for all requests on a locked resource, rather than only using them for requests that might update the locked resource.  </s>
+<s> jc/ I'm not sure this would work well with clients that seperate the lock action from subsequent actions on the locked resources.  </s>
+<s> That is, a human is running the client code.  </s>
+<s> The human requests the locks.  </s>
+<s> Then a human requests various actions on resources that "just happen to be locked".  </s>
+<s> I guess that whenever the human requests an action on a resource, the client application would just need to make a point of finding all locks that apply to a resource... even if inherited... and submit them with the request.  </s>
+<s> I guess this sort of client app often would have to do this anyway, but now they must also do it for PROPFIND and GET also.  </s>
+<s> Okay, no biggie.  </s>
+<s> gmc/ Also note that a human would always need a client doing the real work in a locking context, since it is unlikely that a human ever would or could remember the lock token strings that are needed to work with a locked resource.  </s>
+<s> jc/ It also means that I believe for the first time in WebDAV, it actually becomes functionally important to specify the URI at which we think a lock is rooted when we submit the lock token.  </s>
+<s> gmc/ Without depth locking, the lock token is all that is needed.  </s>
+<s> jc/ If someone does a MOVE... and all the tokens of all the would-be protected URI's are submitted, the server doesn't need to maintain a remapping list because the client already knows which locks have lost those mappings.  </s>
+<s> It's only the URI's for locks for which no tokens were submitted that the server needs to remember the remapping.  </s>
+<s> This might provide for more efficient operation.  </s>
+<s> gmc/ If the server just keeps track of what resource is locked by a particular lock token, then remapping just consists of returning a valid URL to that resource in a 302.  </s>
+<s> jc/ A lock can have many mappings and a single operation can delete multiple mappings of a lock.  </s>
+<s> Previously we said that each lock had a particular URI that was protected... and only when that URI was moved, did feel compelled to do any kind of lock remapping.  </s>
+<s> Although we could probably guess, t now claim to know what lock mapping(s) the client really cares about.  </s>
+<s> None are more privledged.  </s>
+<s> I think the previous paragraph has to be modified to state that if any of these locks have other mappings than the mappings submitted with the token, then all of those others that are broken by an operation need to go onto the remapping list for that lock.  </s>
+<s> Is this really *required*?  </s>
+<s> I think technically yes... but probably not in practice.  </s>
+<s> The client probably only knows a lock by one mapping... and it will be the one that the client will submit.  </s>
+<s> Protecting a URI is sounding easier.  </s>
+<s> :-) gmc/ Associating a lock token with a single resource until it is unlocked is probably even easier (:-).  </s>
+<s> Cheers, Geoff  </s>
+<s> ....  </s>
+<s> The server is responsible for retrieving the same resource whenever the client gives it a URL and a lock token (think of it as a private binding that the server keeps around).  </s>
+<s> jc/ Geoff, I think Jim's point was that the same lock could have been rooted at many places over the course of time as it has moved.  </s>
+<s> In fact due to multiple bindings and such... we've added even one more multiplier to the size of the list that needs to be maintained.  </s>
+<s> His question though was how long does the server need to maintain it.  </s>
+<s> I guess the server/lock would need to remember all of it's URI's until the resource is eventually UNLOCK'd.  </s>
+<s> gmc/ The server has to remember the association of a lock token with a particular resource.  </s>
+<s> Since this is the server, it doesn't need to use some URL ... it just keeps a handle on the resource that is independent of the http URL space.  </s>
+<s> Geoff, you're "forgetting" about depth locks again.  </s>
+<s> :-) Multiple resource can have the same lock token.  </s>
+<s> So providing a lock token doesn't uniquely define what resource you're acting on.  </s>
+<s> The server needs a mapping for URI + token - resource.  </s>
+<s> My posting above predates your most recent proposal.  </s>
+<s> I believe it's the case in the recent proposal that the server only needs to remember one URI for a single resource/lock pairing.  </s>
+<s> Even if the resource moves, it's only the URI used when the lock was first created that needs to be remembered by the server.  </s>
+<s> But no... it's not that easy.  </s>
+<s> (1) If we say that, then it's up to the client to remember that original URI even if redirected... just in case it gets moved again.  </s>
+<s> If the server is unable to redirect after a second move, then I assume the client can detect (via etag-uri combination) that there's been a second movement, and will reinvoke a method based on the original URI and lock token... just to determine where it has moved to again.  </s>
+<s> Anyway, the point is that if the server doesn't remember a second URI, then the client must remember the first URI.  </s>
+<s> (2) If the server remembers all URI's, then the client is relieved of this burden.  </s>
+<s> (1&amp;2) BTW, in either case, the client has to use etags because in the presence of depth locks where multiple resources can have the same locktoken, and if namespace manipulation has occured, a URI+token to resource mapping may not be unique... and I don't think a client can trust a server to somehow detect a collision and somehow do "the right thing".  </s>
+<s> This is an admittedly rare thing... but if the client cares, they have to use uri-tagged etags.  </s>
+<s> whoops!  </s>
+<s> I don't mean etags...  </s>
+<s> I mean guid tags... but we don't have that yet.  </s>
+<s> It would need to be added to the spec.  </s>
+<s> BTW, after the URI+token- resource mapping is done within the server, it also needs to do a resource- URI mapping so that it knows what to return.  </s>
+<s> And of course if all bindings to the resource have been removed, the server will need to generate a binding/URI for that resource so that there is a URI to which to redirect the request.  </s>
+<s> The server could do this by just refusing to MOVE or DELETE the resource (as is required by the current 2518 draft), or by just remembering what resource is associated with that URL, lock-token pair.  </s>
+<s> All we are doing here is giving the server some additional flexibility in implementation that was constrained by the current language in 2518.  </s>
+<s> jc/ I see.  </s>
+<s> So the proposal is that a server either to protect the URI... or to maintain a way for a client to follow where it moved to... and you're proposing the mechanism to do the latter.  </s>
+<s> Interesting.  </s>
+<s> It could be a market differentiator.  </s>
+<s> It would mean a bit more complexity for the client to support either type of server though.  </s>
+<s> Not much though.  </s>
+<s> I think if the client supported what you're proposing, they'd also work with a system that does URI protection.  </s>
+<s> They'd just wouldn't execute the code that deals with what happens after a remapping.  </s>
+<s> gmc/ Right.  </s>
+<s> Given the exchange that I've heard between Yaron and company, I'd like to propose that the client also have some say over this.  </s>
+<s> If the client wants the URI protected, he can request it.  </s>
+<s> I suppose that would have to be a FLAG on the lock request.  </s>
+<s> If the server can't respect the request, it has to fail the lock.  </s>
+<s> I suppose we'd need an error code or something to express this so that a client could deal with that particular failure programaticly.  </s>
+<s> jc/ Also note: in the presence of depth locks... zillions of resources can be locked.  </s>
+<s> I don't think this necessarily increases the size of the list of lock URI's maintained since I believe only the URI's of the root of the lock need to be maintained... but it does mean that the resolution algorithm has to be more sophisticated since it would also need to remap the URI of child resources also.  </s>
+<s> And if we do not support depth locks, the issue goes away completely (:-).  </s>
+<s> I think you've mentioned that before.  </s>
+<s> :-) jc/ This means that a client must submit lock tokens with GETs and PROPFIND's just to insure it gets redirected when necessary.  </s>
+<s> No biggie I suppose.  </s>
+<s> gmc/ Right.  </s>
+<s> The client uses the lock token for all requests on a locked resource, rather than only using them for requests that might update the locked resource.  </s>
+<s> guid tags too I guess... as soon as we invent them.  </s>
+<s> It doesn't seem like a huge burden but it could be.  </s>
+<s> If a client cares enough about all this to do the guid tag stuff... then they also have to collect guids for all resource that it locked.  </s>
+<s> That's a bunch of state for the client to remember rather than just a single URI that is the root of his lock.  </s>
+<s> Especially in some of Yaron's scenarios.  </s>
+<s> jc/ I'm not sure this would work well with clients that seperate the lock action from subsequent actions on the locked resources.  </s>
+<s> That is, a human is running the client code.  </s>
+<s> The human requests the locks.  </s>
+<s> Then a human requests various actions on resources that "just happen to be locked".  </s>
+<s> I guess that whenever the human requests an action on a resource, the client application would just need to make a point of finding all locks that apply to a resource... even if inherited... and submit them with the request.  </s>
+<s> I guess this sort of client app often would have to do this anyway, but now they must also do it for PROPFIND and GET also.  </s>
+<s> Okay, no biggie.  </s>
+<s> gmc/ Also note that a human would always need a client doing the real work in a locking context, since it is unlikely that a human ever would or could remember the lock token strings that are needed to work with a locked resource.  </s>
+<s> jc/ It also means that I believe for the first time in WebDAV, it actually becomes functionally important to specify the URI at which we think a lock is rooted when we submit the lock token.  </s>
+<s> gmc/ Without depth locking, the lock token is all that is needed.  </s>
+<s> Yup.  </s>
+<s> jc/ If someone does a MOVE... and all the tokens of all the would-be protected URI's are submitted, the server doesn't need to maintain a remapping list because the client already knows which locks have lost those mappings.  </s>
+<s> It's only the URI's for locks for which no tokens were submitted that the server needs to remember the remapping.  </s>
+<s> This might provide for more efficient operation.  </s>
+<s> gmc/ If the server just keeps track of what resource is locked by a particular lock token, then remapping just consists of returning a valid URL to that resource in a 302.  </s>
+<s> Also correct.  </s>
+<s> jc/ A lock can have many mappings and a single operation can delete multiple mappings of a lock.  </s>
+<s> Previously we said that each lock had a particular URI that was protected... and only when that URI was moved, did feel compelled to do any kind of lock remapping.  </s>
+<s> Although we could probably guess, t now claim to know what lock mapping(s) the client really cares about.  </s>
+<s> None are more privledged.  </s>
+<s> I think the previous paragraph has to be modified to state that if any of these locks have other mappings than the mappings submitted with the token, then all of those others that are broken by an operation need to go onto the remapping list for that lock.  </s>
+<s> Is this really *required*?  </s>
+<s> I think technically yes... but probably not in practice.  </s>
+<s> The client probably only knows a lock by one mapping... and it will be the one that the client will submit.  </s>
+<s> Protecting a URI is sounding easier.  </s>
+<s> :-) gmc/ Associating a lock token with a single resource until it is unlocked is probably even easier (:-).  </s>
+<s> I think you missed my point.  </s>
+<s> It single resource can have multiple URI's so we need to do what I mentioned above, which is a pain, or we need to say that simply finding a resource (perhaps at a different URI) and doing lock discovery to get a token won't work because the person doing the lock discovery doesn't know the URI that the server is protecting (via remapping in this case).  </s>
+<s> No biggie.  </s>
+<s> We don't get this with protected URI's either.  </s>
+<s> I think we just need to remind clients of this.  </s>
+<s> -- BTW, this could be done if lock discovery also provides a URI that supports the remapping.  </s>
+<s> But then a client that tries this lock discovery approach would be at the mercy the lock owner who could MOVE the resource and unlock it before the second entity finds out.  </s>
+<s> Anyway, this seems like another use of lock discovery that should be deprecated.  </s>
+<s> BTW, do we require that one be the lock owner to use the token for this purpose?  </s>
+<s> So if one application wants to pass the URI of a resource to another application... it also needs to pass a lock (and perhaps a guid).  </s>
+<s> But if the second application isn't logged on as the first person, then?  </s>
+<s> One other thing, the proposal would also have to clarify the target selector header.  </s>
+<s> Well, maybe not HAVE TO.  </s>
+<s> The problem I'm refering to is that for binding related requests like DELETE, BIND, MOVE, it isn't just the target that is important to be specified, but also the parent.  </s>
+<s> It's the binding between the two that we want to specify.  </s>
+<s> I had a target selector based solution to this in mind, but I think the real solution is to have guid tags for both parent and the resource in the request.  </s>
+<s> If the guid check fails on either the parent or target, the client can try to figure out what to do.  </s>
+<s> -- Another approach is to lock both the parent and the child... but if the redirected URI for the DELETE isn't the one that uses the parent, then you'd not get the right affect, so you'd still want the guid check anyway.  </s>
+<s> That really seems to be the best approach in a server that lacks lock URI protection.  </s>
+<s> Anyway, I propose that the **client** be able to specify if it needs the server to protect the LOCK URI.  </s>
+<s> If the client specifies this and the server can't support it, it must reject the request with a new unique response code and the client figures out how to deal with that.  </s>
+<s> J.  </s>

@@ -1,92 +1,92 @@
-Hi, looking at our recent discussion, I feel that we clearly have a problem with 
-the usage of DAV:displayname. 
-The current situation seems to be: 1) Some servers implement DAV:displayname as protected live property that 
-just reflects the last name segment of the request URI (Microsoft IIS) 
-2) Other servers implement DAV:displayname as dead property that by default 
-is not set until it get's explicitly set by a client (Apache moddav) 
-We are currently discussing whether 1) is ok. 
-My position is that it's clearly not, as - the value of the last path segment is not "a description of the resource that is suitable for presentation to a user", - replicating something that's already available from the href element of the PROPFIND response into a property just has no benefit at all, - clients demonstratibly can cope with absent DAV:displayname values (as they all interoperate with Apache moddav today) and finally - the concept of a property that varies with the request URI is deeply incompatible with the concept of multiple bindings to resources. 
-So my preference would be just to state that DAV:displayname SHOULD NOT be used to replicate the information from the last path segment. 
-Another alternative would be to *deprecate* DAV:displayname and to define a new property with more precisely defined semantics, such as DAV:description. 
-Note that this in fact *is* a interoperability issues, as we are getting lots of complaints from users not being able to set display names on some remote WebDAV servers mounted into the SAP Enterprise Portal. 
-Julian 
-On Sunday, 08/17/2003 at 01:03 ZE2, "Julian Reschke" 
-with 
-that 
-default 
-I tend to agree with you that among these two choices (2) is superior. 
-But that seems obvious. 
-What's more interesting is whether (3) A server can treat it as a dead property but initialize it to the 
-segment 
-name. 
-My impression is that (2) is still a better approach. 
-Are there issues for mapping this to a file system? 
-J. 
-with 
-that 
-default 
-segment 
-If I understand you correctly the server would set an initial value, and then treat the property as dead. 
-The result would be that unless a client resets the DAV:displayname, it will always be the last segment of the request URL where the resource was initially created (even if it was MOVEd later). 
-I think that sounds even worse than (1). 
-Yes. 
-Not really. 
-A server that supports setting of dead properties (such as Apache/moddav) doesn't have any issue. 
-A server that does not support dead properties on a certain resource will just reject the PROPPATCHH attempt. 
-Julian 
-Hi, I have installed "MS Sharepoint" and I tested the behavior of Sharepoint. 
-Sharepoint is a basic WebDAV implementation. 
-They have something like versioning, but it's not DeltaV. 
-As far as I understand MS-Sharepoint, the behavior is: There is a URL "segment name" for the name of the resource. 
-There is a DAV:displayname for the "title" of the resource. 
-DAV:displayname normaly is not the same as the "segment name". 
-So DAV:displayname is a "dead" property It's also possible NOT setting the property DAV:displayname. 
-Behavior is like 2). 
-Horst Hi, looking at our recent discussion, I feel that we clearly have a problem with the usage of DAV:displayname. 
-The current situation seems to be: 1) Some servers implement DAV:displayname as protected live property that just reflects the last name segment of the request URI (Microsoft IIS) 2) Other servers implement DAV:displayname as dead property that by default is not set until it get's explicitly set by a client (Apache moddav) We are currently discussing whether 1) is ok. 
-My position is that it's clearly not, as - the value of the last path segment is not "a description of the resource that is suitable for presentation to a user", - replicating something that's already available from the href element of the PROPFIND response into a property just has no benefit at all, - clients demonstratibly can cope with absent DAV:displayname values (as they all interoperate with Apache moddav today) and finally - the concept of a property that varies with the request URI is deeply incompatible with the concept of multiple bindings to resources. 
-So my preference would be just to state that DAV:displayname SHOULD NOT be used to replicate the information from the last path segment. 
-Another alternative would be to *deprecate* DAV:displayname and to define a new property with more precisely defined semantics, such as DAV:description. 
-Note that this in fact *is* a interoperability issues, as we are getting lots of complaints from users not being able to set display names on some remote WebDAV servers mounted into the SAP Enterprise Portal. 
-Julian 
-Here's some more info on DAV:displayname vs Microsoft clients: There are at least two different types of webfolder clients: those shipping with W2K and O2K (DLL version 8.*) completely ignore DAV:displayname. 
-Those shipping with Windows XP, Office XP and Sharepoint do "support" DAV:displayname, but have multiple bugs in doing so: http://greenbytes.de/tech/webdav/webfolder-client-list.html#issue-displayed -href : "The URI displayed in the "internet adress" column is constructed from the base URI of the collection and the resource's DAV:displayname property (when present). 
-This is wrong - the column should display the DAV:href returned in the PROPFIND response body." 
-http://greenbytes.de/tech/webdav/webfolder-client-list.html#issue-displayna me-1 "The Webfolder client displays the DAV:displayname only if it doesn't contain some characters that happen to be reserved in filenames (such as "/"). 
-However, the displayname is just a textual description, so it should be displayable no matter what kind of text it contains (basically this is caused by the Webfolder mistaking the displayname to be some kind of replacement resource name)." 
-http://greenbytes.de/tech/webdav/webfolder-client-list.html#issue-displayna me-2 "If the client decides to use the DAV:displayname instead of the last path segment for display, it seems to internally confuse both. 
-A rename operation on a resource where the displayname and the last path segment differ fails because the client submits the MOVE request to a broken request URI (collection href and displayname concatenated)." 
-If you are aware of more issues, please report them (so I'll can put them into the issues list). 
-Also it would be nice to get some feedback about which issue appears in which client (obviously I can't test them all :-) Regards, Julian 
-Hi, I got interested in this issue by some comments in Jim's article "The WebDAV property design" [1] and discussion on the Subversion mailing list about NTFS features. 
-The problem(s): (a) resources copied to a local file system generally loose their WebDAV property information, thus they won't round-trip when the resource is PUT back to a WebDAV server (b) WebDAV clients mapping servers to filesystems generally can't map the properties to something a filesystem-based client can take advantage of. 
-The issues: (1) Where to store the property information. 
-The only portable solution involves exposing a second file somewhere else in the namespace (such as by appending a particular extension). 
-In general, this is ugly due to possible name collisions, and the fact that the properties will not automatically move with the base file. 
-Filesystems that offer multiple data streams or data forks may do better (see below for some information about NTFS data streams). 
-(2) Which format to use. 
-I think there's some hope in getting interoperability if we can get the client developers (such as MS, Xythos, Apply, davfs Linux developers) to get together (such as during the Interop event). 
-Possible solutions: (1) This problem is hard in general but almost trivial for WIN32 scenarios. 
-NTFS supports multiple data streams that can be accessed with generic file syntax (see [2]). 
-All we'd need to do is to agree on a well-known name for the stream (such as ":dav-properties"). 
-(2) Let's just use the XML serialization of the DAV:prop element from a PROPFIND/allprop response body. 
-Proof-of-concept: Below is a script for Windows Scripting Host that GETs/PROPFINDs a resource and stores the properties in the named data stream ":dav-properties". 
-You can see the properties by just opening the data stream like a regular file, such as cat filename:dav-properties Usage: cscript davget.js 
-URL destination-file user password // davget.js 
-// GET a file from an HTTP server, storing it's properties in a NTFS data stream // params: URL localfile user password var fso = new ActiveXObject("Scripting.FileSystemObject"); var http = new ActiveXObject("MSXML2.ServerXMLHTTP.3.0"); var stream = new ActiveXObject("ADODB.Stream"); var url = WScript.Arguments(0); 
-// PROPFIND http.open("PROPFIND", url, false, WScript.Arguments(2), WScript.Arguments(3)); http.setRequestHeader("Depth", "0"); http.send(" propfind xmlns='DAV:' allprop/ /propfind "); if (http.status != 207) { WScript.Echo("unexpected status from PROPFIND: " + http.status); 
-WScript.Quit(1); var props = new ActiveXObject("MSXML2.DOMDocument"); http.responseXML.setProperty("SelectionLanguage", 
-"XPath"); http.responseXML.setProperty("SelectionNamespaces", 
-"xmlns:D='DAV:'"); props.appendChild( 
-http.responseXML.selectSingleNode("/D:multistatus/D:response/D:propstat[cont 
-ains(D:status,'200')]/D:prop")); http.open("GET", url, false, WScript.Arguments(2), WScript.Arguments(3)); http.send(); if (http.status != 200) { WScript.Echo("unexpected status from GET: " + http.status); 
-WScript.Quit(1); stream.open(); 
-stream.Type 
-= 1; try { if (http.responseText.length  0) { stream.Write(http.responseBody); 
-catch (e) { WScript.Echo("empty content? 
-" + e); stream.SaveToFile(WScript.Arguments(1), 2); stream.close(); 
-stream.open(); 
-stream.Type 
-= 1; props.save(stream); 
-stream.SaveToFile(WScript.Arguments(1) + ":dav-props", 2); stream.close(); 
-Feedback appreciated, Julian [1] http://www.cs.ucsc.edu/~ejw/papers/spe-whitehead.pdf [2] http://www.sysinternals.com/ntw2k/source/misc.shtml#Streams 
+<s> Hi, looking at our recent discussion, I feel that we clearly have a problem with  </s>
+<s> the usage of DAV:displayname.  </s>
+<s> The current situation seems to be: 1) Some servers implement DAV:displayname as protected live property that  </s>
+<s> just reflects the last name segment of the request URI (Microsoft IIS)  </s>
+<s> 2) Other servers implement DAV:displayname as dead property that by default  </s>
+<s> is not set until it get's explicitly set by a client (Apache moddav)  </s>
+<s> We are currently discussing whether 1) is ok.  </s>
+<s> My position is that it's clearly not, as - the value of the last path segment is not "a description of the resource that is suitable for presentation to a user", - replicating something that's already available from the href element of the PROPFIND response into a property just has no benefit at all, - clients demonstratibly can cope with absent DAV:displayname values (as they all interoperate with Apache moddav today) and finally - the concept of a property that varies with the request URI is deeply incompatible with the concept of multiple bindings to resources.  </s>
+<s> So my preference would be just to state that DAV:displayname SHOULD NOT be used to replicate the information from the last path segment.  </s>
+<s> Another alternative would be to *deprecate* DAV:displayname and to define a new property with more precisely defined semantics, such as DAV:description.  </s>
+<s> Note that this in fact *is* a interoperability issues, as we are getting lots of complaints from users not being able to set display names on some remote WebDAV servers mounted into the SAP Enterprise Portal.  </s>
+<s> Julian  </s>
+<s> On Sunday, 08/17/2003 at 01:03 ZE2, "Julian Reschke"  </s>
+<s> with  </s>
+<s> that  </s>
+<s> default  </s>
+<s> I tend to agree with you that among these two choices (2) is superior.  </s>
+<s> But that seems obvious.  </s>
+<s> What's more interesting is whether (3) A server can treat it as a dead property but initialize it to the  </s>
+<s> segment  </s>
+<s> name.  </s>
+<s> My impression is that (2) is still a better approach.  </s>
+<s> Are there issues for mapping this to a file system?  </s>
+<s> J.  </s>
+<s> with  </s>
+<s> that  </s>
+<s> default  </s>
+<s> segment  </s>
+<s> If I understand you correctly the server would set an initial value, and then treat the property as dead.  </s>
+<s> The result would be that unless a client resets the DAV:displayname, it will always be the last segment of the request URL where the resource was initially created (even if it was MOVEd later).  </s>
+<s> I think that sounds even worse than (1).  </s>
+<s> Yes.  </s>
+<s> Not really.  </s>
+<s> A server that supports setting of dead properties (such as Apache/moddav) doesn't have any issue.  </s>
+<s> A server that does not support dead properties on a certain resource will just reject the PROPPATCHH attempt.  </s>
+<s> Julian  </s>
+<s> Hi, I have installed "MS Sharepoint" and I tested the behavior of Sharepoint.  </s>
+<s> Sharepoint is a basic WebDAV implementation.  </s>
+<s> They have something like versioning, but it's not DeltaV.  </s>
+<s> As far as I understand MS-Sharepoint, the behavior is: There is a URL "segment name" for the name of the resource.  </s>
+<s> There is a DAV:displayname for the "title" of the resource.  </s>
+<s> DAV:displayname normaly is not the same as the "segment name".  </s>
+<s> So DAV:displayname is a "dead" property It's also possible NOT setting the property DAV:displayname.  </s>
+<s> Behavior is like 2).  </s>
+<s> Horst Hi, looking at our recent discussion, I feel that we clearly have a problem with the usage of DAV:displayname.  </s>
+<s> The current situation seems to be: 1) Some servers implement DAV:displayname as protected live property that just reflects the last name segment of the request URI (Microsoft IIS) 2) Other servers implement DAV:displayname as dead property that by default is not set until it get's explicitly set by a client (Apache moddav) We are currently discussing whether 1) is ok.  </s>
+<s> My position is that it's clearly not, as - the value of the last path segment is not "a description of the resource that is suitable for presentation to a user", - replicating something that's already available from the href element of the PROPFIND response into a property just has no benefit at all, - clients demonstratibly can cope with absent DAV:displayname values (as they all interoperate with Apache moddav today) and finally - the concept of a property that varies with the request URI is deeply incompatible with the concept of multiple bindings to resources.  </s>
+<s> So my preference would be just to state that DAV:displayname SHOULD NOT be used to replicate the information from the last path segment.  </s>
+<s> Another alternative would be to *deprecate* DAV:displayname and to define a new property with more precisely defined semantics, such as DAV:description.  </s>
+<s> Note that this in fact *is* a interoperability issues, as we are getting lots of complaints from users not being able to set display names on some remote WebDAV servers mounted into the SAP Enterprise Portal.  </s>
+<s> Julian  </s>
+<s> Here's some more info on DAV:displayname vs Microsoft clients: There are at least two different types of webfolder clients: those shipping with W2K and O2K (DLL version 8.*) completely ignore DAV:displayname.  </s>
+<s> Those shipping with Windows XP, Office XP and Sharepoint do "support" DAV:displayname, but have multiple bugs in doing so: http://greenbytes.de/tech/webdav/webfolder-client-list.html#issue-displayed -href : "The URI displayed in the "internet adress" column is constructed from the base URI of the collection and the resource's DAV:displayname property (when present).  </s>
+<s> This is wrong - the column should display the DAV:href returned in the PROPFIND response body."  </s>
+<s> http://greenbytes.de/tech/webdav/webfolder-client-list.html#issue-displayna me-1 "The Webfolder client displays the DAV:displayname only if it doesn't contain some characters that happen to be reserved in filenames (such as "/").  </s>
+<s> However, the displayname is just a textual description, so it should be displayable no matter what kind of text it contains (basically this is caused by the Webfolder mistaking the displayname to be some kind of replacement resource name)."  </s>
+<s> http://greenbytes.de/tech/webdav/webfolder-client-list.html#issue-displayna me-2 "If the client decides to use the DAV:displayname instead of the last path segment for display, it seems to internally confuse both.  </s>
+<s> A rename operation on a resource where the displayname and the last path segment differ fails because the client submits the MOVE request to a broken request URI (collection href and displayname concatenated)."  </s>
+<s> If you are aware of more issues, please report them (so I'll can put them into the issues list).  </s>
+<s> Also it would be nice to get some feedback about which issue appears in which client (obviously I can't test them all :-) Regards, Julian  </s>
+<s> Hi, I got interested in this issue by some comments in Jim's article "The WebDAV property design" [1] and discussion on the Subversion mailing list about NTFS features.  </s>
+<s> The problem(s): (a) resources copied to a local file system generally loose their WebDAV property information, thus they won't round-trip when the resource is PUT back to a WebDAV server (b) WebDAV clients mapping servers to filesystems generally can't map the properties to something a filesystem-based client can take advantage of.  </s>
+<s> The issues: (1) Where to store the property information.  </s>
+<s> The only portable solution involves exposing a second file somewhere else in the namespace (such as by appending a particular extension).  </s>
+<s> In general, this is ugly due to possible name collisions, and the fact that the properties will not automatically move with the base file.  </s>
+<s> Filesystems that offer multiple data streams or data forks may do better (see below for some information about NTFS data streams).  </s>
+<s> (2) Which format to use.  </s>
+<s> I think there's some hope in getting interoperability if we can get the client developers (such as MS, Xythos, Apply, davfs Linux developers) to get together (such as during the Interop event).  </s>
+<s> Possible solutions: (1) This problem is hard in general but almost trivial for WIN32 scenarios.  </s>
+<s> NTFS supports multiple data streams that can be accessed with generic file syntax (see [2]).  </s>
+<s> All we'd need to do is to agree on a well-known name for the stream (such as ":dav-properties").  </s>
+<s> (2) Let's just use the XML serialization of the DAV:prop element from a PROPFIND/allprop response body.  </s>
+<s> Proof-of-concept: Below is a script for Windows Scripting Host that GETs/PROPFINDs a resource and stores the properties in the named data stream ":dav-properties".  </s>
+<s> You can see the properties by just opening the data stream like a regular file, such as cat filename:dav-properties Usage: cscript davget.js  </s>
+<s> URL destination-file user password // davget.js  </s>
+<s> // GET a file from an HTTP server, storing it's properties in a NTFS data stream // params: URL localfile user password var fso = new ActiveXObject("Scripting.FileSystemObject"); var http = new ActiveXObject("MSXML2.ServerXMLHTTP.3.0"); var stream = new ActiveXObject("ADODB.Stream"); var url = WScript.Arguments(0);  </s>
+<s> // PROPFIND http.open("PROPFIND", url, false, WScript.Arguments(2), WScript.Arguments(3)); http.setRequestHeader("Depth", "0"); http.send(" propfind xmlns='DAV:' allprop/ /propfind "); if (http.status != 207) { WScript.Echo("unexpected status from PROPFIND: " + http.status);  </s>
+<s> WScript.Quit(1); var props = new ActiveXObject("MSXML2.DOMDocument"); http.responseXML.setProperty("SelectionLanguage",  </s>
+<s> "XPath"); http.responseXML.setProperty("SelectionNamespaces",  </s>
+<s> "xmlns:D='DAV:'"); props.appendChild(  </s>
+<s> http.responseXML.selectSingleNode("/D:multistatus/D:response/D:propstat[cont  </s>
+<s> ains(D:status,'200')]/D:prop")); http.open("GET", url, false, WScript.Arguments(2), WScript.Arguments(3)); http.send(); if (http.status != 200) { WScript.Echo("unexpected status from GET: " + http.status);  </s>
+<s> WScript.Quit(1); stream.open();  </s>
+<s> stream.Type  </s>
+<s> = 1; try { if (http.responseText.length  0) { stream.Write(http.responseBody);  </s>
+<s> catch (e) { WScript.Echo("empty content?  </s>
+<s> " + e); stream.SaveToFile(WScript.Arguments(1), 2); stream.close();  </s>
+<s> stream.open();  </s>
+<s> stream.Type  </s>
+<s> = 1; props.save(stream);  </s>
+<s> stream.SaveToFile(WScript.Arguments(1) + ":dav-props", 2); stream.close();  </s>
+<s> Feedback appreciated, Julian [1] http://www.cs.ucsc.edu/~ejw/papers/spe-whitehead.pdf [2] http://www.sysinternals.com/ntw2k/source/misc.shtml#Streams  </s>

@@ -1,70 +1,70 @@
-HMAC-SHA1 is actually to be used as the SignatureAlgorithm (though security concerns prompts us to distinguish between "Signature" and "MAC" in the algorithm characterizations.) Consequently, the key would be identified in KeyInfo. 
-I have some doubts regarding MAC and HMAC. 
-I successfully completed sign process using RSA with SHA1 and DSA with SHA1, but struck up with MAC. 
-Where can we implement HMAC for signing process. 
-If I am not wrong HMAC is symmetric key algorihm where key can be generated randomly or using password, but where can we place or store session key in signed document. 
-I am not clear with implementation of MAC and HMAC in standard document(XML-Signature Syntax and Processing W3C Candidate Recommendation 19-April-2001).Please 
-elaborate implementation of HMAC. 
-Joseph Reagle Jr. http://www.w3.org/People/Reagle/ W3C Policy Analyst mailto:reagle@w3.org 
-IETF/W3C XML-Signature Co-Chair http://www.w3.org/Signature W3C XML Encryption Chair http://www.w3.org/Encryption/2001/ 
-May I ask what type of KeyInfo would you use? 
-In addition, section 6.3.1 states that the output length of the HMAC algorithm can be truncated. 
-However RFC 2104 makes no mention of truncation (that I could see). 
-So I was wondered what exactly is truncated. 
-TIA - Dave. 
-Hi Dave, --On Donnerstag, 18. Oktober 2001 17:44 +0100 Dave Roberts 
-The MAC uses a symmetric key which has to be identified by an optionally 
-supplied KeyInfo. 
-So you cannot include the Key itself as KeyValue and 
-cannot use X509Data cause the Key has nothing to do with X.509 
-Certificates. 
-But you _can_ use KeyName with a custom KeyIdentifier or a retrival method that works in the signature verification environment. 
-The MAC algorithm outputs a byte array of the length of the used digest method (for HMAC-SHA1 which uses SHA1, this are 160 bit (20 byte)). 
-This byte array is truncated... 
-Christian 
-Hi Dave, r/dave.roberts@saaconsultants.com/2001.10.18/17:44:40 
-KeyName to identify a shared secret (used in some interop samples). 
-Alternatively, if a KeyAgreement (xmlenc) was used to derive a shared encryption key, the same KeyAgreement could be used to derive an HMAC key as an integrity check. 
-Merlin Baltimore Technologies plc will not be liable for direct, special, indirect or consequential damages arising from alteration of the contents of this message by a third party or as a result of any virus being passed on. 
-In addition, certain Marketing collateral may be added from time to time to promote Baltimore Technologies products, services, Global e-Security or appearance at trade shows and conferences. 
-This footnote confirms that this email message has been swept by Baltimore MIMEsweeper for Content Security threats, including computer viruses. 
-Thanks to Christian and Merlin for the responses... 
-Yep, that certainly prompted my question. 
-Understood. 
-A mutual agreement of the secret key, and an identifier that both parties use. 
-Or retrieval via SSL perhaps to keep the key secret. 
-Much obliged. 
-OK, I understand the truncation, but which bits do you lose, the Most Significant or Least Significant? 
-I suspected the MSB is lost, and the LSB is kept, but... 
-I took a look at the examples in the merlin-xmldsig-fifteen tarball. 
-There is one example outputting the full MAC, and one that outputs 40 bits. 
-As far as I can see, the data being signed is exactly the same, and they use the same secret key, however converting the base64 MAC back into binary, there appears to be no instance of the 40 bits as a subset of the 160 bits (IFSWIM)... so I'm obviously missing something (probably very simple :) 
-- Dave. 
-Sorry, my idea with the RetrievalMethos was wrong. 
-Of cource I can use RetrievalMethod to reference a key somewhere in the filesystem that's only available in the verification environment, but there's no way to 'tag' this resource to be a symmetric key. 
-Sorry about that. 
-You can only use KeyName. 
-Maybe this (JAVA-Code) helps: this is what I did: 
-private static byte[] reduceBitLength(byte completeResult[], int length) { int bytes = length / 8; int abits = length % 8; byte[] strippedResult = new byte[bytes + (abits == 0 ? 
-0 : 1)]; System.arraycopy(completeResult, 
-0, strippedResult, 0, bytes); if (abits  0) { byte[] MASK = { (byte) 0x00, (byte) 0x80, (byte) 0xC0, (byte) 0xE0, (byte) 0xF0, (byte) 0xF8, (byte) 0xFC, (byte) 0xFE }; strippedResult[bytes] = (byte) (completeResult[bytes] &amp; MASK[abits]); return strippedResult; 
-OK, thanks. 
-It does. 
-So I see that the Most Signficant Bits are taken. 
-Unfortunately it doesn't explain the examples in merlin-xmldsig-fifteen.tar.gz. 
-In file signature-enveloping-hmac-sha1.xml: 
-The 160 bit HMAC is 2449 4fb6 d213 e009 bb43 e30d a0cc aff9 60df 019c. 
-In file signature-enveloping-hmac-sha1-40.xml: 
-The 40 bit HMAC is 1c78 aabc 25. 
-That's not what I'm expecting given that the input appears to be the same. 
-I would expect the 40 bit output to be 2449 4fb6 d2. 
-Like I said, I 
-appear to be missing something important, and would rather not. 
-:) 
-Thanks again. 
-- Dave. 
-It's ok I've got it now. 
-I was overlooking the fact that the signer info was different, due to the HMACOutputLength tag. 
-I'm sending this mail to wrap up the thread for the archives. 
-Thanks to Christian for his help. 
-- Dave. 
+<s> HMAC-SHA1 is actually to be used as the SignatureAlgorithm (though security concerns prompts us to distinguish between "Signature" and "MAC" in the algorithm characterizations.) Consequently, the key would be identified in KeyInfo.  </s>
+<s> I have some doubts regarding MAC and HMAC.  </s>
+<s> I successfully completed sign process using RSA with SHA1 and DSA with SHA1, but struck up with MAC.  </s>
+<s> Where can we implement HMAC for signing process.  </s>
+<s> If I am not wrong HMAC is symmetric key algorihm where key can be generated randomly or using password, but where can we place or store session key in signed document.  </s>
+<s> I am not clear with implementation of MAC and HMAC in standard document(XML-Signature Syntax and Processing W3C Candidate Recommendation 19-April-2001).Please  </s>
+<s> elaborate implementation of HMAC.  </s>
+<s> Joseph Reagle Jr. http://www.w3.org/People/Reagle/ W3C Policy Analyst mailto:reagle@w3.org  </s>
+<s> IETF/W3C XML-Signature Co-Chair http://www.w3.org/Signature W3C XML Encryption Chair http://www.w3.org/Encryption/2001/  </s>
+<s> May I ask what type of KeyInfo would you use?  </s>
+<s> In addition, section 6.3.1 states that the output length of the HMAC algorithm can be truncated.  </s>
+<s> However RFC 2104 makes no mention of truncation (that I could see).  </s>
+<s> So I was wondered what exactly is truncated.  </s>
+<s> TIA - Dave.  </s>
+<s> Hi Dave, --On Donnerstag, 18. Oktober 2001 17:44 +0100 Dave Roberts  </s>
+<s> The MAC uses a symmetric key which has to be identified by an optionally  </s>
+<s> supplied KeyInfo.  </s>
+<s> So you cannot include the Key itself as KeyValue and  </s>
+<s> cannot use X509Data cause the Key has nothing to do with X.509  </s>
+<s> Certificates.  </s>
+<s> But you _can_ use KeyName with a custom KeyIdentifier or a retrival method that works in the signature verification environment.  </s>
+<s> The MAC algorithm outputs a byte array of the length of the used digest method (for HMAC-SHA1 which uses SHA1, this are 160 bit (20 byte)).  </s>
+<s> This byte array is truncated...  </s>
+<s> Christian  </s>
+<s> Hi Dave, r/dave.roberts@saaconsultants.com/2001.10.18/17:44:40  </s>
+<s> KeyName to identify a shared secret (used in some interop samples).  </s>
+<s> Alternatively, if a KeyAgreement (xmlenc) was used to derive a shared encryption key, the same KeyAgreement could be used to derive an HMAC key as an integrity check.  </s>
+<s> Merlin Baltimore Technologies plc will not be liable for direct, special, indirect or consequential damages arising from alteration of the contents of this message by a third party or as a result of any virus being passed on.  </s>
+<s> In addition, certain Marketing collateral may be added from time to time to promote Baltimore Technologies products, services, Global e-Security or appearance at trade shows and conferences.  </s>
+<s> This footnote confirms that this email message has been swept by Baltimore MIMEsweeper for Content Security threats, including computer viruses.  </s>
+<s> Thanks to Christian and Merlin for the responses...  </s>
+<s> Yep, that certainly prompted my question.  </s>
+<s> Understood.  </s>
+<s> A mutual agreement of the secret key, and an identifier that both parties use.  </s>
+<s> Or retrieval via SSL perhaps to keep the key secret.  </s>
+<s> Much obliged.  </s>
+<s> OK, I understand the truncation, but which bits do you lose, the Most Significant or Least Significant?  </s>
+<s> I suspected the MSB is lost, and the LSB is kept, but...  </s>
+<s> I took a look at the examples in the merlin-xmldsig-fifteen tarball.  </s>
+<s> There is one example outputting the full MAC, and one that outputs 40 bits.  </s>
+<s> As far as I can see, the data being signed is exactly the same, and they use the same secret key, however converting the base64 MAC back into binary, there appears to be no instance of the 40 bits as a subset of the 160 bits (IFSWIM)... so I'm obviously missing something (probably very simple :)  </s>
+<s> - Dave.  </s>
+<s> Sorry, my idea with the RetrievalMethos was wrong.  </s>
+<s> Of cource I can use RetrievalMethod to reference a key somewhere in the filesystem that's only available in the verification environment, but there's no way to 'tag' this resource to be a symmetric key.  </s>
+<s> Sorry about that.  </s>
+<s> You can only use KeyName.  </s>
+<s> Maybe this (JAVA-Code) helps: this is what I did:  </s>
+<s> private static byte[] reduceBitLength(byte completeResult[], int length) { int bytes = length / 8; int abits = length % 8; byte[] strippedResult = new byte[bytes + (abits == 0 ?  </s>
+<s> 0 : 1)]; System.arraycopy(completeResult,  </s>
+<s> 0, strippedResult, 0, bytes); if (abits  0) { byte[] MASK = { (byte) 0x00, (byte) 0x80, (byte) 0xC0, (byte) 0xE0, (byte) 0xF0, (byte) 0xF8, (byte) 0xFC, (byte) 0xFE }; strippedResult[bytes] = (byte) (completeResult[bytes] &amp; MASK[abits]); return strippedResult;  </s>
+<s> OK, thanks.  </s>
+<s> It does.  </s>
+<s> So I see that the Most Signficant Bits are taken.  </s>
+<s> Unfortunately it doesn't explain the examples in merlin-xmldsig-fifteen.tar.gz.  </s>
+<s> In file signature-enveloping-hmac-sha1.xml:  </s>
+<s> The 160 bit HMAC is 2449 4fb6 d213 e009 bb43 e30d a0cc aff9 60df 019c.  </s>
+<s> In file signature-enveloping-hmac-sha1-40.xml:  </s>
+<s> The 40 bit HMAC is 1c78 aabc 25.  </s>
+<s> That's not what I'm expecting given that the input appears to be the same.  </s>
+<s> I would expect the 40 bit output to be 2449 4fb6 d2.  </s>
+<s> Like I said, I  </s>
+<s> appear to be missing something important, and would rather not.  </s>
+<s> :)  </s>
+<s> Thanks again.  </s>
+<s> - Dave.  </s>
+<s> It's ok I've got it now.  </s>
+<s> I was overlooking the fact that the signer info was different, due to the HMACOutputLength tag.  </s>
+<s> I'm sending this mail to wrap up the thread for the archives.  </s>
+<s> Thanks to Christian for his help.  </s>
+<s> - Dave.  </s>

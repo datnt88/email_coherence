@@ -1,267 +1,267 @@
-You can't 'destroy' a URI. 
-You can ask to have a resource destroyed, 
-and the argument is the URI. 
-The HTTP committee struggled mightily with the terminology about resource/entity/variant, and came up with a set of definitions that I hope you adopt rather than reinterpret. 
-But it's important to be clear about what the operations operate on. 
-I _think_ that all of the operations apply to a resource, not to a URI which identifies a resource. 
-It is with some great difficulty tthat you will have to clarify whether versioning actually applies to content-negotiated resources (e.g., same URL but different renditions.) Do the 'attributes' apply to the resource, to the variant, to the version, or to some combination of them? 
-Why is the PEP draft mentioned in the references? 
-Larry 
-That's what I'm saying as well. 
-The bottom line is: if both the client and the server need to refer to the same thing, give it a name (i.e. a URL) and consider it a resource. 
-This is one reason why early attempts to "solve" the versioning problem ended up tied in knots. 
-If you decide that everything 
-has a URI and that the URI is all that is needed to retrieve a 
-resource its not possible to provide versioning through lexical 
-properties of the URIs. 
-Ie one cannot create a convention that 
-I agree with Dan that we have to name everything and keep to the 
-principle of only using one typr of URI rather than attempt 
-to create ad hoc accessors for "versions" of a URI. 
-What we have is not a resource with many versions but a collection of resources and a collection of assertions stating which resources are earlier variant of others. 
-Ie if we take the "fred" resource we may have the following URIs :- FredThe resource itself, the operation GET("Fred",t) returns the current value of Fred, the Fred of time t. 
-It is the "essence" of Fredishness. 
-Fred.v1Fred version 1, A Fred that is known to be immutable in time. 
-GET("Fred.v1", t) returns the same value for all values of t. 
-This value can be cached since it cannot change by definition. 
-Fred.v2Fred version 2, see above. 
-The advantage of separating the assertions from the resources is that we then have a scheme in which we can move the assertions about in lieu of objects. 
-If we want to synchronise two repositories we can do so by first exchanging the assertions as to which fred versions have changed. 
-The other key advantage of this approach is that because we have not relied on particular lexical properties of the labels (ie convention fred;3 fred;4 are versions 3,4 of fred) we can go to offline distributed authoring and make it work. 
-Consider the following scenario. 
-I have two machines, a laptop and a desk machine. 
-I work on projects on both machines, the two machines are only briefly in communication with each other so we have a continuing problem of synchronising two databases. 
-I'm using this example because I think it gets to the core of what is hard in the distributed authoring problem. 
-If we can solve this problem in a principled manner I think we can do the collaborative, multi-author one as well. 
-I also think that it is the key to making the Network computer something that would be an advance on our current systems rather than an Oracle/IBM big systems, MIS centric disaster. 
-There is a reason why the world has gone to Microsoft and some people just "don't get it", but thats a digression. 
-The rules for the laptop/desktop scenario are as follows:- 1) If compatible changes in the two databases are made the system synchronises transparently. 
-2) If there are collisions the system responds with a semantic level merger of the two systems. 
-By "semantic" level I mean that the merger cannot be the CVS style lexical kludge. 
-The merger process must exploit structure or else it is all hopeless. 
-To make this work I think we need to consider carefully the nature of hypertext structure. 
-I believe that hypertext has structure in the broad scale that is as "cliched" as ordinary text but is beyond merely headings, paragraphs etc. 
-For example where there is a list of objects there is probably a need for a cliche which allows that list to be extended. 
-Anyone who has done requirements engineering will be familliar with a structure of text in which requirements and architecture have to be mutually cross linked. 
-The generation of tables of authorities, crossindexing and cross referencing is all part of this structure. 
-Phill 
-I think there's a design choice people are facing in trying to reconcile versioning and content negotiation, and I want to argue for one choice over another: 
-I have some metapoints on the draft and how it relates to HTTP that I don't think have been raised. 
-It took a long time before we got the terminology right in HTTP and without 
-doubt this caused the final specification to be delayed for some time. 
-The lesson to learn from this is that not having the basics right leads to major problems later on. 
-There were a couple of terminology issues that were not realized in the 
-HTTP work before very late in the process. 
-They may seem to be evident but let me recap them for a moment: 1) A resource is identified by a URL. 
-That is, no resource exists outside the URL name space and only resources are accessible through the Web. 2) HTTP transports entities - not resources. 
-An HTTP method performs an operation on the resource which in the classic case of "GET" generates a snapshot of what the resource looks like to this particular request. 
-Luckily, many requests are very similar and hence the result of a method can often be cached and reused by other clients. 
-Note, however, that an entity does not have a URL and hence is not a resource! 
-The entity tag or the date can be used by a client to verify that the cached entry is still valid in the sense that it still resembles the result produced by the resource when poked with a similar request. 
-3) All entities in a HTTP response may be subject to content negotiation. 
-This includes error messages, redirections, and any other entity type. 
-Content negotiation is not limited to "200 OK" responses. 
-The server MUST use the vary header to indicate that the entity was negotiated as a function of the request. 
-The server may use the Content-Location header to indicate the exact location of the resource corresponding to a particular entity at the time of the request. 
-4) A resource does not move from the origin server. 
-Unlike mail where the message is moved around on the Net, a resource stays on the origin server at all times. 
-When a client creates a new entity, it includes an entity in the request and asks the server to create a resource with the initial contents being the entity. 
-So what does this mean to distributed authoring? 
-I think the two main points are: A) Distributed authoring is about editing/creating resources - not entities! 
-This is in fact the root of the "editing the source" problem which I haven't seen discussed in the draft (unless I have missed something). 
-If the resource is a plain HTML file, then there is no difference between the resource and the entity included in the HTTP response - they contain exactly the same bytes. 
-In other words - good old file system semantics hold true and the entity can be edited directly. 
-However, if the resource represents dynamic contents, a data base view, a CGI script or a server side include then what you GET is not identical to the resource. 
-In this situation, file system semantics break down and the entity can in general not be edited directly. 
-B) Content negotiation is not a problem. 
-The client can always see if the entity has been negotiated or not. 
-If the server provided it with a Content-Location header it can use that when issuing a PUT request (libwww uses this) and if not then it relies on the server to pick the right location based on the entity tag. 
-The immediate solution to problem A) is to have two different methods for viewing (GET) and editing (EDIT). 
-However, this requires you always to explicitly contacting the server in order to edit a document. 
-Hence, off-line editing becomes very hard. 
-Also, in all the "plain HTML" cases, having different methods add extra overhead even though there is no difference between the result of the two methods. 
-New methods also have the problem that they don't pass old proxies very well. 
-Another solution is to have the server indicating when file system semantics do not hold true. 
-In order to avoid a new method this can be done by adding a "Link" header to the response indicating the location where the client can get the resource itself and not the entity generated as a response to a GET request. 
-In the case of a data base entry, this can be a HTML form for entering/editing data, and in the case of a CGI script or server side include (SSI), this is where the client can get the CGI program or the unparsed SSI file. 
-An example: GET /dynamic/contents.html 
-HTTP/1.1 Host: CGI-server HTTP/1.1 200 OK Link: source.cgi; 
-rel="source" etc. 
-In this examppe, the link URL is relative to the Request-URI. 
-It can of course also be pointing to another server as any other URL. 
-Thanks, Henrik 
-Since HTTP/1.1 allows GET with a body, why not use something like 
-GET URI HTTP/1.1 
-Document-Author: ID Want-Source: yes Authors-Credentials: whatever Version-Number: 4 
-to retrieve a specific version (given proper credentials, of course, to prevent general users from retrieving old versions). 
-Alternatively, a new method could be introduced like SGET to get source minus server side includes etc., but that's an issue for another message. 
-Gregory Woodhouse gjw@wnetc.com home page: http://www.wnetc.com/ 
-resource page: http://www.wnetc.com/resource/ 
-Because it completely destroys the idea of being able to link to an arbitrary document from an arbitrary HTML page using a single URI. 
-Schemes such as this require all the clients to be rewritten and promote the obsolete hypertext model the Web replaced. 
-The key advance of the web was to do away with the need for special editors, convoluted document repositories etc. 
-If information is an accessor for a document it bellongs in the URI, otherwise it does not. 
-The most that could be done with URIs at a lexical level would be to provide an assertion that the URI conformed to a lexical convention concerning version numbers. 
-If we are going to support collaborative authoring it better support divergent versions and at least a hierarchical organisation of the version resources. 
-Another point, we need to consider the definition of "set" objects, analogous to the old CMS classes and Groups. 
-a CMS group was a collection of resource entities. 
-A Class was a collection of 
-particular variants of a resource. 
-To make a release one would 
-create a class with the versions of the resources used to make that release. the groups were used simply to collect resources together into handy units. 
-We should be prepared to think beyond "files" however. 
-As anyone who has coded LISP will know files are not a usefull grouping for program objects. 
-Indeed there is no single such grouping. 
-Phill 
-I guess this depends on the role you expect document versioning to play in the first place. 
-If you intend that versions 1 and 2 of the same document should co-exisxt and poth should potentially be available to end users, then you are right: each should ahve its own URI. 
-On the other hand, if only one version should be available to to end users and old versions exist primarily for contnent developers, then I am not convinced. 
-This is a matter for access control, surely? 
-Why invent a new scheme when we already have a perfectly good one? 
-Don't forget that content developers are just end users with extra privilege. 
-I guess I have not bewen viewing multiple versions of a document as separate resources, and have therefore seen the version slection process to be essentially analogous to content negotiation. 
-This may be a faulty assumption. 
-But consider tht if a resource has variants, those variants MAY have their own URIs. 
-It is not required. 
-But if they don't have their own URIs you may not be able to determine how to select them. 
-Certainly not without new headers. 
-I like this idea. 
-If version numbers are totally ordered then it is not possible to have parallel development of separate versions. 
-Of course, unless parallel development paths are ordered then there is no concept of current version. 
-To expand the URL/parallel version model, you could do things like: the file a "user" gets version 1.2.3.4 of somefile (possibly including tagging information for version tracking) a list of versions the latest version of somefile with version tagging 
-Of course, these can be protected with various levels of access control. 
-I'm sure I had some more to say but I'm being more than a little distracted by the gale force winds currently blowing in London ;-) 
-Cheers, Ben. 
-Technical Director URL: http://www.algroup.co.uk/Apache-SSL A.L. Digital Ltd, Apache Group member (http://www.apache.org) 
-London, England. 
-Apache-SSL author 
-I guess this depends on the role you expect document versioning to play in the first place. 
-If you intend that versions 1 and 2 of the same document should co-exisxt and poth should potentially be available to end users, then you are right: each should ahve its own URI. 
-On the other hand, if only one version should be available to to end users and old versions exist primarily for contnent developers, then I am not convinced. 
-I guess I have not bewen viewing multiple versions of a document as separate resources, and have therefore seen the version slection process to be essentially analogous to content negotiation. 
-This may be a faulty assumption. 
-But consider tht if a resource has variants, those variants MAY have their own URIs. 
-It is not required. 
-I like this idea. 
-If version numbers are totally ordered then it is not 
-possible to have parallel development of separate versions. 
-Of course, unless parallel development paths are ordered then there is no concept of current version. 
-Gregory Woodhouse gjw@wnetc.com home page: http://www.wnetc.com/ 
-resource page: http://www.wnetc.com/resource/ 
-Regardless of who is going to interpret the URIs if it is a different resource or a different view on a resource it has another name. 
-The current version may depend on the beholder. 
-The document preparer may consider the current document to be the one in preparation, the customer the one that is published. 
-If the resource is a code fragment there may be reasons to select different versions in different contexts. 
-The Web as it stands is primarily a uniform mapping from URLs to resources. 
-Very few mappings depend upon the observer. 
-If you look at the hermeneutics stuff the presentation of material in the observers belief system is key. 
-If we could promote the www-authenticate tokens to URIs and pass them to the server (ie user hallam in realm ai.mit.edu becomes UID:hallam@ai.mit.edu) we can construct a principled method of presenting individuals with customized views. 
-This is one idea behind the session-id drafts. 
-This seems to argue in favour of a generalized "slot" for passing the context in which we want to view the document. 
-This might have multiple defaults. 
-One way of using such a "slot" would be to use a class (ie collection of versions) to view the state of a Web at a particular moment in time without having to web-whack all the URLs. 
-Phill 
-Re my remark: # When we add versioning, you can say that # a) versions apply to resources # or # b) versions apply to representations # and there is some temptation, for generality, to try to go down the 
-# road (b), but I want to argue that choice (a) is the choice you should # make. 
-Yaron responded: 
-I say we take the weasel way out and support both. 
-The draft already allows for this. 
-But actually, I meant to make a stronger case that you should NOT try to support choice (b): that is, don't try to allow for 'versioning' to apply to resources that don't have URLs. 
-The reason that you shouldn't 
-is that you'll have to invent some way of referring to the thing-that-is-versioned in order to talk about the version of it that you want, and that doing so will be hard, and you'll wind up with something that looks enough like a URL in the first place that you might as well have just required there to be a URL anyway. 
-The primary reason why content negotiation ALLOWS for multiple representations without specific URLs for each of those representations is to support those situations where the representation is computed on-the-fly, e.g., different charset encodings (EUC, Shift-JIS) of the same Japanese document, different image representations (GIF, PNG, JPEG) of the same original image, or just different pages constructed on the fly from a database. 
-I'd claim that in all of those situations, 'versioning' will not apply to the individual representations anyway. 
-Are there any situations you can imagine or explain where the versioned representations don't conveniently have URLs but should be versioned independently? 
-Larry 
-A representation (or entity -- same thing) is immutable, the way integers and URLs are immutable. 
-How many versions of the number 2 or the string "http://www.w3.org/" are there? 
-Well, a 'representation' isn't exactly the 'same thing' as an entity. 
-We're working in an area where there aren't enough precise terms. 
-It's very risky to try to make a 'plain logic' argument where we're primarily having difficulty with definitions of terms. 
-Let's try this out along a different dimension than content negotiation: HTTP supports 'range retrieval' as well as content negotiation. 
-Let's suppose that we allow range retrieval for 'pages' out of a single multi-page resource: request: Range: pages=1,2 without giving separate URLs for each page independently. 
-There's one URL: but I can either retrieve the whole thing or several pages at a time. 
-One might imagine wanting to 'version' the pages independently, e.g., "version 12 of page 7" and "version 9 of page 12" and even have some way of saying "version 10 of the chapter consists of version 23 of page 1, ... version 12 of page 7 ... version 9 of page 12 ....". 
-This isn't logically inconsistent, it's just implementationally difficult. 
-At least in the context of versioning, the part/whole relationship bears a strong resemblance to the representation/resource relationship. 
-Larry 
-In message 96Oct31.105634pdt."415911"@mule.parc.xerox.com 
-, Larry Masinter wri tes: 
-I say we take the weasel way out and support both. 
-The draft already allows 
-Let me make an even stronger case, based not on anectodal evicence, encouragement or rhetoric, but plain logic: 
-A representation (or entity -- same thing) is immutable, the way integers and URLs are immutable. 
-How many versions of the number 2 or the string "http://www.w3.org/" are there? 
-A representation is a sequence of bytes (the body) and a set of name/value string pairs in the header; all together, a sequence of bytes. 
-Look at it as a big base-256 integer. 
-It's still an integer, just like 2. No state. 
-No changes. 
-No versions. 
-A resource, on the other hand, has state, attributes, related resources (i.e. linked resources, or variants, or versions, ...) etc. 
-It's not directly observable: the only thing the world can know for sure about a resource is (1) it's URL, and (2) how it responds to requests like GET, and from that (3) which other resources are linked to/from it. 
-From the outside, files, database entries, program computation results, etc. are indistinguishable. 
-It makes perfect sense for an origin server to say (or for anybody to claim, for that matter) that: is the URL for a resource that represents version 1.2 of the resource at: But it makes no sense to say that the representation: Content-Type: text/plan abc is version 1.2 of the representation: Content-Type: text/plan def any more than it makes sense to say that the number 4 is version 1.2 of the number 2. Dan 
-If there are cases where variants are NOT computed on the fly, what should 
-happen when someone creates a new version of the resource (by editing one of 
-the variants)? 
-I assume the user would normally prefer for the other variants to be brought into synch automatically -- for new versions of them to be generated from the one he submitted. 
-Do we want to do anything to support this? 
---Judy Name:Judith A. Slein E-Mail:slein@wrc.xerox.com 
-MailStop:128-29E 
-# If there are cases where variants are NOT computed on the fly, what should 
-# happen when someone creates a new version of the resource (by editing one of 
-# the variants)? 
-I assume the user would normally prefer for the other # variants to be brought into synch automatically -- for new versions of them # to be generated from the one he submitted. 
-Do we want to do anything to # support this? 
-It depends on how the variants are computed. 
-If they can be automatically generated, you might want to update them automatically, but the state of language translation software, for example, isn't really up to automatically regenerating the French page from a new version of the English page, for example. 
-Since there's not a general solution, the question is whether we need or want to do anything in the protocol. 
-I don't think so. 
-An update (POST or whatever) to http://host.dom/dir/resource.en.html might or might not automatically affect the version of version of the (content-negotiated) http://host.dom/dir/resource.html 
-analogous to the situation that when you update chapter 1 of the book, you automatically update the whole book. 
-Another way to think of a resource that has variants that are not independently named as "multipart/alternative" content: all of the variations are there. 
-Think of a resource that has multiple parts as "multpart/mixed". 
-Larry 
-In message 96Oct31.115252pdt."415911"@mule.parc.xerox.com 
-, Larry Masinter wri tes: 
-Fair enough. 
-Let me make my context, or world-view clear. 
-I've been working on this issue of terminology for years, and in my world-view, representation and entity mean exactly the same thing. 
-I've written down their defintion, plus a whole lot of other definitions, at: The document isn't in a completely consistent state, but many of the definitions there are relavent and could be useful. 
-Because the terms 'representation' and 'entity' are somewhat overloaded and confused, I consider them synonyms of my preferred term, 'digital artifact': digital artifact some information represented as a sequence of octets (bytes) with an associated data format. 
-aka document, entity, entity body, body part, representation In contrast, consider: document 1.a collection of resources that form a unit of information that can be visited. 
-A document has an address. 
-The document consists of the object at that address, plus some other objects connected to that object. 
-aka Node in hypertext research literature. 
-Also known as a frame (KMS), card (Hypercard, Notecards). 
-Used with this special meaning in hypertext circles: do not confuse with "node" meaning "network host". 
-2.The object type with methods GET, PUT, POST, and DELETE. 
-3.see: digital artifact (c.f. 
-HTML spec, SGML spec) 4.see: resource resource an addressable unit of information or service in the Web. 
-Examples include files, images, documents, programs, query results, etc. aka object. 
-object By the way, as requested by Yaron, here's a definition for 'principal'. 
-principal the source of some messages; for example: persons, computers, and programs. 
-See: authentic authentic An authentic message is one that has been received as the sending principal intended. 
-Related failures include: Corruption -- machine malfunction Forgery -- intentional modification Version skew (see also: replica) Dan 
-one of 
-Yes indeed. 
-Whether representations are generated on the fly or not is an implementation detail - not subject for protocol definition. 
-The same is the case for CGI-script outputs - you can't see on a URL what it produces when you poke it (except from the cases where you peek into the URL and find tokens like "cgi-bin" or "htbin" :-)) 
-Not in response particularly to this mail but on the discussion on whether a resource has a name or not, it goes beyond my mind to understand how I can see something on my screen but I can't give it a name. 
-There is no such thing as nameless resources. 
-HTTP allows two situations to occur: 1) The server does send a Content-Location with the response in which case the client _may_ use this location for accessing this resource, for example to replace it with a new version. 
-2) The server does not send a Content-Location in which case for all the client knows the Request-URI _is_ the name of the resource. 
-The client _may_ want to use any entity tag to make sure that when it uploads a new version in order to make sure that the server can identify the previous version. 
-Henrik Henrik Frystyk Nielsen, frystyk@w3.org 
-World Wide Web Consortium, MIT/LCS NE43-356 545 Technology Square, Cambridge MA 02139, USA 
-I didn't want to place any constraints on whether variants are persistent or not. 
-I just wanted to suggest that we provide a way for a user who creates a new version of a resource to say "Please generate for this new version all the variants that existed for the previous version" or "Please generate the following variants for this version". 
-If it turned out that variants for the resource were always created on the fly, nothing would have to be done for this request. 
-If the server could not satisfy the request, ... well, we'd have to decide whether it should create the new version anyway or just fail. 
---Judy Name:Judith A. Slein E-Mail:slein@wrc.xerox.com 
-MailStop:128-29E 
-# I have a feeling that this is a matter for another group. 
-I know that # there has been a lot of talk about having standardized database access # over HTTP around here at MS. Has there already been a W3C or IETF # workgroup on the subject? 
-I'm unaware of any formal W3C or IETF workgroup on 'standardizing database access over HTTP', but part of that is that the scope of such things is enormous. 
-Actually, I think CommerceNet had such an activity at one time. 
-Larry 
+<s> You can't 'destroy' a URI.  </s>
+<s> You can ask to have a resource destroyed,  </s>
+<s> and the argument is the URI.  </s>
+<s> The HTTP committee struggled mightily with the terminology about resource/entity/variant, and came up with a set of definitions that I hope you adopt rather than reinterpret.  </s>
+<s> But it's important to be clear about what the operations operate on.  </s>
+<s> I _think_ that all of the operations apply to a resource, not to a URI which identifies a resource.  </s>
+<s> It is with some great difficulty tthat you will have to clarify whether versioning actually applies to content-negotiated resources (e.g., same URL but different renditions.) Do the 'attributes' apply to the resource, to the variant, to the version, or to some combination of them?  </s>
+<s> Why is the PEP draft mentioned in the references?  </s>
+<s> Larry  </s>
+<s> That's what I'm saying as well.  </s>
+<s> The bottom line is: if both the client and the server need to refer to the same thing, give it a name (i.e. a URL) and consider it a resource.  </s>
+<s> This is one reason why early attempts to "solve" the versioning problem ended up tied in knots.  </s>
+<s> If you decide that everything  </s>
+<s> has a URI and that the URI is all that is needed to retrieve a  </s>
+<s> resource its not possible to provide versioning through lexical  </s>
+<s> properties of the URIs.  </s>
+<s> Ie one cannot create a convention that  </s>
+<s> I agree with Dan that we have to name everything and keep to the  </s>
+<s> principle of only using one typr of URI rather than attempt  </s>
+<s> to create ad hoc accessors for "versions" of a URI.  </s>
+<s> What we have is not a resource with many versions but a collection of resources and a collection of assertions stating which resources are earlier variant of others.  </s>
+<s> Ie if we take the "fred" resource we may have the following URIs :- FredThe resource itself, the operation GET("Fred",t) returns the current value of Fred, the Fred of time t.  </s>
+<s> It is the "essence" of Fredishness.  </s>
+<s> Fred.v1Fred version 1, A Fred that is known to be immutable in time.  </s>
+<s> GET("Fred.v1", t) returns the same value for all values of t.  </s>
+<s> This value can be cached since it cannot change by definition.  </s>
+<s> Fred.v2Fred version 2, see above.  </s>
+<s> The advantage of separating the assertions from the resources is that we then have a scheme in which we can move the assertions about in lieu of objects.  </s>
+<s> If we want to synchronise two repositories we can do so by first exchanging the assertions as to which fred versions have changed.  </s>
+<s> The other key advantage of this approach is that because we have not relied on particular lexical properties of the labels (ie convention fred;3 fred;4 are versions 3,4 of fred) we can go to offline distributed authoring and make it work.  </s>
+<s> Consider the following scenario.  </s>
+<s> I have two machines, a laptop and a desk machine.  </s>
+<s> I work on projects on both machines, the two machines are only briefly in communication with each other so we have a continuing problem of synchronising two databases.  </s>
+<s> I'm using this example because I think it gets to the core of what is hard in the distributed authoring problem.  </s>
+<s> If we can solve this problem in a principled manner I think we can do the collaborative, multi-author one as well.  </s>
+<s> I also think that it is the key to making the Network computer something that would be an advance on our current systems rather than an Oracle/IBM big systems, MIS centric disaster.  </s>
+<s> There is a reason why the world has gone to Microsoft and some people just "don't get it", but thats a digression.  </s>
+<s> The rules for the laptop/desktop scenario are as follows:- 1) If compatible changes in the two databases are made the system synchronises transparently.  </s>
+<s> 2) If there are collisions the system responds with a semantic level merger of the two systems.  </s>
+<s> By "semantic" level I mean that the merger cannot be the CVS style lexical kludge.  </s>
+<s> The merger process must exploit structure or else it is all hopeless.  </s>
+<s> To make this work I think we need to consider carefully the nature of hypertext structure.  </s>
+<s> I believe that hypertext has structure in the broad scale that is as "cliched" as ordinary text but is beyond merely headings, paragraphs etc.  </s>
+<s> For example where there is a list of objects there is probably a need for a cliche which allows that list to be extended.  </s>
+<s> Anyone who has done requirements engineering will be familliar with a structure of text in which requirements and architecture have to be mutually cross linked.  </s>
+<s> The generation of tables of authorities, crossindexing and cross referencing is all part of this structure.  </s>
+<s> Phill  </s>
+<s> I think there's a design choice people are facing in trying to reconcile versioning and content negotiation, and I want to argue for one choice over another:  </s>
+<s> I have some metapoints on the draft and how it relates to HTTP that I don't think have been raised.  </s>
+<s> It took a long time before we got the terminology right in HTTP and without  </s>
+<s> doubt this caused the final specification to be delayed for some time.  </s>
+<s> The lesson to learn from this is that not having the basics right leads to major problems later on.  </s>
+<s> There were a couple of terminology issues that were not realized in the  </s>
+<s> HTTP work before very late in the process.  </s>
+<s> They may seem to be evident but let me recap them for a moment: 1) A resource is identified by a URL.  </s>
+<s> That is, no resource exists outside the URL name space and only resources are accessible through the Web. 2) HTTP transports entities - not resources.  </s>
+<s> An HTTP method performs an operation on the resource which in the classic case of "GET" generates a snapshot of what the resource looks like to this particular request.  </s>
+<s> Luckily, many requests are very similar and hence the result of a method can often be cached and reused by other clients.  </s>
+<s> Note, however, that an entity does not have a URL and hence is not a resource!  </s>
+<s> The entity tag or the date can be used by a client to verify that the cached entry is still valid in the sense that it still resembles the result produced by the resource when poked with a similar request.  </s>
+<s> 3) All entities in a HTTP response may be subject to content negotiation.  </s>
+<s> This includes error messages, redirections, and any other entity type.  </s>
+<s> Content negotiation is not limited to "200 OK" responses.  </s>
+<s> The server MUST use the vary header to indicate that the entity was negotiated as a function of the request.  </s>
+<s> The server may use the Content-Location header to indicate the exact location of the resource corresponding to a particular entity at the time of the request.  </s>
+<s> 4) A resource does not move from the origin server.  </s>
+<s> Unlike mail where the message is moved around on the Net, a resource stays on the origin server at all times.  </s>
+<s> When a client creates a new entity, it includes an entity in the request and asks the server to create a resource with the initial contents being the entity.  </s>
+<s> So what does this mean to distributed authoring?  </s>
+<s> I think the two main points are: A) Distributed authoring is about editing/creating resources - not entities!  </s>
+<s> This is in fact the root of the "editing the source" problem which I haven't seen discussed in the draft (unless I have missed something).  </s>
+<s> If the resource is a plain HTML file, then there is no difference between the resource and the entity included in the HTTP response - they contain exactly the same bytes.  </s>
+<s> In other words - good old file system semantics hold true and the entity can be edited directly.  </s>
+<s> However, if the resource represents dynamic contents, a data base view, a CGI script or a server side include then what you GET is not identical to the resource.  </s>
+<s> In this situation, file system semantics break down and the entity can in general not be edited directly.  </s>
+<s> B) Content negotiation is not a problem.  </s>
+<s> The client can always see if the entity has been negotiated or not.  </s>
+<s> If the server provided it with a Content-Location header it can use that when issuing a PUT request (libwww uses this) and if not then it relies on the server to pick the right location based on the entity tag.  </s>
+<s> The immediate solution to problem A) is to have two different methods for viewing (GET) and editing (EDIT).  </s>
+<s> However, this requires you always to explicitly contacting the server in order to edit a document.  </s>
+<s> Hence, off-line editing becomes very hard.  </s>
+<s> Also, in all the "plain HTML" cases, having different methods add extra overhead even though there is no difference between the result of the two methods.  </s>
+<s> New methods also have the problem that they don't pass old proxies very well.  </s>
+<s> Another solution is to have the server indicating when file system semantics do not hold true.  </s>
+<s> In order to avoid a new method this can be done by adding a "Link" header to the response indicating the location where the client can get the resource itself and not the entity generated as a response to a GET request.  </s>
+<s> In the case of a data base entry, this can be a HTML form for entering/editing data, and in the case of a CGI script or server side include (SSI), this is where the client can get the CGI program or the unparsed SSI file.  </s>
+<s> An example: GET /dynamic/contents.html  </s>
+<s> HTTP/1.1 Host: CGI-server HTTP/1.1 200 OK Link: source.cgi;  </s>
+<s> rel="source" etc.  </s>
+<s> In this examppe, the link URL is relative to the Request-URI.  </s>
+<s> It can of course also be pointing to another server as any other URL.  </s>
+<s> Thanks, Henrik  </s>
+<s> Since HTTP/1.1 allows GET with a body, why not use something like  </s>
+<s> GET URI HTTP/1.1  </s>
+<s> Document-Author: ID Want-Source: yes Authors-Credentials: whatever Version-Number: 4  </s>
+<s> to retrieve a specific version (given proper credentials, of course, to prevent general users from retrieving old versions).  </s>
+<s> Alternatively, a new method could be introduced like SGET to get source minus server side includes etc., but that's an issue for another message.  </s>
+<s> Gregory Woodhouse gjw@wnetc.com home page: http://www.wnetc.com/  </s>
+<s> resource page: http://www.wnetc.com/resource/  </s>
+<s> Because it completely destroys the idea of being able to link to an arbitrary document from an arbitrary HTML page using a single URI.  </s>
+<s> Schemes such as this require all the clients to be rewritten and promote the obsolete hypertext model the Web replaced.  </s>
+<s> The key advance of the web was to do away with the need for special editors, convoluted document repositories etc.  </s>
+<s> If information is an accessor for a document it bellongs in the URI, otherwise it does not.  </s>
+<s> The most that could be done with URIs at a lexical level would be to provide an assertion that the URI conformed to a lexical convention concerning version numbers.  </s>
+<s> If we are going to support collaborative authoring it better support divergent versions and at least a hierarchical organisation of the version resources.  </s>
+<s> Another point, we need to consider the definition of "set" objects, analogous to the old CMS classes and Groups.  </s>
+<s> a CMS group was a collection of resource entities.  </s>
+<s> A Class was a collection of  </s>
+<s> particular variants of a resource.  </s>
+<s> To make a release one would  </s>
+<s> create a class with the versions of the resources used to make that release. the groups were used simply to collect resources together into handy units.  </s>
+<s> We should be prepared to think beyond "files" however.  </s>
+<s> As anyone who has coded LISP will know files are not a usefull grouping for program objects.  </s>
+<s> Indeed there is no single such grouping.  </s>
+<s> Phill  </s>
+<s> I guess this depends on the role you expect document versioning to play in the first place.  </s>
+<s> If you intend that versions 1 and 2 of the same document should co-exisxt and poth should potentially be available to end users, then you are right: each should ahve its own URI.  </s>
+<s> On the other hand, if only one version should be available to to end users and old versions exist primarily for contnent developers, then I am not convinced.  </s>
+<s> This is a matter for access control, surely?  </s>
+<s> Why invent a new scheme when we already have a perfectly good one?  </s>
+<s> Don't forget that content developers are just end users with extra privilege.  </s>
+<s> I guess I have not bewen viewing multiple versions of a document as separate resources, and have therefore seen the version slection process to be essentially analogous to content negotiation.  </s>
+<s> This may be a faulty assumption.  </s>
+<s> But consider tht if a resource has variants, those variants MAY have their own URIs.  </s>
+<s> It is not required.  </s>
+<s> But if they don't have their own URIs you may not be able to determine how to select them.  </s>
+<s> Certainly not without new headers.  </s>
+<s> I like this idea.  </s>
+<s> If version numbers are totally ordered then it is not possible to have parallel development of separate versions.  </s>
+<s> Of course, unless parallel development paths are ordered then there is no concept of current version.  </s>
+<s> To expand the URL/parallel version model, you could do things like: the file a "user" gets version 1.2.3.4 of somefile (possibly including tagging information for version tracking) a list of versions the latest version of somefile with version tagging  </s>
+<s> Of course, these can be protected with various levels of access control.  </s>
+<s> I'm sure I had some more to say but I'm being more than a little distracted by the gale force winds currently blowing in London ;-)  </s>
+<s> Cheers, Ben.  </s>
+<s> Technical Director URL: http://www.algroup.co.uk/Apache-SSL A.L. Digital Ltd, Apache Group member (http://www.apache.org)  </s>
+<s> London, England.  </s>
+<s> Apache-SSL author  </s>
+<s> I guess this depends on the role you expect document versioning to play in the first place.  </s>
+<s> If you intend that versions 1 and 2 of the same document should co-exisxt and poth should potentially be available to end users, then you are right: each should ahve its own URI.  </s>
+<s> On the other hand, if only one version should be available to to end users and old versions exist primarily for contnent developers, then I am not convinced.  </s>
+<s> I guess I have not bewen viewing multiple versions of a document as separate resources, and have therefore seen the version slection process to be essentially analogous to content negotiation.  </s>
+<s> This may be a faulty assumption.  </s>
+<s> But consider tht if a resource has variants, those variants MAY have their own URIs.  </s>
+<s> It is not required.  </s>
+<s> I like this idea.  </s>
+<s> If version numbers are totally ordered then it is not  </s>
+<s> possible to have parallel development of separate versions.  </s>
+<s> Of course, unless parallel development paths are ordered then there is no concept of current version.  </s>
+<s> Gregory Woodhouse gjw@wnetc.com home page: http://www.wnetc.com/  </s>
+<s> resource page: http://www.wnetc.com/resource/  </s>
+<s> Regardless of who is going to interpret the URIs if it is a different resource or a different view on a resource it has another name.  </s>
+<s> The current version may depend on the beholder.  </s>
+<s> The document preparer may consider the current document to be the one in preparation, the customer the one that is published.  </s>
+<s> If the resource is a code fragment there may be reasons to select different versions in different contexts.  </s>
+<s> The Web as it stands is primarily a uniform mapping from URLs to resources.  </s>
+<s> Very few mappings depend upon the observer.  </s>
+<s> If you look at the hermeneutics stuff the presentation of material in the observers belief system is key.  </s>
+<s> If we could promote the www-authenticate tokens to URIs and pass them to the server (ie user hallam in realm ai.mit.edu becomes UID:hallam@ai.mit.edu) we can construct a principled method of presenting individuals with customized views.  </s>
+<s> This is one idea behind the session-id drafts.  </s>
+<s> This seems to argue in favour of a generalized "slot" for passing the context in which we want to view the document.  </s>
+<s> This might have multiple defaults.  </s>
+<s> One way of using such a "slot" would be to use a class (ie collection of versions) to view the state of a Web at a particular moment in time without having to web-whack all the URLs.  </s>
+<s> Phill  </s>
+<s> Re my remark: # When we add versioning, you can say that # a) versions apply to resources # or # b) versions apply to representations # and there is some temptation, for generality, to try to go down the  </s>
+<s> # road (b), but I want to argue that choice (a) is the choice you should # make.  </s>
+<s> Yaron responded:  </s>
+<s> I say we take the weasel way out and support both.  </s>
+<s> The draft already allows for this.  </s>
+<s> But actually, I meant to make a stronger case that you should NOT try to support choice (b): that is, don't try to allow for 'versioning' to apply to resources that don't have URLs.  </s>
+<s> The reason that you shouldn't  </s>
+<s> is that you'll have to invent some way of referring to the thing-that-is-versioned in order to talk about the version of it that you want, and that doing so will be hard, and you'll wind up with something that looks enough like a URL in the first place that you might as well have just required there to be a URL anyway.  </s>
+<s> The primary reason why content negotiation ALLOWS for multiple representations without specific URLs for each of those representations is to support those situations where the representation is computed on-the-fly, e.g., different charset encodings (EUC, Shift-JIS) of the same Japanese document, different image representations (GIF, PNG, JPEG) of the same original image, or just different pages constructed on the fly from a database.  </s>
+<s> I'd claim that in all of those situations, 'versioning' will not apply to the individual representations anyway.  </s>
+<s> Are there any situations you can imagine or explain where the versioned representations don't conveniently have URLs but should be versioned independently?  </s>
+<s> Larry  </s>
+<s> A representation (or entity -- same thing) is immutable, the way integers and URLs are immutable.  </s>
+<s> How many versions of the number 2 or the string "http://www.w3.org/" are there?  </s>
+<s> Well, a 'representation' isn't exactly the 'same thing' as an entity.  </s>
+<s> We're working in an area where there aren't enough precise terms.  </s>
+<s> It's very risky to try to make a 'plain logic' argument where we're primarily having difficulty with definitions of terms.  </s>
+<s> Let's try this out along a different dimension than content negotiation: HTTP supports 'range retrieval' as well as content negotiation.  </s>
+<s> Let's suppose that we allow range retrieval for 'pages' out of a single multi-page resource: request: Range: pages=1,2 without giving separate URLs for each page independently.  </s>
+<s> There's one URL: but I can either retrieve the whole thing or several pages at a time.  </s>
+<s> One might imagine wanting to 'version' the pages independently, e.g., "version 12 of page 7" and "version 9 of page 12" and even have some way of saying "version 10 of the chapter consists of version 23 of page 1, ... version 12 of page 7 ... version 9 of page 12 ....".  </s>
+<s> This isn't logically inconsistent, it's just implementationally difficult.  </s>
+<s> At least in the context of versioning, the part/whole relationship bears a strong resemblance to the representation/resource relationship.  </s>
+<s> Larry  </s>
+<s> In message 96Oct31.105634pdt."415911"@mule.parc.xerox.com  </s>
+<s> , Larry Masinter wri tes:  </s>
+<s> I say we take the weasel way out and support both.  </s>
+<s> The draft already allows  </s>
+<s> Let me make an even stronger case, based not on anectodal evicence, encouragement or rhetoric, but plain logic:  </s>
+<s> A representation (or entity -- same thing) is immutable, the way integers and URLs are immutable.  </s>
+<s> How many versions of the number 2 or the string "http://www.w3.org/" are there?  </s>
+<s> A representation is a sequence of bytes (the body) and a set of name/value string pairs in the header; all together, a sequence of bytes.  </s>
+<s> Look at it as a big base-256 integer.  </s>
+<s> It's still an integer, just like 2. No state.  </s>
+<s> No changes.  </s>
+<s> No versions.  </s>
+<s> A resource, on the other hand, has state, attributes, related resources (i.e. linked resources, or variants, or versions, ...) etc.  </s>
+<s> It's not directly observable: the only thing the world can know for sure about a resource is (1) it's URL, and (2) how it responds to requests like GET, and from that (3) which other resources are linked to/from it.  </s>
+<s> From the outside, files, database entries, program computation results, etc. are indistinguishable.  </s>
+<s> It makes perfect sense for an origin server to say (or for anybody to claim, for that matter) that: is the URL for a resource that represents version 1.2 of the resource at: But it makes no sense to say that the representation: Content-Type: text/plan abc is version 1.2 of the representation: Content-Type: text/plan def any more than it makes sense to say that the number 4 is version 1.2 of the number 2. Dan  </s>
+<s> If there are cases where variants are NOT computed on the fly, what should  </s>
+<s> happen when someone creates a new version of the resource (by editing one of  </s>
+<s> the variants)?  </s>
+<s> I assume the user would normally prefer for the other variants to be brought into synch automatically -- for new versions of them to be generated from the one he submitted.  </s>
+<s> Do we want to do anything to support this?  </s>
+<s> --Judy Name:Judith A. Slein E-Mail:slein@wrc.xerox.com  </s>
+<s> MailStop:128-29E  </s>
+<s> # If there are cases where variants are NOT computed on the fly, what should  </s>
+<s> # happen when someone creates a new version of the resource (by editing one of  </s>
+<s> # the variants)?  </s>
+<s> I assume the user would normally prefer for the other # variants to be brought into synch automatically -- for new versions of them # to be generated from the one he submitted.  </s>
+<s> Do we want to do anything to # support this?  </s>
+<s> It depends on how the variants are computed.  </s>
+<s> If they can be automatically generated, you might want to update them automatically, but the state of language translation software, for example, isn't really up to automatically regenerating the French page from a new version of the English page, for example.  </s>
+<s> Since there's not a general solution, the question is whether we need or want to do anything in the protocol.  </s>
+<s> I don't think so.  </s>
+<s> An update (POST or whatever) to http://host.dom/dir/resource.en.html might or might not automatically affect the version of version of the (content-negotiated) http://host.dom/dir/resource.html  </s>
+<s> analogous to the situation that when you update chapter 1 of the book, you automatically update the whole book.  </s>
+<s> Another way to think of a resource that has variants that are not independently named as "multipart/alternative" content: all of the variations are there.  </s>
+<s> Think of a resource that has multiple parts as "multpart/mixed".  </s>
+<s> Larry  </s>
+<s> In message 96Oct31.115252pdt."415911"@mule.parc.xerox.com  </s>
+<s> , Larry Masinter wri tes:  </s>
+<s> Fair enough.  </s>
+<s> Let me make my context, or world-view clear.  </s>
+<s> I've been working on this issue of terminology for years, and in my world-view, representation and entity mean exactly the same thing.  </s>
+<s> I've written down their defintion, plus a whole lot of other definitions, at: The document isn't in a completely consistent state, but many of the definitions there are relavent and could be useful.  </s>
+<s> Because the terms 'representation' and 'entity' are somewhat overloaded and confused, I consider them synonyms of my preferred term, 'digital artifact': digital artifact some information represented as a sequence of octets (bytes) with an associated data format.  </s>
+<s> aka document, entity, entity body, body part, representation In contrast, consider: document 1.a collection of resources that form a unit of information that can be visited.  </s>
+<s> A document has an address.  </s>
+<s> The document consists of the object at that address, plus some other objects connected to that object.  </s>
+<s> aka Node in hypertext research literature.  </s>
+<s> Also known as a frame (KMS), card (Hypercard, Notecards).  </s>
+<s> Used with this special meaning in hypertext circles: do not confuse with "node" meaning "network host".  </s>
+<s> 2.The object type with methods GET, PUT, POST, and DELETE.  </s>
+<s> 3.see: digital artifact (c.f.  </s>
+<s> HTML spec, SGML spec) 4.see: resource resource an addressable unit of information or service in the Web.  </s>
+<s> Examples include files, images, documents, programs, query results, etc. aka object.  </s>
+<s> object By the way, as requested by Yaron, here's a definition for 'principal'.  </s>
+<s> principal the source of some messages; for example: persons, computers, and programs.  </s>
+<s> See: authentic authentic An authentic message is one that has been received as the sending principal intended.  </s>
+<s> Related failures include: Corruption -- machine malfunction Forgery -- intentional modification Version skew (see also: replica) Dan  </s>
+<s> one of  </s>
+<s> Yes indeed.  </s>
+<s> Whether representations are generated on the fly or not is an implementation detail - not subject for protocol definition.  </s>
+<s> The same is the case for CGI-script outputs - you can't see on a URL what it produces when you poke it (except from the cases where you peek into the URL and find tokens like "cgi-bin" or "htbin" :-))  </s>
+<s> Not in response particularly to this mail but on the discussion on whether a resource has a name or not, it goes beyond my mind to understand how I can see something on my screen but I can't give it a name.  </s>
+<s> There is no such thing as nameless resources.  </s>
+<s> HTTP allows two situations to occur: 1) The server does send a Content-Location with the response in which case the client _may_ use this location for accessing this resource, for example to replace it with a new version.  </s>
+<s> 2) The server does not send a Content-Location in which case for all the client knows the Request-URI _is_ the name of the resource.  </s>
+<s> The client _may_ want to use any entity tag to make sure that when it uploads a new version in order to make sure that the server can identify the previous version.  </s>
+<s> Henrik Henrik Frystyk Nielsen, frystyk@w3.org  </s>
+<s> World Wide Web Consortium, MIT/LCS NE43-356 545 Technology Square, Cambridge MA 02139, USA  </s>
+<s> I didn't want to place any constraints on whether variants are persistent or not.  </s>
+<s> I just wanted to suggest that we provide a way for a user who creates a new version of a resource to say "Please generate for this new version all the variants that existed for the previous version" or "Please generate the following variants for this version".  </s>
+<s> If it turned out that variants for the resource were always created on the fly, nothing would have to be done for this request.  </s>
+<s> If the server could not satisfy the request, ... well, we'd have to decide whether it should create the new version anyway or just fail.  </s>
+<s> --Judy Name:Judith A. Slein E-Mail:slein@wrc.xerox.com  </s>
+<s> MailStop:128-29E  </s>
+<s> # I have a feeling that this is a matter for another group.  </s>
+<s> I know that # there has been a lot of talk about having standardized database access # over HTTP around here at MS. Has there already been a W3C or IETF # workgroup on the subject?  </s>
+<s> I'm unaware of any formal W3C or IETF workgroup on 'standardizing database access over HTTP', but part of that is that the scope of such things is enormous.  </s>
+<s> Actually, I think CommerceNet had such an activity at one time.  </s>
+<s> Larry  </s>

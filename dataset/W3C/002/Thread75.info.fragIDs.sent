@@ -1,25 +1,25 @@
-Dave -- I noticed the following on your "Notes on Pending Work" web page: "Omri Traub would like an option to wrap the contents of style and script elements in CDATA marked sections when converting to XHTML." 
-I need the same support since validating XML parsers reject the currently produced Tidy output when a script contains &amp;&amp; for example. 
-I don't have a c compiler. 
-However, I've changed the java and it works for me. 
-The changes in the c code would look like this: In pprint.c, 
-function PPrintTree, I've changed the code from this: else if (node- tag == tag_style || node- tag == tag_script) PCondFlushLine(fout, indent); indent = 0; PCondFlushLine(fout, indent); PPrintTag(lexer, fout, mode, indent, node); PFlushLine(fout, indent); for (content = node- content; content != null; content = content- next) PPrintTree(fout, (mode | PREFORMATTED | NOWRAP |CDATA), indent, lexer, content); PCondFlushLine(fout, indent); PPrintEndTag(fout, mode, indent, node); PFlushLine(fout, indent); if (IndentContent == no &amp;&amp; node- next != null) PFlushLine(fout, indent); to this: else if (node- tag == tag_style || node- tag == tag_script) PCondFlushLine(fout, indent); indent = 0; /*** not sure why this is here is it is immediately preceeded by PCondFlushLine PCondFlushLine(fout, indent); *****/ PPrintTag(lexer, fout, mode, indent, node); PFlushLine(fout, indent); /** start newly inserted code **/ if (xHTML) { savewraplen = wraplen; wraplen = 0xFFFFFF; /* disable wrapping */ AddC(' ', linelen++); AddC('!', linelen++); AddC('[', linelen++); AddC('C', linelen++); AddC('D', linelen++); AddC('A', linelen++); AddC('T', linelen++); AddC('A', linelen++); AddC('[', linelen++); PCondFlushLine(fout, indent); wraplen = savewraplen; /** end newly inserted code **/ for (content = node- content; content != null; content = content- next) PPrintTree(fout, (mode | PREFORMATTED | NOWRAP |CDATA), indent, lexer, content); PCondFlushLine(fout, indent); /** start newly inserted code **/ if (xHTML) { savewraplen = wraplen; wraplen = 0xFFFFFF; /* disable wrapping */ AddC(']', linelen++); AddC(']', linelen++); AddC(' ', linelen++); PCondFlushLine(fout, indent); wraplen = savewraplen; /** end newly inserted code **/ PPrintEndTag(fout, mode, indent, node); PFlushLine(fout, indent); if (IndentContent == no &amp;&amp; node- next != null) PFlushLine(fout, indent); Also, I added uint savewraplen; up at the top of the PPrintTree function, after Node *content, *last; I'm not sure if this is the best way to report suggested code changes to you but, if there is some alternative procedure, I apologize for cluttering up the mailing list and will resubmit. 
-Gary 
-Hi Gary, I'm using JTidy to convert HTML to XHTML and also need to wrap scripts in CDATA. 
-I was wondering if you could post the changes that you made to the Java version of Tidy to accomplish this. 
-Thanks in advance, Tieu Luu 
-Tieu -- These are basically the same changes as the c code. 
-However, here it is: In class PPrint, method printTree, the changes look like this: else if (node.tag == TagTable.tagStyle 
-|| node.tag == TagTable.tagScript) 
-{ condFlushLine(fout, indent); indent = 0; // condFlushLine(fout, indent); LINE REMOVED AS REDUNDANT printTag(lexer, fout, mode, indent, node); flushLine(fout, indent); // Start of added code if (this.configuration.xHTML) 
-{ int savewraplen = this.configuration.wraplen; 
-/* disable wrapping */ this.configuration.wraplen 
-= 0xFFFFFF; /* a very large number */ addC(' ', linelen++); addC('!', linelen++); addC('[', linelen++); addC('C', linelen++); addC('D', linelen++); addC('A', linelen++); addC('T', linelen++); addC('A', linelen++); addC('[', linelen++); condFlushLine(fout, indent); this.configuration.wraplen 
-= savewraplen; // End of added code for (content = node.content; 
-content != null; content = content.next) 
-printTree(fout, (short)(mode | PREFORMATTED | NOWRAP |CDATA), indent, lexer, content); condFlushLine(fout, indent); // Start of added code if (this.configuration.xHTML) 
-{ int savewraplen = this.configuration.wraplen; 
-/* disable wrapping */ this.configuration.wraplen 
-= 0xFFFFFF; /* a very large number */ addC(']', linelen++); addC(']', linelen++); addC(' ', linelen++); condFlushLine(fout, indent); this.configuration.wraplen 
-= savewraplen; // End of added code printEndTag(fout, mode, indent, node); flushLine(fout, indent); if (this.configuration.IndentContent 
-== false &amp;&amp; node.next != null) flushLine(fout, indent); HTH, Gary 
+<s> Dave -- I noticed the following on your "Notes on Pending Work" web page: "Omri Traub would like an option to wrap the contents of style and script elements in CDATA marked sections when converting to XHTML."  </s>
+<s> I need the same support since validating XML parsers reject the currently produced Tidy output when a script contains &amp;&amp; for example.  </s>
+<s> I don't have a c compiler.  </s>
+<s> However, I've changed the java and it works for me.  </s>
+<s> The changes in the c code would look like this: In pprint.c,  </s>
+<s> function PPrintTree, I've changed the code from this: else if (node- tag == tag_style || node- tag == tag_script) PCondFlushLine(fout, indent); indent = 0; PCondFlushLine(fout, indent); PPrintTag(lexer, fout, mode, indent, node); PFlushLine(fout, indent); for (content = node- content; content != null; content = content- next) PPrintTree(fout, (mode | PREFORMATTED | NOWRAP |CDATA), indent, lexer, content); PCondFlushLine(fout, indent); PPrintEndTag(fout, mode, indent, node); PFlushLine(fout, indent); if (IndentContent == no &amp;&amp; node- next != null) PFlushLine(fout, indent); to this: else if (node- tag == tag_style || node- tag == tag_script) PCondFlushLine(fout, indent); indent = 0; /*** not sure why this is here is it is immediately preceeded by PCondFlushLine PCondFlushLine(fout, indent); *****/ PPrintTag(lexer, fout, mode, indent, node); PFlushLine(fout, indent); /** start newly inserted code **/ if (xHTML) { savewraplen = wraplen; wraplen = 0xFFFFFF; /* disable wrapping */ AddC(' ', linelen++); AddC('!', linelen++); AddC('[', linelen++); AddC('C', linelen++); AddC('D', linelen++); AddC('A', linelen++); AddC('T', linelen++); AddC('A', linelen++); AddC('[', linelen++); PCondFlushLine(fout, indent); wraplen = savewraplen; /** end newly inserted code **/ for (content = node- content; content != null; content = content- next) PPrintTree(fout, (mode | PREFORMATTED | NOWRAP |CDATA), indent, lexer, content); PCondFlushLine(fout, indent); /** start newly inserted code **/ if (xHTML) { savewraplen = wraplen; wraplen = 0xFFFFFF; /* disable wrapping */ AddC(']', linelen++); AddC(']', linelen++); AddC(' ', linelen++); PCondFlushLine(fout, indent); wraplen = savewraplen; /** end newly inserted code **/ PPrintEndTag(fout, mode, indent, node); PFlushLine(fout, indent); if (IndentContent == no &amp;&amp; node- next != null) PFlushLine(fout, indent); Also, I added uint savewraplen; up at the top of the PPrintTree function, after Node *content, *last; I'm not sure if this is the best way to report suggested code changes to you but, if there is some alternative procedure, I apologize for cluttering up the mailing list and will resubmit.  </s>
+<s> Gary  </s>
+<s> Hi Gary, I'm using JTidy to convert HTML to XHTML and also need to wrap scripts in CDATA.  </s>
+<s> I was wondering if you could post the changes that you made to the Java version of Tidy to accomplish this.  </s>
+<s> Thanks in advance, Tieu Luu  </s>
+<s> Tieu -- These are basically the same changes as the c code.  </s>
+<s> However, here it is: In class PPrint, method printTree, the changes look like this: else if (node.tag == TagTable.tagStyle  </s>
+<s> || node.tag == TagTable.tagScript)  </s>
+<s> { condFlushLine(fout, indent); indent = 0; // condFlushLine(fout, indent); LINE REMOVED AS REDUNDANT printTag(lexer, fout, mode, indent, node); flushLine(fout, indent); // Start of added code if (this.configuration.xHTML)  </s>
+<s> { int savewraplen = this.configuration.wraplen;  </s>
+<s> /* disable wrapping */ this.configuration.wraplen  </s>
+<s> = 0xFFFFFF; /* a very large number */ addC(' ', linelen++); addC('!', linelen++); addC('[', linelen++); addC('C', linelen++); addC('D', linelen++); addC('A', linelen++); addC('T', linelen++); addC('A', linelen++); addC('[', linelen++); condFlushLine(fout, indent); this.configuration.wraplen  </s>
+<s> = savewraplen; // End of added code for (content = node.content;  </s>
+<s> content != null; content = content.next)  </s>
+<s> printTree(fout, (short)(mode | PREFORMATTED | NOWRAP |CDATA), indent, lexer, content); condFlushLine(fout, indent); // Start of added code if (this.configuration.xHTML)  </s>
+<s> { int savewraplen = this.configuration.wraplen;  </s>
+<s> /* disable wrapping */ this.configuration.wraplen  </s>
+<s> = 0xFFFFFF; /* a very large number */ addC(']', linelen++); addC(']', linelen++); addC(' ', linelen++); condFlushLine(fout, indent); this.configuration.wraplen  </s>
+<s> = savewraplen; // End of added code printEndTag(fout, mode, indent, node); flushLine(fout, indent); if (this.configuration.IndentContent  </s>
+<s> == false &amp;&amp; node.next != null) flushLine(fout, indent); HTH, Gary  </s>

@@ -1,101 +1,101 @@
-Hi, I implemented the DNames encoding in 4.4.4 
-The X509Data Element. 
-But I feel uneasy because there are no DNames encoding examples in the recommendation. 
-Does anyone know documents of encoded DName? 
-Harada-san: May I ask whether your difficulty with the examples is the absence of 
-non-ASCII characters in the example DN's in 4.4.4, the absence of the escapable characters from those examples, or the fact that the example certificates are truncated to very short lengths? 
-RFC 2253 says that the encoding of DN's is UTF-8 (of which ASCII is a subset), and the heuristic given is fairly clear, although you're supposed to encode DN's in XML by using the same character set as the rest of the document. 
-An ASCII example with escapable characters would be: 
-X509IssuerName CN=J. 
-Random Nerd, O=Dewey\, Cheatham\, \+ Howe, L=Nowhere, ST=AK, C=US /X509IssuerName I can't easily give you non-ASCII UTF-8 characters in this medium. 
-Tom Gindin "Harada" harada@prs.cs.fujitsu.co.jp @w3.org on 03/05/2002 03:13:46 AM Sent by: w3c-ietf-xmldsig-request@w3.org 
-Subject: Are there DName encoding samples? 
-Hi, I implemented the DNames encoding in 4.4.4 
-The X509Data Element. 
-But I feel uneasy because there are no DNames encoding examples in the recommendation. 
-Does anyone know documents of encoded DName? 
-Gindin-san Thank you very much. 
-I was led into wrong way missing a simple example. 
-I know little RFC 2253, and my processor produces as: X509IssuerName CN=J. 
-Random Nerd\, O=Dewey\, Cheatham\, \+ Howe\, L=Nowhere\, ST=AK\, C=US /X509IssuerName It's my misunderstanding. 
-of 
-Hi, This is an report of DName encoding implementation. 
-I tried implementing the encoding, and find something and report it. 
-For Java and MS Crypto, DNames seem to be encoded. 
-For an example of Java, the DName got by the API is X509SubjectName CN=HARADA\"KAZUYUKI \", OU="#Project,A+XML;Kiban", O="FUJITSU\\limited;", L="YOKOAMA SI", ST=KANAGAWA KEN, C=JP /X509SubjectName (I succeeded containing letters #x11, #x1C, #x0A by keytool.) Similar DName in another key store, (I cannot creat a csr containing the letters #x11,.. for it, so I replaced the letters to spaces.) X509SubjectName CN=HARADA\"KAZUYUKI \", OU="#Project,A+XML;Kiban", O="FUJITSU\\limited;", L="YOKO AMA SI", ST="KANAGAWA KEN ", C=JP, EMAILADDRESS=harada@prs.cs.fujitsu.co.jp /X509SubjectName And exporting this certificate to pfx file and importing to MS Crypto, I get a XML Signature of X509SubjectName E=harada@prs.cs.fujitsu.co.jp, C=JP, S="KANAGAWA KEN ", L=YOKO AMA SI, O="FUJITSU\limited;", OU="#Project,A+XML;Kiban", CN="HARADA""KAZUYUKI """ /X509SubjectName Now I am thinking my signature processor SHOULD NOT escaping the letters : ",", "+", """, "\", " ", " ", ";", or beggining "#". 
-(It is escaped in obedience to MS or Java API.) And my processor SHOULD escape characters of Unicode range \x00 - \x1f. 
-I am a little confused by the procedure here. 
-You're not supposed to escape anything in creating the certificate, just in creating the X509Data fields. 
-If you do that, the fact that running this transform multiple times in the same direction produces different results than running it once should not hurt you. 
-My impression was that the transform defined in the spec defined what should happen when you convert the certificate's DER (or BER) encoding of a Distinguished Name to XML. 
-You may need to code a reverse transform into either DER or RFC 2253 format to reach the format other API's want. 
-In particular, that reverse transform will need to get rid of entity definitions like &amp;gt. 
-The problems this leaves seem to be restricted to quote framing - the different results for ST and L (obviously determined by the trailing space), and the bizarre result for CN, are things which an implementation would need to avoid. 
-The work you are doing seems quite valuable. 
-Good luck! 
-Tom Gindin "Harada" harada@prs.cs.fujitsu.co.jp @w3.org on 03/09/2002 12:40:21 AM Sent by: w3c-ietf-xmldsig-request@w3.org 
-Subject: Re: Are there DName encoding samples? 
-Hi, This is an report of DName encoding implementation. 
-I tried implementing the encoding, and find something and report it. 
-For Java and MS Crypto, DNames seem to be encoded. 
-For an example of Java, the DName got by the API is X509SubjectName CN=HARADA\"KAZUYUKI \", OU="#Project,A+XML;Kiban", O="FUJITSU\\limited;", L="YOKOAMA SI", ST=KANAGAWA KEN, C=JP /X509SubjectName (I succeeded containing letters #x11, #x1C, #x0A by keytool.) Similar DName in another key store, (I cannot creat a csr containing the letters #x11,.. for it, so I replaced the letters to spaces.) X509SubjectName CN=HARADA\"KAZUYUKI \", OU="#Project,A+XML;Kiban", O="FUJITSU\\limited;", L="YOKO AMA SI", ST="KANAGAWA KEN ", C=JP, EMAILADDRESS=harada@prs.cs.fujitsu.co.jp /X509SubjectName And exporting this certificate to pfx file and importing to MS Crypto, I get a XML Signature of X509SubjectName E=harada@prs.cs.fujitsu.co.jp, C=JP, S="KANAGAWA KEN ", L=YOKO AMA SI, O="FUJITSU\limited;", OU="#Project,A+XML;Kiban", CN="HARADA""KAZUYUKI """ /X509SubjectName Now I am thinking my signature processor SHOULD NOT escaping the letters : ",", "+", """, "\", " ", " ", ";", or beggining "#". 
-(It is escaped in obedience to MS or Java API.) And my processor SHOULD escape characters of Unicode range \x00 - \x1f. 
-Gindin-san This is an additional information of the process creating the previous e-mail's XML Signature. 
-I created the examples not to escape by my processor. 
-I used JDK1.4 on Windows 98, and Internet Explorer 5.5. 1) The first example is created by a key generated by a batch file of the 
-following. 
-(I entered the letters #x11,.. to the batch file by debug command .) keytool -genkey -alias alias -keyalg RSA -keysize 2048 -sigalg SHA1withRSA -dname "CN=HARADA\"KAZUYUKI \", OU=\#Project\,A\+XML\;\ Kiban\ , O=\"FUJITSU\\limited;\", L=YOKOAMA SI , S=\"KANAGAWA KEN \", C=JP" -keypass keypass -storepass storepass -v And I created a XML Signature for the key of "alias". 
-2) The second example is created for a certificate by Fujitsu's tool . 
-(If there are the letters #x11.. , the command fails. 
-So I don't set.) "%SMEE_HOME%\cmmakecsr" -ed "%CMIPATH%" -sd "%SLOTPATH%" -tl tokenLabel -of D:\src\dom\dsig\tool\smee.csr -f TEXT -c JP -cn "HARADA\"KAZUYUKI \"" -o FUJITSU\limited; -ou "#Project,A+XML; Kiban " -ea harada@prs.cs.fujitsu.co.jp -l "YOKO AMA SI" -s "KANAGAWA KEN " -sa SHA1 -kt RSA -kb 2048 -p keypass And the resulting CSR file is Common Name: HARADA"KAZUYUKI " Country: JP Email Address: harada@prs.cs.fujitsu.co.jp Organization: FUJITSU\limited; Organization Unit: #Project,A+XML; Kiban State: KANAGAWA KEN Locality: YOKO AMA SI -----BEGIN NEW CERTIFICATE REQUEST----- MIIDBjCCAe4CAQAwgcAxGjAYBgNVBAMTEUhBUkFEQSJLQVpVWVVLSSAiMQswCQYDVQQGEwJKUDEq MCgGCSqGSIb3DQEJARYbaGFyYWRhQHBycy5jcy5mdWppdHN1LmNvLmpwMRkwFwYDVQQKExBGVUpJ VFNVXGxpbWl0ZWQ7MR8wHQYDVQQLExYjUHJvamVjdCxBK1hNTDs8S2liYW4+MRYwFAYDVQQIEw1L QU5BR0FXQSBLRU4gMRUwEwYDVQQHEwxZT0tPIEFNQSAgU0kwggEiMA0GCSqGSIb3DQEBAQUAA4IB DwAwggEKAoIBAQCEEf/BOfR7XsRMQslKK5PRK7W5eUEuIZzO0bnL5txiL1EnpnAFLoUlbCB/jkzJ Mg2DjP0Zw9UxpXlXDjrThc44WKKIQQZqCuiUqlI+YuQqB0JEUbL/lu+X7rfYLhA9i9vV9fOpTmHX WD/KMoIzpQHhpmnluu8LOF6aHvE2B4DG/489NzkOu4j3U9LRZExZqoX55JBk6a6OLzsc1x9GJ0EV vBfA6gYETTkrDXoIkVRkN68CnMhQd56HVbSEXueBmRGdz6F/Qv0gRHXOvDIsVCbMJGBJJsyIYT9t 1bTNtxkV8NvQMNDIF903CsyatynPwRQaaE8w3O3tnmiv4PvdEQVXAgMBAAGgADANBgkqhkiG9w0B AQUFAAOCAQEAABJ9/X/p3GnCxqfB7tho6NXrbNW2VOvw2wF8/bGzsdItE0KY1QVfhAKMBoXK4oP3 mDweAYS5KQXgYse0BXdOlReOiYkhlKcJGf9i425PHdK2Z74KDnMhtaavQdfkvbOAe1dvfNZ0/z8v qb8l1ysJKuXBzJjWuKEeTHXvBy9GCyTmfD3JloFBozGAQ6YvWhy+4rY6e3SfsB+zX0BmmiGlE5QT E4kksJDVpFdEO0xhHIL8t0mWW9ENyURThFkAFieTyp4IpaWINYFkqlp8o75+is4gTIXKi0mgsSFE nTyJcQIbY5zPyGWOqbbQIcFtu+Qwv7PPfLnAidekQXrqvanS0g== -----END NEW CERTIFICATE REQUEST----- I created a XML Signature for a key of the certificate. 
-3) The third is created by importing the pfx file that I exported the second example's key by a Fujitsu's tool. 
-I don't add the pfx file's information but I believe the ceritificate is the same as the second example. 
-Unicode #x11 causes error as XML document, so I think I should escape the letters #x00-#x1F. 
-But it is too difficult for me to decode DNames got by MS or Java API and to encode correctly. 
-I am a little confused by the procedure here. 
-You're not supposed to escape anything in creating the certificate, just in creating the X509Data fields. 
-If you do that, the fact that running this transform multiple times in the same direction produces different results than running it once should not hurt you. 
-My impression was that the transform defined in the spec defined what should happen when you convert the certificate's DER (or BER) encoding of a Distinguished Name to XML. 
-You may need to code a reverse transform into either DER or RFC 2253 format to reach the format other API's want. 
-In particular, that reverse transform will need to get rid of entity definitions like &amp;gt. 
-The problems this leaves seem to be restricted to quote framing - the different results for ST and L (obviously determined by the trailing space), and the bizarre result for CN, are things which an implementation would need to avoid. 
-The work you are doing seems quite valuable. 
-Good luck! 
-Tom Gindin "Harada" harada@prs.cs.fujitsu.co.jp @w3.org on 03/09/2002 12:40:21 AM Sent by: w3c-ietf-xmldsig-request@w3.org 
-Hi, This is an report of DName encoding implementation. 
-I tried implementing the encoding, and find something and report it. 
-For Java and MS Crypto, DNames seem to be encoded. 
-For an example of Java, the DName got by the API is X509SubjectName CN=HARADA\"KAZUYUKI \", OU="#Project,A+XML;Kiban", O="FUJITSU\\limited;", L="YOKOAMA SI", ST=KANAGAWA KEN, C=JP /X509SubjectName (I succeeded containing letters #x11, #x1C, #x0A by keytool.) Similar DName in another key store, (I cannot creat a csr containing the letters #x11,.. for it, so I replaced the letters to spaces.) X509SubjectName CN=HARADA\"KAZUYUKI \", OU="#Project,A+XML;Kiban", O="FUJITSU\\limited;", L="YOKO AMA SI", ST="KANAGAWA KEN ", C=JP, EMAILADDRESS=harada@prs.cs.fujitsu.co.jp /X509SubjectName And exporting this certificate to pfx file and importing to MS Crypto, I get a XML Signature of X509SubjectName E=harada@prs.cs.fujitsu.co.jp, C=JP, S="KANAGAWA KEN ", L=YOKO AMA SI, O="FUJITSU\limited;", OU="#Project,A+XML;Kiban", CN="HARADA""KAZUYUKI """ /X509SubjectName Now I am thinking my signature processor SHOULD NOT escaping the letters : ",", "+", """, "\", " ", " ", ";", or beggining "#". 
-(It is escaped in obedience to MS or Java API.) And my processor SHOULD escape characters of Unicode range \x00 - \x1f. 
------ Original Message ----- 
-Looking at the output and considering the input, the only things clearly wrong are the following: 1 The Java API is dropping trailing spaces (see the ST field) unless they are surrounded by quotes. 
-The input fed to the Java API probably needs to convert an escaped trailing space to be framed by quotes or to #32. 2 The MS API thinks that two consecutive double quotes is the correct escape for a double quote. 
-This can be post-processed easily enough. 
-Tom Gindin "Harada" harada@prs.cs.fujitsu.co.jp on 03/10/2002 07:39:55 PM Subject: Re: Are there DName encoding samples? 
-Gindin-san This is an additional information of the process creating the previous e-mail's XML Signature. 
-I created the examples not to escape by my processor. 
-I used JDK1.4 on Windows 98, and Internet Explorer 5.5. 1) The first example is created by a key generated by a batch file of the following. 
-(I entered the letters #x11,.. to the batch file by debug command .) keytool -genkey -alias alias -keyalg RSA -keysize 2048 -sigalg SHA1withRSA -dname "CN=HARADA\"KAZUYUKI \", OU=\#Project\,A\+XML\;\ Kiban\ , O=\"FUJITSU\\limited;\", L=YOKOAMA SI , S=\"KANAGAWA KEN \", C=JP" -keypass keypass -storepass storepass -v And I created a XML Signature for the key of "alias". 
-2) The second example is created for a certificate by Fujitsu's tool . 
-(If there are the letters #x11.. , the command fails. 
-So I don't set.) "%SMEE_HOME%\cmmakecsr" -ed "%CMIPATH%" -sd "%SLOTPATH%" -tl tokenLabel -of D:\src\dom\dsig\tool\smee.csr -f TEXT -c JP -cn "HARADA\"KAZUYUKI \"" -o FUJITSU\limited; -ou "#Project,A+XML; Kiban " -ea harada@prs.cs.fujitsu.co.jp -l "YOKO AMA SI" -s "KANAGAWA KEN " -sa SHA1 -kt RSA -kb 2048 -p keypass And the resulting CSR file is Common Name: HARADA"KAZUYUKI " Country: JP Email Address: harada@prs.cs.fujitsu.co.jp Organization: FUJITSU\limited; Organization Unit: #Project,A+XML; Kiban State: KANAGAWA KEN Locality: YOKO AMA SI -----BEGIN NEW CERTIFICATE REQUEST----- MIIDBjCCAe4CAQAwgcAxGjAYBgNVBAMTEUhBUkFEQSJLQVpVWVVLSSAiMQswCQYDVQQGEwJKUDEq MCgGCSqGSIb3DQEJARYbaGFyYWRhQHBycy5jcy5mdWppdHN1LmNvLmpwMRkwFwYDVQQKExBGVUpJ VFNVXGxpbWl0ZWQ7MR8wHQYDVQQLExYjUHJvamVjdCxBK1hNTDs8S2liYW4+MRYwFAYDVQQIEw1L QU5BR0FXQSBLRU4gMRUwEwYDVQQHEwxZT0tPIEFNQSAgU0kwggEiMA0GCSqGSIb3DQEBAQUAA4IB DwAwggEKAoIBAQCEEf/BOfR7XsRMQslKK5PRK7W5eUEuIZzO0bnL5txiL1EnpnAFLoUlbCB/jkzJ Mg2DjP0Zw9UxpXlXDjrThc44WKKIQQZqCuiUqlI+YuQqB0JEUbL/lu+X7rfYLhA9i9vV9fOpTmHX WD/KMoIzpQHhpmnluu8LOF6aHvE2B4DG/489NzkOu4j3U9LRZExZqoX55JBk6a6OLzsc1x9GJ0EV vBfA6gYETTkrDXoIkVRkN68CnMhQd56HVbSEXueBmRGdz6F/Qv0gRHXOvDIsVCbMJGBJJsyIYT9t 1bTNtxkV8NvQMNDIF903CsyatynPwRQaaE8w3O3tnmiv4PvdEQVXAgMBAAGgADANBgkqhkiG9w0B AQUFAAOCAQEAABJ9/X/p3GnCxqfB7tho6NXrbNW2VOvw2wF8/bGzsdItE0KY1QVfhAKMBoXK4oP3 mDweAYS5KQXgYse0BXdOlReOiYkhlKcJGf9i425PHdK2Z74KDnMhtaavQdfkvbOAe1dvfNZ0/z8v qb8l1ysJKuXBzJjWuKEeTHXvBy9GCyTmfD3JloFBozGAQ6YvWhy+4rY6e3SfsB+zX0BmmiGlE5QT E4kksJDVpFdEO0xhHIL8t0mWW9ENyURThFkAFieTyp4IpaWINYFkqlp8o75+is4gTIXKi0mgsSFE nTyJcQIbY5zPyGWOqbbQIcFtu+Qwv7PPfLnAidekQXrqvanS0g== -----END NEW CERTIFICATE REQUEST----- I created a XML Signature for a key of the certificate. 
-3) The third is created by importing the pfx file that I exported the second example's key by a Fujitsu's tool. 
-I don't add the pfx file's information but I believe the ceritificate is the same as the second example. 
-Unicode #x11 causes error as XML document, so I think I should escape the letters #x00-#x1F. 
-But it is too difficult for me to decode DNames got by MS or Java API and to encode correctly. 
-I am a little confused by the procedure here. 
-You're not supposed to escape anything in creating the certificate, just in creating the X509Data fields. 
-If you do that, the fact that running this transform multiple times in the same direction produces different results than running it once should not hurt you. 
-My impression was that the transform defined in the spec defined what should happen when you convert the certificate's DER (or BER) encoding of a Distinguished Name to XML. 
-You may need to code a reverse transform into either DER or RFC 2253 format to reach the format other API's want. 
-In particular, that reverse transform will need to get rid of entity definitions like &amp;gt. 
-The problems this leaves seem to be restricted to quote framing - the different results for ST and L (obviously determined by the trailing space), and the bizarre result for CN, are things which an implementation would need to avoid. 
-The work you are doing seems quite valuable. 
-Good luck! 
-Tom Gindin "Harada" harada@prs.cs.fujitsu.co.jp @w3.org on 03/09/2002 12:40:21 AM Sent by: w3c-ietf-xmldsig-request@w3.org 
-Hi, This is an report of DName encoding implementation. 
-I tried implementing the encoding, and find something and report it. 
-For Java and MS Crypto, DNames seem to be encoded. 
-For an example of Java, the DName got by the API is X509SubjectName CN=HARADA\"KAZUYUKI \", OU="#Project,A+XML;Kiban", O="FUJITSU\\limited;", L="YOKOAMA SI", ST=KANAGAWA KEN, C=JP /X509SubjectName (I succeeded containing letters #x11, #x1C, #x0A by keytool.) Similar DName in another key store, (I cannot creat a csr containing the letters #x11,.. for it, so I replaced the letters to spaces.) X509SubjectName CN=HARADA\"KAZUYUKI \", OU="#Project,A+XML;Kiban", O="FUJITSU\\limited;", L="YOKO AMA SI", ST="KANAGAWA KEN ", C=JP, EMAILADDRESS=harada@prs.cs.fujitsu.co.jp /X509SubjectName And exporting this certificate to pfx file and importing to MS Crypto, I get a XML Signature of X509SubjectName E=harada@prs.cs.fujitsu.co.jp, C=JP, S="KANAGAWA KEN ", L=YOKO AMA SI, O="FUJITSU\limited;", OU="#Project,A+XML;Kiban", CN="HARADA""KAZUYUKI """ /X509SubjectName Now I am thinking my signature processor SHOULD NOT escaping the letters : ",", "+", """, "\", " ", " ", ";", or beggining "#". 
-(It is escaped in obedience to MS or Java API.) And my processor SHOULD escape characters of Unicode range \x00 - \x1f. 
------ Original Message ----- 
+<s> Hi, I implemented the DNames encoding in 4.4.4  </s>
+<s> The X509Data Element.  </s>
+<s> But I feel uneasy because there are no DNames encoding examples in the recommendation.  </s>
+<s> Does anyone know documents of encoded DName?  </s>
+<s> Harada-san: May I ask whether your difficulty with the examples is the absence of  </s>
+<s> non-ASCII characters in the example DN's in 4.4.4, the absence of the escapable characters from those examples, or the fact that the example certificates are truncated to very short lengths?  </s>
+<s> RFC 2253 says that the encoding of DN's is UTF-8 (of which ASCII is a subset), and the heuristic given is fairly clear, although you're supposed to encode DN's in XML by using the same character set as the rest of the document.  </s>
+<s> An ASCII example with escapable characters would be:  </s>
+<s> X509IssuerName CN=J.  </s>
+<s> Random Nerd, O=Dewey\, Cheatham\, \+ Howe, L=Nowhere, ST=AK, C=US /X509IssuerName I can't easily give you non-ASCII UTF-8 characters in this medium.  </s>
+<s> Tom Gindin "Harada" harada@prs.cs.fujitsu.co.jp @w3.org on 03/05/2002 03:13:46 AM Sent by: w3c-ietf-xmldsig-request@w3.org  </s>
+<s> Subject: Are there DName encoding samples?  </s>
+<s> Hi, I implemented the DNames encoding in 4.4.4  </s>
+<s> The X509Data Element.  </s>
+<s> But I feel uneasy because there are no DNames encoding examples in the recommendation.  </s>
+<s> Does anyone know documents of encoded DName?  </s>
+<s> Gindin-san Thank you very much.  </s>
+<s> I was led into wrong way missing a simple example.  </s>
+<s> I know little RFC 2253, and my processor produces as: X509IssuerName CN=J.  </s>
+<s> Random Nerd\, O=Dewey\, Cheatham\, \+ Howe\, L=Nowhere\, ST=AK\, C=US /X509IssuerName It's my misunderstanding.  </s>
+<s> of  </s>
+<s> Hi, This is an report of DName encoding implementation.  </s>
+<s> I tried implementing the encoding, and find something and report it.  </s>
+<s> For Java and MS Crypto, DNames seem to be encoded.  </s>
+<s> For an example of Java, the DName got by the API is X509SubjectName CN=HARADA\"KAZUYUKI \", OU="#Project,A+XML;Kiban", O="FUJITSU\\limited;", L="YOKOAMA SI", ST=KANAGAWA KEN, C=JP /X509SubjectName (I succeeded containing letters #x11, #x1C, #x0A by keytool.) Similar DName in another key store, (I cannot creat a csr containing the letters #x11,.. for it, so I replaced the letters to spaces.) X509SubjectName CN=HARADA\"KAZUYUKI \", OU="#Project,A+XML;Kiban", O="FUJITSU\\limited;", L="YOKO AMA SI", ST="KANAGAWA KEN ", C=JP, EMAILADDRESS=harada@prs.cs.fujitsu.co.jp /X509SubjectName And exporting this certificate to pfx file and importing to MS Crypto, I get a XML Signature of X509SubjectName E=harada@prs.cs.fujitsu.co.jp, C=JP, S="KANAGAWA KEN ", L=YOKO AMA SI, O="FUJITSU\limited;", OU="#Project,A+XML;Kiban", CN="HARADA""KAZUYUKI """ /X509SubjectName Now I am thinking my signature processor SHOULD NOT escaping the letters : ",", "+", """, "\", " ", " ", ";", or beggining "#".  </s>
+<s> (It is escaped in obedience to MS or Java API.) And my processor SHOULD escape characters of Unicode range \x00 - \x1f.  </s>
+<s> I am a little confused by the procedure here.  </s>
+<s> You're not supposed to escape anything in creating the certificate, just in creating the X509Data fields.  </s>
+<s> If you do that, the fact that running this transform multiple times in the same direction produces different results than running it once should not hurt you.  </s>
+<s> My impression was that the transform defined in the spec defined what should happen when you convert the certificate's DER (or BER) encoding of a Distinguished Name to XML.  </s>
+<s> You may need to code a reverse transform into either DER or RFC 2253 format to reach the format other API's want.  </s>
+<s> In particular, that reverse transform will need to get rid of entity definitions like &amp;gt.  </s>
+<s> The problems this leaves seem to be restricted to quote framing - the different results for ST and L (obviously determined by the trailing space), and the bizarre result for CN, are things which an implementation would need to avoid.  </s>
+<s> The work you are doing seems quite valuable.  </s>
+<s> Good luck!  </s>
+<s> Tom Gindin "Harada" harada@prs.cs.fujitsu.co.jp @w3.org on 03/09/2002 12:40:21 AM Sent by: w3c-ietf-xmldsig-request@w3.org  </s>
+<s> Subject: Re: Are there DName encoding samples?  </s>
+<s> Hi, This is an report of DName encoding implementation.  </s>
+<s> I tried implementing the encoding, and find something and report it.  </s>
+<s> For Java and MS Crypto, DNames seem to be encoded.  </s>
+<s> For an example of Java, the DName got by the API is X509SubjectName CN=HARADA\"KAZUYUKI \", OU="#Project,A+XML;Kiban", O="FUJITSU\\limited;", L="YOKOAMA SI", ST=KANAGAWA KEN, C=JP /X509SubjectName (I succeeded containing letters #x11, #x1C, #x0A by keytool.) Similar DName in another key store, (I cannot creat a csr containing the letters #x11,.. for it, so I replaced the letters to spaces.) X509SubjectName CN=HARADA\"KAZUYUKI \", OU="#Project,A+XML;Kiban", O="FUJITSU\\limited;", L="YOKO AMA SI", ST="KANAGAWA KEN ", C=JP, EMAILADDRESS=harada@prs.cs.fujitsu.co.jp /X509SubjectName And exporting this certificate to pfx file and importing to MS Crypto, I get a XML Signature of X509SubjectName E=harada@prs.cs.fujitsu.co.jp, C=JP, S="KANAGAWA KEN ", L=YOKO AMA SI, O="FUJITSU\limited;", OU="#Project,A+XML;Kiban", CN="HARADA""KAZUYUKI """ /X509SubjectName Now I am thinking my signature processor SHOULD NOT escaping the letters : ",", "+", """, "\", " ", " ", ";", or beggining "#".  </s>
+<s> (It is escaped in obedience to MS or Java API.) And my processor SHOULD escape characters of Unicode range \x00 - \x1f.  </s>
+<s> Gindin-san This is an additional information of the process creating the previous e-mail's XML Signature.  </s>
+<s> I created the examples not to escape by my processor.  </s>
+<s> I used JDK1.4 on Windows 98, and Internet Explorer 5.5. 1) The first example is created by a key generated by a batch file of the  </s>
+<s> following.  </s>
+<s> (I entered the letters #x11,.. to the batch file by debug command .) keytool -genkey -alias alias -keyalg RSA -keysize 2048 -sigalg SHA1withRSA -dname "CN=HARADA\"KAZUYUKI \", OU=\#Project\,A\+XML\;\ Kiban\ , O=\"FUJITSU\\limited;\", L=YOKOAMA SI , S=\"KANAGAWA KEN \", C=JP" -keypass keypass -storepass storepass -v And I created a XML Signature for the key of "alias".  </s>
+<s> 2) The second example is created for a certificate by Fujitsu's tool .  </s>
+<s> (If there are the letters #x11.. , the command fails.  </s>
+<s> So I don't set.) "%SMEE_HOME%\cmmakecsr" -ed "%CMIPATH%" -sd "%SLOTPATH%" -tl tokenLabel -of D:\src\dom\dsig\tool\smee.csr -f TEXT -c JP -cn "HARADA\"KAZUYUKI \"" -o FUJITSU\limited; -ou "#Project,A+XML; Kiban " -ea harada@prs.cs.fujitsu.co.jp -l "YOKO AMA SI" -s "KANAGAWA KEN " -sa SHA1 -kt RSA -kb 2048 -p keypass And the resulting CSR file is Common Name: HARADA"KAZUYUKI " Country: JP Email Address: harada@prs.cs.fujitsu.co.jp Organization: FUJITSU\limited; Organization Unit: #Project,A+XML; Kiban State: KANAGAWA KEN Locality: YOKO AMA SI -----BEGIN NEW CERTIFICATE REQUEST----- MIIDBjCCAe4CAQAwgcAxGjAYBgNVBAMTEUhBUkFEQSJLQVpVWVVLSSAiMQswCQYDVQQGEwJKUDEq MCgGCSqGSIb3DQEJARYbaGFyYWRhQHBycy5jcy5mdWppdHN1LmNvLmpwMRkwFwYDVQQKExBGVUpJ VFNVXGxpbWl0ZWQ7MR8wHQYDVQQLExYjUHJvamVjdCxBK1hNTDs8S2liYW4+MRYwFAYDVQQIEw1L QU5BR0FXQSBLRU4gMRUwEwYDVQQHEwxZT0tPIEFNQSAgU0kwggEiMA0GCSqGSIb3DQEBAQUAA4IB DwAwggEKAoIBAQCEEf/BOfR7XsRMQslKK5PRK7W5eUEuIZzO0bnL5txiL1EnpnAFLoUlbCB/jkzJ Mg2DjP0Zw9UxpXlXDjrThc44WKKIQQZqCuiUqlI+YuQqB0JEUbL/lu+X7rfYLhA9i9vV9fOpTmHX WD/KMoIzpQHhpmnluu8LOF6aHvE2B4DG/489NzkOu4j3U9LRZExZqoX55JBk6a6OLzsc1x9GJ0EV vBfA6gYETTkrDXoIkVRkN68CnMhQd56HVbSEXueBmRGdz6F/Qv0gRHXOvDIsVCbMJGBJJsyIYT9t 1bTNtxkV8NvQMNDIF903CsyatynPwRQaaE8w3O3tnmiv4PvdEQVXAgMBAAGgADANBgkqhkiG9w0B AQUFAAOCAQEAABJ9/X/p3GnCxqfB7tho6NXrbNW2VOvw2wF8/bGzsdItE0KY1QVfhAKMBoXK4oP3 mDweAYS5KQXgYse0BXdOlReOiYkhlKcJGf9i425PHdK2Z74KDnMhtaavQdfkvbOAe1dvfNZ0/z8v qb8l1ysJKuXBzJjWuKEeTHXvBy9GCyTmfD3JloFBozGAQ6YvWhy+4rY6e3SfsB+zX0BmmiGlE5QT E4kksJDVpFdEO0xhHIL8t0mWW9ENyURThFkAFieTyp4IpaWINYFkqlp8o75+is4gTIXKi0mgsSFE nTyJcQIbY5zPyGWOqbbQIcFtu+Qwv7PPfLnAidekQXrqvanS0g== -----END NEW CERTIFICATE REQUEST----- I created a XML Signature for a key of the certificate.  </s>
+<s> 3) The third is created by importing the pfx file that I exported the second example's key by a Fujitsu's tool.  </s>
+<s> I don't add the pfx file's information but I believe the ceritificate is the same as the second example.  </s>
+<s> Unicode #x11 causes error as XML document, so I think I should escape the letters #x00-#x1F.  </s>
+<s> But it is too difficult for me to decode DNames got by MS or Java API and to encode correctly.  </s>
+<s> I am a little confused by the procedure here.  </s>
+<s> You're not supposed to escape anything in creating the certificate, just in creating the X509Data fields.  </s>
+<s> If you do that, the fact that running this transform multiple times in the same direction produces different results than running it once should not hurt you.  </s>
+<s> My impression was that the transform defined in the spec defined what should happen when you convert the certificate's DER (or BER) encoding of a Distinguished Name to XML.  </s>
+<s> You may need to code a reverse transform into either DER or RFC 2253 format to reach the format other API's want.  </s>
+<s> In particular, that reverse transform will need to get rid of entity definitions like &amp;gt.  </s>
+<s> The problems this leaves seem to be restricted to quote framing - the different results for ST and L (obviously determined by the trailing space), and the bizarre result for CN, are things which an implementation would need to avoid.  </s>
+<s> The work you are doing seems quite valuable.  </s>
+<s> Good luck!  </s>
+<s> Tom Gindin "Harada" harada@prs.cs.fujitsu.co.jp @w3.org on 03/09/2002 12:40:21 AM Sent by: w3c-ietf-xmldsig-request@w3.org  </s>
+<s> Hi, This is an report of DName encoding implementation.  </s>
+<s> I tried implementing the encoding, and find something and report it.  </s>
+<s> For Java and MS Crypto, DNames seem to be encoded.  </s>
+<s> For an example of Java, the DName got by the API is X509SubjectName CN=HARADA\"KAZUYUKI \", OU="#Project,A+XML;Kiban", O="FUJITSU\\limited;", L="YOKOAMA SI", ST=KANAGAWA KEN, C=JP /X509SubjectName (I succeeded containing letters #x11, #x1C, #x0A by keytool.) Similar DName in another key store, (I cannot creat a csr containing the letters #x11,.. for it, so I replaced the letters to spaces.) X509SubjectName CN=HARADA\"KAZUYUKI \", OU="#Project,A+XML;Kiban", O="FUJITSU\\limited;", L="YOKO AMA SI", ST="KANAGAWA KEN ", C=JP, EMAILADDRESS=harada@prs.cs.fujitsu.co.jp /X509SubjectName And exporting this certificate to pfx file and importing to MS Crypto, I get a XML Signature of X509SubjectName E=harada@prs.cs.fujitsu.co.jp, C=JP, S="KANAGAWA KEN ", L=YOKO AMA SI, O="FUJITSU\limited;", OU="#Project,A+XML;Kiban", CN="HARADA""KAZUYUKI """ /X509SubjectName Now I am thinking my signature processor SHOULD NOT escaping the letters : ",", "+", """, "\", " ", " ", ";", or beggining "#".  </s>
+<s> (It is escaped in obedience to MS or Java API.) And my processor SHOULD escape characters of Unicode range \x00 - \x1f.  </s>
+<s> ----- Original Message -----  </s>
+<s> Looking at the output and considering the input, the only things clearly wrong are the following: 1 The Java API is dropping trailing spaces (see the ST field) unless they are surrounded by quotes.  </s>
+<s> The input fed to the Java API probably needs to convert an escaped trailing space to be framed by quotes or to #32. 2 The MS API thinks that two consecutive double quotes is the correct escape for a double quote.  </s>
+<s> This can be post-processed easily enough.  </s>
+<s> Tom Gindin "Harada" harada@prs.cs.fujitsu.co.jp on 03/10/2002 07:39:55 PM Subject: Re: Are there DName encoding samples?  </s>
+<s> Gindin-san This is an additional information of the process creating the previous e-mail's XML Signature.  </s>
+<s> I created the examples not to escape by my processor.  </s>
+<s> I used JDK1.4 on Windows 98, and Internet Explorer 5.5. 1) The first example is created by a key generated by a batch file of the following.  </s>
+<s> (I entered the letters #x11,.. to the batch file by debug command .) keytool -genkey -alias alias -keyalg RSA -keysize 2048 -sigalg SHA1withRSA -dname "CN=HARADA\"KAZUYUKI \", OU=\#Project\,A\+XML\;\ Kiban\ , O=\"FUJITSU\\limited;\", L=YOKOAMA SI , S=\"KANAGAWA KEN \", C=JP" -keypass keypass -storepass storepass -v And I created a XML Signature for the key of "alias".  </s>
+<s> 2) The second example is created for a certificate by Fujitsu's tool .  </s>
+<s> (If there are the letters #x11.. , the command fails.  </s>
+<s> So I don't set.) "%SMEE_HOME%\cmmakecsr" -ed "%CMIPATH%" -sd "%SLOTPATH%" -tl tokenLabel -of D:\src\dom\dsig\tool\smee.csr -f TEXT -c JP -cn "HARADA\"KAZUYUKI \"" -o FUJITSU\limited; -ou "#Project,A+XML; Kiban " -ea harada@prs.cs.fujitsu.co.jp -l "YOKO AMA SI" -s "KANAGAWA KEN " -sa SHA1 -kt RSA -kb 2048 -p keypass And the resulting CSR file is Common Name: HARADA"KAZUYUKI " Country: JP Email Address: harada@prs.cs.fujitsu.co.jp Organization: FUJITSU\limited; Organization Unit: #Project,A+XML; Kiban State: KANAGAWA KEN Locality: YOKO AMA SI -----BEGIN NEW CERTIFICATE REQUEST----- MIIDBjCCAe4CAQAwgcAxGjAYBgNVBAMTEUhBUkFEQSJLQVpVWVVLSSAiMQswCQYDVQQGEwJKUDEq MCgGCSqGSIb3DQEJARYbaGFyYWRhQHBycy5jcy5mdWppdHN1LmNvLmpwMRkwFwYDVQQKExBGVUpJ VFNVXGxpbWl0ZWQ7MR8wHQYDVQQLExYjUHJvamVjdCxBK1hNTDs8S2liYW4+MRYwFAYDVQQIEw1L QU5BR0FXQSBLRU4gMRUwEwYDVQQHEwxZT0tPIEFNQSAgU0kwggEiMA0GCSqGSIb3DQEBAQUAA4IB DwAwggEKAoIBAQCEEf/BOfR7XsRMQslKK5PRK7W5eUEuIZzO0bnL5txiL1EnpnAFLoUlbCB/jkzJ Mg2DjP0Zw9UxpXlXDjrThc44WKKIQQZqCuiUqlI+YuQqB0JEUbL/lu+X7rfYLhA9i9vV9fOpTmHX WD/KMoIzpQHhpmnluu8LOF6aHvE2B4DG/489NzkOu4j3U9LRZExZqoX55JBk6a6OLzsc1x9GJ0EV vBfA6gYETTkrDXoIkVRkN68CnMhQd56HVbSEXueBmRGdz6F/Qv0gRHXOvDIsVCbMJGBJJsyIYT9t 1bTNtxkV8NvQMNDIF903CsyatynPwRQaaE8w3O3tnmiv4PvdEQVXAgMBAAGgADANBgkqhkiG9w0B AQUFAAOCAQEAABJ9/X/p3GnCxqfB7tho6NXrbNW2VOvw2wF8/bGzsdItE0KY1QVfhAKMBoXK4oP3 mDweAYS5KQXgYse0BXdOlReOiYkhlKcJGf9i425PHdK2Z74KDnMhtaavQdfkvbOAe1dvfNZ0/z8v qb8l1ysJKuXBzJjWuKEeTHXvBy9GCyTmfD3JloFBozGAQ6YvWhy+4rY6e3SfsB+zX0BmmiGlE5QT E4kksJDVpFdEO0xhHIL8t0mWW9ENyURThFkAFieTyp4IpaWINYFkqlp8o75+is4gTIXKi0mgsSFE nTyJcQIbY5zPyGWOqbbQIcFtu+Qwv7PPfLnAidekQXrqvanS0g== -----END NEW CERTIFICATE REQUEST----- I created a XML Signature for a key of the certificate.  </s>
+<s> 3) The third is created by importing the pfx file that I exported the second example's key by a Fujitsu's tool.  </s>
+<s> I don't add the pfx file's information but I believe the ceritificate is the same as the second example.  </s>
+<s> Unicode #x11 causes error as XML document, so I think I should escape the letters #x00-#x1F.  </s>
+<s> But it is too difficult for me to decode DNames got by MS or Java API and to encode correctly.  </s>
+<s> I am a little confused by the procedure here.  </s>
+<s> You're not supposed to escape anything in creating the certificate, just in creating the X509Data fields.  </s>
+<s> If you do that, the fact that running this transform multiple times in the same direction produces different results than running it once should not hurt you.  </s>
+<s> My impression was that the transform defined in the spec defined what should happen when you convert the certificate's DER (or BER) encoding of a Distinguished Name to XML.  </s>
+<s> You may need to code a reverse transform into either DER or RFC 2253 format to reach the format other API's want.  </s>
+<s> In particular, that reverse transform will need to get rid of entity definitions like &amp;gt.  </s>
+<s> The problems this leaves seem to be restricted to quote framing - the different results for ST and L (obviously determined by the trailing space), and the bizarre result for CN, are things which an implementation would need to avoid.  </s>
+<s> The work you are doing seems quite valuable.  </s>
+<s> Good luck!  </s>
+<s> Tom Gindin "Harada" harada@prs.cs.fujitsu.co.jp @w3.org on 03/09/2002 12:40:21 AM Sent by: w3c-ietf-xmldsig-request@w3.org  </s>
+<s> Hi, This is an report of DName encoding implementation.  </s>
+<s> I tried implementing the encoding, and find something and report it.  </s>
+<s> For Java and MS Crypto, DNames seem to be encoded.  </s>
+<s> For an example of Java, the DName got by the API is X509SubjectName CN=HARADA\"KAZUYUKI \", OU="#Project,A+XML;Kiban", O="FUJITSU\\limited;", L="YOKOAMA SI", ST=KANAGAWA KEN, C=JP /X509SubjectName (I succeeded containing letters #x11, #x1C, #x0A by keytool.) Similar DName in another key store, (I cannot creat a csr containing the letters #x11,.. for it, so I replaced the letters to spaces.) X509SubjectName CN=HARADA\"KAZUYUKI \", OU="#Project,A+XML;Kiban", O="FUJITSU\\limited;", L="YOKO AMA SI", ST="KANAGAWA KEN ", C=JP, EMAILADDRESS=harada@prs.cs.fujitsu.co.jp /X509SubjectName And exporting this certificate to pfx file and importing to MS Crypto, I get a XML Signature of X509SubjectName E=harada@prs.cs.fujitsu.co.jp, C=JP, S="KANAGAWA KEN ", L=YOKO AMA SI, O="FUJITSU\limited;", OU="#Project,A+XML;Kiban", CN="HARADA""KAZUYUKI """ /X509SubjectName Now I am thinking my signature processor SHOULD NOT escaping the letters : ",", "+", """, "\", " ", " ", ";", or beggining "#".  </s>
+<s> (It is escaped in obedience to MS or Java API.) And my processor SHOULD escape characters of Unicode range \x00 - \x1f.  </s>
+<s> ----- Original Message -----  </s>

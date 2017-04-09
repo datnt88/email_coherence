@@ -1,64 +1,64 @@
-HERE IS A REPEAT FOR THOSE WHO DON'T DO HTML IN EMAILS, WHICH I'M FORCED TO DO THANKS TO A BUG IN THE LATEST MICROSOFT EXCHANGE SERVER. 
-As you may have guessed from my prior email "RE: Poll on Exclusive Canonicalization", there remains a simple design tweak to XMLDSig that A) would not hold up anything pertaining to status of the XML DSig spec, B) should be trivial to implement and test for interoperability, and C) solves more problems than just the namespace issue. 
-I mention this technique in part to help everyone understand that the current conflict is not arising from a shortcoming in C14N but rather in XML DSig's application of C14N and/or the application of XML DSig in a particular scenario (signing SOAP messages). 
-Consider the following sentence from the C14N Spec "Since XML canonicalization converts an XPath node-set into a canonical form, the first parameter MUST either be an XPath node-set or ..." 
-Suppose we add an XPath element to the Signature element as a sibling of 
-SignedInfo. 
-The XPath would say how to filter the SignedInfo. 
-The processing model would then say: 1) Form a node-set consisting of the entire subtree rooted at SignedInfo, including namespace and attribute nodes. 
-2) Apply the XPath expression. 
-3) Add the subtree rooted by the XPath element in Signature, including attributes and namespaces. 
-4) Send resultant node-set to C14N. 5) Sign result. 
-End of story. 
-Full stop to conflict. 
-Thanks for coming out. 
-John Boyer Senior Product Architect, Software Development Internet Commerce System (ICS) Team PureEdge Solutions Inc. Trusted Digital Relationships v: 250-708-8047 f: 250-708-8010 1-888-517-2675 http://www.PureEdge.com 
-http://www.pureedge.com/ 
-Hi Joseph, Obviously, I agree with being agreed with. 
-I also agree with prior emails from Don and Merlin that the algorithm proposed by Don, modified to have something like an IncludeNS as a catch-all for namespaces which are in use but cannot be detected by Don's algorithm, can be rigorously defined in a few paragraphs and is quite easy to implement. 
-Furthermore, IncludeNS seems to be a satisfactory addition in that it covers a great fraction of the cases that are likely to occur in practice. 
-The only difficulty with IncludeNS is that it puts the onus partly on the application to come up with the list (extra namespaces used within SignedInfo can be assessed by xmldsig-core, except those appearing inside Object elements). 
-This doesn't seem to add more than an extra parameter to a signature generation function in a generalized signature software module. 
-John Boyer Senior Product Architect, Software Development Internet Commerce System (ICS) Team PureEdge Solutions Inc. Trusted Digital Relationships v: 250-708-8047 f: 250-708-8010 1-888-517-2675 http://www.PureEdge.com 
-http://www.pureedge.com/ 
-w3c-ietf-xmldsig@w3.org John, I agree that any characterizations of Canonical XML as broken are incorrect. 
-Canonical XML does two things and does them well: it decides which nodes of a parsed XML (in the XPath data model) via its default XPath expression (as parameterized with or without comments) and how to serialize the resulting node sets. 
-When combined with generic XPath functionality, it can serialize anything! 
-smile/ I've often said there is no single "The Canonical XML" because different applications will need different things. 
-In it's default XPath expression, the Canonical XML purposefully and wisely uses its ancestor context. 
-However, this is not always appropriate to the enveloped protocol scenario. 
-That's fine! 
-While we did consider permitting arbitrary XPath transforms on SignedInfo, many people were concerned that such flexibility over that data was too much, and instead, we would rely upon the careful specification of standardized canonicalization algorithms (instead of user specified XPaths) that have a well specified data-model/node-section and serialization. 
-Canonical XML 1.0 is one such algorithm that's made it to REC, but there could be others. 
-And this is exactly what we are considering now -- amid concerns about dependencies and timing. 
-And because of Canonical XML's design, this is technically very easy: defining a different canonicalization using a slightly different node set selection but exactly the same serialization method! 
-of 
-Joseph Reagle Jr. http://www.w3.org/People/Reagle/ W3C Policy Analyst mailto:reagle@w3.org 
-IETF/W3C XML-Signature Co-Chair http://www.w3.org/Signature W3C XML Encryption Chair http://www.w3.org/Encryption/2001/ 
-Hi John, From: "John Boyer" JBoyer@PureEdge.com Date: Wed, 20 Jun 2001 11:42:38 -0700 Message-ID: 7874BFCCD289A645B5CE3935769F0B521962B3@tigger.PureEdge.com 
-"Phillip Hallam-Baker" pbaker@verisign.com 
-Well, C14N does what it was designed to do well but it defaults towards including the context. 
-That's great when it is what you want. 
-But for cases where you want to exclude the context, it does not default the way you would want. 
-It is true that you can overcome this with sufficient application of the power of XPath. 
-There are advantages to this. 
-It is certainly very general and powerful. 
-However, I also see disadvantages. 
-- It requires XPath implementation at both generation and verification. 
-- In general, it requires good XPath expression checking at the verification end to determine if it is (1) safe and (2) secure, to apply the provided XPath expression as part of canonicalization. 
-- It is my impression that, if the applicationis using an XPath data model, the XPath expression you apply will need to contain the list of needed namespace declarations and xml namespace attributes to retain at the top level. 
-That means this XPath expression will need to be dynamially created. 
-(Alternatively, all XMLDSIG applications could be required to read the document containing the Signature into a non-XPath data structure which retained original namespace delaration position.) On the other hand an exclusive c14n, while it might not cover every case, would cover many, would not require XPath imlementation, would be safe, would be secure if used as directed, and not require dynamic modification for those cases where namespace prefix use is visible. 
-I don't think this works, if the application uses the XPath data model, because this subtree will have been already been invaded by ancestor namespace declaration. 
-And there are security problems with having it filter itself. 
-Alternativley, all XMLDSIG applciations could be required to 
-Thanks, Donald 
-Let's try again without the HTML... Hi Don, I agree with most of what you said about the relative advantages and disadvantages of a general XPath approach. 
-Whatever little difference I have is not worth debating since I was primarily interested in exhibiting a wealth of XML DSig designs whereby C14N solves the problem at hand (in contradiction to certain claims being made at the time). 
-In case we do find another enormous problem that could be solved by the general XPath approach, I'd better fix the technical problem you pointed out: 
-I don't think this works, if the application uses the XPath data model, because this subtree will have been already been invaded by ancestor namespace declaration. 
-And there are security problems with having it filter itself. 
-Brilliant, as usual, Don. 3) Add the subtree rooted by the XPath element in Signature, excluding attributes and namespaces except those used in the XPath expression. 
-We are only interested in securing the XPath expression (including the namespace context under which it is evaluated). 
-John Boyer Senior Product Architect, Software Development Internet Commerce System (ICS) Team PureEdge Solutions Inc. Trusted Digital Relationships v: 250-708-8047 f: 250-708-8010 1-888-517-2675 http://www.PureEdge.com 
-http://www.pureedge.com/ 
+<s> HERE IS A REPEAT FOR THOSE WHO DON'T DO HTML IN EMAILS, WHICH I'M FORCED TO DO THANKS TO A BUG IN THE LATEST MICROSOFT EXCHANGE SERVER.  </s>
+<s> As you may have guessed from my prior email "RE: Poll on Exclusive Canonicalization", there remains a simple design tweak to XMLDSig that A) would not hold up anything pertaining to status of the XML DSig spec, B) should be trivial to implement and test for interoperability, and C) solves more problems than just the namespace issue.  </s>
+<s> I mention this technique in part to help everyone understand that the current conflict is not arising from a shortcoming in C14N but rather in XML DSig's application of C14N and/or the application of XML DSig in a particular scenario (signing SOAP messages).  </s>
+<s> Consider the following sentence from the C14N Spec "Since XML canonicalization converts an XPath node-set into a canonical form, the first parameter MUST either be an XPath node-set or ..."  </s>
+<s> Suppose we add an XPath element to the Signature element as a sibling of  </s>
+<s> SignedInfo.  </s>
+<s> The XPath would say how to filter the SignedInfo.  </s>
+<s> The processing model would then say: 1) Form a node-set consisting of the entire subtree rooted at SignedInfo, including namespace and attribute nodes.  </s>
+<s> 2) Apply the XPath expression.  </s>
+<s> 3) Add the subtree rooted by the XPath element in Signature, including attributes and namespaces.  </s>
+<s> 4) Send resultant node-set to C14N. 5) Sign result.  </s>
+<s> End of story.  </s>
+<s> Full stop to conflict.  </s>
+<s> Thanks for coming out.  </s>
+<s> John Boyer Senior Product Architect, Software Development Internet Commerce System (ICS) Team PureEdge Solutions Inc. Trusted Digital Relationships v: 250-708-8047 f: 250-708-8010 1-888-517-2675 http://www.PureEdge.com  </s>
+<s> http://www.pureedge.com/  </s>
+<s> Hi Joseph, Obviously, I agree with being agreed with.  </s>
+<s> I also agree with prior emails from Don and Merlin that the algorithm proposed by Don, modified to have something like an IncludeNS as a catch-all for namespaces which are in use but cannot be detected by Don's algorithm, can be rigorously defined in a few paragraphs and is quite easy to implement.  </s>
+<s> Furthermore, IncludeNS seems to be a satisfactory addition in that it covers a great fraction of the cases that are likely to occur in practice.  </s>
+<s> The only difficulty with IncludeNS is that it puts the onus partly on the application to come up with the list (extra namespaces used within SignedInfo can be assessed by xmldsig-core, except those appearing inside Object elements).  </s>
+<s> This doesn't seem to add more than an extra parameter to a signature generation function in a generalized signature software module.  </s>
+<s> John Boyer Senior Product Architect, Software Development Internet Commerce System (ICS) Team PureEdge Solutions Inc. Trusted Digital Relationships v: 250-708-8047 f: 250-708-8010 1-888-517-2675 http://www.PureEdge.com  </s>
+<s> http://www.pureedge.com/  </s>
+<s> w3c-ietf-xmldsig@w3.org John, I agree that any characterizations of Canonical XML as broken are incorrect.  </s>
+<s> Canonical XML does two things and does them well: it decides which nodes of a parsed XML (in the XPath data model) via its default XPath expression (as parameterized with or without comments) and how to serialize the resulting node sets.  </s>
+<s> When combined with generic XPath functionality, it can serialize anything!  </s>
+<s> smile/ I've often said there is no single "The Canonical XML" because different applications will need different things.  </s>
+<s> In it's default XPath expression, the Canonical XML purposefully and wisely uses its ancestor context.  </s>
+<s> However, this is not always appropriate to the enveloped protocol scenario.  </s>
+<s> That's fine!  </s>
+<s> While we did consider permitting arbitrary XPath transforms on SignedInfo, many people were concerned that such flexibility over that data was too much, and instead, we would rely upon the careful specification of standardized canonicalization algorithms (instead of user specified XPaths) that have a well specified data-model/node-section and serialization.  </s>
+<s> Canonical XML 1.0 is one such algorithm that's made it to REC, but there could be others.  </s>
+<s> And this is exactly what we are considering now -- amid concerns about dependencies and timing.  </s>
+<s> And because of Canonical XML's design, this is technically very easy: defining a different canonicalization using a slightly different node set selection but exactly the same serialization method!  </s>
+<s> of  </s>
+<s> Joseph Reagle Jr. http://www.w3.org/People/Reagle/ W3C Policy Analyst mailto:reagle@w3.org  </s>
+<s> IETF/W3C XML-Signature Co-Chair http://www.w3.org/Signature W3C XML Encryption Chair http://www.w3.org/Encryption/2001/  </s>
+<s> Hi John, From: "John Boyer" JBoyer@PureEdge.com Date: Wed, 20 Jun 2001 11:42:38 -0700 Message-ID: 7874BFCCD289A645B5CE3935769F0B521962B3@tigger.PureEdge.com  </s>
+<s> "Phillip Hallam-Baker" pbaker@verisign.com  </s>
+<s> Well, C14N does what it was designed to do well but it defaults towards including the context.  </s>
+<s> That's great when it is what you want.  </s>
+<s> But for cases where you want to exclude the context, it does not default the way you would want.  </s>
+<s> It is true that you can overcome this with sufficient application of the power of XPath.  </s>
+<s> There are advantages to this.  </s>
+<s> It is certainly very general and powerful.  </s>
+<s> However, I also see disadvantages.  </s>
+<s> - It requires XPath implementation at both generation and verification.  </s>
+<s> - In general, it requires good XPath expression checking at the verification end to determine if it is (1) safe and (2) secure, to apply the provided XPath expression as part of canonicalization.  </s>
+<s> - It is my impression that, if the applicationis using an XPath data model, the XPath expression you apply will need to contain the list of needed namespace declarations and xml namespace attributes to retain at the top level.  </s>
+<s> That means this XPath expression will need to be dynamially created.  </s>
+<s> (Alternatively, all XMLDSIG applications could be required to read the document containing the Signature into a non-XPath data structure which retained original namespace delaration position.) On the other hand an exclusive c14n, while it might not cover every case, would cover many, would not require XPath imlementation, would be safe, would be secure if used as directed, and not require dynamic modification for those cases where namespace prefix use is visible.  </s>
+<s> I don't think this works, if the application uses the XPath data model, because this subtree will have been already been invaded by ancestor namespace declaration.  </s>
+<s> And there are security problems with having it filter itself.  </s>
+<s> Alternativley, all XMLDSIG applciations could be required to  </s>
+<s> Thanks, Donald  </s>
+<s> Let's try again without the HTML... Hi Don, I agree with most of what you said about the relative advantages and disadvantages of a general XPath approach.  </s>
+<s> Whatever little difference I have is not worth debating since I was primarily interested in exhibiting a wealth of XML DSig designs whereby C14N solves the problem at hand (in contradiction to certain claims being made at the time).  </s>
+<s> In case we do find another enormous problem that could be solved by the general XPath approach, I'd better fix the technical problem you pointed out:  </s>
+<s> I don't think this works, if the application uses the XPath data model, because this subtree will have been already been invaded by ancestor namespace declaration.  </s>
+<s> And there are security problems with having it filter itself.  </s>
+<s> Brilliant, as usual, Don. 3) Add the subtree rooted by the XPath element in Signature, excluding attributes and namespaces except those used in the XPath expression.  </s>
+<s> We are only interested in securing the XPath expression (including the namespace context under which it is evaluated).  </s>
+<s> John Boyer Senior Product Architect, Software Development Internet Commerce System (ICS) Team PureEdge Solutions Inc. Trusted Digital Relationships v: 250-708-8047 f: 250-708-8010 1-888-517-2675 http://www.PureEdge.com  </s>
+<s> http://www.pureedge.com/  </s>

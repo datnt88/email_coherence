@@ -1,56 +1,56 @@
-To emphasize an earlier comment, it is true that the bind protocol places constraints on how a server is allowed to implement the DELETE and MOVE methods. 
-In particular, a server that supports the bind protocol is not allowed to do a partial MOVE or a partial DELETE (even though 2518 allows it). 
-In addition, section 2.3 does identify a way in which the bind protocol differs from the semantics defined in 2518, i.e.: Section 8.6.1 of [RFC2518] states that during DELETE processing, a server "MUST remove any URI for the resource identified by the Request-URI from collections which contain it as a member." 
-Servers that support bindings MUST NOT follow this requirement." 
-A 2518 server that cannot (or does not want to) support the bind protocol constraints can certainly choose to not support the bind protocol. 
-Cheers, Geoff 
-From: Brian Korver [mailto:briank@xythos.com] 
-Move and Delete The spec states that move and delete are merely operations on bindings. 
-At the very least, this is inconsistent with 2518, How is this inconsistent with 2518 (other than the use of terminology not defined in 2518)? 
-2518 correctly states that MOVE (and COPY) also may involve a DELETE with "Depth: infinity" operation in the case of overwrite. 
-It supports that. 
-What you're possibly refering to is the fact that 2518 let's the DELETE on a collection to delete some of the children and abort before removing the colection itself and without backing out what it did. 
-In the Bind Spec, there is no requirement to unbind those child resources and in many cases you definitely don't want to do that. 
-You only have to unbind the collection. 
-There is no partial DELETE. 
-You just have to unmap that collection. 
-Whether that reclaims resources is a different matter. 
-DELETE also operates on more than bindings. 
-Consider, for instance, what happens to locks. 
-Yes, you can't break a lock without having the proper lock token submitted, but you're not allowed to break the lock, but abort the DELETE. 
-Nor are you somehow allowed to unmap the resource but not remove the lock. 
-(At least not yet. 
-:-)) 
-My reading of the document is different, so the language should be cleaned up so that it doesn't sound like it is prohibiting the semantics spelled out in 2518. 
-Would it help if I provided that text? 
-I actually just read it for the first time in a long time and it's very clear that it doesn't speak of freeing up resources. 
-Except to say that you "MAY" do it. 
-On Monday, 03/03/2003 at 07:48 PST, "Lisa Dusseault" 
-2518 correctly states that MOVE (and COPY) also may involve a DELETE with "Depth: infinity" operation in the case of overwrite. 
-Would you be able to do that -- unmap a collection -- even if one of its children were locked? 
-The person with the lock would then lose it and their resource, right? 
-What you are implying is correct. 
-If a child is locked via a WebDAV lock and the binding to be DELETEd is protected by the protected URL of that lock, then it can't be unmapped. 
-If the inode of the child is locked, then I believe it can be unmapped. 
-If it's locked by a Win32 lock then it probably can't be unmapped in the file system, so it's probably best to reject the DELETE at the WebDAV layer. 
-If on the other hand, you can't unmap a collection until all its children are unlocked, then you have a serious problem supporting that atomically on a filesystem. 
-For example, by the time IIS 5.0 checks all the children of a collection to see if they're locked, one of them might have just gotten a new lock. 
-If we're talking about webdav's locks, it should be handleable inside the server and it should be manageable. 
-If we're talking about a file system lock, then it might depend on the OS. 
-I believe on Linux for example that it doesn't matter if an inode is locked. 
-The resource can move/delete and the resource remains locked and file handles are not broken. 
-In the case of Win32, you probably can go through the same process as the Win32 CMD.EXE MOVE command does. 
-It does take a few seconds looking for locks in descendents in large trees... but I assume it also deals with locks being created while it's looking. 
-If that MOVE succeeds, then that binding should be WebDAV DELETE'able. 
-If that MOVE is rejected, then you probably will need to reject the WebDAV bind-enabled DELETE. 
-I do not check nn621779@smallcue.com 
-Would you be able to do that -- unmap a collection -- even 
-if one of its 
-children were locked? 
-The person with the lock would then 
-lose it and 
-their resource, right? 
-I don't think the bindings specification makes clear what you've just said here. 
-It's probably because you've internalized a data model that's been discussed on the list, and are making conclusions based on the model. 
-This kind of information should be added to the specification, because even when models are written down, they can easily be interpreted differently by newcomers. 
-Lisa 
+<s> To emphasize an earlier comment, it is true that the bind protocol places constraints on how a server is allowed to implement the DELETE and MOVE methods.  </s>
+<s> In particular, a server that supports the bind protocol is not allowed to do a partial MOVE or a partial DELETE (even though 2518 allows it).  </s>
+<s> In addition, section 2.3 does identify a way in which the bind protocol differs from the semantics defined in 2518, i.e.: Section 8.6.1 of [RFC2518] states that during DELETE processing, a server "MUST remove any URI for the resource identified by the Request-URI from collections which contain it as a member."  </s>
+<s> Servers that support bindings MUST NOT follow this requirement."  </s>
+<s> A 2518 server that cannot (or does not want to) support the bind protocol constraints can certainly choose to not support the bind protocol.  </s>
+<s> Cheers, Geoff  </s>
+<s> From: Brian Korver [mailto:briank@xythos.com]  </s>
+<s> Move and Delete The spec states that move and delete are merely operations on bindings.  </s>
+<s> At the very least, this is inconsistent with 2518, How is this inconsistent with 2518 (other than the use of terminology not defined in 2518)?  </s>
+<s> 2518 correctly states that MOVE (and COPY) also may involve a DELETE with "Depth: infinity" operation in the case of overwrite.  </s>
+<s> It supports that.  </s>
+<s> What you're possibly refering to is the fact that 2518 let's the DELETE on a collection to delete some of the children and abort before removing the colection itself and without backing out what it did.  </s>
+<s> In the Bind Spec, there is no requirement to unbind those child resources and in many cases you definitely don't want to do that.  </s>
+<s> You only have to unbind the collection.  </s>
+<s> There is no partial DELETE.  </s>
+<s> You just have to unmap that collection.  </s>
+<s> Whether that reclaims resources is a different matter.  </s>
+<s> DELETE also operates on more than bindings.  </s>
+<s> Consider, for instance, what happens to locks.  </s>
+<s> Yes, you can't break a lock without having the proper lock token submitted, but you're not allowed to break the lock, but abort the DELETE.  </s>
+<s> Nor are you somehow allowed to unmap the resource but not remove the lock.  </s>
+<s> (At least not yet.  </s>
+<s> :-))  </s>
+<s> My reading of the document is different, so the language should be cleaned up so that it doesn't sound like it is prohibiting the semantics spelled out in 2518.  </s>
+<s> Would it help if I provided that text?  </s>
+<s> I actually just read it for the first time in a long time and it's very clear that it doesn't speak of freeing up resources.  </s>
+<s> Except to say that you "MAY" do it.  </s>
+<s> On Monday, 03/03/2003 at 07:48 PST, "Lisa Dusseault"  </s>
+<s> 2518 correctly states that MOVE (and COPY) also may involve a DELETE with "Depth: infinity" operation in the case of overwrite.  </s>
+<s> Would you be able to do that -- unmap a collection -- even if one of its children were locked?  </s>
+<s> The person with the lock would then lose it and their resource, right?  </s>
+<s> What you are implying is correct.  </s>
+<s> If a child is locked via a WebDAV lock and the binding to be DELETEd is protected by the protected URL of that lock, then it can't be unmapped.  </s>
+<s> If the inode of the child is locked, then I believe it can be unmapped.  </s>
+<s> If it's locked by a Win32 lock then it probably can't be unmapped in the file system, so it's probably best to reject the DELETE at the WebDAV layer.  </s>
+<s> If on the other hand, you can't unmap a collection until all its children are unlocked, then you have a serious problem supporting that atomically on a filesystem.  </s>
+<s> For example, by the time IIS 5.0 checks all the children of a collection to see if they're locked, one of them might have just gotten a new lock.  </s>
+<s> If we're talking about webdav's locks, it should be handleable inside the server and it should be manageable.  </s>
+<s> If we're talking about a file system lock, then it might depend on the OS.  </s>
+<s> I believe on Linux for example that it doesn't matter if an inode is locked.  </s>
+<s> The resource can move/delete and the resource remains locked and file handles are not broken.  </s>
+<s> In the case of Win32, you probably can go through the same process as the Win32 CMD.EXE MOVE command does.  </s>
+<s> It does take a few seconds looking for locks in descendents in large trees... but I assume it also deals with locks being created while it's looking.  </s>
+<s> If that MOVE succeeds, then that binding should be WebDAV DELETE'able.  </s>
+<s> If that MOVE is rejected, then you probably will need to reject the WebDAV bind-enabled DELETE.  </s>
+<s> I do not check nn621779@smallcue.com  </s>
+<s> Would you be able to do that -- unmap a collection -- even  </s>
+<s> if one of its  </s>
+<s> children were locked?  </s>
+<s> The person with the lock would then  </s>
+<s> lose it and  </s>
+<s> their resource, right?  </s>
+<s> I don't think the bindings specification makes clear what you've just said here.  </s>
+<s> It's probably because you've internalized a data model that's been discussed on the list, and are making conclusions based on the model.  </s>
+<s> This kind of information should be added to the specification, because even when models are written down, they can easily be interpreted differently by newcomers.  </s>
+<s> Lisa  </s>

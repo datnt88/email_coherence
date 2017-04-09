@@ -1,90 +1,90 @@
-If I were to define a function that resolved a URI reference, would it look something like the following? 
-String resolveURI(String uriReference, String baseURI, String documentURI) I wouldn't have expected the third parameter, documentURI, to be necessary but Appendix C.1 of RFC2396 makes me think otherwise. 
-The ninth example 
-(where the URI reference is "#s") is resolved to "(current document)#s". 
-This is unlike every other example where they are all resolved against the defined base URI of "http://a/b/c/d;p?q". 
-The document URI, if I'm not mistaken, is the URI of the document 
-entity--this can never change. 
-The base URI, on the other hand, can be changed by xml:base or HTML's BASE element, correct? 
-Is there any way to resolve something like "#s" against the base URI and not 
-the document URI? 
-Thanks for any clarifications you can offer, 
-Jason. 
-Right, and it has to be that way (despite the fact that some popular browsers don't do this correctly) or you can't have both xml:base and intra document links in the same document work. 
-Correct. 
-I'd suggest that you shouldn't be calling resolveURI at all in the case that the relative URI reference is merely a fragment identifier. 
-There is nothing to resolve. 
-paul 
-It is a reference which can be satisfied in the immediate context of the current [local, at hand] representationInstance of the resource. 
-The rule is that it must. 
-Look no further. 
-Is there any established guidance as to a protocol saying to refresh [or 
-not to 
-refresh] in the case of a resource representation which has modified itself post-recovery via document.write? 
-Al 
-Thanks, Paul. 
-not 
-I need some function that accepts a URI reference and returns a URI. 
-If you know of a more appropriate name than resolveURI then I would be happy to use it. 
-I only chose resolveURI since Appendix C uses the term resolve and it includes the example of the URI reference "#s". 
-I only asked the question out of pure curiosity--I don't think I would ever need to do it. 
-But just so I understand, let's say that my document URI is http://example.org/document.xml and my base URI is 
-http://example.org/base.xml 
-and I want to resolve to 
-http://example.org/base.xml#fragment 
-, the only URI reference that I can 
-think of that would get me what I want is base.xml#fragment because if I 
-used #fragment , it would get resolved to http://example.org/document.xml#fragment . 
-Is this correct? 
-I really appreciate your helping me to understand these issues! 
-Jason. 
-'Document URI' is your term and not defined in the standard notions. 
-This is the URI by/with/from which you recovered a representation which 
-asserts a BASE at: and my base URI is 
-resolve to You want to refer to ... 
-the only URI reference that I can 
-The _minimum_ URL-reference you can... 
-#fragment . 
-Is this correct? 
-The latter is correct. 
-Other, longer URI-references work, too, starting with "/base.xml#fragment".? So it's not the only URI-reference you can use.? 
-And '.' doesn't work for _ibid_ for documents, just for path segments. 
-And in 
-the case you have painted here where the historical URI and base URI are different, 'ibid' would be ambiguous. 
-So the lexically shorter form is bound 
-to the more local resolution, as is fitting. 
-Al 
-Is there a standard term? 
-Is 'Document URI' unacceptable? 
-It would be nice if we could refer to this concept without such long sentences as yours above (especially when naming parameters in an API). 
-Of course. 
-Thanks for pointing that out, though. 
-And in 
-bound 
-I'm sorry but what does 'ibid' mean? 
-Thanks, Jason 
-I'm gathering you want resolveURI to take any URI ref and return an absolute URI reference. 
-Instead, what I would do is define resolveURI as a function that takes any URI-reference-up-to-but-not-including-the-fragment-id [1] and returns the appropriate absolute URI. 
-The fragment id part is never sent to resolveURI and is always re-appended to what resolveURI returns [2]. 
-In this model, if resolveURI is handed a null string, it just returns a null string and the calling code would know to use the fragment id to access into the current resource without anyone having to talk about a document URI (which may not exist if, say, you're working on some in-memory view of a dynamic document--and even if there is such a URI, you wouldn't want to use the URI to do a fetch of the document that is the current one anyway). 
-Al already gave an extended answer. 
-Briefly, you've got the idea: relative URI refs consisting only of the fragment id are different in that they are not affected by the base URI, they are always relative to the current resource. 
-paul [1] RFC 2396 doesn't have a term to describe this. 
-Rather, it has: URI-reference = [ absoluteURI | relativeURI ] [ "#" fragment ] and so I am referring to the "[ absoluteURI | relativeURI ]" part. 
-[2] TimBL talks about putting the fragment identifier in your back pocket, resolving the rest of the URI reference into a resource, then taking the fragment id out of your back pocket and using it to access into the resource. 
-Yes. 
-[2]. 
-I based my implementation on the example algorithm in Section 5.2. 
-Despite being titled "Resolving Relative References to Absolute Form", it does cover non-relative URI references (see step 3). Step 2 covers the case where the URI reference is the empty string or just a fragment identifier. 
-In that case, it states the the reference is a "reference to the current document and we are done". 
-Hmm. 
-Looking at this paragraph again, I now think that it might be slightly flawed. 
-It says "and we are done". 
-It doesn't mention that the fragment identifier, if present, should be appended to the URI of the current document. 
-I'm fairly certain that my implementation will produce the correct result as would the model that you suggest above. 
-It passes all of the tests in Appendix C. 
-I'm actually working on an RDF parser (in XSLT) so am not fetching any resources but I do need to convert all URI references to their absolute form and would like that encapsulated into a single function. 
-I really appreciate you taking the time to discuss this with me. 
-Jason 
-There was a similar difficulty in dealing with relative references inside multipart/related messages that didn't have a clear "Base URI" either. 
-RFC 2557 made up a new URI scheme "thismessage" merely for the purpose of explaining the algorithm for resolution; the 'base' of a message in transmission was to be considered "thismessage:/" You might want to do the same thing for the document URI, e.g., make up a new URI scheme "thisdocument" whose only purpose is to treat HREF="#fragment" as resolving to HREF="thisdocument:/#fragment". 
+<s> If I were to define a function that resolved a URI reference, would it look something like the following?  </s>
+<s> String resolveURI(String uriReference, String baseURI, String documentURI) I wouldn't have expected the third parameter, documentURI, to be necessary but Appendix C.1 of RFC2396 makes me think otherwise.  </s>
+<s> The ninth example  </s>
+<s> (where the URI reference is "#s") is resolved to "(current document)#s".  </s>
+<s> This is unlike every other example where they are all resolved against the defined base URI of "http://a/b/c/d;p?q".  </s>
+<s> The document URI, if I'm not mistaken, is the URI of the document  </s>
+<s> entity--this can never change.  </s>
+<s> The base URI, on the other hand, can be changed by xml:base or HTML's BASE element, correct?  </s>
+<s> Is there any way to resolve something like "#s" against the base URI and not  </s>
+<s> the document URI?  </s>
+<s> Thanks for any clarifications you can offer,  </s>
+<s> Jason.  </s>
+<s> Right, and it has to be that way (despite the fact that some popular browsers don't do this correctly) or you can't have both xml:base and intra document links in the same document work.  </s>
+<s> Correct.  </s>
+<s> I'd suggest that you shouldn't be calling resolveURI at all in the case that the relative URI reference is merely a fragment identifier.  </s>
+<s> There is nothing to resolve.  </s>
+<s> paul  </s>
+<s> It is a reference which can be satisfied in the immediate context of the current [local, at hand] representationInstance of the resource.  </s>
+<s> The rule is that it must.  </s>
+<s> Look no further.  </s>
+<s> Is there any established guidance as to a protocol saying to refresh [or  </s>
+<s> not to  </s>
+<s> refresh] in the case of a resource representation which has modified itself post-recovery via document.write?  </s>
+<s> Al  </s>
+<s> Thanks, Paul.  </s>
+<s> not  </s>
+<s> I need some function that accepts a URI reference and returns a URI.  </s>
+<s> If you know of a more appropriate name than resolveURI then I would be happy to use it.  </s>
+<s> I only chose resolveURI since Appendix C uses the term resolve and it includes the example of the URI reference "#s".  </s>
+<s> I only asked the question out of pure curiosity--I don't think I would ever need to do it.  </s>
+<s> But just so I understand, let's say that my document URI is http://example.org/document.xml and my base URI is  </s>
+<s> http://example.org/base.xml  </s>
+<s> and I want to resolve to  </s>
+<s> http://example.org/base.xml#fragment  </s>
+<s> , the only URI reference that I can  </s>
+<s> think of that would get me what I want is base.xml#fragment because if I  </s>
+<s> used #fragment , it would get resolved to http://example.org/document.xml#fragment .  </s>
+<s> Is this correct?  </s>
+<s> I really appreciate your helping me to understand these issues!  </s>
+<s> Jason.  </s>
+<s> 'Document URI' is your term and not defined in the standard notions.  </s>
+<s> This is the URI by/with/from which you recovered a representation which  </s>
+<s> asserts a BASE at: and my base URI is  </s>
+<s> resolve to You want to refer to ...  </s>
+<s> the only URI reference that I can  </s>
+<s> The _minimum_ URL-reference you can...  </s>
+<s> #fragment .  </s>
+<s> Is this correct?  </s>
+<s> The latter is correct.  </s>
+<s> Other, longer URI-references work, too, starting with "/base.xml#fragment".? So it's not the only URI-reference you can use.?  </s>
+<s> And '.' doesn't work for _ibid_ for documents, just for path segments.  </s>
+<s> And in  </s>
+<s> the case you have painted here where the historical URI and base URI are different, 'ibid' would be ambiguous.  </s>
+<s> So the lexically shorter form is bound  </s>
+<s> to the more local resolution, as is fitting.  </s>
+<s> Al  </s>
+<s> Is there a standard term?  </s>
+<s> Is 'Document URI' unacceptable?  </s>
+<s> It would be nice if we could refer to this concept without such long sentences as yours above (especially when naming parameters in an API).  </s>
+<s> Of course.  </s>
+<s> Thanks for pointing that out, though.  </s>
+<s> And in  </s>
+<s> bound  </s>
+<s> I'm sorry but what does 'ibid' mean?  </s>
+<s> Thanks, Jason  </s>
+<s> I'm gathering you want resolveURI to take any URI ref and return an absolute URI reference.  </s>
+<s> Instead, what I would do is define resolveURI as a function that takes any URI-reference-up-to-but-not-including-the-fragment-id [1] and returns the appropriate absolute URI.  </s>
+<s> The fragment id part is never sent to resolveURI and is always re-appended to what resolveURI returns [2].  </s>
+<s> In this model, if resolveURI is handed a null string, it just returns a null string and the calling code would know to use the fragment id to access into the current resource without anyone having to talk about a document URI (which may not exist if, say, you're working on some in-memory view of a dynamic document--and even if there is such a URI, you wouldn't want to use the URI to do a fetch of the document that is the current one anyway).  </s>
+<s> Al already gave an extended answer.  </s>
+<s> Briefly, you've got the idea: relative URI refs consisting only of the fragment id are different in that they are not affected by the base URI, they are always relative to the current resource.  </s>
+<s> paul [1] RFC 2396 doesn't have a term to describe this.  </s>
+<s> Rather, it has: URI-reference = [ absoluteURI | relativeURI ] [ "#" fragment ] and so I am referring to the "[ absoluteURI | relativeURI ]" part.  </s>
+<s> [2] TimBL talks about putting the fragment identifier in your back pocket, resolving the rest of the URI reference into a resource, then taking the fragment id out of your back pocket and using it to access into the resource.  </s>
+<s> Yes.  </s>
+<s> [2].  </s>
+<s> I based my implementation on the example algorithm in Section 5.2.  </s>
+<s> Despite being titled "Resolving Relative References to Absolute Form", it does cover non-relative URI references (see step 3). Step 2 covers the case where the URI reference is the empty string or just a fragment identifier.  </s>
+<s> In that case, it states the the reference is a "reference to the current document and we are done".  </s>
+<s> Hmm.  </s>
+<s> Looking at this paragraph again, I now think that it might be slightly flawed.  </s>
+<s> It says "and we are done".  </s>
+<s> It doesn't mention that the fragment identifier, if present, should be appended to the URI of the current document.  </s>
+<s> I'm fairly certain that my implementation will produce the correct result as would the model that you suggest above.  </s>
+<s> It passes all of the tests in Appendix C.  </s>
+<s> I'm actually working on an RDF parser (in XSLT) so am not fetching any resources but I do need to convert all URI references to their absolute form and would like that encapsulated into a single function.  </s>
+<s> I really appreciate you taking the time to discuss this with me.  </s>
+<s> Jason  </s>
+<s> There was a similar difficulty in dealing with relative references inside multipart/related messages that didn't have a clear "Base URI" either.  </s>
+<s> RFC 2557 made up a new URI scheme "thismessage" merely for the purpose of explaining the algorithm for resolution; the 'base' of a message in transmission was to be considered "thismessage:/" You might want to do the same thing for the document URI, e.g., make up a new URI scheme "thisdocument" whose only purpose is to treat HREF="#fragment" as resolving to HREF="thisdocument:/#fragment".  </s>

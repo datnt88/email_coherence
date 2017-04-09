@@ -1,82 +1,82 @@
-This issue is currently stated as: If a server has some computed properties which are expensive to compute, then PROPFIND allprop, especially PROPFIND allprop with Depth infinity can be an expensive operation. 
-There should be an implementation note added to 
-the document noting this problem. 
-Suggestion that servers might want to be 
-conservative in their implementation of such compute expensive properties. 
-Clients should only perform PROPFIND allprop when necessary, not by default. 
-It was raised by Ken Coar at the Advanced Collections breakout at the Orlando IETF meeting. 
-But, since that time there has been a substantive discussion of this issue, begun by Lisa Dusseault, starting at: My understanding of the rough sentiment of the working group is: 1) PROPFIND allprop requests with Depth infinity should be deprecated. 
-That is, PROPFIND allprop with Depth infinity will remain in the WebDAV Distributed Authoring Protocol, but there will be a requirements added that new clients MUST NOT use this capability. 
-When existing clients are revised, they SHOULD be rewritten to avoid using PROPFIND allprop Depth infinity requests. 
-This will only apply to PROPFIND allprop with Depth infinity -- PROPFIND allprop for Depth 0 and 1 will still be OK. 2) The default behavior of PROPFIND will be changed so it is Depth 0, not Depth infinity. 
-- Jim 
-
-I think the key part of Geoff's post is "the subset that it can use". 
-The problem with allprop is that it will return all the live properties irrespective of whether the client is aware of the properties' semantics. 
-Sometimes this is what the client wants, say if it is naively displaying a property sheet; but most likely it is not since there is no way for the client to interpret the values or know if/how they can be changed. 
-Actually I'd think that property sheet case would be pretty common. 
-And removing allprop isn't going to prevent people from doing the same thing... now with two requests rather than one. 
-And sometimes for wide directories it will be difficult to avoid this (suspected) problem even without ALLPROP. 
-If this is actually the pivotal concern, I think the best you can do just warn people of the potential cost that we see of using allprop. 
-From there on in, let time tell if it's really a problem. 
-If we discover it is, let's *really* solves the problem then. 
-I'm willing to remove ALLPROP, but it doesn't sound like doing that really would solve the problem and it's not clear if there is a problem. 
-At first I thought that analogy was flawed, but as I think about it, I think that the situation is analogous. 
-This discussion seems to have all of the same aspects. 
-The differences I see are... 1) I don't think it's clear that there actually is a problem in 2518 that we need to solve. 
-2) In 2518, the people that would be vicitimized by the concern are actually in (more) control over whether they are vulnerable. 
-(Client programers can discover that they don't really want all those random properties and perhaps conclude that it's slowing their response time and stop using ALLPROP. 
-I think clients can disconnect if a response is too long. 
-And I think servers (with guidance from us) can chose to reject certain requests if they really feel that they are too expensive.) 
-
-I have to agree that it is a stealth action to undermine (the effects of) allprop. 
-I'm guessing you're joking, but I'd like to hear why that was put in that spec. 
-Was there some issue involved that we haven't mentioned here? 
-As it stands now, I have a mild preference for leaving allprop in. 
-I'm *very* willing to support another position if it will bring us to agreement and not do any serious damage. 
-J. 
-That was the point I was trying to make (apparently not very well :^) in my earlier message. 
-The problem with leaving ALLPROP in is that we're clearly going to be changing its semantics (e.g., forbidding depth infinity) so existing clients are likely to stop working and will need updates. 
-Plus leaving it in but changing its semantics may mean that existing clients will seem to work but in fact give erroneous results. 
-Plus it means we actually have to *agree* about its semantics, which is apparently not going to be easy. 
-Deprecating it is a much cleaner way to change its semantics: servers who wish to can still honor it (keeping old clients working) and servers that don't can just refuse it (breaking old clients cleanly). 
-Clients who update can go to using PROPNAME/PROPFIND pairs and so work against all servers. 
-I think the only problem with this plan is that folks are worried about the extra work clients will have to do to do PROPNAME/PROPFIND pairs (with unioning) rather than a simple ALLPROP. 
-So I ask again (as a client implementor who doesn't mind doing this): are there any client-side folks out there who believe the extra work is too onerous? 
-And, if so, do you have clear requirements for what an updated ALLPROP needs to do in order to work for you? 
-dan Daniel Brotsky, Adobe Systems tel 408-536-4150, pager 877-704-4062 
-To go a little further than Dan did, I would like to know why a client would do a propname depth 1, a _union_ of all the properties, and a propfind depth 1. 
-How would they _ever_ display all these disparate properties? 
-What, exactly, is the scenario, and is it known that the scenario would work. 
-1. The only working scenario I know of that requires discovery of unknown properties is the "explore information about this resource" functionality. 
-E.g. one could imagine using Windows Explorer to right-click on a resource on a WebDAV server, choose "Properties", then choose the "custom" tag, and it might want to display even unknown property names there at the user request. 
-But I can't see that happening for multiple resources at once. 
-For a single resource, obviously it doesn't require doing a union. 
-Also note that this scenario may not require getting the values of all the properties -- the display would be simplest if it displayed only the names of properties, since some properties have long complex XML values, and then let the user select interesting properties to display the value. 
-2. I'll explore the replication scenario as well but it's basically an unworkable scenario based solely on RFC2518. 
-That's because property replication is impossible to do with only standard elements of WebDAV, even if we did keep allprop. 
-- If the client doesn't know what properties exist, it can't know which of them are dead properties. 
-It can't replicate live properties. 
-Replication would require some way of listing or marking up those properties which can be replicated safely. 
-- If the client DOES know what dead properties it can safely replicate, it can ask for them explicitly. 
-- With the current discussion of getlastmodified in mind, clients can't know when properties change (unless they rely on a particular WebDAV implementation). 
-Thus it's impossible to know when to replicate property values. 
-- The client can do 'propname' and individual specific PROPFIND requests for each resource if absolutely necessary. 
-These can be pipelined for efficiency. 
-In fact, it may be easier to separate them out and pipeline them, than it would be to do depth requests and then to have to deal with the size of a serious depth allprop request. 
-- Operating against regular webDAV servers, it's quite possible clients will discover that serious depth allprop requests won't work. 
-I wouldn't be surprised if various resource limitation safeguards programmed into various WebDAV servers would cut off the response part way through or fail it completely. 
-With all these considerations, I do not think replication of properties is decently possible in RFC2518 without writing serious server and client protocol extensions. 
-If these server and client protocol extensions are being done in order to do replication properly, then surely they will design something better than allprop anyway. 
-Lisa 
-I think everyone on this thread is in agreement. 
-I would like to offer a different POV for Lisa's first scenario: 
-If one solely thinks about a "WebDAV" client as something like a Windows Explorer then you're correct. 
-But think about the marriage of Collaborative Product Commerce tools ( or PDM ) with WebDAV. 
-Folders and files are nodes in a hierarchical network that have complex relationships. 
-The client is now requesting how to navigate the relationships between nodes. 
-The complex XML values provide the additional attributes, alternate or substitute components, and possible T&amp;Cs for digital rights to access files or the next node. 
-Depending on what nodes are returned to an initial query the client may have to perform a significant amount of ancillary requesting to meet the minimum display requirements. 
-The server-side of this configuration must walk the thin-line between two extremes of the WebDAV world. 
-It must still serve the requests of the minimilist clients so that a Windows Explorer or Office integration will still be able to find, display, author files and yet service the requests of the more challenging clients. 
-Just a different point of view, Kevin 
+<s> This issue is currently stated as: If a server has some computed properties which are expensive to compute, then PROPFIND allprop, especially PROPFIND allprop with Depth infinity can be an expensive operation.  </s>
+<s> There should be an implementation note added to  </s>
+<s> the document noting this problem.  </s>
+<s> Suggestion that servers might want to be  </s>
+<s> conservative in their implementation of such compute expensive properties.  </s>
+<s> Clients should only perform PROPFIND allprop when necessary, not by default.  </s>
+<s> It was raised by Ken Coar at the Advanced Collections breakout at the Orlando IETF meeting.  </s>
+<s> But, since that time there has been a substantive discussion of this issue, begun by Lisa Dusseault, starting at: My understanding of the rough sentiment of the working group is: 1) PROPFIND allprop requests with Depth infinity should be deprecated.  </s>
+<s> That is, PROPFIND allprop with Depth infinity will remain in the WebDAV Distributed Authoring Protocol, but there will be a requirements added that new clients MUST NOT use this capability.  </s>
+<s> When existing clients are revised, they SHOULD be rewritten to avoid using PROPFIND allprop Depth infinity requests.  </s>
+<s> This will only apply to PROPFIND allprop with Depth infinity -- PROPFIND allprop for Depth 0 and 1 will still be OK. 2) The default behavior of PROPFIND will be changed so it is Depth 0, not Depth infinity.  </s>
+<s> - Jim  </s>
+<s>  </s>
+<s> I think the key part of Geoff's post is "the subset that it can use".  </s>
+<s> The problem with allprop is that it will return all the live properties irrespective of whether the client is aware of the properties' semantics.  </s>
+<s> Sometimes this is what the client wants, say if it is naively displaying a property sheet; but most likely it is not since there is no way for the client to interpret the values or know if/how they can be changed.  </s>
+<s> Actually I'd think that property sheet case would be pretty common.  </s>
+<s> And removing allprop isn't going to prevent people from doing the same thing... now with two requests rather than one.  </s>
+<s> And sometimes for wide directories it will be difficult to avoid this (suspected) problem even without ALLPROP.  </s>
+<s> If this is actually the pivotal concern, I think the best you can do just warn people of the potential cost that we see of using allprop.  </s>
+<s> From there on in, let time tell if it's really a problem.  </s>
+<s> If we discover it is, let's *really* solves the problem then.  </s>
+<s> I'm willing to remove ALLPROP, but it doesn't sound like doing that really would solve the problem and it's not clear if there is a problem.  </s>
+<s> At first I thought that analogy was flawed, but as I think about it, I think that the situation is analogous.  </s>
+<s> This discussion seems to have all of the same aspects.  </s>
+<s> The differences I see are... 1) I don't think it's clear that there actually is a problem in 2518 that we need to solve.  </s>
+<s> 2) In 2518, the people that would be vicitimized by the concern are actually in (more) control over whether they are vulnerable.  </s>
+<s> (Client programers can discover that they don't really want all those random properties and perhaps conclude that it's slowing their response time and stop using ALLPROP.  </s>
+<s> I think clients can disconnect if a response is too long.  </s>
+<s> And I think servers (with guidance from us) can chose to reject certain requests if they really feel that they are too expensive.)  </s>
+<s>  </s>
+<s> I have to agree that it is a stealth action to undermine (the effects of) allprop.  </s>
+<s> I'm guessing you're joking, but I'd like to hear why that was put in that spec.  </s>
+<s> Was there some issue involved that we haven't mentioned here?  </s>
+<s> As it stands now, I have a mild preference for leaving allprop in.  </s>
+<s> I'm *very* willing to support another position if it will bring us to agreement and not do any serious damage.  </s>
+<s> J.  </s>
+<s> That was the point I was trying to make (apparently not very well :^) in my earlier message.  </s>
+<s> The problem with leaving ALLPROP in is that we're clearly going to be changing its semantics (e.g., forbidding depth infinity) so existing clients are likely to stop working and will need updates.  </s>
+<s> Plus leaving it in but changing its semantics may mean that existing clients will seem to work but in fact give erroneous results.  </s>
+<s> Plus it means we actually have to *agree* about its semantics, which is apparently not going to be easy.  </s>
+<s> Deprecating it is a much cleaner way to change its semantics: servers who wish to can still honor it (keeping old clients working) and servers that don't can just refuse it (breaking old clients cleanly).  </s>
+<s> Clients who update can go to using PROPNAME/PROPFIND pairs and so work against all servers.  </s>
+<s> I think the only problem with this plan is that folks are worried about the extra work clients will have to do to do PROPNAME/PROPFIND pairs (with unioning) rather than a simple ALLPROP.  </s>
+<s> So I ask again (as a client implementor who doesn't mind doing this): are there any client-side folks out there who believe the extra work is too onerous?  </s>
+<s> And, if so, do you have clear requirements for what an updated ALLPROP needs to do in order to work for you?  </s>
+<s> dan Daniel Brotsky, Adobe Systems tel 408-536-4150, pager 877-704-4062  </s>
+<s> To go a little further than Dan did, I would like to know why a client would do a propname depth 1, a _union_ of all the properties, and a propfind depth 1.  </s>
+<s> How would they _ever_ display all these disparate properties?  </s>
+<s> What, exactly, is the scenario, and is it known that the scenario would work.  </s>
+<s> 1. The only working scenario I know of that requires discovery of unknown properties is the "explore information about this resource" functionality.  </s>
+<s> E.g. one could imagine using Windows Explorer to right-click on a resource on a WebDAV server, choose "Properties", then choose the "custom" tag, and it might want to display even unknown property names there at the user request.  </s>
+<s> But I can't see that happening for multiple resources at once.  </s>
+<s> For a single resource, obviously it doesn't require doing a union.  </s>
+<s> Also note that this scenario may not require getting the values of all the properties -- the display would be simplest if it displayed only the names of properties, since some properties have long complex XML values, and then let the user select interesting properties to display the value.  </s>
+<s> 2. I'll explore the replication scenario as well but it's basically an unworkable scenario based solely on RFC2518.  </s>
+<s> That's because property replication is impossible to do with only standard elements of WebDAV, even if we did keep allprop.  </s>
+<s> - If the client doesn't know what properties exist, it can't know which of them are dead properties.  </s>
+<s> It can't replicate live properties.  </s>
+<s> Replication would require some way of listing or marking up those properties which can be replicated safely.  </s>
+<s> - If the client DOES know what dead properties it can safely replicate, it can ask for them explicitly.  </s>
+<s> - With the current discussion of getlastmodified in mind, clients can't know when properties change (unless they rely on a particular WebDAV implementation).  </s>
+<s> Thus it's impossible to know when to replicate property values.  </s>
+<s> - The client can do 'propname' and individual specific PROPFIND requests for each resource if absolutely necessary.  </s>
+<s> These can be pipelined for efficiency.  </s>
+<s> In fact, it may be easier to separate them out and pipeline them, than it would be to do depth requests and then to have to deal with the size of a serious depth allprop request.  </s>
+<s> - Operating against regular webDAV servers, it's quite possible clients will discover that serious depth allprop requests won't work.  </s>
+<s> I wouldn't be surprised if various resource limitation safeguards programmed into various WebDAV servers would cut off the response part way through or fail it completely.  </s>
+<s> With all these considerations, I do not think replication of properties is decently possible in RFC2518 without writing serious server and client protocol extensions.  </s>
+<s> If these server and client protocol extensions are being done in order to do replication properly, then surely they will design something better than allprop anyway.  </s>
+<s> Lisa  </s>
+<s> I think everyone on this thread is in agreement.  </s>
+<s> I would like to offer a different POV for Lisa's first scenario:  </s>
+<s> If one solely thinks about a "WebDAV" client as something like a Windows Explorer then you're correct.  </s>
+<s> But think about the marriage of Collaborative Product Commerce tools ( or PDM ) with WebDAV.  </s>
+<s> Folders and files are nodes in a hierarchical network that have complex relationships.  </s>
+<s> The client is now requesting how to navigate the relationships between nodes.  </s>
+<s> The complex XML values provide the additional attributes, alternate or substitute components, and possible T&amp;Cs for digital rights to access files or the next node.  </s>
+<s> Depending on what nodes are returned to an initial query the client may have to perform a significant amount of ancillary requesting to meet the minimum display requirements.  </s>
+<s> The server-side of this configuration must walk the thin-line between two extremes of the WebDAV world.  </s>
+<s> It must still serve the requests of the minimilist clients so that a Windows Explorer or Office integration will still be able to find, display, author files and yet service the requests of the more challenging clients.  </s>
+<s> Just a different point of view, Kevin  </s>

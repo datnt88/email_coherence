@@ -1,181 +1,181 @@
-In Orlando we discussed optional backpointers again. 
-My impression was that very few people really care about this issue, and those who do care were unable to reach consensus. 
-Consequently, I am proposing to remove backpointers from the specification unless I hear strong and numerous voices of protest. 
-Here is a summary of the arguments we've heard so far: Pro: Navigating Up: Allows clients to discover which collections contain a given target by reference - information for the end user of a DMS or configuration management system Where might I find related documents? 
-How is this resource being used? 
-What configurations does this resource belong to? 
-On a server that doesn't maintain referential integrity, clients can be good citizens by checking for references before deleting. 
-On a server that blocks deletes where there are references, the client can discover the references so as to delete them before attempting to delete the target. 
-Follow the backpointers to replicate properties of the target at the reference. 
-Discussion: There is no reason for the backpointers to be exposed to clients. 
-It's the server that uses them in this case. 
-We need to define the property in order to get interoperability for backpointers. 
-We need someone who buys a server that implements backpointers to be able to use any (or many) clients to interact with it. 
-We need clients to be able to count on a certain implementation. 
-Discussion: This is server value-add and should be standardized (if at all) by a vendor community, not by WebDAV. 
-Any server that maintains referential integrity is keeping a property like this anyhow, so it may as well expose the property to information to clients. 
-Backpointers are so common in data structures that there are likely to be unanticipated uses for this feature. 
-Con: Raises at least some of the issues that led us to defer strong references. 
-(Need interactions between servers, security concerns - revealing to targets the location of references, use up resources by creating lots of references to a target.) Discussion: It won't be implemented for the general case (which was the hard one for strong references), but only for local references. 
-The general case would require interactions between servers, security concerns Performance, efficiency (on the wire vs. on the server? 
-Search vs. maintain and retrieve property?), and scalability issues. 
-The list of backpointers is unbounded. 
-Discussion: We don't expect the general case to be implemented. 
-The list would only include local references. 
-Security concerns: A hostile client could cause large lists of backpointers to be created by creating lots of references. 
-Creator of the reference would have to have permission to update the target's properties; otherwise the request to create the reference would fail. 
-Discussion: No, DAV:references is a live property that the server updates when someone creates a reference or deletes a reference. 
-A search (on DAV:reftarget) would work just as well. 
-Discussion: DASL doesn't include structured queries yet. 
-Discussion: Search would be expensive relative to examining a single property unless it was implemented as examining a property on the target. 
-Discussion: Search could be implemented as a property, or a property could be implemented as a search. 
-So the question is what is more natural to do in the protocol. 
-Discussion: Search behaves better than an optional property for down-level servers Discussion: What about servers that implement referencing but not search? 
-Servers that are built on file system capabilities may find backpointers difficult to implement. 
-Clients may assume that it is more efficient to access a DAV:references property than to perform a search on DAV:reftarget. 
-However, depending on 
-the server's implementation this may not be the case. 
-DAV:references may be 
-computed on the fly. 
-This could be especially bad if a client tries to do PROPFIND with allprop, as there may be other computed properties as well. 
-There's too much optional stuff in WebDAV already. 
-This just adds to the client's burden in having to figure out what the server supports and be able to work whether or not the server supports what it's looking for. 
-(Not all servers will be able to implement it, and those that can may not be able to implement it on all resources.) Keep the protocol simple for clients. 
-Discussion: It still is important for interoperability, so that whenever backpointers are provided, they are provided in a standard way. 
-Discussion: Even for federated servers, it might be possible for the primary server to keep the backpointers for the backend servers. 
-Too many special cases for how the server has to deal with this. 
-For example, what happens when we add versioning? 
-What if the target of a reference is the tip revision - server has to update the DAV:references property whenever a new revision is added, on both the previous tip and the new tip? 
-Keep the protocol simple for servers. 
-Discussion: Can live properties on a revision (frozen) change? 
-Yes. 
-We should minimize the number of DAV: properties we define. 
-It should be only the ones that are needed in order for the protocol itself to function. 
-It should be only the ones that are needed in support of some DAV method. 
-Discussion: There's an important requirement being satisfied here. 
-We choose to satisfy it by introducing a property rather than a method. 
-We could define a NAVIGATE_UP or GET_REFERENCES method. 
-Judith A. Slein Xerox Corporation jslein@crt.xerox.com 
-(716)422-5169 800 Phillips Road 105/50C Webster, NY 14580 
-Well, here's a strong, though solitary, voice of protest. 
-Since I appreciate brevity, so I'll try to be brief and clear myself. 
-Summary: Backpointers are very useful to those who need them, and cost nothing to those who don't care to implement them. 
-Judy's email summarized arguments Pro and Con. 
-Of the Pro arguments, while I concede that one of them was silly, most remain unrefuted. 
-By contrast, all the Con arguments already are refuted or can be refuted (see below). 
-Since there are many unrefuted Pro arguments, and no unrefuted Con arguments, there can be no reasonable objection to adding DAV:references as an optional part of DAV. 
-Remember, this is in the context of an optional extension (ACR) anyway. 
-Anyone who feels that they have additional refutations for Pro positions, new Con arguments, or counters to the refutations of the Con positions should speak up in this forum. 
-The remainder of this message attacks one of the counter arguments to the Pro position, and refutes the Con arguments that did not already have refutations. 
-One Pro argument is that if WebDAV does not specify the semantics, vendors who implement may have inconsistent semantics, and will almost certainly use differing names for the property. 
-This will destroy interoperability. 
-The counter-claim (quoted by Judy) 
-is mistaken, for two reasons. 
-"server value-add". 
-This claim would make sense for features that are purely local to one class of server. 
-Server 'vendors' (I mean by this anyone who creates a server, not just those who *sell* the server) should be able to freely define new features when they affect only that server. 
-Thus e.g. if MS wants to define DAV properties that reflect underlying NT semantics, they can do so. 
-But this is a property that makes sense for any server that implements references (especially direct references) and it makes sense to try to get the semantics identical on *all* servers that support MKREF. 
-"vendor community". 
-There is no forum to do this work other than the WebDAV WG. 
-I thought this WG *was* the vendor community. 
-The vendors I know about are MS, Greg Stein, and Xerox. 
-Consider the infamous "Halloween memo", and the reaction to it. 
-Private extensions to open standards are a fine was to decommodify standards. 
-Why would you force WebDAV to do this? 
-Con arguments 
-Such a hostile client could also do large PUTs, or large PROPPATCHes. 
-This is no new risk. 
-1. PyDAV is built on a file system, and backpointers are cheap 2. In any case, if it's expensive to implement then just don't do it. 
-Etags can be expensive too, you know. 
-may be 
-Yes, it would be bad if a server implemented dav:references this way. 
-It would in fact be stupid. 
-Should we leave something out of DAV because it's possible to implement it poorly and expensively? 
-it's not as if the definition is such that it's impossible to implement it cheaply. 
-The same arguments would rule out other extensions proposed for DAV, including DASL. 
-There is no question that all of the functions backpointer provide are desirable. 
-However, support for referential integrity is required to implement them. 
-This is in general quite difficult to implement, especially across servers and multiple repository managers in the same server. 
-So it will be hard for client applications to depend on them in any generally way. 
-I continue to believe that this is functionality that should not be included in this version of advanced collections. 
-Any facility that raises this much doubt or controversy should be deferred. 
-I'm wondering if we're getting into trouble because the DAV spec conflates elements of real metadata -- elements that describe the actual documents -- with properties that are actually just structural elements of the repository in which the data is being held. 
-The 'backpointer' property, and many of the properties that were on the Microsoft slides at the end of the meeting, aren't really properties of the resources or documents at all -- they're artifacts of the repository. 
-One could easily imagine non-standard metadata properties being used effectively by an interoperable client, because of the existence of 'propfind'. 
-But mixing in structural properties such as 'has-child-subcollections' and 'backpointer' into the set of properties will actually confuse such clients, since these properties will need 
-to be listed, but the clients cannot treat them as if they were some kind of metadata or resource description at all. 
-The WebDAV specification in section 4 tries to define the nature of properties, and does make some reference to 'live' properties as having semantics maintained by the server, but the implication throughout the section is that properties are attributes of the 'data', and not that they're somehow attributes of how the particular repository stores the data. 
-The goal of allowing flexible repository attributes is to allow for different repositories to create different schema of metadata, whether or not those properties fit into 'Dublin core' or any other framework for asserting extrinsic properties of documents. 
-I would like to suggest that insofar as WebDAV clients use semantics of non-standard structural properties, there 
-will be severe interoperability problems, and should be 
-discouraged, or even made to be non-compliant. 
-I acknowledge that there is can be a fuzzy boundary between structural and non-structural live properties; however, I'd suggest that we be suspicious of properties that, for example, change for one resource when another resource is MOVEd. 
-Live Property - A property whose semantics and syntax are enforced by the server. 
-For example, the live "getcontentlength" property has its value, the length of the entity returned by a GET request, automatically calculated by the server. 
-So I think we may need some other mechanism than 'live' properties for structural elements such as backpointers. 
-For example, COPY says: Live properties SHOULD be duplicated as identically behaving live properties at the destination resource. 
-Now, this clearly doesn't apply to 'backpointer'. 
-If you were to have a server with a 'backpointer' live property, and were to supply (reasonably) a 'propertybehavior' element that suggested that all live properties should be copied, then no resource would copy. 
-Larry 
-I take it that this note is part of the discussion of backpointers. 
-So it 
-is meant primarily as an argument in favor of standardizing backpointers, 
-just as we should standardize the collection-related properties Lisa proposed. 
-Because as structural (I would call them "operational") properties, failure to use them consistently across clients can cause interoperability problems. 
-I see two other implications as well: 
-1. The DAV spec actually contains some mistakes because it does not distinguish between operational and descriptive live properties. 
-I agree that the spec's directives about how to treat live properties on COPY are broken, but not that the operational / descriptive could completely solve the problems. 
-The spec says that servers SHOULD copy live properties as live, identically behaving properties (that is, they wouldn't necessarily have the same value at the destination); if they cannot keep the properties live at the destination, they MUST copy them as dead properties or else fail the request. 
-There are problems with both clauses. 
-Where the presence or absence of the property tells something about the state or capabilities of the resource, we can't dictate that the property must be copied with the resource at all. 
-The DAV:lockdiscovery property 
-should not be copied with a resource, since the copy is not locked. 
-Other operational properties, whose presence indicates support for some optional WebDAV functionality, cannot be copied if the destination is on a part of the server (or on another server) that does not support the related functionality (DAV:supportedlock, DAV:reftype, etc.). 
-For some properties, where the value could be seriously misleading, it is better not to copy them at all than to copy them as dead properties. 
-2. Because clients will want to display for users only descriptive properties, maybe we need an attribute of properties: IsDescriptive (boolean). 
-And a new element for use with PROPFIND -- descriptiveprop -- which retrieves all descriptive properties, in contrast to allprop, which retrieves all properties, both descriptive and operational. 
---Judy Judith A. Slein Xerox Corporation jslein@crt.xerox.com 
-(716)422-5169 800 Phillips Road 105/50C Webster, NY 14580 
-My note was motivated not only by the discussion of backpointers, but also by the concern about the "infinite levels of implementation complexity" that might arise and prevent _effective_ interoperability. 
-I used the word 'structural', but I think 'operational' is closer. 
-Yes, I think we should distinguish between descriptive properties and operational ones. 
-I wasn't even entirely sure that operational properties should be 'properties'; mainly the issue is whether clients that want to be unaware of the distinction should even SEE the operational properties. 
-So it is meant primarily as an argument in favor of standardizing 
-backpointers, 
-I think it might be necessary to do something strong: The proper and efficient functioning of a compliant client MUST NOT depend on the presence or proper functioning of non-standard server operational properties. 
-Otherwise, a client could be 'compliant' and not properly interoperate with a compliant server. 
-This would destroy the primary value of having a standard in the first place. 
-... snip... Another way to look at this is that the current DAV spec isn't consistent with operational properties; a quick revision at Proposed Standard would be to disallow them completely. 
-To adequately support simple clients interoperability, it may be necessary to set the default the other way: operational properties are not returned by PROPFIND, and some other method is needed to obtain them, if they're being represented as properties at all. 
-Larry 
-Summary: Larry raises two objections to "structural" properties. 
-I believe both are faulty. 
-Without addressing the epistemological issues you raise (between "structural" and "real" metadata) it's not clear to me that the DAV:resources (backpointer) property would be any more confusing to a generic client than any other non-standard metadata property. 
-Suppose, for example, one constructed a hypertext system of arguments, refutations, and justifications, where resources stored the text and the argument structure was represented as (link) properties. 
-While I am unsure whether a (hypothetical) "RHET:refutes" property is 'real' or 'structural' metadata, it seems reasonable to use WebDAV in this way. 
-But to a client ignorant of the RHET properties there is no important differences between RHET:refutes and DAV:references. 
-Both contain a set of DAV:href elements. 
-So please explain how DAV:references will confuse clients. 
-I believe you are mistaken. 
-The spec says "identicially behaving". 
-Suppose resource R is a references to target T. If you copy T to (new) resource S, then there are no references whose target is S, so the DAV:references property will be empty on S. It's the same behavior as before. 
-So the COPY of T will succeed fine. 
-Or suppose you COPY resource R. This is just the same as if you had done a second MKREF, and hence the DAV:resources property of S will now have a new item. 
-It seems to me that either resource may copied without a problem. 
-Please explain how you think this is paradoxical, confusing, or impossible. 
-best regards Jim 650-812-4301 
-I agree with what you say about not copying live properties, but I don't agree with your proposed solution. 
-I totally don't believe this. 
-First of all, some clients will want to display 'operational' or 'structural' properties, too. 
-For sure, when we have a client that accesses the NT file system via WebDAV, I want to see structural properties such as locking and permissions. 
-Second, some clients will display only those properties they understand (either because they wrote them or because they are standardized, as e.g. Dublin Core or GILS), but others will attempt to display *all* properties, whether they mean anything to the client or the user or not, in some 'generic' way. 
-The WebDAV client I wrote does this. 
-It displays DAV:displayname as the 'name' of the resource, it translates DAV:creationdate from GMT to local time, but properties it does not know it just shows as indented quasi-XML. 
-Finally, I doubt the distinction between descriptive and operational can be formallized well enough that we could standardize it. 
-Likewise, the example you gave 
-seems like a red herring to me. 
-I doubt that servers will ever support copying resources to other servers, it's too much of a security problem. 
-I suppose it's possible that a server might have two different areas with different functionality, but this seems unlikely to me. 
-When I see one, I'll believe it. 
-As I said in another email, I think 8.8.2 should be re-written to say that if live property can not be copied live it MUST NOT be copied at all. 
+<s> In Orlando we discussed optional backpointers again.  </s>
+<s> My impression was that very few people really care about this issue, and those who do care were unable to reach consensus.  </s>
+<s> Consequently, I am proposing to remove backpointers from the specification unless I hear strong and numerous voices of protest.  </s>
+<s> Here is a summary of the arguments we've heard so far: Pro: Navigating Up: Allows clients to discover which collections contain a given target by reference - information for the end user of a DMS or configuration management system Where might I find related documents?  </s>
+<s> How is this resource being used?  </s>
+<s> What configurations does this resource belong to?  </s>
+<s> On a server that doesn't maintain referential integrity, clients can be good citizens by checking for references before deleting.  </s>
+<s> On a server that blocks deletes where there are references, the client can discover the references so as to delete them before attempting to delete the target.  </s>
+<s> Follow the backpointers to replicate properties of the target at the reference.  </s>
+<s> Discussion: There is no reason for the backpointers to be exposed to clients.  </s>
+<s> It's the server that uses them in this case.  </s>
+<s> We need to define the property in order to get interoperability for backpointers.  </s>
+<s> We need someone who buys a server that implements backpointers to be able to use any (or many) clients to interact with it.  </s>
+<s> We need clients to be able to count on a certain implementation.  </s>
+<s> Discussion: This is server value-add and should be standardized (if at all) by a vendor community, not by WebDAV.  </s>
+<s> Any server that maintains referential integrity is keeping a property like this anyhow, so it may as well expose the property to information to clients.  </s>
+<s> Backpointers are so common in data structures that there are likely to be unanticipated uses for this feature.  </s>
+<s> Con: Raises at least some of the issues that led us to defer strong references.  </s>
+<s> (Need interactions between servers, security concerns - revealing to targets the location of references, use up resources by creating lots of references to a target.) Discussion: It won't be implemented for the general case (which was the hard one for strong references), but only for local references.  </s>
+<s> The general case would require interactions between servers, security concerns Performance, efficiency (on the wire vs. on the server?  </s>
+<s> Search vs. maintain and retrieve property?), and scalability issues.  </s>
+<s> The list of backpointers is unbounded.  </s>
+<s> Discussion: We don't expect the general case to be implemented.  </s>
+<s> The list would only include local references.  </s>
+<s> Security concerns: A hostile client could cause large lists of backpointers to be created by creating lots of references.  </s>
+<s> Creator of the reference would have to have permission to update the target's properties; otherwise the request to create the reference would fail.  </s>
+<s> Discussion: No, DAV:references is a live property that the server updates when someone creates a reference or deletes a reference.  </s>
+<s> A search (on DAV:reftarget) would work just as well.  </s>
+<s> Discussion: DASL doesn't include structured queries yet.  </s>
+<s> Discussion: Search would be expensive relative to examining a single property unless it was implemented as examining a property on the target.  </s>
+<s> Discussion: Search could be implemented as a property, or a property could be implemented as a search.  </s>
+<s> So the question is what is more natural to do in the protocol.  </s>
+<s> Discussion: Search behaves better than an optional property for down-level servers Discussion: What about servers that implement referencing but not search?  </s>
+<s> Servers that are built on file system capabilities may find backpointers difficult to implement.  </s>
+<s> Clients may assume that it is more efficient to access a DAV:references property than to perform a search on DAV:reftarget.  </s>
+<s> However, depending on  </s>
+<s> the server's implementation this may not be the case.  </s>
+<s> DAV:references may be  </s>
+<s> computed on the fly.  </s>
+<s> This could be especially bad if a client tries to do PROPFIND with allprop, as there may be other computed properties as well.  </s>
+<s> There's too much optional stuff in WebDAV already.  </s>
+<s> This just adds to the client's burden in having to figure out what the server supports and be able to work whether or not the server supports what it's looking for.  </s>
+<s> (Not all servers will be able to implement it, and those that can may not be able to implement it on all resources.) Keep the protocol simple for clients.  </s>
+<s> Discussion: It still is important for interoperability, so that whenever backpointers are provided, they are provided in a standard way.  </s>
+<s> Discussion: Even for federated servers, it might be possible for the primary server to keep the backpointers for the backend servers.  </s>
+<s> Too many special cases for how the server has to deal with this.  </s>
+<s> For example, what happens when we add versioning?  </s>
+<s> What if the target of a reference is the tip revision - server has to update the DAV:references property whenever a new revision is added, on both the previous tip and the new tip?  </s>
+<s> Keep the protocol simple for servers.  </s>
+<s> Discussion: Can live properties on a revision (frozen) change?  </s>
+<s> Yes.  </s>
+<s> We should minimize the number of DAV: properties we define.  </s>
+<s> It should be only the ones that are needed in order for the protocol itself to function.  </s>
+<s> It should be only the ones that are needed in support of some DAV method.  </s>
+<s> Discussion: There's an important requirement being satisfied here.  </s>
+<s> We choose to satisfy it by introducing a property rather than a method.  </s>
+<s> We could define a NAVIGATE_UP or GET_REFERENCES method.  </s>
+<s> Judith A. Slein Xerox Corporation jslein@crt.xerox.com  </s>
+<s> (716)422-5169 800 Phillips Road 105/50C Webster, NY 14580  </s>
+<s> Well, here's a strong, though solitary, voice of protest.  </s>
+<s> Since I appreciate brevity, so I'll try to be brief and clear myself.  </s>
+<s> Summary: Backpointers are very useful to those who need them, and cost nothing to those who don't care to implement them.  </s>
+<s> Judy's email summarized arguments Pro and Con.  </s>
+<s> Of the Pro arguments, while I concede that one of them was silly, most remain unrefuted.  </s>
+<s> By contrast, all the Con arguments already are refuted or can be refuted (see below).  </s>
+<s> Since there are many unrefuted Pro arguments, and no unrefuted Con arguments, there can be no reasonable objection to adding DAV:references as an optional part of DAV.  </s>
+<s> Remember, this is in the context of an optional extension (ACR) anyway.  </s>
+<s> Anyone who feels that they have additional refutations for Pro positions, new Con arguments, or counters to the refutations of the Con positions should speak up in this forum.  </s>
+<s> The remainder of this message attacks one of the counter arguments to the Pro position, and refutes the Con arguments that did not already have refutations.  </s>
+<s> One Pro argument is that if WebDAV does not specify the semantics, vendors who implement may have inconsistent semantics, and will almost certainly use differing names for the property.  </s>
+<s> This will destroy interoperability.  </s>
+<s> The counter-claim (quoted by Judy)  </s>
+<s> is mistaken, for two reasons.  </s>
+<s> "server value-add".  </s>
+<s> This claim would make sense for features that are purely local to one class of server.  </s>
+<s> Server 'vendors' (I mean by this anyone who creates a server, not just those who *sell* the server) should be able to freely define new features when they affect only that server.  </s>
+<s> Thus e.g. if MS wants to define DAV properties that reflect underlying NT semantics, they can do so.  </s>
+<s> But this is a property that makes sense for any server that implements references (especially direct references) and it makes sense to try to get the semantics identical on *all* servers that support MKREF.  </s>
+<s> "vendor community".  </s>
+<s> There is no forum to do this work other than the WebDAV WG.  </s>
+<s> I thought this WG *was* the vendor community.  </s>
+<s> The vendors I know about are MS, Greg Stein, and Xerox.  </s>
+<s> Consider the infamous "Halloween memo", and the reaction to it.  </s>
+<s> Private extensions to open standards are a fine was to decommodify standards.  </s>
+<s> Why would you force WebDAV to do this?  </s>
+<s> Con arguments  </s>
+<s> Such a hostile client could also do large PUTs, or large PROPPATCHes.  </s>
+<s> This is no new risk.  </s>
+<s> 1. PyDAV is built on a file system, and backpointers are cheap 2. In any case, if it's expensive to implement then just don't do it.  </s>
+<s> Etags can be expensive too, you know.  </s>
+<s> may be  </s>
+<s> Yes, it would be bad if a server implemented dav:references this way.  </s>
+<s> It would in fact be stupid.  </s>
+<s> Should we leave something out of DAV because it's possible to implement it poorly and expensively?  </s>
+<s> it's not as if the definition is such that it's impossible to implement it cheaply.  </s>
+<s> The same arguments would rule out other extensions proposed for DAV, including DASL.  </s>
+<s> There is no question that all of the functions backpointer provide are desirable.  </s>
+<s> However, support for referential integrity is required to implement them.  </s>
+<s> This is in general quite difficult to implement, especially across servers and multiple repository managers in the same server.  </s>
+<s> So it will be hard for client applications to depend on them in any generally way.  </s>
+<s> I continue to believe that this is functionality that should not be included in this version of advanced collections.  </s>
+<s> Any facility that raises this much doubt or controversy should be deferred.  </s>
+<s> I'm wondering if we're getting into trouble because the DAV spec conflates elements of real metadata -- elements that describe the actual documents -- with properties that are actually just structural elements of the repository in which the data is being held.  </s>
+<s> The 'backpointer' property, and many of the properties that were on the Microsoft slides at the end of the meeting, aren't really properties of the resources or documents at all -- they're artifacts of the repository.  </s>
+<s> One could easily imagine non-standard metadata properties being used effectively by an interoperable client, because of the existence of 'propfind'.  </s>
+<s> But mixing in structural properties such as 'has-child-subcollections' and 'backpointer' into the set of properties will actually confuse such clients, since these properties will need  </s>
+<s> to be listed, but the clients cannot treat them as if they were some kind of metadata or resource description at all.  </s>
+<s> The WebDAV specification in section 4 tries to define the nature of properties, and does make some reference to 'live' properties as having semantics maintained by the server, but the implication throughout the section is that properties are attributes of the 'data', and not that they're somehow attributes of how the particular repository stores the data.  </s>
+<s> The goal of allowing flexible repository attributes is to allow for different repositories to create different schema of metadata, whether or not those properties fit into 'Dublin core' or any other framework for asserting extrinsic properties of documents.  </s>
+<s> I would like to suggest that insofar as WebDAV clients use semantics of non-standard structural properties, there  </s>
+<s> will be severe interoperability problems, and should be  </s>
+<s> discouraged, or even made to be non-compliant.  </s>
+<s> I acknowledge that there is can be a fuzzy boundary between structural and non-structural live properties; however, I'd suggest that we be suspicious of properties that, for example, change for one resource when another resource is MOVEd.  </s>
+<s> Live Property - A property whose semantics and syntax are enforced by the server.  </s>
+<s> For example, the live "getcontentlength" property has its value, the length of the entity returned by a GET request, automatically calculated by the server.  </s>
+<s> So I think we may need some other mechanism than 'live' properties for structural elements such as backpointers.  </s>
+<s> For example, COPY says: Live properties SHOULD be duplicated as identically behaving live properties at the destination resource.  </s>
+<s> Now, this clearly doesn't apply to 'backpointer'.  </s>
+<s> If you were to have a server with a 'backpointer' live property, and were to supply (reasonably) a 'propertybehavior' element that suggested that all live properties should be copied, then no resource would copy.  </s>
+<s> Larry  </s>
+<s> I take it that this note is part of the discussion of backpointers.  </s>
+<s> So it  </s>
+<s> is meant primarily as an argument in favor of standardizing backpointers,  </s>
+<s> just as we should standardize the collection-related properties Lisa proposed.  </s>
+<s> Because as structural (I would call them "operational") properties, failure to use them consistently across clients can cause interoperability problems.  </s>
+<s> I see two other implications as well:  </s>
+<s> 1. The DAV spec actually contains some mistakes because it does not distinguish between operational and descriptive live properties.  </s>
+<s> I agree that the spec's directives about how to treat live properties on COPY are broken, but not that the operational / descriptive could completely solve the problems.  </s>
+<s> The spec says that servers SHOULD copy live properties as live, identically behaving properties (that is, they wouldn't necessarily have the same value at the destination); if they cannot keep the properties live at the destination, they MUST copy them as dead properties or else fail the request.  </s>
+<s> There are problems with both clauses.  </s>
+<s> Where the presence or absence of the property tells something about the state or capabilities of the resource, we can't dictate that the property must be copied with the resource at all.  </s>
+<s> The DAV:lockdiscovery property  </s>
+<s> should not be copied with a resource, since the copy is not locked.  </s>
+<s> Other operational properties, whose presence indicates support for some optional WebDAV functionality, cannot be copied if the destination is on a part of the server (or on another server) that does not support the related functionality (DAV:supportedlock, DAV:reftype, etc.).  </s>
+<s> For some properties, where the value could be seriously misleading, it is better not to copy them at all than to copy them as dead properties.  </s>
+<s> 2. Because clients will want to display for users only descriptive properties, maybe we need an attribute of properties: IsDescriptive (boolean).  </s>
+<s> And a new element for use with PROPFIND -- descriptiveprop -- which retrieves all descriptive properties, in contrast to allprop, which retrieves all properties, both descriptive and operational.  </s>
+<s> --Judy Judith A. Slein Xerox Corporation jslein@crt.xerox.com  </s>
+<s> (716)422-5169 800 Phillips Road 105/50C Webster, NY 14580  </s>
+<s> My note was motivated not only by the discussion of backpointers, but also by the concern about the "infinite levels of implementation complexity" that might arise and prevent _effective_ interoperability.  </s>
+<s> I used the word 'structural', but I think 'operational' is closer.  </s>
+<s> Yes, I think we should distinguish between descriptive properties and operational ones.  </s>
+<s> I wasn't even entirely sure that operational properties should be 'properties'; mainly the issue is whether clients that want to be unaware of the distinction should even SEE the operational properties.  </s>
+<s> So it is meant primarily as an argument in favor of standardizing  </s>
+<s> backpointers,  </s>
+<s> I think it might be necessary to do something strong: The proper and efficient functioning of a compliant client MUST NOT depend on the presence or proper functioning of non-standard server operational properties.  </s>
+<s> Otherwise, a client could be 'compliant' and not properly interoperate with a compliant server.  </s>
+<s> This would destroy the primary value of having a standard in the first place.  </s>
+<s> ... snip... Another way to look at this is that the current DAV spec isn't consistent with operational properties; a quick revision at Proposed Standard would be to disallow them completely.  </s>
+<s> To adequately support simple clients interoperability, it may be necessary to set the default the other way: operational properties are not returned by PROPFIND, and some other method is needed to obtain them, if they're being represented as properties at all.  </s>
+<s> Larry  </s>
+<s> Summary: Larry raises two objections to "structural" properties.  </s>
+<s> I believe both are faulty.  </s>
+<s> Without addressing the epistemological issues you raise (between "structural" and "real" metadata) it's not clear to me that the DAV:resources (backpointer) property would be any more confusing to a generic client than any other non-standard metadata property.  </s>
+<s> Suppose, for example, one constructed a hypertext system of arguments, refutations, and justifications, where resources stored the text and the argument structure was represented as (link) properties.  </s>
+<s> While I am unsure whether a (hypothetical) "RHET:refutes" property is 'real' or 'structural' metadata, it seems reasonable to use WebDAV in this way.  </s>
+<s> But to a client ignorant of the RHET properties there is no important differences between RHET:refutes and DAV:references.  </s>
+<s> Both contain a set of DAV:href elements.  </s>
+<s> So please explain how DAV:references will confuse clients.  </s>
+<s> I believe you are mistaken.  </s>
+<s> The spec says "identicially behaving".  </s>
+<s> Suppose resource R is a references to target T. If you copy T to (new) resource S, then there are no references whose target is S, so the DAV:references property will be empty on S. It's the same behavior as before.  </s>
+<s> So the COPY of T will succeed fine.  </s>
+<s> Or suppose you COPY resource R. This is just the same as if you had done a second MKREF, and hence the DAV:resources property of S will now have a new item.  </s>
+<s> It seems to me that either resource may copied without a problem.  </s>
+<s> Please explain how you think this is paradoxical, confusing, or impossible.  </s>
+<s> best regards Jim 650-812-4301  </s>
+<s> I agree with what you say about not copying live properties, but I don't agree with your proposed solution.  </s>
+<s> I totally don't believe this.  </s>
+<s> First of all, some clients will want to display 'operational' or 'structural' properties, too.  </s>
+<s> For sure, when we have a client that accesses the NT file system via WebDAV, I want to see structural properties such as locking and permissions.  </s>
+<s> Second, some clients will display only those properties they understand (either because they wrote them or because they are standardized, as e.g. Dublin Core or GILS), but others will attempt to display *all* properties, whether they mean anything to the client or the user or not, in some 'generic' way.  </s>
+<s> The WebDAV client I wrote does this.  </s>
+<s> It displays DAV:displayname as the 'name' of the resource, it translates DAV:creationdate from GMT to local time, but properties it does not know it just shows as indented quasi-XML.  </s>
+<s> Finally, I doubt the distinction between descriptive and operational can be formallized well enough that we could standardize it.  </s>
+<s> Likewise, the example you gave  </s>
+<s> seems like a red herring to me.  </s>
+<s> I doubt that servers will ever support copying resources to other servers, it's too much of a security problem.  </s>
+<s> I suppose it's possible that a server might have two different areas with different functionality, but this seems unlikely to me.  </s>
+<s> When I see one, I'll believe it.  </s>
+<s> As I said in another email, I think 8.8.2 should be re-written to say that if live property can not be copied live it MUST NOT be copied at all.  </s>

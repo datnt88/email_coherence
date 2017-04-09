@@ -1,176 +1,176 @@
-Note, if the XML is anything other than UTF-8 or UTF-16, the encoding should be present: Because each XML entity not in UTF-8 or UTF-16 format must begin with an XML encoding declaration, in which the first characters must be ' ?xml', 
-any conforming processor can detect, after two to four octets of input, which of the following cases apply. 
-Joseph Reagle Jr. Policy Analyst mailto:reagle@w3.org 
-XML-Signature Co-Chair http://w3.org/People/Reagle/ 
-Hi Joseph, Don and others on the teleconference, I was not completely with it yesterday because my wife's been in hospital the day before (she had a miscarriage (which really hurts) with some complications). 
-Anyway, I wanted to further clarify the 'input/output type' problem we were discussing on the telecon. 
-It seems that there was some confusion because there were two issues at hand. 
-First was the charset encoding and second was the MIME type. 
-For charset encoding in the XML transformations, I solved the problem (interestingly in the way that Peter Norman suggested). 
-Some on the call indicated that this was not a solution they preferred. 
-OK, so we can tweak it a bit, but the charset issue is solved. 
-By the way, the charset transformations require knowledge of how the document type deals with changes in charset (unlike base64 which couldn't care less). 
-I classified them as c14n algorithms to be defined in section 7.5 because XML c14n seems to have the precedent on charset changes, and we should stick to the standards as much as possible. 
-For other types of documents, such as MIME type, it seemed exceedingly pedantic to me to define an input type for the algorithm when the input type is evident from the algorithm itself. 
-I do not believe that the same transform can process multiple types of documents unless the transform doesn't actually parse the document (like base64) in which case it does not need to know the input type. 
-A JPEG decompressor just isn't going to work on an XFDL form. 
-It is the responsibility of the entity that creates the transformation sequence to match up the transformations based on the expected input and output of the types of algorithms that *the entity* strings together. 
-The signature system simply will not have need of this information. 
-If the transformation code receives invalid data, it will generate errors (e.g. if you push non-xml data into an xpath transform, the xml processor will blow chunks). 
-Basically, the transformations I defined did not need this information at all, and the application specific transformations are 1) quite unlikely to need the type information, and 2) quite capable of placing the type information in the Transformation element content even if they do need it. 
-It's really a question of who does the error checking. 
-When I say the type information is not needed, I'm not saying that data of the wrong type shouldn't generate errors, I'm just saying that the core signature syntax and processing rules should not be burdened with trying to figure out the input document type of a Transformation (which would be necessary in order to check whether they match the recorded input type). 
-It has been said repeatedly that we need to be quite specific about the processing rules of these transformations. 
-I was quite specific, but I think some mistook my not restating the rules of XML or other specifications for ambiguity. 
-I would encourage a reread of the section before further discussion, and please address concerns about the actual proposed material to me. 
-It doesn't make sense to have a telecon call where we spend 40 minutes discussing things that are solved either by the spec or implicitly by the specs to which the spec refers. 
-Thanks, John Boyer Software Development Manager UWI.Com -- The Internet Forms Company Note, if the XML is anything other than UTF-8 or UTF-16, the encoding should be present: Because each XML entity not in UTF-8 or UTF-16 format must begin with an XML encoding declaration, in which the first characters must be ' ?xml', 
-any conforming processor can detect, after two to four octets of input, which of the following cases apply. 
-Joseph Reagle Jr. Policy Analyst mailto:reagle@w3.org 
-XML-Signature Co-Chair http://w3.org/People/Reagle/ 
-I agree with John here. 
-I must admit that the whole argument about types &amp; transformations confused me until I realized that the idea was to redefine what a transformation was. 
-So, in the interest of clarifying the problem, I'll explain my thinking. 
-As I understand it, the original idea was that the transformations were a pipeline taking in an octet stream at one end and producing an output octet stream. 
-Very simple and straightforward; one input and one output. 
-The new idea is to augment the octet stream, by adding a parallel type. 
-In other words, each algorithm would have two inputs and two outputs, one of which is an octet stream and the other a "type". 
-The idea comes from the http world where one retrieves a document (analogous to our octet stream) and also gets a whole whack of other information along with it in the http headers, including the mime type of the document. 
-Browsers also sometimes utilize the file extension to determine type. 
-The motivation for the new concept is that some transformations require knowledge of the input type. 
-The main example is the fragment id, which is defined per type. 
-Another example is character set encodings. 
-I strongly feel that transformations should have one input and one output. 
-This makes the specification and implementation for each transformation much 
-simpler and therefore simplifies interoperability and testing. 
-The document 
-being transformed is not going to switch from being text/html to image/jpeg betwixt the signing and the verification, and if it does the signature wouldn't verify anyway. 
-The html or jpeg parser needs to throw errors for invalid input regardless of what we choose. 
-For transformations that need the input type, the input type or character set can be specified as a parameter on that transformation when the signature is created. 
-For character set encodings, I don't think there is much we can do for the general case. 
-Frequently it won't be an issue, the character set will stay constant between signing and verification. 
-If they have an entire XML document, the character set can be determined from the prolog. 
-Otherwise, there is no way of knowing. 
-The http protocol may give us some information that could be passed through in the dual-input/output model, but any other protocol probably won't give us useful information. 
-In the XML case, we could recommend dealing with this issue by canonicalizing the entire document into UTF-8, and then picking out the appropriate fragment. 
-Doing it the other way around would lose the character set encoding information. 
--Mark Bartel JetForm 
-Hi Joseph, Don and others on the teleconference, I was not completely with it yesterday because my wife's been in hospital the day before (she had a miscarriage (which really hurts) with some complications). 
-Anyway, I wanted to further clarify the 'input/output type' problem we were discussing on the telecon. 
-It seems that there was some confusion because there were two issues at hand. 
-First was the charset encoding and second was the MIME type. 
-For charset encoding in the XML transformations, I solved the problem (interestingly in the way that Peter Norman suggested). 
-Some on the call indicated that this was not a solution they preferred. 
-OK, so we can tweak it a bit, but the charset issue is solved. 
-By the way, the charset transformations require knowledge of how the document type deals with changes in charset (unlike base64 which couldn't care less). 
-I classified them as c14n algorithms to be defined in section 7.5 because XML c14n seems to have the precedent on charset changes, and we should stick to the standards as much as possible. 
-For other types of documents, such as MIME type, it seemed exceedingly pedantic to me to define an input type for the algorithm when the input type is evident from the algorithm itself. 
-I do not believe that the same transform can process multiple types of documents unless the transform doesn't actually parse the document (like base64) in which case it does not need to know the input type. 
-A JPEG decompressor just isn't going to work on an XFDL form. 
-It is the responsibility of the entity that creates the transformation sequence to match up the transformations based on the expected input and output of the types of algorithms that *the entity* strings together. 
-The signature system simply will not have need of this information. 
-If the transformation code receives invalid data, it will generate errors (e.g. if you push non-xml data into an xpath transform, the xml processor will blow chunks). 
-Basically, the transformations I defined did not need this information at all, and the application specific transformations are 1) quite unlikely to need the type information, and 2) quite capable of placing the type information in the Transformation element content even if they do need it. 
-It's really a question of who does the error checking. 
-When I say the type information is not needed, I'm not saying that data of the wrong type shouldn't generate errors, I'm just saying that the core signature syntax and processing rules should not be burdened with trying to figure out the input document type of a Transformation (which would be necessary in order to check whether they match the recorded input type). 
-It has been said repeatedly that we need to be quite specific about the processing rules of these transformations. 
-I was quite specific, but I think some mistook my not restating the rules of XML or other specifications for ambiguity. 
-I would encourage a reread of the section before further discussion, and please address concerns about the actual proposed material to me. 
-It doesn't make sense to have a telecon call where we spend 40 minutes discussing things that are solved either by the spec or implicitly by the specs to which the spec refers. 
-Thanks, John Boyer Software Development Manager UWI.Com -- The Internet Forms Company Note, if the XML is anything other than UTF-8 or UTF-16, the encoding should be present: Because each XML entity not in UTF-8 or UTF-16 format must begin with an XML encoding declaration, in which the first characters must be ' ?xml', 
-any conforming processor can detect, after two to four octets of input, which of the following cases apply. 
-Joseph Reagle Jr. Policy Analyst mailto:reagle@w3.org 
-XML-Signature Co-Chair http://w3.org/People/Reagle/ 
-Hi, My problem stemmed from concern that we were throwing away the fragment context. 
-That is, if we decide that you couldn't use for Location, I'd like for there to be something I can put in Location and in Transformations that would have exactly the same effect. 
-So if instead I use Is there an Algorithm I can define so that this has the same effect as the fragment on the end of a URI? 
-The answer is, if Content-Type inforamtion is not forwarded, no, because a fragment on the end of a URI is defined to invoke the fragment processor for the MIME type of the data pointed to dynamically determined at run time. 
-In fact, I think that treat-as-a-fragment is sufficiently useful that it would make sense to make it the default Transform (and Parameter type). 
-On the other hand, in the message below, it seems to be said that this isn't worth much or if it is it should be accomodated by explicitly providing the MIME type as in I guess the concept of dynamically determined type being past along isn't particularly valuable for signatures so I'm willing to go for the InputType form above. 
-That way of handling things would also solve cases like the following for charset So, since there wasn't much support for it and substantial opposition, I'm willing to drop the idea of passing along type/charset/etc. 
-info and have those just be provided as Transform input. 
-Thanks, Donald PS: I put MIME types and charsets as attributes above because it felt natural to do so. 
-I put Location as an Element even though it is a URI and I think should probably be an attribute. 
-PPS: A few more not very important comments of mine below... 
-From: Mark Bartel mbartel@thistle.ca 
-Resent-Date: Fri, 15 Oct 1999 17:28:40 -0400 (EDT) 
-Resent-Message-Id: 199910152128.RAA17363@www19.w3.org Message-ID: 91F20911A6C0D2118DF80040056D77A2032A56@arren.roke.thistle.ca 
-"'IETF/W3C XML-DSig WG '" Date: Fri, 15 Oct 1999 17:28:33 -0400 
-Well, being pedantic, if you can specify Parameters, the Transforms have more than one input. 
-But they have only one output and there is only one thig that is passed to the next Transform in sequence, which is a simplification. 
-It is possible that you have a piece of XML and independent knowledge that its in some particular charset. 
-I don't see how this is much different from MIME type. 
-If needed, it can be a Transform parameter. 
-Hi, My problem stemmed from concern that we were throwing away the fragment context. 
-That is, if we decide that you couldn't use for Location, I'd like for there to be something I can put in Location and in Transformations that would have exactly the same effect. 
-So if instead I use Is there an Algorithm I can define so that this has the same effect as the fragment on the end of a URI? 
-The answer is, if Content-Type inforamtion is not forwarded, no, because a fragment on the end of a URI is defined to invoke the fragment processor for the MIME type of the data pointed to dynamically determined at run time. 
-Actually, the fragment processor is defined. 
-It is in the three dots where you left out the Algorithm. 
-So, we have two different ways of identifying the fragment processor. 
-I recommended identifying the fragment processor by giving its name directly in the Algorithm attribute. 
-You are recommending that we follow the URI-reference notion of picking the fragment processor based on the input type. 
-I recommended Algorithm for the following reasons: 1) There is no reason to stick with URI-reference's limitations on identifying the fragment processor since we are not using URI-references. 
-We use only a URI in Location, so we are free to create a syntax that explicitly identifies the fragment processor. 
-For example, if the Algorithm is Xpointer, then the input type must be in xml format and the fragment is interpreted according to Xpointer's rules. 
-If the input document is not XML, then it doesn't matter whether you called the attribute Algorithm or InputType, the transformation is going to fail. 
-2) We have multiple fragment processors for the same document type. 
-How does knowing the input type allow us to choose? 
-It doesn't, so the Algorithm identifier is necessary. 
-The InputType is nice to have but overly verbose given that we know the fragment processor already. 
-3) It seemed to simplify error handling. 
-If you declare an InputType, then who is responsible for finding out whether the data is in fact of the given type? 
-Seemingly one must parse the document first and if it truly XML or PDF or whatever, then pass it along to the fragment processor. 
-What I'm proprosing is that the Algorithm indicates the fragment processor, which implicitly must parse the document to reach the fragment, and if the fragment processor fails, then obviously the document was wrong. 
-This has an added advantage for resource-constrained implementations. 
-If your app is going to processs very small and specific documents, then you can write a special fragment processor that can only deal with the types of documents in your app domain (like one that only does barenames in XPointer). 
-Anyone wanting to verify the signatures you create can obviously still do that, but you are not required to run a processor on the data first to check whether it matches the InputType. 
-4) I have a preference for having attributes qualify the content of the element rather than some input data that, because of our processing rules, we happen to know will be passed to an algorithm specified by the element content. 
-If the Algorithm says Xpointer, then the Transformation content is an XPointer. 
-This seemed cleaner than saying the InputType said text/xml, so if the data we are processing truly is XML, then the content of Transformation is either an XPath, XPointer or XSLT. 
-In fact, I think that treat-as-a-fragment is sufficiently useful that it would make sense to make it the default Transform (and Parameter type). 
-On the other hand, in the message below, it seems to be said that this isn't worth much or if it is it should be accomodated by explicitly providing the MIME type as in I previously thought you wanted InputType, which is what I think is redundant (see above). 
-I don't think it is necessary to implicitly or explicitly carry the type information. 
-If the indicated fragment processor fails, then the data wasn't of the right type and the signature should fail to create or fail to verify. 
-I guess the concept of dynamically determined type being past along isn't particularly valuable for signatures so I'm willing to go for the InputType form above. 
-That way of handling things would also solve cases like the following for charset So, since there wasn't much support for it and substantial opposition, I'm willing to drop the idea of passing along type/charset/etc. 
-info and have those just be provided as Transform input. 
-Again, I'm not arguing for InputType nor even passing along type/charset implicitly. 
-Given the properly defined algorithm, it is never necessary. 
-In your c14n example above, what do you mean by the Charset attribute? 
-If it is the output charset, then I assumed that information would be a parameter to the CanonicalizationAlgorithm inside of the Transformation, not an attribute of the Transform itself. 
-If it identifies the charset of the data coming into the transform, then 1) we run into the same bag of tricks about making sure it truly has that encoding before proceeding. 
-2) the fragment processor will most likely wipe out on bad data 3) For nonXML I envisioned that such data as this would, if necessary, appear as parameters inside of the Transformation content. 
-We cannot design document specific Transformations in our spec. 
-Not only that, but even if we claimed some non-XML was in a particular encoding, we'd still need app-specific transforms to handle it because we don't know how future non-XML documents will indicate charsets. 
-4) For XML, I envisioned this possibility and accounted for it by forcing the transformation rules to prepend the XMLDecl and UTF16 byte code to the result of any XML transform. 
-This was also done in part because I couldn't tell whether XPath gave any control over that. 
-5) I'm trying to get the Transformation element's attributes to describe the Transformation element's content. 
-The content itself needs to specify what the algorithm will do to data it receives. 
-Thanks, Donald PS: I put MIME types and charsets as attributes above because it felt natural to do so. 
-I put Location as an Element even though it is a URI and I think should probably be an attribute. 
-Right now Location is an element in the spec. 
-ObjectReference is an element that binds a set of elements (Location, Transformations, etc.) that will ultimately result in a digest. 
-It seems odd to make Location into an attribute simply because it identifies the first step in obtaining that data. 
-If such a change were made, then should the first Transform become an attribute, then the second,...,then all Transformations, then the digest algorithm? 
-The resulting element should be called DigestValue not ObjectReference since all of the information necessary to obtain the digest has ended up in the attributes. 
-PPS: A few more not very important comments of mine below... From: Mark Bartel mbartel@thistle.ca 
-Resent-Date: Fri, 15 Oct 1999 17:28:40 -0400 (EDT) Resent-Message-Id: 199910152128.RAA17363@www19.w3.org Message-ID: 91F20911A6C0D2118DF80040056D77A2032A56@arren.roke.thistle.ca 
-"'IETF/W3C XML-DSig WG '" Date: Fri, 15 Oct 1999 17:28:33 -0400 
-much 
-document 
-Well, being pedantic, if you can specify Parameters, the Transforms have more than one input. 
-But they have only one output and there is only one thig that is passed to the next Transform in sequence, which is a simplification. 
-John Technically, agreed. 
-A transform algorithm takes its input data as a parameter (but that is implied not stated as a Parameter element). 
-The explicit parameter to, for example the XPointer transform, is the XPointer. 
-Since none of the defined transforms needed more than one explicit parameter (and since we did not have as strong a Parameter element bent at the time), I didn't make one up. 
-It particularly didn't make sense for the Java transform. 
-For app-defined transforms, they were already free to define whatever was inside of Transformation anyway. 
-It is possible that you have a piece of XML and independent knowledge that its in some particular charset. 
-I don't see how this is much different from MIME type. 
-If needed, it can be a Transform parameter. 
-A Transform parameter would be much better than an attribute. 
-However, how did you come upon this independent knowledge of charset? 
-In the transformations as they were defined (see the XPath processing rules), you never lose it. 
-John Boyer Software Development Manager UWI.Com -- The Internet Forms Company 
+<s> Note, if the XML is anything other than UTF-8 or UTF-16, the encoding should be present: Because each XML entity not in UTF-8 or UTF-16 format must begin with an XML encoding declaration, in which the first characters must be ' ?xml',  </s>
+<s> any conforming processor can detect, after two to four octets of input, which of the following cases apply.  </s>
+<s> Joseph Reagle Jr. Policy Analyst mailto:reagle@w3.org  </s>
+<s> XML-Signature Co-Chair http://w3.org/People/Reagle/  </s>
+<s> Hi Joseph, Don and others on the teleconference, I was not completely with it yesterday because my wife's been in hospital the day before (she had a miscarriage (which really hurts) with some complications).  </s>
+<s> Anyway, I wanted to further clarify the 'input/output type' problem we were discussing on the telecon.  </s>
+<s> It seems that there was some confusion because there were two issues at hand.  </s>
+<s> First was the charset encoding and second was the MIME type.  </s>
+<s> For charset encoding in the XML transformations, I solved the problem (interestingly in the way that Peter Norman suggested).  </s>
+<s> Some on the call indicated that this was not a solution they preferred.  </s>
+<s> OK, so we can tweak it a bit, but the charset issue is solved.  </s>
+<s> By the way, the charset transformations require knowledge of how the document type deals with changes in charset (unlike base64 which couldn't care less).  </s>
+<s> I classified them as c14n algorithms to be defined in section 7.5 because XML c14n seems to have the precedent on charset changes, and we should stick to the standards as much as possible.  </s>
+<s> For other types of documents, such as MIME type, it seemed exceedingly pedantic to me to define an input type for the algorithm when the input type is evident from the algorithm itself.  </s>
+<s> I do not believe that the same transform can process multiple types of documents unless the transform doesn't actually parse the document (like base64) in which case it does not need to know the input type.  </s>
+<s> A JPEG decompressor just isn't going to work on an XFDL form.  </s>
+<s> It is the responsibility of the entity that creates the transformation sequence to match up the transformations based on the expected input and output of the types of algorithms that *the entity* strings together.  </s>
+<s> The signature system simply will not have need of this information.  </s>
+<s> If the transformation code receives invalid data, it will generate errors (e.g. if you push non-xml data into an xpath transform, the xml processor will blow chunks).  </s>
+<s> Basically, the transformations I defined did not need this information at all, and the application specific transformations are 1) quite unlikely to need the type information, and 2) quite capable of placing the type information in the Transformation element content even if they do need it.  </s>
+<s> It's really a question of who does the error checking.  </s>
+<s> When I say the type information is not needed, I'm not saying that data of the wrong type shouldn't generate errors, I'm just saying that the core signature syntax and processing rules should not be burdened with trying to figure out the input document type of a Transformation (which would be necessary in order to check whether they match the recorded input type).  </s>
+<s> It has been said repeatedly that we need to be quite specific about the processing rules of these transformations.  </s>
+<s> I was quite specific, but I think some mistook my not restating the rules of XML or other specifications for ambiguity.  </s>
+<s> I would encourage a reread of the section before further discussion, and please address concerns about the actual proposed material to me.  </s>
+<s> It doesn't make sense to have a telecon call where we spend 40 minutes discussing things that are solved either by the spec or implicitly by the specs to which the spec refers.  </s>
+<s> Thanks, John Boyer Software Development Manager UWI.Com -- The Internet Forms Company Note, if the XML is anything other than UTF-8 or UTF-16, the encoding should be present: Because each XML entity not in UTF-8 or UTF-16 format must begin with an XML encoding declaration, in which the first characters must be ' ?xml',  </s>
+<s> any conforming processor can detect, after two to four octets of input, which of the following cases apply.  </s>
+<s> Joseph Reagle Jr. Policy Analyst mailto:reagle@w3.org  </s>
+<s> XML-Signature Co-Chair http://w3.org/People/Reagle/  </s>
+<s> I agree with John here.  </s>
+<s> I must admit that the whole argument about types &amp; transformations confused me until I realized that the idea was to redefine what a transformation was.  </s>
+<s> So, in the interest of clarifying the problem, I'll explain my thinking.  </s>
+<s> As I understand it, the original idea was that the transformations were a pipeline taking in an octet stream at one end and producing an output octet stream.  </s>
+<s> Very simple and straightforward; one input and one output.  </s>
+<s> The new idea is to augment the octet stream, by adding a parallel type.  </s>
+<s> In other words, each algorithm would have two inputs and two outputs, one of which is an octet stream and the other a "type".  </s>
+<s> The idea comes from the http world where one retrieves a document (analogous to our octet stream) and also gets a whole whack of other information along with it in the http headers, including the mime type of the document.  </s>
+<s> Browsers also sometimes utilize the file extension to determine type.  </s>
+<s> The motivation for the new concept is that some transformations require knowledge of the input type.  </s>
+<s> The main example is the fragment id, which is defined per type.  </s>
+<s> Another example is character set encodings.  </s>
+<s> I strongly feel that transformations should have one input and one output.  </s>
+<s> This makes the specification and implementation for each transformation much  </s>
+<s> simpler and therefore simplifies interoperability and testing.  </s>
+<s> The document  </s>
+<s> being transformed is not going to switch from being text/html to image/jpeg betwixt the signing and the verification, and if it does the signature wouldn't verify anyway.  </s>
+<s> The html or jpeg parser needs to throw errors for invalid input regardless of what we choose.  </s>
+<s> For transformations that need the input type, the input type or character set can be specified as a parameter on that transformation when the signature is created.  </s>
+<s> For character set encodings, I don't think there is much we can do for the general case.  </s>
+<s> Frequently it won't be an issue, the character set will stay constant between signing and verification.  </s>
+<s> If they have an entire XML document, the character set can be determined from the prolog.  </s>
+<s> Otherwise, there is no way of knowing.  </s>
+<s> The http protocol may give us some information that could be passed through in the dual-input/output model, but any other protocol probably won't give us useful information.  </s>
+<s> In the XML case, we could recommend dealing with this issue by canonicalizing the entire document into UTF-8, and then picking out the appropriate fragment.  </s>
+<s> Doing it the other way around would lose the character set encoding information.  </s>
+<s> -Mark Bartel JetForm  </s>
+<s> Hi Joseph, Don and others on the teleconference, I was not completely with it yesterday because my wife's been in hospital the day before (she had a miscarriage (which really hurts) with some complications).  </s>
+<s> Anyway, I wanted to further clarify the 'input/output type' problem we were discussing on the telecon.  </s>
+<s> It seems that there was some confusion because there were two issues at hand.  </s>
+<s> First was the charset encoding and second was the MIME type.  </s>
+<s> For charset encoding in the XML transformations, I solved the problem (interestingly in the way that Peter Norman suggested).  </s>
+<s> Some on the call indicated that this was not a solution they preferred.  </s>
+<s> OK, so we can tweak it a bit, but the charset issue is solved.  </s>
+<s> By the way, the charset transformations require knowledge of how the document type deals with changes in charset (unlike base64 which couldn't care less).  </s>
+<s> I classified them as c14n algorithms to be defined in section 7.5 because XML c14n seems to have the precedent on charset changes, and we should stick to the standards as much as possible.  </s>
+<s> For other types of documents, such as MIME type, it seemed exceedingly pedantic to me to define an input type for the algorithm when the input type is evident from the algorithm itself.  </s>
+<s> I do not believe that the same transform can process multiple types of documents unless the transform doesn't actually parse the document (like base64) in which case it does not need to know the input type.  </s>
+<s> A JPEG decompressor just isn't going to work on an XFDL form.  </s>
+<s> It is the responsibility of the entity that creates the transformation sequence to match up the transformations based on the expected input and output of the types of algorithms that *the entity* strings together.  </s>
+<s> The signature system simply will not have need of this information.  </s>
+<s> If the transformation code receives invalid data, it will generate errors (e.g. if you push non-xml data into an xpath transform, the xml processor will blow chunks).  </s>
+<s> Basically, the transformations I defined did not need this information at all, and the application specific transformations are 1) quite unlikely to need the type information, and 2) quite capable of placing the type information in the Transformation element content even if they do need it.  </s>
+<s> It's really a question of who does the error checking.  </s>
+<s> When I say the type information is not needed, I'm not saying that data of the wrong type shouldn't generate errors, I'm just saying that the core signature syntax and processing rules should not be burdened with trying to figure out the input document type of a Transformation (which would be necessary in order to check whether they match the recorded input type).  </s>
+<s> It has been said repeatedly that we need to be quite specific about the processing rules of these transformations.  </s>
+<s> I was quite specific, but I think some mistook my not restating the rules of XML or other specifications for ambiguity.  </s>
+<s> I would encourage a reread of the section before further discussion, and please address concerns about the actual proposed material to me.  </s>
+<s> It doesn't make sense to have a telecon call where we spend 40 minutes discussing things that are solved either by the spec or implicitly by the specs to which the spec refers.  </s>
+<s> Thanks, John Boyer Software Development Manager UWI.Com -- The Internet Forms Company Note, if the XML is anything other than UTF-8 or UTF-16, the encoding should be present: Because each XML entity not in UTF-8 or UTF-16 format must begin with an XML encoding declaration, in which the first characters must be ' ?xml',  </s>
+<s> any conforming processor can detect, after two to four octets of input, which of the following cases apply.  </s>
+<s> Joseph Reagle Jr. Policy Analyst mailto:reagle@w3.org  </s>
+<s> XML-Signature Co-Chair http://w3.org/People/Reagle/  </s>
+<s> Hi, My problem stemmed from concern that we were throwing away the fragment context.  </s>
+<s> That is, if we decide that you couldn't use for Location, I'd like for there to be something I can put in Location and in Transformations that would have exactly the same effect.  </s>
+<s> So if instead I use Is there an Algorithm I can define so that this has the same effect as the fragment on the end of a URI?  </s>
+<s> The answer is, if Content-Type inforamtion is not forwarded, no, because a fragment on the end of a URI is defined to invoke the fragment processor for the MIME type of the data pointed to dynamically determined at run time.  </s>
+<s> In fact, I think that treat-as-a-fragment is sufficiently useful that it would make sense to make it the default Transform (and Parameter type).  </s>
+<s> On the other hand, in the message below, it seems to be said that this isn't worth much or if it is it should be accomodated by explicitly providing the MIME type as in I guess the concept of dynamically determined type being past along isn't particularly valuable for signatures so I'm willing to go for the InputType form above.  </s>
+<s> That way of handling things would also solve cases like the following for charset So, since there wasn't much support for it and substantial opposition, I'm willing to drop the idea of passing along type/charset/etc.  </s>
+<s> info and have those just be provided as Transform input.  </s>
+<s> Thanks, Donald PS: I put MIME types and charsets as attributes above because it felt natural to do so.  </s>
+<s> I put Location as an Element even though it is a URI and I think should probably be an attribute.  </s>
+<s> PPS: A few more not very important comments of mine below...  </s>
+<s> From: Mark Bartel mbartel@thistle.ca  </s>
+<s> Resent-Date: Fri, 15 Oct 1999 17:28:40 -0400 (EDT)  </s>
+<s> Resent-Message-Id: 199910152128.RAA17363@www19.w3.org Message-ID: 91F20911A6C0D2118DF80040056D77A2032A56@arren.roke.thistle.ca  </s>
+<s> "'IETF/W3C XML-DSig WG '" Date: Fri, 15 Oct 1999 17:28:33 -0400  </s>
+<s> Well, being pedantic, if you can specify Parameters, the Transforms have more than one input.  </s>
+<s> But they have only one output and there is only one thig that is passed to the next Transform in sequence, which is a simplification.  </s>
+<s> It is possible that you have a piece of XML and independent knowledge that its in some particular charset.  </s>
+<s> I don't see how this is much different from MIME type.  </s>
+<s> If needed, it can be a Transform parameter.  </s>
+<s> Hi, My problem stemmed from concern that we were throwing away the fragment context.  </s>
+<s> That is, if we decide that you couldn't use for Location, I'd like for there to be something I can put in Location and in Transformations that would have exactly the same effect.  </s>
+<s> So if instead I use Is there an Algorithm I can define so that this has the same effect as the fragment on the end of a URI?  </s>
+<s> The answer is, if Content-Type inforamtion is not forwarded, no, because a fragment on the end of a URI is defined to invoke the fragment processor for the MIME type of the data pointed to dynamically determined at run time.  </s>
+<s> Actually, the fragment processor is defined.  </s>
+<s> It is in the three dots where you left out the Algorithm.  </s>
+<s> So, we have two different ways of identifying the fragment processor.  </s>
+<s> I recommended identifying the fragment processor by giving its name directly in the Algorithm attribute.  </s>
+<s> You are recommending that we follow the URI-reference notion of picking the fragment processor based on the input type.  </s>
+<s> I recommended Algorithm for the following reasons: 1) There is no reason to stick with URI-reference's limitations on identifying the fragment processor since we are not using URI-references.  </s>
+<s> We use only a URI in Location, so we are free to create a syntax that explicitly identifies the fragment processor.  </s>
+<s> For example, if the Algorithm is Xpointer, then the input type must be in xml format and the fragment is interpreted according to Xpointer's rules.  </s>
+<s> If the input document is not XML, then it doesn't matter whether you called the attribute Algorithm or InputType, the transformation is going to fail.  </s>
+<s> 2) We have multiple fragment processors for the same document type.  </s>
+<s> How does knowing the input type allow us to choose?  </s>
+<s> It doesn't, so the Algorithm identifier is necessary.  </s>
+<s> The InputType is nice to have but overly verbose given that we know the fragment processor already.  </s>
+<s> 3) It seemed to simplify error handling.  </s>
+<s> If you declare an InputType, then who is responsible for finding out whether the data is in fact of the given type?  </s>
+<s> Seemingly one must parse the document first and if it truly XML or PDF or whatever, then pass it along to the fragment processor.  </s>
+<s> What I'm proprosing is that the Algorithm indicates the fragment processor, which implicitly must parse the document to reach the fragment, and if the fragment processor fails, then obviously the document was wrong.  </s>
+<s> This has an added advantage for resource-constrained implementations.  </s>
+<s> If your app is going to processs very small and specific documents, then you can write a special fragment processor that can only deal with the types of documents in your app domain (like one that only does barenames in XPointer).  </s>
+<s> Anyone wanting to verify the signatures you create can obviously still do that, but you are not required to run a processor on the data first to check whether it matches the InputType.  </s>
+<s> 4) I have a preference for having attributes qualify the content of the element rather than some input data that, because of our processing rules, we happen to know will be passed to an algorithm specified by the element content.  </s>
+<s> If the Algorithm says Xpointer, then the Transformation content is an XPointer.  </s>
+<s> This seemed cleaner than saying the InputType said text/xml, so if the data we are processing truly is XML, then the content of Transformation is either an XPath, XPointer or XSLT.  </s>
+<s> In fact, I think that treat-as-a-fragment is sufficiently useful that it would make sense to make it the default Transform (and Parameter type).  </s>
+<s> On the other hand, in the message below, it seems to be said that this isn't worth much or if it is it should be accomodated by explicitly providing the MIME type as in I previously thought you wanted InputType, which is what I think is redundant (see above).  </s>
+<s> I don't think it is necessary to implicitly or explicitly carry the type information.  </s>
+<s> If the indicated fragment processor fails, then the data wasn't of the right type and the signature should fail to create or fail to verify.  </s>
+<s> I guess the concept of dynamically determined type being past along isn't particularly valuable for signatures so I'm willing to go for the InputType form above.  </s>
+<s> That way of handling things would also solve cases like the following for charset So, since there wasn't much support for it and substantial opposition, I'm willing to drop the idea of passing along type/charset/etc.  </s>
+<s> info and have those just be provided as Transform input.  </s>
+<s> Again, I'm not arguing for InputType nor even passing along type/charset implicitly.  </s>
+<s> Given the properly defined algorithm, it is never necessary.  </s>
+<s> In your c14n example above, what do you mean by the Charset attribute?  </s>
+<s> If it is the output charset, then I assumed that information would be a parameter to the CanonicalizationAlgorithm inside of the Transformation, not an attribute of the Transform itself.  </s>
+<s> If it identifies the charset of the data coming into the transform, then 1) we run into the same bag of tricks about making sure it truly has that encoding before proceeding.  </s>
+<s> 2) the fragment processor will most likely wipe out on bad data 3) For nonXML I envisioned that such data as this would, if necessary, appear as parameters inside of the Transformation content.  </s>
+<s> We cannot design document specific Transformations in our spec.  </s>
+<s> Not only that, but even if we claimed some non-XML was in a particular encoding, we'd still need app-specific transforms to handle it because we don't know how future non-XML documents will indicate charsets.  </s>
+<s> 4) For XML, I envisioned this possibility and accounted for it by forcing the transformation rules to prepend the XMLDecl and UTF16 byte code to the result of any XML transform.  </s>
+<s> This was also done in part because I couldn't tell whether XPath gave any control over that.  </s>
+<s> 5) I'm trying to get the Transformation element's attributes to describe the Transformation element's content.  </s>
+<s> The content itself needs to specify what the algorithm will do to data it receives.  </s>
+<s> Thanks, Donald PS: I put MIME types and charsets as attributes above because it felt natural to do so.  </s>
+<s> I put Location as an Element even though it is a URI and I think should probably be an attribute.  </s>
+<s> Right now Location is an element in the spec.  </s>
+<s> ObjectReference is an element that binds a set of elements (Location, Transformations, etc.) that will ultimately result in a digest.  </s>
+<s> It seems odd to make Location into an attribute simply because it identifies the first step in obtaining that data.  </s>
+<s> If such a change were made, then should the first Transform become an attribute, then the second,...,then all Transformations, then the digest algorithm?  </s>
+<s> The resulting element should be called DigestValue not ObjectReference since all of the information necessary to obtain the digest has ended up in the attributes.  </s>
+<s> PPS: A few more not very important comments of mine below... From: Mark Bartel mbartel@thistle.ca  </s>
+<s> Resent-Date: Fri, 15 Oct 1999 17:28:40 -0400 (EDT) Resent-Message-Id: 199910152128.RAA17363@www19.w3.org Message-ID: 91F20911A6C0D2118DF80040056D77A2032A56@arren.roke.thistle.ca  </s>
+<s> "'IETF/W3C XML-DSig WG '" Date: Fri, 15 Oct 1999 17:28:33 -0400  </s>
+<s> much  </s>
+<s> document  </s>
+<s> Well, being pedantic, if you can specify Parameters, the Transforms have more than one input.  </s>
+<s> But they have only one output and there is only one thig that is passed to the next Transform in sequence, which is a simplification.  </s>
+<s> John Technically, agreed.  </s>
+<s> A transform algorithm takes its input data as a parameter (but that is implied not stated as a Parameter element).  </s>
+<s> The explicit parameter to, for example the XPointer transform, is the XPointer.  </s>
+<s> Since none of the defined transforms needed more than one explicit parameter (and since we did not have as strong a Parameter element bent at the time), I didn't make one up.  </s>
+<s> It particularly didn't make sense for the Java transform.  </s>
+<s> For app-defined transforms, they were already free to define whatever was inside of Transformation anyway.  </s>
+<s> It is possible that you have a piece of XML and independent knowledge that its in some particular charset.  </s>
+<s> I don't see how this is much different from MIME type.  </s>
+<s> If needed, it can be a Transform parameter.  </s>
+<s> A Transform parameter would be much better than an attribute.  </s>
+<s> However, how did you come upon this independent knowledge of charset?  </s>
+<s> In the transformations as they were defined (see the XPath processing rules), you never lose it.  </s>
+<s> John Boyer Software Development Manager UWI.Com -- The Internet Forms Company  </s>
