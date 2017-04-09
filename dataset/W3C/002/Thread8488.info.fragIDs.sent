@@ -1,0 +1,81 @@
+Hi Mark (et al), Mark, it looks great. 
+Since I only had a few minor comments, I've gone ahead and copied the archive as you suggested. 
+Just to try and ensure that everyone has a common understanding of what this is about... 
+It looks like there is an early concensus to removing the canonicalization element from SignatureInfo and simply requiring a DOM canonicalization instead. 
+However, we still 
+need a minimal canonicalization algorithm for in Transformations so the following text is applicable to that. 
+(I wonder if we will want the option of minimal canonicalization for imbedded Object elements as well?) Ed Ed, There does not seem to be any disagreement to removing the attribute. 
+So, we should post a suggested section minimal canonicalization section to the list. 
+May I propose --start section-- 7.5.2 
+Minimal Canonicalization The algorithm identifier for the minimal canonicalization is canonicalization CanonicalizationAlg element is CanonicalizationAlg Algorithm="http://www.w3.org/1999/10/signature-core/minimal"/ ***[Ed: should we use the following instead *** CanonicalizationAlgorithm The minimal canonicalization algorithm: * converts the character encoding to UTF-8, removing the encoding pseudo-attribute * normalizes line endings, changing CR/LF sequences to LF only ***[Ed: We also need to change each CR not followed by an LF. *** eg. change "Blah\rBlah." 
+to "Blah\nBlah" NOTE If possible, characters that are decomposed in the source character set 
+remain decomposed when converted to UTF-8; similarly with composed characters. 
+No Unicode composition/decomposition normalization is done. 
+; should we instead require Unicode Canonical Composition (Normalization Form C) as specified for W3C Text Normalization (see ***[Ed: I admit I'm somewhat out of my depth here but from my reading of ***"http://www.unicode.org/unicode/reports/tr15/tr15-10.html", 
+I'd ***say keep the NOTE as it is and see if anyone disagrees. 
+This algorithm is only applicable to XML resources. 
+***[Ed: Well it would be OK for any text resource. 
+***For example, it might be useful for XPointers. 
+--end section-- If you agree, let me know and I'll post it (or you could just post it if you like). 
+-Mark -----Original Message----- Hi Mark, I agree with the scenario and that minimal canonicalization should convert the data to UTF-8. 
+I think the only question is whether the "encoding" pseudo-attribute should be changed to "UTF-8". 
+In my original append, I was in favour of changing it but Don made a reasonable argument against that and I now lean somewhat to his viewpoint. 
+On the issue of specifying the encoding, I can see reasons for and against and that's why, in my original append, I asked for debate about this. 
+It is good you are bringing up the question. 
+However, I am quite opinionated regarding whitespace canonicalization. 
+Normalizing character encoding and line breaks is reasonable text-level normalization. 
+If one is talking about whitespace normalization, then I have to assume that we're getting more into XML-aware canonicalization as opposed to just text-aware canonicalization. 
+(Correct me if my assumption is wrong.) Now, I am very much for requiring, or strongly recommending, XML-aware canonicalization for XML objects but it seems to me that if one wants to do XML-aware canonicalization, you have to go the whole way which means normalization of character encoding, newlines, whitespace, namespaces, attribute ordering, attribute specification (explicit with defaults), and other things like those discussed in DOMHASH and Canonical XML. 
+(Note: I oppose the information loss in Canonical XML.) To me, requiring whitespace normalization for minimal canonicalization is unnecessary for text-level canonicalization and insufficient (by itself) for XML-level canonicalization. 
+(I recognize that changing the encoding pseudo-attribute implies some level of XML awareness but I thought it might be a reasonable exception.) Anyway, I've just re-posted Don's commentary of my orignal append. 
+Perhaps you could take a look at that and then send your opinion to the archive. 
+(You might include the text of this note as reference.) Perhaps, you could indicate exactly what is meant by "whitespace normalization". 
+Regards, Ed -----Original Message----- Ed, here's the kind of scenario I was thinking of: You create a detached signature over a web page which is in some non-UTF8 character set. 
+You then decide to change the character set to, say, UTF8. 
+I think the signature should still verify if you have chosen minimal canonicalization, because part of the decision to use minimal canonicalization is that the character set encoding doesn't matter. 
+Note that sometimes the character set of web pages gets converted enroute (because the web server is attempting to be smart). 
+I got the impression that you and I didn't actually disagree. 
+Should I post something to the list describing this scenario asking for further comment? 
+Is there a counter-scenario? 
+My proposal for minimal canonicalization section: --start section-- The minimal canonicalization algorithm: * converts the character encoding to UTF-8, removing the encoding pseudo-attribute * normalizes line endings [something about ambiguous code points here, need to look into this... haven't looked at your code]. 
+Line ending normalization will change any CR/LF (0x0d/0x0a) line endings to LF (0x0a). 
+This algorithms in only applicable to text resources. 
+--end section-- -Mark Bartel JetForm 
+S/MIME dodges this by relying on MIME's requirement that the sender, who understands the local line ending format, translate to CRLF for transport (rfc2049). 
+We can't dictate a transport encoding, since we are expected to sign content by reference. 
+In theory, HTTP should probably require the rfc2049 canonical encoding for text/*, but it doesn't seem to. 
+Anyway, I'd be interested to hear what FTP does, but I think the simple algorithm 
+1) CRLF - LF 2) CR (alone) - LF works for our purposes. 
+In fact, I think this is the algorihm implemented by most XML parsers, which are required to normalize to LF endings [1]. 
+Keep in mind that we're not modifying the content on disk (or on its way to disk). 
+This is just part of the digest computation. 
+-Greg 
+[1] http://www.w3.org/TR/1998/REC-xml-19980210 
+I looked at the sample minimal canonicalization code, and I think we may be at cross purposes a bit. 
+When we discussed this in Irvine, I thought we were talking about the FTP/Telnet form of canonicalization, where a platform line end is replaced by a canonical line end. 
+This is not the same thing as replacing CR's by LF's. 
+With the first, if I FTP a document from one platform to another and canonicalize it on each platform, I'll get the same result, and in the other I won't. 
+In cases where the sending end of line convention is CR or LF and the receiving line convention is CR-LF or LF-CR, the end of lines will all double. 
+There is a reasonably straightforward example of portable FTP style end of line code in the BSD sources. 
+It's only a few lines of code. 
+Peter Norman, Factpoint 
+I looked at the sample minimal canonicalization code, and I think we may be at cross purposes a bit. 
+When we discussed this in Irvine, I thought we were talking about the FTP/Telnet form of canonicalization, where a platform line end is replaced by a canonical line end. 
+This is not the same thing as replacing CR's by LF's. 
+With the first, if I FTP a document from one platform to another and canonicalize it on each platform, I'll get the same result, and in the other I won't. 
+In cases where the sending end of line convention is CR or LF and the receiving line convention is CR-LF or LF-CR, the end of lines will all double. 
+There is a reasonably straightforward example of portable FTP style end of line code in the BSD sources. 
+It's only a few lines of code. 
+Peter Norman, Factpoint 
+It doesn't and shouldn't. 
+In fact HTTP requires that the server not meddle with the text it is transporting. 
+HTTP adopted the novel idea that canonical encoding was part of the problem and not the solution. 
+Actually this is what we should do. 
+The signed bits should be the bits delivered. 
+I accept however that the bits that are sent may not be the bits that arrive :-( The CRLF - LF, CR- LF convention can at least be formally described as a FSM:- Tokens CR[Carriage Return] LF[Line Feed] NULL[The terminal token] *[everything else] Start CRReturn[] LFStart[LF] *Start[*] NULLEnd Return CRReturn[LF] LFStart[LF] *Start[LF *] NULLEnd[LF] Where the transitions from each state are described as: Recieved Token, Next State, [Emitted Tokens] The only problem with this approach is that we require the object signed to use the LF convention when the IETF adopts the CRLF convention. 
+With a formal construction such as the above I can construct a formal proof that the cannonicalization has the fixed point property [I can show that for any given initial state and sequence of input tokens I can prove that f(x) and f((x)) shall arrive at the same state having emitted the same tokens] Phill 
+I agree. 
+The change you suggest is what the XML Information SET draft says. 
+(Actually, the way it puts it is that if you find a CRLF, the CR is dropped and if you find a CR not followed by an LF (IE, CRXX in the body or a CR at the end) then the CR is coverted into an LF. Donald From: Greg Whitehead gwhitehead@signio.com 
+Resent-Date: Tue, 12 Oct 1999 18:15:34 -0400 (EDT) Resent-Message-Id: 199910122215.SAA16065@www19.w3.org Message-ID: 6B962A1EE646D31193270008C7A4BAB50933A3@mail.paymentnet.com 
+Date: Tue, 12 Oct 1999 15:15:04 -0700 

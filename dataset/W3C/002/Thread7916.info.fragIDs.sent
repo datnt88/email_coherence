@@ -1,0 +1,81 @@
+Here are my thoughts on this. 
+Its a bit late for me, so they might be a bit jumbled.. 
+For those in a hurry, my short answer is: I think that at this time, Digest is no longer the right minimum requirement. 
+Is there some way we can just require an "IETF recognized 'non-plaintext over the wire' authentication system" , such as Digest, Kerberos or SSL+Basic"? 
+My longer explanations... On what/who the requirement applies to... 
+The Requirement applies to implementation, not operation. 
+If you ship a product that claims that it complies with WEBDAV RFC, it must support Digest in the shipped form. 
+If you dont support Digest, then you are not completely compliant. 
+Frankly, I dont think this is such a big deal these days. 
+I imagine a product box or spec that says "Supports WebDAV * " with a footnote below somewhere effectively saying: 
+"* Compliant with RFC XXXX except for Digest Authentication" or "* Conditionally compliant with RFC XXXX. 
+This product does not support Digest" I think its reasonable to have customized versions of products that may only be conditionally compliant. 
+As for servers in operation, it is well known that Operational Policy in an organization may cause a product to be configured in such as way that it does not interoperate with another compliant product. 
+Many specs today seem to have a set of "features" and a minumum required set to be supported, which apply to products claiming compliance yet operators can configure them out of compliance. 
+There is probably some work that should be done to find good language to describe this and differentiate it from "real" requirements that must always be true in both implementation and operation. 
+On Digest as the right choice for the requirement: IMHO, the spirit was "Anyone procuring a product that claims WebDAV RFC compliant must be able to be configured to use a non-plaintext authentication that is recognized by the IETF" Unfortunately, requiring SSL would have been too painful both because it is/was not IPR free and that it is/was considered too hard/heavyweight to require. 
+As a result, Digest was available 
+to be used to solve this problem. 
+Digest was created to fix this problem, of plaintext passwords *over the wire*. 
+I dont think it was obvious at the time how much its implementation would complicate how passwords are stored in practice. 
+Today, I would think that requiring SSL+basic would be less of a hardship than Digest. 
+In my own experience, I know that implementing SSL (for the encryption part at least) was relatively simple and isolated from the rest of the system. 
+In fact, it can be done in a way that applications can use SSL with almost no code changes, similar to socks. 
+Implementing Digest in Windows/IIS was very difficult, since IIS uses authentication integrated with system accounts. 
+Prior to Digest, system passwords were stored in a hash that was incompatible with the digest hash. 
+So some pretty serious architectural changes had to be made to support digest in a non-hacky way. 
+It seems that Daryl has come to a similar realization. 
+I think that at this time, Digest is no longer the right minimum requirement. 
+Is there some way we can just require an "IETF recognized 'non-plaintext over the wire' authentication system, such as Digest, Kerberos or SSL+Basic"? 
+On Testability: Basic Authentication is a required part of HTTP/1.1, testing for that is the same problem as testing for Digest. 
+Depending on your perspective, this reduces to a previously unsolved (or solved) problem. 
+Jason Crawford asked: 
+Are you expressing a preference for any particular approach with your posting below? 
+I'm trying to give some guidance about the basic rules of standards making in the IETF: a) the standard should assure interoperability b) the standard should require implementation of security adequate for its stated purpose c) standards should avoid requiring implementation of patented technologies For WebDAV, the stated purpose is "web distributed authoring". 
+Other uses, like for software configuration management or accessing exchange mailboxes, are fine, but they're not the stated purpose. 
+Saying "authentication must be used" doesn't assure interoperability, because the clients might not implement the authentication mechanism that the server requires. 
+Requiring that "the authentication method used must not have passwords in the clear" doesn't help. 
+I think what RFC 2518 says is that WebDAV clients must USE digest authentication for authentication. 
+(a) means that if you have a compliant client and a compliant server, they should work together. 
+Letting servers implement basic with SSL only without requiring clients to implement basic with SSL means you wouldn't have interoperability. 
+Requiring clients to implement SSL means (I think) that you're requiring them to implement patented technology. 
+Not requiring any security means that 
+you break (b). 
+If not, what would you suggest that the spec say? 
+(Feel free to post to the list and guide the resolution of this.) 
+I think RFC 2518's "MUST support digest" meets the criteria above, especially if you interpret "support" to mean "actually use as an access authentication method". 
+I suggest that the spec stay as it is in RFC 2518 unless you can come up with something that everyone agrees (1) it's better, and (2) it also meets the criteria. 
+Also, do you know if the powers that be would accept us either saying nothing beyond the fact that authentication should be used? 
+No, because of (a); it doesn't guarantee interoperability 
+If not, would they accept it if we additionally specify that the authentication schemes used avoid sending privledged info in the clear? 
+It still doesn't guarantee interoperability. 
+Currently it says "WebDAV applications MUST support the Digest authentication scheme". 
+Yours might be a nice clarification (is an application a client, a server or both?), but we'd have to say something about servers as well. 
+What patented technology are you talking about? 
+In practice, SSL requires RSA, but the patent has expired. 
+There are also plenty of unpatented symmetric algorithms usable with SSL. 
+It's true that SSL is patented itself by Netscape but they've released it for royalty-free use (see rfc2246 appendix G.) Is there still an issue with that? 
+Aside from the patent issues, we might consider whether it's now reasonable to require WebDAV clients to support SSL. 
+I agree that it's too weak to say nothing or to say "authentication must be supported"; for the reasons Larry outlines we need to specify which mechanisms. lisa 
+Jason Crawford pointed out to me that we never resolved the Digest authentication issue, so let me take a stab at it. 
+If you quibble with the wording below, don't just say you don't like it -- suggest some alternate wording. 
+Dylan Barrel [1] and Alan Kent [2] describe the issues with supporting Digest authentication on the server, and their contention that support for Digest is unacceptable: [1] http://lists.w3.org/Archives/Public/w3c-dist-auth/2001OctDec/0062.html [2] http://lists.w3.org/Archives/Public/w3c-dist-auth/2001OctDec/0087.html 
+I clarified the meaning of "supports Digest authentication" in [3]: [3] http://lists.w3.org/Archives/Public/w3c-dist-auth/2001OctDec/0073.html 
+I think Matt Timmerman's post [4] has the start of a solution: [4] http://lists.w3.org/Archives/Public/w3c-dist-auth/2001OctDec/0080.html 
+Thus, I propose the following authentication requirements: * Basic MUST NOT be used unless the connection is secure. 
+Secure is defined to be TLS over the Internet, a physically secure network, or a network behind a well-administered firewall. 
+Client requirements: MUST support Basic, SSL/TLS support is STRONGLY RECOMMENDED Server requirements: SHOULD support Basic, SSL/TLS support is STRONGLY RECOMMENDED * Digest SHOULD be used when the connection is insecure, such as a non-TLS connection over the Internet. 
+Client requirements: MUST support Digest Server requirements: SHOULD support Digest, but it is acceptable for Digest authentication to be disabled by default. 
+It SHOULD be possible for an administrator to configure a server to use Digest. 
+* Additional authentication schemes beyond Basic and Digest MAY be supported, whether or not described in an IETF specification. 
+Implementors should be aware that use of other authentication schemes guarantees some level of non-interoperation of that authentication scheme, since all WebDAV clients and servers cannot be expected to support that authentication scheme. 
+So, for example, it's OK for people to support NTLM. 
+* Finally, to guarantee some level of authentication will be possible: a server MUST at minimum support either Basic OR Digest. 
+A server SHOULD support Basic AND Digest. 
+Note that the terms MUST and SHOULD are being used as defined in RFC 2119: 1. MUST This word, or the terms "REQUIRED" or "SHALL", mean that the definition is an absolute requirement of the specification. 
+3. SHOULD This word, or the adjective "RECOMMENDED", mean that there may exist valid reasons in particular circumstances to ignore a particular item, but the full implications must be understood and carefully weighed before choosing a different course. 
+For example, I would say that Dylan and Matt have carefully weighed the implications of Digest support, and so if they decided not to support Digest under the language above, this would meet the letter and the spirit of the proposed language. 
+Comments? 
+- Jim 
+Fine with me. 
+//Stefan 

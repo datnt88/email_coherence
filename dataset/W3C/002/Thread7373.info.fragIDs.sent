@@ -1,0 +1,170 @@
+# DAV compliant # resources MUST maintain the consistency of the HTTP URL namespace. 
+Is there a definition of what 'the consistency of the HTP URL namespace' means? 
+It's not defined anywhere, and this sentence only gives an example. 
+This does appear to be an omission in the specification. 
+By consistency, we meant: No gaps: Given HTTP URL U, for all unique HTTP URL Ux, where Ux is constructed from U by removing all characters to the right of a "/", Ux MUST 
+be the HTTP URL of a WebDAV collection. 
+So, if there is an HTTP URL: Then MUST be HTTP URLs of WebDAV collection resources. 
+There are two ways to maintain this consistency when a new resource is created: a) create intermediate collections automatically b) refuse to create a resource if intermediate collections do not yet exist. 
+The example in Section 4.3 implies we were recommending option b). 
+Also, consistency implies: 100% containment: Given HTTP URL U, U MUST be a member URL of the collection 
+whose URL, Uc, is contructed by removing the trailing path segment of U. Exception: when U is the top-level resource, "/", of a namespace (i.e., the first slash after the domain name in an HTTP URL), it belongs to no collection, since it is the URI of the root collection. 
+- Jim 
+H From w3c-dist-auth-request@w3.org Thu Sep 10 11:53:20 1998 H Resent-Message-Id: 199809101845.OAA13039@www19.w3.org H MMDF-Warning: Parse error in original version of preceding line at paris.ics.uci.edu 
+H From: Jim Whitehead ejw@ics.uci.edu 
+H Date: Thu, 10 Sep 1998 11:32:02 -0700 H X-Priority: 3 (Normal) H X-MSMail-Priority: Normal H Importance: Normal H Subject: Namespace consistency H H  # DAV compliant H  # resources MUST maintain the consistency of the HTTP URL namespace. 
+H H  Is there a definition of what 'the consistency of the HTP URL namespace' H  means? 
+It's not defined anywhere, and this sentence only gives an example. 
+H H This does appear to be an omission in the specification. 
+H H By consistency, we meant: H H No gaps: Given HTTP URL U, for all unique HTTP URL Ux, where Ux is H constructed from U by removing all characters to the right of a "/", Ux MUST 
+H be the HTTP URL of a WebDAV collection. 
+H H So, if there is an HTTP URL: H H http://www.foo.bar.org/a/b/c 
+H H Then H H http://www.foo.bar.org/a/b/ 
+H http://www.foo.bar.org/a/ 
+H 
+H MUST be HTTP URLs of WebDAV collection resources. 
+H H There are two ways to maintain this consistency when a new resource is H created: H H a) create intermediate collections automatically H b) refuse to create a resource if intermediate collections do not yet exist. 
+H H The example in Section 4.3 implies we were recommending option b). 
+H H Also, consistency implies: H H 100% containment: Given HTTP URL U, U MUST be a member URL of the collection H whose URL, Uc, is contructed by removing the trailing path segment of U. H Exception: when U is the top-level resource, "/", of a namespace (i.e., the H first slash after the domain name in an HTTP URL), it belongs to no H collection, since it is the URI of the root collection. 
+H H - Jim H 
+So if I have a personal webspace, ... .. and I choose I create a "WebDAV collection" in my space, .. 
+.. am I in violation of the rules above since the URL of my personal space 
+is NOT of and by itself the URL of a collection? 
+Howard S. Modell Comptg Sys.Progr-Analyst/4 POBox 3707, m/s 4A-25, Boeing ISDS howard.s.modell@boeing.com 
+Seattle, WA 98124-2207 
+Well, actually, the URL of http://warlok.ds.boeing.com/~howie/ is a correct URL for a collection, since it has a trailing slash. 
+But, what you're probably asking is whether the resource identified by 
+The implication of the requirement in section 4.3 (no namespace gaps) combined with the requirement in section 4.1 that namespaces must behave as DAV collections even if they weren't created with WebDAV, is that yes, the resource identified by http://warlok.ds.boeing.com/~howie/ 
+needs to be of type WebDAV collection if http://warlok.ds.boeing.com/~howie/a/b/c is WebDAV-compliant. 
+- Jim 
+Actually no, http://foo/bar does NOT have to be a collection just because IF http://foo/bar is DAV compliant and IF http://foo/bar/blah/ exists and is DAV compliant THEN http://foo/bar must be a collection. 
+However, IF http://foo/bar is NOT DAV compliant and IF http://foo/bar/blah/ exists and is DAV compliant THEN there is no requirement on http://foo/bar. 
+The reason the requirement runs this way is that often what appears to be a single namespace is in fact a whole mishmash of mapped namespaces owned by separate servers. 
+So even though http://foo/bar/blah may be on a DAV compliant server there is no guarantee that http://foo/bar is on a DAV compliant server. 
+Thus our requirements for namespace consistency are predicated on the parent being DAV compliant. 
+Yaron 
+From: Jim Whitehead [mailto:ejw@ics.uci.edu] 
+Sent: Friday, September 11, 1998 5:02 PM Subject: RE: Namespace consistency 
+Yaron and Jim seem to disagree on the nature of the requirement, so it sounds like this needs to get worked out. 
+Must the intermediaries also be DAV compliant? 
+Well, for one level it doesn't matter, but suppose: 1) http://foo/bar is DAV compliant 2) http://foo/bar/a/b/c/blah/ exists and is DAV compliant 3) then must http://foo/bar/a/b be a (DAV-compliant) collection? 
+This would leave out the possibility that http://foo/bar/a might be some kind of mapping? 
+Or is it that "exists" needs elaboration to except that case where it's a redirection? 
+I agree that this is the implication of the protocol as it stands. 
+I would like to raise an objection to it, as it would prohibit one from supporting DAV methods on anything smaller than the full namespace of a server. 
+It is often useful for various subtrees of a server's namespace to support 
+different sets of methods (sometimes via cgi scripts, without assistance from the server maintainer) and there is no benefit to this restriction (unlike the one requiring internal consistency). 
+I have been meaning to complain about this for a while but didn't because it seems to be trivial. 
+I was having a hard time imagining anyone being so picky as to insist on this point (and, perhaps, denying me the covetted "100 % Pure DAV" sticker for my server?) but perhaps it's better to face it now. 
+In fact, this very issue has been raised in some discussions internal 
+to Xerox. 
+People have said to me "We would like to support DAV methods in this subtree but we don't want to support them on the root but the protocol says we MUST do it, so can we still use DAV?". 
+So Howie isn't the only one 
+worrying about it. 
+I say, strike the restriction. 
+Based on my experiences as a webmaster, I'd agree. 
+I really don't see any prospect of webmasters wanting to have only root-based subtrees (like better with others if it can be restricted to non-root-based subtrees. 
+Not that some servers won't want to be set up using DAV for all document management -- just that some (probably the majority) will not use DAV for all document management, for various political/social/technical reasons. 
+Mark Leighton Fisher Thomson Consumer Electronics fisherm@indy.tce.com 
+Indianapolis, IN "Browser Torture Specialist, First Class" 
+I agree. 
+If we do, then even someone with an ordinary ISP account could run 
+DAV on their account, given a CGI implementation. 
+Also, consider that DAV is a potential security risk (depending on the implementation, of course), so there will be people who want to have only some areas of their server run DAV extensions. 
+|John (Francis) Stracke |My opinions are my own.|Both candidates | |Software Retrophrenologist|=======================/are better than a| |Netscape Comm. 
+Corp. |megalomaniac mutant lab mouse bent on | |francis@netscape.com 
+|world domination...but it's pretty close.| 
+New area code for work number: 650 
+It should be possible to configure a DAV server to have a document root contained in "collection" that is not DAV compliant. 
+For example, I use the Java Web Server's doc.root of c:\some-path\public-html and set the doc.root for my authoring web server to be c:\some-path\public-html\dav. 
+This keeps the 
+authoring server and the production server out of each other's way, but uses the same file system root for both. 
+Other configurations are possible. 
+The -08 spec does not prevent this, it only leaves it as a server option. 
+Yeah, but then you can't use the same URI for authoring as for browsing, in which case you might as well author via FTP. 
+|John (Francis) Stracke |My opinions are my own.|S/MIME supported | |Software Retrophrenologist|=========================================| |Netscape Comm. 
+Corp. |Beware of wizards, for you are crunchy | |francis@netscape.com 
+| and good with ketchup. 
+| New area code for work number: 650 
+I am quite happy to alter the language of the -08 spec. 
+so that the correct meaning of these requirements is expressed, rather than the virus-like behavior that the spec. 
+can be read to imply, which people object to. 
+What I read from this rough consensus on the list is people would like the language to read that a parent of a resource does not have to be a WebDAV-collection. 
+However, if the parent of a WebDAV resource is itself WebDAV compatible, then it has to be a WebDAV collection. 
+A couple of questions: 1) Should there be a policy for whether the parent of a resource must exist? 
+So, if http://foo/bar/blah exists, and is DAV-compliant, must resource My answer: Since we're not requiring the parent of a DAV resource to be a DAV collection, there is no guarantee that a client will be able to retrieve 
+a listing of the other resources at a given level in the HTTP URL hierarchy. 
+Due to this, there isn't much of a difference between getting a 501 Not Implemented for an existing resource that doesn't support PROPFIND, or getting a 404 Not Found for a non-existing resource -- either way the client won't be able to get an index. 
+So, my answer is that we shouldn't require a DAV-compliant resource to have a parent resource. 
+2) Larry Masinter's question (intermediate collections): 
+My answer: I think we should require all collections below a DAV-compliant resource to also be DAV-compliant. 
+So, while it's OK to not be 
+DAV-compliant looking up a hierarchy tree, looking down the tree from a 
+DAV-compliant location should always be DAV-compliant. 
+This way DAV clients 
+will be able to get listings of the members of a collection once they're in a DAV compliant portion of the namespace while going down the namespace hierarchy, providing a less confusing user experience than if the behavior of the namespace changed from level to level. 
+- Jim 
+Fine with me. 
+(Don't care much either way.) 
+Strongly agree. 
+So a DAV-compliant resource can't be, say, a CGI script? 
+Even in 
+'advanced DAV'? 
+If I have http://a/b/c/ and I want to add a CGI such that 'd.cgi' computes a query, you might have http://a/b/c/d?e . 
+Now, is http://a/b/c/d.cgi 
+a 'member' of http://a/b/c/ ? 
+Larry 
+My reading of the DAV spec is that both Jim's statement (the parents of a DAV resource do not have to be a DAV resource) and Larry's language (the child of a DAV resource doesn't have to be a DAV resource) are BOTH correct and BOTH supported by the spec. 
+The language in the spec is phrased as "If a resource is DAV compliant THEN ....." In the particular case Larry lists my understanding of the spec is that if member of http://a/b/c EVEN THOUGH it isn't itself DAV compliant. 
+The requirement for listing is only on http://a/b/c because it is DAV compliant but this puts no onus on http://a/b/c/d.cgi 
+to be DAV compliant. 
+Yaron 
+From: Larry Masinter [mailto:masinter@parc.xerox.com] 
+Sent: Monday, September 14, 1998 8:44 PM Subject: RE: Namespace consistency 
+Hmm, I he did say all _collections_ below a DAV compliant resource, not all resources of any kind. 
+But since 'collection' is a term defined by DAV, what would it mean to be a 'collection' that is not 'DAV'. 
+Jim, did you mean 'resource', or did you mean 'namespace' (in the HTTP sense, not XML). 
+I was assuming he meant 'namespace'. 
+On the other hand, what about the stronger claim (that all resources within a collection must be DAV compliant). 
+It's not unreasonable. 
+What does it mean to do PROPFIND on collection a/b/c, discover that it includes resource a/b/c/d, but that one can't do PROPFIND on a/b/c/d? 
+Of course it can be a CGI script. 
+That's one reason that DAV has source 
+links. 
+What do you see that would prohibit this? 
+I don't understand what you mean by 'indirectly' enough to speak to that, but if a PROPFIND on http://a/b/c/d includes http://a/b/c/d.cgi, then d.cgi is a member of a/b/c. 
+Otherwise, not, because there is no other DAV way to traverse the URL namespace except by issuing PROPFINDs. 
+That could be very difficult to implement, though. 
+If http://foo/bar/baz.cgi is a CGI script, then http://foo/bar/baz.cgi/quux.html is a perfectly legal URI as far as the protocol's concerned. 
+If descendants of DAV collections must be DAV, then baz.cgi must implement all DAV methods in order for quux.html to be compliant. 
+Of course, the server's DAV implementation can provide helper code for baz.cgi to use, but it could still get pretty nasty. 
+|John (Francis) Stracke |My opinions are my own.|S/MIME supported | |Software Retrophrenologist|=========================================| |Netscape Comm. 
+Corp. |"The avalanche has already started. 
+It is| |francis@netscape.com 
+| too late for the pebbles to vote." -Kosh| New area code for work number: 650 
+I've been meaning to get back to this comment all week. 
+Using the same URI for authoring as for browsing should not be considered an "advantage" of WebDAV. 
+In fact, it isn't an advantage at all. 
+The real advantage 
+of WebDAV is that it is able to respond accurately when a user attempts to modify a derived resource instead of the source, and is able to control access to its namespace via an authentication mechanism that is not based on login names. 
+Assuming the URI would be the same for both authoring and retrieving of resources is contrary to good site design, wherein the name assigned to a resource is independent of its implementation. 
+The Web is not a distributed file system, a fact that has a whole set of advantages and disadvantages. 
+However, I'd hope that a WebDAV capable system would not puke and die if it was given a redirect to the source resource that happened to be an ftp URL. 
+I'm not saying that clients should be required to support such authoring modes, but there are countless reasons why it would be a good idea. 
+....Roy 
+Of *course* it is! 
+If you have an authoring tool that's integrated with your browser (at least to the extent of being able to send it "go to this URI" commands), that's going to make it a *lot* easier to test the content you've developed. 
+If the browser can't use the same URI as the authoring tool, then you're going to have to do the translation by hand (which is essentially what I have to do with Netscape Composer today, since my ISP doesn't support HTTP PUT), or else teach the authoring tool to remap URIs that it sends to the browser (possible, but messy). 
+|John (Francis) Stracke |My opinions are my own.| 
+S/MIME supported | |Software Retrophrenologist|===========================================| |Netscape Comm. 
+Corp. |Id est fabula nostra, et non mutabimus eam!| |francis@netscape.com 
+| --House Falconguard and Affiliated Scum | New area code for work number: 650 
+Give me a break, John. 
+The Source URL is a link provided by WebDAV. 
+If you are doing authoring on a resource, the user agent is already aware of both the retrieval interface (seeing the results) and the source interface (seeing the content from which the retrieval is derived). 
+If they are the same thing, then it may be the same URL, or it may not. 
+If they are not the same thing, then it won't be the same URL. 
+Either way, the browser is going to be told to retrieve "a URL" by the Composer. 
+This can all be done automatically by any sensible implementation of WebDAV once at least one of those two URLs are entered by the user to start the authoring process. 
+The server will tell you the rest. 
+....Roy 

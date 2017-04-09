@@ -1,0 +1,258 @@
+While I understand your justifiable fear that the access linearization caused by locks will hinder collaboration you must understand that the reason my users use locks is exactly that - they want to PROHIBIT collaboration. 
+My user's explicit goal is to prevent anyone, anywhere from have any ability 
+to manipulate their "private data worlds" in anyway. 
+This begins with the 
+formation of the namespace and continues to the manipulation of content. 
+For my users WebDAV is a great way to access a large number of "private data worlds." 
+For your users, WebDAV is a great way to powerfully leverage the collaborative features of the web. 
+Our two user's needs are in direct conflict. 
+You have proposed two mitigating technologies, lock monitors and auto-email notifications. 
+Even if I could include those in a $200 OS product (which I can't) I would not do so anyway because my users do not want to have to deal with the ramifications of these technologies. 
+My users do not want to get an e-mail telling them their files have moved. 
+They just want their files to stay where they were put. 
+Given the contradictory needs of our user bases I see two choices. 
+Choice 1 - We agree to disagree. 
+Deciding the problem is irresolvable we create two types of locks in WebDAV. 
+This, of course, destroys any hope for interoperability and puts blocks in the road of my users as they "grow" from their current "private data world" model to a more open "collaborative world model." 
+Choice 2 - We agree that locks, as unfortunate as it may be, must lock the namespace and accept this limitation as the cost of bringing the widest number of users into WebDAV. 
+Yaron 
+From: Geoffrey M. Clemm [mailto:geoffrey.clemm@rational.com] 
+Sent: Saturday, October 23, 1999 5:11 PM Subject: Re: DELETE leaving a lock-null resource; was LOCK Scenarios From: "Yaron Goland (Exchange)" yarong@Exchange.Microsoft.com 
+Using the updated proposal where a process gets back a 
+302 when it 
+tries to access a locked resource that has moved, word 
+will have to 
+update its path to the document the next time it 
+accesses it for read 
+or write. 
+When it does so, the user will know to look at the new place in a different process. 
+How long do you expect the original resource to remember the forwarding information? 
+In an implementation, it often isn't the resource that is remembering the forwarding information, but rather some locking authority. 
+This is true for many WebDAV implementations (although certainly not all). 
+The locking authority must maintain any forwarding information for the lifetime of the lock. 
+So if you move foo/bar to foo/baz and someone else creates a new resource at foo/bar then the forwarding from foo/bar to foo/baz will be destroyed. 
+These are file systems, they don't have long memories. 
+If an implementation cannot maintain forwarding information, then it must fail the move (with a "locked" status). 
+Also, how do you think the UI in Hiro's word processor is going to tell him about the name change? 
+"Dear Hiro, someone decided to move your file for you, it now lives at the following name." 
+I can't ship that product, my users would revolt. 
+If Hiro's word processor is using HTTP (the premise of WebDAV), it had better be prepared to handle a 302. 
+Probably somebody who had a good reason do so (perhaps 
+fixing a bad 
+copyright statement in her document). 
+In either case, 
+there is no 
+lost update problem, since she has no pending updates to 
+the document 
+(except for those only in her head, which we can't take 
+responsibility 
+for :-). 
+The only problem is that her document has mysteriously disappeared, even though she locked it. 
+Admittedly this can happen anyway if the admin overrides her lock but that is a very rare circumstance and enough of a disaster that the admin would be expected to send e-mail out to those affected. 
+The same would not be true here. 
+If Joe comes along and moves the entire directory and isn't aware that Irit had a locked file he would never know he should tell Irit. 
+The lock is there, and Joe could easily notify all the lock holders (assuming the locks hold principal information, as is recommended). 
+In fact, if he had a good client, it could largely automate the notification process. 
+So when Irit comes back her file is gone and she has no idea what has happened. 
+Even if Joe knew, it wouldn't be sufficient. 
+Irit wants her stuff staying where it is, that is why she took out the lock. 
+And I want to put red lights on all cross-roads of all the intersections on my way to work (:-). 
+But I'm not allowed to do that because it interferes with everybody else's commute. 
+Just a silly analogy, but not too far off the mark, I believe. 
+You seem to believe that locks are just there to protect content. 
+That simply isn't true. 
+Locks are there to control the name for it is the name which gives access to everything. 
+By controlling the name you control where the name can be moved as well as who can access the content pointed to by the name. 
+Locks are more about names then they are about content. 
+I think we agree that locks are there to prevent the lost update problem (i.e. protecting content). 
+It is an interesting question as to whether they are appropriate for preventing other problems, and if so, how they are best used to do so. 
+I believe that locks are useful for keeping a handle on where a locked resource is located, but that a server should be able to allow the move and return a 302, if it wants to maximize parallel work. 
+A server can also just fail a moves if it cannot track the movement of a locked resource. 
+In our experience the over whelming majority of documents are one user at a time. 
+That is, one user edits and then hands over control to another user. 
+Locks prevent control from being transferred prematurely. 
+They also prevent unwanted changes to shared namespaces. 
+While documents are often single user, namespaces are often shared. 
+Yes, it is the shared nature of namespaces that causes me to resist requiring anything like a "namespace lock". 
+To say that a server can do such a lock if that's the best it can to, then that's fine. 
+But to say that all servers must act that way leaves out a useful alternative, namely, using 302's to let a client know the new location of their locked resource. 
+Since a web client needs to know how to deal with 302's anyway, I believe there is little or no additional cost to clients. 
+Cheers, Geoff 
+From: "Yaron Goland (Exchange)" yarong@Exchange.Microsoft.com 
+While I understand your justifiable fear that the access linearization caused by locks will hinder collaboration you must understand that the reason my users use locks is exactly that - they want to PROHIBIT collaboration. 
+Then they should just make sure to buy a server that blocks MOVE's of locked files (which I agree a server should be able to do). 
+For your users, WebDAV is a great way to powerfully leverage the collaborative features of the web. 
+Which means they probably will instead chose a server that does lock tracking and returns 302's. 
+Our two user's needs are in direct conflict. 
+So they buy different servers, but clients and servers can use the same protocol ... and everybody is as happy as one can reasonably expect. 
+You have proposed two mitigating technologies, lock monitors and auto-email notifications. 
+Even if I could include those in a $200 OS product (which I can't) I feel compelled to point out that $200 times 10 million users equals 2 billion dollars (:-). Also that the current complexity of that $200 OS product makes lock monitors and auto-email an unmeasurably small increase in complexity. 
+But then again, probably the last thing it needs is even an unmeasurably small increase in complexity (:-). 
+I would not do so anyway because my users do not want to have to deal with the ramifications of these technologies. 
+My users do not want to get an e-mail telling them their files have moved. 
+They just want their files to stay where they were put. 
+Fair enough. 
+So we make sure that the protocol allows their server to refuse to do the moves. 
+Given the contradictory needs of our user bases I see two choices. 
+Choice 1 - We agree to disagree. 
+Deciding the problem is irresolvable we create two types of locks in WebDAV. 
+This, of course, destroys any hope for interoperability and puts blocks in the road of my users as they "grow" from their current "private data world" model to a more open "collaborative world model." 
+Bad choice. 
+Choice 2 - We agree that locks, as unfortunate as it may be, must lock the namespace and accept this limitation as the cost of bringing the widest number of users into WebDAV. 
+What about choice 3: Choice 3 - The protocol allows a server to either refuse the move (returning "locked" status) or to promise to track the move and return 302's as appropriate. 
+No problem for the clients, since they have to deal with 302's anyway, and no problem for the servers, since they can do what they believe is the right thing for their users. 
+Then we let the market decide which server was right ... and all the while, we have one common protocol to interoperate with. 
+Cheers, Geoff 
+We are going in circles. 
+You have made the "server can always say no" argument before and I have explained why I don't believe that philosophy is workable: There are two differences in your arguments this time. 
+#1 - Clients must be able to deal with 302s anyway. 
+Clients do not have to currently deal with a 302 while their lock is outstanding because the lock prohibits the file from being moved. 
+The only way a 302 could occur is if the lock failed and the client will treat that as a catastrophic error. 
+For example, today if you try to use Office 2000 against a level 1 WebDAV server Office will disable "Save..." functionality and only allow "Save As...". 
+The reason is that our users are trained to have very high expectations regarding the reliability provided by "Save" where as they have no expectations regarding "Save As..." Without namespace locking support we can not meet those expectations, so we are forced to disable "Save..." #2 - Mitigating features such as lock monitors and e-mail notification are becoming so cheap that they can be relied upon being widely available. 
+Speaking from personal experience having helped to develop products which provide for e-mail tracing, your expectations of their pricing are unrealistic. 
+Such systems are currently priced in the hundreds of thousands of dollar range and I know of some new ones that will only be in the thousands of dollar range. 
+However it will be many years before they hit the $200 OS range. 
+Even were they widely available our users would refuse to use them in practice because of the awful user experience they create. 
+Irit doesn't want to receive a message telling her that Joe has moved her files. 
+She just doesn't want her files to move. 
+I believe this comes down to one and only one issue. 
+Will allowing locked files to be moved cause an interoperability problem? 
+As I previously argued, I believe the answer is yes. 
+You believe the answer is no. 
+Neither of us seems to be convincing the other. 
+Since we aren't making any real progress might I suggest we table this topic until the next IETF? 
+We can discuss this in our usual manner, an unbelievably good/expensive meal followed by pistols at 10 paces. 
+I checked out restaurant&amp;handler=byCategory&amp;sortBy=CategoryRestaurantRank&amp;fList=10001&amp;loca leID=7&amp;searchPhrase=Favorite+Restaurants for ideas, Kinkeads looks both good and close. 
+L'AUBERGE CHEZ FRANCOIS actually sounded perfect given our mutual sounded good but I could use a bit more of a boisterous environment. 
+It will cover the noise of the gun shots. 
+You remember the trouble we had last time. 
+The gun shots scared away all the cabs! 
+Yaron 
+Uh...isn't that what access control is for? 
+|John Stracke | http://www.ecal.com 
+|My opinions are my own.| |Chief Scientist |=============================================| |eCal Corp. |Please do not adjust your mind--reality is | |francis@ecal.com|malfunctioning. 
+| 
+I don't think so. 
+Access control is long-term, locks are shorter/transitory. 
+I totally agree with Yaron here: if I'm editing a document (with a lock), then it sure as hell better not move on me. 
+That is just annoying and wrong. 
+This whole business about the server retaining redirects after a move of a locked resource seems really and arbitrarily complex. 
+Why support something like that? 
+Just say a server MUST refuse a move of a locked resource rather than "well, it might or it might not, but you really won't know unless you try." And if this nonsense does go thru as a "consensus change" to the move/lock behavior, then the default should be to refuse the move. 
+There was a suggestion that an app should set a flag to state that it can't support locked resources that may move -- that's backwards since the current behavior is "I lock it and it stays there until I unlock it." 
+In other words, an app should say "I can support you [the server] moving this locked resource on me and sending me a 301 response." 
+(I still don't like it though because of the additional complexity on the client, which people seem to be ignoring, much to Yaron's dismay; who on this list is actually writing client software/tools/apps?) Personally, I'll refuse the darn move. 
+I'm not going to start recording all these redirects on the server. 
+Cheers, -g Greg Stein, http://www.lyra.org/ 
+From: Greg Stein gstein@lyra.org 
+I totally agree with Yaron here: if I'm editing a document (with a lock), then it sure as hell better not move on me. 
+That is just annoying and wrong. 
+It's also annoying and wrong for a resource that is on my favorites list to be moved away and have me get a 302 back. 
+Why not just leave the darn thing where it is? 
+Well, there are sometimes good reasons to move it. 
+And these reasons also apply, even if someone currently has a write lock out on some leaf resource. 
+Luckily, it's quite easy to cope with a 302, so life goes on. 
+If the proposal was that a server MUST allow the move and MUST provide 302's, I could see the server writers complaining. 
+But that's not the case. 
+A server is free to block the move, if that's what it thinks best serves its customers (or is the easiest to implement). 
+I agree that getting a 302 on access to a locked resource would be new behavior, but I have heard no arguments (convincing or otherwise :-) as to how a 302 would be hard for a client to deal with. 
+This whole business about the server retaining redirects after a move of a locked resource seems really and arbitrarily complex. 
+Why support something like that? 
+Just say a server MUST refuse a move of a locked resource rather than "well, it might or it might not, but you really won't know unless you try." What causes something to be renamed by a versioning server is not just a MOVE operation, but rather any change to any metadata that affects the revision selection for a versioned collection. 
+Unless it re-computes all revision selection rules for all versioned collections before *any* requested metadata change (i.e. moving a label, changing the member of a configuration), it won't know whether or not the name of a locked resource will change. 
+So although a versioning server can always tell you where your versioned resource is, it is computationally infeasible for it to detect whether the name of a locked resource is affected by a change. 
+I'm just looking for a compromise that gives us interoperability between down-level clients and versioning servers. 
+And if this nonsense does go thru as a "consensus change" to the move/lock behavior, then the default should be to refuse the move. 
+There was a suggestion that an app should set a flag to state that it can't support locked resources that may move -- that's backwards since the current behavior is "I lock it and it stays there until I unlock it." 
+In other words, an app should say "I can support you [the server] moving this locked resource on me and sending me a 301 response." 
+I personally would not favor any flag that splits the locking behavior into two different flavors. 
+Since I can't imagine clients putting in alternative code paths for these different flavors of locks, this just guarantees non-interoperability, as each flavor of server fails a client's request to provide the other flavor of lock. 
+We should just pick one interoperable semantics. 
+I'd just like us to pick a semantics that is implementable by both versioning and non-versioning servers. 
+(I still don't like it though because of the additional complexity on the client, which people seem to be ignoring, much to Yaron's dismay; who on this list is actually writing client software/tools/apps?) Every versioning server implementor on this mailing list that I know of is also a client implementor. 
+This is also true for all the document management system server implementors that I know of. 
+Personally, I'll refuse the darn move. 
+I'm not going to start recording all these redirects on the server. 
+I'd be against any protocol that required you to do otherwise. 
+I'd just like to see us produce a protocol that is compatible with versioning (after all, this is Distributed Authoring and Versioning :-). 
+Cheers, Geoff 
+I have to agree with Greg and Yaron. 
+I too think that locking a resource should prevent it from being moved except by the owner of the lock. 
+It doesn't seem like the flexibility for allowing locked resources to be moved by others justifies the complexity it adds to the protocol semantics and server implementations. 
+I would like to minimize the use of lock tokens rather than introducing them as part of namespace management. 
+This does not mean that another principal is unable to create a new binding to the locked resource, only that they cannot remove an existing binding. 
+However, I don't think this completely resolves the locking problem. 
+The reason this came up was with respect to MOVE retaining locks. 
+The current spec says locks are lost on move, even if the owner of the lock is doing the move. 
+MOVE could be either a rename or copy/delete depending on how the server has to implement it. 
+It is my understanding that the advanced collections specification has specified the semantics of MOVE as rename, and if clients want to do a COPY/DELETE, they can do that and hide it in their UI. 
+This makes MOVE a kind of rebind that does not disturb other bindings, or actually require the physical resource to move. 
+(Perhaps it should be called RENAME then). 
+In this case, it doesn't make sense for the locks to be lost. 
+Only the lock owner can do the MOVE, and the locks should be retained. 
+There is no need to change COPY/DELETE semantics with respect to locks, only this new, more specific definition of MOVE. 
+Greg Stein gstein@lyra.org on 10/26/99 06:38:31 PM Subject: Re: Can you move a locked file? 
+ability 
+I don't think so. 
+Access control is long-term, locks are shorter/transitory. 
+I totally agree with Yaron here: if I'm editing a document (with a lock), then it sure as hell better not move on me. 
+That is just annoying and wrong. 
+This whole business about the server retaining redirects after a move of a locked resource seems really and arbitrarily complex. 
+Why support something like that? 
+Just say a server MUST refuse a move of a locked resource rather than "well, it might or it might not, but you really won't know unless you try." And if this nonsense does go thru as a "consensus change" to the move/lock behavior, then the default should be to refuse the move. 
+There was a suggestion that an app should set a flag to state that it can't support locked resources that may move -- that's backwards since the current behavior is "I lock it and it stays there until I unlock it." 
+In other words, an app should say "I can support you [the server] moving this locked resource on me and sending me a 301 response." 
+(I still don't like it though because of the additional complexity on the client, which people seem to be ignoring, much to Yaron's dismay; who on this list is actually writing client software/tools/apps?) Personally, I'll refuse the darn move. 
+I'm not going to start recording all these redirects on the server. 
+Cheers, -g Greg Stein, http://www.lyra.org/ 
+From: jamsden@us.ibm.com 
+I too think that locking a resource should prevent it from being moved except by the owner of the lock. 
+It doesn't seem like the flexibility for allowing locked resources to be moved by others justifies the complexity it adds to the protocol semantics and server implementations. 
+OK, as that old campaign slogan went: "Show Me the Beef", or more precisely, "Show Me the Cost". 
+First, there is no added cost to a server. 
+A server can just refuse the move, if that's what it wants to do. 
+The benefit to the server is that it has a degree of freedom it previously lacked. 
+I described in an earlier message why this degree of freedom is essential for supporting versioned collections. 
+Second, the only client cost of this approach is that a client will on rare occasion get back a 302 for a locked resource, at which point it updates its name table and moves on with its business. 
+It may well be that this breaks clients in ways I haven't predicted, but I haven't heard any client implementor make this case. 
+I would like to minimize the use of lock tokens rather than introducing them as part of namespace management. 
+Lock tokens already take part in namespace management if they can "protect" the URL namespace. 
+This does not mean that another principal is unable to create a new binding to the locked resource, only that they cannot remove an existing binding. 
+When collections are versioned, changing a binding is not just an explicit operation. 
+It is also the result of a revision rule evaluation against the versioning metadata (labels, activities, baselines). 
+To prevent a binding from being removed, you have to precede every metadata update with an evaluation of every potentially affected revision selection rule in every workspace to ensure it does not violate "URL protection". 
+However, I don't think this completely resolves the locking problem. 
+The reason this came up was with respect to MOVE retaining locks. 
+The current spec says locks are lost on move, even if the owner of the lock is doing the move. 
+MOVE could be either a rename or copy/delete depending on how the server has to implement it. 
+It is my understanding that the advanced collections specification has specified the semantics of MOVE as rename, and if clients want to do a COPY/DELETE, they can do that and hide it in their UI. 
+This makes MOVE a kind of rebind that does not disturb other bindings, or actually require the physical resource to move. 
+(Perhaps it should be called RENAME then). 
+In this case, it doesn't make sense for the locks to be lost. 
+Only the lock owner can do the MOVE, and the locks should be retained. 
+There is no need to change COPY/DELETE semantics with respect to locks, only this new, more specific definition of MOVE. 
+I agree with everything Jim says in the preceding paragraph. 
+Cheers, Geoff 
+gmc I personally would not favor any flag that splits the locking gmc behavior into two different flavors. 
+Since I can't imagine gmc clients putting in alternative code paths for these different gmc flavors of locks, this just guarantees non-interoperability, as gmc each flavor of server fails a client's request to provide the gmc other flavor of lock. 
+Well, uh, sheesh, I almost regret having to point this out, but the current LOCK method already describes two flavors of locking, and it seems to me that that overloading is what is causing the current disagreement and discussion. 
+LOCKing a resource and LOCKing a namespace are different animals, whether you use the same verb or not. 
+Having the method overloaded gives the opportunity for (1) implementation errors, and (2) wishing it weren't so. 
+bill@carpenter.ORG 
+(WJCarpenter) PGP bill@bubblegum.net 
+0x91865119 38 95 1B 69 C9 C6 3D 25 73 46 32 04 69 D6 ED F3 
+Then why don't we look at the problems caused by selection rules, rather than assuming they are fixed and making everything else fit into their little world? 
+Why can't we simply constrain the selection rules better, thereby avoiding the issues that you foresee with locks? 
+Cheers, -g Greg Stein, http://www.lyra.org/ 
+From: Greg Stein gstein@lyra.org 
+Then why don't we look at the problems caused by selection rules, rather than assuming they are fixed and making everything else fit into their little world? 
+First I should emphasize that these issues only arise with level 3 versioning, which introduces versioned collections. 
+Level 1 (Core) and Level 2 (Activity and Configuration) versioning do not provide namespace versioning, and therefore do not have this problem. 
+But for many applications, versioning the URL namespace is essential, so we still need to face this issue for clients that desire support for namespace versioning. 
+Why can't we simply constrain the selection rules better, thereby avoiding the issues that you foresee with locks? 
+That is the essence of the fallback proposal I mentioned in an earlier message. 
+In particular, you would need to: a) only provide URL protection in the default workspace b) constrain the selection rules in the default workspace Restriction (a) is needed because no matter how you restrict the selection rules, if you allow an arbitrary number of workspaces to have protected URL's, the cost of pre-computing the effect of even something simple like a label request will become arbitrarily large. 
+Restriction (b) is needed because even if you only support URL protection in a single workspace, some selection rules (such as configurations and baselines) affect an arbitrary number of resources, and therefore the effect on the namespace of a baseline change would require arbitrarily large costs to pre-compute. 
+Doing away with configurations and multiple workspaces entirely would eliminate much/most of the value of versioning. 
+Cheers, Geoff 

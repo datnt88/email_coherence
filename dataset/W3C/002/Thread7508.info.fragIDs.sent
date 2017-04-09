@@ -1,0 +1,40 @@
+12.9 says "The server is free to withhold any or all of this information if the requesting principal does not have sufficient access rights to see the requested data." 
+If the server does not wish to inform caller of, say, the owner, then should it generate an empty owner or should it leave it out of the activelock altogether? 
+The latter would violate the syntax of activelock, as only depth is optional. 
+I am not sure whether all the other elements of activelock are defined to allow them to be empty. 
+If any of them are, then we have an inconsistency. 
+If all of them allow empty, then the spec should add language telling what to do. 
+This argument also argues against having them because the user won't know whether it is safe to overwrite the file when confronted with the dialogue box for confirmation so the protection that they provide is very weak and therefore not worth the effort of both the client and server implementations having to manage the lock tokens they are dealing with, the implementors of these systems having to become acquainted with yet another standard etc. 
+Cheers 
+Dylan More often than not users don't even know that a program they are running has locked a file or that it will want to lock a file. 
+For example, which word processors lock files they are working on? 
+Think carefully because not all of them do it. 
+Furthermore when a user is interacting with the system through other mechanisms, such as backing up the system or copying a directory, it is quite likely that they may end up effected a locked file without knowing it before hand. 
+Given that programs often lock files or effect locked files without the user's knowledge it is therefore self evident that a user may have no idea of the ramifications of their actions until a program politely points it out. 
+Hence the lock token requirement. 
+Yaron 
+-----Original Message----- From:Dylan Barrell [SMTP:dbarrell@opentext.ch] Sent:Tuesday, February 03, 1998 4:37 PM Subject:RE: v6: 12.9 lockdiscovery Dylan, we provide a very specific example for why we believe that lock tokens are absolutely required. 
+[Dylan Barrell] As I said, the example is weak at best. 
+If a user takes out a lock THEY KNOW THEY HAVE TAKEN IT OUT. 
+If they then perform PUT with another application to that locked resource THEY KNOW WHY. 
+The advantages of requiring lock token just so that the application can then warn them that a lock exists on the resource (when it could do this without requiring the lock token) IS NOT WORTH THE EFFORT. 
+My belief is that a standard should have the minimum requirements to allow disparate systems to interoperate effectively. 
+Lock tokens are not required in order to fulfill this requirement. 
+box  for confirmation so the protection that they provide is very weak and 
+implementations  having to manage the lock tokens they are dealing with, the implementors of  these systems having to become acquainted with yet another standard etc. 
+Dylan. 
+You raise a good point about the potential for user confusion, but I don't think it's strong enough to justify removing lock tokens. 
+Lock tokens solve the following problem (Yaron has already said this, but perhaps I will say it differently?) In the modern era of computing, a user typically does not (and can not) know the full set of programs that might be acting on his/her behalf (with the full access rights of that user), nor can he/she know what resources a given program will be using. 
+So you can have a situation where two programs are running, and they both need exclusive access to a resource. 
+Neither one knows about the other, and the user does not know about at least one, if not both, and hence can't be umpire. 
+If locking is based only on identity of the principal, then program B can smash the data of program A. Lock tokens allow one program to exclude all others, even those with the same authentication rights. 
+By default, program B will just fail to get the lock, in the same way as if the resource were locked by some other user. 
+If B is smart, it can do lock discovery, realize that the lock is help by another program also acting on behalf of the same user, and try to decide what to do. 
+It might just go ahead and blindly do the operations it wants, (living dangerously), or it might pop up a dialog box and ask for advice. 
+I can very easily believe you when you say that users won't know what such a dialog box really means. 
+This might be an argument that the author of B should not even try but should just have the program die gracefully. 
+but it is not an argument against lock tokens, because if you did not have them, B would have not even know about the problem, and would have clobbered A, and if you think the dialog box was confusing, think how much worse this would be. 
+I hope I have explained the rationale for lock tokens. 
+In any case, I must say that lock tokens are only a small portion of the WebDav spec, and are, I think, expressed fairly clearly. 
+If you take complexity of the specification as an argument against a feature, then you will surely have even more objections when DASL (search), access control lists, or ordered collections come down the line. 
+Best regards Jim 

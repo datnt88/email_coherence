@@ -1,0 +1,104 @@
+I had simply assumed that under SGML rules, tags were closed when a new STAGO was seen, exempli gratia: !DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd" html head 
+Quite some time ago, I posted patches to make this work. 
+I seem to remember that is is disallowed by the HTML spec, but 
+in any case won't work with existing web browsers. 
+Regards, -- Dave Raggett dsr@w3.org or dave.raggett@openwave.com 
+W3C Visiting Fellow, see http://www.w3.org/People/Raggett 
+The W3C search does not work for me URL: Does it work for you? 
+The archives are not (obviously) downloadable as for example these archives are. 
+Almost all guides on asking questions suggests searching archives exempli gratia it is a good idea to follow a bit the mailing list or to read some of the mailing list archives before asking, to get aquanted to the culture of the list and not to get flamebated imediately. 
+Often the list etiquette is explicitly listed on it's homepage or refered to in the subscription reply. 
+Ben. 
+I hope that I am not reading this backwards. 
+If Tidy does not already do so is there a reason why it should not normalise sgml-valid unclosed tags? 
+Surely one of the raison d'etres of Tidy is to fix syntactically valid but not browser ready mark-up? 
+Ben 
+Ben Fowler commented on html head and I remarked that 
+Dave Raggett responded: I seem to remember that is is disallowed by the HTML spec, 
+The SGML declarations in the HTML 3.2 and HTML 4.0 specifications very clearly disallow this (leaving out the  at the end of a tag when there is a following ). 
+HOWEVER, the reason I sent patches way back when was that this pattern nevertheless occurs in some real HTML pages. 
+but in any case won't work with existing web browsers. 
+Yes, exactly. 
+That's why it's nice for Tidy to fix it. 
+I hesitate to take a position contrary to a co-author, and probably the senior author of the relevant documents, but my reading of URL: http://www.w3.org/TR/html401/appendix/notes.html#h-B.3.7 suggests that the relevant features are certainly allowed in HTML and are not even deprecated. the only warning is that some browsers do not support them. 
+Do you have a URL for this? 
+Ben 
+bfowler@ewitness.co.uk (ewitness - Ben Fowler) very properly challenged this: Do you have a URL for this? 
+The relevant part is section 20.1 "SGML Declaration" of http://www.w3.org/TR/html4/sgml/sgmldecl.html 
+The SHORTTAG feature of SGML controls three things: (1) Empty tags  and / , where the generic identifier is inferred; empty end-tags make a lot of sense, but the rules for empty start-tags are sufficiently involved, not to say weird, that even a die-hard SGMLer would be wary of them. 
+(2) Unclosed tags foo ... /foo ... where the  that closes a tag may be omitted "when it is followed immediately by another tag". 
+(3) Null end tags foo/..../ where the start-tag ends with / and the end-tag is then simply /. 
+I am very fond of these; I'd _much_ rather write em/this/ than em that /em . 
+Now section B.3.7 says to avoid all of these things, and the simple way for the HTML designers to have been serious about that would have been for them to put "SHORTTAG NO" in the SGML declaration. 
+It would have made it easy for people to check that their documents didn't use these features. 
+In fact my local copy of HTML.dcl _was_ hacked to say SHORTTAG NO. Trouble is, I'm the one that hacked it, and I'd forgotten that. 
+The _official_ SGML declaration says "SHORTTAG YES", thus explicitly requiring HTML processors to support these features that B.3.7 says not to use. 
+Is it just me, or is that odd? 
+SHORTTAG YES is there to allow input type="checkbox" checked instead of input type="checkbox" checked="checked" . 
+Liam Quinn 
+Thanks for jogging my memory. 
+The HTML working group wanted to support the widespread practice of omitting quote marks around attribute values when these didn't include spaces. 
+This forced SHORTTAG YES even though none of the browsers supported the other features implied by SHORTTAG YES. 
+My advice is not to encourage authors to rely on short tags. 
+Please don't extend Tidy to fully support shorttags. 
+Regards, -- Dave Raggett dsr@w3.org or dave.raggett@openwave.com 
+W3C Visiting Fellow, see http://www.w3.org/People/Raggett 
+Thanks for jogging my memory. 
+The HTML working group wanted to support the widespread practice of omitting quote marks around attribute values when these didn't include spaces. 
+This forced SHORTTAG YES even though none of the browsers supported the other features implied by SHORTTAG YES. 
+By Jove, he's right: "An attribute value specification can be an attribute value (that is, not an attribute value literal) only if it contains nothing but name characters and either: a) it occurs in an attribute definition list; or b) "SHORTTAG YES" is specified on the SGML declaration." 
+Why on _earth_ would the SGML designers make this entirely harmless feature depend on SHORTTAG? 
+As far as I can see, the only benefit is to make SGML parsers slower (because they'd have to make an otherwise unnecessary check of SHORTTAG) and to link this feature with an extremely dangerous one (  ). 
+However, the fact that they _are_ linked means that people who develop HTML pages using an SGML parser to check them for validity (like me) still need to use HTML Tidy to check that  , / , x//, x y and so on are not used, because an SGML parser won't complain about them. 
+Note in particular 
+that Emacs' is a good HTML editor, but uses an SGML parser, so it's quite easy to slip in the odd em/item/ that should be tidied. 
+This suggests that it would be a good thing for Tidy to recognise and eliminate at least some of the SHORTTAG features. 
+In the case of nsgmls, it will complain if you use -wmin-tag on the command line. 
+The WDG HTML Validator [*] uses this when warnings are enabled. 
+[*] http://www.htmlhelp.com/tools/validator/ 
+Liam Quinn 
+Liam Quinn liam@htmlhelp.com pointed out that people checking HTML 
+with nsgmls can use the -wmin-tag option on the nsgmls command line. 
+Many thanks for that, my scripts now do this. 
+Interestingly enough, the test cases I tried (real web pages) have now convinced me that Tidy _shouldn't_ be made to clean up NET. 
+Reason: This is in the "Hacker's Digest - Ten Things not to do if Arrested" page. 
+Given the prevalence of / in URIs and things like this, and the prevalence of incorrectly omitted quotations marks (I've even seen pages generated by well known commercial HTML editors where there are attribute names with spaces in them...) it's obviously right that Tidy should treat / like a letter and not like NET. 
+I therefore withdraw my remark that it would be nice if Tidy cleaned up SHORTTAG stuff in general. 
+However, I _have_ run into br br and the like in real pages, so it's still a good idea to handle unclosed tags as well as possible. 
+Tidy turns  into  and pretends nothing happened. 
+Sure, it is usually what we want, but I just don't think it is right for tidy to use the same 'no errors found' message for a file that is completely unchanged when run thru tidy, v.s. one that gets changed. 
+At least tell us "I changed something, not too important, use diff if you absolutely must see it." 
+Tidy does warn about changes it makes to the document structure, e.g. adding missing tags. 
+Since  and  are equivalent no warning message is issued. 
+The output may be different even when the structure of the document is unchanged, and no entities have been converted -- in essence, tidy parses the document, builds an internal tree representation of the document and serializes the internal tree as HTML. 
+There is no single "canonical" form for an HTML document, so even when no errors or warnings are reported you should always expect the output to look different from the input. 
+Klaus Johannes Rusch KlausRusch@atmedia.net 
+K Tidy does warn about changes it makes to the document structure, e.g. K adding missing tags. 
+K Since  and  are equivalent no warning message is issued. 
+K The output may be different even when the structure of the document is K unchanged, and no entities have been converted -- in essence, tidy K parses the document, builds an internal tree representation of the K document and serializes the internal tree as HTML. 
+There is no single K "canonical" form for an HTML document, so even when no errors or K warnings are reported you should always expect the output to look K different from the input. 
+Tidy not telling me that it changed  into  means that I have no way of telling if I have written good HTML or not. 
+It is very important to me to know if I am careless enough to put raw  's into a file... 
+I thought that I am skilled enough in HTML to make my own 
+'s . 
+If a  gets through then it was probably a typo and I want 
+to know about it right away, instead of it getting swept under the carpet to sit embarrassingly on my web page for months. 
+So, neatening the blanks, wrapping, etc. is fine and I don't need to be told about that. 
+However, let's say the postman is so nice that he corrects addressing mistakes and adds extra stamps needed for my letters, but is too courteous to tell me. 
+I want to be told! 
+Add an option! 
+'s . 
+If a  gets through then it was probably a typo and I want 
+There is another reason for a tidy comment to be helpfull here: Often the string br or p were meant to be html tags but a typo occured. 
+A 
+similar thing can be said for entities where &amp;amp is transformed to 
+&amp;amp;amp ... Here, a tidy comment could be usefull. 
+For me I would like 
+to have an option which I can switch on that tells me when tidy parses entities in one coding but prints them out in a second coding. 
+Cheers alex Alexander Biron Support the ban of Dihydrogen Monoxide: http://www.dhmo.org/ 
+/"\ ASCII ribbon campaign \ / --------------------- http://www-zeuthen.desy.de/~biron/ 
+X against HTML mail Tel (+49)33762-7-7516 / \ and postings mailto:alexander.biron@desy.de 
+If it comes to a vote, I would also like this option please. 
+Peter Vince Home: Barney.Wol@noctua.demon.co.uk Work: Peter.Vince@bbc.co.uk Web: http://www.noctua.demon.co.uk/ Barn Owls and more at http://www.owlsanctuary.co.uk/ PGP id = 0x332B72C0, &amp; fp = 3535 9AD9 C0EA 3606 0DE4 3811 422E 10B4 332B 72C0 PGP encryption software available free from: http://www.pgpi.org 
+br or p would actually get translated to for XHTML output, or for HTML output, with warnings about unknown attributes "or" and "p". 
+Tidy already issues a warning when converting &amp; to &amp;amp;: Warning: unescaped &amp; or unknown entity "&amp;whatever" Klaus Johannes Rusch KlausRusch@atmedia.net 

@@ -1,0 +1,54 @@
+I see yet another specification of literals in That has the same problem. 
+Here's a suggested replacement: 6.5 RDF Literals To define a literal in an RDF graph, let S be the set of Unicode strings in Normal Form C, L be the set of language identifiers [RFC3066], 
+and U be the set of RDF URI references. 
+A plain literal is an element of the union of S with SxL; i.e. it's either 
+a string or a string paired with a language identifier. 
+A typed literal is an element of the union of SxU with SxUxL. 
+Note that U and L are disjoint (every member of U contains a colon; no member of L contains a colon), 
+so SxL doesn't intersect SxU. 
+Then literal equality falls out from the traditional definition of tuple equality and string equality. 
+I don't see what the NOTE about literals being distinguisable from URI references is supposed to mean; that's the same sort of double-speak that's giving us trouble in the XML Schema spec. 
+Dan Connolly, W3C http://www.w3.org/People/Connolly/ 
+Eh? Where's this about literal strings not containing colons come from? 
+As far as I'm concerned, "a:b" is a perfectly good literal. 
+It's meant to mean that: ex:subj ex:prop http://example.org/abc . 
+and ex:subj ex:prop "http://example.org/abc" . 
+are different graphs. 
+#g Graham Klyne 
+I think you've confused S with L. 
+"let ... L be the set of language identifiers [RFC3066]" 
+but it's no good as a language identifier, is it? 
+[I have to admit I didn't check closely.] 
+Those are different graphs because 
+"http://example.org/abc" and http://example.org/abc 
+are different terms, 
+not because the URI http://example.org/abc 
+is different from the string 'http://example.org/abc'. 
+Hmm... I guess that means we can't let the URI and the string-literal be terms themselves... they do need to be sorta wrapped in something, syntactically... Maybe I'm barking up the wrong tree here... I need what the term "http://example.org/abc" to *denote* a unicode string, but I don't need the term itself to *be* a unicode string. 
+But somewhere there's a semantic consition that literal terms denote themselves, no? 
+I guess I'll have to think about it some more... 
+Dan Connolly, W3C http://www.w3.org/People/Connolly/ 
+Yes, you're right. 
+My apologies. 
+I thought that was what the text was trying to say. 
+Checks... Note: RDF Literals are distinct and distinguishable from RDF URI references; e.g. http://example.org 
+as an RDF Literal (untyped, without a language identifier) is not equal to http://example.org as an RDF URI reference. 
+Hmmm, yes. 
+I guess we need to lose at least one of: (a) URIs are nodes (b) strings are nodes (c) URIs are strings (d) literal nodes denote themselves I think you're saying that dropping (c) doesn't wash. 
+Not having thought this through, I'd been going with the idea that URIs are string-like things distinguishable from strings. 
+Which I now see is a bit like the XML datatype troubles you mentioned. 
+Hmmm... xsd:string,"string" denotes "string" ? 
+#g Graham Klyne 
+Ho, hum, this relates to a number of messages over the weekend (from DanC, Graham and Pat). 
+The WG has *not* decided whether or not plain literals without language tags are or are not xsd:string's. 
+I believe that the plan is to resolve all problematic datatyping equivalences after last call, working with XML Schema WG. 
+It would be stupid if xsd:anyURI was the same as an RDF plain literal, an xsd:string was the same as an RDF plain literal but that they were not the same. 
+I don't believe the WG should be pushed into a premature decision on this topic. 
+As the exchange between Graham and Dan has shown, the statement in the LCC concepts: This set of blank nodes, the set of all RDF URI references and the set of all literals are pairwise disjoint. 
+is crucial, and currently there is no other text in concepts that contradicts that. 
+Dan is proposing text that would contradict that, and hence his proposals on changing the literal definition must be rejected. 
+Without this, it is impossible to tell the difference between triples I see this as completely orthogonal to whether or not the literal value denoted by a plain literal with no language component is or is not a string, and whether such a string is or is not an xsd:string which seems to be the heart of the issue. 
+The quoted sentence is crucial because given a triple we need to known whether the subject is a bnode or a URIref, and whether the object is a literal, a bnode or a URIref. 
+Hence concepts distinuishes syntactically between a plain literal with no language tag and a URI reference by being clear that the former is not just a string, but is a structure with named components. 
+Without this, there would also be potential confusion between a typed literal with no language tag, and a plain literal with a language tag. 
+Jeremy 

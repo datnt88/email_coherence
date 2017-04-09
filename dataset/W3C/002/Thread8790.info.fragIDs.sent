@@ -1,0 +1,142 @@
+Hi, I have questions regarding the XML Signature schema. 
+Are there thoughts on rewriting the schema an making more elements globaly available? 
+Thanks! 
+/Peter Peter Tornberg X-OBI work: +46 (0)18 60 72 50 mobile: +46 (0)702 882 772 
+namespace. 
+I.e. while creating new schemas I'm unable to do a ref="ds:..." to a number of elements in the xmldsig schema. 
+Instead I 
+Could you be more specific? 
+We did rewrite our schema to make both the major element and their types named and global items. 
+[1] includes all of the global elements. 
+A few of the key structures' children (like those of PGP or X509) are not provided globally because (1) we didn't have demand to 
+make *everything* global (it'd be ugly) and those children typically share 
+a contextual semantic (they are properties of the same thing). 
+Consequently, it wouldn't make sense or mean the same thing, if somehow someone use them piece-meal or in a different context: they should use a different namespace. 
+Of course, the could build that on top of our own by deriving it from our type. 
+[1] http://www.w3.org/Signature/Drafts/xmldsig-core/xmldsig-core-schema.xsd 
+Global elements and types in XMLDSIG type="ds:CanonicalizationMethodType"/ 
+Thanks for your response Joseph, Here is what I think would be nice. 
+E.g. X509IssuerSerial is not global from the XML Dsig schema. 
+This means 
+that if I ever want to use a X509IssuerSerial in any cryptographic schema I 
+will have to define my own instead of reusing an already existing. 
+If my own schema is almost entirely cryptographic if would feel like reinventing the wheel. 
+The schema could be rewritten for e.g. X509IssuerSerial: Global -- I suppose writing it like this may introduce a performance penalty for the parser? 
+Or is there any other reason from keeping these things from beeing global? 
+Thanks! 
+/Peter 
+namespace. 
+I.e. while creating new schemas I'm unable to do a ref="ds:..." to a number of elements in the xmldsig schema. 
+Instead I 
+to 
+Hi All, just a question to all implementors: 
+What do _your_ applications do with X509 CRLs? 
+Do you collect all CRLs into a file and check new chertificates against the sum of all CRLs ? 
+Best, 
+Christian 
+Christian, 
+IXSIL has an interface to a "trust management system". 
+If IXSIL detects CRLs, they are provided to the TMS over this interface. 
+Later in the process IXSIL requests a decision wheter a certain certificate is trusted by the TMS. 
+What the TMS does with the provided CRLs, is in its own responsability. 
+Liebe Gruesse/Regards, DI Gregor Karlinger Phone +43 316 873 5541 Institute for Applied Information Processing and Communications Austria 
+Hi Gregor, 
+OK, that's what I thought, too. 
+Do there already exist standards to interfaces to TMS like XKMS or do you leave this to your app (simply a addCRL(CRL) and checkAgainstTMS(X509Certificate) interface) ? 
+Regards, Christian 
+The interface is defined by IXSIL, i.e. its the kind you have described above. 
+Liebe Gruesse/Regards, DI Gregor Karlinger Phone +43 316 873 5541 Institute for Applied Information Processing and Communications Austria 
+By the way, all of the elements in this case except for X509SKI are 
+plausible candidates for reuse. 
+X509Certificate, X509CRL, and 
+X509SubjectName are all more likely to be reused in another spec than 
+X509IssuerSerial. 
+Tom Gindin "Peter Tornberg" tberg@x-obi.com 
+@w3.org on 09/21/2001 04:13:56 AM Sent by: w3c-ietf-xmldsig-request@w3.org 
+Subject: Re: XML Signature schema implementation Thanks for your response Joseph, Here is what I think would be nice. 
+E.g. X509IssuerSerial is not global from the XML Dsig schema. 
+This means 
+that if I ever want to use a X509IssuerSerial in any cryptographic schema I will have to define my own instead of reusing an already existing. 
+If my own schema is almost entirely cryptographic if would feel like reinventing the wheel. 
+The schema could be rewritten for e.g. X509IssuerSerial: Global -- I suppose writing it like this may introduce a performance penalty for the parser? 
+Or is there any other reason from keeping these things from beeing global? 
+Thanks! 
+/Peter 
+namespace. 
+I.e. while creating new schemas I'm unable to do a ref="ds:..." to a number of elements in the xmldsig schema. 
+Instead I 
+to 
+share 
+In that case, I think the tweaked schema would need to look like [1]. 
+This wouldn't affect parser or schema validation performance I don't think. 
+It does permit people to borrow our natural language specification of how these things are encoded and such. 
+However, it is rather ugly, if someone wants to re-use it, they could redefine/import them in a new namespace, and 
+it divorces these element types from their context/meaning as properties of 
+a single X509Data structure. 
+These are all minor points, but given our late stage in the game, I'd like to hear more voices in support of this change... [1] Tweaked X509DataType ? 
+? 
+sequence maxOccurs="unbounded" ? 
+? 
+? 
+choice 
+? ? 
+? 
+? 
+? 
+element ref="ds:X509IssuerSerial"/ 
+? ? 
+? 
+? 
+? 
+element ref="ds:X509SKI"/ ? 
+? 
+? 
+? 
+? 
+element ref="ds:X509SubjectName"/ ? 
+? 
+? 
+? 
+? 
+element ref="ds:X509Certificate"/ ? 
+? 
+? 
+? 
+? 
+element ref="ds:X509CRL"/ ? 
+? 
+? 
+? 
+? 
+any namespace="##other" processContents="lax"/ ? 
+? 
+? 
+/choice ? 
+? 
+/sequence ? 
+? 
+sequence ? 
+? 
+/sequence 
+If we are opening this up I would prefer to simply have a rule that we have a type declared for every element. 
+It may look ugly in some folk's view, but the fault lies in XML schema. 
+The distinction between elements and element types is unnecessary, especially since they invented abstract types. 
+But they did wot they did. 
+Phill Phillip Hallam-Baker FBCS C.Eng. 
+Principal Scientist VeriSign Inc. pbaker@verisign.com 781 245 6996 x227 
+From: Joseph Reagle [mailto:reagle@w3.org] 
+Sent: Thursday, September 27, 2001 5:18 PM Subject: X509 Schema Tweaks (Was: XML Signature schema implementation) 
+Hi, To me the suggested solution looks like a good one. 
+Still we could go even further and declare everything as global, such as X509IssuerName etc. "However, it is rather ugly", I don't think so, it's only practical. 
+/Peter 
+and 
+of 
+Infomosaic announces availability of the XML Digital Signature library. 
+You can try it by visiting https://www.infomosaic.net 
+Both C-Source code and binary license is available. 
+Questions/Complains: Please contact Manoj Srivastava (408) 351-3337 or at manoj@infomosaic.com 
+I agree with Phillip. 
+Introducing a type for every element will simplify the reuse of dsig elements. 
+I do not think that its looks ugly enough to justify avoidance of type definitions ;-) Liebe Gruesse/Regards, DI Gregor Karlinger Phone +43 316 873 5541 Institute for Applied Information Processing and Communications Austria 
+-----Original Message----- From: Joseph Reagle [mailto:reagle@w3.org] 
+Sent: Thursday, September 27, 2001 5:18 PM Subject: X509 Schema Tweaks (Was: XML Signature schema implementation) 

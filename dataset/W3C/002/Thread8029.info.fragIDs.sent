@@ -1,0 +1,64 @@
+I was after any recommendations or experience others have had of the best way to integrate WebDAV into an application. 
+In particular, we want to ship a demo application with three distinct functionalities in the one web server: 
+* WebDAV interface to a file system of documents that can be edited * Web based workflow interface for document management (users log on) * Public anonymous web interface to released documents I am thinking at present that the paths in the WebDAV folder are not going to be related to the paths in the public interface. 
+The folder paths can be set up by users to whatever structure they want. 
+The final public application paths are determined by the application logic. 
+So URIs for WebDAV and for the public web interface are not going to be the same. 
+One way to avoid collisions with URLs is to prefix the three different areas with a name 
+The public access URL is not very nice though (people want to just go to http://localhost/), so the URI for / might relocate the user down into /public/... 
+The real question for this list is, is there any reason against requiring client applications to use a base URI of http://localhost/webdav/ instead of http://localhost/ ? 
+Are there any clients that assume WebDAV folders always start from /? Does it create any bad semantics starting from /webdav? 
+The other logical alternative strategy I can see is to mount WebDAV from GET request on / relocates the user to /public/... DMS users can just be told to start at /dms in order to bring up the DMS interface. 
+Is there any *best* thing to do? 
+Or is intensionally left up to developers? 
+Would any clients break if they had to be given http://localhost/webdav/ instead of http://localhost/? 
+Thanks as always 
+Alan 
+I can see why you would want the authoring location to be different from the released location, but just for interests sake, can you explain why you would separate the webdav root from the dms root? 
+In any case, I know of no client that requires WebDAV to be enabled at "/". 
+Cheers, Geoff I was after any recommendations or experience others have had of the best way to integrate WebDAV into an application. 
+In particular, we want to ship a demo application with three distinct functionalities in the one web server: 
+* WebDAV interface to a file system of documents that can be edited * Web based workflow interface for document management (users log on) * Public anonymous web interface to released documents I am thinking at present that the paths in the WebDAV folder are not going to be related to the paths in the public interface. 
+The folder paths can be set up by users to whatever structure they want. 
+The final public application paths are determined by the application logic. 
+So URIs for WebDAV and for the public web interface are not going to be the same. 
+One way to avoid collisions with URLs is to prefix the three different areas with a name 
+The public access URL is not very nice though (people want to just go to http://localhost/), so the URI for / might relocate the user down into /public/... 
+The real question for this list is, is there any reason against requiring client applications to use a base URI of http://localhost/webdav/ instead of http://localhost/ ? 
+Are there any clients that assume WebDAV folders always start from /? Does it create any bad semantics starting from /webdav? 
+The other logical alternative strategy I can see is to mount WebDAV from GET request on / relocates the user to /public/... DMS users can just be told to start at /dms in order to bring up the DMS interface. 
+Is there any *best* thing to do? 
+Or is intensionally left up to developers? 
+Would any clients break if they had to be given http://localhost/webdav/ instead of http://localhost/? 
+Thanks as always 
+Alan 
+The DMS root I was referring to was the user interface to the DMS application. 
+That is, it comes up with menu bars with commands like 'display worklist'. 
+The URLs are not normal resources - its more like a CGI-bin application with lots of arguments encoded into the URL. 
+So the DMS urls do not relate to resources made available from WebDAV in my particular application. 
+So it seemed good to separate them. 
+Alan 
+Alan: I have just finished integrating a (custom modified) open source DAV server for use with my company's collaborative portal offerings and would like to offer my experiences and thoughts, as well as pose some additional questions. 
+In our implementation, the DAV server is Java servlet-based and to access content via a web server, the URL would actually include two prefixes--one for delimiting the root of the portal web-app, and the other representing the servlet-mapping to the DAV servlet (e.g. http://localhost/portal/dav). 
+IMO, this only increases the flexibility of the solution, allowing multiple portal web-apps per machine and/or multiple dav servlet mappings per web-app. 
+In other words, I could have any number of portal sites available from a single host, each with any number of DAV repositories. 
+BTW, what constitutes a "namespace" in DAV, I'm still not totally clear on this. 
+Would the namespace be the URL prefix (before the DAV resource portion of the URI) without the host (i.e. /portal/dav) or would it be (/dav) or is it something totally different? 
+We would handle this by having the root URL be an index page that redirects appropriately based on user context (including authentication/authorization credentials, device, language preferences, browser version, etc.). 
+In particular, I might be inclined to forward/redirect the "public" request to "/" to a public collection inside the DAV namespace (proper usage?) that contained BINDings, which are essentially symbolic links to other DAV resources that can maintain properties such as access control permissions, separate from those defined on the target of the link. 
+Don't see a best scenario easily here, but I believe standard J2EE-container security mappings could easily manage this type of setup, while still maintaining the flexibility of allowing the situation I described above (multiple namespaces per web-app, per host) to function. 
+I even have an HTTP-based DAV explorer-like interface component that might be mapped to /portal/davclient, which encapsulates all of the access to the DAV server and provides the most-appropriate or preferred access interface based on context. 
+And I'm sure there are similar ways to accomplish the same thing using other paradigms besides J2EE... Thanks, Jason Coward Technical Relationship Manager/Developer Mongoose Technology, Incorporated jason.coward@mongoosetech.com 
+From: Jason Coward [mailto:jason.coward@mongoosetech.com] BTW, what constitutes a "namespace" in DAV, I'm still not totally clear on this. 
+Would the namespace be the URL prefix (before the DAV resource portion of the URI) without the host (i.e. /portal/dav) or would it be (/dav) or is it something totally different? 
+A "namespace" in DAV is just an HTTP namespace, i.e. a hierarchical namespace where "/" delimits segments of the namespace (see Section 5.1 of RFC 2518). 
+Perhaps you are thinking of what DAV calls a "consistent" namespace? 
+A consistent namespace is one where every resource is a member of the collection that contains it, or as section 5.1 states: "for every URL in the HTTP hierarchy there exists a collection that contains that URL as an internal member". 
+(Now we all know that the internal members of a collection are resources, and not URLs, but let's not go there right now :-). 
+We would handle this by having the root URL be an index page that redirects appropriately based on user context (including authentication/authorization credentials, device, language preferences, browser version, etc.). 
+Note though that this might make it challenging to support interoperable locking semantics, since locks are URL based. 
+If the redirecting is always to the same place while the client holds the lock token (which is likely to be the case), it probably won't be bad in practice. 
+In particular, I might be inclined to forward/redirect the "public" request to "/" to a public collection inside the DAV namespace (proper usage?) that contained BINDings, which are essentially symbolic links to other DAV resources that can maintain properties such as access control permissions, separate from those defined on the target of the link. 
+I assume by BINDings, you are referring to what is described in the BIND protocol? 
+If so, the result of a BIND call is like a Unix hard link, not like a symbolic link, because a BIND call does not create a new resource, and does not maintain properties, such as access control permissions, that are separate from those defined on the target of the binding. 
+Cheers, Geoff 

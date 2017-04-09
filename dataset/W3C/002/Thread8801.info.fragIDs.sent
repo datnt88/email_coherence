@@ -1,0 +1,34 @@
+Hiya, I have been playing around with Christian Geuer-Pollma's wonderful Java library over the weekend and ran into a problem which I feel deserves some discussion on this list because the problem might exist in other implementations, and because of a weakness in DOM API that affects this problem. 
+Application Constraint causing the Problem: I had a hand in the design of Visa's 3D-Secure protocol which uses XML-Signature for payment authentication response message (aka PARes) in the protocol. 
+Due to certain design and business constraints, all messages have to use default namespace declarations. 
+No namespace prefixes are allowed. 
+Problem with Christian's library: Charistian's library generates Signature elements with "ds" as namespace prefix. 
+Looking it at the source code, there was no apparent way to generate Signature elements using default namespace. 
+Problem with DOM API: As of DOM Level 2, there was no implementation independent means to remove namespace prefixes from a Document without having to build a new Document and duplicating nodes minus the prefixes. 
+Node.setPrefix() behavior is unclear regarding null or empty prefix as parameter. 
+I would like to hear from other implementors about this issue. 
+Does your implementation mandate use of namespace prefixes? 
+Best, Don Park 
+Hi Don, 
+I think that the problem with the software is implementation specific. 
+The Signature spec allows you to create Signatures without prefix. 
+In my 
+opinion, it's a philosophical question whether you want to use prefixes or not or whether the prefix should be "ds" or "dsig" or "digsig" or "foo"... 
+The XML Signature spec let you choose. 
+Christian 
+PS: My library does, too. 
+Simply say: org.apache.xml.security.util.Constants.setSignatureSpecNSprefix(""); 
+before you use the library and everything should be fine... Signatures without prefix (But now you should take care if you include ds:Objects with element content outside Signature space to make something like::: because with prefix, this was not a problem: PPS: If you need infos about the library, simply subscribe to security-dev-subscribe@xml.apache.org 
+--On Donnerstag, 11. 
+Oktober 2001 04:33 -0700 Don Park 
+r/donpark@docuverse.com/2001.10.11/04:33:26 
+Hi Don, Baltimore's implementation is configurable (whether and what prefix to use). 
+Merlin Baltimore Technologies plc will not be liable for direct, special, indirect or consequential damages arising from alteration of the contents of this message by a third party or as a result of any virus being passed on. 
+In addition, certain Marketing collateral may be added from time to time to promote Baltimore Technologies products, services, Global e-Security or appearance at trade shows and conferences. 
+This footnote confirms that this email message has been swept by Baltimore MIMEsweeper for Content Security threats, including computer viruses. 
+I realize that it is an implementation issue. 
+I was raising the issue because it is an issue easy to overlook. 
+Thanks. 
+Its working now. 
+My thanks also to Merlin for his response regarding Baltimore implementation. 
+Best, Don Park 

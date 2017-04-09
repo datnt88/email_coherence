@@ -1,0 +1,87 @@
+Hi, I note that the issue above ( http://www.webdav.org/wg/rfcdev/issues.htm ) mentions: "Another seems to be to specify what lock to refresh in a lock refresh request." 
+RFC2518bis-05 (and possibly earlier versions) resolve this by using the "Lock-Token" header to indicate which lock to refresh (I think this was dicussed during an interop meeting; but this resolution doesn't appear on the issues list like it should!). 
+I *do* agree that "Lock-Token" technically is a better choice to select 
+the lock to be refreshed, however...: - RFC2518bis is unclear about whether you'll still need to specify the "If" header in the request (because one may argue that the LOCK refresh 
+request is modifying the locked state of the resource) 
+- RFC2518bis says it is "recommended" to support the old marshalling ("If" header). 
+I think for backwards compatibilty with existing client this should be a "REQUIRED". 
+Finally, I'm not so sure that this change really makes sense. 
+As far as 
+I can tell, no widely used server currently implements the new marshalling (I just tested IIS5, Apache/moddav2 and our own). 
+Also, clients will likely continue to use the old format anyway, because after 
+all it works just fine; and IIS is unlikely to be upgraded anytime soon :-) 
+So either 1) roll back the change in RFC2518bis, or 
+2) add both issue and resolution, and also clarify the issues mentioned 
+above in new RFC2158bis text 
+Best regards, Julian 
+Given the behavior of IIS5 and Apache/moddav2, it sounds we're pretty much stuck with the 2518 marshalling, so I'd vote to just roll back the change in 2518bis. 
+Cheers, Geoff Julian wrote on 06/02/2004 09:16:27 AM: 
+select 
+refresh 
+as 
+after 
+soon :-) 
+mentioned 
+The old way of overloading If seems pretty lame. 
+Can't new clients do both? 
+Can't new servers detect which approach in being used? 
+I wouldn't require servers to support the old way. 
+Supporting the old way is common sense but at some point we should encourage the movement to the new approach. 
+J. 
+Agreed, but it works (if it ain't broke, don't fix it). 
+Why are we adding completely new requirements for both servers and clients with the inevitable interoperability issues if the present protocol does what it's supposed to do? 
+They could, if we clearly define how. 
+So far we haven't. 
+Well, that would break Microsoft Office. 
+I don't think people will be very interested in a spec revision that doesn't work with it. 
+IMHO the only thing we should say is that LOCK without a request body 
+*with* an If header will refresh all locks on the resource identified by 
+the request URI (possibly deprecating the use of the Time-Out request header here -- I don't think there's a strong use case for changing the timeout after the lock already exists; and as far as I know existing servers do not support it anyway). 
+Best regards, Julian 
+Make that... "...will refresh all locks on the resource identified by 
+the request URI that have been submitted in the 'If' header..." Julian 
+We have been conservative about changes in RFC2518bis, generally only changing things where interoperability testing shows that there is a problem. 
+In this case, confusion over where to put the lock token in refresh requests came up in actual implementations and early interoperability testing. 
+In addition, it was unclear what to do if multiple lock tokens appeared in the If header (the Lock-Token header allows only one). 
+IOW, the present protocol didn't quite do what it was supposed to do. 
+It doesn't really fit our shared lock model (such as it is) to refresh all locks on the resource. 
+Some may have been taken out by other 
+users. 
+Lisa 
+I agree that it is confusing. 
+However, popular clients and servers seems to agree on how it works, so why don't we just write that down? 
+Yep. It should refresh exactly those that have been submitted in the "If" header. 
+Best regards, Julian 
+One problem is that popular clients and servers only do exclusive locks, so current practice is not sufficient to answer the unanswered questions in RFC2518. 
+We could cut shared locks from WebDAV, require 
+that only one resource's lock may be updated by a LOCK refresh request, 
+and that would codify existing practice. 
+I believe that works even for collection locks since a collection lock may not overlap another exclusive lock. 
+So the new requirements would be something like: - The LOCK refresh request MUST address the resource that was locked (the root of the lock) 
+- The If header on the LOCK refresh request MUST contain one (and only one) lock token, the token for the lock that is to be refreshed 
+- The server MUST reject the request if the request-URI and token do not match 
+Lisa 
+Yes. 
+I'd say it's harmless if it contains more lock tokens. 
+The server can figure out which one actually identifies a lock on the request resource. 
+Yes. Seems that we agree except for the minor point above; in practice I don't think that clients *will* submit multiple lock tokens in a refresh request, so this shouldn't be an issue. 
+Best regards, Julian 
+Well, the bigger issue then is whether to toss out shared locks. 
+If they're not interoperably implemented, and if we're indeed trying to go to draft standard, then they need to go. 
+lisa 
+We discussed that before. 
+We have both servers (Apache/moddav, SAP Netweaver, Xythos??) and clients (Adobe GoLive, SAP Netweaver) implementing them, so there doesn't seem to be any issue with it... Best regards, Julian 
+I keep forgetting that, because it hasn't been done in interop tests, to my knowledge. 
+Here's what we'll need: - Interop test reports from a couple independent pairs of server/clients, outlining what tests worked - Explanation of how servers refresh locks if the client submits multiple lock tokens in the If header in a LOCK refresh request - Any other clarifications necessary for shared locks... Lisa 
+OK, here's my attempt to summarize what Lisa and I discussed. 
+I think this should be used as resolution for the following issues: - LOCK_BODY_SHOULD_BE_MUST - LOCKS_SHOULD_THEY_USE_AN_IF_HEADER_TO_VERIFY Note that the description below does *not* change the original semantics; it's just a clarification that seems to be in sync with current implementations (and that's what we should be looking for when updating the protocol)...: 1) A LOCK request with message body is a LOCK create request. 
+A LOCK request without a message body is a LOCK refresh request. 
+2) A LOCK refresh request refreshes those locks on the request resource whose lock tokens are submitted in the "If" header and whose lock-root is the resource identified by the request URI. 
+A server MAY support using the Time-Out header to set a new timeout, but clients can not rely on that behaviour. 
+2a) In the case of a shared lock it's technically feasable to submit lock tokens for multiple locks to be refreshed in one "If" header. 
+The semantics for that seem to be clear from 2), but it's doubtful whether a client will ever want to do that. 
+IMHO it doesn't make any sense to put in the additional wording to forbid it, though (that's where I disagreed with Lisa...). 
+Note that if we stick with this resolution, the LOCK refresh changes in RFC2518bis-05 will need to be rolled back. 
+Best regards, Julian 
+OK, can we please make a decision? 
+Best regards, Julian 

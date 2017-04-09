@@ -1,0 +1,44 @@
+Checking some deployed code for what is done with example above: repat - dies: "unknown or out of context rdf attribute: blah" rapier - ignores it SiRPAC - generates a statement where the predicate is 'blah' - i.e. not an absolute URI, could be considered a relative one I suppose. 
+[both SiRPACs] VRP 1.4 - forms property URI http://example.org/blah 
+i.e. takes 2b) 
+(after putting that testcase before our firewall) we found Jena giving: 
+rdf:RDF xmlns:rdf='http://www.w3.org/1999/02/22-rdf-syntax-ns#' xmlns:RDFNsId1='http://example.org/' rdf:Description rdf:about='http://vam969.roam.agfa.be/rdf/rdf-ns-prefix-confu 
+sion.rdfnode' and cwm giving: !-- using base http://vam969.roam.agfa.be/rdf/rdf-ns-prefix-confusion.rdf-- 
+# Begining output. 
+rdf:RDF xmlns:foo="http://example.org/" xmlns="http://vam969.roam.agfa.be/rdf/rdf-ns-prefix-confusion.rdf#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" so they are both 2b but there is a difference in their rdf:about=... and also cwm gives some (strange?) rdf:resource="../../example.org/bar" 
+Jos De Roo, AGFA http://www.agfa.com/w3c/jdroo/ 
+ps test cases (even very simple ones) are so helpful 
+Jena uses David Megginson's RDFFilter (with a few minor mods). 
+It doesn't have a parser of its own. 
+Brian 
+this is very nice, http://www.w3.org/2000/10/swap/cwm.py now produces: !-- using base http://vam969.roam.agfa.be/rdf/01-rdf-ns-prefix-confusion.rd f-- # Begining output. 
+rdf:RDF xmlns="http://vam969.roam.agfa.be/rdf/01-rdf-ns-prefix-confusion.rdf#" xmlns:foo="http://example.org/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:Description rdf:about="http://vam969.roam.agfa.be/rdf/01-rdf-ns-prefix- 
+confusion.rdf#node" 
+Jos De Roo, AGFA http://www.agfa.com/w3c/jdroo/ 
+jos.deroo.jd@belgium.agfa.com@w3.org on 05/09/2001 07:44:46 PM Sent by: w3c-rdfcore-wg-request@w3.org Subject: Re: Issue 
+Checking some deployed code for what is done with example above: repat - dies: "unknown or out of context rdf attribute: blah" rapier - ignores it SiRPAC - generates a statement where the predicate is 'blah' - i.e. not an absolute URI, could be considered a relative one I suppose. 
+[both SiRPACs] VRP 1.4 - forms property URI http://example.org/blah 
+i.e. takes 2b) 
+(after putting that testcase before our firewall) we found Jena giving: rdf:RDF xmlns:rdf='http://www.w3.org/1999/02/22-rdf-syntax-ns#' xmlns:RDFNsId1='http://example.org/' rdf:Description rdf:about='http://vam969.roam.agfa.be/rdf/rdf-ns-prefix-confu 
+sion.rdfnode' and cwm giving: !-- using base http://vam969.roam.agfa.be/rdf/rdf-ns-prefix-confusion.rdf-- 
+# Begining output. 
+rdf:RDF xmlns:foo="http://example.org/" xmlns="http://vam969.roam.agfa.be/rdf/rdf-ns-prefix-confusion.rdf#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" so they are both 2b but there is a difference in their rdf:about=... and also cwm gives some (strange?) rdf:resource="../../example.org/bar" 
+Jos De Roo, AGFA http://www.agfa.com/w3c/jdroo/ 
+ps test cases (even very simple ones) are so helpful 
+Updated with a few nits corrected from 1. 
+The current RDF/XML syntax uses the following attributes in the syntax: about aboutEach aboutEachPrefix ID bagID type resource parseType -- List of RDF attributes (henceforth The List) The remaining concepts are not in the list because: a. Seq Bag Alt Property Statement These are rdfs:Class-es and can never be used as attributes b. RDF Description Syntax only things that have no current use as attributes c. li _ n subject predicate object value Not allowed to be used unprefixed according to the grammar Note Re: aboutEach aboutEachPrefix Note that there are other issues relating to aboutEach and aboutEachPrefix. 
+The resolution of those issues may affect the inclusion of these attributes in The List. 2. Namespace qualification MUST be used for all RDF attributes on The List, where the namespace URI is The meaning of the attributes is defined by the appropriate RDF M&amp;S sections and is not modified here. 
+3. The updated grammar productions required for #2 in are as follows. 
+[6.6] idAttr ::= ' rdf:ID="' IDsymbol '"' [6.7] aboutAttr ::= ' rdf:about="' URI-reference '"' [6.8] aboutEachAttr ::= ' rdf:aboutEach="' URI-reference '"' 
+' rdf:aboutEachPrefix="' string '"' 
+[6.9] bagIdAttr ::= ' rdf:bagID="' IDsymbol '"' [6.11] typeAttr ::= ' rdf:type="' URI-reference '"' [6.18] resourceAttr ::= ' rdf:resource="' URI-reference '"' [6.32] parseLiteral ::= ' rdf:parseType="Literal"' [6.33] parseResource ::= ' rdf:parseType="Resource"' 4. Namespace qualification MUST be used for all property attributes. 
+Discussion: this addresses the point Art Barstow raised in when he pointed out the grammar allowed non-prefixed properties. 
+5. The updated grammar production required for #4 is: [6.19] Qname ::= NSprefix ':' name 6. As a consequence of #4 the following paragraph is removed from It is recommended that property names always be qualified with a namespace prefix to unambiguously connect the property definition with the corresponding schema. 
+in the annotated M&amp;S copy this is http://ioctl.org/rdf/ms/rdfms#215 
+since this is now required, not optional. 
+7. There are certainly other changes needed throughout the rest of the document such as all the examples and all other mentions of the attributes - there are probably over a hundred of these. 
+8. Non-prefixed RDF elements (NOT attributes) are allowed when a default XML element namespace is defined with an xmlns="http://www.w3.org/1999/02/22-rdf-syntax-ns#" attribute. 
+9. The grammar changes required from #8 in are all productions mentioning an rdf: element: 6.1, 6.3, 6.25, 6.26, 6.27, 6.29 which need to be changed to also allow the unprefixed form, for example: [6.1] RDF ::= [' rdf:RDF ' ] obj* [' /rdf:RDF '] 
+[' RDF xmlns="http://www.w3.org/1999/02/22-rdf-syntax-ns#" ] obj* [' /RDF '] 
+and so on for the other productions, but this is rather verbose to express in this BNF and might be better addressed by more words. 
+Dave 

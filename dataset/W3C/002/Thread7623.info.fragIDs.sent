@@ -1,0 +1,47 @@
+In our project we want to support persistency of our meta-data in a repository, based on WebDAV. 
+We'd like to avoid fine-grain repositories because there is no a product of this type, running on different platforms. 
+We'd like to use different WebDAV servers depending on our requirements and to protect ourselves from their differences via WebDAV protocol. 
+We found that the following services from WebDAV are crucial for us: - naming service, properties, etc. (the whole WebDAV level-2) - versioning (Delta-V) - query service (DASL) - transactions - relationships In WebDAV level-2 there is something called links. 
+In RFC2518 links are defined in paragraph 4.6 "Media Independent Links" "A WebDAV link is a special type of property value, formally defined in section 12.4, that allows typed connections to be established between resources of any media type." 
+From 12.4 "Link XML Element" We suppose that these links are the closest notion in WebDAV that may be used to map relationships between models, but there are a lot of questions in respect to Delta-V and DASL. 
+1) Does a link include version information for "src" and "dsc" or "src" and 
+"dst" will be resolved in a context of a workspace? 
+2) Can I get part of the whole link back as result of a DASL query? 
+For example, I'd like to know all destinations for particular source for particular kind of a link. 
+3) Is there any intention to provide special operations for links? 
+For example, I'd like to modify link. 
+Is it required to download the whole link, change, then save or may I do incremental modifications (add/remove pairs (src, dst) from a link without downloading it)? 
+Thanks, Viktor 
+From: Viktor Lioutyi Viktor_Lioutyi@i2.com 
+and 
+I believe that the intent was for the src and dst of a link to be a URL. 
+This URL could be: - a specific revision (in which case no versioning resolution is required) - a specific versioned resource (in which case either a workspace or a revision-id could be used to resolve the URL to a particular working resource or revision of the versioned resource) - a versioned resource that is identified by performing version selection on the versioned collections identified by prefixes of the URL (in which case a workspace must be used to resolve the URL to a particular working resource or revision). 
+Cheers, Geoff 
+See comments below in jra tags... 
+"Viktor Lioutyi" Viktor_Lioutyi@i2.com on 11/26/99 04:42:14 PM 
+Subject: Lost with links ... In our project we want to support persistency of our meta-data in a repository, based on WebDAV. 
+We'd like to avoid fine-grain repositories because there is no a product of this type, running on different platforms. 
+We'd like to use different WebDAV servers depending on our requirements and to protect ourselves from their differences via WebDAV protocol. 
+We found that the following services from WebDAV are crucial for us: - naming service, properties, etc. (the whole WebDAV level-2) - versioning (Delta-V) - query service (DASL) - transactions - relationships In WebDAV level-2 there is something called links. 
+In RFC2518 links are defined in paragraph 4.6 "Media Independent Links" "A WebDAV link is a special type of property value, formally defined in section 12.4, that allows typed connections to be established between resources of any media type." 
+From 12.4 "Link XML Element" We suppose that these links are the closest notion in WebDAV that may be used to map relationships between models, but there are a lot of questions in respect to Delta-V and DASL. 1) Does a link include version information for "src" and "dsc" or "src" and "dst" will be resolved in a context of a workspace? 
+The link does not include version information, and generally this would not be a good practice as it would require editing of the property and/or containing documents to change revisions of related resources. 
+So these, and all other URL references would be resolved in the context of the workspace which would be inherited from the request. 
+2) Can I get part of the whole link back as result of a DASL query? 
+For example, I'd like to know all destinations for particular source for particular kind of a link. 
+I don't know DASL that well, but does it support regular expressions in matching strings like SQL? 3) Is there any intention to provide special operations for links? 
+For example, I'd like to modify link. 
+Is it required to download the whole link, change, then save or may I do incremental modifications (add/remove pairs (src, dst) from a link without downloading it)? 
+Links are properties and may be modified with PROPPATCH. 
+You'll have to use PROPFIND first if you need to modify an existing link. 
+Thanks, Viktor 
+Viktor - for questions about DASL you should write to www-webdav-dasl@w3.org 
+I am cc'ing that list with my answers to your questions. 
+Yes. The result of a DASL query is a set of property values, it is just as if you did a PROPFIND on the resources that the query selects. 
+But maybe that is not what you meant to ask. 
+if you meant, "Can I write a query that selects all resources that have a link that is of certain type and whose destination is a certain URL" the answer is no not in the current DASL. 
+DASL only allows queries that compare properties to constant string values, it does not provide a way to compare a portion of the XML value of a property. 
+It does support a pattern match operator, similar to the LIKE operator of SQL. 
+This is not as powerful as a regular expression though. 
+thanks for your interest. 
+for other email on dasl please use the dasl email list Jim 

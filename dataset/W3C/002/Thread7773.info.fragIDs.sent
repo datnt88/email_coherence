@@ -1,0 +1,101 @@
+Looking over the minutes from the Oslo, it appears that the main technical issue on the advanced collection specification was circular bindings. 
+We need to try to settle what we want the specification to say about circular bindings. 
+Currently, the specification requires servers to detect cycles when processing requests with Depth: infinity, and to respond with 506 (Loop Detected). 
+Questions raised at Oslo were: 1. Whether it would be better to prevent circular bindings from being created in the first place. 
+There was discussion of the relative costs of preventing cycles for any method that creates a new binding vs. detecting them during Depth: infinity processing. 
+Do people have opinions about whether it would be prohibitively expensive to prevent a cycle from being created by BIND or MOVE on a collection? 
+There was discussion of possible legitimate uses for cycles. 
+Can people offer examples of real scenarios requiring collections to contain themselves (directly or indirectly)? 
+2. Whether we should allow Depth: infinity requests to succeed even when loops are encountered. 
+(Possibly a parameter was being suggested, allowing clients to direct the server whether to ignore cycles.) Jason also suggested in earlier e-mail that there is really no reason why a request should fail when it encounters a cycle during Depth: infinity. 
+For DELETE, MOVE, COPY, and LOCK if the server can detect the cycle (which is presumed to be easy), it can do the right thing with it and report success. 
+For PROPFIND, we could just have the server report 506 for a single response element whenever it encounters a collection for the second time, and not go into that collection. 
+Similarly for SEARCH, it seems that the server could simply not search the collection a second time when it encounters a loop, and report success. 
+If we decide to let cycles be created, should we change the spec to have Depth: infinity operations succeed? 
+Or add a header to let clients specify whether to succeed or fail when a cycle is encountered? 
+3. General uneasiness about the impact of cycles on all methods that can have Depth: infinity, including new ones being introduced in versioning and perhaps in future extensions. 
+Can anyone point out specific cases in versioning / configuration management where the existence of cycles might be a problem? 
+Or in any other functional area that we might tackle in the future? 
+--Judy Judith A. Slein Xerox Corporation jslein@crt.xerox.com 
+(716)422-5169 800 Phillips Road 105/50C Webster, NY 14580 
+A useful note from Jason. 
+Jason also suggested in earlier e-mail that there is really no reason why a request should fail when it encounters a cycle during Depth: infinity. 
+For DELETE, MOVE, COPY, and LOCK if the server can detect the cycle (which is presumed to be easy), it can do the right thing with it and report success. 
+For PROPFIND, we could just have the server report 506 for a single response element whenever it encounters a collection for the second time, and not go into that collection. 
+One other thing that I said was that there are two cases to consider... 1) if the loop includes the request URI... and 2) if the loop only includes elements that are pure descendents of the request URI. 
+The same thing goes for the destination URI in a copy. 
+If the destination URI (or more precisely, the "parent" of the destination URI) is not included in the loop, the deletion phase of the COPY is pretty easy. 
+But consider if if the destination (and it's parent) is in a loop.... /a/b/c/d/b/c/d/b/c/d/.... if /a/b/c/d is the destination, then a deletion is probably also going to remove various links and leave us with /a/b/ before we try to actually begin copying at /a/b/c/d.... but wait! we can't copy to /a/b/c/d unless /a/b/c exists. 
+Now if /a/b/c is the destination, once again the deletion phase will leave us with /a/b/. 
+And the COPY should work just fine. 
+Now let's take the above situation and also say that there exists /e/c/d/b/c/d/b/c/d/... And let's say the destination is /e/c/d/. 
+That's the same destination resource as in the troublesome first situation, but we are using a different URI to specify it. 
+The deletion phase leaves us with /a/b/ and /e/c/ and the subsequent COPY phase can be pulled off. 
+with much of the same result that we would have expected in that first scenario. 
+Now let's us consider this previous siutation, where there is an /e/c, but let's make the destination URI the same as the first situation: /a/b/c/d/. 
+Once again, we are left with /a/b and /e/c/ after the deletion phase. 
+Are we allowed to go through with the COPY phase? 
+The parent resource still exists... but the URI that was used to specify it doesn't.... Hmmmm. 
+:-) Anyway, my point is that if the request URI (or the destination URI) is included in a loop, that can pose real problems that aren't as easily resolved as loops that reside entirely decendants of request URI. 
+We should be aware of these distinctive classes of loops. 
+Another observations that's not related to loops but that my example reminds me of. 
+In the rfc2518 we say that a COPY performs a implicit delete at the destination. 
+That has the possibly unfortunate side effect that if a portion of the destination subtree is shared via bindings with another portion of the URI space, that sharing is lost. 
+For that reason down the road I think we should have an operation that is much like DOS's XCOPY /s. 
+I don't want to delay the spec now for that. 
+It can be added later. 
+BTW, this also reminds me that with AdvColl, it is possible that a portion of the source tree and the destination might be common. 
+And that initial deletion phase of the COPY might actually essentially delete a portion of the source tree. 
+It's probably a red herring, but it's probably also something we should mention in the spec. 
+From: ccjason@us.ibm.com [mailto:ccjason@us.ibm.com] ... this also reminds me that with AdvColl, it is possible that a portion of the source tree and the destination might be common. 
+And that initial deletion phase of the COPY might actually essentially delete a portion of the source tree. 
+It's probably a red herring, but it's probably also something we should mention in the spec. 
+I agree that it is something that should be explicitly mentioned (and disagree that it is a red herring :-). 
+In particular, I'd suggest some words to the effect that a COPY should be semantically equivalent to a COPY to a temporary URL (that identifies a null resource) followed by a MOVE from the temporary URL to the destination URL. 
+Since this situation can arise even in the base WebDAV spec, it probably would be worth adding this wording there as well, but minimally it should appear in the Adv. 
+Col. specification. 
+Cheers, Geoff 
+... this also reminds me that with AdvColl, it is possible that a portion of the source tree and the destination might be common. 
+And that initial deletion phase of the COPY might actually essentially delete a portion of the source tree. 
+It's probably a red herring, but it's probably also something we should mention in the spec. 
+I agree that it is something that should be explicitly mentioned (and disagree that it is a red herring :-). 
+In particular, I'd suggest some words to the effect that a COPY should be semantically equivalent to a COPY to a temporary URL (that identifies a null resource) followed by a MOVE from the temporary URL to the destination URL. 
+Geoff, I don't understand your wording. 
+Whoops. 
+Yes, I do. 
+The COPY would create a new instance of the resources that were in the source tree. 
+The MOVE would UNBIND the destination and rebind the newly created copy to the destination URI. 
+(Am I using our "bind" vocabulary/object-model correctly? 
+:-)) Got it. 
+Of course, that's the AdvColl. 
+way of explaining it. 
+And it still has this odd behavior with the the DELETE phase if we use your wording with RFC2518... so we still should flag it there. 
+Hopefully we can move to AdvColl. and not worry too much about this. 
+(It's only a problem for AdvColl if the UNBIND of the MOVE phase destroys a binding that happens to be in the source tree. 
+Fortunately that one binding is the only thing that gets destroyed (at least explicitly) as a result of the COPY. 
+I said explicitly because a bunch of resources might lose their only mapping(s) as a result of that unbind and thus become inaccessable in the absense of versioning.) The caveat is... even with AdvColl, I think we need to define what COPY/MOVE do across machines that don't cooperate on bindings. 
+Your definition of COPY seems to work across machines as long as we say the COPY phase copies to a temporary location on the *destination* machine. 
+MOVE across machines is another matter. 
+We should say if we allow MOVE if the intended semantics can't be achieved. 
+Or if best effort is acceptable. 
+Or if the client can specify if best-effort is acceptable. 
+Judy: Would you add this topic to the "action item" list for the adv. 
+col. 
+spec? 
+Thanks! 
+From: ccjason@us.ibm.com ... this also reminds me that with AdvColl, it is possible that a portion of the source tree and the destination might be common. 
+And that initial deletion phase of the COPY might actually essentially delete a portion of the source tree. 
+gmc/ I'd suggest some words to the effect that a COPY should be semantically equivalent to a COPY to a temporary URL (that identifies a null resource) followed by a MOVE from the temporary URL to the destination URL. 
+jcl/ ... I think we need to define what COPY/MOVE do across machines that don't cooperate on bindings. 
+Your definition of COPY seems to work across machines as long as we say the COPY phase copies to a temporary location on the *destination* machine. 
+MOVE across machines is another matter. 
+We should say if we allow MOVE if the intended semantics can't be achieved. 
+Or if best effort is acceptable. 
+Or if the client can specify if best-effort is acceptable. 
+gmc/ Since COPY produces a new set of resources (which won't be locked or have existing bindings to them), I don't think any of the cross-server problems should apply here. 
+Cheers, Geoff 
+Recursion alert: MOVE is defined in terms of COPY. 
+|John Stracke | http://www.ecal.com 
+|My opinions are my own. 
+| |Chief Scientist |===============================================| |eCal Corp. |I am destined to build a bridge to China out of| |francis@ecal.com|live sheep. 
+| 

@@ -1,0 +1,243 @@
+John has done a great job of quickly putting together a new XPath Signature filter spec. 
+I've done some tweaks and posted it at [1]. 
+Below I list some of my tweaks that John (or anyone else) can push back on. 
+1. 
+As we did for exc-c14n, I've assigned it a tenative namespace instead of using the actual documents URI: 2. I added a schema and DTD for the instance syntax, and in the process ended up moving from John's id("PrimaryBorrowerSig") to XPath Filter="include" xmlns="http://www.w3.org/2002/02/xmldsig-xpath-filter" id("PrimaryBorrowerSig") because the schema based on the original syntax had a FilterType attribute in the SignatureFilterType complexType -- it started looking confusing. 
+Also, in the end I felt that using syntax similar to the existing XPath transform, and just considering this 2.0 made things easier to understand actually. 
+3. John originally had the "exclusive" be default. 
+However, I wasn't sure if this was supposed to be implicit processing behaviour (which we try to avoid) or in the schema (we also try to avoid defaults there). 
+So in the interest of explicitness I made it required to specify. 
+Thoughts? (On these syntax issues, or implementation performance) [1] http://www.w3.org/Signature/Drafts/xmldsig-transform-xpath.html 
+Joseph Reagle Jr. http://www.w3.org/People/Reagle/ W3C Policy Analyst mailto:reagle@w3.org 
+IETF/W3C XML-Signature Co-Chair http://www.w3.org/Signature/ W3C XML Encryption Chair http://www.w3.org/Encryption/2001/ 
+In message "New XPath Filter Transform" 
+Does this transform ignore the input nodeset except the root 
+node? 
+Does a resultant nodeset contain a node which is not contained in the input nodeset but it is selected by SignatureFilter XPath expression? 
+TAMURA Kent @ Tokyo Research Laboratory, IBM 
+I'll defer your question to John but apoligize that I didn't publish the editorially tweaked version (with some renaming, schema, and namespace). 
+The latest version is at: 
+Joseph Reagle Jr. http://www.w3.org/People/Reagle/ W3C Policy Analyst mailto:reagle@w3.org 
+IETF/W3C XML-Signature Co-Chair http://www.w3.org/Signature/ W3C XML Encryption Chair http://www.w3.org/Encryption/2001/ 
+I believe that "include" is set intersection of the input 
+node set with the xpath-selected regions; "exclude" is set subtraction. 
+So, no; the resultant node set cannot contain a node which is not contained in the input node set. 
+Merlin r/reagle@w3.org/2002.03.07/16:59:12 
+Baltimore Technologies plc will not be liable for direct, special, indirect or consequential damages arising from alteration of the contents of this message by a third party or as a result of any virus being passed on. 
+This footnote confirms that this email message has been swept by Baltimore MIMEsweeper for Content Security threats, including computer viruses. 
+Hi Merlin and Kent, Merlin's response actually doesn't match the spec as currently written. 
+The result can have any nodes from the input document, and yes, Kent, the input is immaterial except for giving us a way to obtain a document root node. 
+Please see the first paragraph of Section 3.3 "Input and Evaluation Context of Signature Filter Transform": "...The XPath evaluation context for the node-set will be: A context node equal to the root node of the document whose node-set was provided as input to this transform..." Thanks, 
+John Boyer, Ph.D. Senior Product Architect PureEdge Solutions Inc. 
+I believe that "include" is set intersection of the input 
+node set with the xpath-selected regions; "exclude" is set subtraction. 
+So, no; the resultant node set cannot contain a node which is not contained in the input node set. 
+Merlin r/reagle@w3.org/2002.03.07/16:59:12 
+Baltimore Technologies plc will not be liable for direct, special, indirect or consequential damages arising from alteration of the contents of this message by a third party or as a result of any virus being passed on. 
+This footnote confirms that this email message has been swept by Baltimore MIMEsweeper for Content Security threats, including computer viruses. 
+Hi John, 
+I read the context part, and I think it is correct; I just misunderstood 
+the application of the resulting subtrees. 
+I think that include should be specified as set intersection, as exclude is set subtraction. 
+Set replacement would, I think, be non-intuitive and, in my opinion, bad. 
+We can get set replacement behaviour using set intersection and an input 
+nodeset from URI #xpointer(/). 
+It would seem that the current exclude behaviour honours preceding URIs and transforms, whereas the current include behaviour ignores them. 
+I don't like the dichotomy. 
+Merlin r/JBoyer@pureedge.com/2002.03.08/09:12:17 
+The schema and DTD probably need a slight tweak: Something like that, anyway. 
+Merlin r/reagle@w3.org/2002.03.07/16:59:12 
+Baltimore Technologies plc will not be liable for direct, special, indirect or consequential damages arising from alteration of the contents of this message by a third party or as a result of any virus being passed on. 
+This footnote confirms that this email message has been swept by Baltimore MIMEsweeper for Content Security threats, including computer viruses. 
+I agree with Merlin. 
+intersection and subtraction seems better. 
+TAMURA Kent @ Tokyo Research Laboratory, IBM 
+Hi Kent and Merlin, Generally, I like intersection and subtraction as features. 
+Three things bother me though: 1) The first is naming. 
+An XPath 'include' filter should include the nodes specified by the XPath expression. 
+An XPath 'exclude' filter should exclude the nodes specified by the XPath expression. 
+I don't agree with the assertion tha tthis is non-intuitive. 
+If we had more appropriate names like 'intersect' and 'subtract', respectively, I think the resulting markup would more clearly communicate what happens, particularly with nodes selected by the XPath 
+but not in the input. 
+2) More importantly, I think the problem is more complicated than what has been alluded to so far. 
+In the interest of speed, the XPath expressions in include and exclude filters specify subtree roots, not individual nodes. 
+The input is a set of nodes, not a set of subtree roots, so the XPath expression would have to be evaluated, then expanded to include all nodes in each subtree before the set intersection or subtraction could be performed against the input. 
+To me, this is less intuitive than what is in the current specification because we are not intersecting and subtracting the input nodes with the nodes selected by the XPath. 
+We are intersecting and subtracting the input nodes with a nodes-set formed by subtree expansion of nodes selected by the XPath. 
+3) Exclude is not currently defined as set subtraction. 
+It is defined in exactly the same way that include is defined. 
+So, whether using include or exclude, I am not able to convince myself that your version of set replacement will be as fast as what is currently specified. 
+I absolutely need ways of making the features currently specified to be as fast as possible. 
+So, why don't we add 'intersect' and 'subtract' to the currently specified filter? 
+John Boyer 
+misunderstood 
+input 
+I agree with Merlin. 
+intersection and subtraction seems better. 
+TAMURA Kent @ Tokyo Research Laboratory, IBM 
+r/JBoyer@pureedge.com/2002.03.14/11:07:42 
+I personally think that include and exclude are fine: "Include/exclude only those nodes /from the input node set/ that match X." The difference in our interpretations is that I interpret transforms as applying to the input node set; the xpath filter transform doesn't really consider the input node set at all; just the input document. 
+Again, I'd disagree on the intuitiveness; I certainly didn't consider that that either include or exclude could be expressed as they apparently are; subtree include/exclude against the input document, regardless of the input node set. 
+I personally consider this anathema to the transform model. 
+If I understand this correctly - exclude is the whole document less the identified subtrees - can I use the transform to select the ToBeSigned element, less any Signature children? 
+If not, exclude seems of extremely limited use. 
+In terms of performance, we can specify that this transform must behave as if the subtrees are expanded into node sets, and node set intersection or subtraction is performed. 
+That leaves vendors wide open to implement things as they wish, as we do for enveloped signature. 
+Any implementation that cares about performance will do things right. 
+Certainly, if the input is a bizarre node set formed from a bizarre transform, then the set operations may be slow. 
+If, however, the input is a standard dsig node set (, #x, #xpointer(...), octet stream) then it is trivial to optimize subtree-based set operations. 
+Remember, the output of this transform must be a node set - that is what xmldsig mandates - so if an implementation is going to have performance problems with nodes sets, doing things differently inside this transform won't help matters. 
+More subjectively; when I implemented the transform under the false assumption that it performed intersection or subtraction, I threw in optimizations for typical node sets, such that these operations, used in the base cases (e.g., the input is a whole document or element, with or without comments) are no slower (give or take a few non-iterative lines of code) than if they had been implemented as they apparently should have been. 
+But, I'm just a limited sample set. 
+I strongly feel that the current specification is wrong. 
+I don't think that it will be materially faster, and I do think is is non-intuitive and that it goes against the spirit of the transform model. 
+Adding more options that perform similar, but subtlely different operations will only serve to confuse matters. 
+However, this is just my opinion; I'm open to input from others! 
+Merlin 
+Baltimore Technologies plc will not be liable for direct, special, indirect or consequential damages arising from alteration of the contents of this message by a third party or as a result of any virus being passed on. 
+This footnote confirms that this email message has been swept by Baltimore MIMEsweeper for Content Security threats, including computer viruses. 
+Hi Merlin, Again, I'd disagree on the intuitiveness; I certainly didn't consider that that either include or exclude could be expressed as they apparently are; subtree include/exclude against the input document, regardless of the input node set. 
+I personally consider this anathema to the transform model. 
+A transform takes as input either a node-set or octet stream and can produce as output a nodeset or an octet stream. 
+This is the transform model. 
+What a transform does or how it does so are completely up to the transform and not in violation of anything in the recommendation. 
+It should be noted that the current XPath filter 2.0 is more or less how it used to be specified in drafts long ago. 
+The *only* reason it got changed is that some did not want authors to have to type (//. 
+| //@* | //namespace::*). 
+Considering the speed problems it introduced, that change turned out to be a phenomenally bad idea! 
+In this case, we take a node-set as input and promptly use it to find the document root. 
+There is nothing wrong with using one's input to do this. 
+We then initializing the input of the XPath expression evaluation *in the only way possible*-- by providing the root node of the document. 
+You cannot initialize the input to the XPath evaluator to be every node of the input nodeset. 
+Then we evaluate the Xpath and obtain a node-set, and we expand each node to include the full subtree for which it is the root. 
+Now we are talking about whether we then perform some extra further action involving this output node-set and the input node-set, so it is hard to see how intersection and subtraction would not be slower (and depending on implementation, I would argue MUCH slower in certain common usage cases that need to be optimized). 
+If I understand this correctly - exclude is the whole document less the identified subtrees - can I use the transform to select the ToBeSigned element, less any Signature children? 
+If not, exclude seems of extremely limited use. 
+Exclude selects the whole document less some subtrees as you have asserted. 
+In terms of performance, we can specify that this transform must behave as if the subtrees are expanded into node sets, and node set intersection or subtraction is performed. 
+That leaves vendors wide open to implement things as they wish, as we do for enveloped signature. 
+Any implementation that cares about performance will do things right. 
+Sorry, but this is the trap we are in now. 
+It is quite possible to create XPath transforms that are MUCH faster than the ones currently being implemented, but the effort appears to be more than what folks are prepared to do. 
+To be fair, though, the new design (however it comes out) will be faster than the fastest possible implementation of the current Xpath transform. 
+Certainly, if the input is a bizarre node set formed from a bizarre transform, then the set operations may be slow. 
+If, however, the input is a standard dsig node set (, #x, #xpointer(...), octet stream) then it is trivial to optimize subtree-based set operations. 
+Remember, the output of this transform must be a node set - that is what xmldsig mandates - so if an implementation is going to have performance problems with nodes sets, doing things differently inside this transform won't help matters. 
+xmldsig does not mandate that the output be a nodeset. 
+The reference processing model indicates that the software must *behave as if* it were processing nodesets. 
+This leaves far more latitude than what you are allowing. 
+More subjectively; when I implemented the transform under the false assumption that it performed intersection or subtraction, I threw in optimizations for typical node sets, such that these operations, used in the base cases (e.g., the input is a whole document or element, with or without comments) are no slower (give or take a few non-iterative lines of code) than if they had been implemented as they apparently should have been. 
+But, I'm just a limited sample set. 
+The case of having the entire document as input and including or excluding certain subtrees, then signing the result can be performed with far less filtering work than what you suggest here. 
+Remember, we only have to *behave as if* performing according to the given specs. 
+For include filters, we just run the XPath then render the subtrees rooted by the resultant nodes, so the work is quite a bit less than set intersection. 
+For exclude filters, we run the Xpath then set a flag for each node. 
+Then we go right to serializing each node in document order, except that we do not descend into subtrees rooted by flagged nodes. 
+This still avoids O(n) work (i.e. the run-time is reduced by a healthy constant factor) plus we do no work over the excluded subtrees. 
+I strongly feel that the current specification is wrong. 
+I don't think that it will be materially faster, and I do think is is non-intuitive and that it goes against the spirit of the transform model. 
+Adding more options that perform similar, but subtlely different operations will only serve to confuse matters. 
+I don't agree that adding intersect and subtract would confuse matters. 
+They are different words that clearly suggest different semantics. 
+John Boyer However, this is just my opinion; I'm open to input from others! 
+Merlin 
+I hope the new filter becomes easy-to-use replacement of old "XPath Filtering" of the REC-xmldsig, which is very confusing and difficult to understand and use for many people. 
+So, intersection and subtraction seem natural for me. 
+TAMURA Kent @ Tokyo Research Laboratory, IBM 
+I agree with Merlin regarding the feeling that the current speci- fication does not fit in the general idea of having a chain of transforms, where the second transform operates on the output of the first transform. 
+Of course - as John does - it can be argued that the XPath Filter transform does not violate the model in principal, but I am SURE that it will cause lots of misunderstandings since people think that the XPath filter transform will operate on the result of the previous transform in the chain, and not on the whole document. 
+To make my feeling clear, consider the following example: If I were a programmer using XMLDSIG and not knowing the inherent secrets ;-) of the XPath filter transform, I would use the following transfroms to select (1) Use a XPath filter transform "include" to select the child1. 
+(2) Use a XPath filter transform "exclude" to exclude grandChild2. 
+But, as the transform is currently specifed the actual result would be: John: Could you please explain in more detail, where you expect the big difference regarding performance between the current include/exclude and a set intersection/exclusion as Merlin suggests? 
+Regards, Gregor 
+Hi Gregor, Firstly, I should reiterate that I agree with and like the set intersect and subtraction operations. 
+While I suspect there would be less need for the XPath transform to do set operations if they were native to XPath as union currently is, the reality is that we are stuck with XPath 1.0, so I would not mind (i.e. would prefer) seeing additional keywords that offer these options. 
+They would be easy to implement and allow one to do exactly the kind of wonderful things that appear in your example. 
+I am also amenable to changing the current keywords, e.g. include-from-document, exclude-from-document, to be as clear as possible about the semantics. 
+My main point, however, is that intersection and subtraction do more work and will therefore be slower for the simple include/exclude cases that involve only one transform. 
+It should be noted that PureEdge has been applying signatures to XML for over four years now, and we have not yet run across a business application that requires more than this. 
+And we absolutely need these cases to be as fast as possible to maximize server-side throughput. 
+You asked me to provide more info on the claim that it will be slower. 
+I did that in the last email. 
+Here is a copy of what I said; if this is not enough, please let me know and I will elaborate: The case of having the entire document as input and including or excluding certain subtrees, then signing the result can be performed with far less filtering work than what you suggest here. 
+Remember, we only have to *behave as if* performing according to the given specs. 
+For include filters, we just run the XPath then render the subtrees rooted by the resultant nodes, so the work is quite a bit less than set intersection. 
+For exclude filters, we run the Xpath then set a flag for each node. 
+Then we go right to serializing each node in document order, except that we do not descend into subtrees rooted by flagged nodes. 
+This still avoids O(n) work (i.e. the run-time is reduced by a healthy constant factor) plus we do no work over the excluded subtrees. 
+It is worth noting that an implementation could be specially programmed to recognize that the input is a whole document and that there is only one transform. 
+In such cases, intersection and subtraction could be performed in the manner described currently for include/exclude. 
+However, for a low-level operation like signature validation, high performance is an important-- and up to now implicit-- interoperability requirement. 
+We cannot count on implementors who care to make certain markup 'fast enough' to be of practical use because it means that XML consumers cannot freely switch technologies and count on at least a similar performance profile. 
+Even within using include/exclude as defined now (and as was previously defined before we decided to make implementers run an Xpath on every node), I think there will still be a substantial performance difference. 
+It may be worthwhile recommending the strategy above for implementation in order to maximize the probability that implementations will have acceptably similar performance profiles. 
+John Boyer, Ph.D. Senior Product Architect PureEdge Solutions Inc. 
+I agree with Merlin regarding the feeling that the current speci- fication does not fit in the general idea of having a chain of transforms, where the second transform operates on the output of the first transform. 
+Of course - as John does - it can be argued that the XPath Filter transform does not violate the model in principal, but I am SURE that it will cause lots of misunderstandings since people think that the XPath filter transform will operate on the result of the previous transform in the chain, and not on the whole document. 
+To make my feeling clear, consider the following example: If I were a programmer using XMLDSIG and not knowing the inherent secrets ;-) of the XPath filter transform, I would use the following transfroms to select (1) Use a XPath filter transform "include" to select the child1. 
+(2) Use a XPath filter transform "exclude" to exclude grandChild2. 
+But, as the transform is currently specifed the actual result would be: John: Could you please explain in more detail, where you expect the big difference regarding performance between the current include/exclude and a set intersection/exclusion as Merlin suggests? 
+Regards, Gregor 
+Hi John, from what I understood from your mails is that you need a transform which allows to easily iterate (tree-traversal) over a structure like a DOM tree without evaluating an costly XPath expression against every node in the XPath node set. 
+First of all, if the document [1] should become stable in it's current processing model, I would add a comment that this transform only makes sense as a first Transform after dereferencing a nodeset or after transforms which produced an octet stream which is reparsed. 
+Why? 
+Because if I e.g. have an XMLDSIG 1.0 XPath transform prior the new XPath filter, the results of the original transform are discarded. 
+But now to my approach: For me, it's not that clear how to use a sequence chain of multiple http://www.w3.org/2002/02/xmldsig-xpath-filter transforms to select the correct subset. 
+But anyhow, I recently solved a similar problem and I thing that my solution would work in an alternative form of your filter. 
+Let's discuss the example in terms of DOM, even if the input is an XPath node set.: 
+We 'label' the tree with three different labels: 1.) The "dont-include-any-descendant-or-self" label 2.) The "include-descendant-or-self-and-search-forward" label 3.) The "dont-include-self-but-search-forward" label Let's take Gregor's example to show how this transform works: The input document is: And I want to get as output of the transform Which means all descendant-or-selfs of child1 but not it's grandchild2: Transform URI="http://www.w3.org/2002/03/xmldsig-the-next-alternative-xpath" !-- don't output / but descend - you maybe find subtrees to be outputted -- !-- 
+We output the subtree under child1 but maybe something inside this subtree is omitted -- /root/child1[1] !-- don't output grandchild2 and don't descend - you won't find subtrees to be outputted -- /root/child1[1]/grandchild2 Does this makes sense to you? 
+You can do the same optimizations: You only evaluate 3 XPath expressions, you make a simple tree traversal and you don't descend into subtrees which only contain unselected information. 
+Regards, Christian [1] http://www.w3.org/Signature/Drafts/xmldsig-xpath 
+Hi Christian, My first read of this is that without a reissue of the XML DSig REC, we wouldn't be able to do it this way. 
+Under this formulation, we leave the concept of a node-set travelling from transform to transform and instead have a 'labelled' node-set (or perhaps more desirably, a labelled parse tree). 
+Also, at first glance I don't understand why set subtraction wouldn't be the better method. 
+How many labels can a node have? 
+How do we know when to change the labelled node-set into something c14n can understand? 
+Also I don't understand what the 'dont-include-self-but-search-forward' label does. 
+Perhaps for each label you could describe exactly what it does rather than relying on the label name (just in case I'm missing something in each). 
+Finally, note that we are currently discussing how to optimize what, in my opinion, are simpler cases involving only one transform. 
+The method you are describing seems that it might only be better at optimizing sequences of multiple transforms. 
+Could you demonstrate how it could accommodate the include/exclude that are currently defined? 
+Thanks, John Boyer [mailto:geuer-pollmann@nue.et-inf.uni-siegen.de] 
+Hi John, from what I understood from your mails is that you need a transform which allows to easily iterate (tree-traversal) over a structure like a DOM tree without evaluating an costly XPath expression against every node in the XPath node set. 
+First of all, if the document [1] should become stable in it's current processing model, I would add a comment that this transform only makes sense as a first Transform after dereferencing a nodeset or after transforms which produced an octet stream which is reparsed. 
+Why? 
+Because if I e.g. have an XMLDSIG 1.0 XPath transform prior the new XPath filter, the results of the original transform are discarded. 
+But now to my approach: For me, it's not that clear how to use a sequence chain of multiple http://www.w3.org/2002/02/xmldsig-xpath-filter transforms to select the correct subset. 
+But anyhow, I recently solved a similar problem and I thing that my solution would work in an alternative form of your filter. 
+Let's discuss the example in terms of DOM, even if the input is an XPath node set.: 
+We 'label' the tree with three different labels: 1.) The "dont-include-any-descendant-or-self" label 2.) The "include-descendant-or-self-and-search-forward" label 3.) The "dont-include-self-but-search-forward" label Let's take Gregor's example to show how this transform works: The input document is: And I want to get as output of the transform Which means all descendant-or-selfs of child1 but not it's grandchild2: Transform URI="http://www.w3.org/2002/03/xmldsig-the-next-alternative-xpath" !-- don't output / but descend - you maybe find subtrees to be outputted -- !-- 
+We output the subtree under child1 but maybe something inside this subtree is omitted -- /root/child1[1] !-- don't output grandchild2 and don't descend - you won't find subtrees to be outputted -- /root/child1[1]/grandchild2 Does this makes sense to you? 
+You can do the same optimizations: You only evaluate 3 XPath expressions, you make a simple tree traversal and you don't descend into subtrees which only contain unselected information. 
+Regards, Christian [1] http://www.w3.org/Signature/Drafts/xmldsig-xpath 
+Hi John, sorry that I used that short and inexact description of the processing model. 
+Give me a second chance: - The three different labels are 'attached' to the tree, e.g. by using a hash table with the Node as the key and the label value as the value. 
+- A Node can have a maximum of one label: It wouldn't make sense to attach a "include" and an "exclude" label to a node. 
+- You create an empty xpath node set (the result which is passed to the next transform). 
+- You create a boolean variable "include" which stores the default behaviour for non-labeled nodes. 
+- Now you make a tree-traverse on the full document according to the following procedure: 1.) If your traversal approaches a "dont-include- any-descendant-or-self" label, you do not add this this node to the result node set and do not descend into this nodes childs. 
+2.) If you hit an "include-descendant-or-self-and-search-forward" label, you set include=true, add the current node to the result xpath node set and visit the children of the current node. 
+3.) If you hit a "dont-include-self-but-search-forward" label, you set include=false, do not add the current node to the result node set _but_ you must visit it's children; maybe you find one of the other labels. 
+4.) You hit a node which has no label: You look inside the include variable whether you must include the node in the result node set or not. 
+After including it or not, you visit the children. 
+- That's it. 
+Now you have an XPath node set which is passed to c14n or whatever. 
+You do not have to evaluate an XPath against each node, you only have to check eventually set labels. 
+You can include/exclude complete subtrees. 
+Don't nail me down on these long attribute names ;-)) They are just for illustration. 
+Let's give an example. 
+The enveloped signature transform includes the document root and excludes the signature: A reformulation using my transform would look like this: Transform URI="http://www.w3.org/2002/03/xmldsig-the-next-alternative-xpath" ds="&amp;dsig;" !-- don't output the signature and don't descend - you won't find subtrees to be outputted -- here()/ancestor-or-self::ds:Signature[1] Another example could look like this: Given the document A, you want to write a Transform which results in document B (just elements, whitespace only added for readability, no Text nodes): Document A: A B C D E F G H/ /G /F /E /D /C /B /A Document B: B D F /F /D /B dont-include-self-but-search-forward / //C //E include-descendant-or-self-and-search-forward: //B //D //F dont-include-any-descendant-or-self //G You could also put the //G expression into the dont-include-but-search, but that would be waste of time... 
+I hope this description was a little bit clearer? 
+Christian 
+Mit freundlichen Gr??en, Christian Geuer-Pollmann Institute for Data Communications Systems University of Siegen Hoelderlinstrasse 3 D-57068 Siegen Germany mail: mailto:geuer-pollmann@nue.et-inf.uni-siegen.de 
+web: http://www.nue.et-inf.uni-siegen.de/~geuer-pollmann/ 
+If we seperate out the issue of what sort of operation occurs (interset, substract, include-search-forward, etc.) and focus on the input, I'm still a little confused. 
+Folks seems to have passed me by and agreed that the input nodeset is that of the *original* document. 
+John said: Please see the first paragraph of Section 3.3 "Input and Evaluation Context of Signature Filter Transform": "...The XPath evaluation context for the node-set will be: A context node equal to the root node of the document whose node-set was provided as input to this transform..." Yes, and the input is the nodeset resulting from the previous step (dereferencing and parsing a URI, or the output of the previous transform). 
+If the previous transform was a similar XPath transform, then that input from the previous step would be the: An inclusive filter is a signature filter transform whose output node-set contains only those nodes in the subtrees identified by a given XPath expression. 
+An exclusive filter is a signature filter transform whose output node-set contains all nodes of a document except those nodes in the subtrees identified by a given XPath expression. 
+ogy And consequently, if there was a "chain" of them, I'd expect what Gregor demonstrated [1]. 
+What did I miss? 
+[1] Joseph Reagle Jr. http://www.w3.org/People/Reagle/ W3C Policy Analyst mailto:reagle@w3.org 
+IETF/W3C XML-Signature Co-Chair http://www.w3.org/Signature/ W3C XML Encryption Chair http://www.w3.org/Encryption/2001/ 

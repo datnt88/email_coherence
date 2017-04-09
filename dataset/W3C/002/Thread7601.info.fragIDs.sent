@@ -1,0 +1,72 @@
+The UNLOCK method isn't documented very well with respect to its interaction with the Depth: header or how to return errors (generally, and in the case of a failed If: condition match). 
+S9.2 states that a Depth: header is only supported if the method explicitly supports it. 
+Am I to assume, then, that UNLOCK ignores the Depth: header? 
+(or should it return an error if one is present?) Presuming the UNLOCK should always be treated as Depth: 0, then an If: failure is pretty easy. 
+No multistatus is possible, so a 412 (Precondition Failed) would be the response from an UNLOCK? 
+Note there is also a bit of weirdness in that UNLOCK is Depth: 0, but that a lock could have Depth: infinity. 
+And that you can unlock the whole tree of locks by unlocking any of the locked resource. 
+Also, how do you signify failure if the UNLOCK cannot be performed? 
+For example, an unknown lock token or improper authorization? 
+Let's say the lock token isn't found. 
+Return a 400 (Bad Request)? 
+Now, let's say the lock token *is* found but the authorization is wrong. 
+Just keep returning 401 (Unauthorized) until they get it right? 
+Well... this is somewhat rambling. 
+To summarize: * I think S8.11 should be explicit that the Depth: header is not used. 
+* There should be a summary of "typical" status codes like some of the other sections. 
+Cheers, -g Greg Stein, http://www.lyra.org/ 
+Greg Stein gstein@lyra.org on 11/06/99 10:30:01 PM Subject: UNLOCK issues The UNLOCK method isn't documented very well with respect to its interaction with the Depth: header or how to return errors (generally, and in the case of a failed If: condition match). 
+S9.2 states that a Depth: header is only supported if the method explicitly supports it. 
+Am I to assume, then, that UNLOCK ignores the Depth: header? 
+(or should it return an error if one is present?) All unused headers should be ignored. 
+This wasn't specified for COPY which doesn't use the depth header, but if its specified, it must be infinity. 
+Don't know why the inconsistency exists. 
+Presuming the UNLOCK should always be treated as Depth: 0, then an If: failure is pretty easy. 
+No multistatus is possible, so a 412 (Precondition Failed) would be the response from an UNLOCK? 
+Actually, UNLOCK should always be treated as Depth: infinity. 
+If you unlock a depth locked collection, all the locked resource with that lock token are unlocked. 
+If you try to unlock a resource in a depth locked collection with the collection lock token, this should fail because of inherited locks. 
+So a multistatus is always possible for UNLOCK because the method could fail to unlock many resources in a depth lock. 
+Note there is also a bit of weirdness in that UNLOCK is Depth: 0, but that a lock could have Depth: infinity. 
+And that you can unlock the whole tree of locks by unlocking any of the locked resource. 
+I think depth should be ignored. 
+The thing that determines what will be unlocked is the lock token. 
+Also, how do you signify failure if the UNLOCK cannot be performed? 
+For example, an unknown lock token or improper authorization? 
+Let's say the lock token isn't found. 
+Return a 400 (Bad Request)? 
+Now, let's say the lock token *is* found but the authorization is wrong. 
+Just keep returning 401 (Unauthorized) until they get it right? 
+That's what I did. 
+Well... this is somewhat rambling. 
+To summarize: * I think S8.11 should be explicit that the Depth: header is not used. 
+* There should be a summary of "typical" status codes like some of the other sections. 
+Agreed. 
+Why don't you write something up and we'll try to cover it this week. 
+Cheers, -g Greg Stein, http://www.lyra.org/ 
+From: jamsden@us.ibm.com 
+The UNLOCK method isn't documented very well with respect to its interaction with the Depth: header or how to return errors (generally, and in the case of a failed If: condition match). 
+S9.2 states that a Depth: header is only supported if the method explicitly supports it. 
+Am I to assume, then, that UNLOCK ignores the Depth: header? 
+(or should it return an error if one is present?) All unused headers should be ignored. 
+This wasn't specified for COPY which doesn't use the depth header, but if its specified, it must be infinity. 
+Don't know why the inconsistency exists. 
+I agree that unused headers should be ignored. 
+The header will often be something that would make sense to a more advanced server. 
+This does mean you lose the error check for clients that are issuing the wrong header but it's probably worth paying that price in order to simplify the life of client writers. 
+Presuming the UNLOCK should always be treated as Depth: 0, then an If: failure is pretty easy. 
+No multistatus is possible, so a 412 (Precondition Failed) would be the response from an UNLOCK? 
+Actually, UNLOCK should always be treated as Depth: infinity. 
+If you unlock a depth locked collection, all the locked resource with that lock token are unlocked. 
+If you try to unlock a resource in a depth locked collection with the collection lock token, this should fail because of inherited locks. 
+So a multistatus is always possible for UNLOCK because the method could fail to unlock many resources in a depth lock. 
+I'd just say that the depth header is irrelevant to the UNLOCK command, rather than saying it should be treated as Depth:infinity. 
+If you happen to be deleting a depth-infinity lock rooted at the request-URL, then the Depth:infinity header is redundant. 
+If the request-URL is not the root of the lock, or if the lock is not depth-infinity, then the Depth:infinity header would either be ignored or generate an error. 
+A header that must be either redundant, ignored, or wrong is not a useful header (:-). 
+Note there is also a bit of weirdness in that UNLOCK is Depth: 0, but that a lock could have Depth: infinity. 
+And that you can unlock the whole tree of locks by unlocking any of the locked resource. 
+I think depth should be ignored. 
+The thing that determines what will be unlocked is the lock token. 
+I agree. 
+Cheers, Geoff 

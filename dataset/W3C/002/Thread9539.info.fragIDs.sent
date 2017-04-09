@@ -1,0 +1,86 @@
+Jos, 
+I was going to ask you about whether your were thinking of building 
+in functions to Euler. 
+The functional Properties I am using for this sort of stuff at the moment 
+are: 
+log:semantics - The graph (formula) you get if you get a representatioon 
+of somthing and parse its semantics 
+log:conjunction - The graph you get from merging a list of graphs log:conclusion - The graph you get from taking all the rules in a graph 
+and applying them the graph, putting new statements into the graph. 
+Closure under forward chain inference. 
+Same as cwm -think 
+log:includes - A binary operator, true if one graph is a subgraph of 
+the other, modulo a bit of inference and variable subsitution. 
+log:directlyIncludes - A binary operator, true if one graph is a subgraph of the other, modulo only variable subsitution. 
+I haven't got conjunction and conclusion running yet. is an example of using some of these to check that predicates used in a document are indeed defined in the schema. 
+I have not used "entails under RDFS" - I just merge the RDFS axioms and then 
+use log:conclusion. 
+So, I would write a test something like { this log:forAll :p, :r, :x, :z. { :p rdfs:range :r . 
+:x :p :z } log:shouldEntail { :z a :r }. } a :test. 
+Then I would define use of shouldEntail with something *like* (untested!!) 
+{ :T a :test. 
+:T log:includes { :F log:shouldEntail :G}. 
+rdfsRules.n3 
+log:semantics :R. [ log:conjunction ( :F :R) ] log:conclusion [ log:includes :G ]. } 
+log:implies { :T a :success }. 
+plus a few combinations with notIncludes to do negative tests. 
+I expect if one had a backward chainer, one would use a proof search instead of the conclusion...includes combination: [ log:conjunction ( :F :R) ] euler:supportsProofOf G ]. } log:implies 
+{ :T a :success }. 
+Tim 
+Tim, there is the "entailment test cases" idea (in the RDFCore WG) and the idea is to describe these tests in RDF (actually RDF/NT) -- http://lists.w3.org/Archives/Public/w3c-rdfcore-wg/2001Sep/0322.html 
+I just wonder how [ tc:graph g1, g2, g3 ] tc:rdfsentail [ tc:graph g4 ]. could be written in more of your log: vocabulary... 
+I see there log:semantics, so we could maybe write g1 log:semantics _:lhs . 
+g2 log:semantics _:lhs . 
+g3 log:semantics _:lhs . 
+_:lhs mt:rdfs_entail _:rhs . 
+g4 log:semantics _:rhs . 
+where mt: is the model theory namespace containing #rdf_entail, #rdfs_entail, ... thoughts? 
+Jos 
+Tim, 
+Yes, and I was thinking the last couple of weeks to ask you 
+about which ones and this is the nicest work I can imagine! 
+ok, seems a must 
+log:conclusion will be a challenge we've done attempts with a query _:s _:p _:o . 
+we try that along the 'entail' way, and control the kind of inferencing with what Pat calls 'namespace entailment' 
+haven't thought how to support that one... 
+I will start with the log:semantics 
+(and also do () lists) and then log:conjunction 
+This is of real great help, thanks! 
+Jos 
+moment 
+representatioon 
+graph 
+graph. 
+I would suggest then you don't use it - define a log:entails (say) which is 
+the equivalent of 
+the combination of conclusion and includes. 
+Because in this case, it is what the test case needs, after all, and what Euler will naturally test. 
+I think maybe we will need mixtures of forward and backward reasoning. 
+When dealing with small datasets, cwm can always replace F log:entails :G with F log:conclusion [ log:includes :G ] --- it just doesn't scale well! 
+of 
+then 
+(untested!!) 
+notIncludes in cwm has to involve a recursive call back to a new query, testing the result, and returning it. 
+It is quite different to includes. 
+notIncludes is the way you can spoecifically introduce defaults, and specify definitive documents without relying on falacious closed world assumptions. 
+log:implies 
+I am really embarassed that I haven't gone to the trouble of setting up Euler -- I must! 
+It is interesting and encouraging that we have forward and backward chaining systems usefully using the same data and the same rules! 
+Tim 
+FWIW, I had a student working for me last year who wrote a simple expert system shell using RDF for its facts and rules input... one characteristic 
+of this system was that it could apply both forward and backward chaining 
+over the same rules in evaluation of a given goal. 
+(I should say that that capability was somewhat underdeveloped in the version we released when he returned to his studies.) #g Graham Klyne MIMEsweeper Group Strategic Research http://www.mimesweeper.com 
+indeed, equivalent and log:entails is a good name if we are explicit about the rdf, rdfs, dpo, etc axioms at the lhs so it is then something like @prefix log: http://www.w3.org/2000/10/swap/log# . 
+@prefix x: http://example.org/nt/ . 
+@prefix y: http://example.org/n3/ . 
+[ log:conjunction x:g1, x:g2, x:g3, y:a1 ] log:entails x:g4 . 
+#@@use/mention or in N-Triples _:a0 http://www.w3.org/2000/10/swap/log#conjunction http://example.org/nt/g1 . 
+_:a0 http://www.w3.org/2000/10/swap/log#conjunction http://example.org/nt/g2 . 
+_:a0 http://www.w3.org/2000/10/swap/log#conjunction http://example.org/nt/g3 . 
+_:a0 http://www.w3.org/2000/10/swap/log#conjunction http://example.org/n3/a1 . 
+_:a0 http://www.w3.org/2000/10/swap/log#entails http://example.org/nt/g4 . 
+or in RDF/XML rdf:RDF xmlns="http://www.w3.org/2000/10/swap/log#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:x="http://example.org/nt/" xmlns:y="http://example.org/n3/" 
+we actually (already) do some forward chaining when we do auto generated rules for premis and query statements with anonymous nodes (that comes down to "existential introduction" rules) well, maybe forward chaining... but I agree, we will need mixtures of forward and backward reasoning 
+I'm blushing (and that since a very long time...) 
+You couldn't be more right than that :-) Jos 

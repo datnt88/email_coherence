@@ -1,0 +1,67 @@
+With reference to action: AP: 2001-06-08#4: Brian McBride to write up this third proposed interpretation A third proposal is to regard: as equivalent to: Brian 
+This whole distinction between ID and about is trouble waiting to happen. 
+RDF may be embedded in messages (like SOAP) that might not have a url of any sort. 
+In this case, the distinction between id and about, and the proposal to use "#" which is based on the idea of anchors all lead to nothing but trouble. 
+guha 
+I agree with Guha. 
+As to me, I'd get rid of rdf:ID altogether, or make it deprecated. 
+With respect to this and other syntax issues, I'd like to remind of the "roundtrip" test, which have been raised many times on RDF Interest: an RDF tool must be able to parse, serialize, parse, serialize etc. without loss of information, i.e., on every parse, exactly the same set of statements is produced. 
+Notice that after the first parse, rdf:ID will be necessarity replaced by rdf:about, since the model does not intrinsically capture the information about its origin. 
+Sergey 
+If is defined to be equivalent to, i.e. represents the same triples as: and the round tripping test is defined to be that XML/RDF before represents the same triples as the XML/RDF after (i.e. model equivalence) which I think is the test that you suggest, then this solution passes the round triping test. 
+Brian 
+This is right. 
+However, by endorsing rdf:ID and rdf:about with relative anchors we embark on potentially unpleasant issues like e.g. HTTP redirect, support in RDF editors etc. 
+In HTTP redirect, we'll need to specify precisely which URL will be assigned for the namespace, the original one, or the resolved one. 
+Furthermore, if you are using an RDF editor, it has to maintain an additional flag with each "local" resource plus the URL of the page. 
+This distinction becomes essential when you want to store the content at another URL and assert that it "moved from previous URL ". 
+If the editor cannot distinguish relative and absolute references, it will blindly replace previous URL with a relative reference resolving to the new page. 
+Moreover, if the distinction between relative and absolute URLs is required, the parsers will need to support it as well. 
+I'm trying to make a point that this issue is closely related to has been resolved in favor of "in doubt be precise". 
+Sergey 
+Moreover, if the distinction between relative and absolute URLs is required, the parsers will need to support it as well. 
+What do you mean? 
+Relative URIs are abbreviations for absolute URIs, and turn out to be very useful in practice. 
+See: RDF definitely needs relative URIs. 
+What it sounds like you want is better ways of dealing with base URIs, which I agree with. 
+[ "Aaron Swartz" ; mailto:me@aaronsw.com ; http://www.aaronsw.com/ 
+] 
+Moreover, if the distinction between relative and absolute URLs is required, the parsers will need to support it as well. 
+To clarify, the parsers will need to explicitly flag each generated resource as originating from an absolute or relative URL. 
+Do we want to introduce these extra "flags" as a part of the model? 
+In my opinion, while relative URLs are very useful for HTML, they may be harmful for RDF (discussed a lot on RDF Interest). 
+Sergey 
+I still don't understand. 
+Why do parsers "generate" resources? 
+How do resources "originate" form URLs? It is my understanding that only absolute URIs identify resources. 
+Relative URIs are simply abbreviations for absolute URIs which must be resolved through use of a base URI. 
+An RDF document without a base URI is meaningless -- have you ever opened up an HTML page in your browser without a URL? [ "Aaron Swartz" ; mailto:me@aaronsw.com ; http://www.aaronsw.com/ 
+] 
+Ok, Aaron, you hit the nail on the head. 
+RDF absolutely has to make sense even outside the context of an enclosing document which can be given a uri. 
+so ... 
+guha 
+So... what? 
+That doesn't make any sense to me. 
+An RDF document is an XML document. 
+Each XML document has a base URI (cf the infoset spec). 
+If you copy the contents from one place in the web to another, you get a different XML document, and hence a difference RDF document; if it uses relative URI references, the resulting triples may be different. 
+This is by design. 
+This design does allow users to goof, but it also allows folks to manage collections of documents and by and large, it has succeeded over the course of the last 10 years. 
+Noone is forced to use relative URI references; anyone who uses them does so by choice. 
+Surely the consequences of that choice for RDF documents should be the same as the consequences for HTML, XML, PDF, and other document formats in the Web, no? 
+Or rather: surely the the consequences *are* the same for RDF as for XML in general; we're not designing RDF 1.0 today; we're just clarifying the spec; and the spec is already pretty clear on this: [[[ The value of the about attribute is interpreted as a URI-reference per Section 4 of [URI]. 
+The corresponding resource identifier is obtained by resolving the URI-reference to absolute form as specified by [URI]. 
+-- Resource Description Framework (RDF) Model and Syntax Specification Wed, 24 Feb 1999 14:45:07 GMT The only question is about this sort of fuzzy text: [[[ The ID attribute signals the creation of a new resource ... ]]] But this text in particular suggests pretty strongly that rdf:ID="foo" means the same thing as rdf:about="#foo" : [[[ The ID attribute, if specified, provides the URI fragment identifier for c. -- section 6. Formal Grammar for RDF Dan Connolly, W3C http://www.w3.org/People/Connolly/ 
+Currently, the concept of relative URIs is present in the M&amp;S 1.0 serialization syntax only, and is not reflected in the model in any way. 
+That is, relative URIs is a just another "abbreviation feature" of the M&amp;S syntax, and I'd like to emphasize that in the revised spec to avoid misconceptions. 
+As abbreviation features, relative URIs have nothing to do with the fragment IDs described in fragment ID in an RDF document does *not* refer to a portion of this document). 
+Therefore, IMO the axioms and benefits summarized by TimBL for HTML at above link do not seem to hold in the RDF world. 
+I feel strongly about not using relative URIs, especially given the parsing/editing complication (see prev. 
+postings in this thread), and the problems associated with moving RDF documents from one location to another. 
+However, I think keeping cleaned-up rdf:ID, rdf:about and relative URIs in the revised M&amp;S syntax is essential for backward compatibility and is the least bloody compromise (sigh...) I'd just suggest to word it so the developers understand the pros and cons. 
+Sergey 
+Sergey, I think you're suggesting that relative URIs be regarded as syntactic sugar in a surface syntax. 
+If so, I agree. 
+#g 
+Graham Klyne Baltimore Technologies Strategic Research Content Security Group 

@@ -1,0 +1,122 @@
+I have been reading charmod to try and understand what the RDF core working group should do vis-a-vis internationalization. 
+I am multiply posting this to uri@w3.org and www-i18n-comments@w3.org (It is unclear to me which is the more appropriate forum). 
+I had some comments on the URI encoding. 
+These are specifically motivated by the problem of international URIs in XML Namespace declarations, and I think, give a workable proposal for how to resolve the need to escape the forbidden US-ASCII characters in some contexts but not in others, as well as providing a backwardly compatible migration path from URI to IRI. 
+I first give my sense of the problem domain, than my proposal along with two algorithms, then some comment. 
+All refs to [RFC 2396] include the extension given by [RFC 2732] 
+The CHARMOD ref is the last call working draft from early this year. 
+Problem statement. 
+(A) When internationalizing URIs, in some contexts it is preferred to continue to exclude the excluded charcaters of RFC 2396 section 2.4.3, in other contexts (e.g. XML attributes), other escaping mechanism make this unnecessary. 
+(B) In many contexts there is a significant legacy problem, e.g. XML Namespace declarations. 
+Here the defining specifications require the use of URIs from RFC 2396. 
+In practice, applications copy strings without processing them, and hence work just as well with any other (internationalized) URI specification. 
+But if a document contains an arbitrary string how should it be encoded. 
+Should a URI-escaping algorithm be applied or not. 
+Insight: Actually URI escaping is not problematic if we never escape '%'. 
+In this case we can apply URI-escaping to an already escaped, or to a partially escaped, URI and get the right answer. 
+Thus the only requirement on URI authors is that they escape literal '%' as "%25"; they may escape any other characters (although it is unwise to escape the US-ASCII unreserved characters). 
+Proposal: An IRI is any string in any encoding such that: + every '%' is followed by two hexadecimal characters '0' - '9' and 'a' - 'f' and 'A' - 'F' + applying the IRI encoding algorithm below creates an RFC 2396 URI. 
+NOTE: representing a literal '%' character in an IRI is usually done using the string '%25'. 
+All other characters can usually be represented as themselves. 
+IRI encoding algorithm (slightly modified from draft-masinter-url-i18n-05.txt) 1) Represent the IURI characters as a sequence of ISO 10646 characters. 
+2) If the original encoding was not UCS-based, normalize the character sequence according to Normalization Form C as defined in [UNI15] and [IETFNorm]. 
+3) For each character that is syntactically not allowed by the generic URI syntax (all non-ASCII characters, plus the excluded characters in [RFC 2396, Section 2.4.3] except "#" and "%" (and "[" and "]"), apply the following: 3.1) Convert the character to a sequence of one or more bytes using UTF-8 [RFC 2279]. 
+3.2) Escape each of the bytes in the sequence with the URI escaping mechanism [RFC 2396, Section 2.4.1] (i.e. convert each byte to %HH, where HH is the hexadecimal notation of the byte value using upper case 'A' - 'F' and not lower case 'a' - 'f'). 
+3.3) Replace the original non-allowed character by the resulting character sequence. 
+4) For each '%': - if it is followed by two characters from the set: { '0' - '9', 'a' - 'f', 'A' - 'F' } replace by the upper case variants of the two characters. 
+- otherwise flag an error. 
+IRI decoding algorithm (for use for human display - not machine processing) 
+1) Leave each sequence "%25" unchanged. 
+2) For every other '%' replace by the byte value indicated by the following two hexadecimal digits. 
+3) Leave every other character unchanged. 
+The output MAY be a UTF-8 encoded string. 
+Observations By clarifying the special role of '%' it is clear that the escaping algorithm (which I believe is the usual one) is idempotent. 
+That is, we do not need to know that it has not been applied before, because escaping an already escaped IRI has no effect. 
+It is useful (but not necessary) to be able to reverse such an encoding, the IRI decoding algorithm does this. 
+Notice the special treatment of "%31" the encoding of '%'. 
+A server that needs to fetch a URL (for example) needs to use the normal RFC2396 decoding algorithm in which '%31' is decoded as '% and the character encoding is defined by the server and is not in general UTF-8. 
+The 2nd step in the encoding algorithm clarifies the *early* normalization of UCS-based strings, in accordance with CHARMOD. 
+URIs that are encoded in a non-UTF-8 encoding can be used as IRI's under this proposal; however the IRI decoding algorithm will work incorrectly. 
+Partially encoded IRIs (e.g. such as those encoding the unwise characters of RFC 2396) are IRIs under this proposal. 
+Encoding the partially encoded IRI has the desired effect of creating a fully encoded IRI, that is identical to that reached by fully encoding the completed unencoded IRI. 
+Any URI (potentially with '%HH' sequences) is an IRI under this proposal, and IRI-encoding it leaves it unchanged (except capitilizing any "%hh" pairs). 
+The clarification of step 3.2 in the algorithm to use upper case hex digits is intended to help in contexts such as RDF in which the binary comparison of (encoded) URIs is intended as the test for URI equality. 
+For URIs intended for servers using non-UTF8 encoding, the IRIs may encode % in a way other than %25, and may require encoding of many more characters. 
+All such encodings will be compatible with RFC2396, and can then be IRI-encoded as in this proposal without changing them. 
+Jeremy Carroll HP Labs RDF Core Working Group (this message has NOT been discussed by this WG). 
+Two comments: 
+(a) I don't see what significance RFC 2732 has regarding this I18N debate. 
+Or am I missing something? 
+(b) If specifications are going to be changed to allow IRIs, then I think the opportunity should also be grasped to insist that the octet-sequence encoding of an IRI MUST BE UTF-8. 
+#g 
+Graham Klyne GK@NineByNine.org 
+I had a request for examples. 
+Here are some. 
+Examples: Suppose we have two http servers, one using UTF-8 the other using iso-8859-1 called utf8.example.org 
+and iso-8859-1.example.org 
+each has files called simple braces{} percent% Duerst (where ue represents u umlaut) Duerst/percent% Duerst/braces{} Then the following table gives the URI, the IRI, and the partially escaped IRI (PE IRI) of the files The PE IRI is suitable for contexts where the unwise characters may not be used. 
+utf8.example.org 
+URI http://utf8.example.org/simple 
+IRI http://utf8.example.org/simple 
+PE IRI http://utf8.example.org/simple 
+URI http://utf8.example.org/braces%7B%7D 
+IRI http://utf8.example.org/braces{} 
+PE IRI http://utf8.example.org/braces%7B%7D 
+URI http://utf8.example.org/percent%25 
+IRI http://utf8.example.org/percent%25 
+PE IRI http://utf8.example.org/percent%25 
+URI http://utf8.example.org/D%C3%BCrst 
+IRI http://utf8.example.org/D#C3#BCrst 
+PE IRI http://utf8.example.org/D#C3#BCrst 
+where #C3#BC is the two bytes with those values. 
+Note: both the IRI and the PE IRI may be encoded in other character encodings, in which case the #C3#BC should be replaced by the representation of u umlaut in such an encoding. 
+UCS-based encodings must use a NFC representation of u umlaut (i.e. that u umlaut unicode character) and not an abnormal form such as a u and an umlaut. 
+Non UCS-based encodings do not have this restriction. 
+URI http://utf8.example.org/D%C3%BCrst/percent%25 
+IRI http://utf8.example.org/D#C3#BCrst/percent%25 
+PE IRI http://utf8.example.org/D#C3#BCrst/percent%25 
+URI http://utf8.example.org/D%C3%BCrst/braces%7B%7D 
+IRI http://utf8.example.org/D#C3#BCrst/braces{} 
+PE IRI http://utf8.example.org/D#C3#BCrst/braces%7B%7D 
+iso-8859-1.example.org 
+URI http://iso-8859-1.example.org/simple 
+IRI http://iso-8859-1.example.org/simple 
+PE IRI http://iso-8859-1.example.org/simple 
+URI http://iso-8859-1.example.org/braces%7B%7D 
+IRI http://iso-8859-1.example.org/braces{} 
+PE IRI http://iso-8859-1.example.org/braces%7B%7D 
+URI http://iso-8859-1.example.org/percent%25 
+IRI http://iso-8859-1.example.org/percent%25 
+PE IRI http://iso-8859-1.example.org/percent%25 
+URI http://iso-8859-1.example.org/D%FCrst 
+IRI http://iso-8859-1.example.org/D%FCrst 
+PE IRI http://iso-8859-1.example.org/D%FCrst 
+note #FC is the representation of u umlaut in iso-8859-1 since the IRI is UTF-8 based this must be escaped in all representations of the URI. 
+We also note that the decode algorithm for creating a human readable form of the IRI fails. 
+The server decode algorithm for the URI (which uses the server specified encoding of iso-8859-1) succeeds. 
+URI http://iso-8859-1.example.org/D%FCrst/percent%25 
+IRI http://iso-8859-1.example.org/D%FCrst/percent%25 
+PE IRI http://iso-8859-1.example.org/D%FCrst/percent%25 
+URI http://iso-8859-1.example.org/D%FCrst/braces%7B%7D 
+IRI http://iso-8859-1.example.org/D%FCrst/braces{} 
+PE IRI http://iso-8859-1.example.org/D%FCrst/braces%7B%7D 
+Note: the characters { and } only do not need escaping since the encoding of them under ISO-8859-1 and UTF-8 are identical. 
+Any instance of an IRI may be replaced by a (partially) encoded IRI, because the encoding algorithm is idempotent. 
+With all of these, the IRI encoding algorithm produces the URI (whether applied to the URI, the IRI or the PE IRI). 
+With all of the UTF-8 based examples the IRI-decoding algorithm, whether applied to the URI, the IRI or the PE IRI produce the IRI. 
+Hence, no layer of software needs to specify of its input which one of URI, IRI or PE IRI, in order to be able to produce a URI output. 
+Isn't that the one that adds '[' and ']' to the allowed characters. 
+The point about this MAY is simply that the algorithms doesn't always work For better or worse there are legacy URIs that are not UTF-8 encoded, e.g. in my example, http://lists.w3.org/Archives/Public/uri/2001Sep/0010.html the URI http://iso-8859-1.example.org/D%FCrst/braces%7B%7D 
+cannot be unencoded to include the u umlaut without knowledge of the iso-8859-1 encoding scheme. 
+IRI's, because of the idempotency, can include any URI. 
+Some of these URIs are the encoding of an IRI without any % escapes other than %25; some of them such as ones with D%FCrst in them are not. 
+Even ones which are the UTF-8 encoding of some IRI might not have that as the intended unencoded form, only the end server knows how to correctly decode a URI. 
+The decode algorithm correctly works for any URI that is UTF-8 encoded. 
+The IRI itself certainly need not be UTF-8 encoded, the rule is that as part of the encoding to URI syntax the IRI is transcoded to UTF-8. 
+A stronger requirement that IRIs are UTF-8 unnecessarily prevents the inclusion of IRIs in non UTF-8 documents. 
+One of the points about my proposal, is that current practice, (which is all the proposed algorithm amounts to), is in fact, very robust, and can work despite multiple character encodings used by servers and multiple character encodings used for the IRIs themselves. 
+This robustness depends on URIs not containing '%' which hence has completely special treatment in my proposal. 
+Jeremy 
+Yes, to allow IPv6 addresses without escaping, IIRC. 
+Oh yes, I see what you mean. 
+#g Graham Klyne (GK@ACM.ORG) 

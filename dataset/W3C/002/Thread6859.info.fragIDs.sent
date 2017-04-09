@@ -1,0 +1,20 @@
+Okay maybe you can help me I'm stuck: taking the XML 2e xml as the example and more precisely the production NT-doctypedecl: ( nt def="NT-S" S /nt nt def="NT-ExternalID" ExternalID /nt )? 
+nt def="NT-S" S /nt ? 
+('[' ( nt def="NT-markupdecl" markupdecl /nt | nt diff="chg" def="NT-DeclSep" DeclSep /nt )* ']' nt def="NT-S" S /nt ?)? ' ' /rhs vc def="vc-roottype"/ wfc def="ExtSubset" diff="add"/ com loc role="erratumref" href="http://www.w3.org/XML/xml-19980210-errata#E109" [E109] /loc /com 
+the child sequence of prod is lhs-rhs-vc-wfc-com lets look at the template handling rhs xsl:apply-templates select="following-sibling::*[1][name()='com' or name()='constraint' or name()='vc' or name()='wfc']"/ the when matches it generates the td, the code then goes the apply-templates 
+that's where I don't understand, the select section returns only the vc, excluding the wfc and com from being processed. 
+Those are IMHO excluded due to the first [1] filter. 
+Where I'm puzzled is that the spec HTML version is anyway correct, it has the references for the external subset WFC. 
+I checked both the old version of the XSL linked from the spec and the new version in CVS at dev.w3.org, both have the [1] predicate. 
+I'm puzzled, I can't see what I missed, any enlighening would be extremely welcome. 
+thanks, Daniel Daniel Veillard | Red Hat Network http://redhat.com/products/network/ veillard@redhat.com 
+| libxml Gnome XML toolkit http://xmlsoft.org/ 
+Okay I finally realized it was handled by the apply-templates of the prod parent, sorry for the noise. 
+Daniel Daniel Veillard | Red Hat Network http://redhat.com/products/network/ veillard@redhat.com 
+| libxml Gnome XML toolkit http://xmlsoft.org/ 
+true, but the later siblings are picked up by the template for the parent: xsl:apply-templates select=" *[self::lhs or ( (self::vc or self::wfc or self::com) and not(preceding-sibling::*[1][self::rhs]) or (self::rhs and not(preceding-sibling::*[1][self::lhs])) )]"/ David This message has been checked for all known viruses by Star Internet delivered through the MessageLabs Virus Control Centre. 
+For further information visit 
+/ Daniel Veillard Daniel.Veillard@imag.fr was heard to say: 
+No problem. 
+Be seeing you, norm Norman.Walsh@East.Sun.COM | A man can believe a considerable deal of Technology Development Group | rubbish, and yet go about his daily work Sun Microsystems, Inc. | in a rational and cheerful 
+manner.--Norman Douglas 

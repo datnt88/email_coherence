@@ -1,0 +1,180 @@
+I know this is an old conversation, but the email got buried in my 
+mailbox... 
+Some PROPPATCH results can fail and others can succeed, so this is why we 
+have multi-valued responses. 
+Clients can easily see what happened. 
+Rollback is difficult for servers to implement. 
+Are there any server 
+implementations that do already implement this as atomic or with rollback? 
+I'm not aware of any. 
+I see rollback as a more advanced feature, that we 
+can figure out how to do later on. 
+Lisa 
+From: Greg Stein [mailto:gstein@lyra.org] Sent: Wednesday, February 17, 1999 4:21 PM Subject: Re: Must PROPPATCH operation be atomic... 
+I am implementing WebDAV server but I feel I might be hitting in a brick wall. 
+I was wondering if PROPPATCH command enforces 
+atomicity? 
+Atleast according to the WebDAV draft it says that either all the set/remove operations pass or they all fail which means 
+rolling back. 
+Can't I do "besteffort" vs. "atomic" in case of PROPPATCH? 
+Because in 
+my application scenario I am trying to replace the 
+current protocol 
+that allows besteffort as well as atomic flexibility. 
+Painful as it may be, the operation must be atomic. 
+As a 
+fellow server 
+implementor, I sympathize ... I haven't implemented rollback either :-) It would be nice if a client could say "do best effort", but that doesn't exist. 
+The atomic requirement allows a client to 
+ensure that a 
+consistent set of changes are made. 
+IMO, if you have a closed system (your own client and 
+server), then it 
+is perfectly acceptable to insert a new child element in 
+the PROPPATCH 
+to identify best-effort. 
+For example, the request body could look like: ?xml 
+version="1.0" 
+encoding="utf-8" ? 
+D:propertyupdate xmlns:D="DAV:" xmlns:Z="http://www.example.com/mydav/" 
+Z:besteffort D:set D:prop Z:some-prop/ /D:prop /D:set D:remove D:prop Z:other-prop/ /D:prop /D:remove /D:propertyupdate Your server could then recognize the besteffort tag. 
+Your 
+client would 
+also use the tag. 
+Other clients that access the server would not include it, so your server would guarantee atomicity for them (since they expect it). 
+Cheers, -g Greg Stein, http://www.lyra.org/ 
+I am unsure whether I understand your email. 
+Are you questioning the 
+requirement that PROPPATCH be atomic? 
+I do not recall the design rationale 
+-- perhaps it is in the WebDAV book of Why. 
+But in any case, one can't argue against it on the basis of difficulty, since 
+the PyDAV server implements PROPPATCH as atomic. 
+Apologies if I misunderstood you Jim please reply to jrd3@alum.mit.edu, despite the Reply-To address in the header. 
+So what does multi-status mean?? 
+Ideally there would be a way for the client to specify atomicity, but we 
+don't have that yet. 
+Lisa 
+From: Brian Lloyd [mailto:Brian@digicool.com] Sent: Friday, April 16, 1999 1:57 PM Subject: RE: Must PROPPATCH operation be atomic... 
+Zope (web application server) implements atomic PROPPATCH w/rollback. 
+We lucked out in this respect, as Zope is based on a transactional object database which made this relatively painless. 
+While implementing it on a non-transactional server is harder, it still (IMHO) seems to be a requirement. 
+Clients that respect the rfc will have an expectation that a failure means no changes were made. 
+If this is not the case, you might have any number of caching and resource integrity problems, based on mismatched expectations on the part of the client and server... Brian Lloyd brian@digicool.com 
+Software Engineer 540.371.6909 
+Digital Creations http://www.digicool.com 
+Zope (web application server) implements atomic PROPPATCH 
+w/rollback. 
+We lucked out in this respect, as Zope is 
+based on a transactional object database which made this 
+relatively painless. 
+While implementing it on a non-transactional server is harder, 
+it still (IMHO) seems to be a requirement. 
+Clients that respect 
+the rfc will have an expectation that a failure means no changes 
+were made. 
+If this is not the case, you might have any number 
+of caching and resource integrity problems, based on mismatched 
+expectations on the part of the client and server... 
+Brian Lloyd brian@digicool.com 
+Software Engineer 540.371.6909 
+Digital Creations http://www.digicool.com 
+To quote section 8.2: 
+Instructions MUST either all be executed or none executed. 
+Thus if any error 
+occurs during processing all executed instructions MUST be undone and a 
+proper error result returned. 
+I apologize if this language is not sufficiently clear. 
+As for multi-status, it is a compound response format. 
+While a single error 
+is sufficient to cause a PROPPATCH to fail the system may be programmed to 
+send out commands to set all the properties and then to roll back if one or 
+more fail. 
+The key is, one or more. 
+For example, a client sends in a PROPPATCH with changes to four properties. 
+The server sends a command to its property store to change all four 
+properties. 
+The property store sends the server back a message saying that 
+three of the property set commands failed and one succeeded. 
+The server then 
+orders a roll back. 
+However the server wants to be able to tell the client 
+exactly what went wrong. 
+That is, the server wants to send a message to the 
+client saying "Your request failed. 
+The reason it failed is that there were 
+the following errors on three of your properties." 
+To do this the server 
+needs a compound error response format and that is what multi-status does. 
+As for why we have the atomicity requirement please refer to the section 
+entitled " "This is another fine protocol you've gotten me into!" " in 
+believe the second paragraph exactly answers your question. 
+Although it 
+seems that my comment regarding compliance with the atomicity requirement is 
+wrong. 
+Most folks apparently have implemented it. 
+I think that rocks! 
+I will 
+eventually have to update the WebDAV book of why to reflect this. 
+Yaron 
+-----Original Message----- From: Brian Lloyd [mailto:Brian@digicool.com] Sent: Friday, April 16, 1999 1:57 PM Subject: RE: Must PROPPATCH operation be atomic... 
+mod_dav is going to have it RSN, too. 
+Unfortunately, it is a bit tougher... 
+I don't have a nice transactional DB or an easy language such as Python :-( ... (interesting note: both PyDAV and Zope are written using Python(!)). 
+Anyways, the work was started in 0.9.8 and rollback should be implemented in mod_dav 0.9.9. 
+Cheers, -g Greg Stein, http://www.lyra.org/ 
+I've been thinking about this some more, and I believe both are valid scenarios. 
+There are scenarios where the client wants to have all succeed or none, and there are scenarios where the client wants to have as many succeed as possible. 
+Some reasons for the second case: - Clients don't have to grovel through the 207 multi-status to find the ones which would have worked, and try them again. 
+- Servers may be able to be more performant without having to implement some dort of transactioning for PROPPATCH. 
+Of course this depends on the 
+server implementation, what's under it, how important performance is and 
+what operations need to be performant. 
+Really, it's too bad clients don't have some simple switch to say whether this should be treated as an entire transaction or not. 
+Then servers that don't support the model that the client asks for could fail the operation right away. 
+Lisa 
+-----Original Message----- From: Brian Lloyd [mailto:Brian@digicool.com] Sent: Friday, April 16, 1999 1:57 PM Subject: RE: Must PROPPATCH operation be atomic... 
+From: "Lisa Lippert (Dusseault) (Exchange)" lisal@exchange.microsoft.com 
+I've been thinking about this some more, and I believe both are valid scenarios. 
+There are scenarios where the client wants to have all succeed or none, and there are scenarios where the client wants to have as many 
+succeed as possible. 
+I agree. 
+Really, it's too bad clients don't have some simple switch to say whether this should be treated as an entire transaction or not. 
+Then servers that don't support the model that the client asks for could fail the operation right away. 
+And if someone feels the alternative behavior (where as many succeed as possible) is worth the time and effort to define and get accepted, he/she should join or form a working group to define such an extension to the base WebDAV spec. 
+Cheers, Geoff 
+-----Original Message----- From: Brian Lloyd [mailto:Brian@digicool.com] Sent: Friday, April 16, 1999 1:57 PM Subject: RE: Must PROPPATCH operation be atomic... 
+I definitely think besteffort vs. atomic operation is very valid real-world scenario. 
+What we have done is added an XML tag called sync, whose value determines the behaviour for the PROPPATCH, PROPFIND or SEARCH methods. 
+So the XML element would be D:sync besteffort /D:sync or D:sync atomic /D:sync . 
+Ofcourse in order to maintain compatilibity the default would be "atomic". 
+Thanks, Imran 
+From: Yaron Goland Sent: Friday, April 16, 1999 2:25 PM 
+'w3c-dist-auth@w3.org' Subject: RE: Must PROPPATCH operation be 
+Thus if any error occurs during processing all 
+instructions MUST be undone and a proper error 
+a single error is sufficient to cause a 
+system may be programmed to send out commands 
+properties and then to roll back if one or more 
+four properties. 
+The server sends a command to 
+store to change all four properties. 
+The 
+the server back a message saying that three of 
+server then orders 
+client exactly what went wrong. 
+That is, the 
+send a message to the client saying "Your 
+reason it failed is that there were the 
+server needs a 
+the section entitled " "This is another fine 
+question. 
+Although it seems that my comment 
+will eventually have to update the WebDAV book 
+-----Original Message----- From: Brian Lloyd 
+[mailto:Brian@digicool.com] 
+Sent: Friday, April 16, 1999 1:57 PM 
+'w3c-dist-auth@w3.org' 
+Subject: RE: Must PROPPATCH operation be 
+Do You Yahoo!? Get your free @yahoo.com 
+address at http://mail.yahoo.com 

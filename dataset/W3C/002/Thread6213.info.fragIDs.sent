@@ -1,0 +1,26 @@
+1) Test case japanese\pr-xml-little-endian.xml: 
+AElfred, Expat and MSXML compain about this document. 
+Right after the XML declaration there is a sequence (hex): 0x0d 0x0a 0x00 0x0d 0x0a 0x00 Should that not be 0x0d 0x00 0x0a 0x00 0x0d 0x00 0x0a 0x00 ? 
+Expat and MSXML complain about line 1, column 22, but maybe only because 
+they assume it is UTF-8 since there is no encoding declaration. 
+A separate Unicode checker I am using complains about a low surrogate 0xdd30 without a high surrogate further down, when I tell it to check for UTF-16. 
+2) Test case japanese\pr-xml-utf-16.xml: Very similar to the first case - document is in UTF-16, big endian. 
+Expat and MSXML complain about line2, column 0. The sequence right after the XML declaration is: 0x00 0x0d 0x0a 0x00 0x0d 0x0a 0x00 0x3c A separate Unicode checker I am using complains about a low surrogate 0xdd30 without a high surrogate further down, when I tell it to check for UTF-16. 
+3) Test case japanese\weekly-little-endian: 4) Test case japanese\weekly-utf-16.xml/dtd: Basically the same as 1) and 2). 
+Also fail the Unicode checker in similar ways. 
+Regards, Karl 
+I think this is a CVS problem. 
+The file really contains 0A 00 0A 00, and when you checked it out, the OAs were converted to OD OA. Presumably the files are not marked as binary in the repository, and you are checking them out on a MS Windows machine. 
+I suspect this is the cause of the other problems you reported too. 
+I seem to recall that this came up before, but no-one dared to run the command that would change every file in the repository to be marked as binary. 
+-- Richard 
+Thanks, that certainly explains it. 
+It would be nice if that change in CVS could be made! 
+Best regards, Karl 
+OK, I checked the test suite out again (WinCVS), this time specifying Unix line breaks. 
+(I consider this a workaround, not a solution) The results confirm your suspicions. 
+We were testing with a script written in C# to test the new SAX.NET parser ports. 
+Before, Expat (for .NET) 
+failed on 18 test cases, now it fails on only 9: Script results: Files Passed: 2153 Files Failed: 9 Files Not Supported: 271 The cases that failed, but are now successful are these: valid-sa-049 valid-sa-050 valid-sa-051 pr-xml-little pr-xml-utf-16 weekly-little weekly-utf-16 utf16b utf16l Which are exactly the ones I complained about. 
+Confirmed to be a good idea. 
+;-) Karl 

@@ -1,0 +1,55 @@
+I don't think the above comment was resolved. 
+Do we want to make a change to the spec? 
+Are we clear on what URL we need to point reference in the multi-status response for various lock problems? 
+J. 
+Having waited three days for someone smarter than me to say something... Am Montag den, 15. 
+April 2002, um 23:59, schrieb Jason Crawford: 
+I don't feel strongly about it. 
+If, then I would list 207 as possible status code of COPY/MOVE (where there are completely absent now) and explain that 423 LOCKED will only map to locked 
+request-uri. 
+If any other uri (destination included) makes trouble, clients should be able to deal with a 207. 
+I don't understand that question. 
+Can you elaborate? 
+//Stefan 
+They are missing from the status tables, but they are mentioned in descriptions and examples. 
+I think the issue is that - 423 is used both for LOCK problems on source and destination URIs, 
+- there doesn't seem to be any prior usage of multistatus to describe information about destination URIs. 
+The cleanest "solution" (although not backward-compatible) would be to have 
+a separate status code for the condition "destination locked". 
+However, we are currently talking about RFC2518, so we're probably stuck with the 
+ambiguity. 
+In a future WebDAV protocol that supports enhanced error reporting a la RFC3253, I'd probably suggest: 409 CONFLICT 
+I understand that as: is it actually allowed (in copy/move/delete) to use multistatus to report problems on destination resources? 
+Am Freitag den, 19. 
+April 2002, um 10:12, schrieb Julian Reschke: 
+I think that's why I wrote that they are missing from the status codes. 
+;) 
+Yes. 
+The examples cover children of destination uris in 207. 
+But, for example, 
+with access control you can get 403 on the destination uri and that is not defined either. 
+I would expect a server to report this 403 on the destination inside a 207 multistatus. 
+I don't like this for the simple reason that clients need hardcoded information about each DAV:error _and_ they need to know how to handle HTTP status codes. 
+So I would prefer to use existing HTTP status codes over new DAV:errors. 
+Otherwise you need to define also DAV:destination-is-not-accesible, DAV:destination-parent-is-locked, etc. 
+//Stefan 
+Indeed. 
+So I'll have to take this back. 
+But how well will this interoperate? 
+If the href in multistatus only lists the destination URI, it will be non-trivial to find out which source could not be copied/moved, right? 
+So to make this fly, I'd expect the response element *also* to tell me which source resource was affected by the problem on the destination. 
+RFC3253 already goes this way, simply for the reason that it's hard to define new HTTP status codes, but it's simple to define new error elements (because this solves the issue of namespacing the new codes automatically). 
+"Simple" clients will just see 403 (won't work no matter how hard you try) or 409 (it failed, but there's something you can do about it). 
+Maybe. 
+Hi, we just noticed the following bug in Microsoft's web folder implementation: when displaying the contents of a collection, it will use (when present) the DAV:displayname property as internal member name. 
+Furthermore, the URI displayed in the "tabular view" will use the collection's URI + the displayname to build the member's URI. 
+This is obviously wrong, because there's no guarantee that the individual DAV.displayname values in a property are distinct. 
+IMHO, the RFC2518 revision should say: "User agents MUST not use the DAV:displayname to identify the individual collection members (because the value may not be unique across the members of a collection). 
+However, they MAY use it to display additional information about a collection member". 
+Hi, I recently tested this ([1]). 
+After changing the explorer options, Word indeed launches when selecting a link to a .doc 
+file, however a trace shows that Word a) GETs the resource (ok) and displays it as "read only" (wrong), then b) does an OPTION on the root collection (wrong, it may not be DAV enabled), then c) does an OPTION on the resource itself, which responds with a 401 (Auth required). 
+However, the authentication dialog does not pop up until Word's document window is closed. 
+Has anybody used this setup successfully? 
+And yes, d) the file can be successfully opened and edited when opened from Microsoft's webfolder client. 
+Julian [1] http://support.microsoft.com/default.aspx?scid=kb;DE;q178222 

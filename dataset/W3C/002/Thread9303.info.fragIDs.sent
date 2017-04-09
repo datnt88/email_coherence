@@ -1,0 +1,136 @@
+Re: http://www.w3.org/2001/sw/RDFCore/ntriples/ 
+1. Is it intended that a name can start with a digit? 
+name ::= [A-Za-z0-9]+ As far as I can tell, it's used only in anonNode 
+2. I think this violates the syntax notation: absoluteURI ::= [^   space]+ As far as I can tell, http://www.w3.org/TR/REC-xml#sec-notation allows only literal characters or #xN character codes within the [...] construct. 
+I suggest: absoluteURI ::= ( [^  ] - space )+ 
+3. Outstanding issue 1 N-Triples is a text/plain MIME type format - consider character and encoding issues with requirement to be able to express all Unicode chars. 
+That much is easy, I think. 
+Use: 
+4. Outstanding issue 2 Consider adding \#xHEX escaping to allow N-Triples to encode Unicode characters in text/plain. 
+Or after Python: \uxxxx and \Uxxxxxxxx 
+I suppose that, for completeness, we must. 
+Escaping is a topic that can be 
+far trickier than it seems it should be for such a "simple" purpose. 
+Following your Python reference, I see they've tightened up the Python spec. 
+I think these are probably the right choices for us: \uxxxx Character with 16-bit hex value xxxx (Unicode only) \Uxxxxxxxx Character with 32-bit hex value xxxxxxxx (Unicode only) 
+One might also consider allowing: \xhh ASCII character with hex value hh for 'hh' in the range '00' to '7F' (i.e. where Unicode code points match US-ASCII). 
+5. eoln format 
+Being a MIME text/plain format, the cr in eoln should not be optional: 
+eoln ::= cr? lf 
+should read: eoln ::= cr lf 
+#g Graham Klyne (GK@ACM.ORG) 
+Graham Klyne said: 
+The file may have moved there but I cannot edit it at present. 
+I changed this to match N3 tools but I see now that while n-triples2kif.pl uses the above, the main cwm code uses xmllib.py 
+which has: _Name = '[a-zA-Z_:][-a-zA-Z0-9._:]*' 
+# valid XML name so I guess another change to: name ::= [A-Za-z][A-Za-z0-9]* seems in order. 
+We probably shouldn't allow _ or : since we use those in other ways (e.g. would make things like _:_: legal). 
+I have no opinion about allowing - or . 
+Yes. I haven't been able to update the document since adding the pointer to the use of the XML notation, and need to amend the character classes and references to characters amongst other things. 
+That out-of-band information cannot be picked up by the parser just reading the bytes. 
+I would prefer the format to be self-contained if 
+possible, not depending on charset, so all unicode chars can be 
+handled inside US-ASCII. 
+Asking N-Triples parsers to have to add an entire UTF-8 decoding step seems rather an large step, when \u etc. below could do the work when required. 
+I would add notes such that there would only be 1 way to encode any character, so even escaped literals could be compared as strings. 
+i.e. \uxxxx for (mutter some chars below #0020) &amp; chars #007f-#ffff \UXXXXXXXX for chars #00010000 to #ffffffff 
+Is this one escape too many? 
+If we do add it, I would prevent \u from this handling the range this covers. 
+How about just one escape \UXXXXXXXX for all chars not made available by \-escapes or used in-situ - that seems more appealing for this little syntax. 
+As I commented previously, that change would make all our existing examples illegal and this seems awkward to impose on many people writing these files. 
+I would agree if this was a protocol such as HTTP, SMTP or telnet where it was never (hardly ever) typed by people. 
+Most web servers will autodetect and deliver ntriples files as text/plain whatever line ending we use, for example your RDF Core WG minutes of 2001-06-15: is served as text/plain but uses only \n as newlines which strictly isn't allowed. 
+So what to do? 
+Invent a suggested ".nt" suffix and MIME type it text/x-ntriples? 
+I don't see that as necessary - lets not worry about it. 
+Dave 
+Hi Dave, 
+OK, I accept the "out of band" point. 
+Assuming that the only place where non-ASCII characters can appear is in string literals, that might work. 
+Then I think we'd also need to be careful about requiring non-USASCII characters to always be escaped in string literals so that the higher Unicode code points don't appear anywhere in the N-triples source code. 
+But then there's the internationalized URIs and domain name work that's waiting in the wings, so I don't suppose that approach would last for ever. 
+If you want to stick with just US-ASCII in an N-triples file then I won't fight it, but my own feeling is that it would be easier to just say: always use UTF-8 encoding. 
+That seems fairly future-proof. 
+In view of what you say above, I agree. 
+Forget I suggested that! 
+Well, that could work too. 
+Well, you are right. 
+I hadn't noticed that. 
+The original that I sent did NOT use bare LFs, so it's getting corrupted in the cycle from mailing list to archive and back. 
+The MIME spec (RFC 2046, section 4.1.1) is very clear that line breaks in a text/* type MUST be represented by CR LF, and that bare CR or LF are not allowed. 
+But now I see what is happening... the HTTP designers chose to override that aspect of MIME (RFC 2616, section 19.4.2) so now we have two different flavours of MIME floating around. 
+The email flavour requires CRLF, but the HTTP flavour allows CRLF, bare CR or bare LF. Hmph! (You may notice I come from an email orientation.) 
+I suppose, then, we must go back to allowing CRLF, LF or CR as a line break, to be compatible with anything that can be served via HTTP. 
+That doesn't fix the problem -- it's still subject to the rules of text/* content types. 
+You'd have to define something like application/vnd.w3c.ntriples to achieve that effect. 
+I agree. 
+Because a text file can get munged from whatever form it starts out in if its passed about using HTTP and email, I don't think the MIME type particularly helps us. 
+Oh well. 
+#g Graham Klyne (GK@ACM.ORG) 
+I've managed to update the document with the notation changes you previously described, and with the issues you have brought up, along with some solutions. 
+Graham Klyne said: 
+I don't mind saying N-Triples is UTF-8 since I've got code around to do that and it comes for free with Java and Python for example. 
+However it just moves the escaping to a different level and makes it impossible for anyone to generate unicode characters with plain text (ASCII that is) editors. 
+Dave said: 
+Graham said: 
+Yes, but is it better than my other suggestions? 
+I've listed all the suggestions in the updated doc. 
+Graham said: 
+which was actually where I started in the first version, Doh! 
+Dave 
+Hi, 
+If n-triples containing characters other than us-ascii are escaped, it would not be viewed with a normal viewer or an editor. 
+It may be a problem for people who use a language other than English. 
+However, there are some problem. 
+1. 
+Is it possible to using encoding other than utf-8? 
+For example, some servers or gateways may make a content negotiation and convert its charset, if n-triples uses text/* content-type. 
+What happen if the server convert its encoding to other than utf-8 and replace charset parameter? 
+2. What happen if n-triples are transfered using 'Content-Type: text/plain'? 
+MIME specification says that if there is no charset parameter, it must be treated as us-ascii, and HTTP says iso-8859-1. 
+Is it an error? 
+To avoid these problem, RDF uses XML as a container, and it solves these problems. 
+So, it's may be nonsense to discuss about transfering n-triples. 
+In this meaning, escapeing all characters other than us-ascii, and handling n-triples as us-ascii text seems good idea. 
+Satoshi Satoshi Nakamura snakamura@infoteria.co.jp Infoteria Corporation 
+A nit: you still have: eoln ::= cr? lf 
+given that (a) email converts to CRLF in transit, and back to local conventions on receipt, (b) HTTP does not touch EOL sequences, (c) systems exist that use CR/LF (PCs), bare LF (Un*x), bare CR (Macs, I believe) then I think any of these may appear, however the document is created. 
+Thus (contrary to my earlier comments) I'd suggest: eoln ::= cr lf | cr | lf (Aaron: am I right about the Mac?) 
+Graham Klyne said: 
+snip/ 
+If you want to have a single encoded representation for a string, that's true. 
+I guess I don't mind either! 
+OK, my vote is for your option 1. 
+My reasons, FWIW, are: (a) to achieve a common representation for any string, and to be possible to create N-triples with a non-UTF-8 tools. 
+(The common encoded representation isn't so important to me, but the requirement has been expressed...) (b) that the higher 32-bit code-points seem very rare, and 4 leading zeros is a lot of overhead for a very occasionally (if ever) required feature. 
+Yes, I acknowledge that. 
+That was before I'd taken on board the fact that HTTP breaks the MIME text handling model that I'm most familiar with. 
+Sorry for the roundabout (but I learned something, so it wasn't a total waste ;-). 
+#g Graham Klyne (GK@ACM.ORG) 
+Graham Klyne said: 
+That's because I only made grammar fixes to match the XML notation - no change to the syntax. 
+The change to the version below needs consensus as a WG document, rather than just a document on my web site. 
+That's one of the suggestions I have already recorded. 
+Again, that is also where I first started :-) but I got feedback that suggested I prune it down as much as possible. 
+I've no strong feelings on changing to this from the current version apart from having to write more code. 
+[which is adding the \u, \U and \x python escapes] 
+I also prefer solution 1. Also implies file format is ASCII - characters 0 to 127 are used. 
+Dave 
+Yes. "Aaron Swartz" | The Semantic Web http://www.aaronsw.com/ 
+| i'm working to make it happen 
+? Really? 
+My understanding was that a key property of UTF-8 was that 7-bit ASCII was a subset of it. 
+One pays for the ASCII convenience by the longer encodings of Japanese. 
+Pat Hayes (650)859 6569 w (650)494 3973 h (until September) phayes@ai.uwf.edu 
+Satoshi Nakamura said: 
+I agree with your last comments - we use XML for doing this properly and this is a simple text/plain format that *can* encode all characters, and is indented primarily for developing and testing RDF syntax reader/writer code, and as a concrete syntax for our formal model. 
+This is not intended for end users to type as a new RDF syntax. 
+[ At least not yet... if we do change our minds about this later, we can revisit it later and use, for example, UTF-8 since it is a superset of US-ASCII, the 0..127 code points are the same. 
+But I don't want to start that discussion now. 
+] So I am going to change the N-Triples document to be a US-ASCII format (chars 0..127) and the \-escapes to allow encoding of the higher code points. 
+Dave 
+pat hayes said: 
+Not just Japanese but many encodings. 
+I'm going for US-ASCII text/plain since this is aimed mostly at developers and all characters can be expressed with a little bit of escaping. 
+Users will have the XML syntax with the full set of XML character encoding power. 
+Dave 

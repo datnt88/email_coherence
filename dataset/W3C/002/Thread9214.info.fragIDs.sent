@@ -1,0 +1,113 @@
+Revising in light of an error pointed out privately by Stefan Kokkelink - thanks! 
+Here goes 
+The confusion is the different interpretation of rdf:ID in propertyElt when the element is empty / non-empty. 
+1. if the propertyElt is an *empty* XML-element, an rdf:ID is the identifier of the target resource: Jan Grant has been working on empty elements but not considered rdf:ID so far: The current relevant words are [[3. 
+r2 is the resource named by the resource attribute if present or a new resource. 
+If the ID attribute is given it is the identifier of this new resource.]] 
+section 6 paragraph beginning [[Properties and values expressed in XML attribute form within an empty XML element E..., second sentence of item #3] so the answer to the test case Brian McBride gave in rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:random="http://random.ioctl.org/#" is that the statement: (http://random.ioctl.org/#bar, 
+http://random.ioctl.org/#someProperty, 
+document-URI#foo) should be generated; no reification occurs since rdf:ID identifies a resource, not a statement here. 
+2. if the propertyElt is an *non-empty* XML-element, an rdf:ID is the identifier of the reified statement: [[The value of the ID attribute, if specified, is the identifier for the resource that represents the reification of the statement.]] 
+section 6 paragraph beginning [[Within propertyElt (production [6.12]),]] So stating the issue again: [[The propertyElt production 6.12 of the grammar does not allow both an ID attribute and a resource attribute to be specified.]] 
+and goes on to give an example with an empty element. 
+In case #1 (empty element) since rdf:ID points to the target resource, adding rdf:resource as well would have two statement objects which does not make sense. 
+Aside: I don't know why rdf:resource alone wasn't used uniquely to point to a target resource rather than both rdf:ID and rdf:resource being allowed. 
+I suspect you often want to point to local IDs and making rdf:ID be the identifier of a reified statement wouldn't make sence because there are potentially many statements generated from propName, propAttr - so which one would it be? 
+6.12 part 4 which applies in this case is currently: 
+' ' propName idRefAttr? 
+bagIdAttr? 
+propAttr* '/ ' 
+and remains valid (ID and resource are alternatives). 
+In case #2 (non empty element), the current 6.12 part 1 is ' ' propName idAttr? 
+' ' value ' /' propName ' ' where no rdf:resource attribute is allowed and rdf:ID identifies the reified statment. 
+It does not make sense to add rdf:resource here, since in that case if the value of the property was a resource, case#1 could be used to perform that. 
+In summary - no change need be made to the grammar although some clarifications are obviously needed since this wasn't too clear. 
+Dave 
+Howdy, I'm afraid I cannot make it tomorrow either. 
+Rael : From: w3c-rdfcore-wg-request@w3.org : [mailto:w3c-rdfcore-wg-request@w3.org]On 
+Behalf Of R.V.Guha : Sent: Thursday, May 17, 2001 11:25 AM : Subject: apologies 
+: I apologize, I can't make it for tomorows teleconference : guha 
+I apologize, I can't make it for tomorows teleconference guha 
+It was my understanding that the issue was the fact that statements using resources as objects could not be reified. 
+For example: rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:e="http://rdf.example.org/#" 
+would be expected to create the triples: #bar e:someProperty #baz . 
+#foo rdf:type rdf:Statement ; rdf:subject #bar ; rdf:property e:someProperty ; rdf:object #baz . 
+But the grammar does not allow this because of the (somewhat unexpected and little-known) usage of ID to name a new property. 
+Along with Jan Grant's proposal for removing the creation of new resources on empty propElts, I think that the use of ID to name them should also be removed. 
+Thus your option 2 would always be the case. 
+[ Aaron Swartz | me@aaronsw.com 
+| http://www.aaronsw.com 
+] 
+Guha, Thanks for letting us know. 
+You said last week that you expected to have something on #rdfms-reification-required to discuss. 
+Please could you circulate on the mailing list. 
+Brian 
+I'm not following you here Dave. is clearly legal and the rdf:ID attribute defines the URI of the refied statement the property represents. 
+The question that arises is whether is legal, with again the rdf:ID attribute defining the URI of the reifed statement. 
+It does seem a bit irregular to allow the use of an rdf:ID attribute to identify the reifed statement in the case where the object 
+is a literal, but not in the case where it is a resource. 
+And strictly speaking, the grammar does not rule it out as the rdf:resource attribute 
+matches the idAboutAttr? 
+in the production and the rdf:ID attribute matches the propAttr*. 
+Brian 
+My take on Dave's comments in: is that you two agree in this case (non-empty propertyElt) but I should let Dave speak for himself :-). 
+I think it does rule this out - see below. 
+But when a propertElt is empty, idAboutAttr is not part of the grammar: [6.12] propertyElt ::= ' ' propName idAttr? 
+' ' value ' /' propName ' ' 
+' ' propName idAttr? 
+parseLiteral ' ' 
+literal ' /' propName ' ' 
+' ' propName idAttr? 
+parseResource ' ' 
+propertyElt* ' /' propName ' ' 
+It seems like the intent of the idRefAttr (in the last option of [6.12]) is to make it illegal for an empty propertyElt to contain both an id and resource attribute. 
+Art 
+I think thats exactly right Art. 
+The question is whether the spec *should* allow: not whether it does allow it. 
+What I've seen so far is an answer that says the spec doesn't allow it. 
+I feel that doesn't fully answer the issue raised. 
+Brian 
+I know that Dave seems to feel differently about this, but I see a simple solution to this and empty property elements: - Define an empty property element to be an empty literal - Define an id and a resource to be the reification of the statement 
+So simply: becomes: #foo :bar "" . 
+and becomes: #foo :bar #bat . 
+#baz rdf:subject #foo ; rdf:predicate :bar ; rdf:object #bat . 
+[ Aaron Swartz | me@aaronsw.com 
+| http://www.aaronsw.com 
+] 
+Aaron Swartz said: 
+We *can* do these things - i.e. changing the RDF/XML syntax but we need good reasons. 
+Neatness is one but I feel it isn't strong enough to counterpoint breaking existing parsers; make no mistake - this would be a change in the meaning. 
+I feel we should be making changes additions, removals, modifications that break existing code only if absolutely necessary for important reasons such as removing ambiguity. 
+In this case we can write a better explanation of what is already allowed in the syntax and there is already a way to do what is required - make the property statement and give an ID for the reified statement, so there is no requirement for any new syntax. 
+If this was RDF/XML syntax version 2 (no backwards compatibility required) then we wouldn't be starting from here. 
+[rdf/n3 examples deleted] 
+Dave 
+Sorry for not being clear, but I see a very good reason for this. 
+It seems that consensus suggests that: 
+/rdf:Description 
+should result in an empty literal for the value of propName. 
+In such a case, something like: could only be understood as assigning foo to the reification of the 
+statement. 
+Similarly, would also assign foo the the reification of the statement. 
+Certainly this does change the meaning, but it changes it to be more consistent and brings it in line with what (IMO) the majority of RDF authors expect. 
+I doubt that many (if any) RDF authors understand the current wackiness and even fewer have built documents on it. 
+I think in this case we can expend the effort needed to fix this rather large mistake in the syntax. 
+[ Aaron Swartz | me@aaronsw.com 
+| http://www.aaronsw.com 
+] 
+I'm inclined to agree with Aaron on this. 
+Also noting DanC's comment about balancing the needs of the future against the needs of the past (can't find the exact quote, but I noted the gist). 
+#g 
+Graham Klyne Baltimore Technologies Strategic Research Content Security Group 
+Aaron - I'm trying to understand the ramification of the change you are proposing. 
+Would you please enumerate the triples you would expect from the above RDF if it was legal (and doing so in Subject, Pred, Object format ala SiRPAC would be much appreciated)? 
+Also, what triples would you expect if the RDF was: Thanks, Art 
+Sorry for not including this -- I've done it several times before (but not in SiRPAC style) so I was getting tired, but here it is: triple(r('#genid1'),r('http://rdf.example.org/#propName'),r('bar')) . 
+triple(r('#foo'),r('http://www.w3.org/1999/02/22-rdf-syntax-ns#subject'),r(' #genid1')) . 
+triple(r('#foo'),r('http://www.w3.org/1999/02/22-rdf-syntax-ns#predicate'),r ('http://rdf.example.org/#propName')) . 
+triple(r('#foo'),r('http://www.w3.org/1999/02/22-rdf-syntax-ns#object'),r('b ar')) . 
+The same as above except "some_resource" replaces "#genid1". 
+This kind of output is very much in line with what would happen with something like: and the same with an rdf:about. 
+[ Aaron Swartz | me@aaronsw.com 
+| http://www.aaronsw.com 
+] 

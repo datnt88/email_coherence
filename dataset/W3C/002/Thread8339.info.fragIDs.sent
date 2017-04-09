@@ -1,0 +1,89 @@
+If widely deployed clients (e.g. MS office) would not choke on this change, I would support doing as Julian suggests. 
+Cheers, Geoff 
+INTEROP_DELETE_AND_MULTISTATUS 
+From: w3c-dist-auth-request@w3.org [mailto:w3c-dist-auth-request@w3.org]On 
+Behalf Of John DeSoi Sent: Thursday, January 23, 2003 2:25 PM Subject: RE: Issues PUT_AND_INTERMEDIATE_COLLECTIONS and INTEROP_DELETE_AND_MULTISTATUS 
+Lisa Dusseault: 
+few HTTP clients do authoring, and those that do are at 
+least aware that 
+207 is a multistatus response 
+Netscape/Mozilla Composer is an HTTP authoring tool that is not aware of 207. 
+Yes. But as far as I understand it's abandoned as well. 
+The 
+solution here is 
+to make sure that when/if Mozilla 1.x starts supporting 
+authoring again, it 
+will pay attention to RFC2518 semantics. 
+Netscape/Mozilla still supports editing with Composer and works fine with my WebDAV server (using HTTP PUT). 
+I don't believe it supports a 
+You are right. 
+For some reason I thought that this was supposed to work using "save", which was greyed out when a web resource was opened. 
+In fact, it's "Publish". 
+You learn something new every day. 
+DELETE method; but since HTTP does define a DELETE method, I don't see how WebDAV can justify redefining the meaning of 2xx status codes. 
+Well. 
+The main justification is that it has been doing this for almost 4 years now, and - there wasn't a big outcry, and - it doesn't seem to negatively affect anybody. 
+That being said, from a consistency p.o.v. 
+I agree. 
+I'll assume for a moment that few WebDAV clients indeed *do* evaluate a 207 on DELETE (and other candidates such as LOCK/COPY...), and those probably would be easy to upgrade. 
+If this is true, all we'd need to do is - deprecate status of 207 for failures - introduce a new 4xx code such as INCOMPLETE OPERATION which would carry the same multistatus body Feedback appreciated. 
+Julian 
+I've never seen the MS webfolder client actually parsing a 207 response -- all it does is display the fact that something whent wrong. 
+I guess we'll just experimentally implement that and see how clients behave... 
+Lisa Dusseault: 
+few HTTP clients do authoring, and those that do are at 
+least aware that 
+207 is a multistatus response 
+Netscape/Mozilla Composer is an HTTP authoring tool that is not aware of 207. 
+Yes. But as far as I understand it's abandoned as well. 
+The 
+solution here is 
+to make sure that when/if Mozilla 1.x starts supporting 
+authoring again, it 
+will pay attention to RFC2518 semantics. 
+Netscape/Mozilla still supports editing with Composer and works fine with my WebDAV server (using HTTP PUT). 
+I don't believe it supports a 
+DELETE method; but since HTTP does define a DELETE method, I don't see how WebDAV can justify redefining the meaning of 2xx status codes. 
+Speaking of which... 
+Assuming WebDAV would want to define a new 4xx status code -- how do I find out about which codes have been "taken"? 
+Roy? 
+Julian 
+Lisa Dusseault: 
+few HTTP clients do authoring, and those that do are at 
+least aware that 
+207 is a multistatus response 
+Netscape/Mozilla Composer is an HTTP authoring tool that is not aware of 207. 
+Yes. But as far as I understand it's abandoned as well. 
+The 
+solution here is 
+to make sure that when/if Mozilla 1.x starts supporting 
+authoring again, it 
+will pay attention to RFC2518 semantics. 
+Netscape/Mozilla still supports editing with Composer and works fine with my WebDAV server (using HTTP PUT). 
+I don't believe it supports a 
+DELETE method; but since HTTP does define a DELETE method, I don't see how WebDAV can justify redefining the meaning of 2xx status codes. 
+I don't know what the status of the registry is now, but it was supposed to be IANA. 
+The holdback was the lack of a registration process [meaning the lack of a volunteer with enough free time to write that boring task]. 
+Larry might know the current state. 
+Why don't you just respond with the status code of the first error, since otherwise you will need a 5xx as well. 
+207 is completely lame (and yes I did make a stink of it at the time). 
+HTTP doesn't specify the contents of the message body -- a multi-response could have just as easily been done as 200/201 with a special media type specific to webdav. 
+The client already knows it is performing a webdav action and intermediaries know it isn't cacheable (because of the 
+method), so a parallel set of status codes isn't necessary. 
+....Roy 
+In the past, when we defined new status codes I looked at the latest HTTP specification, and then all HTTP-related RFCs (of any status, be they Informational, Experimental, Proposed, Draft, etc.) and drafts likely to become RFCs (such as drafts of the Draft standard HTTP as it was being defined), composing the union of all status codes. 
+I then selected the number one above the highest number yet assigned. 
+- Jim 
+From: w3c-dist-auth-request@w3.org [mailto:w3c-dist-auth-request@w3.org]On 
+Behalf Of Roy T. Fielding Sent: Friday, January 24, 2003 10:51 PM Subject: Re: Issues PUT_AND_INTERMEDIATE_COLLECTIONS and INTEROP_DELETE_A ND_MULTISTATUS 
+(sorry for my previous empty mail) 
+I absolutely agree that 207 is lame -- for a successful response, 200 should have been just fine. 
+However, this doesn't seem to be a real issue, as long as we use 207 only as a status for successfull requests, such as a typical PROPFIND. 
+The suggestion not to specify any new error code is interesting, and we should really discuss how far we can go this path. 
+Proposal: define that servers may send a DAV:multistatus or a DAV:error (RFC3253) body with any 4xx and 5xx response. 
+Use DAV:multistatus for failures that affected resources other than the one identified by the request URI, and DAV:error (optionally) otherwise. 
+Clients would then initiate the DAV:multistatus / DAV:error evalutations independantly of the response code (do we need a new content type? 
+I don't think so). 
+Let's try some examples: 1) A collection delete fails because the server couldn't delete one of it's children (privileges missing): HTTP/1.1 403 Forbidden (note that we wouldn't include a response for the parent collection(s) as per result minimization rules) 2) A collection delete fails because the server couldn't delete one of it's children (I/O error because some other process on the server has the actual file in the filesystem opened): HTTP/1.1 500 Internal Server Error 3) PROPPATCH on a protected property HTTP/1.1 403 Forbidden This really seems to work quite well. 
+So can anybody think of a reason why we would need a new return code? 
+Julian 

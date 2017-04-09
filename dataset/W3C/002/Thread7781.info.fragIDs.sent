@@ -1,0 +1,68 @@
+Just wanted to pass along some Mozilla information I heard last week. 
+Turns out that, at present, no one on the Mozilla team is working on integrating WebDAV functionality, a definite bummer. 
+But, it appears that now would be a very good time for volunteers to join the Mozilla team and implement DAV, since the Mozilla editor is currently being re-built, and it would presumably be fairly easy to add WebDAV support in during this rebuild process. 
+(I've been having trouble accessing it this morning, though). 
+- Jim 
+Hi! 
+Wouldn't it make more sense if WebDAV functionality would be implemented in the underlying OS as then every application automatically would have access to it. 
+But I see that maybe more advanced features like properties etc. one would 
+not be able to handle that way (if it's only some sort of filesystem structure). 
+I once also asked on the Linux Kernel Mailing list and it looks as if 
+also there nobody is working on it.. 
+There have been some interesting ideas floating around though like implementing filesystems in Perl which might make the implementation of a DAV prototype quite easy. 
+(But as I am mostly into Python and my time is quite limited I cannot do that. 
+But maybe one day I will port it to Python and write the DAV FS with this.. But we will see :) 
+At least it would make sense to have a look at it and tell them where some hooks should be added to do it later, etc. Usually they're quite open (as far as I experienced..) regards, Christian 
+Take a look at DAV4J on http://www.alphaworks.ibm.com. 
+It presents a client API for accessing WebDAV resources that would make building clients much easier. 
+ruebe@aachen.heimat.de 
+(Christian Scholz) on 08/25/99 11:04:37 AM 
+Subject: Re: Mozilla editor and DAV Hi! 
+Wouldn't it make more sense if WebDAV functionality would be implemented in the underlying OS as then every application automatically would have access to it. 
+But I see that maybe more advanced features like properties etc. one would 
+not be able to handle that way (if it's only some sort of filesystem structure). 
+I once also asked on the Linux Kernel Mailing list and it looks as if 
+also there nobody is working on it.. 
+There have been some interesting ideas floating around though like implementing filesystems in Perl which might make the implementation of a DAV prototype quite easy. 
+(But as I am mostly into Python and my time is quite limited I cannot do that. 
+But maybe one day I will port it to Python and write the DAV FS with this.. But we will see :) 
+At least it would make sense to have a look at it and tell them where some hooks should be added to do it later, etc. Usually they're quite open (as far as I experienced..) regards, Christian 
+No. Why would you want to bloat the OS with something that most processes don't need? 
+Now, a common library that apps can use easily, that'd be different; but it certainly doesn't belong in the kernel. 
+|John Stracke | My opinions are my own | S/MIME &amp; HTML OK | |francis@ecal.com|============================================| |Chief Scientist | NT's lack of reliability is only surpassed | |eCal Corp. | by its lack of scalability. 
+-- John Kirch | 
+ruebe Wouldn't it make more sense if WebDAV functionality would be ruebe implemented in the underlying OS as then every application ruebe automatically would have access to it. 
+But I see that maybe Oh, you must be talking about emacs now. 
+:-) bill@carpenter.ORG 
+(WJCarpenter) PGP bill@bubblegum.net 
+0x91865119 38 95 1B 69 C9 C6 3D 25 73 46 32 04 69 D6 ED F3 
+IMHO, WebDAV definitely has its place in a filesystem implementation. 
+It'd be convenient, but think about the security problems: given existing HTTP authentication protocols, the filesystem code would have to have the cleartext password of each user. 
+|John Stracke | My opinions are my own | S/MIME &amp; HTML OK | |francis@ecal.com|============================================| |Chief Scientist | NT's lack of reliability is only surpassed | |eCal Corp. | by its lack of scalability. 
+-- John Kirch | 
+As for the secure authentication, that is an issue that has to be dealt with for WebDAV (and HTTP in general) anyway. 
+Yes, but the point is that any acceptably strong authentication system is going to involve credentials that can't be reused. 
+(E.g., if I'm running through a proxy, then the proxy can steal my credentials if I use Basic authentication, but not if I use Digest.) This is more or less OK if only your browser has the credentials; but, if you want to do a filesystem, it's going to need access to all the credentials of all the users who want to use it. 
+(For example, with Samba, if I want a filesystem to be mounted at startup, I have to put the password into the appropriate /etc/rc.d 
+script.) |John Stracke | My opinions are my own | S/MIME &amp; HTML OK | |francis@ecal.com|============================================| |Chief Scientist | NT's lack of reliability is only surpassed | |eCal Corp. | by its lack of scalability. 
+-- John Kirch | 
+Here's one idea at least But I don't think he's been looking at this for quite a while. 
+This approach seems to have occurred to several people. 
+There was a paper in the 1997 Usenix Annual Technical Conference titled: "Extending the Operating System at the User level: the Ufo Global File System" Albert D. Alexandrov, Maximilian Ibel, Klaus E. Schauser, Chris J. Scheiman pages 77-90 "Ufo is a global file system. 
+It allows users to treat remote files exactly as if they were local. 
+Currently, Ufo supports file access through the FTP and HTTP protocols and allows new protocols to be plugged in. 
+Ufo is implemented entirely at the user level using the Catcher. 
+The Catcher is our tool for extending the functionality of standard UNIX operating systems completely at the user level. 
+It works by intercepting selected system calls at the user level, using the existing /proc interface." 
+I contacted them about a year ago, and told them about DAV. 
+They mentioned that the project was no longer active, but that source code was available if someone was interested in picking it up and extending it. 
+Their approach may be Solaris-specific. 
+I did download their binary executable and ran it on a Solaris machine, and it worked pretty well. 
+It was kinda neat being able to do an "ls" of the Internet-Drafts directory (and very useful to be able to use the ls wildcards to only find specific I-Ds). 
+Of course, this approach highlighted for me why you want to have both tool integration and OS support. 
+For example, if using Ufo (i.e., using only an OS integration) I wanted to do a grep of the I-D directory, it would be a really long operation, where every I-D would be locally downloaded, then searched. 
+If, however, grep knew about DASL, it could then turn its request into a DASL query, which would execute much faster. 
+It seems to me the advantage of OS integration is compatibility will all existing file-based tools, at the cost of some operations taking longer than the same operation performed by a tool that was tightly integrated with DAV, and hence could take advantage of DAV features to perform the operation in the most efficient way. 
+So, I see advantages to both approaches, with the tight integration into every tool being the best possible choice. 
+But, since this is going to take a while to occur, OS-level integration gives a good level of compatibility for the interim as tools add DAV support. 
+- Jim 

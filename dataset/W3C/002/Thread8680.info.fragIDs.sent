@@ -1,0 +1,47 @@
+I was just reading through the XPath spec for the umpteenth time when I realized that although the node() function matches any time of node, it can only match any type of node available on the given axis. 
+Furthermore, the descendant and descendant-or-self axes of XPath exclude attribute and namespace nodes (for some completely unfathomable reason). 
+Although the whole idea of having special axes for namespaces and attributes is flawed and unnecessary (rather than simply leaving them as children of the element and letting the fact that they have a *TYPE* of namespace or attribute carry the information), we have to live with the recommendation. 
+Therefore, in places where I have in the past used the subexpression "/descendant-or-self::node()" to mean ALL of the nodes in the parse tree INCLUDING namespace and attribute nodes, it is necessary to substitute the following subexpression: (//. 
+| //@* | //namespace::*) 
+The union operator | combines the results of the three sets. 
+The first subexpression (//.) is the abbreviated syntax for obtaining the root document node and all of its descendants (which unfortunately includes only elements, text nodes, processing instructions and comments). 
+The second subexpression obtains all of the attributes in the entire parse tree, and the third obtains all of the namespace nodes in the entire parse tree. 
+The union of the three sets contains all of the nodes in the parse tree. 
+Do you think there is any possibility that this might get fixed at some point in the future? 
+It seems terribly tedious to have to go through such 
+hoops to simply say "give me a set containing all nodes in the whole parse tree". 
+If not, I suppose we can be content that at least there is *some* way to indicate what we want. 
+John Boyer Software Development Manager PureEdge Solutions Inc. (formerly UWI.Com) Creating Binding E-Commerce jboyer@PureEdge.com 
+I don't think there is any possibility whatever that the meaning of /descendant-or-self::node() will change. 
+You can't fundamentally redesign a spec after it's become a Recommendation. 
+(I don't agree, by the way, that the current design is flawed in this respect, but that's academic at this point.) James 
+Actually, it does not take a fundamental redesign to add this feature. 
+It would simply require a new axis like all-descendants. 
+Furthermore, I expressed an opinion that it seemed overly cumbersome to indicate the entire parse tree *because* the ability to apply certain tests to every node (e.g. give me every node except those having a certain ancestor) is quite useful in a variety of circumstances. 
+You declared that you didn't believe there was a problem. 
+Is there some reason for this belief (i.e. something that would follow the word *because*)? 
+John Boyer Software Development Manager PureEdge Solutions Inc. (formerly UWI.Com) Creating Binding E-Commerce jboyer@PureEdge.com 
+[mailto:w3c-ietf-xmldsig-request@w3.org]On 
+Behalf Of James Clark 
+I don't think there is any possibility whatever that the meaning of /descendant-or-self::node() will change. 
+You can't fundamentally redesign a spec after it's become a Recommendation. 
+(I don't agree, by the way, that the current design is flawed in this respect, but that's academic at this point.) James 
+[Reagle: Steven_DeRose@brown.edu was not a subscribed email.] 
+Hmm; I'm surprised that seems unfathomable: a) Attributes and namespaces are unordered while children are ordered -- so the means of accessing them is going to be quite different, and the order in which they would be candidates in a merged list must be defined arbitrarily. 
+b) Typical operations for one type do not generally want to look at the other (note I do not say *all* operations; just typical ones). 
+c) Attributes and sub-elements in XML can have the same names ( p z="a" z ...), and so having operations that go through both of them would pose some interesting ambiguities and potential user confusion. 
+It is not clearly "flawed", nor is there any consensus that is should be "fixed". 
+It is clearly true in XML that attributes and namespaces are different animals from sub-elements; it would be far odder for us to try to obscure that distinction in XPointer. 
+Yes, the distinction is technically "unnecessary", but so are lots of things that are awfully useful and that intuitively model the way users think about their data: All programming languages, for example (all you really need is 2 machine-language instructions). 
+Minimizing the number of primitives does not equal simplicity. 
+You may want to read my paper from last year's ACM conference on Very Large Data Bases for more on this, or the sections on attributes in my "The SGML FAQ Book". 
+Attributes are not going away, even if foreign to the RDB world. 
+The issue of order as information being one of several fundamental differences. 
+Attributes model things needed in XML; and given their presence this definition of descendant makes considerable sense for typical XML. 
+Yup; that is because this is far less likely to be frequently used. 
+I am willing to believe that your application might require it -- though it would be helpful to know just why; but this is pretty clearly not a common need for XML in general. 
+It would be trivial to add *syntax* to do this (though I agree with James it would be hugely disruptive to change any already-defined axes!) -- but we would need a clear definition of things like relative ordering, intercomparisons, name conflicts, etc; and a clear reason this would be widely used. 
+Can you say a little about why this seems so crucial? 
+It sounds like arguing to pitch alists from LISP because they're just lists anyway (which they are, but the conclusion to pitch them doesn't follow). 
+And I've honestly never heard any similar request before, despite having worked with a huge variety of XML and SGML users for a long time. 
+Steven_DeRose@Brown.edu; http://www.stg.brown.edu/~sjd 

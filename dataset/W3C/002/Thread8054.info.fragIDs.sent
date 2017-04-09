@@ -1,0 +1,54 @@
+Good question, Julian. 
+I was going to respond "so that client side relative URL processing is correct". 
+But of course, a better way to handle that would be for the GET to just return the slash-terminated name (or even better, the resource that it is really redirecting the request to, such as "index.html") in the Content-Location field, since the client is required to use the value in the Content-Location field as the base for relative URL processing. 
+So a 302 redirect is not even required for GET processing (i.e. the server can just automatically forward the request without an extra roundtrip for the 302 redirect). 
+Cheers, Geoff returned collections Like Geoff said, except: 
+As indicated above, the 302 redirect is only required for a GET, and WebDAV clients commonly use PROPFIND and not GET to retrieve the state of a collection. 
+Where does this distinction come from? 
+I really don't want to get into a situation where 1) HEAD and 2) PROPFIND/depth 0 say different things about the same resource. 
+Julian 
+I dug out another testimonial to the interoperability problems of not consistently using trailing slashes. 
+Geoff Alexander said: "We are developing a WebDAV server and have encountered interoperability problem with request on collections in which the resource does not have a trailing slash. 
+Where do things stand on this issue? 
+Our testing indicates that the above does not work in the real world. 
+For example, both IE 5 
+and Netscape 4.7 do not properly process relative references in response to a GET request on a collection without the trailing slash.. 
+I guess one could say that IE and Netscape only support the HTTP protocol and not WebDAV protocol, but then our server would have to determine whether the request was HTTP or WebDAV (which is not a workable solution). 
+Also, we have encountered interoperability problem with other WebDAV clients." 
+lisa 
+Am Dienstag den, 17. September 2002, um 17:49, schrieb Clemm, Geoff: 
+I agree with you that RFC 2616 clearly states this purpose of Content-Location. 
+However, neither IE 5.0, nor IE 6.0, nor Mozilla 1.1 gives my beautiful Content-Location header any justice: it is completely ignored when resolving relative uri references inside the HTML page. 
+So, for all practical purposes, a 302 is required. 
+//Stefan 
+As indicated above, the 302 redirect is only required for a GET, and WebDAV clients commonly use PROPFIND and not GET to retrieve the state of a collection. 
+From: Lisa Dusseault [mailto:lisa@xythos.com] 
+... I need to see some compelling reasons why a collection requires protocol-imposed naming constraints. 
+Another reason was given by Roy in an older mail: "There are no known examples of HTTP servers for which the URI without a slash is the SAME RESOURCE as the URI with a slash. 
+That is because pre-WebDAV HTTP servers just redirected a request on what WebDAV identifies as a collection (with or without the last slash) to some server-defined member of that collection (e.g. index.html). 
+Automatically providing two different URI for the same resource, particularly when they cross hierarchical syntax, instantly doubles the application name space (bad for IR and QA) and creates holes in access control." 
+If that is in fact a problem, then the server won't do it. 
+On the other hand, if the server's implementation does not support trailing separator characters, and the user expects this equivalence because all other protocols that access this server do so, it may be significantly more complex (for both the implementor and a user of the repository) to try to fake trailing separator characters as indicating a separate resource. 
+That is why the mapping of URIs to types of resources needs to be under the server's control, not predefined by the protocol. 
+If the server consistently uses the same URL for each resource, then it's easier for clients and intermediaries to handle (cache, compare, concatenate paths, etc) those resources. 
+With the presence of multiple bindings to the same resource (something that is explicitly allowed by the rfc2616, and explicitly supported by the BIND protocol extension), the client cannot assume that there is only one URI for a given resource. 
+Any client that assumes otherwise has a serious bug that should be fixed. 
+Since when is a collection path without a trailing slash a "bad Request-URI"? 
+RFC-2518 explicitly states in Section 5.2 that "a resource may accept a URI without a trailing '/' to point to a collection." 
+If you are proposing to change this semantics, then I object even more vigorously (but I'll save those objections until I verify that you are proposing to make this change). 
+I don't think it matters too much which one you pick, with trailing slash or without (with trailing slash is slightly more convenient because it's a marker for collections). 
+However, there was strong opinion that the spec should pick one. 
+Allowing such flexibility, as usual, makes life harder for clients. 
+The only client complexity that we have identified is the need for the client to add a '/' before adding a new segment, if there is not yet a slash there (usually in one line of code). 
+Given that file system clients have dealt with this for years with no issues, I see no reason why this is any harder for HTTP/WebDAV clients. 
+If the spec is ambiguous, or the algorithms required are complex, then certainly one can fix the protocol, but if a client just has a bug with a simple fix, you fix the client -- you don't change the protocol to workaround that bug for a few special cases. 
+Note also that there is no requirement in 2518 for a server to redirect a non-GET request (it just needs to return the '/' terminated name in a Location header). 
+Note that I have no problem with requiring that a Location header be returned, since if the server is applying a method to a resource, it will have had to find out what type of resource it is anyway. 
+Yes. And if the server returns the slash-terminated name in a Location header, it should use the SAME name everywhere else in the response. 
+That is an opinion with which I disagree. 
+The only real interoperability problem I saw identified above was the "clients don't redirect properly", and the solution there is to fix the broken clients, not change URL conventions so that the broken clients work better in this one case of redirection. 
+(I consider the addition of a slash when extending a URL to be a trivial coding issue, not an interoperability problem). 
+Also an interoperability problem found was "clients don't append new child names properly onto collection names". 
+That was the "trivial coding issue" I was referring to. 
+A client that appends a new segment to a URL without ensuring there is a preceding '/' just has a bug, and a bug that is trivial to fix. 
+Cheers, Geoff 

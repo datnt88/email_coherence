@@ -1,0 +1,70 @@
+8.11.5 has the Depth value "infinity" written as "Infinity". 
+Should be lower case 
+Sometimes the opaquelocktoken scheme is written in all lower case (8.13.10) 
+and sometimes in mixed case (8.12.5) 
+Also 8.13.10 writes the locktoken "directly", rather than as a Coded-URL, as mandated by 9.11 
+Perhaps it would be useful to move the definition of Coded-URL from 9.5 Destroy Header to someplace more generic, since it is used in many places (e.g. Enforce-Live-Properties, Lock-Token request and response headers etc) 
+Why is Coded-URL not used in the "AdditionalLocks" portion of the Lock-Info 
+request header (unless that's because AdditionalLocks is to be dropped, as 
+I suspect?) 
+Finally, can someone explain to me why we need "Coded-URL"? 
+Why can't we just write property names as property names? 
+We don't seem to need to code 
+the URI in the Destination header, so why do we need to code it when used in e.g. Enforce-Live-Properties, or for a list of locks? 
+To take this from a slightly different angle, when a property name is written as a coded-URL, it looks just the same as if if were an XML open tag. 
+Would it be better to express them as "empty" tags instead? 
+The difference is that foo bar quux is not legal XML, but foo/ bar/ /quux/ is. 
+Another advantage, although unlikely to arise in 
+practise is that XML allows for tags to have arbitrary attibutes, e.g. 
+I could have foo type="3"/ . 
+Here, the "property name" is just foo. 
+so there's a real difference, I think, between expressing this is a coded-URL 
+of the property name as opposed to as a tag. 
+Jim, Thank you for your comments. 
+Some affirmations and responses below. 
+On Tuesday, December 16, 1997 5:30 PM, Jim Davis 
+Agreed. 
+(8.13.10) 
+This should definitely be converted to all lower case for all instances. 
+Good catch. 
+etc) Agreed, especially since the Destroy header is being moved to the versioning document. 
+Lock-Info 
+as 
+As you suspected, AdditionalLocks is being worked on. 
+If it remains, it will use the Coded-URL syntax. 
+code 
+My recollection of the rationale (as originally told by Roy Fielding) is as follows: - We needed a list of URLs, which implies a set of URLs with some form of separator. 
+- Separator characters are ideally not legal URL characters, since this allows URLs to be placed into the protocol stream without an encoding step to URL-encode instances of the separator character - The typical separator character, "," happens to be a legal URL character, hence it would be difficult to detect the end of a URL in a comma-separated list. 
+- While space is also not a valid URL character, its use as a separator is deprecated (I can't remember why -- perhaps due to gateway manipulation of spaces) - The characters " " and " " are not valid URL characters, and hence, when used to wrap a URL, allow the wrapped URL to be included in a comma-separated list. 
+- Since many headers use comma-separated lists, a comma-separated list of URLs would be able to use existing parsers in HTTP applications. 
+Use of another separator would cause applications to develop a new parser for that type of separated field. 
+- While the quote character could be used as a URL wrapping character, we decided to be consistent with RFC 2068 which uses the " " and " " characters to wrap URLs in the Link header in the appendix. 
+Granted, this is a somewhat weak rationale now that this appendix has been removed. 
+I do recall there was a reason why quote characters aren't the ideal choice, but the exact reason escapes me at present (Roy?). 
+For the Destination header, we follow the conventions of RFC 2068, where singleton URLs are not encoded in header fields. 
+The exception to this is the Lock-Token header, where we do use the Coded-URL. 
+This, at first blush, does appear to be arbitrary, and could be changed back to an uncoded URL, unless there is a reasonable case that this field could become a list of URLs in the future (have to think about this one). 
+in 
+coded-URL 
+Given the context of use of Coded-URLs is limited to headers only, I don't see there being a cause for confusion. 
+Where do you see this confusion arising? 
+- Jim 
+[Note to readers: Please read, there are some proposals below] 
+fixed 
+fixed 
+fixed 
+Traditionally the way such definitions are handled is by defining them at their first use. 
+That's why when we use the URI production we only give a reference on its first use. 
+This all having been said, so the hell what? 
+I will add a section on generic BNF productions. 
+Damn your good! 
+You wrote this before I wrote my proposal. 
+See Jim's explanation, he covers all the basis. 
+I do agree about encoding lock-token on responses which are singletons. 
+The only reason it uses a coded-URL is to make it symmetric with the lock-token request header. 
+In fact I will make the lock-token response a #coded-url. 
+There is no reason the server couldn't return multiple identifiers for a single lock, the client need only remember one. 
+I have added the following language to the response lock-token header: If multiple lock-tokens are returned then they MUST all refer to the exact same lock. 
+As the lock tokens all refer to the exact same lock a client need only record one of them. 
+Ditto Jim, I don't think this is an issue. 
+Yaron 

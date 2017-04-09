@@ -1,0 +1,50 @@
+You saw this coming, didn't you? 
+;) The HTTP If-* header family, namely If-Match, If-None-Match, If-Modified-Since, If-Unmodified-Since and If-Range are described in rfc2616 as they apply to GET, HEAD and PUT. 
+But what about the WebDAV methods? 
+I think we need to clarify and put an advisory in an updated rfc2518. 
+Easy things first: If-Range seems only to make sense with GET. 
+So we could exclude it from discussions of other methods. 
+The other four, IMO, should be honoured on DELETE, COPY, MOVE, LOCK and UNLOCK. 
+But what about PROPFIND? 
+For the If-* headers to make sense with PROPFIND, a client would rely on the assumption that DAV:getlastmodified and DAV:getetag change when properties are changed (either by PROPPATCH or as a side-effect on live properties from other methods.) Would the burden on the server (to update etag/lastmodified) justify the benefit? 
+I rather doubt that, but would like to hear the opinion of the excellent audience on this list. 
+//Stefan 
+Whenever the topic has come up in the past, it has always become clear that there will always be some live properties that will change without updating the DAV:getlastmodified or DAV:getetag values, that some implementations will update these values when dead properties (and certain live properties) change, and that other implementations will never update these values for any property change. 
+So there is little useful we can say about the relationship between property values and the If-* headers. 
+Cheers, Geoff You saw this coming, didn't you? 
+;) The HTTP If-* header family, namely If-Match, If-None-Match, If-Modified-Since, If-Unmodified-Since and If-Range are described in rfc2616 as they apply to GET, HEAD and PUT. 
+But what about the WebDAV methods? 
+I think we need to clarify and put an advisory in an updated rfc2518. 
+Easy things first: If-Range seems only to make sense with GET. 
+So we could exclude it from discussions of other methods. 
+The other four, IMO, should be honoured on DELETE, COPY, MOVE, LOCK and UNLOCK. 
+But what about PROPFIND? 
+For the If-* headers to make sense with PROPFIND, a client would rely on the assumption that DAV:getlastmodified and DAV:getetag change when properties are changed (either by PROPPATCH or as a side-effect on live properties from other methods.) Would the burden on the server (to update etag/lastmodified) justify the benefit? 
+I rather doubt that, but would like to hear the opinion of the excellent audience on this list. 
+//Stefan 
+Am Freitag den, 26. April 2002, um 18:41, schrieb Clemm, Geoff: 
+That is the current state of affairs, yes. 
+Hmm. I think it would be useful to say that ETags should only change on content modifications. 
+In my understanding HTTP caches are encouraged by HTTP/1.1 to validate on ETags. 
+WebDAV enabled servers could improve caching if PROPPATCH and friends would not change ETags. 
+So, a recommendation in a future version of 2518 makes sense, don't you think? 
+//Stefan 
+I agree with Stefan. 
+ETags should only apply to the GET/HEAD response. 
+We can invent something else if we want some ETAG-like support that applies to properties. 
+Stefan did mention PUT. 
+I wound't even necessarily mention that since more than just PUT can alter the GET response. 
+Stefan, you've apparently just read the IF-* specifications. 
+Does this sound acceptable in view of what you read? 
+J. 
+I also agree that the Etag should only apply to the content. 
+Unfortunately, there are implementations (such as some by Microsoft) that store the dead properties as hidden parts of the file, and which use the file system to provide the modification dates and etags, and therefore a PROPPATCH will in fact change the modification date and etag. 
+So if we want to avoid confusing clients that want to interoperate with those implementations, we probably can at most say that "PROPPATCH SHOULD NOT modify the etag or modification date". 
+Cheers, Geoff I agree with Stefan. 
+ETags should only apply to the GET/HEAD response. 
+We can invent something else if we want some ETAG-like support that applies to properties. 
+Stefan did mention PUT. 
+I wound't even necessarily mention that since more than just PUT can alter the GET response. 
+Stefan, you've apparently just read the IF-* specifications. 
+Does this sound acceptable in view of what you read? 
+J. 

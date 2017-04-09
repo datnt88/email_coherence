@@ -1,0 +1,55 @@
+From: Geoffrey M. Clemm [mailto:gclemm@tantalum.atria.com] 
+Sent: Wednesday, May 05, 1999 10:02 PM jrd3@alum.mit.edu; ejw@ics.uci.edu; 
+JSlein@crt.xerox.com; 
+tyson@datachannel.com 
+Subject: Re: WebDAV Advanced Collections Minutes 5/4/99 From: "Slein, Judith A" JSlein@crt.xerox.com 
+Chuck: 4.1.2 implies that referential integrity is guaranteed for bindings -- that it is impossible to have a "dangling" binding. 
+But is this really true? 
+Couldn't a cross-server binding, in particular, be broken? 
+I believe it is important that if a server can't guarantee binding semantics, it MUST fail the BIND request. 
+I expect few servers will be able to support cross-server bindings, and therefore clients should expect attempts to create cross-server bindings to fail. 
+If a client wants to allow dangling references, it should use a redirect reference, not a binding. 
+I think the question Chuck was trying to raise was whether the semantics we specify do actually require servers to guarantee the integrity of bindings. 
+Although the overview implies that this is so, I think he is right that the semantics do not require it. 
+The most likely place where broken bindings could occur is cross-server bindings. 
+We don't forbid them. 
+Nor do we forbid cross-server MOVEs; in fact, we proposed to talk explicitly about cross-server MOVEs in an implementation note. 
+For DELETEs, either of a single binding (in the case where it's the last binding the server knows about) or of all bindings, the server is permitted to do garbage collection once the last binding that it knows about is removed. 
+So if there can be any bindings the server doesn't know about, there is the possibility that those bindings could be broken. 
+Similarly for MOVE in a case where the server implements it as COPY / fix up / DELETE. 
+If there are any bindings the server doesn't know about, it will fail to fix those up. 
+There might also be some same-server cases where a server might be unaware of some bindings to a particular resource, but I can't think how that could 
+happen. 
+--Judy Judith A. Slein Xerox Corporation jslein@crt.xerox.com 
+(716)422-5169 800 Phillips Road 105/50C Webster, NY 14580 
+From: "Slein, Judith A" JSlein@crt.xerox.com 
+From: Geoffrey M. Clemm [mailto:gclemm@tantalum.atria.com] 
+I believe it is important that if a server can't guarantee binding semantics, it MUST fail the BIND request. 
+I expect few servers will be able to support cross-server bindings, and therefore clients should expect attempts to create cross-server bindings to fail. 
+If a client wants to allow dangling references, it should use a redirect reference, not a binding. 
+I think the question Chuck was trying to raise was whether the semantics we specify do actually require servers to guarantee the integrity of bindings. 
+Although the overview implies that this is so, I think he is right that the semantics do not require it. 
+The semantics I (vigorously :-) advocate do require it. 
+The most likely place where broken bindings could occur is cross-server bindings. 
+We don't forbid them. 
+Nor do we forbid cross-server MOVEs; in fact, we proposed to talk explicitly about cross-server MOVEs in an implementation note. 
+We don't forbid cross-server bindings because there actually are ways to implement them if the servers are willing to cooperate. 
+We certainly don't forbid cross-server MOVE's, since a MOVE of an object with only a single binding can fairly easily be achieved with a COPY/DELETE, without violating binding semantics. 
+But neither of these statements imply that a server can chose to violate binding semantics, irrespective of whether the binding is cross-server or not. 
+If you want to create these non-bind style relationships, that's what redirect references are for. 
+For DELETEs, either of a single binding (in the case where it's the last binding the server knows about) or of all bindings, the server is permitted to do garbage collection once the last binding that it knows about is removed. 
+So if there can be any bindings the server doesn't know about, there is the possibility that those bindings could be broken. 
+Then either creating such "unknown" bindings MUST be aborted by a server, or the DELETE MUST fail. 
+In particular, a server MUST fail a request to bind to a resource on another server, unless it can guarantee that the other server will respect the semantics of bind for that cross-server binding. 
+Similarly for MOVE in a case where the server implements it as COPY / fix up / DELETE. 
+If there are any bindings the server doesn't know about, it will fail to fix those up. 
+And similarly, either the BIND request MUST fail, or the MOVE request MUST fail in this case. 
+There might also be some same-server cases where a server might be unaware of some bindings to a particular resource, but I can't think how that could happen. 
+It could easily not be aware of some associations (e.g. from symbolic links or shortcuts), but those then are by definition, not "bindings". 
+If an attempt to create a binding fails, a client is always free to create a redirect reference instead. 
+If the server says it has created a binding, but won't guarantee any semantics for it, it is useless (at least for my purposes). 
+Cheers, Geoff 
+I agree. 
+It's not a BINDing if this happens. 
+Semantics must be guaranteed. 
+If they can't, the BIND request should not be accepted, and the client can try to request a redirect (resource?) be created.. 

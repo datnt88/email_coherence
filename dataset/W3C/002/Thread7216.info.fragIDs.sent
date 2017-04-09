@@ -1,0 +1,212 @@
+1Meta Data Handling The proper handling of meta-data has been an issue for this group since its inception. 
+To date the spec has used links to handle meta-data. 
+The power of links is that they allow meta-data to be resources. 
+However it is often the case that useful meta-data does not need to be contained in resources, witness the existence of HTTP headers. 
+It would seem logical to simply continue adding entity headers to HTTP in order to provide for new meta data. 
+The following is a list of reasons why I believe it is not feasible to put non-request/response related meta-data in entity headers. 
+1.Putting arbitrary meta-data into the header will cause namespace confusions and increase the processing load for proxies and other intermediaries who need to sniff headers in order to ensure proper handling of messages. 
+2.It is a waste of bandwidth to return all headers at once. 
+3.Violates the principal that one request should perform one action. 
+If a request sets headers as well as executing some arbitrary 
+method, it is necessary to provide error information for all of the 
+associated actions. 
+4.There is no way to delete a header. 
+5.There is no way to modify just one part of a header. 
+So, for example, if a header consists of "name: blah12, blah13, blah14" there is no way to say that "blah13" should be replaced with "blah15". 
+While links solve all of these problems, they have their own problem, for example, they make all meta data into resources. 
+This is often overkill. 
+Status information such as modification dates, ownership information, etc. can all be usefully recorded in small pieces of data rather than requiring the overhead of a resource. 
+In order to keep the meta-data model "light", I further propose that meta-data take the form of a header. 
+In addition I recommend that meta-data behave like headers in that multiple pieces of meta-data with the same header name must be unambiguously combinable using commas. 
+In order to handle the assignment, modification, discovery, and removal of meta-data I propose adding three new methods - METAPOST, METAGET, and METADELETE. 
+These methods, defined below, accept meta-data that is 
+structured like HTTP headers for assignment to a resource through METAPOST. 
+Allow for the discovery of meta-data through METAGET and finally allow for the removal of meta-data through METADELETE. 
+METAPOST is meant to be a more generic form of LINK, METADELETE a more generic form of UNLINK, and METAGET is the equivalent of GETLINKVAL for this type of meta-data. 
+What this proposal will not address is the question of where meta-data is stored. 
+This issue is intentionally left open in order to allow implementers maximum flexibility and power. 
+For example, let us say a server has the ability to accept arbitrary meta-data. 
+A user then comes along and puts a MS Word document on the server. 
+The server understands the Word document's format and is able to retrieve from it author, creation date, and revision information. 
+The server is now free to make that information available to users who know nothing about Word or its format through the META* methods. 
+For ease of conversation I would like to define the following terms as used below: Attribute - A piece of meta-data consisting of an attribute name and entries. 
+Entry - One of a comma delimited list of values assigned to an attribute name. 
+2METAPOST Method 2.1Attribute-Specify Header AttributeSpecify = "Attribute-Specify" ":" #("name" "=" AttributeName "," #("value" "=" AttributeValue)) CRLF AttributeName = field-name AttributeValue = [field-value without commas or quoted string] 2.2Server-Supported Header ServerSupported = "Server-Supported" ":" 1#field-name CRLF 2.3Atomic Header AtomicHeader = "Atomic" ":" CRLF 2.4Explanation The METAPOST method is used to add an entry to an attribute. 
+If the attribute does not exist then it will be created. 
+If an Attribute-Specify header does not contain any entries and the attribute does not exist, and the attribute's definition allows for entryless attributes or if the server does not enforce the attribute's semantics, then the attribute is created with no entries. 
+As specified for HTTP 1.1 headers, the attribute name is case insensitive. 
+The server-supported header specifies that the request should only go through if the server supports the syntax and semantics of the specified attributes, which may or may not be listed in an accompanying Attribute-Specify. 
+The Atomic header specifies the request should only go through if all the entries can be assigned as requested. 
+If not, the entire request should fail. 
+NOTE: The Server-Supported header seems to be a bit wasteful. 
+It might be worth defining attribute names to have the form: ["req"] "\" field-name. 
+The idea being that all attribute names would be prefixed by a "\". 
+If a "req" is listed before the "\" then users of the attribute expect the server to provide some sort of behavior above and beyond what is provided by the META* methods. 
+If the server does not recognize the attribute then it would refuse to METAPOST it. 
+2.5Example METAPOST http:\\foo HTTP/1.1 
+Attribute-Specify: Name = 29348x, Value = "Jim Whitehead", Value = "Roy 
+Fielding", Name = Xyz, Value = Ooooga! 
+Atomic: Server-Supported: 29348x, LKHXZ This message requests that the entries "Jim Whitehead" and "Roy Fielding" be added to the 29348x attribute and that the entry Ooooga! 
+Be added to the Xyz attribute. 
+However, the request should only go through if the server supports the 29348x and LKHXZ attributes and only if all the entries can be successfully assigned. 
+2.6Response Codes A server may reject entries because they are not consistent with the definition of the attribute. 
+In that case a 406 Not Acceptable should be returned. 
+If the atomic header is included then all indicated assignments must succeed or all must be rejected with a 412 Precondition Failed. 
+If the atomic header is not included then a 200 may be returned if at least one entry was successfully assigned. 
+A web collection returned in the response will indicate which entries where successfully assigned. 
+I recommend that the atomic header not be required by a server in order to be considered DAV compliant. 
+Implementing atomic is extremely difficult. 
+3METADELETE Method The METADELETE method is used to remove one or more entries from an attribute. 
+If an attribute-specify header is used without any entries then this is interpreted as meaning the header should be deleted. 
+Note that this is a different interpretation for the same structure as used in METAPOST. 
+3.1Example METADELETE http://foo HTTP/1.1 Attribute-Specify: Name = blah, Value = x98 The previous will delete the x98 value from the blah attribute. 
+METADELETE http://foo HTTP/1.1 Attribute-specify: blah Server-Supported: blah Will remove the blah attribute, but only if the server enforces the blah attribute syntax and semantics. 
+3.2Response Codes Same as METAPOST. 
+4METAGET Method The METAGET method is used to retrieve all the entries associated with an attribute. 
+If entries are specified then the response will only include entries that match those listed. 
+This mechanism is useful for quickly checking if an entry has already been set. 
+The atomic header may not be used with the METAGET method. 
+4.1Example METAGET http:\\foo HTTP/1.1 Attribute-Specify: name = ydfh, name = blah, value = foobar Server-Maintained: ydfh, 29348x The server is being asked to return all entries associated with the ydfh attribute and to return the foobar entry of blah if it exists. 
+However, these values should only be returned if the server supports the ydfh and 29348x attributes. 
+4.2Response Codes Same as METAPOST with the exception of atomic related errors. 
+5Link Attribute If META* is adopted then links become attributes. 
+I propose they be defined as follows: Name = "Link" Entry = #(Source Dest Type *(";" link-extension)) Source = Specifier SP 
+Dest = "Dest" "=" Specifier SP Specifier = " URI " | "SET" Type = "Type" "=" Token SP 
+Links would be created, retrieved, and deleted using the META* commands. 
+All previous descriptions of link behavior still hold. 
+The current spec thus prevents behavior such as setting both URIs to SET. However I also propose removing the rule that either the source or destination must be equal to the Request-URI. 
+This will enable annotation facilities. 
+I have left the "Source" label off the initial URI in order to maintain the same format as the Link header given in the HTTP 1.1 spec. 
+Yaron 
+Yaron, 
+Several approaches to representing and transporting metadata have recently been discussed (elsehwere). 
+Syntactically these range from extensions of PICS (s-expressions) to the use of XML. 
+What are the advantages of the syntax you are proposing? 
+If I understand correctly your are proposing a flat namespace of attributes without any object-model behind it. 
+I do not think this is a good idea. 
+Choosing attribute names arbitrarily will eventually lead to name collisions. 
+It is also conceivable that people will define "schemata" for metadata for various purposes (e.g. the Dublin Core). 
+This would also allow the definition of default values. 
+The schemata could be referred to via URLs (at least the URLs could name the schemata like in PICS services are named). 
+BTW, PICS labels can already be requested and transported via HTTP. 
+- Ora Ora Lassila, lassila@w3.org , http://www.w3.org/pub/WWW/People/Lassila Visiting Scientist (from Nokia Research Center) World Wide Web Consortium, MIT/LCS 
+Yaron, I realize the need for a light HTTP oriented metadata method. 
+I would make the suggestion that instead of using the method names of META* that some other name is used since at least in my world I would assume that a method with a name that general should be able to handle metadata in a general way. 
+I.e. when we begin to to REAL metadata standards stuff in HTTP we're probably going to want to use those methods for more generalized stuff. 
+Its similar to some current proposals for a new HTML tag to actually fix the META tag. 
+I would also urge you to look at the application/directory MIME type as a way of doing "light" metadata but I think you have more of a desire to actually do it within HTTP 
+itself, right? 
+-MM 
+Yaron gave some very good reasons why headers were not a good way to handle metadata. 
+He mentioned namespace collisions, processing load, wasted bandwidth, etc. 
+Despite understanding these problems, he goes ahead and recommends that headers be used for dealing with metadata in order to keep the model "light". 
+He cites the example of small pieces of information such as modification dates to justify this decision. 
+I agree with Yaron to a limited extent. 
+Handling *all* metadata as resources is inappropriate. 
+However, it is my considered technical opinion that handling *all* metadata as headers is just as inappropriate as handling *all* metadata as separate resources. 
+Some descriptions, such as Content-length, Last-modified, Content-type, ... are best carried as headers. 
+Other descriptions, such as detailed revision histories, provenance tracking, and bibliographic descriptions, are best carried as separate resources. 
+WEB-DAV needs a metadata architecture that accommodates both. 
+Furthermore, 
+it is not that difficult. 
+When we send resources (original or "metadata") between clients and servers we can use MIME headers for the "light" metadata about particular resources, while still allowing separate metadata packages to carry descriptions that are too heavyweight for headers. 
+We can send those resources in multipart message bodies, and can use message/external-body if we want the client to know of the existence of some big package but don't want to clog the lines by actually sending it. 
+If we can agree on an architecture that isn't all one way or the other, then we can advance to more meaningful arguments, like just what new headers (if any) we need to define, what packages (if any) we initially want to support, how (or whether) their elements can be used in both contexts, and how we can do queries on them. 
+It seems to me that to make progress, this group needs to agree on a few simple points and stop arguing over them. 
+Can we start by agreeing on two things: 
+1) Neither headers or separate resources meet all the requirements on metadata in WEB-DAV, so we will need a combined solution. 
+2) All communications between clients and servers will take the form of MIME messages, and frequently those messages will be multipart/related? 
+The last seems uncontroversial to me, but then I have been accused of being an optimist :-). 
+I hope that the former is also uncontroversial given the last few messages on this list. 
+Assuming we agree that some metadata is handled by headers and some by separate resources, we can now discuss ways of editing it. 
+For metadata held as resources, the GET, DELETE, and PUT (or POST) methods should suffice. 
+For the smaller info carried as headers we may need methods such as you describe. 
+I think the essential functionality of METAGET is already handled by the HEAD method. 
+Something like METAPOST and METADELETE seems necessary. 
+I'll skip detailed comments on the methods at this time, but there is one I just can't let go without remarks: 
+I think that redefining existing parts of the HTTP spec, such as LINKs, is beyond the bounds of this WG. 
+Furthermore, annotations can be handled under the existing constraints on LINKs. 
+Later, Ron Daniel Jr. voice:+1 505 665 0597 Los Alamos National Lab http://www.acl.lanl.gov/~rdaniel 
+Los Alamos, NM, USA, 87545 
+Could you elaborate a bit on how you imagine using application/directory as a way of doing "light" metadata? 
+Larry 
+Sure. 
+For those that aren't aware of the application/directory MIME type it is a product of the directory services ASID group within the IETF. 
+The format is basically attribute/value with per attribute qualifiers seperated by semi-colons. 
+Here's an example: Name;encoding=text/plain: Michael Mealling Image;value=url: http://www.foo.com/bla.gif Updated;value=date: 31/12/97 etc... 
+The MIME headers are fairly generic except for the 'profile' attribute of the content-type. 
+This is used to specify the profile or schema that the attributes and value in the body adhere to. 
+WEBDAV would probably define a handfull of these to handle most operations. 
+A profile gets to define a) the possible attributes, b) the possible values and c) the possible attribute qualifiers. 
+Its still a simply attribute value encoding that is simply to parse but it is hooks to allow for handling things like character sets, encodings, schema specification, etc. -MM 
+I agree. 
+After reviewing many Web metadata proposals, including PICS, PICS-NG, Dublin Core, Warwick Framework, W3C position papers on a resources and relationships metadata model, W3C position papers on adding metadata to HTML, Murray Malone's REL/REV draft, and Web Collections, in addition to skimming the proceedings of the first IEEE Metadata conference (yes, Ora, we've done our homework :-), my view is there are two main varieties of metadata: "Small" chunk metadata: These include metadata items such as: - HTTP headers - short attribute-value pairs - typed links (e.g. HTTP links) While developing a stringent definition of "small" is most likely impossible, since the definition is arbitrary, and seems to be based on unstated assumptions about retrieval performance (e.g., retrieval of small chunk metadata should be "trivially" or "unnoticeably" fast), much metadata has a small chunk flavor to it. 
+Characteristics of small chunk metadata include: fast retrieval speeds, no need for content negotiation, no requirements on ordering, no need for "trust" information (e.g., digital signature, author information, hash of contents, date of creation), and relatively simple value information. 
+"Large" chunk metadata: These include metadata items such as instances of: - PICS, PICS-NG collections - Warwick collections - MARC records - Dublin Core records - discipline-specific metadata records - Web pages Like the smallness of small chunk metadata, the largeness of large chunk metadata is similarly difficult to define (a strong indicator that small and large are poor terms). 
+Characteristics of large chunk metadata include: requirements on the ordering of fields, encoded trust information, pointers to metadata schema descriptions, complex data models, and multiple levels of containment. 
+Large chunk metadata often contains several instances of small chunk metadata. 
+Typically large chunk metadata is larger than small chunk metadata, although it is easy to develop classes of both for which this assertion does not hold. 
+As a result, there is an assumption that large chunk metadata takes longer to transmit than small chunk metadata. 
+Mapping of metadata to Web data model The mapping of metadata to the various data containers (resources, headers) in the Web data model varies depending on whether the metadata is stored on, in, or as a resource. 
+1. 
+On resource. 
+In this case, the metadata is stored with the resource, but is not part of the resource itself. 
+Examples: HTTP links, HTTP headers, PICS labels (using the PICS-Label header). 
+This is typically used for small chunk metadata. 
+On resource metadata is typically retrievable in 1 request (a HEAD or GET). 2. Within resource. 
+The metadata is embedded within the resource, and is a defined part of the description of the document type. 
+Examples: HTML REL/REV, HTML META tag, various HTML metadata proposals, MS Word .DOC documents, Web Collections (?). 
+Within resource metadata is retrievable in 1 request (GET). 
+Within resource metadata has the advantage of being independent of access protocol, and portable (when the resource moves, it does too). 
+Within resource metadata tends to be small chunk. 
+3. Is (whole) resource. 
+The metadata is itself an entire resource. 
+When the metadata is an entire resource, there usually exists a relationship (link) between the described and metadata (describing) resources. 
+This bears a resemblance to entity-relationship or semantic data modeling database models. 
+Examples: Web Collections, Warwick containers, Web pages. 
+Typically large-chunk metadata ends up as whole resource metadata. 
+Typically retrieval of whole resource metadata requires 2 requests (one to get the links, one to get the metadata). 
+Relation to WEBDAV. 
+Using this model of the mapping of metadata to the Web data model, the various WEBDAV proposals can be characterized. 
+In draft-jensen-webdav-ext-00 (the proposal discussed at the Irvine meeting), all metadata was whole resource metadata, with the exception of the links used to hold the relationship between the described resource and the metadata resource. 
+In Yaron's recent proposal, the pendulum swings to the other end, emphasizing a model where metadata is predominantly on resource metadata. 
+While some might argue that his proposal makes all metadata on resource metadata, this is undoubtedly too strict an interpretation. 
+Yaron will undoubtedly argue that whole resource metadata is still supported since links can still be defined and followed. 
+However, now that we have investigated the predominantly whole resource, and predominantly on resource solutions of mapping metadata to the Web data model, I do feel we can agree with: 
+Roadmap to the future: 
+Since there are two main containers for data in the HTTP data model, headers and resources, and since we have seen arguments in favor of storing metadata in both of these places, it makes sense to develop a mechanisms in WEBDAV for storing metadata in both places. 
+Alternatively, we might consider extending the places we can store metadata, and hence extend the HTTP data model. 
+Sticking with just the HTTP data model, this would take the form of: In headers: - a means of adding a piece of metadata - a means of modifying a piece of metadata - a means of deleting a piece of metadata - a means of retrieving a piece of metadata - a means of querying for metadata These capabilities largely map to Yaron's recent proposal. 
+As resources: - a means of creating a link to another resource - a means of creating, modifying, deleting, and retrieving a whole resource These capabilities map to the existing HTTP/1.1 specification. 
+This also agrees with Ron Daniel: 
+Links. 
+I disagree in the case of LINKs, since they are underspecified in the current HTTP specification, are defined in an Appendix, and do not meet the needs of annotation services (since the source is implicitly the resource on which the link is defined). 
+I think we should accept as a goal to be as compatibile as possible with HTTP/1.1 links, but meeting our requirements should come first. 
+However, we do have an open issue. 
+Are links simply metadata, or are they a special class of metadata? 
+If there is a generic way to define and delete HTTP headers (e.g. METAPOST and METADELETE), and a link is simply an HTTP header called "Link", then do there need to be LINK and UNLINK methods at all? 
+If links have semantics which differentiate them from other headers (e.g., LINKSEARCH) then it makes sense to have LINK and UNLINK headers, and even separate retrieval functions (such as in draft-jensen-webdav-ext-00 ). 
+If they are simply headers, then LINK and UNLINK have no place (and HTTP should be renamed the Object-Oriented Transfer Protocol :-) - Jim 
+Yaron and Jim: Metadata as headers would solve a lot of the metadata problems that have been worrying me about the earlier proposal based on links. 
+If metadata are headers, problems of managing metadata go away: if you move a resource, its metadata will move with it. 
+If you copy a resource, its metadata will get copied with it. 
+If you delete a resource, its metadata will get deleted. 
+There are no longer issues about referential integrity -- since two resources can't share the same metadata, you don't have to worry about unintentionally deleting metadata that is still in use. 
+It used to be the case that you couldn't even tell by looking at a resource whether it was metadata or not -- using headers, that problem is gone. 
+Of course by using resources linked to the objects they describe, you had some great benefits, too: the possibility of sharing metadata, the possibility of metadata itself having metadata, the possibility for a resource to have multiple sets of metadata maybe authored by different people maybe residing on different servers, etc. 
+If we move toward a model that allows metadata to be stored either in headers or in resources linked to the object they describe, we need to be clear about the costs. 
+For any metadata that is implemented as resources, the original problems of management still exist. 
+Jim: Great analysis of the problem space! 
+A nit that I think is a source of great confusion: Links are not really metadata. 
+The link together with its destination resource is metadata. 
+So although the link is *on* a resource, insofar as we implement metadata using links, the metadata is *partly* on the resource, and partly a separate resource. 
+Just managing the links is not managing metadata. 
+Managing the destination resource is part of the problem. 
+Where a resource has links to many metadata resources, the problem becomes onerous. 
+The fact that the destination resource does not have a link back to the resource (or resources) it describes makes preserving referential integrity extremely difficult. 
+Searching links is not searching metadata. 
+Searching links just tells you what metadata is available. 
+Searching metadata requires you to follow the links to the destination resources and search those resources for a matching value. 
+--Judy 
+Name:Judith A. Slein E-Mail:slein@wrc.xerox.com 
+MailStop:128-29E 

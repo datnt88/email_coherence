@@ -1,0 +1,334 @@
+gmc/ I personally believe that the best answer is to fix the LOCK semantics so it *really* is just on the resource (and not on the name). 
+Then things are simpler and consistent, even in the case of multiple URL mappings to a resource. 
+Rather than "protecting" a URL to resource mapping, I'd propose that a locked resource be allowed to MOVE (this is just a change to the state of the parent collection, not to the state of the resource being moved), but that an attempt to access the MOVE'd resource with that lock just returns a 302 indicating where it has MOVE'd to. 
+But some moves will result in a change in state of the resource being moved, and this is server dependent. 
+The new parent collection may be in a collection that has different OPTIONS then the old parent, e.g., in a different repository manager. 
+It may also have different live properties. 
+This isn't just a cross-server move issue. 
+The semantics of MOVE can't be defined as rebind (rename) and copy/delete at the same time. 
+MOVE can however be implemented that way. 
+As a result, one doesn't know if the resource is new or not after a MOVE, and therefore locks can't be guaranteed to be retained. 
+Therefore, the semantics must pick the conservative case and not move 
+locks. 
+Take for example moves in typical file systems. 
+Sometimes the 
+file actually moves (gets a new INODE in UNIX) and sometimes it doesn't Users don't see this unless they are manipulating INODES directly which is playing with the implementation, not the protocol. 
+Moving locks has lots of other problems too as there is a possible conflict with the potentially inherited lock from the new destination parent collection. 
+Lock tokens are server dependent, and may be repository dependent too. 
+Seems like loosing the lock is the lesser of the evils. 
+gmc/ So there are really multiple threads here: - Should locking be on a resource or also/instead on a URL-to-resource mapping? 
+(we know what it is now, but what *should* it be) * I vote "on a resource". 
+I agree. 
+The resource is the thing being manipulated, not the URL. 
+The URL is only a way to get to the resource. 
+There may be other ways, and no way. 
+- Does a DELETE delete all bindings to a resource, or just the one specified in the request-URL. 
+* I vote "just the one named by the request-URL". 
+I have to disagree with this one as it is not consistent with LOCK. 
+If LOCK, GET, PUT, etc. apply to the resource, then so should DELETE. 
+If bindings are created with a BIND method, then they should be removed with an UNBIND method. 
+Otherwise, URL to resource mappings (i.e., bindings) must be exposed as separate resources (direct and redirect referencs) so they can be managed discretely. 
+DELETE should stick to manipulating resources as defined in HTTP/1.1. 
+- Should a DELETE delete a LOCK? 
+* I vote, "no". 
+A DELETE modifies the state of the collection containing the binding, not that of the resource. 
+In particular, all other mappings to that resource will continue to exist and display the LOCK'ed semantics. 
+If you want to prevent a DELETE, you put the LOCK on the collection whose state is being modified. 
+I wish I could agree with this one, but I can't. 
+DELETE deletes a resource and as a side effect it modifies the state of its parent collection(s). 
+It is unfortunate that PUT and DELETE are resource behaviors instead of having addMember, removeMember be operations on the parent collection. 
+It is hard to recover from the resulting mixed semantics, but WebDAV does a reasonable job already. 
+I think we should leave this alone. 
+From: jamsden@us.ibm.com gmc/ I personally believe that the best answer is to fix the LOCK semantics so it *really* is just on the resource (and not on the name). 
+Then things are simpler and consistent, even in the case of multiple URL mappings to a resource. 
+Rather than "protecting" a URL to resource mapping, I'd propose that a locked resource be allowed to MOVE (this is just a change to the state of the parent collection, not to the state of the resource being moved), but that an attempt to access the MOVE'd resource with that lock just returns a 302 indicating where it has MOVE'd to. 
+pair always access the locked resource. 
+But some moves will result in a change in state of the resource being moved, and this is server dependent. 
+The new parent collection may be in a collection that has different OPTIONS then the old parent, e.g., 
+in a different repository manager. 
+It may also have different live properties. 
+This isn't just a cross-server move issue. 
+gmc/ A MOVE (as being proposed by the advanced collection protocol) is not allowed to change the state of the resource - it just changes the state of the source and destination collections that contain the resource. 
+If a server cannot implement the MOVE without changing the state of the resource, the MOVE MUST fail, and the client may resort to a COPY/DELETE if it does not need MOVE (i.e. state preserving) semantics. 
+The semantics of MOVE can't be defined as rebind (rename) and copy/delete at the same time. 
+gmc/ I completely agree. 
+I should be defined as a rebind (rename). 
+I hope we're not bringing back the "logically equivalent to a COPY/fixup/DELETE" dead horse? 
+It has been thoroughly flogged (:-). 
+MOVE can however be implemented that way. 
+gmc/ Not if it is going to support advanced collections (and not if it is going to support most people's intuition of how a MOVE differs from a COPY). 
+A MOVE produces no new resources, but changes one of the bindings to an existing resource. 
+A COPY/DELETE produces a new resource with just one binding, and leaves an existing resource with one less binding. 
+As a result, one doesn't know if the resource is new or not after a MOVE, and therefore locks can't be guaranteed to be retained. 
+gmc/ I believe that if we leave the semantics of MOVE as vague as they are in 2518 (i.e. some arbitrary "fixup" step is involved), we will continue to see the confusion about what a MOVE does/should mean that we see today. 
+The proposed semantics are simple: if you can't guarantee that locks are retained, the MOVE MUST fail. 
+If the client wants the locks to be removed, it can (and should) explicitly remove them. 
+gmc/ A key use case here is with multiple bindings. 
+You issue a LOCK on /x/y.html. 
+It turns out that is bound to the same resource as /a/b.html. 
+Now you move /a/b.html 
+to /a/oldb.html. 
+So you now lose your lock on /x/y.html? 
+I'm not a happy client if that's the case. 
+Therefore, the semantics must pick the conservative case and not move 
+locks. 
+Take for example moves in typical file systems. 
+Sometimes the 
+file actually moves (gets a new INODE in UNIX) and sometimes it doesn't Users don't see this unless they are manipulating INODES directly which is playing with the implementation, not the protocol. 
+gmc/ As a general comment, there is no reason for us to exactly mimic Unix file behavior (although I agree that there is lots of wisdom embedded in the Unix file system that we should learn from). 
+As a particular comment, as you point out, the INODE is part of the file system implementation that is rarely exposed/used by a client. 
+The fact that the inode changes is largely not a visible state change from a clients perspective, and that is the perspective that matters. 
+Moving locks has lots of other problems too as there is a possible conflict with the potentially inherited lock from the new destination parent collection. 
+gmc/ This is not a problem (although I am against inherited locks for other reasons). 
+If there is a conflict, the server simply MUST fail the operation that would cause the conflict. 
+Better that than removing locks as a side-effect of the MOVE operation. 
+Lock tokens are server dependent, and may be repository dependent too. 
+Seems like loosing the lock is the lesser of the evils. 
+gmc/ What evil are we avoiding? 
+If the MOVE fails (because of inability to keep the lock on the resource), the client is notified, and is then free to explicitly removes the locks and then requests the MOVE again. 
+gmc/ So there are really multiple threads here: - Should locking be on a resource or also/instead on a URL-to-resource mapping? 
+(we know what it is now, but what *should* it be) * I vote "on a resource". 
+I agree. 
+The resource is the thing being manipulated, not the URL. 
+The URL is only a way to get to the resource. 
+There may be other ways, and no way. 
+gmc/ Whew ... at least we agree on that! 
+(:-). 
+- Does a DELETE delete all bindings to a resource, or just the one specified in the request-URL. 
+* I vote "just the one named by the request-URL". 
+I have to disagree with this one as it is not consistent with LOCK. 
+gmc/ I disagree (see below). 
+But even if this were true, I'd suggest that we fix the LOCK semantics rather than making DELETE unusable against versioning servers. 
+If LOCK, GET, PUT, etc. apply to the resource, then so should DELETE. 
+gmc/ Why exactly? 
+I believe that what matters is getting the semantics right so that clients and servers can interoperate. 
+I believe it is important to have a definition of DELETE that works in the presence of versioning, and the "delete-all-bindings" semantics does not. 
+If bindings are created with a BIND method, then they should be removed with an UNBIND method. 
+Otherwise, URL to resource mappings (i.e., bindings) must be exposed as separate resources (direct and redirect referencs) so they can be managed discretely. 
+DELETE should stick to manipulating resources as defined in HTTP/1.1. 
+Then a versioning server will have to refuse every DELETE operation issued by a non-versioning aware server. 
+Roy Fielding has verified that the single binding definition of DELETE matches his intentions when the HTTP-1.1 spec was defined. 
+So what is the benefit we are reaping that matches the cost of non-interoperability between versioning servers and non-versioning aware clients? 
+- Should a DELETE delete a LOCK? 
+* I vote, "no". 
+A DELETE modifies the state of the collection containing the binding, not that of the resource. 
+In particular, all other mappings to that resource will continue to exist and display the LOCK'ed semantics. 
+If you want to prevent a DELETE, you put the LOCK on the collection whose state is being modified. 
+I wish I could agree with this one, but I can't. 
+DELETE deletes a resource and as a side effect it modifies the state of its parent collection(s). 
+It is unfortunate that PUT and DELETE are resource behaviors instead of having addMember, removeMember be operations on the parent collection. 
+It is hard to recover from the resulting mixed semantics, but WebDAV does a reasonable job already. 
+I think we should leave this alone. 
+gmc/ This is too broken to leave alone, and too easy to fix to not do so. 
+Define DELETE and MOVE as binding operations, and you get full compatibility with existing HTTP behavior, simple semantics, and interoperability between versioning/binding aware and versioning/binding unaware clients and servers. 
+Cheers, Geoff 
+I agree with everything Geoff says below. 
+The problems we're having result from mixing the semantics of: 1. a resource and its contents/properties 2. URLs we use to access a resource. 
+Note that a resource may have some 
+server-dependent objectId that distinguishes it from all other resources managed by that server, but this is not a URL and is not exposed to HTTP clients. 
+This is the ID the server maps URL bindings to. 
+3. membership in a collection Here's a summary of what I think we agreed to: 1. all URL references to a resource are bindings, including the PUT or MKCOL used to create the resource in the first place. 
+2. DELETE is effectively an UNBIND. 
+A server is free to garbage collect and actually destroy the resource if there are no remaining bindings, but this is not defined by the protocol. 
+3. There is no DESTROY method that deletes the resource and all its bindings. 
+4. LOCK locks the resource, not the bindings. 
+If the namespace needs to be controlled, then the user should lock the applicable parent collections. 
+5. MOVE is really REBIND (or BIND followed by DELETE). 
+So the resource in the repository is guaranteed to be the same resource and locks can be retained. 
+6. 
+There is no MOVE operation that is effectively COPY followed by DELETE or GET/PROPFIND followed by PUT/PROPPATCH and DELETE. 
+If a MOVE operation fails because the binding to the destination cannot be created, then the user is free 
+to do a COPY followed by a DELETE if that meets their needs. 
+Client applications 
+are free to hide these operations inside a move menu item if they desire. 
+"Geoffrey M. Clemm" gclemm@tantalum.atria.com on 09/24/99 10:58:31 AM Subject: Re: DELETE Semantics 
+From: jamsden@us.ibm.com gmc/ I personally believe that the best answer is to fix the LOCK semantics so it *really* is just on the resource (and not on the name). 
+Then things are simpler and consistent, even in the case of multiple URL mappings to a resource. 
+Rather than "protecting" a URL to resource mapping, I'd propose that a locked resource be allowed to MOVE (this is just a change to the state of the parent collection, not to the state of the resource being moved), but that an attempt to access the MOVE'd resource with that lock just returns a 302 indicating where it has MOVE'd to. 
+pair always access the locked resource. 
+But some moves will result in a change in state of the resource being moved, and this is server dependent. 
+The new parent collection may be in a collection that has different OPTIONS then the old parent, e.g., 
+in a different repository manager. 
+It may also have different live properties. 
+This isn't just a cross-server move issue. 
+gmc/ A MOVE (as being proposed by the advanced collection protocol) is not allowed to change the state of the resource - it just changes the state of the source and destination collections that contain the resource. 
+If a server cannot implement the MOVE without changing the state of the resource, the MOVE MUST fail, and the client may resort to a COPY/DELETE if it does not need MOVE (i.e. state preserving) semantics. 
+The semantics of MOVE can't be defined as rebind (rename) and copy/delete at the same time. 
+gmc/ I completely agree. 
+I should be defined as a rebind (rename). 
+I hope we're not bringing back the "logically equivalent to a COPY/fixup/DELETE" dead horse? 
+It has been thoroughly flogged (:-). 
+MOVE can however be implemented that way. 
+gmc/ Not if it is going to support advanced collections (and not if it is going to support most people's intuition of how a MOVE differs from a COPY). 
+A MOVE produces no new resources, but changes one of the bindings to an existing resource. 
+A COPY/DELETE produces a new resource with just one binding, and leaves an existing resource with one less binding. 
+As a result, one doesn't know if the resource is new or not after a MOVE, and therefore locks can't be guaranteed to be retained. 
+gmc/ I believe that if we leave the semantics of MOVE as vague as they are in 2518 (i.e. some arbitrary "fixup" step is involved), we will continue to see the confusion about what a MOVE does/should mean that we see today. 
+The proposed semantics are simple: if you can't guarantee that locks are retained, the MOVE MUST fail. 
+If the client wants the locks to be removed, it can (and should) explicitly remove them. 
+gmc/ A key use case here is with multiple bindings. 
+You issue a LOCK on /x/y.html. 
+It turns out that is bound to the same resource as /a/b.html. 
+Now you move /a/b.html 
+to /a/oldb.html. 
+So you now lose your lock on /x/y.html? 
+I'm not a happy client if that's the case. 
+Therefore, the semantics must pick the conservative case and not move 
+locks. 
+Take for example moves in typical file systems. 
+Sometimes the 
+file actually moves (gets a new INODE in UNIX) and sometimes it doesn't Users don't see this unless they are manipulating INODES directly which is playing with the implementation, not the protocol. 
+gmc/ As a general comment, there is no reason for us to exactly mimic Unix file behavior (although I agree that there is lots of wisdom embedded in the Unix file system that we should learn from). 
+As a particular comment, as you point out, the INODE is part of the file system implementation that is rarely exposed/used by a client. 
+The fact that the inode changes is largely not a visible state change from a clients perspective, and that is the perspective that matters. 
+Moving locks has lots of other problems too as there is a possible conflict with the potentially inherited lock from the new destination parent collection. 
+gmc/ This is not a problem (although I am against inherited locks for other reasons). 
+If there is a conflict, the server simply MUST fail the operation that would cause the conflict. 
+Better that than removing locks as a side-effect of the MOVE operation. 
+Lock tokens are server dependent, and may be repository dependent too. 
+Seems like loosing the lock is the lesser of the evils. 
+gmc/ What evil are we avoiding? 
+If the MOVE fails (because of inability to keep the lock on the resource), the client is notified, and is then free to explicitly removes the locks and then requests the MOVE again. 
+gmc/ So there are really multiple threads here: - Should locking be on a resource or also/instead on a URL-to-resource mapping? 
+(we know what it is now, but what *should* it be) * I vote "on a resource". 
+I agree. 
+The resource is the thing being manipulated, not the URL. 
+The URL is only a way to get to the resource. 
+There may be other ways, and no way. 
+gmc/ Whew ... at least we agree on that! 
+(:-). 
+- Does a DELETE delete all bindings to a resource, or just the one specified in the request-URL. 
+* I vote "just the one named by the request-URL". 
+I have to disagree with this one as it is not consistent with LOCK. 
+gmc/ I disagree (see below). 
+But even if this were true, I'd suggest that we fix the LOCK semantics rather than making DELETE unusable against versioning servers. 
+If LOCK, GET, PUT, etc. apply to the resource, then so should DELETE. 
+gmc/ Why exactly? 
+I believe that what matters is getting the semantics right so that clients and servers can interoperate. 
+I believe it is important to have a definition of DELETE that works in the presence of versioning, and the "delete-all-bindings" semantics does not. 
+If bindings are created with a BIND method, then they should be removed with an UNBIND method. 
+Otherwise, URL to resource mappings (i.e., bindings) must be exposed as separate resources (direct and redirect referencs) so they can be managed discretely. 
+DELETE should stick to manipulating resources as defined in HTTP/1.1. 
+Then a versioning server will have to refuse every DELETE operation issued by a non-versioning aware server. 
+Roy Fielding has verified that the single binding definition of DELETE matches his intentions when the HTTP-1.1 spec was defined. 
+So what is the benefit we are reaping that matches the cost of non-interoperability between versioning servers and non-versioning aware clients? 
+- Should a DELETE delete a LOCK? 
+* I vote, "no". 
+A DELETE modifies the state of the collection containing the binding, not that of the resource. 
+In particular, all other mappings to that resource will continue to exist and display the LOCK'ed semantics. 
+If you want to prevent a DELETE, you put the LOCK on the collection whose state is being modified. 
+I wish I could agree with this one, but I can't. 
+DELETE deletes a resource and as a side effect it modifies the state of its parent collection(s). 
+It is unfortunate that PUT and DELETE are resource behaviors instead of having addMember, removeMember be operations on the parent collection. 
+It is hard to recover from the resulting mixed semantics, but WebDAV does a reasonable job already. 
+I think we should leave this alone. 
+gmc/ This is too broken to leave alone, and too easy to fix to not do so. 
+Define DELETE and MOVE as binding operations, and you get full compatibility with existing HTTP behavior, simple semantics, and interoperability between versioning/binding aware and versioning/binding unaware clients and servers. 
+Cheers, Geoff 
+This is probably unavoidable--as far as HTTP is concerned, a resource has no identity apart from its URL. 
+|John Stracke | http://www.ecal.com 
+|My opinions are my own.| |Chief Scientist |=============================================| |eCal Corp. |Guide us, oh holy Lemming Herder! 
+| |francis@ecal.com| | 
+From: John Stracke francis@ecal.com 
+Yes, but we are talking about extending HTTP (in a backward compatible way). 
+So just because HTTP-1.1 clients do not have any way of identifying a resource other than its URL, does not imply that the same is true for clients and servers that understand an extension of HTTP-1.1. 
+In particular, the advanced collection protocol proposes a GUID property, as does the versioning protocol. 
+Cheers, Geoff 
+DELETE nukes the resource. 
+If the resource gets nuked so does its bindings 
+since they are associated with the resource. 
+Hence DELETE is DESTROY. 
+BTW, I personally believe that MOVE SHOULD allow the lock to be moved. 
+The reason we didn't do this had to do with supporting the majority of existing systems. 
+I would love to see a WebDAV extension that introduced a header 
+which specified "MOVE the lock or fail." 
+Yaron 
+Very nice summary Jim. 
+I agree with each point. 
+Just one comment on point #1: The mapping from "/" to a resource is not a binding, because there is no collection in which the binding can live. 
+So the mapping from "/" to a collection is done through some other (server defined) means. 
+We could define some way of re-mapping "/" to some other currently namable resource, but in general (and certainly to get started) you need some server defined way of mapping "/" to a resource, so I don't think it would be worth special casing the re-mapping of "/" to some current descendent of "/". 
+Also of course, this only applies to resources that support the WebDAV protocol. 
+Cheers, Geoff 
+DELETE nukes the resource. 
+If the resource gets nuked so does its bindings 
+since they are associated with the resource. 
+Hence DELETE is DESTROY. 
+This could be interpreted as the HTTP/1.1 definition, but it is not useful in situations where multiple bindings and versions are available. 
+We would like DELETE to mean subsequent requests on that URL return 404 Not Found. 
+UNBIND has these semantics and supports multiple bindings and multiple versions. 
+Geoff says that this definition is not inconsistent with the intent of HTTP/1.1 according to Roy Fielding. 
+Agreed. gclemm@atria.com 
+(Geoffrey M. Clemm) on 09/24/99 03:39:34 PM Subject: Re: DELETE Semantics Very nice summary Jim. 
+I agree with each point. 
+Just one comment on point #1: The mapping from "/" to a resource is not a binding, because there is no collection in which the binding can live. 
+So the mapping from "/" to a collection is done through some other (server defined) means. 
+We could define some way of re-mapping "/" to some other currently namable resource, but in general (and certainly to get started) you need some server defined way of mapping "/" to a resource, so I don't think it would be worth special casing the re-mapping of "/" to some current descendent of "/". 
+Also of course, this only applies to resources that support the WebDAV protocol. 
+Cheers, Geoff 
+free 
+applications 
+1. all URL references to a resource are bindings, including the PUT or MKCOL used to create the resource in the first place. 
+Just to clarify. 
+I think you're suggesting that PUT and MKCOL are operations on bindings. 
+I agree... they create new bindings, if there isn't a resource there already. 
+But in the case of PUT, if there's a (non-collection) resource already there, then it's an action on the resource... not the binding. 
+4. LOCK locks the resource, not the bindings. 
+If the namespace needs to be controlled, then the user should lock the applicable parent collections. 
+I agree that that's what seems to be suggested. 
+I just want to add, "ouch! 
+That's a painful way to protect a URI.". 
+From: Jason Crawford on 09/24/99 03:56 PM Subject: Re: DELETE Semantics (Document link: Jim Amsden) 1. all URL references to a resource are bindings, including the PUT or MKCOL used to create the resource in the first place. 
+Just to clarify. 
+I think you're suggesting that PUT and MKCOL are operations on bindings. 
+I agree... they create new bindings, if there isn't a resource there already. 
+But in the case of PUT, if there's a (non-collection) resource already there, then it's an action on the resource... not the binding. 
+Yes 4. LOCK locks the resource, not the bindings. 
+If the namespace needs to be controlled, then the user should lock the applicable parent collections. 
+I agree that that's what seems to be suggested. 
+I just want to add, "ouch! 
+That's a painful way to protect a URI.". 
+Then what are collections for if not to manage and control the namespace? 
+What else could locking a collection mean? 
+Note that it does not have to be a deep lock. 
+Another point of view is that DELETE on a URL ensures that the next GET on that URL returns the appropriate error status. 
+Furthermore, unless you want downlevel clients to trash the history of a versioned resource, DELETE *must* have UNBIND semantics rather than DESTROY semantics. 
+I don't see how this follows. 
+Embedded HREF's in xml documents are also associated with the resource they reference, but they are unaffected by any operation on the resource. 
+In the past, I've only heard this said for Windows95. 
+I have not been able to find anything in Windows95 resembling WebDAV locking behavior. 
+Is this some internal implementation thing not exposed to end users? 
+Or is this a reference to how it was implemented in Office-2000? 
+In either case, although it should influence locking semantics, I don't think we should let it determine locking semantics, if it results in a complex or confusing protocol. 
+For example, with multiple bindings to a resource (say /a/x.html and /b/y.html), if you issue a LOCK on /a/x.html, can you move /b/y.html? 
+Cheers, Geoff 
+You don't even need to appeal to versioning for this one. 
+Suppose I use two DAV clients, an editor with some minimal file-management features and a file manager with full AdvCol support. 
+In the file manager, I do some BINDs to make one of my documents appear in multiple places. 
+Then, while I'm editing, I decide I no longer want it one of those places. 
+I'm in the editor, so I use its DELETE command...and discover I've lost my document, no just the one binding I wanted to remove. 
+|John Stracke | http://www.ecal.com 
+|My opinions are my own.| |Chief Scientist |=============================================| |eCal Corp. |Due to circumstances beyond your control, you| |francis@ecal.com|are master of your fate, and captain of your | 
+|soul. 
+| 
+4. LOCK locks the resource, not the bindings. 
+If the namespace needs to be controlled, then the user should lock the applicable parent collections. 
+I agree that that's what seems to be suggested. 
+I just want to add, "ouch! 
+That's a painful way to protect a URI.". 
+Then what are collections for if not to manage and control the namespace? 
+What else could locking a collection mean? 
+Note that it does not have to be a deep lock. 
+jlc/ I agree that collections are to manage and control namespace. 
+My editorial comment was that locking a whole collection to protect a single binding seems like a lot of overkill. 
+And if you want to protect a URI mapping... you'd have to lock the collection chain up to the root. 
+Even more overkill. 
+From: ccjason@us.ibm.com jlc/ I agree that collections are to manage and control namespace. 
+My editorial comment was that locking a whole collection to protect a single binding seems like a lot of overkill. 
+And if you want to protect a URI mapping... you'd have to lock the collection chain up to the root. 
+Even more overkill. 
+gmc/ But the URL is "protected" by a LOCK, since we are requiring that a subsequent use of the URL with that lock token always select that locked resource. 
+We're just removing the language in 2518 that over-constrained the server implementation (i.e. removing the language that said you cannot apply a MOVE or a DELETE to a locked resource). 
+What 2518 didn't realize (and neither did I until Edgar pointed it out) you don't need to prevent the MOVE or DELETE just to keep a handle on the locked resource. 
+So you only need to apply a lock to a collection if you really want to reserve the right to change the membership or properties of that collection. 
+Cheers, Geoff 

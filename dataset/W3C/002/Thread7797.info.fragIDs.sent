@@ -1,0 +1,57 @@
+Both Yaron and Jim Amsden our attempts to enforce consistency between the Request-URI and the Destination header in BIND requests are not appropriate. 
+We wanted to say that either both must end in a "/" or neither may end in a But in reality a trailing "/" is not a reliable indicator of the type of resource being addressed, so we should allow servers to process BIND requests even if the Request-URI ends in "/" and the Destination header does not, or vice versa. 
+We agree with these comments and will remove the constraints from the description of the BIND method and the related examples. 
+Yaron also objected to our saying that the Request-URI cannot just consist of "/". 
+That is, we currently say that you cannot use BIND to create a binding between the root and some resource. 
+We say this because we define a binding to be a relation between a URI segment in its parent collection and some resource. 
+That is, it's the triple (segment, collection, resource). 
+Here there is no segment, and there is no parent collection. 
+So you can't make sense of creating a binding for "/". 
+--Judy Judith A. Slein Xerox Corporation jslein@crt.xerox.com 
+(716)422-5169 800 Phillips Road 105/50C Webster, NY 14580 
+The inability to bind "/" simply means that your model is broken. 
+There is nothing exceptionally special about the "/" resource name other than it doesn't have a parent. 
+It must be just as bindable as any other resource name. 
+From: "Yaron Goland (Exchange)" yarong@Exchange.Microsoft.com 
+The inability to bind "/" simply means that your model is broken. 
+There is nothing exceptionally special about the "/" resource name other than it doesn't have a parent. 
+It must be just as bindable as any other resource name. 
+The BIND operation is the way of linking a resource by name into a collection resource (i.e. giving it another parent). 
+If a BIND were allowed to succeed on "/", it would result in "/" having a parent, which would violate the very thing that you identified as being special about "/", namely that it has no parent. 
+Another way to see why this is so, is to observe that BIND is really is a 3 argument operation: BIND(source-resource-URL, destination-collection-URL, binding-name). 
+For convenience, we have encoded it as: BIND source-resource-URL Destination: destination-collection-URL/binding-name This is unambiguous, since you strip off a trailing slash (if any) from the Destination URL, use the last segment of the resulting URL to get the binding-name, and the remainder of the Destination URL is the destination-collection-URL. 
+This works for every URL except for "/", since stripping off the trailing slash will leave you with the empty string from which you can get neither a legal binding-name nor a legal destination-collection-URL. 
+Judy: We might want some form of this preceding paragraph to the spec to make sure servers parse the Destination header of the BIND properly. 
+Cheers, Geoff 
+Geoff, I think Yaron's point is that he believes / should be able to refer to any resource. 
+Right now it's stuck with whatever it started with. 
+Or at least it appears that it stuck. 
+I think his words were a bit harsh and that we can address his concerns. 
+It just needs more thought. 
+Unless someone has a quick answer, I think this should go on our issue list. 
+Judy... you've got the issue list, right? 
+:-) 
+From: ccjason@us.ibm.com jc/ I think Yaron's point is that he believes / should be able to refer to any resource. 
+Right now it's stuck with whatever it started with. 
+Or at least it appears that it stuck. 
+gmc/ Fair enough. 
+We could certainly overload "BIND" and/or "MOVE" to make a BIND/MOVE to "/" be a special case that doesn't affect bindings, but rather modifies the current mapping of "/". 
+Cheers, Geoff 
+From: ccjason@us.ibm.com jc/ I think Yaron's point is that he believes / should be able to refer to any resource. 
+Right now it's stuck with whatever it started with. 
+Or at least it appears that it stuck. 
+gmc/ Fair enough. 
+We could certainly overload "BIND" and/or "MOVE" to make a BIND/MOVE to "/" be a special case that doesn't affect bindings, but rather modifies the current mapping of "/". 
+jc/ Sounds fair. 
+There's nothing in the syntax of the protocol to suggest that it can't be done or that there's anything special about it. 
+Obviously we can't lock the "parent" of / if we wanted to lock a whole tree, but if we lock / itself, the URI protection feature will have the same effect. 
+It's only our data model... and perhaps some implementations that might have to twist themselves a bit to handle this. 
+Can any server implementers comment on the difficulty of this? 
+Note: changing the root is sort of an academic case. 
+Unless you are going cross server, the new / will actually be "deleted" in the delete phase before it becomes the new resource. 
+At least in the model. 
+Next question... do we want to make replacement of the / resource a MUST? 
+Next question... Folks have talked about mixed webdav/non-webdav servers. 
+Do we have a similar situation at the interfaces between the webdav and non-webdav portion of a site? 
+(Honest question. 
+I don't have a clue how these mixed servers work.) 

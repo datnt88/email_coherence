@@ -1,0 +1,76 @@
+Congratulations to Judy for creating this first draft. 
+I have some questions, and I think I see some problems. 
+This is the first of several messages, one per topic, on this draft. 
+The draft proposes the new referential members will be created using M-PUT (the syntax defined in the ID "Mandatory Extensions in HTTP"). 
+This ensures that the server understands the additional headers necessary to define a referential member correctly. 
+The URI in the method is that of the collection, and the URI of the new referential member is in the Referential-Member header. 
+Using the M-PUT method (as opposed to plain old PUT) allows the client to be sure that the server does understand the new headers (e.g. Referential-Member) defined in the protocol. 
+Unless I misunderstand the Mandatory ID, this isn't quite right, because it specifies that after processing the mandatory headers, the method is to be treated as an ordinary PUT, which in this case would be a PUT to an existing collection, which must fail. 
+I suggest instead that the URI in the method be that of the referential member. 
+This makes the M-PUT resemble the (ordinary) PUT more closely. 
+You don't need to pass the URI of the collection to contain the ref member, since you can get that from syntax of the URI alone. 
+I think you are right. 
+So the example request to create a new referential member of a collection would look like this: M-PUT /~whitehead/dav/spec08.ref HTTP/1.1 Host: www.ics.uci.edu 
+Man: "DAV:Coll-headers" Referential-Member: Ref-Target: http://www.ics.uci.edu/i-d/draft-webdav-protocol-08.txt 
+Ref-Integrity: T Position: After requirements.html 
+Content-Length: 0 The Referential-Member header is no longer really necessary, since the server can tell from the presence of the Ref-Target header that it is supposed to create a referential member rather than an internal member of the collection. 
+But it might be worth keeping Referential-Member from a human-readable point of view and to avoid using one header for two purposes. 
+I'm a little uncertain still whether it makes sense to use the Mandatory Extensions to accomplish what we want. 
+The Mandatory spec says the server should first process the extension headers, then process the PUT as usual. 
+I don't know how to make sense of this for our case. 
+What we are asking the server to do is create an (empty) resource, and then put some DAV properties on it, where the properties are specified by the extension headers. 
+So the order of processing specified in Mandatory seems backwards for us. 
+--Judy 
+Name:Judith A. Slein E-Mail:slein@wrc.xerox.com 
+MailStop:105-50C Web Site: http://www.nde.wrc.xerox.com/users/Slein/slein.htm 
+The discussion about Mandatory suggests (to me) that we return to using ADDREF as the means of creating a referential member. 
+Then we can dispense with the Mandatory Extensions stuff altogether. 
+* Servers that don't understand referential members will just fail the ADDREF. 
+* DELETE will delete referential members, just as it can delete collections and "plain" resources. 
+So there's no need for DELREF The only thing we'd lose is the ability to MOVE or COPY a resource while *changing* the value of Ref-integrity. 
+Servers are already requires to preserve properties, thus an attempt to MOVE a strong reference to a server that can't enforce it would fail anyway. 
+We only needed M-MOVE to ensure 
+the server noticed the Ref-integrity header. 
+On the other hand I think we still need mandatory headers for ordered collections, otherwise there's no way to do a PUT (or ADDREF, if you take the suggestion above) to a designated location. 
+Rats. 
+By the way how can one change the order of members in an ordered collection? 
+Presumably one does PROPPATCH on the dav:ordering property, but is there also a way to do it with MOVE (e.g. MOVE x After y) 
+I'm hoping we'll get some clarification from the authors of the Mandatory spec about whether M-PUT with mandatory headers could do what we need for 
+creating new referential members of collections. 
+If it can't, we are certainly back to defining a new ADDREF method. 
+I have no problem with using ADDREF. 
+It was really the thought of having to define new methods to replace the DAV MOVE and COPY methods that pushed me toward using Mandatory. 
+If I MOVE or COPY a referential member from one place to another on the same server, the server must understand the Ref-Integrity header, so there 
+is no problem. 
+I'm less confident than you about what would happen for a request to MOVE or COPY a referential member to a non-compliant server. 
+I think we should state explicitly that an attempt to MOVE or COPY a referential member to a server that does not comply with the referential members part of WebDAV MUST fail. 
+Then we could dispense with Mandatory for the Ref-Integrity header. 
+So what about the Position header? 
+We could just get rid of it, and make clients do a separate PROPPATCH operation to place a new collection member where they want it in an ordering. 
+If we keep the Position header, we need something like Mandatory to insure that the request will fail if the header is not recognized. 
+There is one other case, not currently in the collections spec, that might need Mandatory. 
+We may decide that we need a way to specify, at the time a collection is created, that it be an ordered collection. 
+If we introduce a new Ordered header for use with MKCOL to accomplish this, we need a way to make the request fail if the server doesn't comply with the ordered collections part of WebDAV. 
+ADDREF. 
+Name:Judith A. Slein E-Mail:slein@wrc.xerox.com 
+MailStop:105-50C Web Site: http://www.nde.wrc.xerox.com/users/Slein/slein.htm 
+My opinion is that either 1) adding a referential member is exactly equivalent to creating a resource with no content, in which case you don't need M-PUT (just use PUT); or 2) adding a referential member is not creating a resource with no content; it is instead creating a resource that exists as a namespace indirection for some other resource, in which case using PUT would not be appropriate at all. 
+It seems to me that the latter is what you intend, so defining ADDREF is the appropriate action. 
+Neither case requires the use of the Mandatory draft's extension mechanism. 
+Not necessary for ADDREF. 
+If the header is not recognized, then ADDREF will not be allowed either. 
+Besides, the chances that an application would want the server to reject the request in this case are nonexistant -- ordering is always at the discretion of the server and there is no alternative if the server doesn't even understand the Position header. 
+Again, such usage is only necessary if the client actually wants the server to fail the request. 
+That is rarely the case for namespace operations (so rare, in fact, that I know of no application area that would ever want such functionality). 
+In any case, the Mandatory syntax allows such a requirement to be defined independently of your own extensions, so define the protocol as if you know the server will support the extension (which will be true for all but the very first interaction with that server) and then just remind the reader that they can use the Mandatory prefix if desired. 
+The only thing you need to define is the URI for the semantics, which in this case would be the RFC of your eventual standard (or any DAV:thingy you might prefer). 
+....Roy 
+Thanks for the explanations and advice. 
+The changes I would make based on your comments are: 1. to specify a new ADDREF method for adding referential members to collections. 
+2. to get rid of all mentions of M-PUT, M-COPY, and M-MOVE that are currently scattered through the spec, and instead add an implementation note for clients suggesting that they use the Mandatory Extensions Spec for cases where they want to be sure that the request fails if the headers are not understood. 
+--Judy 
+Name:Judith A. Slein E-Mail:slein@wrc.xerox.com 
+MailStop:105-50C Web Site: http://www.nde.wrc.xerox.com/users/Slein/slein.htm 
+Yep, that's exactly what I was thinking. 
+That will also make it clearer what the new protocol is instead of what it looks like after the prefix munging of Mandatory. 
+....Roy 

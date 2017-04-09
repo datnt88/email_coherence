@@ -1,0 +1,35 @@
+As you know, I've been arguing that both external members and ordering of collections should be implemented by properties alone. 
+Last night it occurred to me that such property manipulation would be way more efficient 
+if one extended PROPPATCH by defining a new XML element (append) that added a new value to a property (optionally at an arbitrary position). 
+Without such an extension, to add a new external member one do LOCK, PROPFIND, PROPPATCH, UNLOCK. 
+With it, it suffices to do a PROPPATCH. 
+In a way, this makes PROPPATCH behave like PATCH did. 
+It allows a client to rewrite a value without a round trip. 
+I would be willing to write this up as an Internet Draft as a proposed *extension* to WebDAV. 
+I am not arguing for this to be part of the core WebDAV (I don't want to delay things.) 
+A little more detail: I propose to define a new XML element 'append', to extend propertyupdate to allow it. 
+The 'append' XML element MUST have a prop element, and optionally accepts a a 'listposition' XML element. 
+It interprets the property named by the prop as a list, and inserts the value 
+of the prop into that list. 
+If listposition is not provided, the new item 
+goes at the end. 
+If it is, then it specified the position. 
+I have not worked out listpostion, but it would include means to specify absolute position (0-n), first, last, and position relative to another value. 
+(before, after). 
+Is there any good reason that I shouldn't try this? 
+Jim 650-812-4301 
+A much more useful extension which there has been discussion about is the ability to do XML savy patching, of which append would be a subset. 
+I know the XML folks have been thinking about this. 
+Yaron 
+On Monday, March 02, 1998 2:32 PM, Jim Davis [SMTP:jdavis@parc.xerox.com] 
+efficient 
+Unless you have test and set semantics on this append capability, it will be difficult to guarantee freedom from race condition problems without performing a LOCK. 
+Since PROPPATCH doesn't modify the entity tag (it doesn't modify the GET entity body), you can't use If-Match to see if the contents have changed. 
+I think you'd save one round trip (PROPFIND). 
+value 
+item 
+It seems to me the devil is in the details of how to specify the absolute position. 
+Where do you start counting? 
+What gets counted (elements), what doesn't (PIs)? 
+It might be interesting to perform counting by "level" -- i.e., append after the 2nd level 2 element. 
+- Jim 

@@ -1,0 +1,100 @@
+Pat shoeSize "10" then I am saying that my shoe size is a character string, right? 
+From here on I will omit the double quotes to avoid confusion. 
+Do you mean then 
+Pat shoeSize 10 Such that 10 is something other than a string/literal? 
+If so, 
+what is it? 
+A URI? A local ID? 
+Grounded in what base (a'la 
+xml:base)? 
+Well, I do. 
+The motivating example for me was the use of range information to fix a datatype, as in aaa shoeSize 10 . 
+shoeSize rdfs:Range xsd:integer . 
+which seems to me to be eminently simple. 
+Obviously, the literal should be interpreted using xsd:integer. 
+No need to apply rules or rewrite using bnodes; you just use the literal in the triple. 
+Ahhh, but what if we have aaa shoeSize 0x12 . 
+shoeSize rdfs:range xsd:integer . 
+Hmmm.... xsd:integer requires a decimal notation. 
+It may also be that the person making the statement about shoe size is not the one asserting the range constraint. 
+That might be a localized interpretation. 
+So just how does a system *know* how to interpret '0x12' as an xsd:integer? 
+ASSERTION: Typed data literals must have local type defined that is inseparable from the lexical form embodied in the literal value. 
+Range asserted interpretation does not suffice for interpretation of the lexical form. 
+The alternate is to impose the requirement that all lexical forms of all data types be valid lexical forms for all superordinate types of that data type. 
+Ouch. 
+Tough to verify... Granted, XML Schema seems to comply with such a requirement (I haven't checked rigorously though). 
+But whether we could actualy empose such a requirement (either reasonably or practically) is questionable. 
+...#me ...#shoeSize _:x. 
+_:x ...rdf-syntax-ns#type ...#integer . 
+_:x ...#decimalRep "10". 
+This representation presumes that the lexical form is separate from the data type, which is not the case 
+(neither for RDF or XML, nor for a given programming 
+language). 
+The typing system of RDF does not apply to canonical internal representations of values in value spaces, but of lexical forms corresponding to values in value spaces. 
+As such, the #decimalRep could be seen as superfluous, as one would expect that #integer would define the lexical space and the literal value would conform to that space. 
+Those languages which allow for multiple notations of the same data type in lexical forms utilized mechanisms in the lexical form itself to differentiate those variant notations. 
+The above treatment seems to me to presume that no lexical space is defined for the data type at all, therefore it must be specified separately, and that I think is incorrect. 
+Cheers, Patrick 
+So, the simple types do appear to follow this. 
+The derived types satisfy this by construction. 
+Derivation by restriction satisfies this by construction. 
+Derivation by list and by union satisfies this by virtue of not having a superclass (other than anySimpleType) The primitive datatypes inherit from anySimpleType, which appears by definition to be a union of all the other types, and hence Patrick's condition is satisfied. 
+The complex types (which have XML elements - see message later this morning) seem more difficult, and I think in general Patrick's condition is false. 
+I am new to XML schema though, having only read part 2 last week, and parts 0 and 1 last night. 
+Jeremy 
+From: ext Jeremy Carroll [mailto:jjc@hplb.hpl.hp.com] Sent: 07 November, 2001 12:03 Subject: datatypes: inheritence in schema RE: datatypes and MT 
+Right. 
+But just because XML Schema types satisfy this condition (possibly by intent, possibly by coincidence) I'm not sure we can impose such a condition on any arbitrary data types. 
+Thus, should one wish to use hex notation for integers, and defines a subclass of xsd:integer called xxx:hex it would not have a lexical form that is valid for xsd:integer. 
+I think we need instead to take an approach by which all typed data literals are specified locally for type and range definitions are only prescriptive for locally typed values. 
+I never intended to include complex types insofar as the above condition was stated. 
+Though, as complex types must at some point terminate in simple types, the condition still applies. 
+Though it opens up the can of worms about what it means to say that some subgraph is of a given XML Schema complex type, when the purpose of that complex type is to define 
+an XML subtree, not an RDF subgraph. 
+I would interpret our charter to mean that we relate RDF to XML Schema *simple* data types only, as they apply to literals, and not complex data types (but I may very well be wrong there). 
+Cheers, Patrick 
+The label in the triple itself is a string, of course, just like all the other labels. 
+Urirefs are strings, too. 
+So '10' is a string (which is also a numeral). 
+On the other hand, 10 is a number, as in '10=6+4'. 
+The question is whether the literal label *denotes* a string or not. 
+I want to be able to write a numeral and have it denote a number. 
+If we interpret the double quotes as genuine quotation then that is impossible: all such quotations denote strings. 
+I guess its just a literal. 
+(But maybe, for you, "literal" *means* "string" ? 
+There seems to be one subcommunity which takes that for granted. 
+If so, however, there seems to be little point in this entire discussion, since obviously a string doesn't have properties like being base-64. 
+Its just a bare sequence of characters. ) 
+Well, I do. 
+The motivating example for me was the use of range information to fix a datatype, as in aaa shoeSize 10 . 
+shoeSize rdfs:Range xsd:integer . 
+which seems to me to be eminently simple. 
+Obviously, the literal should be interpreted using xsd:integer. 
+No need to apply rules or rewrite using bnodes; you just use the literal in the triple. 
+It doesn't, probably. 
+Look, I'm not expecting miracles to occur. 
+All that the MT extension can do is to make sure that datatyping information is tallied up with literal labels in a sensible way. 
+If someone uses a literal that isn't the right type, then something 
+ought to barf (that something would probably be outside RDF, and 
+would know a lot about the intimate details of the datatyping scheme.) 
+So in this case, RDF would tell the xsd: expert that '0x12' was supposed to be an integer, and that expert would tell it to go to hell. 
+Superordinate *datatypes*, not types in general. 
+But yes, it does seem to require that. 
+But is that so hard to verify? 
+I'm assuming 
+that we will be using genuine, published datatype schemes with URIs, 
+not just random stuff put together in a back room. 
+But even there, as long as mydatatype:frobjet is not asserted to also be an xsd:number, or some such, then there are no superordinate datatypes to get in the way. 
+Maybe we should ask our Chair what the intended scope of this discussion is supposed to be. 
+By 'datatype' should we understand only XML datatypes, or *any* datatyping scheme that anyone could possibly dream up, or something in between? 
+Are there any general assumptions that we can make about all 'reasonable' datatyping schemes? 
+Pat IHMC(850)434 8903 home 40 South Alcaniz St.(850)202 4416 office phayes@ai.uwf.edu 
+I would seek Dan Brickley's advice on this, however as a working assumption I would suggest we focus our attention on our charter requirement to explain to users how to use RDF Schema datatypes with RDF. 
+Brian 
+What exactly is the difference between an RDF Schema and an RDF Schema datatype, and how would one of the latter be used to fix the interpretation of a literal? 
+Pat IHMC(850)434 8903 home 40 South Alcaniz St.(850)202 4416 office phayes@ai.uwf.edu 
+Oh b****er. 
+I meant to write *XML* schema datatypes. 
+Sorry for the confusion. 
+Brian 

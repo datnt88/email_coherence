@@ -1,0 +1,48 @@
+Hi all, 
+after I implemented the current spec of XPath Filter 2.0[1], I started to play around with some akward combinations of input node set (I) and expanded evaluated XPath expression (S) and came across the following problem: If the transform implementation receives an empty input node set as its input paramter, there is no way to get access to the input document. 
+But this is necessary because the context node for the XPath transform has to be initialized with the root node of the input document (according to section 3.3 of [1]). 
+According to the processing model of XMLDSIG, a transform receives its input either as an octet stream or as a XPath node set. 
+So I think that it is OK for a transform implementation to fail to get access to the input document if there are no nodes in the XPath node set which can be used to ask for the underlying document. 
+In all other transforms currently specified this is no problem, since they need not access to the underlying document. 
+They all can be processed even with an empty input node set. 
+A possible solution for this problem could be to explicitely forbid an emtpy input for the XPath Filter 2.0 transform. 
+Any thought? 
+Regards, Gregor [1] http://www.w3.org/Signature/Drafts/xmldsig-filter2/Overview.html 
+Hi Gregor, --On Sonntag, 26. Mai 2002 14:31 +0200 Gregor Karlinger 
+Absolutely right. 
+If you don't have at least one node which works as an "anchor" into the to-be-signed document, you can't proceed (well, it'd be possible to create nasty hacks which do not only pass the node set information to the transform but also the owner document). 
+For me, +1. 
+That'd be a good addition/clarification to the spec. 
+Empty node sets should be an error. 
+Regards, Christian 
+How would one forbid this? 
+We can't stop a user from specifying an XPath expression that misses the mark, right? 
+If we said throw an error, that would stop the processing of the signature -- maybe there are other useful XPath transforms. 
+We could add a processing step that says if the input node-set is empty the transform is done. 
+Joseph Reagle Jr. http://www.w3.org/People/Reagle/ W3C Policy Analyst mailto:reagle@w3.org 
+IETF/W3C XML-Signature Co-Chair http://www.w3.org/Signature/ W3C XML Encryption Chair http://www.w3.org/Encryption/2001/ 
+r/reagle@w3.org/2002.05.29/11:27:31 
+Just as it is an error to use here() in an XPath transform that is processing a different document from the signature document, it is an error to supply an empty node set to the XPath filter transform. 
+I agree with Gregor; the transform should fail and processing of the reference should stop. 
+Merlin 
+Ok. new revision: 1.8 3.3 Input and Evaluation Context of Signature Filter Transform The input required by this transform is an XPath input node-set over the input document. 
+If the input document is an octet stream, then the application MUST attempt to parse the octets yielding the required node-set (including comment nodes) via [XML] well-formed processing. 
+An empty XPath input node-set is an error. 
+The XPath evaluation context for the node-set will be: 
+Hi all, An empty node-set as input to an Xpath filter 1.0 yields no output. 
+For Xpath filter 2.0 intersection and subtraction, this result continues to make sense. 
+Only union can cause a problem if the input node-set is empty since the node-set must have an implicit knowledge of the document from which the node-set selects nothing. 
+As for union, perhaps it would be best for the filter to act exactly like XPath would under the same circumstances. 
+The union filter is supposed to perform a union of an empty set S with a node-set obtained by evaluating a given Xpath expression E with an initial context node of the root node R relative to the input node-set S. A pure XPath expression that performs the same sequence of operations is: (S | (S)/ancestor::node()[last()]/E) The ancestor::node()[last()] gets the root node as the starting context for E, but the subexpression only works if set S is non-empty. 
+The way XPath works is that once a location step results in an empty node-set, there are no context nodes on which to perform the next location step so the result of the subexpression S/ancestor::node()[last()]/E is an empty node-set. 
+Since S is an empty node-set, the result of the final union is an empty node-set, regardless of what E would have selected had we been able to obtain the document root. 
+In conclusion, this means that if an empty node-set is given as input to an Xpath 2.0 filter, returning an empty node-set would be behavior consistent with the XPath 1.0 recommendation and with the XPath filter 1.0 in the XML DSig recommendation. 
+To throw an error would be inconsistent. 
+Thanks, John Boyer 
+Yes, I prefer this and its what I meant when I said, "We could add a processing step that says if the input node-set is empty the transform is done." 
+[1] I changed it to the error [2] because I feared I was alone, but now that you've clarified it further perhaps Gregor and Merlin might agree too? 
+smile/ 
+[1] [2] 
+r/reagle@w3.org/2002.05.29/14:20:26 
+Either option is defensible and this is just a boundary case, although I agree we need to specify what happens, so I'll change my vote to abstain. 
+Merlin 

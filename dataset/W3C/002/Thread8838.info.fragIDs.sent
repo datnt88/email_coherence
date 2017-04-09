@@ -1,0 +1,88 @@
+Martin: Ask for a health warning re problem with Exclusive Canonicalization, where xml:lang and perhaps namespaces get ignored when signing a payload. 
+Thank you for raising this issue. 
+It gives me an opportunity to be clear about our present state on this issue. 
+Martin and I did talk about this issue a few months ago when he was in Boston. 
+Also, Philippe raised this question with respect to xml:base when we were entering CR. 
+However, I don't recall any specific action or text resulting from that conversation with Martin beyond what the present text states (see below). 
+However, I do remember the salient point of conversation. 
+Take the following example of a soap envelope contain an svg element and signature over it: 
+env:Envelope xml:lang="english" xml:space="preserve" 
+xmlns:env="...soap..."/ Do namespace nodes and xml:* attributes pose the same sort of problems? 
+For namespace nodes, they are nuisance and a problem. 
+Under c14n the env: declarations aren't even needed (nuisance) in the svg element, yet they are there and contaminate the SVG such that if it is signed in context and then removed from the SOAP header and the signature is recalculated (and canonicalized outside of the envelope) it won't be able to validate. 
+exc-c14n removes this problem. 
+For the xml:{lang, space, and base} one can argue that they are less of a 
+nuisance, but still pose a problem. 
+While the env: namspace nodes in the canonical form of the svg are completely un-needed, one can argue that the SVG element should be also be considered to be in English and have 
+important white space. 
+Or that a relative URI in the SVG is dependent on the xml:base in the soap Envelope. 
+However, if an application removes the SVG and acts on it as such, it wouldn't be useful anyway. 
+(I don't know if or how SOAP defines the detachment of a payload for processing...?) 
+Regardless, I'd expect that if the detachable SVG is to be useful when detached, it will already have its own xml:* attributes. 
+And if it does, the canonical form in or out of the soap envelope will be the same. 
+It's definitely a tricky issue and we explicitly solicited feedback on these points in our CR [1], but haven't had any push-back, so I hope folks are largely satisfied and the text is clear [2]. 
+[1] http://www.w3.org/TR/2002/CR-xml-exc-c14n-20020212 Specific areas where we would appreciate further implementation experience are: 1. Speed of canonicalziation relative to Canonical XML; it should be no slower, is it faster? 
+2. Use in application contexts. 
+Does the specified behaviour meet application requirements for flexibly canonicalizing document subsets if they are moved out of their context? 
+For example, does your application scenario lead to any difficulties in which a subset (e.g., payload) require the use of an ancestor base that is not easily remedied by including xml:base in the apex of the subset? 
+[2] http://www.w3.org/Signature/Drafts/xml-exc-c14n#sec-Limitations 1.3 Limitations Exclusive XML Canonicalization has the limitations of Canonical XML [XML-C14N] plus two additional limitations as follows: 1. 
+The XML being canonicalized may depend on the effect of xml namespace attributes, such as xml:lang, xml:space, and xml:base appearing in ancestor nodes. 
+To avoid problems due to the non-importation of such attributes into an enveloped document subset, either they must be explicitly given in the apex nodes of the XML document subset being canonicalized or they must always be declared with an equivalent value in every context in which the XML document subset will be interpreted. 
+2. Applications that use the XML being canonicalized may depend on the effect of XML namespace declarations where the namespace prefix being bound is not visibly utilized. 
+An example would be an attribute whose value is an XPath expression and whose evaluation therefore depends upon namespace prefixes referenced in the expression. 
+Or, an attribute value might be considered a QName [XML-Schema] by some applications, but it is only a string-value 
+to XPath: number xsi:type="xsd:decimal" 10.09 /number . 
+To avoid problems with such namespace declarations, + the XML must be modified so that use of the namespace prefix involved is visible or + the namespace declarations must appear and be bound to the same values in every context in which the XML will be interpreted or + the prefixes for such namespaces must appear in the InclusiveNamespaces PrefixList. 5. Security Considerations This specification is used to serialize an XPath nodeset under certain assumptions given in [XML-C14N] and this specification. 
+For example, implementations of [XML-C14N] do not render a document XML declaration; when implementations of this specification serialize a subset they do not render ancestor attributes from the "xml:" namespace (e.g., xml:lang, xml:space, and xml:base). 
+Nor do implementations of this specification consider the appearence of a namespace prefix within an attribute value to be visibly utilized. 
+While we feel such choices are consistent with other XML specifications and satisfy our application requirements it is 
+important that an XML application carefully construct its transforms such that the result is meaningful and unambigous in its application context. 
+The Limitations of this specification, the Resolutions of [XML-C14N], and the Security Considerations of [XML-DSig] should be carefully attended to. 
+5.1 "Esoteric" Nodesets Consider an application that might use this specification or [XML-C14N] to serialize a single attribute node. 
+Neither specification will automatically emit a namespace declaration for that single attribute node. 
+Consequently, a "carefully constructed" transform should create a nodeset containing the attribute and the relevant namespace declaration for serialization. 
+We provide this example to caution that as one moves beyond well-formed [XML] and then well-balanced XML [XML-Fragment], it becomes increasingly difficult to create a result that "is meaningful and unambiguous in its application context." 
+Hello Joseph, Many thanks for your excellent summary. 
+Just a few comments below: [Jonathan, there is some question about XML Base where maybe you can help.] 
+Martin: Ask for a health warning re problem with Exclusive Canonicalization, where xml:lang and perhaps namespaces get ignored when signing a payload. 
+Should be xml:lang="en", just for the record. 
+Yes, there is only one of each, and they don't have prefixes hidden in attributes and text content. 
+Or some other language. 
+There is one specific problem with xml:lang, which is the following: If the SVG document to be included has no language information, it is impossible to note that in the top SVG element or just outside. 
+We had some preliminary discussion on how to fix this problem; the proposal that has received most support in the I18N WG/IG is to use xml:lang="". 
+In some specific cases, there is a similar problem with namespaces. 
+For xml:space, there should not be any such problem, because there is a default, which can be made explicit. 
+For xml:base, I don't know if there is such a problem or not. 
+I.e. the question is whether xml:base="" means 'the current document is the base' or it means 'don't change the base you have', or it is undefined. 
+I think this covers my action from the I18N WG minutes: Martin: Ask for a health warning re problem with Exclusive Canonicalization, where xml:lang and perhaps namespaces get ignored when signing a payload. 
+If somebody disagrees, please tell me. 
+I don't think you should cite XML-Schema, but XML-Namespaces (http://www.w3.org/TR/REC-xml-names/#NT-QName). 
+In the example 
+below, XML-Schema is only one example of an application using QNames, nothing special. 
+But with the reference above, it can easily be read differently. 
+I'm not very happy here; this can be read as "it's okay to remove xml:lang". 
+I think the explanation that XML-C14N and exclusive canonicalization provide two extremes, and the application designer has to chose the right mix, would be better. 
+Regards, Martin. 
+That sounds reasonable. 
+An additional problem with these attributes is that if one wants to counter a declaration made by an ancestor/envelope, one might not even be able to. 
+Are xml:foo attribute even *permitted* in our example of SVG? 
+Yes, but what of other applications? 
+We considered this in the schema for the root EncryptedKey and EncryptedData structures [1] and there wasn't any support to inlude these in the root element, only in EncryptionProperties [2]. 
+I wonder how many of our XML applications permit this? 
+(I know signature and xml encryption don't.) If we expect to be de/composing chunks of XML, should all of our applications support these elements in their schema? 
+[0]http://www.w3.org/TR/SVG/struct.html#StdAttrs 
+[1]http://lists.w3.org/Archives/Public/xml-encryption/2002Jan/0109 [2]http://www.w3.org/Encryption/2001/Drafts/xmlenc-core/Overview#sec-EncryptionProperties 
+Jonathan has mentioned that it means "don't change the base you have." 
+This could be problematic in that if you incorportate one document into another, a semantic difference is introduced that's not possible to remedy. 
+If I had the document and I then put this in a soap envelope. 
+The SVG won't work properly when it's in the SOAP envelope, but one might argue that's to be expected. 
+But what happens when you detach it? 
+That's hard for me to say, I think it depends which specs you deal with. 
+Since the xml:base specification says the base URI is the base URI of the parent, and Jonathan has confirmed that the base URI of a parent element with "" is the one already in affect, then if the Infoset reflects that the serialization of the "then detached" svg InfoSet might be: And of course, the Infoset document warns that things may get ugly with "synthetic infosets." 
+[2] In exc/c14n we're XPath based, so we just see it as an attribute and would emit svg xml:base="" . 
+[1] http://www.w3.org/TR/xmlbase/#granularity 
+The base URI of an element is: 1. the base URI specified by an xml:base attribute on the element, if one exists, otherwise 2. the base URI of the element's parent element within the document or external entity, if one exists, otherwise 3. the base URI of the document entity or external entity containing the element. 
+[2] http://www.w3.org/TR/xml-infoset/#intro.synthetic 
+This may not be true of an information set constructed by other means; in such a case there will be no XML document corresponding to the information set, and to serialize it will require resolution of the inconsistencies (for example, by outputting namespace declarations that correspond to the namespaces in scope). 
+Ok fixed. 
+I don't think I share your reading, but I've tweaked it for clarity, I hope this addresses your concern: "implementations of this specification only render attributes from the "xml" namespace (e.g., xml:lang, xml:space, and xml:base) when they are are in the subset being serialized" 

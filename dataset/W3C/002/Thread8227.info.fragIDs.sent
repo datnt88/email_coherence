@@ -1,0 +1,77 @@
+Hello, The current WebDAV specifications deal with a transactional support on a method base only. 
+Either a single WebDAV method is completely and successfully executed, or the method is not executed at all (e.g. a PropPatch command will either modify all requested properties or none of them). 
+A transactional support spanning multiple WebDAV methods is currently not specified. 
+Multi user requirements are either handled in separate workspaces (Delta-V) or via the Lock method. 
+During our discussion on the JSR 170 (Content Management API) implementation on top of WebDAV, we believe that we require longer transactions spanning multiple separate WebDAV methods. 
+(This issue was already partially discussed in the Batch method thread). 
+Do you also fell the need/requirement to get a standard on the way, concerning a transactional WebDAV protocol extension? 
+A possible use case would be: An author wants to modify an html page. 
+To successfully do so, he will PUT the updated html page back, PROPPATCH and UNLOCK it, DELETE all bitmap files, which are not references any more, and PUT (create) the newly referenced bitmaps files. 
+If he wants to ensure, that either all his changes do apply (or none of them) he would surround those method call with an TA-BEGIN and a TA-COMMIT method call. 
+If the author would be an API (e.g. JSR 170) exposing the TA functionality to an application, we believe this feature to be mandatory. 
+A possible (starting) specification could be: WebDAV defines 3 additional methods: TA-BEGIN, TA-COMMIT and TA-ABORT. 
+The TA-BEGIN method will return a TA token (e.g. via an XML response body). 
+This TA token will be send to the following WebDAV methods, which are part of this transaction (e.g. via an additional header). 
+The TA-COMMIT or TA-ABORT method will either commit or abort the transaction and invalidate the TA token. 
+If and when an open TA, which is not used any more, is aborted, could be controlled similar to the lock method timeout header. 
+All WebDAV methods, which either do not posses a TA token, or posses an invalid token are handled as today (the method is executed within its own TA), this would ensure upward compatibility. 
+This extension would be optional, if a server supports the TA methods, it will state this in the OPTIONS request (similar to Delta-V). 
+Does this make sense? 
+Best regards Juergen Pill 
+One thing you do NOT want under any circumstances are begin-transaction, end-transaction, and abort-transaction methods. 
+That approach simply does not scale beyond a single user, and is a performance disaster. 
+You absolutely need to stick to single method calls that can Perform Multiple operations on the server in a single Transaction. 
+Batching up operations is a valid approach. 
+Transactions aren't that easy to deal with. 
+That becomes Even more true when multiple servers are involved. 
+Someday, WebDAV might get that far. 
+Transactions aren't new. 
+They're decades old. 
+The effort would Profit from the decades of thought that has gone before. 
+For example, see the DMA standard for one approach. 
+(But remember: DMA specifies an API, not a protocol, and WebDAV is a protocol.) Dr. Alan F. Babich 
+Hi, one thing that the participants of the interop meeting may want to consider... 
+A long time ago ([1]), Microsoft proposed a live property DAV:ishidden which signals that a resource should be displayed as hidden in a UI. Support currently exists in: MS IIS 5.0: reports DAV:ishidden according to the file system flags of the underlying file system MS webfolder client: asks for DAV:ishidden, and hides the resource when it is reported as hidden SAP Enterprise Portal Server: treats DAV:ishidden as live property with the semantics defined in [1] I think this is a really useful feature, and in case we can identify another client that supports it, we may want to roll it into RFC2518. 
+Regards, Julian 
+[1] http://greenbytes.de/tech/webdav/draft-hopmann-collection-props-00.txt 
+I still don't see your objection to Julian's original proposal, i.e. if your server can (or is willing to) allow a client to operate directly on the resource identified by the DAV:resourceid, then it 
+just makes the value of DAV:resourceid be in the HTTP: namespace. 
+There is value in a DAV:resourceid, even if it isn't something a client can use to directly operate on the resource, so I don't believe it is reasonable to require that the value of DAV:resourceid be in the HTTP 
+namespace. 
+Cheers, Geoff didn't think about that problem... What I'd like to be able to do is to have a URL-based scheme for accessing resources by resource ID, without having to run a REPORT or SEARCH method or something to find a URL for it, especially since that will be yet another spec. 
+OK, how about if we make resource IDs href s that are guaranteed to be unique? 
+We had to do the same thing with principals in the ACL spec to uniquely identify them. 
+So, rather than treating resource ID as an opaque string, we can do something with it. 
+On a server storing GUIDs for each resource, you could return: as the string rather than just GUID --Eric ----- Original Message ----- 
+-----Original Message----- From: w3c-dist-auth-request@w3.org [mailto:w3c-dist-auth-request@w3.org]On 
+Behalf Of Eric Sedlar Sent: Thursday, September 05, 2002 8:12 PM Subject: Re: Interoperability for DAV:ishidden? 
+What is needed is an interoperable way, given a resource ID, to operate on a resource with that ID on the server. 
+If the mapping between resource-ID and implementation is server-defined, we can't do that. 
+Requiring the DAV: namespace to respond to these requests is probably the easiest thing to do, since this will work with other methods, like LOCK and so forth. 
+REPORT doesn't handle that case. 
+Eric, WebDAV is an HTTP extension. 
+There's simply no way to directly manipulate 
+a 
+How does an interoperable client know that it can do this? 
+Are you going to 
+allow an optional href tag in DAV:resourceid so that the client can know to do this? 
+This just puts the burden on the client writer. 
+HTTP 
+What do you feel is unreasonable? 
+Finding some obscure part of the HTTP 
+namespace on a server to map to? 
+Handling requests with resource-ids? 
+It 
+seems to me that this makes resourceid simpler for simple repositories that may not have GUIDs available, as they can just use the resource's URL if they don't allow multiple bindings to a resource. 
+--Eric 
+(subject updated) 
+From: w3c-dist-auth-request@w3.org [mailto:w3c-dist-auth-request@w3.org]On 
+Behalf Of Eric Sedlar Sent: Thursday, September 05, 2002 11:47 PM Subject: Re: Interoperability for DAV:ishidden? 
+It parses the URI and determines whether it's a HTTP: or HTTPS: URL. 
+According to the expired bindings draft, DAV:resourceid happens to have the DAV:href format anyway ([1]). 
+For instance, you might want to assign resource identifiers that can travel between servers. 
+Using the HTTP scheme would make this impossible. 
+No, they can't. 
+For instance, the resourceid would change if the resource is moved. 
+This is not allowed. 
+Julian [1] http://greenbytes.de/tech/webdav/draft-ietf-webdav-binding-protocol-02.html #rfc.section.13.2 

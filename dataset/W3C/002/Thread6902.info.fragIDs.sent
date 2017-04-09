@@ -1,0 +1,114 @@
+Below is a test suite for Python based on Appendix C of RFC2396. 
+Python's built-in urlparse module fails the test suite in a number of instances. 
+I used a similar test suite to validate my Tcl URI parser. 
+Enjoy, 
+[ "Aaron Swartz" ; mailto:me@aaronsw.com ; http://www.aaronsw.com/ 
+] 
+import urlparse base = 'http://a/b/c/d;p?q' 
+assert urlparse.urljoin(base, 
+'g:h') == 'g:h' assert urlparse.urljoin(base, 
+'g') == 'http://a/b/c/g' assert urlparse.urljoin(base, 
+'./g') == 'http://a/b/c/g' assert urlparse.urljoin(base, 
+'g/') == 'http://a/b/c/g/' assert urlparse.urljoin(base, 
+'/g') == 'http://a/g' assert urlparse.urljoin(base, 
+'//g') == 'http://g' assert urlparse.urljoin(base, 
+'?y') == 'http://a/b/c/?y' 
+assert urlparse.urljoin(base, 
+'g?y') == 'http://a/b/c/g?y' assert urlparse.urljoin(base, 
+'#s') == 'http://a/b/c/d;p?q#s' 
+assert urlparse.urljoin(base, 
+'g#s') == 'http://a/b/c/g#s' assert urlparse.urljoin(base, 
+'g?y#s') == 'http://a/b/c/g?y#s' assert urlparse.urljoin(base, 
+';x') == 'http://a/b/c/;x' assert urlparse.urljoin(base, 
+'g;x') == 'http://a/b/c/g;x' assert urlparse.urljoin(base, 
+'g;x?y#s') == 'http://a/b/c/g;x?y#s' 
+assert urlparse.urljoin(base, 
+'.') == 'http://a/b/c/' assert urlparse.urljoin(base, 
+'./') == 'http://a/b/c/' assert urlparse.urljoin(base, 
+'..') == 'http://a/b/' assert urlparse.urljoin(base, 
+'../') == 'http://a/b/' assert urlparse.urljoin(base, 
+'../g') == 'http://a/b/g' assert urlparse.urljoin(base, 
+'../..') == 'http://a/' assert urlparse.urljoin(base, 
+'../../') == 'http://a/' assert urlparse.urljoin(base, 
+'../../g') == 'http://a/g' assert urlparse.urljoin(base, 
+'') == base assert urlparse.urljoin(base, 
+'../../../g') == 'http://a/../g' assert urlparse.urljoin(base, 
+'../../../../g') == 'http://a/../../g' assert urlparse.urljoin(base, 
+'/./g') == 'http://a/./g' 
+assert urlparse.urljoin(base, 
+'/../g') == 'http://a/../g' assert urlparse.urljoin(base, 
+'g.') == 'http://a/b/c/g.' assert urlparse.urljoin(base, 
+'.g') == 'http://a/b/c/.g' 
+assert urlparse.urljoin(base, 
+'g..') == 'http://a/b/c/g..' assert urlparse.urljoin(base, 
+'..g') == 'http://a/b/c/..g' assert urlparse.urljoin(base, 
+'./../g') == 'http://a/b/g' assert urlparse.urljoin(base, 
+'./g/.') == 'http://a/b/c/g/' assert urlparse.urljoin(base, 
+'g/./h') == 'http://a/b/c/g/h' assert urlparse.urljoin(base, 
+'g/../h') == 'http://a/b/c/h' assert urlparse.urljoin(base, 
+'g;x=1/./y') 
+== 'http://a/b/c/g;x=1/y' assert urlparse.urljoin(base, 
+'g;x=1/../y') == 'http://a/b/c/y' assert urlparse.urljoin(base, 
+'g?y/./x') == 'http://a/b/c/g?y/./x' assert urlparse.urljoin(base, 
+'g?y/../x') == 'http://a/b/c/g?y/../x' assert urlparse.urljoin(base, 
+'g#s/./x') 
+== 'http://a/b/c/g#s/./x' 
+assert urlparse.urljoin(base, 
+'g#s/../x') == 'http://a/b/c/g#s/../x' 
+You remind me - I logged a bug with Python a while back regarding their urlparse module; it represents a URI as a six-tuple ( scheme, authority, path, parameters, query, fragment ) As I read 2396, parameters can occur as a suffix to *each* path segment, not only on the final one. 
+Guido's response was "great! 
+fix it!", but I haven't had time to make a go of it. 
+URI list, is this reading correct? 
+Any opinions as to what data structure is best to represent a parsed URI with? 
+(I'm thinking just make it a 5-tuple, taking out 'parameters', and optionally making 'path' a list of 2-tuples, but that's probably not useful in a lot of scenarios). 
+Mark Nottingham, Research Scientist Akamai Technologies (San Mateo, CA USA) 
+Make it an opaque object that you can query with various methods. 
+Python is OO, isn't it? 
+Regards, Martin. 
+*hits head* Of course. 
+Mark Nottingham, Research Scientist Akamai Technologies (San Mateo, CA USA) 
+Interesting. Someone pointed your bug report out to me and they are very much related. 
+The reason Python fails the test suite is because it treats queries and parameters specially, where as RFC2396 treats them only as a normal part of the path segment. 
+So perhaps the solution is to just get rid of parameters and query... [ "Aaron Swartz" ; mailto:me@aaronsw.com ; http://www.aaronsw.com/ 
+] 
+I've started sketching out a class-based URI module to replace the function-based urlparse one distributed with Python... don't know how much time I'll have to work on it, but if you (or anyone else) is interested, we could give it a go. 
+Cheers, 
+Mark Nottingham, Research Scientist Akamai Technologies (San Mateo, CA USA) 
+I've got a few thoughts on URI API design that I haven't managed to code up. 
+But while we're talking about it... Developers tend to learn about URIs from APIs, and I'd like to clarify some things from that perspective. 
+For example, a URI object shouldn't have any state. 
+Several APIs bundle URI parsing with network access, putting GET and POST methods on the same object as getFragID. 
+Bad news. 
+So I'd prefer a URIOracle class that knows how to parse 
+URIs; its interface is exposed with static methods. 
+(this is pretty much the same thing as a python module with functions). 
+Another opportunity I'd like to exploit is explaining the difference between when it's OK to peek into which parts of a URI. 
+At one level, the only methods are: URIOracle.getFragID(aURIRef): # returns fragid URIOracle.combine(absBaseURI, aURIRef) # returns absolute URIref URIOracle.refTo(fromHere, toThere) # URI "subtraction" 
+(and maybe some escaping/unescaping methods... and maybe something for encoding form arguments... gotta think about that). 
+At this level, you can't peek in enough to tell the difference between one scheme and another. 
+This level corresponds to 
+the application and/or presentation objects in TimBL's diagrams of the web model Then there's a separate interface for use by code that does network access; at this level, you can parse the scheme, the host, the username/password, the path segments, etc. Anyway... as I say, I haven't worked out the details. 
+I have a formal specification of these interfaces in progress... 
+Dan Connolly, W3C http://www.w3.org/People/Connolly/ 
+Please say getFrag.? 
+You don't know that the Frag is an ID until you have recovered the resource and determined its type by inspection. 
+The 'fragment' that is the heuristic reason for the naming of this terminal in the parsing model is _a fragment of the URI-reference string_, not a "fragment" of the resource. 
+It is just what follows the '#'. 
+In general. 
+It is commonly used for an ID to indicate a proper sub-object (not general fragment) of the recovered value of the indicated resource. 
+But that's not definitive, i.e. not universal. 
+So in an OO context getFrag is stateful because the class of the object returned -- what you can do with it -- depends on the state variable knowResourceRecoveredValueType. 
+This level is pertinent to the topic of URIref methods, not URI methods, precisely. 
+These are two closely related classes, but the abstract URI comprised of the equivalence class of all strings provable to indicate the same resource (by equivalence under the escaping rules, etc.) is worth regarding as a separate class from the URIref that one finds in the HREF of a hyperlink, for example. 
+The URI is fully qualified and needs no context. 
+The URIref appears in context and may be relative, depending for its interpretation on a BASE available from the context. 
+If you can't tell the scheme, you are not dealing with URIs.? GetScheme is perhaps the sole universal proper method for URIs.? Everything else hangs on it. 
+URIs expose the class of their indicated resources by means of the scheme component.? 
+That is the first, most important production in the reference model for defining the world in which we use URIs.? If you haven't captured that, start over. 
+ftp: URLs indicate resources which have a have a GET method. 
+[no PUT] data: URLs indicate resources which have a PARSE method.? [no GET or PUT] to handle a URIref one contextualizes and normalizes to obtain the associated URI and case on scheme to determine the applicable proper methods of the resource indicated.? 
+More information on which of these methods is indicated by some activation may be available from the context of the URIref, as for example when it appears as the ACTION for a FORM. 
+Al 
+http://www.w3.org/XML/9711theory/URIclient.lsl http://www.w3.org/XML/9711th eory/URIclient.lsl 
+http://www.w3.org/XML/9711theory/URI.lsl http://www.w3.org/XML/9711theory/U RI.lsl 
+http://www.w3.org/People/Connolly/ http://www.w3.org/People/Connolly/ 
