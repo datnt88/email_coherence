@@ -1,0 +1,103 @@
+Looking for feedback on the short SWAP/XML example, particularly from the XML/EDI folks. 
+Greg EXCERPT: All parameters are put into an XML encoding including scoping and namespaces to be sent with the appropriate calls. 
+In the example of Figure 1, the root node has a list of attributes including interfaces, 
+process instance key, valid states, actual state, and data. 
+From this 
+XML snippet, we can determine the values and state of that process instance as well as the others possible. 
+This example shows a potential purchase order made by the SWAP working group chair using the configuration information provided by an online PC manufacturer. 
+The SWAP protocol creates a trackable process instance upon the request, but doesn't begin the execution of the process. 
+The method call returns a value of "207" Multi-Status indicating several different values are appropriate. 
+It turns out that the size of the memory conflicts with the order configuration. 
+The customer can then choose to TERMINATE the purchase order or amend it using the appropriate PROPFIND and PROPPATCH methods for assigning particular values. 
+Request 
+CREATEPROCESSINSTANCE /submit/order?proc=10 HTTP/1.1 Host: www.widget-makers.com 
+Content-Type: text/xml Content-Length: xxxx realm="skreddy@oracle.com", 
+... 
+?xml:namespace ns="http://conf.pcmanufact.com/" 
+prefix="z" 
+? 
+d:startImmediately no /d:startImmediately !-- "available?" 
+-- 
+Response 
+HTTP/1.1 207 Multi-Status Content-Type: text/xml Content-Length: xxxxx ?xml:namespace 
+ns="http://conf.pcmanufact.com/" 
+prefix="z" ? 
+d:href http://www.widget-makers.com/status?proc=10.1 
+Question: 
+doesn't this need a METHOD name after the d:observer tag? 
+something like: Actually - I thought it would look more like this (sorry - no namespaces :( ): INTERFACE PROCESSINSTANCE /INTERFACE -- PROCESSINSTANCE is a value - not a tag????? METHOD PROPFIND /METHOD -- the PROCESSINSTANCE method as a METHOD tag value KEY http://rheim.jcals.csc.com /KEY --- the URL goes in the key field Otherwise - how do we know which method is being requested? 
+thanks, rich 
+Request 
+Response 
+The method is specified as part of the HTTP protocol. 
+It is actually the first characters of the first line of the header of the request. 
+Most requests to a web server use the GET method, so the browser will send as the first line to the server something like: GET /pub/doc/index.html 
+HTTP/1.1 
+For this reason the method does not need to be part of the XML body of the message. 
+We were fairly well persuaded by ietf members who worked on WebDAV that this was the right way to extend the HTTP protocol for use in things like SWAP. 
+By the way, the WebDAV spec goes into detail about the PROPFIND method you used as an example. 
+-Keith 
+Request 
+? d:swap 
+-- /d:swap 
+Response 
+/d:processInstance d:propstat d:prop z:size/ /d:prop d:status HTTP/1.1 409 
+Conflict /d:status 
+d:comment part unavailable /d:comment /d:propstat d: propstat ?-- 
+"other resource properties" -- /d:propstat /d:response /d:multistatus 
+I don't think it is appropriate to extend HTTP for SWAP in the same way that HTTP was extended for WebDAV. 
+WebDAV is a set of extensions to HTTP for Web distributed authoring and versioning, and the extensions being supported are appropriate for things which might otherwise be accessed via web protocols. 
+I think SWAP's situation is much more like IPP's, where the services are being accessed over the Internet are not otherwise Web resources that one would access using a web browser, and that using a single generic POST method (going POSTal), and putting the actual operation in the body, makes more sense. 
+This design choice is somewhat of a religious debate, unfortunately: it's clear that the first-order functionality of a protocol can be expressed either way, and that the design considerations are second-order, yet the design choice has a major effect in the description of (although not the implementation of) the protocol. 
+Larry 
+Looks good to me, except you didn't use the current namespace syntax. 
+Now the namespace is declared the first time it is used. 
+Also don't forget to close your xml tag. 
+Here is the first example fixed up: z:processor xmlns:Z="http://conf.pcmanufact.com/" 
+pentiumII /z:processor 
+Lisa 
+Looking for feedback on the short SWAP/XML example, particularly from the XML/EDI folks. 
+Greg EXCERPT: All parameters are put into an XML encoding including scoping and namespaces to be sent with the appropriate calls. 
+In the example of Figure 1, the root node has a list of attributes including interfaces, process instance key, valid states, actual state, and data. 
+From this XML snippet, we can determine the values and state of that process instance as well as the others possible. 
+This example shows a potential purchase order made by the SWAP working group chair using the configuration information provided by an online PC manufacturer. 
+The SWAP protocol creates a trackable process instance upon the request, but doesn't begin the execution of the process. 
+The 
+method call returns a value of "207" Multi-Status indicating several different values are appropriate. 
+It turns out that the size of the memory conflicts with the order configuration. 
+The customer can then choose to TERMINATE the purchase order or amend it using the appropriate PROPFIND and PROPPATCH methods for assigning particular values. 
+Request 
+CREATEPROCESSINSTANCE /submit/order?proc=10 HTTP/1.1 Host: www.widget-makers.com 
+Content-Type: text/xml Content-Length: xxxx realm="skreddy@oracle.com", 
+... ?xml:namespace 
+ns="http://conf.pcmanufact.com/" 
+prefix="z" ? 
+d:startImmediately no /d:startImmediately !-- "available?" -- 
+Response 
+HTTP/1.1 207 Multi-Status Content-Type: text/xml Content-Length: xxxxx ?xml:namespace 
+ns="http://conf.pcmanufact.com/" 
+prefix="z" ? 
+d:href http://www.widget-makers.com/status?proc=10.1 
+Thanks everyone! 
+I'll put it down as a possible example and describe the format as an item of debate. 
+I tend to agree that HTTP methods should be added very sparingly, although it made the example easier and from a programming standpoint, would be easier to implement in some ways. 
+Greg 
+Just a note: When I run this example through IE 5.0 (which has XML support), I get the following error: Reference to undeclared namespace prefix: 'd'. 
+Line 2, Position 25 thanks, rich heim 
+1. what does one do when one wishes to support both protocols. 
+wouldn't that argue for uniform implementation? 
+2. does the WebDAV argument re authorization carry no significance here? 
+According to an email from Lisa: 
+Let me know if this fixes it. 
+(I don't have a copy of IE 5.0). 
+You're absolutely right. 
+This is due to my silly error in changing the case of the namespace prefix to capital "D:". 
+Also, I was wrong about closing the /xml tag. 
+And, I found a 3rd error: namespaces are scoped to the current element and contained elements, so the "z:" namespace in the example has to be either redeclared for every z: element, or must be declared in some element which contains all the z: elements. 
+This revised XML works: z:processor xmlns:z="http://conf.pcmanufact.com/" 
+pentiumII /z:processor It also works to declare the z: namespace on just the "swap" element, even though that's not part of the z: namespace.. Lisa Just a note: When I run this example through IE 5.0 (which has XML support), I get the following error: Reference to undeclared namespace prefix: 'd'. 
+Line 2, Position 25 thanks, rich heim 
+Not particularly. 
+It's not clear that your implementation effort is reduced if you have to modify an existing implementation to add more functionality. 
+Not that I can see. 
+You likely should review draft-iesg-using-http-00.txt, as well; it's an initial draft about the policy on 'using HTTP for other protocols', which seems to be what some people desire for SWAP. 

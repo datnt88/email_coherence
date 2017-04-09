@@ -1,0 +1,76 @@
+I pulled a copy of the test suite from CVS and noticed that the dom1.dtd 
+file is not there. 
+It was in the previous release in the "test" directory. 
+And at lease some (if not all) of the tests currently in CVS reference the DTD. 
+If it's not going to be supported anymore, the references need to be removed. 
+If it is to be supported, the DTD need to be placed in CVS. 
+This brings up some good questions: Can the current tests in CVS (for at least core level 1 tests) be validated against dom1.dtd from the previous release ???? 
+Will this be supported in the future ???? 
+What about level 2 ??? Has the definition of the test files changed to support level 2 ??? 
+In any case, I a building a test harness for the test suite and I need a good definition of the contents of the test files so I can build the test generator. 
+Is there such a definition in CVS or elsewhere ????? 
+Joe Schafer jschafer@iquest.net 
+All the DTD's are built from the DOM specs as part of the build process. 
+Running the "dom1-dtd" target will generate the dom1.dtd and copy the built 
+file to the appropriate test directories. 
+There are several "-validate-tests" targets that will validate tests against the appropriate 
+DTD. 
+comments inlined 
+[dd] As Curt indicated, the DTD (and schema) are generated 
+[dd] Most of the current tests are validated against the same DTD, since this is generated from the W3C specifications and Working Drafts. 
+However, it's best to generate them using the specific target in the build process. 
+[dd] I think the best way to go about is to take a test file (XML) and compare it to the code which is generated from it to understand how it 
+works. 
+There isn't a description of the markup language, mainly due to lack of time. 
+What language and/or implementation are you wanting to test? 
+The code generation templates are pretty numbingly complex XSLT. 
+Probably the best process is to: generate the Java tests manually transliterate a few of them to your target language, binding and xUnit test framework Transliterate the framework functions Get the few tests running Create a test-to-whatever.xsl from test-to-java.xsl to produce something like your transliterated tests Iterate 
+I know someone has already done the process for a C or C++ parser, would have to check the mailing list history for the details. 
+If you can tackle the first couple of steps, we could probably help on the last couple. 
+I am using an XML parser and DOM that I wrote myself that is based on COM. 
+I have gotten it to completely pass the previously released level 1 tests using JsUnit. 
+And I am now working on the level 2 support. 
+However, I want to get away from JsUnit and JUnit is not acceptable either. 
+They both introduce dependencies from the Java/DOM or JavaScript/DOM bindings that have nothing to do with my COM bindings. 
+I have noticed the "numbing complexity". 
+I want to avoid this all together. 
+I'm taking the approach to read the XML definitions of the tests and then call the functions directly. 
+No intermediate source code generation. 
+The COM standard provides all I need and I don't have to deal with language specific binding issues either !!!! 
+So I am far more concerned with changes to the DTD's used to validate the test definitions than I am with changes or additions to tests in the suite. 
+In fact I have a task on my plate to programmatically generate tests to pass 
+though this framework. 
+So DTD stability is doubly important to me. 
+Since the DTD's are generated, I guess the real question is how stable are 
+the inputs and scripts used to generate the DTD's ???? 
+Or maybe as a longer term solution, Is there any place I can get recently 
+generated copies of the test suite so I can avoid going though the whole build 
+process just to get a few files ???? 
+It might not be a bad idea to include even 
+the generated components in CVS !!!!! 
+Joe Schafer jschafer@iquest.net 
+Comments inlined: 
+suite. 
+pass 
+are 
+The most significant factor is the stability of the DOM level that is being addressed. 
+The DTD's and Schemas for DOM Level 1 and DOM Level 2 are very stable. 
+The schema for DOM Level 3 will change with new working drafts of the L3 modules. 
+There are some constructs that are needed in L3 tests that can't effectively be validated using DTD's, so we don't anticipate producing an L3 DTD. 
+The other source for changes in the introduction of new utility constructs. 
+For example, writing events tests was made substantially easier by adding a EventMonitor type and associated methods. 
+These additions are fairly rare and changes to existing constructs are unlikely. 
+You could review the revision history of transforms/dom-to-schema.xsl if you want some metric of how frequently that occurs. 
+Your COM runner would also want to use the domX-interfaces.xml 
+file produced from the build process. 
+This basically provides the expected "type library" for the DOM implementation. 
+It is used by the current code generation to determine when cast operators are needed. 
+recently 
+build 
+include even 
+The DOM3 schemas I assume are out of date. 
+Thanks for the clarification. 
+However the link: does not seem to be active or there is some restrictive permissions on it. 
+I can see http://www.w3.org/DOM/Test/Documents but the DOMTSML.html file is not accessible !!! Joe Schafer jschafer@iquest.net 
+Thanks for the info, I'll look into this issue, otherwise just go with any links on the main (http://www.w3.org/DOM/Test) page, they are stable. 
+/Dimitris 

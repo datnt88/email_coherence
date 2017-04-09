@@ -1,0 +1,63 @@
+== Task &amp; Roles A client software wishes to connect to server software to retrieve RDF via a query. 
+The client wishes to render the query result for the user using XSLT. 
+The XSL transformation should be self-sufficient i.e. no more queries are needed from the XSL itself to render human readable strings. 
+== Description A client requests for music:genre property value from a server. 
+Here, the music:genre value will be a resource type of object. 
+The client uses XSLT to transform the query result into XHTML. 
+For a Finnish user, an object value 'http://music.org/genres/Classical' should be rendered as string 'Klassinen musiikki' and for English speaking users as 'Classic music'. 
+In addition, the property 'music:genre' should be rendered as 'tyylilaji' for Finnish users and as 'genre' for English speaking users. 
+These strings might be available via schema annotations using primitives such as rdfs:label or rdfs:comment. 
+Instead of making a complex query (at the end of the day) which returns rdfs:label and rdfs:comment for the resource values and for properties, a syntactic sugar would be useful to make the annotations available for all of them in the query result. 
+Janne Saarela janne.saarela@profium.com 
+Profium, Lars Sonckin kaari 12, 02600 Espoo, Finland Mob. 
++358 (0)40 508 4767 Internet: http://www.profium.com 
+One could get the answer: { ?tune 
+vcard:FN "L'amour de loin". 
+?tune 
+mb:genre ?genre. 
+} = {  answer (?genre) }. and the presentation information: { mn:genre rdfs:label ?label 
+} = {  answer (?label) }. separately. 
+Is it a common case that the client asking about an mb:genre property won't know how to display it? 
+I think this presentation request comes up more commonly when the client doesn't know exactly what properties it is looking for: { ?thingy 
+vcard:FN "L'amour de loin". 
+?thingy 
+?p ?v. } = {  answer (?p ?v) 
+}. 
+A query language that expressed variable predicates would allow for these queries to be smushed together: { ?thingy 
+vcard:FN "L'amour de loin". 
+?thingy 
+?p ?v. ?p rdfs:label ?label 
+} = {  answer (?p ?v 
+?label) 
+}. -eric office: +81.466.49.1170 W3C, Keio Research Institute at SFC, Shonan Fujisawa Campus, Keio University, 5322 Endo, Fujisawa, Kanagawa 252-8520 JAPAN cell: +1.857.222.5741 (does not work in Asia) (eric@w3.org) 
+Feel free to forward this message to any list for any purpose other than email address distribution. 
+I agree that making separate queries will do the trick but it will make XSLT development trickier. 
+What we need to build to our customers is query result visualisation using XSLT from RDF/XML to (X)HTML and other markup. 
+For this purpose we've noticed that we need access to labels/comments from XSLT. 
+If they are not explicitly requested in the original query, alternatives are: a) make other queries for them like you suggested which makes xslt more inefficient. 
+b) include the natural language descriptions in the XSLT (replicating strings from RDFS to XSLT, not very nice) Therefore we had to introduce support for syntactic sugar ourselves to include rdfs:label and rdfs:comment to query results without query explicitly asking for them. 
+Janne 
+Janne Saarela janne.saarela@profium.com 
+Profium, Lars Sonckin kaari 12, 02600 Espoo, Finland Mob. 
++358 (0)40 508 4767 Internet: http://www.profium.com 
+Its seems to me that there are different stages in handling the query going on here. 
+A simple model I have used in the past is that a query has 3 phases - locate, extract, present - which tries to capture the different concerns. 
+Locate: find the parts of the graph of interest (often, a set of resources) This is the matching part. 
+Extract: for each part that is interesting, collect information, such as additional property values or local subgraphs. 
+That is, this phase does not effect the success or failure of the matching part but does contribute to the overall information returned. 
+Optional triples fit here. 
+Present: concerned about how the results are handed back to the application or requesting agent. 
+For example, results sets or subgraphs of the original graph. 
+Applying this (rather simple) framework, the annotations Janne describes are 
+an issue for the extract phase, not the matching. 
+The use of a second query, driven by the first, is a common way an app has to do it in many of the existing QLs but some allow option matching which includes the case of adding annotations. 
+Andy 
+From: Janne Saarela Date: 15 March 2004 07:50 
+I think Andy's structuring of query steps makes a lot of sense. 
+If possible, we could associate use cases to one or more steps of this structure. 
+Clearly, JS-2 is related to the extract part and asks for syntactic sugar to do it without additional query primitives in locate part. 
+Janne 
+From: Janne Saarela Date: 15 March 2004 07:50 
+Janne Saarela janne.saarela@profium.com 
+Profium, Lars Sonckin kaari 12, 02600 Espoo, Finland Mob. 
++358 (0)40 508 4767 Internet: http://www.profium.com 

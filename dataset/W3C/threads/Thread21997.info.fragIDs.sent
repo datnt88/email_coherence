@@ -1,0 +1,40 @@
+Hi Everyone, We are in the process of updating our tests to DOM L2 and have come across a couple of questions. 
+1) The setPrefix() method will throw a NAMESPACE_ERR DOMException if the specified prefix is malformed. 
+The same method will also throw an INVALID_CHARACTER_ERR if the specified prefix contains an illegal character. 
+What is the difference between a malformed prefix and a prefix with an invalid character? 
+How are they distinguished? 
+2) The setPrefix() method will throw a NO_MODIFICATION_ALLOWED_ERR if this 
+node is readonly. 
+How do you determine if a node is readonly or not? 
+Is there a way to specify a node as readonly? 
+As it turns out, we had problems converting our read 
+only tests to Java and do not have any tests in this area. 
+Can anyone suggest a 
+test scenario that will give us a read-only node that we can then manipulate? 
+Thanks, Mary Brady NIST, Conformance Testing mbrady@nist.gov 
+Descendents of EntityReference and Entity nodes are automatically marked read-only. 
+The latter may or may not be revised when DOM Level 3 addresses DTDs in more detail. 
+You can't currently ask a node if it's readonly except by trying to modify it. 
+That query, and ways to selectively make nodes read-only or read-write by user request, are known wishlist items. 
+Joe Kesselman / IBM Research 
+We ran into the same question. 
+On the WWW-DOM list it was answered as follows: - A qualfied name (QN) is malformed, if you cannot determine if it has a prefix, or where the prefix ends and the local name starts. 
+Thus, a QN is malformed if it has: - more than one colon (:). 
+- A colon at the start or at the end of the QN. - A prefix is malformed if it contains a colon. 
+So in both these cases a NAMESPACE_ERR is appropriate. 
+In all other cases (where the QN or prefix doesn't match the XML Name production) a INVALID_CHARACTER_ERR is appropriate. 
+Entity and EntityReference Node subtrees are read-only. 
+However, you cannot create Entity Nodes with the DOM Level 2 API alone. 
+In our DOM level 2 tests for Python DOM implementations the API asks for a parse method to be passed in, next to the DOMIMplementation to be tested. 
+This method is expected to accept an arbitrary XML document (stored in a string) and return a DOM tree built with the DOMImplementation that is tested. 
+With the help of this method our tests *can* create Entity Nodes, and thus execute tests on read-only Node types. 
+We simply pass in a document that defines an interal DTD which in turn defines an entity. 
+We test individual attributes on their read-only state by trying to change them, expecting an exception to be raised. 
+We also test for all situations where a NO_MODIFICATION_ERR should be raised, for example when trying to append a Node that itself is a child of a read-only node. 
+There are no other ways of determining wether or not a Node is read-only. 
+Martijn Pieters 
+Software Engineer mailto:mj@digicool.com 
+Digital Creations http://www.digicool.com/ 
+Creators of Zope http://www.zope.org/ 
+The specification has been clarified. 
+See errata core-10, core-11 and core-12 in Thank you for your report, Philippe 

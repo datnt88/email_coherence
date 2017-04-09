@@ -1,0 +1,50 @@
+Although the spec includes a "Group by" example we have found that such an xquery performs very poorly. 
+The reason for this is that the number of comparisons explode as it behaves quadratically. 
+Since there is a sort by expression why not a group by as well - it would also make mapping to SQL a little easier. 
+At the moment we have implemented group by as a function - with enormous performance gains 
+Regards, Eddie 
+Hi Eddie, Several companies have proposed or implemented group by extensions, and these extensions differ. 
+It would be helpful to have information on the group by function that you have implemented. 
+One of the big questions is a central semantic one - what exactly is a group, given the definition of FLWR? 
+Earlier in the WG's history, we had some group by proposals. 
+One of the issues was defining exactly what is meant by a group, and what relationship a group has to the tuple stream of FLWR and its variable bindings. 
+Several of us felt that trying to add group by, at least in the given proposals, was complicating and muddling the language, without adding functionality. 
+This may or may not be true of the group by that you have developed - more details would be helpful. 
+In one proposal we examined, GROUP BY would be used in the RETURN clause as follows: for $b in document("http://www.bn.com")/bib/book, $a in $b/author, $y in $b/@year return groupby $a, $y in result { $a, }, year { $y } /year , But to make this work, the return clause needs access to more than one tuple, which it does not have. 
+Another possibility would be to make group by a separate clause in FLWR, eg: for $b in document("http://www.bn.com")/bib/book group by $a in $b/author, $y in $b/@year return { $a, }, year { $y } /year , This is more plausible, but defining the interaction between the tuple stream and the groups is somewhat problematic. 
+Do you want the return clause to be executed once per group? 
+Do you want the above query to be equivalent to this: for $a in distinct-values($b/author), $y in distinct-values($b/@year) let $b := document("http://www.bn.com")/bib/book[author=$a and @year=$y] return { $a, }, year { $y } /year , If so, then arguably the group by example should have used let rather than for to bind the variable. 
+What exactly is the definition of for and let in the presence of group by? 
+Should we allow both group by and for to exist in the same FLWR expression? 
+Is the group by version any clearer for the user? 
+Is the version that doesn't use group by really that hard to optimize? 
+In your mail, you suggest that the number of comparisons explodes 
+quadratically without group by. What comparisons would you make for the query with group by, and what comparisons would you make for the query without group by? 
+In other words, should we just teach the people who want group by to use the idiom shown above? 
+Many of the proposals I have seen for grouping show 
+equivalent XQueries without grouping that are just awful. 
+That may be a matter of just learning the appropriate idioms. 
+I believe that the main reason for group by is to aid optimization. 
+When I write queries that do grouping, I generally see clear patterns that can be identified - when all the for bindings use distinct-values(), and a let clause filters by all a set of these variables, that's probably an indication that your optimizer could do something useful, probably something not much different from what you want to do with group by. 
+I think that grouping is something we should explore further in XQuery 2.0, but it's way too late for us to be adding features of this magnitude in XQuery 1.0. 
+We spent a lot of time exploring grouping early in the WG history, and we didn't come up with an approach that was particularly helpful. 
+Perhaps vendors will go out and implement various grouping extensions that we can learn from in our XQuery 2.0 design work, or perhaps we will find that what we have works fine without a grouping operator. 
+Jonathan 
+Adding to Jonathan's reply, I think the main difficulty in defining a "group by" construct is that the data model does not allow sets of sets (or sequences of sequences). 
+The natural result of a grouping function is to create a set of groups, and this result is difficult to model currently. 
+In XSLT 2.0 we got round this by not exposing the set of groups as an object, but providing a construct that iterates over this set, one group at a time, essentially (in XQuery-like syntax) for group $d in //employee group-by department return {-- $d is now a sequence representing the contents of one group --} {for $e in $d return {$e/name} Of course many people asking for XQuery group-by are looking for something like SQL group-by. 
+This doesn't really carry over very well to XML, because the SQL construct is constrained to return tuples, which don't make much sense in XML. 
+Given all the experience of the grouping problems people have with XSLT 1.0, I think that the distinct-values() function will probably meet 90% of the requirement, and with a little bit of cleverness I think it can be implemented with (n log n) performance (you need to create a dynamic index over the grouping population and then make sure you use it when needed). 
+So I do think this can be left to XQuery 2.0. 
+Michael Kay 
+"Since there is a sort by expression why not a group by as well?" 
+I agree with you. 
+Groupby is such a common operation that having a user-level syntax feature would be very very useful, both for users and for optimizers. 
+There is currently an open issue in the XQuery document, issue 168, asking for this feature -- we will take your feedback into account when considering this issue. 
+A proposal for adding groupby to the language have been submitted. 
+An common objection has been that the specification of the semantics through translation to XQuery without groupby is difficult, or that it requires changes to the data model (Jonathan Robie said essentially the first, and Michael Kay the second). 
+But this is not really an objection to any particular proposal for the feature, it is more an objection to the reality of what grouping does. 
+(each grouping creates a sequence of sequences -- the groups) I suggest you join the WG so that we can push for this feature together. 
+:-) I also suggest that you encourage other members of the community to voice their comments on the public drafts -- we need the feedback! 
+One question: are you suggesting/asking for a single-level grouping feature, or are you looking for a grouping feature that allows for nested groupings (let's say within the same FLWOR expression)? 
+Thanks, Vasilis Vassalos 

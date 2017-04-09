@@ -1,0 +1,47 @@
+Imagine that you've computed an MD5 (or other) checksum over the content body and various of the headers. 
+If you change any of them, the digest won't check thereafter. 
+When the digest is used for authentication and as a secure integrity check, the failure of the digest to check would lead to some kind of security fault. 
+The "no-transform" directive was added to tell proxies that changing the body or certain headers would lead to some kind of failure. 
+In the case in question (an HTTP to mail gateway), it may not be important that the recipient of the Mime-body be able to verify its 
+origins and that it wasn't tampered with in transit -- an ordinary mail client wouldn't know how to do so anyway. 
+Hence, adding a Content-Length in the gateway might not matter. 
+From: Jeffrey Mogul[SMTP:mogul@pa.dec.com] 
+Sent: Friday, December 13, 1996 3:48 PM Subject: Re: HTTP/1.1 Contradiction Hey HTTP-WG, why can't proxies modify/change Content-Length on no-transform responses? 
+I believe this is because the Digest-Authentication people needed that. 
+See (but you'll have to ask one of them for a definitive answer). 
+-Jeff 
+First let me say I'm not concerned with mail gateways, so I don't want to get too lost thinking about the implications of such. 
+:) I understand what you are saying in the first paragraph, and it sounds like what you are saying applies to Transfer-Encoding as well. 
+Or are we presuming that whatever the digest-computation algorithms are in the browser (and the server as well!) they are both intelligent/aware enough to ignore the Transfer-Encoding headers in their computations? 
+If we can't make that assumption (it sounds like a tenuous one), then we should state somewhere in the HTTP/1.1 spec that proxies are *not* allowed to remove Transform-Encodings on responses/messages that have a no-transform Cache-Control directive. 
+Are there any other implications of this? 
+Now I think some more about it.... 
+Why are we specifying headers at all? 
+Why aren't they ALL un-modifiable in face of no-transform and the possibility of a some-headers-digested situation? 
+Daniel DuBois, Traveling Coderman www.spyglass.com/~ddubois 
+o The Heroes of Might and Magic II Bible is here! 
+Because the transfer-encoding is added and stripped off on a hop-by-hop basis, that header (and its effects on the entity-body) were deliberately left out of the digest. 
+More precisely, only certain fields that we felt were strongly related to the integrity of the entity body are _included_ in the digest. 
+Here is what header-related info the digest-auth spec says is included in the digest: entity-info = H( digest-uri-value ":" media-type ":" ; Content-type, see section 3.7 of [2] *DIGIT ":" ; Content length, see 10.12 of [2] content-coding ":" ; Content-encoding, see 3.5 of [2] last-modified ":" ; last modified date, see 10.25 of [2] expires ; expiration date; see 10.19 of [2] last-modified = rfc1123-date ; see section 3.3.1 
+of [2] expires = rfc1123-date It goes on to say that if a header is missing, then the null string is included in the digest. 
+Note that this is mandatory for all the headers _except_ Content-Length, whose value can be computed even when the header is missing. 
+Note also that in order to digest a chunked body, the digest has to go in the footer, after the end of the chunk-encoded body. 
+However, the HTTP spec says that only headers that state that they are allowed in footers are allowed in footers, and the relevant digest-auth header does not so state. 
+So, there is no semantic reason that a proxy couldn't convert from a content-length that is implicit in the chunked encoding to one that is explicit in the Content-Length header, but we'd have to change a couple of things that essentially needlessly disallow it: CHANGES NEED TO THE HTTP/1.1 SPEC to make the above work: 1. Allow proxies to add Content-Length header if not present. 
+CHANGES NEEDED TO THE DIGEST SPEC: 1. Change section 2.1.3 "The AuthenticationInfo Header" to say that it is allowed in the footer of a chunked encoded HTTP message. 
+2. Change section 2.1.2 to specifically state that content length is always to be included. 
+The HTTP/1.1 spec requires that content length is well defined in all messages, whether or not there is a Content-Length header. 
+Paul 
+From: Daniel DuBois[SMTP:dan@spyglass.com] Sent: Friday, December 13, 1996 4:37 PM Subject: RE: HTTP/1.1 Contradiction 
+The spec says: Requests with a version lower than that of the proxy/gateway's version MAY be upgraded before being forwarded; the proxy/gateway's response to that request MUST be in the same major version as the request. 
+How about the following: 1.0 Client - 1.1 Proxy - 1.1 Origin Client sends request to proxy, proxy forms 1.1 request to origin, origin starts CGI program, CGI program generates response sans Content-Length, origin chunkifies entity body, origin sends chunked/no-transform/digest/whatever response to 1.1 proxy, proxy MUST remove the chunking before sending it to the 1.0 client. 
+Pat 
+"PL" == Paul Leach paulle@microsoft.com 
+... writes re the interation between transfer-encoding and content digest in authentication information. 
+PL Note also that in order to digest a chunked body, the digest has to go PL in the footer, after the end of the chunk-encoded body. 
+However, the PL HTTP spec says that only headers that state that they are allowed in PL footers are allowed in footers, and the relevant digest-auth header does PL not so state. 
+PL CHANGES NEEDED TO THE DIGEST SPEC: PL 1. Change section 2.1.3 "The AuthenticationInfo Header" to say that it PL is allowed in the footer of a chunked encoded HTTP message. 
+This issue is also important in the context of servers for embedded systems (such as our EmWeb product http://www.agranat.com/emweb.html ). 
+Because much of the data we serve is generated dynamically and because in an embedded system it is not practical to buffer all the data in order to compute a content digest before sending it, we would very much like to see the change Paul suggests above to allow the Authentication-info header to appear in the final chunk of a chunk-encoded response. 
+Scott Lawrence Principal Engineer lawrence@agranat.com 
+Agranat Systems, Inc. http://www.agranat.com/ 

@@ -1,0 +1,110 @@
+I am working on the next version of the HTTP PATCH method proposal: 
+We've had some discussions amongst WebDAV people of the best way for 
+clients to discover server feature support. 
+In this case, the client wants to discover: - if the server supports PATCH at all - if so, what delta or diff formats can be used on this resource. 
+For that purpose, is a new header on OPTIONS still considered to be the way to go? 
+Can a server omit this header on responses to OPTIONS * if 
+it only supports the feature in part of its namespace? 
+(E.g. if a java servlet supplies support for this feature only in the namespace hosted by that servlet) Any other comments on the draft are welcome as well. 
+Thanks, Lisa Dusseault 
+The discussion is captured here: Regards, Julian 
+Hello Lisa, Could you please expound upon the reasons why PUT with a Content-Range is a dangerous operation? 
+In your draft you state: The PUT method is already defined to overwrite a resource with a complete new body, and MUST NOT be reused to do partial changes. 
+Otherwise, proxies and caches and even clients and servers may get confused as to the result of the operation. 
+But it is not clear to me why this is a problem. 
+I would appreciate your thoughts on this issue, and it may be worthwhile to expound upon it a bit in your draft. 
+Thanks, 
+-Justin Justin Chapweske - Founder, Onion Networks 651-340-8787 Transfer large files 900% faster than FTP with Onion Networks' WAN 
+Transport(tm). http://onionnetworks.com/products_wantransport.php 
+I do mention one reason in the draft -- the problem of write-through caches. 
+The cache (if an intermediary) could see a PUT with a body and save the body as the new body for the resource, even though the PUT 
+request body is only a diff or content range. 
+Greg Stein expressed 
+this better than me: PUT works a certain way, and has been known to 
+work a certain way for at least a decade, and it's very difficult to change its semantic meaning without breaking things. 
+Another concern I have is that HTTP servers that allow PUT may ignore the Content-Range header since it's not defined as a PUT header. 
+This is even worse -- the authoritative source will then replace the full resource with a corrupted, partial resource. 
+I suspect clients have 
+tried this already and found it not to work in practice. 
+Similarly, HTTP servers that support PUT today simply won't understand a new header defined in an extension draft. 
+It *might* work for the client to ask the server for support for the header on the specific resource that the client would like to alter, before using PUT -- but that wouldn't solve the intermediary or cache misunderstanding problems. 
+Lisa 
+gives the reason why PUT-RANGE wasn't left in the HTTP 1.1 specification and is where PUT-RANGE was officially removed from Rev-02 of the HTTP 1.1 spec. 
+Yes, Apple's WebDAV file system client still has to deal with the performance problems of not having better range operations. 
+When a large resource is opened, modified and closed by a file system client, the entire resource has to be downloaded with a GET and then re-uploaded to the server with a PUT -- even if just a single byte is changed. 
+I like the PATCH proposal because it provides clients with: 1 - The ability to change the size of a resource independent or in addition to changing the data. 
+PUT doesn't do this unless you change the current meaning of the byte-content-range-spec passed in a Content-Range header so that */100 means "set the length of the resource to 100 -- truncate the resource if its current length is more than 100, zero extend the resource if its current length is less than 100". 
+2 - The ability to change multiple ranges and optionally the size of a 
+resource with a single request. 
+On high latency connections, our 
+performance problems are often causes by the number of transactions, not the amount of data transfered. 
+How does PATCH proposal allow to separate data from its size? 
+I was always thinking that in HTTP world the "size of the resource" and "size of [resource] data" are always the same. 
+That is, "size" is not a property that can be changed without changing resource content/data. 
+Can you clarify why would you want to separate the two concepts and would "zero" definition depend on content type or patch format? 
+Multi-hunk patches are indeed very useful to support atomic updates. 
+draft-dusseault-http-patch-01 does not seem to have error codes related to situations where some of the patch hunks failed while others succeeded. 
+Are all updates assumed to be atomic (i.e., all or nothing)? 
+Should this assumption be made explicit? 
+Sorry if I missed it in the draft. 
+Thanks, Alex. 
+I meant that you could change the size of a resource without resending its existing content. 
+For example, to truncate a resource to just the first 100 bytes of its current content, this gdiff command could be 0xd1, 0xff, 0xd1, 0xff 4 249,0,0,100 0 Extending a resource without resending its existing content can be accomplished with a gdiff copy command (to copy the existing resource content) followed by a data command with the new data to be appended. 
+Yes, I agree that updates should be atomic. 
+On many current HTTP servers PUT is not atomic, and so a GET during an in-progress PUT will return just the portion of the resource already sent to the server. 
+Related to this, does the gdiff format allow you to succinctly describe a remote random-access write type operation? 
+It seems to me that there will be two main ways in which PATCH will be used: o The traditional diff/patch approach where complete copies of the old and new versions of the files are compared to extract a diff. 
+The diff is then PATCHed to the HTTP resource. 
+o Real-time edits and random-access I/O ala NFS. 
+It should be simple to express actions such as: - Write bytes at a given offset, including scattered writes - Append to the end of a file (already covered) - Skip beyond the end of the file and write some bytes, leveraging support for file system "holes" if supported by the server. 
+- Truncate the file to a given length, including 0. (already covered) I would guess that some WebDAV clients that are implemented as file system drivers may tend to prefer the second approach, especially if operating over low-latency networks. 
+This brings up another issue. 
+With the second style of PATCHing, the suggestion that " The server SHOULD provide a MD5 hash of the content after the delta was applied. 
+" becomes very onerous indeed since a bunch of small writes to a huge file will result in an unacceptable performance hit. 
+In any case, I think it is important that the specification recommend a delta format that can meet the needs of both diff/patch type usage as well as remote random-access I/O patterns. 
+Thanks, -Justin 
+Justin Chapweske - Founder, Onion Networks 651-340-8787 Transfer large files 10x faster than FTP with Onion Networks' WAN Transport(tm). 
+http://onionnetworks.com/products_wantransport.php 
+Yes, and the performance hit can be unacceptable for the first kind of patching as well. 
+However, SHOULD level seems appropriate for this case. 
+The server is free to skip MD5 calculation for large files, for example. 
+I am not sure I agree. 
+Would it be better to provide a different method for remote random-access I/O patterns? 
+Random I/Os seem to have different enough priorities and possibly different set of essential operations to justify the increased complexity of morphing two content modification methods together. 
+Thanks, Alex. 
+I doubt that a different method is needed besides PATCH, but perhaps a simple alternate diff format that can express these random-access I/Os would be appropriate. 
+Honestly I don't know what the answer is since I have no expertise on the specific diff/delta algorithms that are being discussed. 
+I would just like to see a base-line format that can express these types of I/O patterns in an easily implementable manner. 
+Thanks, -Justin 
+Exactly. 
+It seems to me that the ability to map file operations directly to a PATCH format is essential. 
+It will be extremely useful for all WebDAV clients that act as filesystem drivers (there are at least three different ones for Windows, one for Linux and one for OS/X). 
+Also, I think we should keep the number of REQUIRED patch formats minimal, and the ones that are indeed required should be dead simple tim implement. 
+If there isn't a simple format to which file i/o (write bytes, seek, truncate) can be mapped, we should specify one. 
+Such as: SEEK bytes (only positive offsets accepted, seeking beyond end of "document" appends zero bytes) WRITE bytes bytestream TRUNCATE Example: 
+SEEK 1234 lf WRITE 5 lf abcde lf TRUNCATE lf would seek by 1234 bytes, write the bytes stream "abcde" (format is binary), then truncate at this position. 
+Yep. Best regards, Julian 
+The gdiff format expressed these operations fairly straightforwardly. 
+Gdiff is just a sequence of "COPY n bytes from position m of original" and "insert n DATA bytes b0,b1,...bn-1". 
+A random access write of n bytes to position p is expressed simply in gdiff as: COPY 0,p DATA n,b0,b1,...,bn-1 COPY p+n,length-p-n The only difficulty for a filesystem driver is that it needs to know the length before sending the PATCH command. 
+If the driver and server are using Etags anyway, to ensure the PATCH applies to known content, then the driver will know the length. 
+Same if it's using WebDAV-style locking. 
+However, Etags are often based on things like the MD5 of the file's contents, which we don't want the server to have to recompute each time. 
+We should bear in mind that if we're trying to design a _good_ read-write file server protocol, a bit more thought needs to go into the cacheing model. 
+-- Jamie 
+Jamie, my concerns are - no standards-track documentation of GDIFF (as far as I understand) and 
+- it seems to do more than we need. 
+Therefore the proposal to use a *very* simple format (pick one if it exists, otherwise invent one), put it into the PATCH specification and make that one (and only that one) mandatory. 
+Optimally, a reliable implementation of that format should be doable in one day. 
+Regards, Julian 
+...for instance, GDIFF requires random access to the old file, while a simpler format may work on plain streams... 
+Regards, Julian 
+That was my immediate concern when I read the GDIFF spec too. 
+On the other hand, the random access allows fragments of the old file to be reordered. 
+Note that traditional "diff" and "patch" also require random access, because their hunks needn't be in order. 
+I looked at VCDIFF (which is quite a nice principle). 
+It does the same thing: random access is required. 
+Some attempt to reduce that is done by allowing the patch to specify "windows" from the old file which are operated on independently, in sequence. 
+I must admit I don't like that either: Gzip's sliding window with bounded length seems, on the face of it, like it would be more effective at compression (due to increased matching opportunities), while keeping the access pattern requirements of the patcher/decompressor bounded to a small region of the stream. 
+(Gzip also breaks the input stream into blocks, in sequence, but they are much larger than the sliding window, so much larger than the memory requirements of the decompressor (which would also be the patcher)). 
+-- Jamie 

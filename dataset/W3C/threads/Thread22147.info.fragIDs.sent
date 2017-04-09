@@ -1,0 +1,79 @@
+I was looking at this and I think either the test needs to change or the specification does. 
+The relevant parts of the test (in Java): newList = doc.getElementsByTagNameNS 
+("*", "employee"); newElement = (Element)newList.item 
+(3); The problem is that only two elements have a namespace URI, and that "*" is supposed to match "all namespaces". 
+Those two elements are: - employee ... EMP0001, Margaret Martin - emp:employee ... EMP0004, Jeny Oconnor 
+Now, either the spec should be changed so that "*" means to ignore any namespaces (and thereby match elements that are 
+not in any namespace), or (preferably) the test should change so that it accesses item 1, not item 3. - Dave 
+From the narrative of the test, the author clearly expected getElementsByTagNameNS to return five elements. 
+Xerces-J 1.4.3, Crimson 1.1.3 and a recently nightly build of Mozilla (the only implementations have 
+tested so far) returned 5 elements interpreting the call to be equivalent to the XPath expression descendent::*[local-name() = $tagname] not 
+decendent::*[namespace-uri() and local-name() = $tagname] There should be only one right answer to the result of the query, either 5 or 2 elements. 
+Changing the test so that the assertion is nodelist.size  
+= 2 doesn't help anyone. 
+Since the test narrative clearly says it expects 5 
+elements, I added a corresponding assertion to the body of the test. 
+If the ultimate correct answer is 2, then the test should be changed to require exactly 2 elements in the node list. 
+I would agree that your interpretation of the recommendation text is reasonable and possibly what the WG was trying to say, but if all (or almost all) the implementations read it a different way, then I would suggest an errata to ratify the defacto behavior. 
+Will need to get more data points on 
+the implementations. 
+The level 2 core tests are pretty fresh. 
+They were committed by NIST about 3 weeks ago and I've only worked through them enough to fix compilation problems (at that time) and to analyze the test failures for Xerces-J 1.4.3 (last couple of nights). 
+I've only superficially looked at the test failures from Mozilla (http://home.houston.rr.com/curta/mozilla-l2.txt) and Crimson (http://home.houston.rr.com/curta/crimson-l2.txt) to see what their response to getElementsByTagNameNS02. 
+I've updated test-to-ecmascript.xsl to reflect the changes in test-to-java.xsl 
+from 3 weeks ago and last night. 
+Running the tests from 
+Mozilla will require you to punch the OK button around 100 times, but you will finally get through. 
+I've never configured Ant to use Saxon. 
+The stuff about Ant and Xalan versions were specific combinations that have worked for me. 
+Any other combinations of Ant and Xalan have had problems, either locking up on two specific tests (documentcreatecdatasection and importNode02 specifically) that other versions of Xalan and Saxon process without incident or Xalan-J 2.2 throwing spurious XPath errors when a transform uses document() a lot. 
+If you could pass along some quick notes on using Saxon with Ant, I'd be grateful. 
+That's pretty much what I said ... either the spec has a bug, or some implementations do. 
+I think it's the implementations, but the question does need to get answered. 
+Ratifying random bugs is a dangerous route. 
+How does the DOM WG get involved when such issues get raised? 
+All I did was run ANT 1.4.1 (current) in an environment that's set up to default to using the current GNUJAXP code (SAX and DOM) and Saxon 6.4.2; 
+I've no idea if more recent versions of Saxon would behave differently. 
+The build ran fine, modulo out-of-memory problems caused by having too much other stuff going on at the same time. 
+- Dave 
+comments inlined 
+[dd] If there are tests that bring up the question of there possibly being an error in the specification, it gets immediately discussed by the DOM WG for further action. 
+There can be basically two outcomes: 1. 
+The test is considered incorrect, in which case the specification remains intact, perhaps reqwriting is necessary to clarify things futher 2. The tests is correct, in which case the WG decides on what should be done to the spec, perhaps an erratum 
+This is not an exhaustive list, things can end up in between. 
+In any case it is written into the DOM TS charter that tests bringing specification ambiguity to the surface are dealt with in due course. 
+There area of course cases in between 
+There's a similar problem with getElementsByTagNameNS04 ... only three of the "address" element have a namespace: for EMP001, EMP004, and EMP005. 
+But the test is written to expect that all of the "address" elements have namespaces. 
+- Dave 
+Does GNUJAXP implement the bahavior that you are expecting? 
+Yes: "In NO namespace" != "In ANY namespace". 
+Could you post the overall test results from GNUJAXP. 
+Referring to the DOM-TS tests from CVS as of a couple days ago, and just summarizing results with the current GNUJAXP release ... everything passes EXCEPT: - Quite a number of the tests that try to verify behavior for readonly nodes produce errors because instead of using such nodes as found in the document, they try to create new entity refs ... such refs are created with no children. 
+Seems to me a number of those tests would be better if they verified that behavior using the entity ref nodes in the document. 
+And those tests should likely not execute when the parser isn't populating entity refs. 
+(Lots of tests such as "unreadablenamenomodificationallowederr" fail, about a dozen total, this is the main L1 failure mode. 
+:) (This is an area where IMO there are longstanding API deficiencies in DOM. 
+First, you can't mark subtrees as readonly. 
+Second, entities and entity refs, in their entirety. 
+I recall discussions late in DOM L1 to ensure it was legal to never populate these nodes, yet these tests insist that they must always be populated.) 
+- Some of the L2 importNode tests acted strange. 
+I need to look at them some more. 
+For example, one seems to expect that importing a no-namespace node will cause the imported node to acquire a namespace. 
+(importNode{07,10,11,12} gave problems.) - Those L2 getElementsByTagNameNS tests, as mentioned, where I think the tests are wrong (since they treat the "no namespace" case like a "has a namespace" case). 
+In one parser mode, some more of the L2 tests failed, such as some "prefix" tests. 
+Haven't had a look at any of those to see what's up yet, could be a bug in tests or in the implementation. 
+For L1 it was mostly those "create another populated entity ref" tests that failed. 
+- Dave 
+Does GNUJAXP implement the bahavior that you are expecting? 
+Could you post the overall test results from GNUJAXP. 
+Could you point out something in the specs that would support an entity reference created with createEntityReference not being identical to an entity reference that was created due to an entity reference in the source document? 
+If that was allowable, then you should never trust the child contents of an entity reference. 
+The tests that were expected to raise a NO_MODIFICATION_ERR. as submitted from NIST , depended on entity references being preserved. 
+However, since an implementation is free to expand entity references (for example, Xerces-C cannot preserve entity references), these tests would be skipped and the particular behavior not tested. 
+To test the same behavior for implementations that expanded entity references (or for implementations where this behavior is switchable), I created variants of the NIST supported tests that created the equivalent entity reference and added an EE suffix. 
+So for implementations (or configurations) that support entity preservation, the same behavior is tested with both entity references created from the base document and entity references created using createEntityReference. 
+For implementations or configurations that expand entity references, only the createEntityReference test is run. 
+Xerces-J 1.4.3 shows an interesting behavior, when entity reference preservation is on, the createEntityReference tests pass. 
+However, the same tests fail when entity references are expanded. 
+It seems inappropriate that the document loading configuration should affect the behavior of subsequent document manipulation. 

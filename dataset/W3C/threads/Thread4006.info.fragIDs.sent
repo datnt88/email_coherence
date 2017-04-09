@@ -1,0 +1,139 @@
+Hi, I would like to make a case for the removal of the restriction imposed on 
+the result-document instruction when writing to a temporary result tree. 
+The proposal states: 
+[ERR146] It is a dynamic error to evaluate the xsl:result-document instruction when the current destination node is not a node belonging to a result tree (for example, when it is a node belonging to a temporary tree). 
+The processor must signal the error. 
+. 
+This means, for example, that it is an error to use xsl:result-document when the tree containing the current destination node is a temporary tree created using xsl:variable, or a tree created using xsl:message, xsl:attribute, etc 
+and, as I understand, the issue that brought this restriction was related to limiting side-effects and a typical case was stated as: But let's take a global variable / / The variable is never referenced. 
+Should the result document be output, or not? 
+There are a few alternatives to answer this question, but restricting result-document is not the right one because it is much to restrictive. 
+In fact it blocks recursion for serialization of documents which I would think is one of the last things to do in a functional environment. 
+XSLT is functional programming and functional programming is recursion for recursive structures. 
+Blocking recursion is defeating the main purpose. 
+Here is a brief summary of the issue. 
+First a trivial example where a "Cannot switch to a final result destination while writing a temporary tree" error on the line marked with an x is generated when the processor (ex: Saxon v7.3.1 reaches the recursive call to 'publish' and executes the 'make-page' template from there. 
+x xsl:result-document format="output-format" href="{$fname}" xsl:with-param Writing a secondary document is not a side effect, it is simply dealing with (serializing to) the real world where information is mapped to finite flat files like web pages. 
+It seems to us like a major impediment if a style sheet is limited to outputting a single page at a time, without recursion. 
+We have here an application with 10 to 20K lines of XSLT, processing millions of lines of streaming and static XML into infinitely complex documents for printed and interactive access. 
+There are many issues involved and performance is one of them. 
+One of the keys is to stream and process graphs and structures efficiently. 
+Recursion and not having to reprocess the same (often very large) structures iteratively is crucial. 
+So as one traverses such structures, gathering data and building a page, and one finds information there that warrants a sub page (and so on recursively), one needs to also produce those pages. 
+With the current restriction, the only alternative is to iteratively process and reprocess the structure(s), building multiple temporary trees and variables, recalculating values and node sets until the full depth of the structure(s)I has been reached and all sub-pages at all levels of the recurring structure have been generated. 
+This is using iteration to deal with recursion. 
+It is not only (very) inefficient and awkward (and not streamable), it is plain ugly. 
+The example code here was purposely simple to show where the error message occurred but we do have real world examples and they are far more intricate. 
+This feature is required by a few major modules in our application (ex: publishing, O-R mapping, invoicing, etc.). 
+We built this application with Saxon v6.5.2 that complied to the XSLT 1.1 draft which defined a "document" instruction that did not have this restriction on changing the final output document while writing to a temporary tree. 
+Our application works fine with Saxon v6.5.2 (XSLT v1.1) but cannot be ported to Saxon 7.3.1 
+(XSLT v2.0) for this single reason. 
+This is a major limitation to us. 
+But we also feel that it is a major limitation for XSLT. 
+Of course side-effects should be avoided but preventing recursion (for serialisation) is not the right way, because the cost is to high and out weights the benefits. 
+As for the unused global variable with a result-document in the initial example above, I tend to believe that if the variable is unused, the document should probably not be output and the processor should probably signal that the variable is not used (and (possibly) that the document will not be output). 
+Other solutions could also be acceptable to us, including outputting the document anyway or even, as was suggested, that the document be output only if the temporary tree gets copied to the final result tree. 
+We would be happy to contribute in any way on the resolution of this issue (changing final output while writing a temporary tree) so do not hesitate to contact us. 
+Thank you. 
+Regards, Andre Cusson ac@hyperbase.com 
+01 Communications Inc. 11840 Norwood Avenue Montreal, QC, H3L 3H7 
+I think that the mental model we have used for multiple result trees is that 
+there is conceptually one combined tree, and that the actual result trees 
+all have to be subtrees of this combined tree. 
+The stylesheet logic for 
+writing multiple result documents is therefore exactly the same as you would write if you were generating the combined tree. 
+If you can write the logic 
+to produce the combined tree, then it is trivial to modify it to produce 
+multiple trees. 
+What the facility for multiple result trees does not do is 
+to free you from the need to produce output in "result tree order" - that 
+is, the order of instructions in the stylesheet reflects the order of nodes 
+written to the result. 
+Its true that the restriction on when xsl:result-document can be used 
+appears somewhat draconian, and the problem it is solving seems rather small 
+in comparison. 
+Arguably, we are applying the "no-side-effects" philosophy of the language rather strictly in this case. 
+I'm sure we could relax the rules by leaving some edge cases implementation defined, but on the whole we have been reluctant to do that. 
+We did have a different solution to this problem in earlier drafts, but it 
+required extra information in the data model and was very hard to understand. 
+It still imposed substantial restrictions. 
+The model was that a result document was effectively a child node attached to some other tree, invisible to XPath expressions, but still linked in the sense that the tree was written out only if and when the parent node was written to a result tree. 
+We spent some time debating this and I'm reluctant to re-open it. 
+Rather, 
+I'd like to see whether we can use your problem as a test case to see 
+whether the existing language is up to solving the problem. 
+In the example 
+you show, I find it very hard to understand why you are trying to produce a 
+result document as a side-effect of calculating a parameter to a named 
+template. 
+It seems a very odd way to do things, though I'm sure it makes sense to you. 
+Michael Kay 
+Hi, Thank you again for your time and interest. 
+I would like to sit down with you and show you what we are doing but since that is not really possible now and since the code base is relatively large (and complex), I will try to describe some typical problems we are trying to solve, using result-document. 
+In essence, it is quite simple: 1. 
+The principle : a possibly large and complex source xml document that needs to be traversed recursively and from which pages (ex: web pages) are to be published. 
+2.. 
+A publishing use case : I have a source XML document of , lets say 50 to 100K lines, describing the structured content of a scientific information web site, organized in volumes, sections, chapters, and pages (which are of course also organized into sections, sub-sections, paragraphs, etc). 
+Further, the page contents, gathered from the source document have to be merged with XML defined layouts that describe the page layout. 
+Every time a page is to be published, the page-publish template is called and passed the corresponding contents. 
+It then merges the contents into specified layout(s) and then serializes the page to html. 
+Note: this is again a simplified model of a section of the application, the publishing module. 
+As the publishing module is traversing the source document, it figures out what needs to be done and calls the page-publish template as required. 
+Many cases happen. 
+A typical one could be, for example, a test page, a page that offers a test to the user: so we start building the page tree and doing all kinds of calculations for the page, on this page we also find information to build the answer page which uses a lot of the same data so we build the answer page, publish it and go on with the publishing of the test page, building hyperlinks and navigation between the pages, and so on. 
+The only issue is that since we are traversing down a tree, the leaves get output first and the root, last. 
+3. O-R mapping use case: Another example could come from our O-R mapping tool where we take a tree, any tree and map its contents to a series of hyperlinked editing forms, each with a table with the children (or a group of them) of a node and where each child that has children will require additional sub-pages, and so on recursively. 
+So, as I am building page 1, I find that I also need to do pages 1a, 1b and 1c (all with bidirectional links (xpointers) between them). 
+Since everything is recursive, as I start building page 1a, but now I find that I also have to build sub-pages 1a1, 1a2 and 1a3 and so on. 
+Every time that I have a page ready, I publish it but, because of recursion, bottom pages (tree leaves) get publish first and the root node is still being build at that time so the result-document instruction bombs out. 
+The way I see this, we are not using a side-effect, we are doing plain recursive processing, with no tricks or anything twisted. 
+The fact that there is a tree (final) in a tree (temporary) can hardly (or maybe academically) be called a side-effect. 
+In my view and for the uses we have of this, a tree in a tree is recursion. 
+Is recursion a side effect ? 
+Now, I don't doubt that some people may want to abuse recursion or the result-document instruction and I believe that we should do everything reasonable to prevent these abuses, short of preventing the development of useful applications. 
+Personally, the price to pay for side-effects is to high for me to toy with. 
+On the other hand, blocking recursion kills my application. 
+I am surprised that something so natural to (streaming) XSLT like traversing a tree structure and building web pages as you go has not brought up this issue before and I start to wonder, what are others doing with XSLT? 
+Theoretically, I could process the structure iteratively but I would loose performance, maintainability and I would get sick looking at the code because of its ugliness and illogical structure. 
+Comparatively, (academical) side-effects are almost nice. 
+Ever since we found out about the new restriction, a few weeks ago, I have been trying to find a viable alternative but I have not yet. 
+If you can think or suggest me one, I will be happy to try it. 
+If we can't, XSLT 2.0 might run into a problem when people start using it to generate web pages as opposed to simply rendering them or building them from flat structures. 
+For now, and until a viable solution is found, the only way we can advance and deliver a product to our users is to stick to Saxon v6.5.2 and forget about XSLT 2.0. 
+It is a very high price to pay in the long run but it may be better than loosing everything. 
+I hope that the case is getting clearer and I will be happy to provide you with additional information, try things out, talk on the phone or anything that will help resolve this. 
+I also hope that the mix of my passion and my frustration does not blur the issues. 
+I thank you for everything and especially for your interest. 
+Please take care. 
+Regards, Andre Cusson ac@hyperbase.com 
+01 Communications Inc. PS: Whether I invoke result-document while building a with-param tree or I do it in a variable and then pass the variable as a parameter does not improve the problem because now I have additional variables (which are temporary trees also) and more "non streamable" steps, but I still need to recursively generate pages (from temporary trees). 
+Recursion is designed to handle problems that are cannot (easily) be solved otherwise and it seems to me that generating html pages from traversing a hierarchical structure is one of them. 
+I am very sorry that the committee might already have spent serious resources debating (complex) output tree issues and that I am trying to stir things up again but the way I see it, either I am wrong and there is a better way to do this and I will be happy and I will grow as a programmer if I can find/learn it, or I am right and it is in XSLT's best interest to revisit the issue. 
+Consequently, If I have not been clear enough in my description of the problem, or anything else, please advise me and I will quickly try to fix up or provide more info. 
+PSS: we have a small test portal with some static html pages generated like described above, currently on the web. 
+One of the sites there is a complex document of close to 1000 web pages, dedicated to a generative approach to music theory. 
+This site can be accessed through www.musicnovatory.com. 
+Please keep in mind that both the sites and the tools to generate them are still in construction. 
+Please also note that everything, including all portals, sites, pages, navigation, sitemaps, etc are automatically generated from pure content XML source documents (and XML layouts), all with XSLT. 
+Thanks. 
+The reason we produce public working drafts and the reason that I ship an early implementation of the drafts is precisely to get this kind of feedback. 
+I think we need to take a look at the algorithms you are using, and come to 
+a position on whether we regard this as being an appropriate use case for the language or not. 
+It looks as if we have some studying to do. 
+Michael Kay 
+tree. 
+If you can write the logic to produce the combined 
+is trivial to modify it to produce multiple trees. 
+What the facility for multiple result trees does not do is to free you from 
+the example you show, I find it very hard to understand why you are trying to produce a result document as a side-effect of 
+Hi, Thank you. 
+I am happy if this is useful. 
+Tell me if/how I can help. 
+Regards. 
+Andre Cusson ac@hyperbase.com 
+01 Communications Inc. 
+tree. 
+If you can write the logic to produce the combined 
+is trivial to modify it to produce multiple trees. 
+What the facility for multiple result trees does not do is to free you from 
+the example you show, I find it very hard to understand why you are trying to produce a result document as a side-effect of 

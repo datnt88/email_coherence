@@ -1,0 +1,88 @@
+In trying to implement the Element.removeAttribute resp. 
+removeAttributeNS I am a little uncertain what happens with the attribute node afterwards. 
+Since it is a remove and not a delete method it suggests that the attribute is still there. 
+The problem of the application is, how to find out its address (in order to entirely delete it or to insert it somewhere else) since the removeAttribute method does not return the removed node. 
+So the application has to detect the Attribute before removal: 
+MyAttr:= MyElement.getAttributeNode('xyz'); 
+MyElement.removeAttribute('xyz'); deleteOrDoSomethingElse(MyAttr); 
+But then one could instead use the removeAttributeNode method: MyAttr:= MyElement.getAttributeNode('xyz'); 
+MyElement.removeAttributeNode(MyAttr); deleteOrDoSomethingElse(MyAttr); 
+Conclusion: removeAttribute seems to be for almost every case replaceable by removeAttributeNode. 
+So its a superfluous extension of 
+the DOM unless it gets the removed node as its return value. 
+Then one could write: 
+MyAttr:= MyElement.removeAttribute('xyz'); deleteOrDoSomethingElse(MyAttr); 
+It's not backward compatible but elegant. 
+Dieter Koehler, M. A. - dieter.koehler@ppp.uni-bamberg.de 
+Mittlere Kaulberg 22, D-96049 Bamberg, +49(0)951-5190726 "http://www.philo.de/Philosophie-Seiten/": 
+1000+ Philosophie-Links "http://www.philo.de/VirtualLibrary/14.de.htm": Deutsche Philo-Links "http://www.philo.de/xml/": 
+Open XML - XML-Komponenten fuer Delphi 
+That's true. 
+e.removeAttribute(x) is just a shorthand for e.removeAttributeNode(e.getAttributeNode(x)). 
+However, the single removeAttribute call may be more efficient than the two-call version (in some implementations). 
+And it is often more convenient. 
+Joe Kesselman / IBM Research 
+Generally, removeAttribute is used when a user does not already have a reference to the node and, hence, will not be reusing it. 
+Otherwise the user could have called removeAttributeNode. 
+But removeAttribute still allows for reuse, since it does not explicitly delete. 
+If the user hung on to a reference in some prior call, then it does not get deleted. 
+For garbage collected or reference counted solutions, this is not a problem, because when the attribute is removed, if no references remain, then it is automatically deleted. 
+Otherwise, it may be reused, and the reference count or garbage collector detect this. 
+DOM implementations which do not rely on either garbage collection or reference counting are, I believe, somewhat unknown and not fully understood due to precisely this type of issue. 
+If the root of a sub-hierarchy is deleted without removing children, does this mean that all descendant nodes are automatically deleted? 
+How about if a descendent is deleted, does his parent get deleted? 
+How about if a document gets deleted, do all owned nodes get deleted, regardless of whether they were part of the hierarchy, etc. 
+Even reference counted implementations have to have special rules to avoid problems with cycles. 
+Ray Whitmer ray@xmission.com 
+Note that the points Ray brings up about the possibility that someone still has a reference to the removed node are precisely the reason we've tried to be very careful about always saying that nodes are "removed" rather than 
+"deleted". 
+A removed node continues to exist until some memory management 
+scheme destroys it, presumably after the application has released all references to it. 
+Exactly how that memory management scheme works is left up to the specific DOM language binding and implementation. 
+Joe Kesselman / IBM Research 
+So what's the reason, why removeAttribute does not return the attribute's reference? 
+If des user does not already have a reference 
+it might be useful and convenient that he might have it afterwards. 
+BTW: If the applications mixes namespace and non-namespace methods for adding nodes in the following code MyAttr:= MyElement.getAttributeNode('xyz'); 
+MyElement.removeAttribute('xyz'); the first line might return another node than the second removes. 
+Dieter Koehler, M. A. - dieter.koehler@ppp.uni-bamberg.de 
+Mittlere Kaulberg 22, D-96049 Bamberg, +49(0)951-5190726 "http://www.philo.de/Philosophie-Seiten/": 
+1000+ Philosophie-Links "http://www.philo.de/VirtualLibrary/14.de.htm": Deutsche Philo-Links "http://www.philo.de/xml/": 
+Open XML - XML-Komponenten fuer Delphi 
+Compatability with "DOM Level 0". 
+I believe our intent was that the behavior would be consistant; removeAttribute will remove the same attribute that getAttributeNode would return. 
+We should probably add that to the last paragraph of section 1.1.8. 
+Joe Kesselman / IBM Research 
+I have a question that does not belong to the discussion group. 
+You keep making reference to pages and paragraphs from a document I haven't been able to find. 
+... 
+Actually, this does belong on the list, in case anyone else is confused -- All public W3C documents are available from their website. 
+The easiest approach for DOM-related information is to go to http://www.w3.org/DOM . 
+For related projects, see the list at http://www.w3.org/TR which includes both Recommendations (as close to an "official standard" as W3C ever gets) and specs which are still under development and haven't yet been approved by the W3C's membership. 
+At the moment, most the discussion in the www-dom list focuses on the DOM Level 2 Candidate Recommendation document; any quotations and/or citations should refer to that unless explicitly marked otherwise. 
+A few quotes refer to the FAQ, the requirements. 
+I believe there are links to all of these from the DOM page. 
+DOM Level 3 does not yet have any formal documentation. 
+We're still working on requirements and an initial sketch. 
+We hope to have those available fairly soon. 
+The "Level 3 open issues" list is not curently a public document; you'll have to take my word for it when I assure you that we're aware of an issue and have logged it there for further consideration. 
+Joe Kesselman / IBM Research 
+The NamedNodeMap version does return a node. 
+But for this usage, it is more likely that he does not want it. 
+Any method which returns an object forces every COM caller of that method to explicitly unreference the return. 
+Only Java or other garbage- collected bindings can simply ignore it if they don't want it. 
+Also, a number of implementations do not create full attribute nodes unless they are explicitly asked for. 
+Making this method return a node would force all implementations to construct an attribute node, whether it was needed or not, and would force all reference-counted implementations to call a dereferencing method, whether the node was needed or not. 
+Implementations which want the node for some reason can use the Node-based methods instead of the name-based methods. 
+Section 1.1.8 states: "Note: DOM Level 1 methods are namespaces ignorant. 
+Therefore, while it is safe to use these methods when not dealing with namespaces, using them and the new ones at the same time should be avoided. 
+DOM Level 1 methods solely identify attribute nodes by their nodeName. 
+On the contrary, the DOM Level 2 methods related to namespaces, identify attribute nodes by their namespaceURI and localName. 
+Because of this fundamental difference, mixing both sets of methods can lead to unpredictable results. 
+In particular, using setAttributeNS, one can set on an element two attributes (or more) that have the same nodeName, but different namespaceURIs. 
+Calling getAttribute with that nodeName could then return any of those attributes. 
+The result is implementation dependent. 
+Similarly, using setAttributeNode, one can set two attributes (or more) that have different nodeNames but the same prefix and namespaceURI. 
+In this case getAttributeNodeNS will return one or the other, in an implementation dependent manner. 
+The only guarantee in such cases, is that setAttribute and setAttributeNS affect the node that, respectively, getAttribute and getAttributeNS return." 
+Perhaps it should extend to describe the following sets instead of just the simple string-based get/set: getAttribute getAttributeNode getNamedItem setAttribute setAttributeNode setNamedItem removeAttribute getAttributeNS getAttributeNodeNS getNamedItemNS setAttributeNS setAttributeNodeNS setNamedItemNS removeAttributeNS Ray Whitmer ray@imall.com 

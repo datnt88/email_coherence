@@ -1,0 +1,71 @@
+Hi! 
+First of all, I'm not quite sure wheter the general opinion is to have everything in DOM implemented as Nodes/NodeIterators or if attributes should be a special case, with an AttributeList. 
+I would like to see a special-case implementation for attributes, as opposed to using Nodes for attributes. 
+Here I present an alternative to AttributeList, designed with performance efficient implementation and usage in mind: 1) Each document should have an AttributeIndex object. 
+2) This object has a list of AttributeDefinitions. 3) The document can create AttributeData objects, which are used thoughout the document instead of the old AttributeLists. 
+Something like this: interface AttributeDefinition //Abstract superclass for defining the interface readonly attribute wstring name; readonly attribute wstring type;// Returns the name of the subclass of // this instance. 
+// (This may not be necessary with RTTI) // Conversion functions for reading and writing the attribute value as known types // Will raise an exception if the desired conversion is not possible attribute wstring asString; attribute long asLong; attribute datetime asDateTime;// This type is just an example... attribute rgbColor asRGBColor;// Another example attribute cmykColor asCMYKColor;// Still example... //Add more conversion functions here interface StringAttrDef : AttributeDefinition { // Implements an attribute stored as a string // If say, get_asLong is called, then the string is converted // to "long" if it has a valid format. 
+Otherwise an exception is raised interface longAttrDef : AttributeDefinition {} // Implements an attribute stored as a long. 
+interface datetimeAttrDef : AttributeDefinition {} // Implements an attribute stored as some datetime type. 
+interface colorAttrDef : AttributeDefinition {} // Implements an attribute stored as color interface AttributeIndex unsigned long attributeDefs();// Count AttributeDefinitons AttributeDefinition attributeDefAtIndex(in unsigned long index); AttributeDefinition attributeDefByName(in wstring name); AttributeDefinition addAttributeDef(in wstring name, in wstring type); // Adds a subclass of AttributeDefinition to the list, and returns it. 
+// If an AttributeDefinition with the same name exists, // the existing one is returned instead. 
+If the existing // one have a different type, an exception is raised. 
+void removeAttributeDefAtIndex(in unsigned long index); void removeAttributeDefWithName(in wstring name); interface AttributeData void activate();// You call this to operate on the // attribute data stored in this object. 
+The above architecture have one limitation though: Any attributes in the document (AttributeData) with a given name (say, FGColor), has to be of the same AttributeDefinition type. 
+But isn't this what is intended? 
+Here is an example using this architecture: AttributeIndex index = document.getAttrIndex(); 
+// You want to create an FGColor attribute: // First make sure the FGColor type exists in the index: AttributeDefinition fgColor = index.addAttributeDef("FGColor", 
+"colorAttrDef"); // Now create the data object to store the attribute: AttributeData data1 = document.createAttrData(); 
+// Now store the color: data1.activate(); 
+fgColor.set_asRGBColor(0xffffff); 
+// You want to store another FGColor some other place in the document: AttributeData data2 = document.createAttrData(); 
+data2.activate(); 
+fgColor.set_asRGBColor(0x8050ff); 
+// You also want to store BGColor in data2 AttributeDefinition bgColor = index.addAttributeDef("BGColor", 
+"colorAttrDef"); data2.activate(); 
+// Just to make sure... ;) bgColor.set_asRGBColor(0x101010); 
+// You want to read data1's FGColor as a string: data1.activate(); 
+wstring fgColStr = data1.get_asString(); 
+// fgColStr might be: "R:FF,G:FF,B:FF", if that is the RGB-string format. 
+If you want to know why I think this architecture is performance efficient compared to something like AttributeList (or Node/NodeIterator), I can post my implementation ideas too... If any of you people knows Delpi, this architecture is similar to TTable and TField operating on a database-table with records, where: TTable is similar to AttributeIndex, TField is similar to AttributeDefinition each database record is similar to AttributeData. 
+You just navigate the "database table" with attrData.activate(); 
+instead of table.First();, 
+table.Next(), 
+table.EOF() 
+etc. 
+Any comments appreciated. 
+Cheers ANOQ of the Sun / Johnny Andersen E-Mail: anoq@vip.cybercity.dk or anoq@berlin-consortium.org Homepage: http://users.cybercity.dk/~ccc25861/ 
+We've moved away from the idea of attributes being a special case. 
+We discussed attribute handling in yesterday's DOM teleconference, and we agreed to leave it roughly as it was INTENDED to be in the April 15 draft (with errors corrected). 
+Your proposal is rather more elaborate than we'd like to have the DOM core be at this point. 
+The performance efficiency of 
+implementations is of less concern to the WG at this point than keeping the spec simple and re-using the basic interfaces whereever possible, so we're going to keep Attributes specified using Nodes and NodeLists. 
+There are a lot of interesting convenience methods in this proposal, however, so it might be useful to implement them ON TOP of the DOM as an "aftermarket" product, or if experience indicates that they are indeed very useful, they might be specified as part of an optional package in a subsequent release of the DOM spec. 
+In a nutshell, here's how attribute will be specified in the next draft of the DOM API spec. 
+Please let us know what you think -- there's still time to get suggestions considered at next week's face to face DOM WG meeting: [a bit of background information] We've removed NodeIterator from the Core (it may come back in a later revision of the DOM API, probably as an optional package rather than part of Core). 
+Everywhere we once used NodeIterator, we now use NodeList: To be consistent with the Java 1.2 terminology, we accept the definition of the the word "Set" to mean a grouping of unique objects, "Collection" to mean a grouping that allows duplicates but doesn't define a particular ordering, and "List" to mean an ordered collection. 
+In most uses in the DOM, the sets of objects we manipulate may contain duplicates but are in a specific order, so NodeList seems like the best label for the set of child nodes of an Element, the set of entity declarations in a DocumentType, etc. Attribute is derived from Node. 
+This SHOULD have been specified in the 4/15 draft. 
+mea culpa ... In the "object model", the value of an attribute is specified by the Attribute's child nodes. 
+In the simple case, the value would be a single Text node, in the more complicated case where the attribute value contains entity references, this may be a list of nodes or even a list of Elements and subtrees. 
+This is unchanged from the 4/15 draft. 
+The Attribute interface will look just like it did in the 4/15 draft: interface Attribute : Node { wstring getName(); wstring getValue(); attribute boolean specified; wstring toString(); Since Attribute is a Node, it has a getParent() method ... we are discussing whether it should return NULL (since Attributes are not "children" of elements), and have a getElementNode method on Attribute to get the Element that contains an Attribute. 
+Thoughts???? 
+There is no longer an AttributeList interface; instead Element has a NodeList containing the Attribute nodes to represent all the attribute-value pairs defined for a given element. 
+[OK, it should probably be a "NodeSet", but a) we don't want to add an interface just to be "politically correct" with respect to terminology, and b) the actual set of attributes is in SOME order defined by the implementation (if not by the XML spec), and NodeList provides the methods needed to enumerate all the Attributes.] 
+The "power user" MAY index into the NodeList of attributes and use the Attribute interface to get and set specific attribute values. 
+This will be useful mainly to those using XML where attribute values may have entity references. 
+The typical user may use various "convenience" methods on the Element interface to get/set/remove Attribute Node's by the name of the attribute, and to get/set/remove attribute VALUES represented as strings. 
+Thus, the Element interface will look as follows: interface Element : Node { wstring getTagName(); NodeList getAttributeList(); wstring getAttribute(in wstring name); void setAttribute(in string name, in string value); void removeAttribute(in wstring name); Attribute getAttributeNode(in wstring name); void setAttributeNode(in Attribute newAttr); void removeAttributeNode(in Attribute oldAttr); void getElementsByTagName(in wstring tagname); (normalize() will -- I hope -- be removed) 
+Are there any other issues that have been discussed on the www-dom list with respect to Attributes that are still murky? 
+It appears that there have been some inconsistency between my brain and the DOM-spec... ;) (i.e. 
+I didn't understand it correctly...) My impression was, that attributes were used for things such as the color of text, the text-font, alignment etc. 
+I see now that elements with tagnames are used for this purpose. 
+So I guess the spec. 
+will be just great. 
+I'm very sorry about this... 
+There are a lot of interesting convenience methods in this proposal, however, so it might be useful to implement them ON TOP of the DOM as an "aftermarket" product... 
+If it should be implemented, I think it should be a layer _below_ the current API... But I guess you are not referring to API-layers when you say "on top of"... are you? 
+I wonder, what kind of data/information is stored in attributes? 
+Can you give any concrete examples? 
+Cheers ANOQ of the Sun / Johnny Andersen E-Mail: anoq@vip.cybercity.dk or anoq@berlin-consortium.org Homepage: http://users.cybercity.dk/~ccc25861/ 

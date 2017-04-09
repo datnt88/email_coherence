@@ -1,0 +1,30 @@
+From check-character-normalization "check-character-normalization" true [optional] Check if the characters in the document are fully normalized, as defined in appendix B of [XML 1.1]. 
+What actions should be expected if a character in the document is not fully normalized? 
+I'd assume that an error should be dispatched, but 
+the spec doesn't say. 
+What should be the behavior if both check-character-normalization and normalize-characters are specified as true? 
+Are there any interaction 
+between the parameters? 
+It might make sense that setting one unsets the other. 
+As far as I am aware there are no implementations supporting either of these parameter being true. 
+Curt Arnold scripsit: 
+The processor should make that fact available to the application by some means or other. 
+XML 1.1 is rather new, y'know. 
+A: "Spiro conjectures Ex-Lax." 
+John Cowan Q: "What does Pat Nixon frost her cakes with?" jcowan@reutershealth.com --"Jeopardy" for generative semanticists http://www.ccil.org/~cowan 
+LS specifies a 'check-character-normalization-failure' DOMError. 
+Perhaps this ought to be in Core, though given the resolution of LSSerializer-iucd-issue it probably won't be. 
+pxdom supports both, but only on Python 2.3; earlier versions of the unicodedata module do not provide character normalisation. 
+Andrew Clover 
+Sorry I missed it since I've been trying to finish up the L3 Core suite at the expense of all the other modules. 
+I would appreciate any feedback on the L3 Core tests added yesterday. 
+You're touching here an area that is under specified in XML: the XML error catalog. 
+Core and Load/Save do provide some of the errors/warnings types that can be generated but we are clearly missing a lot of them. 
+I don't think we followed a particular logic on when to define one or not, and it is not the role of the DOM WG to define the error catalog imho. 
+We may want to define if it's a warning, or an error at least. 
+I'd expect the implementations to check and normalize the characters (doing it in reverse order would be useless). 
+Now whether it's going to generate one or two DOMErrors given that both parameters are activated is not defined in the specification. 
+Why? normalize-characters doesn't tell you if some characters were unnormalized before normalizing them. 
+An application might want to report the number of characters that were normalized as well as doing the normalization without invoking normalizeDocument twice. 
+See http://www.w3.org/2003/10/DOM-Level-3-Core-implementations.html 
+Philippe 

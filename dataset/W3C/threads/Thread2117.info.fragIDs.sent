@@ -1,0 +1,78 @@
+Please send me any additions/amendments, before I send these in tomorrow afternoon. 
+Henrik is on vacation, and the minutes are due August 4, so I wrote up Henrik's notes. 
+At least we can get the minutes in early... - Jim Gettys ---------------------------------10768836720160 Content-Transfer-Encoding: 7bit Draft Minutes of HTTP Working Group, 33rd IETF Meeting, in Stockholm Reported by Jim Gettys from notes taken by Henrik Nielsen. 
+HTTP 1.0 We need to come up with a final draft before we can finish all discussion. 
+Draft will be available August 1, for anticipated last call later in the month. 
+Access Authentication - MD5 digest There is real no objections to the current state of this proposal. 
+HTTP does not provide possibility for having MIME headers after the HTTP object. 
+There are multiple implementations: * NCSA server and client * Spyglass * Dave Kristol's server HTTP Session Extension Ted Hardie, NASA, led this discussion. 
+* This proposal would avoid TCP latency, overhead, and slow start performance problems. 
+* Ted described a proposal from Alex Hopmann, who was not present * Henrik noted that Request-ID header makes the proposal more flexible as the server can send them back out of order * There was general talk about sessions with a server. 
+* Jeff Mogul of DECWRL has made an extensive study and simulation of persistent connection HTTP. 
+The results of this work can be found at * Is it a good idea to save headers while a connection is kept alive? 
+o Eric Sink: No big advantage - 10% (from implementation) o Masinter: Too early to say o authentication may be the biggest performance win. 
+* A number of implementations were mentioned; performance is unclear, and most likely to be seen over long haul and dial up lines, rather than in a local network, where most naive tests are performed. 
+* The general consensus is that persistent connections are a good idea. 
+There are concerns about upward compatibility and interoperability with 1.0; this may or may not require 1.1; it was suggested that operation under 1.0 might be written up as an experimental protocol. 
+* An open question is the timeouts for the tcp connection; there is some data from Jeff Mogul's simulation. 
+MIME multi-part MIME multi-part was not discussed. 
+Session-ID, Request-ID, cookies No one wanted to talk about it at this meeting. 
+Problem with HTTP PUT and POST Henrik Nielsen described a problem with HTTP PUT and POST that has recently been uncovered, and solicited feedback. 
+HTTP/1.1 
+A HTTP/1.1 draft will be available in mid-August. 
+HTTP/NG HTTP/NG: Andy Norman, Ange@hplb.hpl.hp.com. 
+Stefek Zaba has an experimental implementation of what they call HTTP/NG, and has been taking to Simon Spero. 
+Simon was not at the meeting, so there was little discussion of NG. 
+Larry Masinter asserted that HTTP must support transactions. 
+Larry also commented that RPC keeps the connection open; but we may be reinventing the wheel, and would rather see a general HTTP maybe using RPC. 
+This begs the question: Who has implemented a non-blocking (streaming) RPC system that can be used if we are to avoid rolling our own? 
+Feedback from John Klensin, and Harald Alvestrand, Area Directors for Applications John Klensin expressed great displeasure with the current state of the working group. 
+Some issues he raised, but not necessarily an exhaustive list include: * Working group chairs that do not warn the area director before an IETF meeting that they cannot attend are asking to be shot. 
+John promised to convey his displeasure directly to the chairs. 
+* How will we make progress? 
+* We have a collective problem in the working group. 
+We should stick to 
+the milestones. 
+* Without NG as a milestone for this group, 1.1 will likely end up out of control. 
+Without Simon Spero present, and with his RSI problems, John is very concerned about NG. Jim Gettys volunteered to edit HTTP/NG, if Simon is unable to deal with it due to his problems. 
+When will it become a proposed standard? 
+Harald Alvestrand noted that there is no reason to wait for an IETF meeting in to send a document to the IESG for standardization. 
+Proposed New Milestones AUG 95 send HTTP/1.0 of to IESG as proposed standard. 
+OCT 95 Session as experimental extension. 
+APR 96 HTTP/1.1 as proposed standard DEC 96 HTTP/NG as proposed standard. 
+Jim Gettys volunteered to help Simon with writing. 
+---------------------------------10768836720160-- 
+Just FYI: Actually, DCE RPC has been in Windows NT since 3.1; and the Win32 SDK included support for 16 bit Windows, and it is "in the box" for Win95 --- all with threads support to effect non-blocking if you need it. 
+Also, you can more than halve the size of the spec you need to implement by just doing the the UDP version -- which, given that one of the problems with HTTP that everyone talks about is the overhead incurred from opening TCP connections for one-off transactions, seems like a good direction to go. 
+(If the normal interaction between client and server is idempotent, it will only take one round trip...) Lastly, if I were tasked with implementing datagram DCE RPC from the spec, I'd start by looking at the 1990 Prentice Hall book "Network Computing Architecture", by Zahn, et al, which uses a much clearer specificaiton methodology (IMHO) to specify a previous, backwards compatible, version of the DCE RPC protocol. 
+Paul ] From: Rich Salz rsalz@osf.org 
+janssen@parc.xerox.com ; ] rsalz@osf.org 
+] Subject: Re: Draft Minutes of HTTP Working Group, 33rd IETF Meeting, Stockholm ] Date: Tuesday, August 08, 1995 11:43PM ] Bill's comments on DCE are correct enough that picking nits isn't worthwhile. 
+] Thanks. 
+(Wish I could pay as close attention to his work. 
+:) ] On the other hand, it will be bundled with the next release of NT, and ] several not-as-ubiquitous operating systems. 
+:) ] /r$ 
+Also, you can more than halve the size of the spec you need to implement by just doing the the UDP version -- which, given that one of the problems with HTTP that everyone talks about is the overhead incurred from opening TCP connections for one-off transactions, seems like a good direction to go. 
+(If the normal interaction between client and server is idempotent, it will only take one round trip...) I think there's a misconception here. 
+Yes, there is some packet overhead for creating and destroying TCP connections, and the current one-request-per-connection model is expensive in that respect. 
+But simply going to UDP is not the answer, because UDP (without some extra effort) does not offer any congestion-control mechanisms. 
+Sure, you can layer them on top of UDP, but I suspect that you would quickly get back to something very similar to TCP. 
+Since we're discussing what is already the dominant source of packets in the wide-area Internet, and will surely keep growing, we need to be very sensitive about how HTTP's design affects WAN congestion. 
+Otherwise, nobody is going to be very happy. 
+One major benefit of a persistent-TCP-connection model is that it allows the packet sources to learn, over sufficiently long periods, what the congestion state of the network is, and therefore adapt to it. 
+I should also point out that the average size of an HTTP retrieval is well over one packet's worth of data (I don't have the stats handy, but the number "8 K bytes" sticks in my head from someplace). 
+This means that even for a single request per connection, the congestion control mechanisms of TCP have some chance of being helpful. 
+Paul, what does DCE RPC do for congestion avoidance and control in WANs, when it uses UDP? -Jeff 
+Excerpts from ext.ietf-http: 10-Aug-95 Re: UDP or TCP? 
+Albert Lunde@nwu.edu (1794*) 
+Does IPNG or any of the protcol designs related to ATM networking address any of these issues? 
+(I'm thinking if we can let someone else re-enginer the lower parts of TCP/IP it could save some work.) 
+Yes, some of these concerns are addressed. 
+In particular, the quality of service issues are interesting, allowing you to specify particular characteristics of a connection. 
+Both IPng and ATM are big research topics here at PARC, and we're going to be experimenting with them in ILU over the next year. 
+Bill 
+I'm skeptical that rebuilding quasi-reliable protocols on top of UDP or some such is a good idea for long-haul transport. 
+It also making writing clients a lot more work, as I recall this was a problem that limited the development of "archie" clients. 
+Another consideration is that people administering firewalls seem to hate UDP because its lack of state makes filtering less reliable. 
+Does IPNG or any of the protcol designs related to ATM networking address any of these issues? 
+(I'm thinking if we can let someone else re-enginer the lower parts of TCP/IP it could save some work.) Albert Lunde Albert-Lunde@nwu.edu 

@@ -1,0 +1,64 @@
+Tidy mis-formats text between pre and /pre when that text contains br . 
+I don't know what produced this original; it's clearly ugly (but correct) HTML. 
+See the attached files: pre-text.html is the original; pre-tidy.html is the output of HTML Tidy for Linux/x86 (vers 1st September 2002; built on Sep 4 2002, at 23:33:09). 
+Ed GouldAgileTV Corporation ed@agile.tv333 
+Ravenswood Avenue, Bldg. 
+202 
+Thanks, I added this to the bug tracker. 
+Yes, I checked that one out and shook my head. 
+I think there are two problems: one, the br tags need to be removed and replaced with a simple newline (if there isn't one already there) and, two, the tab-to-space conversion isn't working quite right. 
+I am not sure whether we should remove the br . 
+It's valid to use it 
+inside pre and I am not even aware of any deprecatation of this practise; maybe it'd be better to leave it to the user to fix it. 
+Anyway, if it is replaced, it must be replaced by \n, no matter of preceding or following newlines in order to emulate browser behaivour. 
+I did not notice any problem with the tabs. 
+What's wrong with them? 
+Are they replaced by the wrong number of spaces? 
+I remember we discussed this before and I proposed to change the default number of spaces. 
+Did we reach consensus on that? 
+Or is something else going wrong here? 
+Ok, my mistake. 
+Broke down and read the DTD - again. 
+In HTML 3.2 the following are allowed inside PRE elements. 
+TT | I | B | U | STRIKE | EM | STRONG | DFN | CODE | SAMP | KBD | VAR | CITE A | APPLET | BASEFONT | BR | SCRIPT | MAP INPUT | SELECT | TEXTAREA Yow! Basically, %text/%inline less images and fonts. 
+HTML 4 is similar. 
+In my test, the left-right alignment (the primary reason for using pre ) was messed up. 
+The Pre-Tidy sample lined up nicely in both IE6 and NS6. 
+The input has lots of tabs and _no_ newlines. 
+So a) I think the code is not 
+adding the right number of spaces and b) any time we add a newline where 
+there wasn't one before, perhaps we should take away a br . 
+Either that, or do not add newlines at all. 
+take it easy, Charlie 
+But differently, IE 6.0 ignores sub-sequent br s while Opera 6.0 and Mozilla 1.0 insert a newline wherever they find a br . 
+The http://tidy.sourceforge.net/docs/quickref.html is wrong, while tab-size defaults to 8 (changed after the mentioned discussion) it is documented as defaulting to 4. If you replace all br with \n Tidy won't mess up anything hence that's where to look at. 
+The point is, surely, that there *is no* "right number of spaces". 
+Tabs should not be used inside PRE, precisely because there is no way 
+to tell the rendering system what the tab boundaries are. 
+If I code \t\tText \t More text then I have no right to make assumptions about how the two pieces of text will line up: it depends on the tab stops, which are undefined (and not definable). 
+If both IE and NS have the same defaults as my editor, that's luck. 
+HTML4.01 section 9.3.4 last para: 
+The horizontal tab character (decimal 9 in [ISO10646] and [ISO88591] ) is usually interpreted by visual user agents as the smallest non-zero number of spaces necessary to line characters up along tab stops that are every 8 characters. 
+We strongly discourage using horizontal tabs in preformatted text since it is common practice, when editing, to set the tab-spacing to other values, leading to misaligned documents. 
+"Usually", not "required to be". 
+Mapping br to \n is of course another can of worms altogether. 
+Got ya. br br == br in IE. Good eye. 
+Yup. Leaving the " br " might be messing up the left-right (column) alignment. 
+I tried a tweak to avoid putting out newlines right after br for pre-formatted mode. 
+It had no real effect. 
+I also tried adding a b /b here and there. 
+My current theory is that Tidy is including the element names in it's character count. 
+This makes sense for pretty 
+printing, but not for pre-formatted elements. 
+take it easy, Charlie 
+Hi Fred, Good to see you there. 
+Well, "usually" is the bread and butter of Tidy. 
+I mean, you're right. 
+There are no guarantees (apparently). 
+But we do try to follow the principle of "interoperable compliance with the least surprise". 
+Also, there is an option for tab-size (in chars), so you can always tweak it to your liking. 
+Agree about the worms. 
+I am hesitant to map br to \n and not do anything about all the other markup allowed in pre that will still mess up the layout. 
+take it easy, Charlie 
+The horizontal tab character (decimal 9 in [ISO10646] and [ISO88591] ) is usually interpreted by visual user agents as the smallest non-zero number of spaces necessary to line characters up along tab stops that are every 8 characters. 
+We strongly discourage using horizontal tabs in preformatted text since it is common practice, when editing, to set the tab-spacing to other values, leading to misaligned documents. 

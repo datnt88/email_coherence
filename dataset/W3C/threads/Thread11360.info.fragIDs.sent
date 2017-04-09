@@ -1,0 +1,168 @@
+More on addressing. 
+On March 15, the ERB agreed that: 
+1. Contrary to our decision of last time, we will support subelement addressing by a simple search operator. 
+We will make it clear that 
+bit-for-bit matching without respect to words or tokens is compliant behavior; if implementations wish to compete on the basis of case-folding or other fancy search optimization, that's fine. 
+2. Locators shall consist of a URL, optionally followed by a '#' 
+3. The '#' may be followed by the string " tei ", in which case the 
+remainder of the locator is to be treated as a TEI extended pointer. 
+Michael Sperberg-McQueen has an action item to figure out the required changes to TEI xptr syntax to fit them into a URL. 
+Note: with respect to our previous concerns on internationalization, we investigated and it appears that both Netscape and MSIE are trying to do the right thing; while there remain bugs in this area, our policy seems to be reasonable. 
+On another subject, we agonized further over the fact that current implementations of '#' in URLs always fetch the whole document and then navigate to the fragment in the client. 
+For SGML, this is 
+probably often unreasonable. 
+Too bad - this behavior is not carved in stone; early implementations that stupidly try to fetch the entire OED or Physician's Desk Reference, just to pull out a fragment, will not succeed in the marketplace 
+CONUNDRUM: 4. If the '#' is followed only by a string, then.... what? 
+This should be an IDREF, right? 
+Maybe. 
+And if it is, how do you know how to find ID attributes in an XML document out at the far end of a URL? 
+Can you be sure of finding the appropriate declaration in the internal DTD subset? 
+Can you be sure of finding the external subset? 
+On the Web, in the URL "http://foo.bar.com/baz.html#sec1.2", the "sec1.2" 
+should correspond to a A NAME='sec1.2'. 
+It is not, in the HTML DTD, an ID attribute. 
+They want to use more characters than SGML ID allows, and they don't want to enforce uniqueness. 
+If there is more than one matching NAME=, few browsers will do anything reasonable, but 
+it's not an error. 
+In fact, the semantics of #-fragments in HTML are easily expressed in a simple TEI xptr query saying "find the first A element whose NAME attribute has the value whatever". 
+We could 
+duplicate that in XML, but it feels limiting. 
+We could duplicate it but, in the linking element, provide other attributes to say what the element type and attribute name you're trying to match are. 
+But then you're duplicating something you could do with a "# tei " string. 
+Or, we could say that it *is* an IDREF, and by default look for an attribute named 'ID' with the indicated value, and also, if it's 
+possible, look in the internal subset or the whole DTD to find out what attributes are IDs. 
+This would be weaker than HTML in the allowed values (SGML NAME) and requirement for only one match. 
+Big deal? 
+What we want is to have a simple behavior that makes sense, specified simply. 
+No surprise that it's hard to be simple. 
+Input and inspiration from the WG are solicited. 
+Cheers, Tim Bray tbray@textuality.com 
+http://www.textuality.com/ 
++1-604-708-9592 
+This sounds like what I need. 
+Is 'subelement addressing' a clear term? 
+I take it to mean finding a substring or position in a chunk of #PCDATA, by some means either to be further described or left to the application? 
+Does this also apply to mixed content or is one expected to have navigated down to the raw #PCDATA... 
+I like the idea of regular expressions. 
+Is this a 'fancy search'? 
+WF XML documents may contain more than one ID (uniqueness is a VC, not a WFC). 
+Therefore we need to say something about it, if only to say it's undefined. 
+I think that there may be marketing problems with ID rather than NAME. 
+I started CML with proper SGML ID/IDREF addressing and changed to HREF/NAME. 
+I think my reasons were: - the semantics of HREF/NAME were commonly applied (although fuzzy). 
+If you are going to use IDs you will need to educate the webhackers (like me) as to why this is better. 
+- since many of my docs were manualy edited I frequently ended up with multiple IDs or IDREFS unresolved. 
+This gave (correctly) zillions of errors in sgmls. 
+I just felt it was easier to use NAME which had no validity constraints (for me). 
+Whether we like it or not, a very large number of people will come to XML from HTML. 
+A functioning HREF/NAME mechanism is an attractive thing to give them. 
+That is what I would expect as 'reasonable behaviour' for multiple identical IDs or NAMEs. 
+Is the intention that in XML there is a default recommendation that all IDs have a name 'ID'? 
+(It would certainly help in WF documents which may not otherwise have a means of identifying IDs). 
+In summary, if there are behaviours in HTML that we like and can work with, it makes sense to carry them over, even if we have to clarify the semantics. 
+Hope this webhacker's view is useful. 
+Is it useful at this stage for the pointer to carry information about the MIME type of the target document? 
+I would find this very useful myself because it allows downloading a search engine of the appropriate type. 
+Thus: A HREF="http://www.venus.co.uk/omf/cml/mydoc.cml#(3 
+MOL)" MIME="text/xml" METHOD="http://www.ch.ic.ac.uk/omf/pmr.chemime.ChemTree" 
+This would tell the application that the remote file was expected to be of MIME type text/xml. 
+The classes used to search the document are given. 
+If the remote document is not text/xml, then there may be an error or some content negotiation. 
+You may disagree with this philosophy (that the calling document rather than the called document defines the MIME type), but I suspect we shall use it in our community in some cases. 
+[I daren't say what 'MIME' types we use - they might not be text/xml]. 
+P. Peter Murray-Rust, domestic net connection Virtual School of Molecular Sciences 
+If we are allowing # tei why not also allow # id ? 
+Then we could reserve #CDATA to be used specifically to identify the name of an anchor in an HTML file referenced from an XML file. 
+Martin Bryan, The SGML Centre, Churchdown, Glos. 
+GL3 2PU, UK 
+How can implementors implement case folding interoperably if there is no specification saying how it shall be done? 
+If you specify server behavior for URLs that is not that specified by the existing RFCs, please either call them something other than URLs or put your case for variant behavior to the IETF's URL WG. "Too bad" is not much of an argument. 
+Did the ERB consider using queries 
+rather than fragment locators? 
+Regards, Terry Allen Electronic Publishing Consultant tallen[at]sonic.net 
+specializing in Web publishing, SGML, and the DocBook DTD A Davenport Group Sponsor: http://www.ora.com/davenport/index.html 
+Good. 
+Is this now cast in Jell-O and can I document it in the FAQ? 
+Including the  and  ? 
+So I can refer to ulink url="http://foo.bar.com/blort.html# 
+tei baz (1 5 5 3)" ? 
+Are there implementations of SO TR9601? 
+///Peter 
+Better not. 
+The angle brackets are excluded characters per ftp://ds.internic.net/internet-drafts/draft-fielding-url-syntax-03.txt of December 1996, the latest URL syntax draft I can find at the site. 
+Regards, Terry Allen Electronic Publishing Consultant tallen[at]sonic.net 
+specializing in Web publishing, SGML, and the DocBook DTD A Davenport Group Sponsor: http://www.ora.com/davenport/index.html 
+No kidding. 
+We have serious unsolved problems. 
+Not only that; that draft also makes it crystal clear that the URL syntax hardwires in the processing model; i.e. if you say URL#fragment, the user agent has to get the whole URL and pick out the fragment. 
+Clearly this is a nonstarter for XML, where the fragment might select an entry from the OED... on the other hand using URL?fragment has its own set of problems. 
+In fact, what we *really* want is to specify the URL and fragment by way of policy, and let the implementation figure out how to divvy the load between client and server. 
+Also, we'd like to do this without egregiously violating the ruling RFC's. 
+Which may cost us our ability to declare that "locators are URLs". 
+Blecch. 
+Double blecch. 
+- Tim 
+Terry Allen says: 
+Tim did not say that the   go in a URL. 
+They follow the URL. 
+Another way to do this would be to use ;xml-loc-tei=....... which conforms and can be put in a URL. 
+(it may actually be treated as a MIME parameter on some systems, but that's OK) Lee 
+I just did some tests and it appears that the fragment identifier (the text following the hash on the URL) is even passed to the server, at least for 
+HTTP. Thus a server does not even know that you are addressing rather than 
+This makes using the fragment identifier for server-side filtering rather difficult, as I see it. 
+-derek ddb@criinc.com 
+|| software-engineer || www/sgml/java/perl/etc. 
+There are two points here, which have not been distinguished clearly in what Tim has posted, although I'm sure he has them distinct in his mind. 
+1. 
+What is the URL fragment syntax for XML; that is, what do fragment identifiers mean wrt XML? 
+2. How can the TEI mechanism be used in URLs in general? 
+After all, I might want to use URLs with TEI xptrs to point to almost any kind of data, not solely XML. 
+Tim's remarks about large XML documents apply just as well to other data formats; they can be big, it may be desired to retrieve only parts of them, and so on. 
+It should not be assumed that TEI xptrs are going to be used solely with XML, and thus a solution to (1) above does not provide an answer to (2), unless the limiting assumption is made that for every large data format a special query language must be constructed. 
+I assume Eliot would agree ... Regards, Terry Allen Electronic Publishing Consultant tallen[at]sonic.net 
+specializing in Web publishing, SGML, and the DocBook DTD A Davenport Group Sponsor: http://www.ora.com/davenport/index.html 
+Right. 
+We looked at the problem of subdocument addressing in DynaWeb a number of times. 
+You cannot use fragment specifiers in URL's if you want server-side processing. 
+You can use: 
+1) URL paramaters 2) Query Parameters 3) URL syntax and that's it. 
+As I said a long time ago, I prefer (3), hence my proposal, though (2) can be made to work well. 
+We assume he means 'NOT even passed to the server' 
+In XML, we do *not* want to build the server-side/client-side distinction into the link syntax. 
+We want to attach a URL and a TEI xpointer and let the server &amp; client figure out what to do. 
+If we want to force server-side processing, the '?' syntax is available. 
+There is nothing in the current URL RFC that allows a resource/fragment partitioning without also forcing the process model. 
+In my view, this is purely a bug. 
+Either we introduce a new syntax, or we overload '#' and let the market deal with it. 
+-Tim 
+While I agree with the sentiment, I object strongly, very strongly, to overloading the query part of a URL. 
+Such usage just confluges the 3 seperate roles of URL's. 
+Right. 
+This is why I prefer to use the *pure* URL (none of the fragment or query part, or even URL parameters). 
+The pure URL should be regarded as an address, and carries few semantics, which is exectly what we want. 
+[first off: Gavin, can you PLEASE start replying just to the group] 
+So concretely, you want to have two attributes in an XML linking element: the locator, which is a URL, and another to store the query part? 
+-T. 
+Something like that, though I'm not convinced that having a query as part of a link is a good idea in the cases where the link is an address. 
+This is eay to fix, though. 
+An alternate syntax should not be a serious problem... 
+No, we need to define the client-side method. 
+We can suggest a server-side sytnax, but frankly I doubt that we can do that in a way that will satisfy all the servers (and unprincipled hacks) out there on the server side -- and I don't see that we really need to. 
+I think that leaving it to the author to decide how the URL should be done is perfectly reasonable: Things like the OED will not be served up monolithically (probably by contract with OUP!), and so references made by authors (or people browsing a site) will automatically be in terms of URLs that designate smaller, well-formed document fragments. 
+I'm afraid that I don't see what the problem is with having two formats, and no standard for the server side. 
+Servers can serve up URLs that take advantage of whatever queries they support. 
+This does not seem difficult to ensure. 
+I don't really see a significant practical advantage (other than neatness) to standardizing the server query syntax. 
+I suppose you could do blind queries to a server if you have a common syntax, but I'm not sure that that is a primary goal here... It certainly doesn't seem _required_ to support linking and browsing, which are the de-facto requirements for WWW compatibility. 
+Can anyone offer an argument to convince me? 
+-- David David Durand dgd@cs.bu.edu \ david@dynamicDiagrams.com 
+Boston University Computer Science \ Sr. Analyst --------------------------------------------\ http://dynamicDiagrams.com/ MAPA: mapping for the WWW \__________________________ 
+This is the problem we must solve. 
+I don't see why we should care. 
+We are defining XML. 
+If TEI pointers are useful for PDF, let Adobe worry about it. 
+Sure, but what does that signify for XML. 
+Nothing, I think. 
+They can use our query language if it suits, but I fail to see issue 2 as even peripherally a concern of this group. 
+-- David David Durand dgd@cs.bu.edu \ david@dynamicDiagrams.com 
+Boston University Computer Science \ Sr. Analyst --------------------------------------------\ http://dynamicDiagrams.com/ MAPA: mapping for the WWW \__________________________ 

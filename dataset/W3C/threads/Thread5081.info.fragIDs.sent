@@ -1,0 +1,50 @@
+I'm pretty much happy with the "don't embed; link" answer to RDF and HTML, but I've run into a few applications (geoURL, Creative Commons) that aren't going to pick up RDF on that basis. 
+The part of this RDF-in-XHTML problem that intrigues me is keeping the visible info and the metadata in sync. 
+In Cambridge, as we started exploring the possibilities of alternative RDF syntaxes, somebody brought up the possibility of reaching out of the RDF into the XHTML content via XPath or something, so you could do... or some such so that the info from the HTML title element and the dublin core title property would automatically stay in sync; likewise the address element and dc:creator. 
+Then I realized: expecting HTML authors to think at this level is silly; they're not going to write XPaths to relate RDF properties to their text. 
+They're just going to copy-and-paste and then edit until it looks right on the screen. 
+If we're lucky, they'll maybe validate when they think they're done. 
+What is perhaps realistic is to get the folks deploying the applications to write some XPath stuff... XSLT, actually. 
+I've done it a few times Site Summaries in XHTML Dublin Core Extraction Service HyperRDF: Using XHTML Authoring Tools with XSLT to produce RDF Schemas and I went thru the mental excercise of doing it for creative commons and geoURL, and it looks easy. 
+I meant to work out more of the details of how to use the XHTML profile attrbute and links to XSLT "data view" extractors so that you can have more than one of them and such... and to evaluate this solution w.r.t. various requirements... 
+but the end of the day has come, so I'll send this much; if folks chime in, perhaps that will provide motivation to work out the remaining details. 
+Meanwhile, in addition to this bit that's my own view, I did a little tweaking in this page that I try to maintain from the community perspective... Dan Connolly, W3C http://www.w3.org/People/Connolly/ 
+SCENARIOS 
+And the present "trackback" stuff, which is actually RDF associated with *parts* of an HTML document. 
+REQUIREMENTS 
+Yes, this coincides with the current bias of: "Authoring, the solution MUST enable ... RDF authors to be copy an arbitrary serialization into an XHTML document (hand authoring the RDF serialization in NOT a requirement)" PROPOSAL 
+To consider this proposal in light of requirements (these are not "judgments" about the requirements, merely asking if I understand it correctly in light of requirements): 1. 
+Does this actually permit easy copy and paste? 
+Does this proposal require a known document structure document for the XPath expressions to be valid across all documents? 
+For instance, in CC, if the document SHOULD have a dc:author, then this value MUST appear elsewhere in the page. 
+However, this might not be already present, or it might appear in different places for all of the pages a CC statement might be associated with? 
+2. This proposal satisfies the "simple scenarios" regiments, but not the more complex one? 
+Dan, after our discussion today this idea gelled with me further when it connected to some discussion I had with the HTML WG last week and a question I asked there: 2. It would cool that if instead of an RDF application only accepting a particular syntax, it had a MANDATORY mechanism (i.e. XSLT) that enabled it to transform any XML to a suitable serialization prior to consumption. 
+(I actually don't know if there's any definition of conformance for an RDF application? 
+Does RDF 1.0 only specify a format?) In the creative commons case, one would want to move from: p a href="http://creativecommons.org/licenses/by-nd-nc/1.0/" img alt="Creative Commons License" border="0" align="left" src="http://creativecommons.org/images/public/somerights.gif" / /a The textual, audio, and visual materials on this a href="http://goatee.net/" site /a "http://w3.org/" 
+(hereafter the "work") are licensed under the Creative Commons a href="http://creativecommons.org/licenses/by-nd-nc/1.0/legalcode" Attribution-NoDerivs-NonCommercial 1.0 /a license, in summary: /p To something in the HTML that indicates a the URL of an XSLT that would turn this into: rdf:RDF xmlns="http://web.resource.org/cc/" 
+xmlns:dc="http://purl.org/dc/elements/1.1/" 
+xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" 
+That shouldn't be too hard as the only real bit of "meaning" here is the identifier 'http://creativecommons.org/licenses/by-nd-nc/1.0/'. 
+However, it might get hairier in more complex situations... 
+Also, you mentioned the use of a profile, akin to what you've proposed in [1], but today we noted that we might want to have *more than* transform associated with any given XHTML document (one for yeilding the creative commons, another for the calendar, etc.), but you can only have one profile in the html:head element, right? 
+[1] http://www.w3.org/2000/07/hs78/ 
+[jumping into the thread] 
+Not so: """profile = uri [CT] This attribute specifies the location of ***one or more meta data profiles, separated by white space***. 
+For future extensions, user agents should consider the value to be a list even though this specification only considers the first URI to be significant. 
+Profiles are discussed below in the section on meta """ (note that the XHTML Modularization definition implies only 1 URI, but that the current draft of XHTML 2 explicitely allows more than 1 URI). 
+Dom Dominique Haza?l-Massieux - http://www.w3.org/People/Dom/ W3C/ERCIM 
+Another case of using XSLT to specify the RDF-meaning of an XML format: 
+The best of both worlds RDF (the model) is a good thing; RDF (the syntax) is a bad thing. 
+"But," I hear you cry, "I don't care about the syntax because I have good RDF tools!" How can we allow you to use your RDF tools on Atom, and do the right thing with reusing existing ontologies, and keep the syntax simple for people who simply want to parse Atom feeds in isolation, as XML? 
+We can make the XSLT transformation normative. 
+Here it is, the result of a 4-hour IRC chat. 
+We should include it in the specification, maintain it as the format changes, and mandate that it is the One True Way to use Atom syndicated feeds as RDF. 
+Is this more work for the RDF folk? 
+Sure. 
+Now they need an XSLT parser as well as their favorite RDF tool. 
+But every platform that has robust RDF tools (a small but growing number) also has robust XSLT tools. 
+-- http://www.xml.com/pub/a/2003/08/20/dive.html 
+Dan Connolly, W3C http://www.w3.org/People/Connolly/ 
+Simple Semantic Resolution - RSS 2.0 Module Put simply: an element is added to the source RSS 2.0 document which declares "this is RDF, and here is the mapping". 
+This has absolutely no effect on the interpretation of the document as RSS 2.0 within the bounds of that specification, but enables the contents of RSS 2.0 files to be considered first class material for the Semantic Web. 

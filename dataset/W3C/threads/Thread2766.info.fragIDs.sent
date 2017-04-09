@@ -1,0 +1,46 @@
+The LPWA proxy truncates the Referer header, in most cases, to read Referer: with no value, and therefore violates the HTTP/1.1 specification. 
+I received a report about a site that didn't work with the LPWA HTTP proxy. 
+After much investigation, I discovered that the site's server software was barfing because Referer had no value. 
+Add a value, or remove the header altogether, and their server worked okay. 
+I was all set to go off in high dudgeon about how the specification *says* that headers that aren't understood should be ignored. 
+What it says (7.1 Entity Header Fields) is that "unrecognized header fields SHOULD be ignored...." 
+The question I have is, what does "unrecognized" mean? 
+Does it just mean a header whose name is unfamiliar, or does it also mean a 
+recognized header for which the value is in some way invalid (such as my example above)? 
+I realize that "be liberal in what you accept" is on my side, here, but it's not clear that the *letter* of the specification is also on my side. 
+Dave Kristol 
+That's certainly the implication. 
+There are 12 uses of the term in the -03 level of HTTP 1.1, and they all focus on "unrecognized" as "not known to the implementation" (as opposed to "not properly constructed"). 
+The letter appears to be against you in two ways. 
+In the case of handling "unrecognized" headers, "urecognized" appears to mean "not known to the implementation"). 
+Section 3.7.2 
+uses the term to clearly mean "a MIME type that this implementation does not know of", as the requirement is to treat unrecognized subtypes of MULTIPART as MULTIPART/MIXED. 
+Sections 4.5, 5.3, and 6.2 discuss general, request and, response header fields by name and require an implementation to treat unrecognized headers as entity-headers. 
+Section 5.1.1 discusses handling of unrecognized methods in a context that implies it to mean unknown. 
+Likewise section 6.1.1 when discussing status codes. 
+Section 7.1, upon which your argument would hang, implcitly defines "unrecognized" in terms of the BNF for extension-header , when it says: "The extension-header mechanism allows additional entity-header fields to be defined without changing the protocol, but these fields cannot be assumed to be recognizable by the recipient. 
+Unrecognized header fields SHOULD be ignored by the recipient and MUST be forwarded by transparent proxies." 
+Section 14.9.6 makes much the same implication. 
+The second point to make is that an empty REFERER: header is illegal. 
+The BNF in section 14.36 reads: "Referer = "Referer" ":" ( absoluteURI | relativeURI )" There is a required value. 
+Surely the RFC can't make a normative statement expecting a compliant implementation to ignore mal-formed headers - that way would lie madness and miscommunication. 
+Ross Patterson VM Software Division Sterling Software, Inc. 
+I don't think it's so crazy for an implementation to treat a malformed header as though it were simply missing. 
+If the header is required for proper interpretation of the request, then the request will fail. 
+If the header is just optional fluff (User-Agent, Referer), then the actually or implied missing header can be ignored, no harm done. 
+I agree that the empty Referer header violates the specified syntax. 
+The question is, what should the recipient do about it? 
+A server could parse all headers strictly according to the specified syntax and return a 400 Bad Request response if it sees an error. 
+Or, it could adopt the more common tolerant Internet behavior and ignore the malformed header. 
+I seem to have encountered, for the first time of which I'm aware, an example of the former, and it surprised me. 
+Dave Kristol 
+I agree that in general, implementing "common tolerant Internet behavior" is a good thing. 
+However, there are times that for simplicity, security, or correctness reasons, certain protocol violations must cause error responses from servers. 
+One that comes to mind is when CTL chars are included in the message header without first being encoded or inside of a quote string. 
+I've seen applications (MapQuest might still do this) that attempt to use control characters in the URL. 
+For security reasons, our proxy refuses to retrieve requests that violate the protocol in that fashion. 
+-Rob Polansky 
+From: dmk@research.bell-labs.com 
+[mailto:dmk@research.bell-labs.com]On 
+Behalf Of Dave Kristol Sent: Tuesday, May 26, 1998 2:41 PM Subject: Re: what does "unrecognized header fields" mean? 
+[...snip...] 

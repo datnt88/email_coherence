@@ -1,0 +1,152 @@
+actualEncoding: Not adequately explained. 
+Is this the encoding at the time of parsing? 
+Do subsequent saves change the value? 
+initialEncoding might be better. 
+config: Using an abbreviation is unusual. 
+documentURI: Should it be possible (or required) for an implementation to raise an exception if a new value is set that is not a valid URI. 
+xmlEncoding: Can an implementation raise an exception if it does not recognize the encoding on setting? 
+How is this affected by saves? 
+Does this affect saves (which would be in the L/S spec)? 
+Maybe it is cleaner just to allow the encoding to be specified on the save request. 
+xmlStandalone: What occurs when this attribute is set to true and the document does not satisify the requirements for standalone="yes". 
+adoptNode: The difference between adoptNode and importNode is not immediately obvious. 
+"from its parent child list" should be "from its parent's child list" or better "from the child list of its parent" 
+"or null if the operation fails, such as when the source node comes from a different implementation". 
+This seems to be a opening for an implementation to always return null. 
+The expected failure scenarios should be enumerated as exceptions. 
+getElementsByTagName: "The special value "*" ... For XML, this is is case-sensitive" "this is" should be "the tagname parameter" or the sentences should be rearranged. 
+normalizeDocument: "Note that this method does not generate fatal errors" Should this be "does not raise exceptions" 
+renameNode: What is the behavior when attempting to change the attribute name to the name of an attribute that already exists on the element. 
+fixed. 
+fixed. 
+No, normalizeDocument does not declare exceptions anyway. 
+This method generates DOMErrors instead. 
+Since we have 3 categories of errors on DOMError, we needed to be explicit that receiving a fatal error DOMError when using normalizeDocument will never happen, unlike the load operation in LS. [other issues added to the issues list] Philippe 
+Without having spent much time with DOMError, my first interpretation of "fatal error" is along the lines of: System.out.println("Fatal 
+Error"); System.exit(1); 
+"fatal DOMError", "does not dispatch fatal errors to the DOMErrorHandler" or something along those lines would have provided a clue that the traditional definition was not intended. 
+Modified as follows: If errors occur during the invocation of this method, such as an attempt to update a read-only node or a Node.nodeName contains an invalid character according to the XML version in use, errors or warnings (DOMError.SEVERITY_ERROR or DOMError.SEVERITY_WARNING) will be reported using the DOMErrorHandler object associated with the "error-handler" parameter. 
+Note that this method does not report fatal errors (DOMError.SEVERITY_FATAL_ERROR) to the DOMErrorHandler. 
+Philippe 
+We believe that the description is accurate. 
+It is the encoding used 
+while loading the document. 
+The value is read-only and cannot be 
+changed, including the LS module. 
+write* operations in LS don't never modify the document. 
+We do have some abbreviation, such as "Attr", "id", "doctype". 
+We choose to keep config for the moment. 
+We didn't want to go into the issue of URI/IRI checking, so no exception or error if you set to an invalid one. 
+I clarified that no lexical 
+checking was done when setting documentURI. 
+baseURI will return null if 
+an absolute URI cannot be determined. 
+Note that we don't check the xml:base attributes either. 
+xmlEncoding has been changed to read-only, in order to simplify the computation of the encoding used at save time (i.e. only DOMOutput.encoding could be changed). 
+Save defines an "unsupported-encoding" error if the encoding is not supported. 
+normalizeDocument and the DOMSerializer will catch it, as defined by the XML specification: this is a validity constraint. 
+I added for that effect in the description of xmlStandalone. 
+We think that the current description is clear enough. 
+Here are some excerpts from the first paragraphs of the 2 methods: 
+adoptNode: When possible, changes the ownerDocument of a node, its children, as well as the attached attribute nodes if there are any. 
+importNode: Imports a node from another document to this document. 
+[...] The source node is not altered or removed from the original document; this method creates a new copy of the source node. 
+done. 
+Correct, it is indeed an opening for an implementation to refuse to adopt a node from one document to an other. 
+Several failure scenarios can happen, predictable or implementation dependent ones, so any list would be incomplete. 
+fixed. 
+No, the current description is correct. 
+The normalizeDocument method does not generate fatal errors, as well as does not raise exceptions (specified by the IDL). 
+The current description says: When the node being renamed is an Attr that is attached to an Element, the node is first removed from the Element attributes map. 
+Then, once renamed, either by modifying the existing node or creating a new one as described above, it is put back. 
+i.e. it will replace the old attribute node, since it is equivalent to the removal of the Attr node, then set it back using setAttributeNode. 
+Philippe 
+I assume that you meant "adequate" in the first sentence in the previous paragraph and I would disagree since I could not find anything is the spec like the second sentence in the previous paragraph. 
+Is there some other recommendation that already uses the term "actual encoding" in the manner? 
+If that is your intention, I think that "initialEncoding" is clearer. 
+OK 
+OK. Wanted to clarify that URI/IRI checking was intentionally omitted instead of overlooked. 
+So an implementation would be non-conformant if it raised an exception on a malformed URI? 
+I think that "lastEncoding" or "saveEncoding" is clearer. 
+It would be good if the first sentences in each description were parallel. 
+For example, adopt could say: 
+Attempts to adopt a node from another document to this document. 
+[...] 
+If supported, the source node is removed from the original document and altered changing the ownerDocument of the node and any descendants,,, 
+Is it an opening for an implementation to not attempt to adopt a node under any circumstances? 
+That is class DocumentImpl implements Document 
+public Node adoptNode(Node node) { // i'm not even going to try return null; 
+There should be some statement of allowable changes to the source node in the event of a null return. 
+Could an adoptNode implementation detach 
+the source node from its parent and then fail to add it to the target document? 
+A Node return type was appropriate for importNode since it would create a new Node. 
+For adoptNode, only acceptible return values appear to be the source node or null. 
+The return value is just an expensive boolean. 
+This was discussed earlier. 
+I was interpreting "fatal error" in the panic error (System.exit(-1)) 
+sense. 
+OK 
+correct, since no lexical checking is done when setting the attribute. 
+better than xmlEncoding? 
+but it is supposed to come from the XML declaration, which is xmlEncoding and xmlStandalone follow the same pattern. 
+How about: Attempts to adopt a node from another document to this document. 
+If supported, it changes the ownerDocument of the source node, its 
+children, as well as the attached attribute nodes if there are any. 
+If the source node has a parent it is first removed from the child list of its parent. 
+This effectively allows moving a subtree from one document to another (unlike importNode() which create a copy of the source node instead of moving it). 
+When it fails, applications should use 
+Document.importNode() instead. 
+correct. 
+It is up to the implementation what is allowed or what is not. 
+As recommended in the description of adoptNode, use importNode if it fails. 
+No. It is an atomic operation, like insertBefore. 
+If it fails, the source node must not be detached from its parent. 
+Not exactly. 
+Since DOM nodes can be proxies, the return object might differ from the specified one. 
+renameNode acts the same. 
+Hopefully, this has been clarified in Philippe 
+AHA. I wasn't making the connection that xmlEncoding is the encoding specified in the XML declaration (seems pretty obvious now) and is orthogonal to the encoding of the initial source document and then encoding used in any subsequent saves. 
+Would this be null if there were no XML declaration or no encoding specified in the declaration? 
+Some implementations allow parsing from a string where the declared encoding is ignored. 
+Would the xmlEncoding retain the value from the declaration (say UTF-8 or ISO-8859-1) when the source string was UTF-16? 
+What would actualEncoding be in this case? 
+OK 
+After rereading the spec, it is had to explain why I didn't grasp that xmlEncoding was based on the XML declaration. 
+I must have obsessed on setting xmlEncoding to influence the encoding that would be used when saving the document. 
+I agree that with making xmlEncoding read-only. 
+It should reflect the 
+encoding (if any) that was specified in the XML declaration when the 
+document was initially loaded. 
+Subsequent changes to the document may result in the document may not being able to be saved in the encoding, but that is something to deal with in Load/Save. 
+I assume that actualEncoding and xmlEncoding would be null on a document created using createDocument. 
+Was xmlStandalone also made read-only and strictly based on the value in the XML declaration present when the document was loaded? 
+However, 
+there should be something in L/S that allows you to specify that you want to document serialized with standalone="yes" which would either place everything in the internal subset or expand entity references and explicitly serialize default attribute values. 
+I can see a case for making xmlVersion read/write, but it would be better if it could be symmetric with xmlEncoding and xmlStandalone so that it only reflects what version, if any, was stated in an XML declaration. 
+Having it read-write and influencing the allowable names, is like having xmlEncoding read-write and throwing an exception if a tagname was specified that could not be serialized in that encoding. 
+Could not an XML 1.1 aware implementation accept legal 1.1 name at any time, but an attempt to save a document containing XML 1.1 (only) names as XML 1.0 would throw an exception? 
+Is there a method to determine whether an implementation supports XML 1.1? 
+The current description says "This is null when unspecified." 
+As you realized, the xmlEncoding is the encoding from the XML declaration so xmlEncoding retain the value from the declaration. 
+I don't think I can do better than saying "An attribute specifying, as part of the XML declaration, the encoding of this document." 
+on that one (with a link from "XML declaration" to renamed to inputEncoding) will be UTF-16, since it as parsed from a source string. 
+If parsed from a character stream, then it depends where the implementation is able to determine the encoding by the character stream. 
+Philippe 
+Correct. 
+It has been clarified that actualEncoding can be null as well, "such as when the Document was created in memory." 
+Yes. 
+We need to look at that from the LS perspective. 
+Johnny? 
+Correct. 
+One can change the value of xmlVersion and then try to serialize the Document. 
+I differ to Johnny to see if he wants to document that case in this well-formed fatal error case. 
+imho, we shouldn't try too hard to document all those cases otherwise we'll end up having to define an XML catalog for error cases. 
+Philippe 
+In order to clearly express that it represents the encoding used during the load of the Document, the attribute was renamed "inputEncoding". 
+This matches the idea of an input, introduced by the DOMInput interface in the LS module. 
+Philippe 
+It would be dangerous to start doing "magic" based on the value of the standalone attribute. 
+XML Parsers are required to check the value of standalone when validating. 
+It is therefore logic to do the same in the DOM and make the check dependent on the validate and validate-if-schema parameters. 
+No change is needed in the specifications since this error type is already controlled by XML. 
+Philippe 

@@ -1,0 +1,34 @@
+I have been reading the specs on 1.0 working draft for XQuery regarding the where clause. 
+It does not seem to support the following syntax: Let $a := input()/person/lastname Where $a = "miller" ?xml:namespace 
+prefix = o ns = "urn:schemas-microsoft-com:office:office" / Return $a 
+Notice in the where clause there is no further navigation down the tree because this query wants all documents with lastname = to miller. 
+All spec examples do not show this usage of the where clause. 
+Is the above query syntactically correct based on the 1.0 standards? 
+many thanks in advance Shane 
+If you delete " ?xml:namespace 
+prefix = o ns = 
+"urn:schemas-microsoft-com:office:office" / " and change the case of your keywords to lowercase, this parses fine according to our grammar: 
+let $a := input()/person/lastname where $a = "miller" return $a It's often helpful to try out queries on our test grammar page if you're not sure whether a given query parses: 
+Our BNF accepts this query just fine. 
+You might be a little surprised by what it means! 
+To explain why, let me add in a little data: let $in := people let $a := $in/person/lastname where $a = "miller" return $a What do you expect this to return? 
+It returns the following: To explain why, let me step through this one clause at a time: let $a := $in/person/lastname $a is bound to: lastname robie /lastname , where $a = "miller" this is approximately equivalent to: where some $dot in $a satisfies $dot eq miller return $a since the where clause evaluates to true, this returns $a That's why for/where is more common than let/where, but let/where is very helpful with aggregate functions like sum(), count(), avg(), min(), and max(). 
+Is that helpful? 
+Jonathan 
+In a message dated 21/03/2003 20:59:30 GMT Standard Time, 
+Shane, I may be misunderstanding your question. 
+Try the following query in the X-Hive online demo: for $b in document("/XQuery/docs/XMP/bib.xml")/bib/book where $b/publisher = "Addison-Wesley" return $b Paste the above query into XMP 1.1.9Q1 
+Is that the usage of the where clause you are interested in (given the constraints on what can be queried in the online demo)? 
+BTW general XQuery questions can be discussed at the mailing list on Andrew Watt 
+Many thanks Mr Robie. 
+The results you highlighted below are exactly what we were getting but not expecting. 
+We changed the let to a for and all works great. 
+Thanks for your reply Shane 
+If you delete " ?xml:namespace 
+prefix = o ns = "urn:schemas-microsoft-com:office:office" / " and change the case of your keywords to lowercase, this parses fine according to our grammar: let $a := input()/person/lastname where $a = "miller" return $a It's often helpful to try out queries on our test grammar page if you're not sure whether a given query parses: 
+Our BNF accepts this query just fine. 
+You might be a little surprised by what it means! 
+To explain why, let me add in a little data: let $in := people let $a := $in/person/lastname where $a = "miller" return $a What do you expect this to return? 
+It returns the following: To explain why, let me step through this one clause at a time: let $a := $in/person/lastname $a is bound to: lastname robie /lastname , where $a = "miller" this is approximately equivalent to: where some $dot in $a satisfies $dot eq miller return $a since the where clause evaluates to true, this returns $a That's why for/where is more common than let/where, but let/where is very helpful with aggregate functions like sum(), count(), avg(), min(), and max(). 
+Is that helpful? 
+Jonathan 

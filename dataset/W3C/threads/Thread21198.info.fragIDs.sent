@@ -1,0 +1,33 @@
+Moin, 
+I've been playing around with Amaya 7.2 under Gentoo Linux with kernel 2.4.20 and Digest Access Authentication. 
+But as soon as the server started sending qop="auth, auth-int" in it's WWW-Authenticate response header, Amaya was unable to authenticate any longer while Mozilla worked fine. 
+By modifying the server code I found that Amaya uses "auth, auth-int" (without the quotes of course) as value for unq(qop-value) in the calculation of the request-digest (RFC 2617, section 3.2.2.1), while RFC 2617 clearly states that it "... MUST be one of the alternatives the server indicated it supports in the WWW-Authenticate header. 
+[...] Note that this is a single token, not a quoted list of alternatives as in WWW-Authenticate." (section 3.2.2) So, if I'm not mistaken this is a bug in Amaya, isn't it? 
+Appendix: abbreviated trace of the whole process: 
+GET /~henryk/digestauthtest.php HTTP/1.1 Host: gleam.homeip.net 
+User-Agent: amaya/7.2 libwww/5.4.0 HTTP/1.1 401 Authorization Required Date: Sat, 29 Mar 2003 05:15:27 GMT Server: Apache/1.3.27 (Unix) (Gentoo/Linux) PHP/4.3.1 WWW-Authenticate: Digest realm="Privatbereich", algorithm=MD5, qop="auth", nonce="1048914927;01b735bc99b9a649b0aaba92c80b397b" GET /~henryk/digestauthtest.php HTTP/1.1 nonce="1048914927;01b735bc99b9a649b0aaba92c80b397b", uri="/~henryk/digestauthtest.php", qop=auth, nc=00000001, cnonce="012345678", response=f2c608b80ce93b01d917f868fc22440f HTTP/1.1 200 OK Date: Sat, 29 Mar 2003 05:15:27 GMT 
+(So username/password are okay, now modify the qop-options and wait some time for the nonce to become stale) 
+GET /~henryk/digestauthtest.php HTTP/1.1 nonce="1048914927;01b735bc99b9a649b0aaba92c80b397b", uri="/~henryk/digestauthtest.php", qop=auth, nc=00000004, cnonce="012345678", response=db3d2bb738528b8202bf9ad2924bfe4f HTTP/1.1 401 Authorization Required Date: Sat, 29 Mar 2003 05:17:01 GMT WWW-Authenticate: Digest realm="Privatbereich", stale=true, algorithm=MD5, qop="auth, auth-int", nonce="1048915021;27b59a639ad37173b20f6d64a5f6b040" GET /~henryk/digestauthtest.php HTTP/1.1 nonce="1048915021;27b59a639ad37173b20f6d64a5f6b040", uri="/~henryk/digestauthtest.php", qop=auth, nc=00000001, cnonce="012345678", response=0159180556a57ae1c191a75d8198d117 HTTP/1.1 401 Authorization Required Date: Sat, 29 Mar 2003 05:17:01 GMT WWW-Authenticate: Digest realm="Privatbereich", algorithm=MD5, qop="auth, auth-int", nonce="1048915021;27b59a639ad37173b20f6d64a5f6b040" 
+(Now modify the server to too use "auth, auth-int" in the request digest calculation) 
+GET /~henryk/digestauthtest.php HTTP/1.1 nonce="1048916207;a55a349d45382773f7451e12190679c6", uri="/~henryk/digestauthtest.php", qop=auth, nc=00000001, cnonce="012345678", response=915adaab5d6de34418915e3ac607a9ab HTTP/1.1 200 OK Date: Sat, 29 Mar 2003 05:36:47 GMT 
+Henryk Pl?tz Gr??e von der Ostsee Help Microsoft combat software piracy: Give Linux to a friend today! 
+Hello Henryk, Looking at my code comments, I noted that we don't handle auth-int. 
+The case where the server sends both values must be something we never tried before. 
+So it must be a bug. 
+Can you tell me which server you were using or open me an access so that I can debug and fix this problem? 
+The latter would be the fastest. 
+-jose 
+[snip] 
+Moin, Am Thu, 10 Apr 2003 12:22:42 +0200 schrieb Jose Kahan: 
+I used Apache 1.3.27 with mod_auth_digest and 
+AuthDigestQop auth auth-int in the main apache configuration file, as well as my own Digest Authentication implementation in PHP. 
+As I can't use the apache module on my public web server, I have created a modified version of that script which will tell you whether your browser works correct. 
+URL: http://www.ploetzli.ch/test/doauth.php 
+username: guest, password: guest Note: Although the script asks to use qop=auth-int (to trigger this bug), it is not implemented. 
+However, currently I don't know of any browser that supports auth-int. 
+Henryk Pl?tz Gr??e von der Ostsee Help Microsoft combat software piracy: Give Linux to a friend today! 
+Henryk, Thanks for your help. 
+It helped me quickly find the bug and fix it. 
+It's commited on CVS now and will come out in the next release (hopefully next week). 
+As the auth-int support wasn't complete, I disabled it for the time being, until someone contributes that part of code or it becomes important to have it. 
+-jose 

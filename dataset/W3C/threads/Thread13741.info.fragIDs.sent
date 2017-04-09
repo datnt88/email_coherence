@@ -1,0 +1,108 @@
+I too have been playing with posting EARL to the annotest server. 
+At its 
+core, it's just an RDF database, so it can accept any kind of RDF you give 
+it. 
+You don't have to wrap the EARL as an annotation at all - you can just post it straight. 
+You'll get back an error about "no annotations found," 
+but all the triples are now in the database and you can do algae queries to retrieve them. 
+The RDF that is returned is re-generated from the triples, so it's a bit uglier than the beautful EARL we're producing, but looking at 
+it has helped me think about the structure of EARL a bit more, and 
+hopefully it's still valid. 
+I'm not sure how Jim is posting to annotea, but I'm guessing that since the reports he gets back haven't been transformed the way I'm seeing mine be changed, he's at least including the 
+EARL in the body of an annotation. 
+You can't do general queries for content if the EARL is stored in the body of an annotation. 
+This week at the technical plenary I spent a lot of time bugging Eric Prud'hommeaux about various "features" of the annotea system. 
+According to him, if I post multiple EARL reports as straight EARL to annotea and do a query, the returned result should be a combination of all the RDF documents that satisfied my query. 
+I haven't got that to work quite yet (I only get back the first document) but the combination could be useful. 
+A few warnings from my experience playing with annotea: 1. 
+The documentation at http://www.w3.org/2001/Annotea/User/Protocol.html is wrong. 
+Annotest gives errors if you try to just post straight XML to 
+it. 
+Look at the source for submit things - for example, to submit an annotation you have post your content as w3c_annotate= url-encoded rdf . 
+Same idea for algae queries. 
+2. The annotea documentation also doesn't mention that you need to use Authorization:Basic with username and password to post to the server. 
+3. Jim has already discovered this, but annotest has a bug when it names 
+other RDF namespaces, and EARL 0.95 properties come back as 0.95:whatever , which isn't legal and causes IE to complain and refuse to 
+show me anything. 
+I hope some of this was helpful. 
+If my sleep-deprived babbles on querying weren't intelligible, I can attempt to explain myself better later. 
+Nadia 
+"Nadia Heninger" nadia@barbwired.com 
+the 
+Can you provide me with the Algae queries you use, and pages where you have annotations stored. 
+So far all Algae Queries I do on EARL submitted comes back all disconnected graphs, losing all the information - I assume 
+it's my queries, but haven't yet solved the problem. 
+For example, the algae: 
+(ask '( (http://www.w3.org/2001/03/earl/0.95#testSubject ?b ?s) 
+(http://www.w3.org/1999/02/22-rdf-syntax-ns#predicate ?q 
+) collect '()) 
+returns (modified to be valid.) 
+which doesn't associate the testSubject with the predicate, I always get this result. 
+I need Algae help! 
+to 
+I have two clients which both post straight XML without problems, the above page is wrong, but only in that it omits the ?xml 
+...  with that included it works fine for me - what problems do you have? 
+XML, with: Content-Type: application/xml Accept: text/xml user-agent: FillyJonk IRC Bot Content-Length: 1000 as the headers (content length obviously accurate.) 
+queries. 
+I definately don't like this for submission - url length is getting long, I don't trust proxy's even if I can trust annotest to be okay with it. 
+names 
+to 
+This is solved if you use one of the test-servers - I'll leave it to EricP if he wants to open it up to the list. 
+Also I believe it's important we agree on a namespace to use, algae queries really need to know what namespace you are using and it would be nice if we could all use the same one. 
+Jim. 
+Jim, I had a quick chat with ericP about this, and he says that you need 
+to connect the sub query type things with each other with the variable 
+names (correct me if I've got this wrong eric) 
+so your query 
+needs to be something like 
+(ask '( (http://www.w3.org/2001/03/earl/0.95#testSubject ?webcontent 
+?subject) 
+(http://www.w3.org/1999/02/22-rdf-syntax-ns#subject ?assertion 
+?subject) (http://www.w3.org/1999/02/22-rdf-syntax-ns#predicate ?assertion ) collect '()) (I changed the variable names to make hem clearer to me.) nadia probably knows better than I...ericP is en route to the US so wont be able to help for a bit. 
+Libby 
+We're working it out on IRC now. 
+I think I understand now how to structure a query, but I'll need to do some exploring. 
+I'm not sure I entirely understand what's going on with what I get returned, though. 
+(ask '((http://www.w3.org/1999/02/22-rdf-syntax-ns#type ?a ) :collect '(?a)) 
+Returns: earl:Person xmlns:earl="http://www.w3.org/2001/03/earl/0.95#" a:Attribution r:resource="http://iggy.w3.org/annotations/attribution/1014886708.379036" / along with a bunch of empty earl:Person tags. 
+I'm assuming all the empty Person tags come from every report that matched, but why is there only one with the annotea Attribution? 
+It's always the same attribution, too. 
+Eric told me that that one attribution would point to a combination of the reports that matched, but it doesn't seem to. 
+Ahh... I had left that off. 
+It works fine now with straight XML, thank you. 
+I'm still using POST. 
+The only difference is the URL-encoding. 
+So apparently the script accepts both methods. 
+I'm glad to not have to url-encode now. 
+Yes... unfortunately, EARL looks like it's going to continue to change. 
+Is it time to decide on a 1.0 now? 
+Nadia 
+Hi, Here's a good query to try, giving back a page, its date, the validity, and the test case:- (ask '( (http://www.w3.org/1999/02/22-rdf-syntax-ns#subject ?a 
+?ts) 
+(http://www.w3.org/2001/03/earl/0.95#testSubject ?ts 
+?page) 
+(http://www.w3.org/2001/03/earl/0.95#date ?ts 
+?date) 
+(http://www.w3.org/1999/02/22-rdf-syntax-ns#predicate ?a 
+?tp) 
+(http://www.w3.org/1999/02/22-rdf-syntax-ns#object ?a 
+?tc) ) :collect '(?page ?date 
+?tp 
+?tc)) 
+Results at [1]. 
+That should give all of the people... but only as anonymous nodes. 
+If you want their names, you can do:- (ask '( (http://www.w3.org/1999/02/22-rdf-syntax-ns#type ?a 
+http://www.w3.org/2001/03/earl/0.95#Person) (http://www.w3.org/2001/03/earl/0.95#name ?a 
+?name) ) :collect '(?name)) That gives a pretty good list (well... of "Nadia" and "Bob" repeated a fair few times!), [2]. 
+Hmm... Jim's ones aren't included, although from what I can tell, he doesn't include his name with the evaluations. 
+Ah: he uses http://www.w3.org/2000/08/palm56/addr# with firstName and lastName. 
+A suitably modified query would return those too. 
+Oh, I speedily hacked up a little HTML form thing for posting the queries to the server. 
+I doubt that it's of any use, but it's attached as  annotea.html  . 
+If you add "youremail%40yourdomain.org:yourpass@" to the front of the "action" attribute - after the "http://" and before the "annotest" - (and I don't recommend this, BTW...), then it might automatically authenticate you, making things a little easier. 
+Cheers, [1] r:Description r:about="http://example.org/#myAssertion" r:object r:resource="http://example.org/#MyTestCase" / r:predicate r:resource="http://www.w3.org/2001/03/earl/0.95#passes" / r:Description r:about="http://example.org/#someID02495012470" 0.95:date xmlns:0.95="http://www.w3.org/2001/03/earl/0.95#" 2001-05-17T23:07:35Z 0.95:testSubject xmlns:0.95="http://www.w3.org/2001/03/earl/0.95#" r:resource="http://www.w3.org/" / p:E-mail r:resource="mailto:jim@jibbering.com" / r:object r:resource="http://example.org/#MyTestCase" / r:predicate r:resource="http://www.w3.org/2001/03/earl/0.95#passes" / r:Description r:about="http://hkn.berkeley.edu/~nadiah/#1014989111470" 
+0.95:date xmlns:0.95="http://www.w3.org/2001/03/earl/0.95#" 2001-05-17T23:07:35Z 0.95:testSubject xmlns:0.95="http://www.w3.org/2001/03/earl/0.95#" r:resource="http://hkn.berkeley.edu/~nadiah/" 
+/ atr:attribution r:resource="http://annotest.w3.org/annotations/attribution/1014971256. 
+869491" / r:object r:resource="http://example.org/#MyTestCase" / r:predicate r:resource="http://www.w3.org/2001/03/earl/0.95#fails" / r:Description r:about="http://jibbering.com/2002/2/iggy/algae-annotest.html#10149938 85980" 0.95:date xmlns:0.95="http://www.w3.org/2001/03/earl/0.95#" 2001-05-17T23:07:35Z 0.95:testSubject xmlns:0.95="http://www.w3.org/2001/03/earl/0.95#" r:resource="http://hkn.berkeley.edu/~nadiah/" 
+/ [2] 0.95:Person xmlns:0.95="http://www.w3.org/2001/03/earl/0.95#" 0.95:Person xmlns:0.95="http://www.w3.org/2001/03/earl/0.95#" 0.95:Person xmlns:0.95="http://www.w3.org/2001/03/earl/0.95#" [more Bobs and Nadias follow...] Kindest Regards, Sean B. Palmer @prefix : http://purl.org/net/swn# . 
+:Sean :homepage http://purl.org/net/sbp/ . 

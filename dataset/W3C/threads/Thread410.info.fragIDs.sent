@@ -1,0 +1,38 @@
+I would like to propose that we discard the Tidy DOM classes altogether. 
+The DOM is about to have a Level 2 Recommendation with Level 3 coming not too far after that. 
+The functionality is rapidly increasing and I don't think that there's any way that we can or should keep up. 
+DOM now offers the whole traversal specification with NodeFilters, NodeIterators, etc. What I propose is that we add a SAX 2 output capability to JTidy and discard the DOM classes altogether. 
+The SAX 2 interface would fit in nicely with the current XML/XHTML output options and we would be done with it. 
+If someone wanted a DOM implementation, they could use a parser like Xerces and drive it with SAX 2 events. 
+Then, they could have a full-blown DOM implementation supported by a team that is focused on that. 
+Ouch! I depend very heavily on the JTidy DOM classes. 
+If they disappeared, I would have absolutely no use for the library. 
+What is the C version doing? 
+I had rather assumed JTidy to be a Java port of it rather than a parallel implementation. 
+I don't think that the c version of tidy implements the DOM at all! 
+I suppose we could keep the existing DOM classes and continue to support them as is and enhance them as time allows. 
+But for people who need full DOM support, it would be much easier for us to build in SAX 2 events. 
+Russell, for your application, you'd just need to add in a few lines of code to a handler that can accept SAX 2 events (like Xerces) and that can build a DOM tree from that. 
+Then, you'd use the Xerces DOM tree and have a full blown DOM implementation with all of the features that Xerces supports. 
+It could be somewhat slower and consume more memory because we'd first be building the tidy tree and then walking it to generate the SAX events. 
+But HTML pages are usually small and I think the increased benefits would outweigh these disadvantages. 
+Gary 
+Greetings, 
+Gary, do you think that SAX is less of a moving target than DOM? 
+If yes, I think your proposal sounds very good. 
+It has the following advantages: - The DOM implementation would be left to the folks who know it best (e.g. Xerces) - Maintenance of the JTidy DOM support would be easier. 
+The disadvantages are: 1 Work required to design the SAX2 event generator 2 Speed 3 Existing application base. 
+The solution to 3) would be to either support the existing DOM classes in parallel or providing a smooth migration path to the DOM functionality. 
+Can you give a work estimate? 
+How about the speed/memory penalty? 
+-Sami lempinen@iki.fi 
+http://www.iki.fi/lempinen/ apt-get a life 
+Sami -- Another disadvantage (probably goes with 2) is memory, depending on what is used as the ContentHandler. 
+I'm notoriously bad at work estimates. 
+In this case it would be even worse because I basically haven't looked at the JTidy code at all. 
+I'll need to study the structure and then fit the code in in the proper place so that we can maintain sync with c tidy. 
+I'll look at this in the next few days and have a better idea then and report back. 
+On the speed/memory penalty, I have no clue. 
+I really want to spend my free time in the next few days studying the JTidy structure so that I can get a good feel for the architecture. 
+Measure twice, cut once. 
+Gary 

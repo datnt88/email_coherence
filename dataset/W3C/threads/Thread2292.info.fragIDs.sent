@@ -1,0 +1,55 @@
+That is consistent with my reading, but it isn't really the case I was worried about. 
+Consider the case where a client sends 
+GET /foo.gif HTTP/1.1 Range: bytes = 1500-2047 and foo.gif is only 1800 bytes long. 
+My reading is that right now the returned response would have a Content-Range: bytes 1500-1799/1800 
+And the client would end up with the last 300 bytes, just as if a Range bytes = 1500- had been sent. 
+It seems that we agree that isn't what we want, No, I think this is acceptable behavior. 
+and that if the byte range specified is out of bounds, the robustness prinicipal implies returning the *whole* entity. 
+I'm not sure about that last implication. 
+I think we really have two choices: (1) the server returns a straightforward interpretation of what the client asked for, and if the client doesn't like it, the client can ask for something different. 
+(2) the server tries to protect the client from receiving something that might or might not be what the client wants. 
+Choice #2 seems to be unnecessarily restrictive. 
+Since the responses are always unambiguously marked with a Content-Range header, there is no danger (if we adopt choice #1) of confusing a properly implemented client. 
+However, #2 runs the risk of requiring an extra round-trip in a case where the client might actually be happy with the 1500-1799 range. 
+If the client really does not want to receive a smaller range than it asked for, it could do something like GET /foo.gif HTTP/1.1 Range: bytes =1500-2047 If-Valid: "xyzzy" knowing that if there is any change in the size of /foo.gif, this will change the validator and make this conditional request return 
+412 (Precondition Failed). 
+Using persistent-connection and pipelining, the client might even send something like GET /foo.gif HTTP/1.1 Range: bytes =1500-2047 If-Valid: "xyzzy" HEAD /foo.gif HTTP/1.1 If-Invalid: "xyzzy" so that within one RTT it knows the current size of the object, if it has changed (at the cost of a few more bytes on the wire). 
+If the last-byte-pos value is present, it must be greater than or equal to the first-byte-pos in that byte-range-spec, or the byte-range-spec is invalid. 
+The recipient of an invalid byte-range-spec must ignore it. 
+That the recipient of an invalid byte-range-spec ignored it by treating the request as if it did not contain a Range: header (once again, returning the whole entity on a GET request). 
+Am I misreading that? 
+I believe the intention behind this rule is to say that if a server receives something obviously bogus like GET /foo.gif HTTP/1.1 Range: 4-3 then it should return the whole entity rather than an error. 
+But maybe the server should return 400 (Bad Request) in this case. 
+-Jeff 
+That is consistent with my reading, but it isn't really the case I was worried about. 
+Consider the case where a client sends GET /foo.gif HTTP/1.1 Range: bytes = 1500-2047 and foo.gif is only 1800 bytes long. 
+My reading is that right now the returned response would have a Content-Range: bytes 1500-1799/1800 And the client would end up with the last 300 bytes, just as if a Range bytes = 1500- had been sent. 
+It seems that we agree that isn't what we want, and that if the byte 
+range specified is out of bounds, the robustness prinicipal implies returning the *whole* entity. 
+In the case you describe, I can see how what is written gets the client the whole entity, but I'm not sure that it does imply that it in all cases. 
+In other words, I think there is an ambiguity here that we need to plug. 
+This makes me wonder whether there isn't another ambiguity here. 
+I had assumed from this section: If the last-byte-pos value is present, it must be greater than or equal 
+to the first-byte-pos in that byte-range-spec, or the byte-range-spec is invalid. 
+The recipient of an invalid byte-range-spec must ignore it. 
+That the recipient of an invalid byte-range-spec ignored it by treating the request as if it did not contain a Range: header (once again, returning the whole entity on a GET request). 
+Am I misreading that? 
+Regards, Ted Hardie 
+Sigh. And it all looked so simple, briefly. 
+I think that returning the whole entity is a reasonable response whenever the byte-range-spec doesn't fit reality. 
+There may be cases where a client wants the last 300 bytes of something that it thought had 700 more bytes, but I'm not very comfortable with them. 
+If the client doesn't care about how many bytes remain, there are already other, better ways of handling that, and they fit situations where the client is uncertain about how many bytes remain (or just wants "from here to the end"). 
+It is also easy for the client to know what to do with the whole entity, and sending the whole entity means that the client doesn't need to do any new checks for integrity. 
+I believe Jeff is right that this problem won't occur very often for well-implemented clients, but I think that the problem *will* occur. 
+I propose the following wording change within 3.17.2 
+: Delete: If the last-byte-pos value is present, it must be greater than or equal to the first-byte-pos in that byte-range-spec, or the byte-range-spec is invalid. 
+The recipient of an invalid byte-range-spec must ignore it. 
+and If the last-byte-pos value is larger than the current length of the entity, it is assumed to be equal to the current length of the entity. 
+Insert after "If the last-byte-pos value is absent": If the last-byte-pos value is present, it must represent a possible value within the byte-range-spec. 
+It must be greater than or equal to the first-byte-pos in the byte-range-spec and less than or equal to the current length of the entity in bytes. 
+Similarly, if the first- byte-pos is present, it must represent a possible value. 
+It must be greater than or equal to zero and it must not be greater than the last-byte-pos value. 
+The recipient of an invalid byte-range-spec must ignore it and return the entire entity. 
+This is more restrictive than the original wording, but I believe it closes off an ambiguity and makes for a set of rules which will be easy for implementors to follow. 
+Comments? 
+regards, Ted Hardie 

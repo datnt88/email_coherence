@@ -1,0 +1,73 @@
+I have submitted a slightly updated version of the main transparent content negotiation draft, draft-ietf-http-negotiation-05.txt, and 
+made it available at the usual place: 
+To make room for independent developments on feature tag registration, some small changes were made to the feature tag parts of the draft: feature tags may now be quoted, so that one can use URLs as feature tags, a reference to work on feature tag registration procedures has been added, and the syntax has been changed slightly to make fault-tolerant parsing of feature tags which are URLs easier. 
+The web page above has also been updated to reflect recent revisions of other drafts by Ted Hardie. 
+Koen. 
+I had a couple of comments on the content negotiation draft. 
+I am new to this discussion, so I apologize if these comments have been addressed before. 
+1. 
+I am curious why Section 5.4 makes the inclusion of type, language, charset, and length attributes optional. 
+Are there some cases where it would be difficult for a web server/proxy to determine these characteristics at the time it generates the variant list? 
+The only 
+examples I can think of are cgi-bin scripts and streaming documents that do not have a fixed size. 
+Additionally, I am also curious why the server does not have to maintain a one-to-one correspondence between the attributes in the variant description and the relevant HTTP Content-* headers. 
+Obviously, making these fields required and identical to those in the HTTP header would make a client's job of choosing the most appropriate variant much easier, and unless there is a reason that this is difficult, it might be useful to make these MUSTs. 
+2. The list of alternates in an "Alternates:" header currently uses the URI of documents for identification. 
+It seems that there might be some advantages to using the URL of the document instead, e.g. the example in Section 4.3: 
+Alternates: {"paper.1" 
+0.9 {type text/html} {language en}}, {"paper.2" 
+0.7 {type text/html} {language fr}}, {"paper.3" 
+1.0 {type application/postscript} 
+becomes: 
+Alternates: {"http://x.org/paper.1" 
+0.9 {type text/html} {language en}}, {"http://x.org/paper.2" 
+0.7 {type text/html} {language 
+fr}}, 
+{"http://x.org/paper.3" 
+1.0 {type 
+application/postscript} Using URLs instead of URIs has the significant advantage that it provides a simple mechanism for pointing clients to mirror locations that replicate the same content. 
+For example, the Internet Movie Database could have an "Alternates:" header like: Alternates: {"http://www.imdb.com/" 
+1.0 {type text/html} {language en}}, {"http://uk.imdb.com/" 
+0.7 {type text/html} {language en}}, {"http://italy.imdb.com/" 
+0.7 {type text/html} {language it}} 
+I don't know of any existing mechanism to do replication of this nature other than mapping a DNS name to multiple addresses, which doesn't handle replicas on sites that are not a part of the same administrative domain and does not allow fine-grained replica support. 
+I'd appreciate your comments, and thanks. 
+--Mark 
+Mark, 
+On at least one of the revisions of the "Alternates"draft, the full URL syntax was made mandatory. 
+I believe that that syntax continues to be the consensus of the conneg list. 
+regards, Ted Hardie NASA NIC 
+Alternates: {"paper.1" 
+0.9 {type text/html} {language en}}, {"paper.2" 
+0.7 {type text/html} {language fr}}, {"paper.3" 
+1.0 {type application/postscript} 
+Alternates: {"http://x.org/paper.1" 
+0.9 {type text/html} {language en}}, {"http://x.org/paper.2" 
+0.7 {type text/html} {language 
+{"http://x.org/paper.3" 
+1.0 {type 
+Mark Stemm: 
+Yes, there are such times. 
+First, an document author may simply not have specified the language of a document, or even the charset, so the server is allowed to leave them out. 
+Second, as you note below, computing the length can be expensive. 
+The only 
+In the transparent negotiation scheme, the client uses the alternates header field only to select content, it never needs to look at the header fields of variants for this, so a MUST would not make the life of a client any easier, while it might make the life of a server (implementer) somewhat harder. 
+Hmm, I think you are confusing terminology here; an URI is not a relative URL, it is an old term which is supposed to be somewhat more general than an URL. 
+The URI can be both absolute and relative, as the draft says, so your examples below are already allowed. 
+Alternates: {"paper.1" 
+0.9 {type text/html} {language en}}, {"paper.2" 
+0.7 {type text/html} {language fr}}, {"paper.3" 
+1.0 {type application/postscript} 
+Alternates: {"http://x.org/paper.1" 
+0.9 {type text/html} {language en}}, {"http://x.org/paper.2" 
+0.7 {type text/html} {language 
+{"http://x.org/paper.3" 
+1.0 {type 
+Nobody ever did a good mirroring system for the web (and managed to get is deployed), and I would not argue that the alternates header is a good mirroring mechanism, but as you note it can be abused to do mirroring. 
+Thanks for your comments. 
+Note, by the way, that nobody is currently working on developing the protocol in draft-ietf-http-negotiation any further, we are going to take the current version and release it as an experimental protocol. 
+Koen. 
+This is a bit ambiguous: I meant to say that nobody in this working group is working on changes to the text of draft-ietf-http-negotiation. 
+However, some people in the implementation community *are* working on developing implementatations of the protocol in this draft. 
+Thanks to Larry Masinter for pointing out this ambiguity. 
+Koen. 

@@ -1,0 +1,31 @@
+Hi, I'm a newbie with OWL-S and I have some questions about the expression of conditions in combination with the use of an OWL-S IF-THEN-ELSE statement. 
+For a project I'm working on I try to express the following scenario as a composite process. 
+An atomic process A produces an boolean output, saying the output property is either "true" or "false". 
+Depending on the value of that output I want to start either atomic process B or atomic process C. I don't know if I'm on the right track but according statement provided in OWL-S v.1.0 to model that. 
+Unfortunately I wasn't able so far to find an example implementation of it. 
+What I'm really concerned about expressing the condition since I've no glue how to express the condition mentioned above and I know that there is not yet on official standard for expressing conditions in OWL-S. 
+Is it possible to express something like above with the IF-THEN-ELSE statement and if so can anyone help me with an example of an implemented 
+IF-THEN-ELSE statement? 
+Any hints about expressing conditions would be welcome as well! 
+Thanks in advance, Mike 
+We (the OWL-S conspiracy) are still hammering out the details of how to combine parameter notation with condition notation. 
+I'll sketch one way to fit things together, but in what follows I'm speaking for myself, not the OWL-S people in general. 
+A composite process is a structure of activities (simple processes and composite subprocesses). 
+A _step_ of such a composite is an invocation of (i.e., a request to "perform") a named process. 
+The named process will have output parameters, and we have to have a way to specify how those get bound in the composite process that invoked the named process. 
+In your scenario, suppose we have an invocation followed by an IF-THEN-ELSE: Sequence components (A If-then-else ifCondition ??? then B else C) (Translation into RDF/XML left as execise for readers not suffering from repetitive-motion stress disorder). 
+The problem is how to make A communicate with the "???". 
+Suppose A is an invocation of a named process with output parameter 'res'. 
+Then we need a way to refer to the "res output of that occurrence of A." We introduce a tagging mechanism for that purpose: 
+Sequence components (Tagged tag S action Invoke A If-then-else ifCondition (= (res S) true) then B else C) For instance, A might be "check credit card," with a boolean result 'res'. 
+This way of passing data around works fine, but for If-then-else's I think it would be better if the ifCondition were a real condition rather than just a check that some output has a value. 
+Somewhere in either this process or the definition of A it needs to say "If the result is true, then person P has a good credit card, otherwise P does not." 
+One possibility is: Sequence components (Tagged tag S action Invoke A input-binding parameter credit-card value ... input-binding parameter cc-owner value P effect-in-context Conditional effect condition (res S) effect (good-credit-card P)) effect-in-context Conditional effect condition (not (res S)) effect (bad-credit-card P) If-then-else ifCondition (good-credit-card P) then B else C) "effect-in-context" (which I just made up) allows us to specify effects of a step that occur here, but might not occur every time the process is invoked. 
+(It also allows me to avoid spelling out the details of process A.) I've left conditions parenthesized, but they can be encoded in RDF by writing stuff like classMembership individual P class Good-credit-cards (a rough parady of OWL Rules.) I hope this is useful. 
+-- Drew McDermott Yale University CS Dept. 
+Could we resolve some of these problems by allowing for a set of variables at the outer scope of any OWL-S/SWSL process... i.e. we don't try to bury all this down in the details of specific conditions, etc. 
+A list of variables in the outer scope of the whole OWL-S process (where'er a compound or primitive one) would appear to be a simple mechanism that is more familiar to those of us used to dealing with planning system operators anyway. 
+Austin 
+It's not clear to me what you're proposing. 
+Can you give an example, or rework the OP's example? 
+-- Drew -- Drew McDermott Yale Computer Science Department 

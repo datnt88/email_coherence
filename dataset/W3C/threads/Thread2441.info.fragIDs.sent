@@ -1,0 +1,39 @@
+The MHTML group has decided to allow more than one Content-Location in the same message heading. 
+This can be used, for example, if the same object can be located by several different URLs, and you want to specify all of them. 
+A particular case is the following -- border -- Content-Location: http://www.dsv.su.se/a.gif Content-Location: http://www.dsv.su.se/images/a.gif -- border -- -- border -- -- border -- Supposes a.gif and images/a.gif actually refer to the same image. 
+And suppose the two HTML objects above have digital seals on them. 
+Then, if you did not allow multiple Content-Location headers in the first body part, you would have to send the image twice, or you would have to modify the HTML invalidating the digital seals! 
+The reason I am sending this message to the http working group mailing list, is that this decision in the MHTML working group may modify the HTTP spec, which presently says 14.15Content-Location The Content-Location entity-header field MAY be used to supply the resource location for the entity enclosed in the message when that entity is accessible from a location separate from the requested resource's URI.. In the case where a resource has multiple entities associated with it, and those entities actually have separate locations by which they might be individually accessed, the server should provide a Content-Location for the particular variant which is returned. 
+In addition, a server SHOULD provide a Content-Location for the resource corresponding to the response entity. 
+The MHTML group further has decided, that if there is more than one Content-Location in the same message heading, then neither of them can be used to establish a base (unless both specify the same base). 
+I suggest that the editors of the HTTP draft go through all cases where Content-Location is mentioned in the HTTP draft to check that it agrees with the above decisions in the MHTML group. 
+Please do not send replies to this message only to the http-wg@cuckoo.hpl.hp.com mailing list, since I will not then get them, I am not a member of that mailing list. 
+Jacob Palme jpalme@dsv.su.se (Stockholm University and KTH) for more info see URL: http://www.dsv.su.se/~jpalme 
+Jacob, 
+I am not very happy with changing an existing and already implemented IETF proposed standard in such a radical way. 
+But maybe it is necessary. 
+Let us examine the differences between how MHTML and HTTP uses Content- Location to see if they really need to be split into two different header fields. 
+The reason for changing from my previous align MHTML with HTTP 1.1 position (which you also enunciate), to my employ a new header field position, was because I was concerned that the MIME folding algorithm we apply to header fields containing invalid URIs would be incompatible with HTTP 1.1. 
+HTTP 1.1 can outlaw invalid URIs, MHTML has to both make them RFC822/MIME safe and cope with them. 
+The problematic text is: 
+4.4 Encoding and decoding of URIs in MIME header fields 4.4.1 Encoding of URIs containing inappropriate characters Some documents may contain URIs with characters that are inappropriate for an RFC 822 header, either because the URI itself has an incorrect syntax according to [URL] or the URI syntax standard has been changed to allow characters not previously allowed in MIME headers. 
+These URIs cannot be sent directly in a message header. 
+If such a URI occurs, all spaces and other illegal characters in it must be encoded using one of the methods described in [MIME3] section 4. This encoding MUST only be done in the header, not in the HTML text. 
+Receiving clients must decode the [MIME3] encoding in the heading before comparing URIs in body text to URIs in Content-Location headers. 
+The charset parameter value "US-ASCII" SHOULD be used if the URI contains no octets outside of the 7-bit range. 
+If such octets are present, the correct charset parameter value (derived e.g. from information about the HTML document the URI was found in) SHOULD be used. 
+If this cannot be safely established, the value "UKNOWN-8BIT" [RFC 1428] MUST be used. 
+Note, that for the matching of URIs in text/html body parts to URIs in Content-Location headers, the value of the charset parameter is irrelevant, but that it may be relevant for other purposes, and that incorrect labeling MUST, therefore, be avoided. 
+Warning: Irrelevance of the charset parameter may not be true in the future, if different character encodings of the same non-English filename are used in HTML. 
+4.4.2 Folding of long URIs Since MIME header fields have a limited length and long URIs can result in Content-Location and Content-Base headers that exceed this length , Content-Location and Content-Base headers may have to be folded. 
+Encoding as discussed in clause 4.4.1 MUST be done before such folding. 
+After that, the folding can be done, using the algorithm defined in [URLBODY] section 3.1. 
+4.4.3 Unfolding and decoding of received URLs in MIME header fields Upon receipt, folded MIME header fields should be unfolded, and then any MIME encoding should be removed, to retrieve the original URI. 
+Nick 
+This would then require that Content-Base be replaced by a new header name, too. 
+And maybe also other header fields. 
+I think it would be a great pity if the same object could not be sent via HTTP and SMTP just because of such possible syntax problems. 
+For example, you may want to receive an object via one protocol and further transport it via another protocol. 
+And we have in the MHTML group carefully tried to avoid the need for changes in the object in this case, so that digital seals are not broken. 
+Would existing HTTP implementations get into deep trouble if they get header fields which are folded across several lines according to the conventions used in e-mail? 
+Jacob Palme jpalme@dsv.su.se (Stockholm University and KTH) for more info see URL: http://www.dsv.su.se/~jpalme 

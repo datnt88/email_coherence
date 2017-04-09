@@ -1,0 +1,108 @@
+someone has brought to my attention that there is a debate on a packet encoding for content. 
+Here are my comments:- 
+1) Boundary delimiters (like mime) These are absolutely, fundamentaly and irrevokably unacceptable. 
+They 
+require the originator to be precient is choice of boundary marker, they require the recipient to scan for them. 
+Ad-hoc arguments resorting to MD5 and probablistic considerations 
+carry no weight with me. 
+In the first place there is a very strong probability that a persistent TCP/IP stream will be self referential, that is make a response based upon the low level encoding of the stream. 
+Consider two people in a chat conversation debugging HTTP connections, At some point somone will incorporate the message boundary into a message and the system will come to a grinding halt. 
+In the second place there is the processing overhead of scanning a live MPEG feed for a boundary delimeter. 
+This is simply not the right thing. 
+The only argument for the boundary strings I have heard is to simplify MAIL gateways. 
+I don't accept the argument that one compromises a system for a minor simplification of backwards compatibility. 
+If a gateway likes boundary delimeters it can easily convert. 
+The email system is horribly compromised already by the numerous concessions it makes to broken MTAs. 
+One more should not hurt. 
+Do not ask the clean protocol to start making the same concessions by proxy. 
+2) On binary vs human readable. 
+I prefer that a protocol be faithful unto itself. 
+Either be human 
+readable or let us lose with ASN.1 BER or something like it. 
+There is no point in half measures one way or the other. 
+If you must consider 
+performance at this level use base 16. 
+Base 10 is probably as efficient since there is not the upper/lowercase ambiguity. 
+If you don't think this can be done well in an ascii based scheme please make that statement. 
+We can then decide how to produce a generic scheme for employing binary encodings as MIME/RFC822 achieves for ascii, human readable encodings. 
+Please do not attempt to create a hybrid that is neither one thing nor the other. 
+If you are going to have an ascii based scheme there will be an overhead. 
+I don't think its a very large one but it will exist. 
+There are a number of binarry encodings with worse overhead, ASN.1 DER for example. 
+3) Encryption Please remeber that people will want to encode streams using block ciphers. 
+This?requires provision for specifying the number of padding octets. 
+Note that PEM style padding cannot be used since is creates a security problem when used for repeated numbers of small packets. 
+It is essential that this padding be random bytes. 
+4) On a fixed upper limit on the packet size. 
+This is not an acceptable proposal. 
+Whatever size you chose I can 
+provide examples where there is a very good need for a bigger size. 
+Since history is littered with standards whose creators did not anticipate future needs I don't think we should make an arbitrary restriction which has no rational justification. 
+I have just helped order a pair of machines with 512Mb of RAM, I have used file systems with a capacity of 6 Tb. 
+I have built systems with a bandwidth of 6Tb/sec. 
+32 bits is simply not enough for these purposes. 
+Experience demonstrates that to build a system for the future we must at least be able to satisfy the most exotic needs of the day. 
+Self describing binary length encodings are simple enough. 
+ASN.1 has one, one of the sensible suggestions in the original design that survived the committee cycle? 
+ASN.1 has two legth encodings, short and long. 
+The first octet defines the length of the length. 
+If bit 7 is clear the length is encoded in a single octet a bits 0-6 of the first octet. 
+Otherwise bits 0-6 give the number of additional octets the length. 
+A perhaps cleaner way to do it combines the recycling unused bits in the lead octet idea with the fact that most lengths will be most conveniently expressed using 1, 2, 4 or 8 bytes. 
+The decision table is as follows: IF Bit 7 clear, length is 1 octet, bits 0-6 give value Bit 6 clear, length is 2 octets, bits 0-5 give msb of value, octet 2 gives LSB Bit 5 clear, length is 4 octets, bits 0-4 give msb of value, octets 2-4 gives LSB Bit 4 clear, length is 8 octets, bits 0-3 give msb of value, octets 2-9 gives LSB TRUE these are reserved for future expansion. 
+Of these points the last is the most critical. 
+If the first is not accepted it will not be a significant disaster because I don't think the protocol would be used. 
+If a scheme with a fixed length gains popularity it will be very hard to remedy it later on. 
+Thus I would like names of any proponents of a fixed length scheme with their rationale. 
+I promise faithfully to retain said list and produce it in a suitable forum (eg IETF conference dinner) for an "I told you so" speach. 
+Phillip M. Hallam-Baker Not speaking for anoyone else hallam@w3.org 
+http://www.w3.org/hypertext/WWW/People/hallam.html 
+Information Superhighway ----- Hi-ho! 
+Yow! 
+I'm surfing Arpanet! 
+Yes, this makes sense. 
+Inventing YApacketization scheme seems silly unless we really feel all existing ones are clearly unsuitable. 
+? Not sure what you're hinting at here... 
+I see this as a problem unrelated to packetizing data so you can tell where the end is. 
+I'd like to see arbitrary limits removed to the extent that it's possible; that's one of the things I dislike most about SSL's record layer (particularly since SSL adds so much per-record overhead) and I'd like to see that mistake not get repeated. 
+- Marc 
+Phillip M. Hallam-Baker writes in 9507261823.AA18496@www18.w3.org : 
+They 
+Although I don't agree, as 
+do carry weight with me, there are times when it is preferable to not have to scan for a boundary marker. 
+In this spirit, I propose a simple (and perhaps simple-minded : ) method for a self-describing binary length encoding: 1. 
+The initial octet shall be in the Base64 alphabet (RFC1341). 
+It describes the length of the length string; and 2. The following octets of the length string shall be in the Base64 alphabet, such that "B"(64) = 1(10), "BA"(64) = 64(10), "BAAA"(64) = 262144(10), and so on. 
+These examples would then be: octet# on wire octet value 0 B 1 B for "B"(64) = 1(10), octet# on wire octet value 0 C 1 B 2 A for "BA"(64) = 64(10), and octet# on wire octet value 0 E 1 B 2 A 3 A 4 A for "BAAA"(64) = 262144(10). 
+This complies with the spirit of HTTP, as the length encoding will be in ASCII as Phill noted: 
+A self-describing binary length encoding string of length 64 (1 octet for the length of the length + 63 length octets) represented in the Base64 alphabet can encode a transmission length of up to 64^63 - 1 octets, or 61565634681866373769186000156474396570437092610102260418669208444133\ 9402679643915803347910232576806887603562348543 octets if you prefer. 
+This is around 6.16x10^112, whereas there are only around 10^80 particles in the known universe. 
+By the time we run into this limit, it is likely we will want to switch away from HTTP :)... 
+The Base64 alphabet was chosen because it is a compact printable representation of base 64 numbers that is portable between ASCII, EBCDIC, ISO 646, and ISO 10646 that should have multiple correct alphabet translation tables already available. 
+Mark Fisher Thomson Consumer Electronics fisherm@indy.tce.com 
+Indianapolis, IN 
+No, if we are going to go with something simple(-minded), then a straight CRLF delimited number is more appropriate -- dicking with bits and base64 is a waste of time if all you'd every save is one or two bytes. 
+Right-o then, here's where the perceived consensus lands us. 
+Content-Transfer-Encoding: chunked BNF: Entity-Body = *( chunk ) "0" CRLF footer CRLF chunk = chunk-size CRLF chunk-data CRLF chunk-size = hex-no-zero *hex chunk-data = chunk-size(OCTET) footer = *( Entity-Header ) hex = "0" | hex-no-zero hex-no-zero = "1"|"2"|"3"|"4"|"5"|"6"|"7"|"8"|"9" 
+"A"|"B"|"C"|"D"|"E"|"F" "a"|"b"|"c"|"d"|"e"|"f" 
+....Roy T. Fielding Department of ICS, University of California, Irvine USA Visiting Scholar, MIT/LCS + World-Wide Web Consortium (fielding@w3.org) 
+(fielding@ics.uci.edu) 
+Roy's perceived consensus C-T-E proposal looks okay to me. 
+And he's stated that anything purporting to handle HTTP/1.1 must handle "chunked". 
+Next questions: 1) Should the specification state when "chunked" must and must not be used? 
+Although there's no consensus session/keepalive proposal, obviously any content sent from the server to the client for a held-open connection must either have a Content-Length or be chunked. 
+2) Can a client send chunked content in a POST in lieu of a Content-Length, or even with a C-L? (And what does it mean to have both, especially if they disagree?) 3) If (2) is true, does the CGI interface change to require a CGI script to interpret C-T-E, or does the interface stay the same, and the server processes the chunked content and passes the concatenated chunks to the CGI? 
+If the latter, is it valid for the server to forge a Content-Length header for the CGI to use to read the concatenated content where none existed previously? 
+Dave Kristol 
+a) I think we should pay attention to Harald's request that we not call it a C-T-E. 
+Even though we can justify that usage ourselves, there's no harm in using a different header in HTTP, is there? 
+b) I'll give up calling for a string-terminated boundary marker if no one else thinks it is worthwhile. 
+c) So far the HTTP WG has avoided specifying what happens with CGI -- it's out of scope of the WG, platform dependent, etc. 
+However, changes to HTTP do affect CGI, so should be considered. 
+C-T-E is a really gross but essential bit of cruft. 
+Creating something similar but with elegant purpose should imply a new name. 
+The MIME spec. 
+expressly closes the category off for extension anyhow and it's a gesture that should be respected. 
+I think it's essential not just worthwhile, but I suppose it can wait 'til HTTP-NG if necessary. 
+Being able to start sending a stream before having the full wad in hand has too many applications to ignore support for it, particularly since we've got a functioning model, that's proven to work well, available to clone. 
+... ian 

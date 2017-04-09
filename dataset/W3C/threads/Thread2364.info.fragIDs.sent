@@ -1,0 +1,139 @@
+Alexei Kosut (or someone doing a very good impression of him) asked me to forward this to the list, as he is having email problems: 
+I was actually speaking with the MSIE folks about this just today- They removed the digest support because they couldn't find any servers to test it against. 
+They have assured me that it will be back in the next version. 
+Baloney - the latest versions of both Apache and NCSA's web servers (which together make up more than 40% of Internet web servers) support digest auth. 
+The problem here may be that no one actually *uses* digest auth. 
+The problem is that these servers don't let you use both together. 
+This is because both servers (indeed, pretty much all Unix HTTP servers that I know of) store Basic passwords crypted. 
+This makes them unusable for Digest auth's purposes, which either needs the passwords in the clear or hashed. 
+So the vast installed base of installed authentication cannot use digest (except in specific, intranet-like cases, where you are assured that the user is capable of supporting digest auth). 
+In addition, the architecture of both servers make it so that they cannot support more than one authentication scheme at the same time - so you cannot maintain seperate password files for each, one crypted and one hashed. 
+This may help to explain why it hasn't taken off, even though it's been in a majority of WWW servers for several months. 
+No one uses it on their servers, therefore no clients want to take the time to implement it. 
+(FWIW, now that I've thought of it, I may make the upcoming Apache 1.2 support both basic and digest auth at once (though not for existing password databases, unfortunately, which would of course be ideal, but as I've mentioned, they're crypted), possibly easing the hopeful transition from digest to basic auth.) -- Alexei Kosut akosut@organic.com 
+The Apache HTTP Server 
+I don't understand this. 
+As you observe server support for digest auth is widely available. 
+The reason no one uses it is because it is not supported by Netscape or MSIE -- period. 
+As long as this remains the case digest will never 
+be widely used. 
+All other pros and cons for digest are pretty much irrelevant at this point. 
+John Franks Dept of Math. 
+Northwestern University john@math.nwu.edu 
+This is unfortunate. 
+The design of DIGEST deliberately made it possible to share a database for both purposes - if absolutely necessary. 
+No server should ever be storing the passwords used by DIGEST, all that is necessary is the one way function hashed key. 
+The one way hash used by DIGEST is much stronger than that used by the UNIX password format. 
+There is no cryptographic reason to prefer the UNIX format. 
+The reason why nobody is using DIGEST is because of clients which do not. 
+Phill 
+I think we have a bit of a chicken and egg problem. 
+Server software is available which is claimed to support digest but it is not activated by real installations because the majority of users don't have clients which will support it *AND* apparently the server installation can't, at least easily, support basic and digest concurrently. 
+On the otherhand, the client authors can't find a set of easy places to test their code with so the clients don't include the code. 
+In my experience, it is very rare for a development organization to have the resources to do everything the know to be right to do. 
+I also find that the QA groups are even more stressed. 
+In particular, the QA group may have learned how to test the browser but don't have the skills to set up many varieties of servers. 
+I would expect that testing would focus on a very few servers and then depend on WWW deployed servers for surface verification with others. 
+After all, if http is an interoperable protocol, it should be sufficient to test with one server. 
+This group is a bit two faced. 
+A couple weeks a go, a prominant member was chastising folks who might be publishing a server and calling it HTTP/1.1 before the very stable draft is really approved by the IETF. 
+Now we are complaining because one or more other software publishers chose not to deliver software matching a spec about which discussion had gotten very hot and might be expected to be an unstable implementation target. 
+C'mon folks we can't have it both ways! 
+I think there is some obvious room here for W3C activity in the form of facilitating the testing of client and server implementation of digest. 
+1. Bring up and make 'public' a copy of each of the servers which claim to implement digest, with digest active of course. 
+2. I believe there is at least one publicly available client which also claims to support digest. 
+Help any interested developers install and use such clients. 
+If necessary because of platform difficulties, use the client against a developers server. 
+3. Do both of the above with appropriate diagnostic tools such as sniffers available to facilitate diagnosis of the failure to interoperate. 
+4. Provide some level of consulting services to help with problem determination. 
+Of course, this is still difficult because I would expect that most developers and QA groups are behind firewalls which might not be real friendly to such testing. 
+One could hope that the server and client teams within a organization might cooperate but I would guess that the product manager at one publisher for the server might have different priorities from the client in the same organization. 
+Surely the client needs the support at least a generation sooner than the server. 
+And in any case, I would worry that just because AAclient works with AAserver, they may not operate with BBserver or BBclient. 
+So in summary, if we as a WG think deployment of digest is important, then I think we need to forget about the political implications of SHOULD vs MUST and somehow forcing publishers to do it our way and figure out how to facilitate the environment needed for publishers to successfully develop, test, and ship digest enabled software. 
+Dave Morris 
+You are missing the point. 
+Digest can and should have been implemented in HTTP/1.0 as the experiment that it was -- whether or not it is stable only affects the allocation of limited resources. 
+In contrast, we are 
+using the label "HTTP/1.1" to indicate minimum compliance to a specific proposed standard, and you cannot indicate minimum compliance to something which is still subject to change. 
+Any future change to HTTP's minimum compliance will now require a change to the HTTP version, since that 
+is how the version stuff is supposed to work. 
+My concern is that the WG 
+as a whole needs to understand the meaning of HTTP-version, and when the version number should change, since that understanding is central to the protocol's extensibility. 
+...Roy T. Fielding Department of Information &amp; Computer Science (fielding@ics.uci.edu) 
+I disagree, because of the nature of "experimental" features. 
+The particular case we're talking about (I believe) is the case where Digest was implemented, and pulled because the spec showed signs of destabilization. 
+With the final release of the servers in question rapidly approaching, we decided it would be better to play it safe and remove support until the spec was stable than to keep the support in and saddle everyone with an experimental implementation for a long time. 
+If a spec shows signs of instability, and a product is scheduled to ship a final release, it is not prudent to release an experimental feature in a release product. 
+Haven't specs gotten bit by experimental features with large user bases before? 
+Currently I'm thinking of the Host: header, which I believe was appending the port number in Navigator, and some discussion came up to remove the port number. 
+Even if the spec did change, now experimental behavior has to be expected and dealt with because users will be sending it. 
+We decided to be prudent and wait for the spec to calm down rather than etch experimental behavior into a final release. 
+(Note that I can only speak for the server side.) 
+The point I would like to make is that non-finalized specs are risky for a final release of a product. 
+The situation does bear some similarity in that this is a case where a released product would be advertising that it does features involved in a non-finalized spec, and if the spec changes, the product becomes non-compliant. 
+Similarly, if we had released an implementation of digest auth at the time when we had it done, and the spec had changed, then we would become non-compliant with the later drafts, and that behavior would have to be dealt with for interoperability. 
+We chose not to risk being the black sheep. 
+As to why we haven't revisited that decision after it happened, then it's more of a resource issue, which will undoubtedly be looked at again for the next release. 
+My concern is that the WG as a whole needs to understand the meaning of HTTP-version, and when the version number should change, since that understanding is central to the protocol's extensibility. 
+My concern is simply that I think if Digest goes to a must, then it should be done for the right reasons. 
+People have brought up valid reasons why it should be a must. 
+I don't think it's right to make it a must in order to force people who would not otherwise implement digest auth to implement it. 
+Using that argument weakens an otherwise strong argument by making it look political. 
+--MLM ---- mlm@netscape.com 
+* http://www.netscape.com/people/mlm/ 
+---- 
+There are live examples of Digest authentication to test your client. 
+These have been freely available for a year with reference implementation in a high-level language. 
+We haven't checked the lastest version of the digest draft to make sure we handle all new additions, but we'll do so soon and drop in any needed patches. 
+Any shortcomings are fixed in realtime when we have a minute or two. 
+Our 1.1 testers have been very helpful and they seem to think we have as well. 
+BTW, it would be desirable to select a better algorithm than MD5 like SHA at the earliest convenience.. 
+We don't disagree -- that is what I meant by experiment. 
+I have no problem with Netscape's decision not to include it in their released products until there is a stable spec. 
+However, I do hope that you (and everyone else) have continued to experiment and thus that you will be ready to release a completed implementation, based on the now final draft, as soon as possible. 
+My disagreement was with Mr. Morris' suggestion that this is the same as the "HTTP/1.1" 
+labelling issue; it is not. 
+Digest (as a draft) is now just as stable for HTTP/1.0 as it is for HTTP/1.1. 
+I personally do not care whether Digest is a MUST or not -- people will implement it because doing so results in a better product. 
+...Roy T. Fielding Department of Information &amp; Computer Science (fielding@ics.uci.edu) 
+Clever implementations of chunked transfer encoding will do it by using the tcp buffer directly, thereby eliminating the need to copy to another buffer and reducing the working set. 
+This is accomplished by reserving space at the beginning of a chunk for the size and any chunk arguments, and then filling them in before transmitting the buffer. 
+Most simply, this requires using come padding characters before or after the hex chunk size. 
+This has been achieved under the following operating systems for CL-HTTP: MAC OS, UNIX, WindowsNT, Lisp Machine. 
+Whereas I had the impression from reading earlier drafts that trailing whitespace was a feasible for padding, one of our users has pointed out that the current implementation does not match the description in section 3.6 of the august, 12, 1996 draft. 
+However, at first blush, the spec seems cleverly engineered to prevent using any padding, front or back. 
+BUT, in section 2.1 where implied *LWS is discussed, it suggests that whitespace may appear between and delimiters without changing the interpretation of a field. 
+Thus, hex-no-zero *lws CRLF would be legal. 
+Does this mean that padding the chunk-sized with spaces on the right is legal in the current http 1.1 spec? 
+If so, section 3.6 should be updated to make this clear. 
+If not, section 3.6 should be amended to correct this mistake. 
+All the known 1.1 clients that have tested against the server (2 W3C clients and one from Switzerland) have been able to deal fine with trailing whitespace before a ";" or the CRLF 
+I think this mistake should be corrected as quickly as possible. 
+In the event that this mistake cannot be corrected swiftly, we are prepared to employ the following workaround, which although legal, is quite likely to break current 1.1 clients that do not handle chunk-size arguments. 
+hex-no-zero ";" *lws CRLF or one could imortalize it with hex-no-zero ";"fyrCRLF Constructive suggestions? 
+For those who are interested, you will note that the chunk size emitted by the cl-http server varies. 
+This is because the lisp machine has an adaptive TCP implementation that identifies optimal packet sizes based on TCP factors. 
+The chunk sizes vary because chunking is built on the TCP buffer, which is the TCP packet to send. 
+The server selects chunk sizes 2 less than the packet size to allow the CRLF to be appended at the end of the packet, thus delivering a chunk every TCP packet. 
+One would imagine that this kind of implementation will achieve the best throughput rates for a given platform and network route. 
+When I proposed the chunked encoding to this WG (Dan Connolly originally suggested it on www-talk more than a year before that), I wanted a fixed chunk size (and no CRLF's) for the same reason. 
+Ummm, no, that would be bad because LWS may include CRLF. 
+Under the circumstances, the spec could say chunk = chunk-size [ chunk-ext ] *(SP | HT) CRLF 
+chunk-data CRLF and explicitly disallow any other LWS between chunk-size and chunk-data CRLF (as it does for the other cases where CRLF is acting as a delimiter). 
+Well, it isn't illegal, but that won't help interoperability any. 
+*sigh*, I hope someone is making a list of these. 
+That's how I'd implement it as well, just for the sake of robustness. 
+Not possible without issuing another draft. 
+...Roy T. Fielding Department of Information &amp; Computer Science (fielding@ics.uci.edu) 
+Your description would require the ";" to immediately follow chunk-size and padding to appear between the ";" and CRLF. 
+The present known server and client implementations are handling this: #2 chunk = chunk-size *(SP | HT) [ chunk-ext ] CRLF chunk-data CRLF Although one reference client doesn't parse [ chunk-ext ], and so might need a small hack to detect ";" and skip *(SP | HT) to the CRLF. 
+Another alternative could be: #3 chunk = chunk-size *(SP | HT) [ chunk-ext ] *(SP | HT) CRLF chunk-data CRLF This would seem most robust, if a little longer. 
+Oops, right. 
+I forgot to add the chunk-ext change as well. 
+What are these "reference client" implementations? 
+Amaya isn't quite ready yet (last I checked) and Henrik's line-mode browser still has a couple things to implement. 
+Is there another? 
+I'd like to do more testing as well. 
+Actually, I would put the *(SP | HT) inside the definition of chunk-ext (before and after each ";"). 
+...Roy T. Fielding Department of Information &amp; Computer Science (fielding@ics.uci.edu) 

@@ -1,0 +1,79 @@
+What is the situtation regarding the use of Annotea with documents which are HTML, but not XHTML? 
+XPointer, after all, applies to "resources whose type is one of text/xml, application/xml, text/xml-external-parsed-entity, or application/xml-external-parsed-entity". 
+Matthew Wilson 
+You will probably be ok as long as you use well formed markup, no matter the doctype. 
+Also this will not be a problem with any target browsers, since they will just ignore unrecognised tags. 
+BTW, can anyone provide me with some real Annotation examples viewable with amaya (or not) ? 
+Kindest regards, Manos 
+Hello Matthew, 
+You got it right. 
+I can tell you that in the Amaya client instance of Annotea, we allow to make XPointers on HTML documents. 
+As Manos pointed out, if you do so in a non-valid HTML document, the result may vary from browser to browser. 
+You can, of course, use XPointer to point to the anchor or to the ID attribute of HTML documents. 
+However, if your XPointer expression has some kind of tree inside it, it should only point to one of the above types of documents. 
+At least, this is the politcally correct, spec. 
+conformant view. 
+We don't impose such rule in Amaya yet, because we wanted to experiment a bit more with the possibilities of XPointer. 
+We may need to change this in the near future, according to the feedback we get from the XPointer WG. 
+-jose 
+Thanks. 
+Perhaps I should point out the issues I am coming up against: 
+For Annozilla, I try to resolve the XPointer describing the context of the annotation, and I intend to try and construct XPointers when creating annotations. 
+Currently I concentrate on things like xpointer(/html[1]/body[1]/p[3]). 
+This works quite well, but I can only do this by navigating the DOM. 
+But this has its difficulties: the HTML DOM says that tag names should be canonicalised to upper case, and also (I think) that "implied" HTML elements are exposed by the DOM - so you could end up creating references to elements that are not really present in the document. 
+Matthew Wilson 
+While I understand how useful this would be, this is not conform to the RFC 2854 [1] that is the normative reference describing the HTML media type (browse for "3. 
+Fragment Identifiers"). 
+This RFC clearly states that the fragment identifier for HTML documents: designates the correspondingly named element; any element may be named with the "id" attribute, and A, APPLET, FRAME, IFRAME, IMG and MAP elements may be named with a "name" attribute. 
+This is described in detail in [HTML40] section 12. 
+The syntax "http://foo.xxx/bar.html#xpointer(...)" should therefor not been used for HTML documents. 
+To change this should involved only the XPointer WG, but also the authors of the RFC 2854 and the HTML WG which is quoted in this RFC. 
+Since the HTML WG has declared that no further work would be done on HTML and that the problem is solved for XHTML, I wonder if these specifications are likely to be changed, though. 
+My 0,02 Euros. 
+Eric [1] http://www.ietf.org/rfc/rfc2854.txt 
+See you in Berlin for XML Europe 2001: Eric van der Vlist http://xmlfr.org 
+http://dyomedea.com 
+I would tend to agree, but I'm just trying to imitate Amaya (or at least what I understand Amaya's usage to be...) Matthew 
+Use of xpath with HTML (not XML) is an interesting issue. 
+I wonder what other fora might be discussing this. 
+I just did a quick scan of the XML Linking public comments archive and did not find this topic. 
+I will argue that whether or not xpath syntax is permissible in fragment identifiers is open for discussion and interpretation. 
+The debate can hinge on the interpretation of the word "named". 
+We might be able to easily get agreement that an xpath expression is a kind of address for an element. 
+From there we proceed to the observation that naming and addressing need not be disjoint. 
+See, e.g. http://www.w3.org/DesignIssues/NameMyth.html 
+So a coherent -- not to say pragmatic -- case can be made that an expression such as xpointer(/html[1]/body[1]/p[3]) can indeed constitute a permissible "name" for an element. 
+Note, also, that this paragraph doesn't use the RFC keywords MUST or SHOULD but rather the more permissive "may". 
+"should not" as in "is not endorsed by any standard and is therefore not interoperable when employed". 
+Matthew's client would be entirely conformant if it chose to ignore fragment identifiers containing ()'s. 
+If you meant to write "... involve /+not+/ only..." then I agree. 
+Tough call. 
+I think a coherent consensus could be reached that requires no change to RFC 2854 but that does drop the tight binding between "fragment identifiers", "anchor identifiers", and "anchor names" in http://www.w3.org/TR/html4/intro/intro.html#h-2.1.2 and http://www.w3.org/TR/html4/struct/links.html#h-12.2.1 
+The issue of case sensitivity doesn't worry me too much. 
+If HTML DOM requires canonicalization of element names to uppercase, the obvious thing is to apply that canonicalization to (only) the element names in an xpath as well. 
+"Only" because HTML4 says that anchor name comparison is case sensitive but also that no two anchor names within a single document may differ only in case. 
+Surely this discussion must have occurred elsewhere already. 
+Anyone have any pointers? 
+(w/ fragments :-) 
+Meanwhile, does the community here think that Amaya should disallow selection (highlighting) of element content when attaching an annotation to a text/html document? 
+Should it limit the context to the smallest enclosing element with an ID or NAME attribute and draw its pencil icon at the start of that element? 
+I think that as you mentioned: 
+the key point is the level of interoperability we want to achieve. 
+If the purpose is "only" to indicate to an Annotea client the location to highlight, then one can use any syntax ;=) and yes, I do think that this is a useful feature... 
+The fact to write "http://foo.xxx/bar.html#xpointer(id('Main')/p[2])" 
+has anyway enough intrinsic meaning to attach a higher level of expectation and 99% of the internet lurkers would probably expect it to be a valid URI that can be opened in their favorite browser! 
+It's a matter of presentation and would probably not chock anyone! 
+Eric See you in Berlin for XML Europe 2001: Eric van der Vlist http://xmlfr.org 
+http://dyomedea.com 
+My main point was that this is just an annoying inconsistency, and that XHTML should perhaps have followed the DOM's lead and decided on capitalised tag names. 
+That seems a bit too restrictive to be useful. 
+Perhaps we need a new XPointer scheme? 
+Matthew Wilson 
+followup... 
+I asked this question of my colleages on the W3C staff and was referred to Eve Maler's mention of "schemes" in XPointer last November: I still don't know if this challenge has been taken up by anyone. 
+I put the same question to those present in a W3C staff (aka "Team") meeting and it made it to today's agenda. 
+The conclusion of the 19 or so people present was that if we were to invest resources in a technical solution, it would be more broadly useful to define a canonical translation (mapping) of HTML to XHTML than to work on an XPointer scheme. 
+This mapping would also address the question of optional HTML elements that Claus raised yesterday: Also, the consensus of those present was that as an experiment it was fine for Annotea implementations to continue to generate and consume XPointers for HTML documents, understanding that there was no formal guarantee of interoperability. 
+Specifically, we are not going to immediately remove that code from Amaya. 
+-Ralph 

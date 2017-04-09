@@ -1,0 +1,43 @@
+In RFC2616, section 14.9.6 (Cache Control Extensions), we have: For example, consider a hypothetical new response directive called community which acts as a modifier to the private directive. 
+We define this new directive to mean that, in addition to any non-shared cache, any cache which is shared only by members of the community named within its value may cache the response. 
+An origin server wishing to allow the UCI community to use an otherwise private response in their shared cache(s) could do so by including Cache-Control: private, community="UCI" A cache seeing this header field will act correctly even if the cache does not understand the community cache-extension, since it will also see and understand the private directive and thus default to the safe behavior. 
+By extension, one would expect this example to work: Cache-Control: no-store, community="UCI" and it might, in fact, be preferable, since it prevents browser caches (as well as proxy caches) from doing something wrong. 
+Section 14.9.6 allows the "community" directive to modify the "requirements associated with the standard directive," so that (FOR EXAMPLE) caches that implement the "community" directive could ignore the "no-store" and do something useful. 
+But suppose instead that the example was: Cache-Control: no-store, community="UCI", max-age=30 RFC2616 is not specific on what this header means to a vanilla HTTP/1.1 cache. 
+14.9.6 does make it clear that if the cache doesn't understand "community", then it MUST interpret this header as equivalent to: Cache-Control: no-store, max-age=30 The specification (14.9.3, first paragraph) for "max-age" says: 
+The max-age directive on a response implies that the response is cacheable (i.e., "public") unless some other, more restrictive cache directive is also present. 
+Howwever, I'm concerned that some implementations might have erroneously followed the reasoning "well, if the origin server didn't want us to cache the response, why did it give us a non-zero max-age"? 
+(This particular requirement was not 
+stated with the usual MUST keyword, so it might have been overlooked. 
+Also, section 13.4 ambiguously says that responses with "other status codes" are cachable if they include directives such as "max-age", but without saying that more restrictive directives take precedence.) If so, that would greatly complicate the design of the delta-encoding extension that we're now trying to debug. 
+We need to make sure that delta-encoded responses are never cachable by caches that don't understand them, even if the responses contain Cache-control directives aimed at caches that do understand delta-encoding. 
+And we're not entirely sure that the Vary header will work efficiently for this case. 
+Similarly, if the response instead were to include: Cache-Control: no-cache, max-age=30 do any existing HTTP/1.1 cache implementations ignore the "no-cache" in this case? 
+It would also be important to know if any HTTP/1.1 implementations that support "Cache-control: max-age" actually ignore the "no-store" directive - which would be contrary to the spec, of course. 
+Finally, when RFC2616 is revised to move from Draft Standard to Full Standard, would anyone object to clarifying the language in 14.9.3? 
+For example, replacing: The max-age directive on a response implies that the response is cacheable (i.e., "public") unless some other, more restrictive cache directive is also present. 
+with The max-age directive on a response implies that the response is cacheable (i.e., "public") unless some other, more restrictive cache directive is also present. 
+If a more restrictive cache directive (such as "no-cache" or "no-store") is present, the cache MUST ignore the max-age directive; this supports extensibility using the mechanism described in section 14.9.6. 
+and perhaps also, under "s-maxage": If a more restrictive cache directive is present, the cache MUST ignore the s-maxage directive. 
+for the same reason. 
+-Jeff 
+Wouldn't that become a contradiction with the extension scheme? 
+In other words, that requirement along with your example of Cache-Control: no-store, community="UCI", max-age=30 would require that the recipient ignore max-age even if it did understand the community extension. 
+I think that is why we decided to use relative constraints rather than absolute constraints in the language above. 
+....Roy 
+Message-Id: 200004191602.aa19350@gremlin-relay.ics.uci.edu 
+Wouldn't that become a contradiction with the extension scheme? 
+In other words, that requirement along with your example of Cache-Control: no-store, community="UCI", max-age=30 would require that the recipient ignore max-age even if it did understand the community extension. 
+I think that is why we decided to use relative constraints rather than absolute constraints in the language above. 
+No contradiction, because 14.9.6 says: Both the new directive and the standard directive are supplied, such that applications which do not understand the new directive will default to the behavior specified by the standard directive, and those that understand the new directive will recognize it as modifying the requirements associated with the standard directive. 
+The key phrase here is that the new directive ("community", in this example) "[modifies] the requirements associated with the standard directive." 
+Presumably, the "modification" needs to be part of the specification for each extension. 
+I.e., the specification for "community" could include, hypothetically, "an implementation that complies with the specification for the community directive SHOULD ignore the no-store directive if it appears together with the community directive." 
+Which means that the no-store directive, being ignored, would not take precedence over the max-age directive for "community-aware" implementations. 
+-Jeff 
+But the existing text already handles that situation as a condition on the meaning of max-age, and the extension rules already allow new extensions to modify the interpretation of other cache-directives. 
+It seems to me that adding a further MUST requirement will just raise the issue of which section has precedence, particularly since implementing the extension mechanism itself is not a MUST requirement. 
+That is what I meant by a contradiction. 
+I think we both agree on what is desirable from the implementation, but I think the existing text is less confusing than the proposed change. 
+Is there another alternative? 
+....Roy 

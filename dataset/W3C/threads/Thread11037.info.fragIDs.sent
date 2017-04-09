@@ -1,0 +1,263 @@
+[Eliot Kimber for the ERB] 
+An XML parser shall interpret white space and record ends in XML 
+Really? 
+If an XML application is implemented strictly, as an SGML application, then there's separation between the parser and the application, and this step should happen in the application. 
+If the XML application is not implemented in terms of SGML, then this still seems to me to be an application convention. 
+It's only a semantic point, really, but I think it makes a difference: 
+This approach also requires that truly significant record ends in data must be escaped in some way. 
+If the whitespace interpretation rules are phrased as an application 
+convention, and not a change in parsing rules, it buys this: 
+o An SGML parser can be an XML parser without any changes. 
+o A DSSSL-based XML application can do the whitespace rules as a grove operation, after an SGML parse. 
+o Record ends need not be escaped. 
+The stylesheet can affect whitespace normalization behavior; if the element is to be styled "verbatim" or "preformatted", then whitespace is not normalized. 
+o Even an SGML application can parse XML with no (or an ANY) DTD; all elements are mixed content, but the extra whitespace between elements is irrelevant, since it'll be normalized away by the application. 
+True, this won't be ESIS-identical to a parse with the DTD, but after application-level normalization, the "true content" will come out to the same thing. 
+The rules adopted by the ERB are good ones, but I think they should be 
+stated as application conventions, not parsing rules, for the benefit of those implementing XML as an SGML application. 
+-Chris !ENTITY crism PUBLIC "-//EBT//NONSGML Christopher R. Maden//EN" SYSTEM 
+[Eliot Kimber] 
+I'll let other members of the ERB correct me if I'm wrong, but I believe our assumption, in fact the whole purpose of this exercise, is to enable the creation of *XML parsers* that are much simpler than SGML parsers but define XML in such a way that it also be processed as SGML without change (to the instance at least, it may be necessary to create a DTD or modify the XML DTD). 
+Absolutely. 
+An XML parser, implemented without reference to SGML, can 
+follow these rules simply. 
+However, by putting the rules in terms of the parser, it seems that it's difficult for an SGML-based XML application to be compliant with both XML and SGML. 
+Just by changing the rules from a parser rule to an application convention, it becomes possible for an application to be compliant with both SGML and XML. 
+We want this to be done by an XML parser for the same reason SGML has the record end handling rules--so applications don't have the opportunity to do it wrong. 
+Definitely. 
+The rules are very clear; I'm just worried about *where* the rules live. 
+It's slightly picayune, but now is the time to change it if it's to be changed. 
+-Chris !ENTITY crism PUBLIC "-//EBT//NONSGML Christopher R. Maden//EN" SYSTEM 
+The SGML-ERB met yesterday by phone and discussed the RS/RE problem at some length. 
+While we haven't necessarily arrived at concensus, our discussion did result in the following proposal that appears to satisfy the requirement of SGML compatibility while being simple and more or less consistent with existing HTML practice. 
+The rules we came up with are: 
+An XML parser shall interpret white space and record ends in XML documents 
+as follows: 1. 
+All white space, including RS and RE, immediately following start tags and immediately preceding end tags is not significant. 
+2. All other RS/REs are collapsed to a single space. 
+This approach has the effect that the white space and RS/RE collapsing can 
+be done before or after SGML RE rules are applied without affecting the 
+result. 
+The only place this is not true is record ends followed by one or more PIs followed by data. 
+In SGML, the RE will be considered to have occurred *after* the PIs, whereas in XML it will be considered to have occurred *before* the PIs (there are many who consider this behavior of SGML to be a bug that should be fixed, or at least made optional, in the SGML revision). 
+This approach also requires that truly significant record ends in data must be escaped in some way. 
+Cheers, Eliot 
+W. Eliot Kimber (kimber@passage.com) 
+Senior SGML Consultant and HyTime Specialist Passage Systems, Inc., (512)339-1400 10596 N. Tantau Ave., Cupertino, CA 95014-3535 (408) 366-0300, (408) "If I never had existed, would you still remember me?..." --Austin Lounge Lizards, "1984 Blues" 
+An implication of the ERB's current RE/RS proposal just posted by Eliot is that extra spaces within the text of a paragraph (for example) would not be collapsed by this rule (though of course they could be by the application). 
+So people who have gotten into the habit of prettying up their source by indenting text (for example) will have to unlearn this habit if the receiving app isn't set up to collapse the extra spaces. 
+Personally (speaking now only as the five-line perl hacker and someone who has to teach this stuff in two-day extension courses), this is fine with me because it's so incredibly easy to explain: you want spaces, put 'em in; you don't want spaces, leave 'em out. 
+But I thought that this aspect should be made explicit. 
+Jon 
+[Chris Maden:] 
+The RS/RE rules posted by Eliot have not been formally adopted. 
+This is just an idea that the ERB would like to see examined by the whole group. 
+Jon 
+I'll let other members of the ERB correct me if I'm wrong, but I believe our assumption, in fact the whole purpose of this exercise, is to enable the creation of *XML parsers* that are much simpler than SGML parsers but define XML in such a way that it also be processed as SGML without change (to the instance at least, it may be necessary to create a DTD or modify the XML DTD). 
+We want this to be done by an XML parser for the same reason SGML has the record end handling rules--so applications don't have the opportunity to do it wrong. 
+Cheers, E. 
+W. Eliot Kimber (kimber@passage.com) 
+Senior SGML Consultant and HyTime Specialist Passage Systems, Inc., (512)339-1400 10596 N. Tantau Ave., Cupertino, CA 95014-3535 (408) 366-0300, (408) "If I never had existed, would you still remember me?..." --Austin Lounge Lizards, "1984 Blues" 
+Do you mean this as stated, or do you mean all sequences of white space consisting of RSs, REs, and spaces are collapsed to a single space? 
+I'm not so worried about the RE's that migrate around PIs at the moment. 
+What I'm hoping for is that--discounting the case where the relative order of the PI and the RE affects the resulting display--when the user likes what they see presented by an "XML browser" and they then bring up an "SGML browser/viewer" on the document, they'll see the same thing. 
+I don't know how much to weigh cases such as: which would come out in XML as: He was over-sensitive. 
+and in SGML as: He was over- sensitive. 
+At least if the XML were "XML-normalized" to strip ignored spaces, then 
+the result would be handled the same by both XML and SGML parsers. 
+[Jon Bosak] 
+This is another thing that becomes moot if whitespace normalization is an application convention instead of a parser rule. 
+For non-verbatim elements, spaces can be normalized (in the grove of a DSSSL engine, or before rendering in a simpler browser), and they can be preserved in verbatim elements. 
+I think it simplifies a lot to define it this way, but I'd love to hear counterarguments. 
+-Chris !ENTITY crism PUBLIC "-//EBT//NONSGML Christopher R. Maden//EN" SYSTEM 
+.... stuff about genesis of proposal in a phone call deleted ... 
+I like the consistency and simplicity of these rules, but the lack of any way to have a "verbatim" element is a fatal flaw. 
+Pandering to typists is not a good idea, but removing useful functionality for the sole sake of preserving compatibility is far worse. 
+I still have not seen any reason 
+that we ever _need_ to ignore a linend character in an element. 
+Given that, I oppose ignoring them all, just so that we can preserve SGML's bad habit of ignoring some. 
+C showed us the way almost 2 decades ago: '\n' '\r' are whitespace, and characters _like any others_. 
+RE delenda est. 
+-- David David Durand dgd@cs.bu.edu | david@dynamicDiagrams.com 
+Boston University Computer Science | Dynamic Diagrams 
+Well, an SGML tool working with HTML data already has this problem, right? 
+For instance, in HTML, multiple spaces are collapsed, except in PRE. 
+Can't we treat the XML whitespace-in-mixed-content rules as application conventions? 
+Paul Prescod 
+Isn't a verbatim element just text-entry convenience? 
+Why should it be preserved instead of the ability to use newlines as formatting around tags? 
+Paul Prescod 
+Yes, that is true, but on a practical note, I cannot see that we are heading for wide acceptance if we rule it out. 
+I was not the first on this list to raise the issue of vebatim-style elements. 
+This is not going to help us make our case to the currently unconvinced. 
+We are taking a common, reasonable, well-established usage, and making it impossible, solely for compatibility with a feature of SGML that isn't popular, easy to explain, or widely understood. 
+-- David RE delenda est David Durand dgd@cs.bu.edu | david@dynamicDiagrams.com 
+Boston University Computer Science | Dynamic Diagrams 
+If the rules about ignoring white-space are left to the XML application and the application is free to require that those rules are not applied for verbatim elements, then XML tools built on top of SGML parsers will be unable to correctly process some XML documents, namely those that have verbatim elements that include REs that are ignored according to the SGML rules. 
+(An application could get information from the SGML parser about the 
+record-ends it ignored and attempt to undo the ignoring that was done by the SGML parser, but that's not going to be practical in many cases.) The effect would be to prevent most unmodified SGML-based tools from being able reliably to process XML documents. 
+I would say that would be a far worse situation for XML to be in than requiring that a user, in verbatim text, simply replace space and newline by entity references at the same time as they are replacing ,  and &amp; by entity references. 
+James 
+From an SGML point of view, XML _will be_ an application and XML's whitespace handling rules will be application conventions. 
+From an XML point of view, XML's rules are "the rules" and should be enforced by the parser. 
+Paul Prescod 
+As Lee says, they may not be as reasonable as they seem. 
+Since when did it become "okay" to encode formatting in an SGML document? 
+And isn't it doubly wrong to put formatting in using characters that are meant to encode structure. 
+(i.e. word breaks and line breaks?) 
+Also, most text has to be escape-encoded for inclusion in an SGML document anyways. 
+Improperly including non-SGML data in an SGML document is a MAJOR source of errors. 
+It may be a good thing to make it a little more difficult. 
+People use verbatim elements because a) SGML "files" usually only have one entity in them, so people who want to keep their documents in a single file don't want multiple entities and b) the handling of an entity with notation "C++" or "Perl" is pretty much up in the air. 
+Maybe we should fix those two problems to make verbatim formatting unncessary instead of bringing back verbatim. 
+Mime seems to have solutions for both. 
+Paul Prescod 
+This is the same situtation as with HTML and SGML, right? 
+In neither of those would the parser collapse spaces. 
+In either of those, spaces in a verbatim element (like PRE ) are retained. 
+Just as in HTML or SGML, the author will have to know their application to know if "prettying up" is allowed in a particular element or not. 
+Paul Prescod 
+This is only true if the record ends occur in the input. 
+If a suitable declaration is given (ie, one in which RE and RE never occur) then an SGML parser and an XML parser should return identical parse results. 
+I explained in an earlier message (mainly paragraph 2) why I believe that view to be mistaken. 
+James 
+This is a little long, so here's a summary: On systems where documents are not split into records at logical line boundaries, RS/RE processing is not mandated by ISO8879:SGML. 
+Neither Unix nor the Internet split documents in that way. 
+I am not sure about MS-DOS and Macintosh files. 
+Under Windows, it is optional. 
+So if RS/RE processing is optional, let's decide not to do it. 
+The whitespace handling proposed in Jon's summary of the ERB 'phone call (or was it Eliot? 
+Sorry) seems fine to me. Lee 
+James said: 
+including the statement: The entity manager is supposed to transform 
+whatever mechanism the OS uses for representing lines into RS/RE. 
+Wll, Unix itself does not mandate a particular storage format within a file, and does not itself represent lines (although connected devices often do, of course, typically with CR on input and CR LF on output). 
+So on Unix you could argue that the entity manager should go and reaf annex F :-) Annex F, says: If the document contains record boundaries, they are processed as defined in this international standard. 
+imlying that if it doesn't contain them, that's fine. 
+Again, B.3.3 starts with Not every text processing system breaks its storage entites into records. 
+I grant you, however, that these are not normative. 
+Record is defined in 4.252 as normally corresponding to an input line on a text entry device. 
+So if your SGML parser is reading input from what Unix calls a teletype, the line boundaries (terminated either by CR or LF depending on tty modes) are record boundaries. 
+If you are reading from a regular file, this definition does not apply. 
+The notes to the definition do seem to indicate that a Record is intended to be a line in the normal sense of the word. 
+However, the same definition also says that the record must be bounded (on input, presumably) by a record start and a "record end character". 
+It's interesting that we have record start but record end character -- I am not sure how to interpret that, except possibly as an editing error. 
+Also, see note 2 to 7.6.1: 
+Alhough the handling of record boundaries is defined by SGML, there is no requirement that SGML documents must be organized in records. 
+At any rate, it seems to boil down to [1] must the parser generate RS and RE if they are not in the file? 
+7.6.1 talks about recognising RS and RE, not generating them; so I think it should not. 
+[2] must the parser always recognise ASCII CR and LF as RS and RE even if the SGML declaration changes RS and RE? 
+The standard does not mention ASCII CR and LF in this context, but only talks about RS and RE. 
+So you should be able to change them. 
+Of course, not all parsers support variant concrete syntaxes. 
+[3] must the parser treat the characters associated with RS and RE as record boundaries if the operating system or underlying storage system does not use drecords? 
+Clearly not -- see Annex F quoted above, and also note 2 to 7.6.1. 
+Since RS/RE processing is optional except on operating systems using records (would that include MS-DOS??), let's just decide not to use it. 
+Lee 
+Is there some sort of contest going on here to see who can find the most ridiculous interpretation of 8879? 
+This is a little confused. 
+An SGML parser operates on entities, not directly on files. 
+It's the job of the *entity manager* to recognize the 
+lines in the file and generate an *entity* containing RS or RE which is then 
+processed by the parser. 
+James 
+I was hoping to see a response to Paul's question, but hadn't seen one yet? 
+I'm curious to understand how the proposal would address the white-space in the following snippet. 
+/ROOT bob Robert Streichstreich@slb.com Schlumbergervoice: 1 512 331 3318 
+I disagree with this, James. 
+I think the likelihood of someone inserting markup into a "verbatim" element that would trigger the ignore-this-RE rule in SGML is very, very small. 
+With SGML, the intrusion on elements of this type in our data has been minimal. 
+Even in PCDATA, the need to replace ' ' and '&amp;' is rare and we never have to replace ' '. 
+But why the mention of spaces? 
+I thought these were left unscathed. 
+bob Robert Streichstreich@slb.com Schlumbergervoice: 1 512 331 3318 
+Right, and I replied to that message earlier. 
+It seems to me that this is a matter of subjective opinion. 
+It is a fact that many, and perhaps even most, modern operating systems do not even have the concept of line seperators, except as applied 
+to certain devices. 
+TTY drivers are what implements the line-oriented display features of UNIX: the file systems have no concept of this. 
+MSDOS, and windows follow the same path. 
+As David has also pointed out, even on the Mac, there is no such thing as "line" or "record". 
+The concept of "line" is even more poorly defined than "record", and in most cases is an application convention. 
+Then who is to define *how* an entity manager is to recognise these "lines"? 
+Having written more device drivers than I care to remember, I can tell you that in most operating systems, the concept of lines is vacuous at best. 
+In SGML, the records (which is synonymous with your use of "lines") are those 
+that the author saw when the document was formatted to his screen by his text editor. 
+Some editors preserve those record breaks; some don't. 
+SGML makes sure that the data is the same in both cases by eliminating the REs that were caused solely by markup. 
+Charles F. Goldfarb * Information Management Consulting * +1(408)867-5553 13075 Paramount Drive * Saratoga CA 95070 * USA International Standards Editor * ISO 8879 SGML * ISO/IEC 10744 HyTime Prentice-Hall Series Editor * CFG Series on Open Information Management 
+So how can you determine which is which? 
+Unless the editor understands all the rules of SGML, or the entity manager understands all the rules of the editor, there seems to be a very large margin for error in creation or interpretation. 
+It seems to me that removing the rules for RE/RS entirely is certainly no worse than this: in either case, there is a large body of software (in one case applications, in the other, XML entity and storage managers) that could get it wrong. 
+The advantage of removong RE/RS entirely is that you suddenly have a single, easily explained set of rules for parsers, to which applications can cater. 
+I consider both this issue, and the characater set issues of far less importance than getting XML *done*, so I'm willing to compromise my position. 
+However, it seems to me that in both cases, the decision to go one way or the other is purely subjective: technical arguments either way are available. 
+I think the point of view I take generally emphasises pragmatism. 
+My understanding from the conference call is that we decided that we only needed to collapse RS/REs--spaces we could leave alone, except as specified in rule (1). 
+Using NSGMLS style output (and ignoring attributes): (ROOT (DS -WFMD-AA, WAFE MAIN DRAWER )DS (Q -1.0000 )Q 
+(DWG 
+(USES (REF (Q -6.0000 )Q )REF (REF (Q -8.0000 )Q )REF 
+(REF (Q -36.0000 )Q )REF )ROOT 
+There is *no* uncollapsed space in the example because, unless I've gotten it horribly wrong, all the white space falls under rule 1. 
+Cheers, E. W. Eliot Kimber (kimber@passage.com) 
+Senior SGML Consultant and HyTime Specialist Passage Systems, Inc., (512)339-1400 10596 N. Tantau Ave., Cupertino, CA 95014-3535 (408) 366-0300, (408) "If I never had existed, would you still remember me?..." --Austin Lounge Lizards, "1984 Blues" 
+From: "W. Eliot Kimber" kimber@passage.com 
+Consider the following example where I represent ALL RE's with @: chapter @ title The Title /title @ p Here is paragraph one containing a bunch of gratuitous REs@ in the middle of it. 
+/p @ p Here is paragraph two containing a bunch of gratuitous REs @ in the middle of it. 
+/p @ /chapter @ 
+a. If 1 and 2 above are the only rules, then does that mean that the space and RE between the title and first paragraph are significant? 
+b. 
+Given the clarification of rule 2, then all of paragraph one's REs are collapsed to a single space, but paragraph two contains " @ @ @ @". 
+Then, I assume rule 2 says each @ gets "collapsed" into a single space resulting in " ". Am I understanding this correctly? 
+paul 
+[... example omitted, see Paul's message ] 
+That's the way I interpret it: If you don't want spaces, don't put them in. 
+Cheers, E. W. Eliot Kimber (kimber@passage.com) 
+Senior SGML Consultant and HyTime Specialist Passage Systems, Inc., (512)339-1400 10596 N. Tantau Ave., Cupertino, CA 95014-3535 (408) 366-0300, (408) "If I never had existed, would you still remember me?..." --Austin Lounge Lizards, "1984 Blues" 
+On Thu, 26 Sep 1996 13:46:22 -0400 Eliot Kimber said: 
+Sorry to be so slow responding to this post, but I've been out of network contact. 
+This is slightly different from the proposal I thought the ERB had discussed, with consequences for some of the discussion. 
+My memory may deceive me, but I thought the ERB's discussion led to a proposal that in XML, RE is handled this way: 1 element content is treated as in SGML 2 white space at the beginning and ending of element ESIS be removed (this differs from Eliot's formulation primarily in making clear that A paragraph. and A paragraph. have the same ESIS under the rules: comments don't affect this phase of white-space stripping. 
+If you use a vacuous PI instead of the comment, the second example works, since PIs are part of ESIS. 3 sequences of RS and RE are merged into a single RE (or RE/RS sequence, if RS isn't being ignored) This means that verbatim elements CAN be handled using this scheme, 
+since most record ends ARE preserved, though getting blank lines may 
+involve ensuring somehow that there is at least a blank character on the line, to make the REs and RSs non-contiguous. 
+(A record consisting of a blank followed by ! 
+will surely do the trick.) 
+In XML systems, this is all handled by the parser; in SGML systems handling XML documents, it's an application convention required by XML. 
+As James Clark has pointed out, requiring this white-space handling helps ensure that SGML and XML tools can interoperate reliably on the same data -- if systems sometimes eat an RE and sometimes doesn't, based on whether under the hood they use native XML parsers or unmodified SGML parsers, then XML will seem flaky and unreliable. 
+Note that within elements, this scheme, like 8879, exposes the user to apparently capricious changes in behavior, depending on whether the editor last used (a) strips all trailing white space, (b) strips all trailing white space and then adds a single blank at the end of each line, or (c) preserves what you type, so that lines may or may not have trailing white space, without the difference being visible under normal operation. 
+This exposure to caprice is neither an advantage nor a disadvantage of this scheme, since it's shared by 8879. 
+It does mean the proposed white-space stripping at the beginning and ending of elements is probably more robust and predictable than 8879's rule, which as far as I can tell distinguishes between p @ (insignificant) and p @ (significant). 
+Since the difference between Eliot's point 2 and my point 3 seems germane to subsequent discussion, I'm uneasy that no other ERB members have made this correction. 
+The fact that they haven't suggests to me that my recollection may be deceiving me, and Eliot's summary may be more accurate than mine, as regards the ERB discussion. 
+But as regards RE handling in XML, I think it's better to reduce (RE | RS)+ to RE,RS than to " ", because it makes verbatim elements so much simpler. 
+(N.B. the purist view that if REs are really significant there should be markup there does appeal to me a lot. 
+But it fails the Stooopid test. 
+Who will believe that failing to handle PRE in a natural way is the sign of a system more intelligent than HTML? 
+Can anyone name a widely used production text processor that has no equivalent to the \obeylines of TeX or the XMP of the GML starter set? 
+-C. 
+M. Sperberg-McQueen 
+So, correct me if I'm wrong, but with the proposed set of rules: "If you don't want spaces, don't put them in." 
+With the other proposal: "If you don't want newlines, don't put 'em in." 
+(I'm not ignoring the other proposals just juxtaposing these two.) I don't see a substantive difference other than that I lose the ability to do verbatim formatting with the former. 
+bob Robert Streichstreich@slb.com Schlumbergervoice: 1 512 331 3318 
+It varies by the file system (or more generally, storage manager). 
+IBM mainframes use a length field, DOS uses CR/LF, and so on. 
+There is a good description of this in the FSI spec. 
+Charles F. Goldfarb * Information Management Consulting * +1(408)867-5553 13075 Paramount Drive * Saratoga CA 95070 * USA International Standards Editor * ISO 8879 SGML * ISO/IEC 10744 HyTime Prentice-Hall Series Editor * CFG Series on Open Information Management 
+On Mon, 30 Sep 1996 19:13:34 -0900, "W. 
+Eliot Kimber" kimber@passage.com 
+I did get it horribly wrong. 
+My appologies [why can't we just end this madness! 
+Just do what James says and nobody gets hurt...] 
+Right. Delimit all data and be done with it! 
+Charles F. Goldfarb * Information Management Consulting * +1(408)867-5553 13075 Paramount Drive * Saratoga CA 95070 * USA International Standards Editor * ISO 8879 SGML * ISO/IEC 10744 HyTime Prentice-Hall Series Editor * CFG Series on Open Information Management 
+In following the subsequent discussion, I realized that my response to Bob was flawed in that I forgot that white space following end tags and preceding start tags is *not* ignored. 
+Darn. 
+I've corrected my example below, using "@" for spaces. 
+E. 
+-\n@@ 
+I did get it horribly wrong. 
+My appologies [why can't we just end this madness! 
+Just do what James says and nobody gets hurt...] Cheers, E. W. Eliot Kimber (kimber@passage.com) 
+Senior SGML Consultant and HyTime Specialist Passage Systems, Inc., (512)339-1400 10596 N. Tantau Ave., Cupertino, CA 95014-3535 (408) 366-0300, (408) "If I never had existed, would you still remember me?..." --Austin Lounge Lizards, "1984 Blues" 

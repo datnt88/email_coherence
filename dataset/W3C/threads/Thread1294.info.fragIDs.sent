@@ -1,0 +1,210 @@
+Hi, I didn't have time to follow the discussion for some months, so perhaps I'm not uptodate on all arguments. 
+What I noticed with the recent draft it the 'revision' was replaced by 'version'. 
+I remember that I asked sometime why 'revision' was used. 
+So well done :-) 
+I have not seen any rebuttal to the recent arguments (only your initial messages in favor of requiring label support by all servers). 
+To summarize the recent arguments: The combination of standard client defined properties like DAV:comment and DAV:creator-displayname, custom client defined properties, and standard server defined properties like DAV:version-name and DAV:getmodificationdate, are sufficient to name and locate versions of interest, and this is demonstrated by the document management systems that do so (without the use of labels). 
+I think some sort of 'labeling' should be available in core versioning. 
+Sort of a poor mans baseline :-) Perhaps it is possible to get a similar result with DAV:comment, but I imagine that more than one label could be stuck to one version. 
+So won't that be a little bit confusing and complex if I label with DAV:comment. 
+Also I understand DAV:comment (perhaps wrongly) as comparable to the RCS log string you can give to a new version. 
+Labels aren't too complicated to implement in comparison to other things I guess. 
+If labels aren't in core versioning then I fear that different clients would perhaps find different ways to implement pseudo labeling which could hurt interoperability. 
+It works now because every document management system that do so without the use of labels has it's matching client. 
+Just some brainstorming without too much thinking. 
+It's late already. 
+So I will stop and give just a short comment on workspace headers. 
+I really wouldn't like to give them up because IMHO workspaces are a central concept in advanced versioning. 
+And it would be a shame to hide them in the protocol. 
+But I have to think about the technical problems Geoff mentioned (The stuff about server extension responsible for namespace subtrees). 
+Cheers, Edgar edgar@edgarschwarz.de 
+http://www.edgarschwarz.de * DOSenfreie Zone. 
+Running Native Oberon. 
+* Make it as simple as possible, but not simpler. 
+Albert Einstein 
+From: Edgar@EdgarSchwarz.de Hi Edgar, good to see you back on the list! 
+What I noticed with the recent draft it the 'revision' was replaced by 'version'. 
+I remember that I asked sometime why 'revision' was used. 
+So well done :-) I'm pretty sure that your question was part of the motivation for my suggesting we change, so you get to pat yourself on the back for that one (:-). 
+I think some sort of 'labeling' should be available in core versioning. 
+Sort of a poor mans baseline :-) As a side note, I encourage servers to actually implement baselines if they want to provide baseline functionality, and encourage clients to use it on servers that provide it (:-). 
+Perhaps it is possible to get a similar result with DAV:comment, but I imagine that more than one label could be stuck to one version. 
+The argument for using DAV:comment was not that it is a good/reasonable way to provide baselining, but rather that it is a good way to add client defined information to a version if you are *not* interested in baselining, but rather just distinguishing versions from a *single* version history. 
+If there are two versions that are tested, it is quite reasonable to annotate them both as "tested", and use other information to distinguish one "tested" version from another. 
+This of course doesn't work with baselining, but a server that cares about baselining will implement labels (or preferably, baselines). 
+Labels aren't too complicated to implement in comparison to other things I guess. 
+If labels aren't in core versioning then I fear that different clients would perhaps find different ways to implement pseudo labeling which could hurt interoperability. 
+If a client encounters a server that does not provide labeling support, no need to "fake it", you just grey out the "label" operation. 
+If you want labeling, just get a server that supports it, and then it's easy for a client to expose it, since we've standardized on what labeling looks like when it is supported. 
+(I'm tempted to make an analogy about the superiority of "market driven" economy over a "command" economy :-). 
+It works now because every document management system that do so without the use of labels has it's matching client. 
+I think labeling is such a well understood concept that any DMS system that wanted the functionality would have invested in implementing it. 
+They certainly would do so in their server, and not in their client. 
+So I will stop and give just a short comment on workspace headers. 
+I really wouldn't like to give them up because IMHO workspaces are a central concept in advanced versioning. 
+And it would be a shame to hide them in the protocol. 
+But I have to think about the technical problems Geoff mentioned (The stuff about server extension responsible for namespace subtrees). 
+Yeah, I was a strong advocate of Workspace headers too, until I ran into those pesky technical problems ... (:-). 
+Cheers, Geoff 
+Well... as a counterpoint argument: I've never viewed workspaces as a central concept. 
+I've always found them rather bothersome. 
+That darned Workspace header just felt a bit wrong to me. 
+Thankfully, I could implement a lot of DeltaV and just completely disregard the workspace concept. 
+Cheers, -g Greg Stein, http://www.lyra.org/ 
+From: Greg Stein gstein@lyra.org 
+Well... as a counterpoint argument: I've never viewed workspaces as a central concept. 
+I've always found them rather bothersome. 
+That darned Workspace header just felt a bit wrong to me. 
+Thankfully, I could implement a lot of DeltaV and just completely disregard the workspace concept. 
+You are maintaining a copy of the versioned resource tree (sometimes called a "sandbox") on your client I assume, for local builds, disconnected use, etc. ? 
+Now what if you wanted to represent that sandbox on the server? 
+That's what a workspace is. 
+Here's some additional motivation I'll be adding to the "Workspace" section of the protocol: It is often desirable to allow several clients on behalf of a single user to access a related set of checked-out resources. 
+In particular, this allows a user to access these resources from several physical locations, such as from another office, from home, from a remote site, or while traveling, without being forced to prematurely checkin those checked-out resources. 
+Sometimes it is even desirable to provide shared access to checked-out resources for several closely cooperating users (using WebDAV locking to avoid overwrite problems). 
+If only one set of checked-out resources is required, then this can be achieved with core versioning by simply checking out the appropriate version selectors. 
+This approach is often unacceptable because it exposes the intermediate states of the checked-out resources to every client, and does not allow for a second set of checked-out resources to be defined for a group that wishes to be isolated from the intermediate states of another group. 
+Unfortunately, working resources do not address this problem, because although they allow multiple concurrent checkouts from a single version history, there is no mechanism for grouping related working resources into an identifiable set. 
+A related problem is that it is often desirable to isolate clients from a logical change that involves renaming shared resources, until that logical change is complete and tested. 
+When all clients use a common set of shared version selectors, every client sees the result of a MOVE as soon as it occurs. 
+An additional problem is that it is often necessary to perform testing on the server rather than on the client. 
+Since a test routine on the server has no way of knowing what working resources or what versions are to be tested, only the versions selected as the current target of the version selectors can be tested. 
+This not only does not allow testing of a checked-out resource before checking it in, but also does not provide for any parallel testing of different configurations of versioned resources. 
+To address these problems, advanced versioning introduces the concept of a "workspace". 
+A workspace is a collection whose members are a set of related version selectors and unversioned resources. 
+In order to expose multiple views of a set of related version selectors in the URL namespace, multiple workspaces may be used. 
+In order to make a change made to a version selector in one workspace visible in another workspace, that version selector must be checked in, and then the corresponding version selector in the other workspace can be updated to display the content and dead properties of the new version. 
+In order to ensure unambiguous merging and baselining semantics, a workspace may contain at most one version selector for a given version history (although a server may support multiple bindings in a workspace to the same version selector). 
+Cheers, Geoff 
+Geoff, Great stuff! 
+A couple of comments. 
+Another reason for using workspaces is that sometimes the tools required to edit, compile, or otherwise operate on a resource have to exist on a particular platform. 
+That is, they cannot just be files in the user's local (Windows or UNIX) file system. 
+Workspaces provide a uniform way of addressing resources regardless of where they are, or what versions are selected. 
+But this raises an issue for testing on the server. 
+Say you are testing a Web application, not an unusual situation for a WebDAV client to be in. 
+Now the web server needs to see the same workspace as the client in order to test the resources just edited. 
+This is the scenario you describe below. 
+But often web server plugins (Servlets, JSP's, ASP's, CGI programs, ISAPPI programs, Apache modules, etc.) don't go through a nested HTTP request, they access files directly using the file system. 
+This won't work unless the files are materialized on the server since the file system is not likely WebDAV versioning enabled. 
+Workspaces can help this problem if their contents are mirrored in the server's file system. 
+But then this limits the number of concurrent tests on different workspaces that can be done. 
+Any thoughts on this area? 
+From: Greg Stein gstein@lyra.org 
+Well... as a counterpoint argument: I've never viewed workspaces as a central concept. 
+I've always found them rather bothersome. 
+That darned Workspace header just felt a bit wrong to me. 
+Thankfully, I could implement a lot of DeltaV and just completely disregard the workspace concept. 
+You are maintaining a copy of the versioned resource tree (sometimes called a "sandbox") on your client I assume, for local builds, disconnected use, etc. ? 
+Now what if you wanted to represent that sandbox on the server? 
+That's what a workspace is. 
+Here's some additional motivation I'll be adding to the "Workspace" section of the protocol: It is often desirable to allow several clients on behalf of a single user to access a related set of checked-out resources. 
+In particular, this allows a user to access these resources from several physical locations, such as from another office, from home, from a remote site, or while traveling, without being forced to prematurely checkin those checked-out resources. 
+Sometimes it is even desirable to provide shared access to checked-out resources for several closely cooperating users (using WebDAV locking to avoid overwrite problems). 
+If only one set of checked-out resources is required, then this can be achieved with core versioning by simply checking out the appropriate version selectors. 
+This approach is often unacceptable because it exposes the intermediate states of the checked-out resources to every client, and does not allow for a second set of checked-out resources to be defined for a group that wishes to be isolated from the intermediate states of another group. 
+Unfortunately, working resources do not address this problem, because although they allow multiple concurrent checkouts from a single version history, there is no mechanism for grouping related working resources into an identifiable set. 
+A related problem is that it is often desirable to isolate clients from a logical change that involves renaming shared resources, until that logical change is complete and tested. 
+When all clients use a common set of shared version selectors, every client sees the result of a MOVE as soon as it occurs. 
+An additional problem is that it is often necessary to perform testing on the server rather than on the client. 
+Since a test routine on the server has no way of knowing what working resources or what versions are to be tested, only the versions selected as the current target of the version selectors can be tested. 
+This not only does not allow testing of a checked-out resource before checking it in, but also does not provide for any parallel testing of different configurations of versioned resources. 
+To address these problems, advanced versioning introduces the concept of a "workspace". 
+A workspace is a collection whose members are a set of related version selectors and unversioned resources. 
+In order to expose multiple views of a set of related version selectors in the URL namespace, multiple workspaces may be used. 
+In order to make a change made to a version selector in one workspace visible in another workspace, that version selector must be checked in, and then the corresponding version selector in the other workspace can be updated to display the content and dead properties of the new version. 
+In order to ensure unambiguous merging and baselining semantics, a workspace may contain at most one version selector for a given version history (although a server may support multiple bindings in a workspace to the same version selector). 
+Cheers, Geoff 
+From: "Jim Amsden/Raleigh/IBM" jamsden@us.ibm.com 
+Another reason for using workspaces is that sometimes the tools required to edit, compile, or otherwise operate on a resource have to exist on a particular platform. 
+That is, they cannot just be files in the user's local (Windows or UNIX) file system. 
+Workspaces provide a uniform way of addressing resources regardless of where they are, or what versions are selected. 
+Yes, that is one of the important reason for "server side testing" support. 
+But this raises an issue for testing on the server. 
+Say you are testing a Web application, not an unusual situation for a WebDAV client to be in. 
+Now the web server needs to see the same workspace as the client in order to test the resources just edited. 
+This is the scenario you describe below. 
+But often web server plugins (Servlets, JSP's, ASP's, CGI programs, ISAPPI programs, Apache modules, etc.) don't go through a nested HTTP request, they access files directly using the file system. 
+This won't work unless the files are materialized on the server since the file system is not likely WebDAV versioning enabled. 
+Workspaces can help this problem if their contents are mirrored in the server's file system. 
+But then this limits the number of concurrent tests on different workspaces that can be done. 
+Any thoughts on this area? 
+This depends on whether your testing requires a "shared resource" on the server. 
+For things like compiling and running the compiled programs, testing in parallel in different workspaces often works just fine (since workspaces are modeled as different collections, it is natural to map them to different points in a file system tree). 
+If there is some common resource (like some database) that is required by the tests, then you have a problem, but this is not a problem that an HTTP protocol can address. 
+Cheers, Geoff 
+Thank you for this explanation of workspaces. 
+It is *much* clearer now (to me, at least :-). 
+Russ Resent-Date: Thu, 12 Oct 2000 11:34:29 -0400 (EDT) Resent-From: ietf-dav-versioning@w3.org References: 200010112138.RAA10083@tux.w3.org Well... as a counterpoint argument: I've never viewed workspaces as a central concept. 
+I've always found them rather bothersome. 
+That darned Workspace header just felt a bit wrong to me. 
+Thankfully, I could implement a lot of DeltaV and just completely disregard the workspace concept. 
+You are maintaining a copy of the versioned resource tree (sometimes called a "sandbox") on your client I assume, for local builds, disconnected use, etc. ? 
+Now what if you wanted to represent that sandbox on the server? 
+That's what a workspace is. 
+Here's some additional motivation I'll be adding to the "Workspace" section of the protocol: It is often desirable to allow several clients on behalf of a single user to access a related set of checked-out resources. 
+In particular, this allows a user to access these resources from several physical locations, such as from another office, from home, from a remote site, or while traveling, without being forced to prematurely checkin those checked-out resources. 
+Sometimes it is even desirable to provide shared access to checked-out resources for several closely cooperating users (using WebDAV locking to avoid overwrite problems). 
+If only one set of checked-out resources is required, then this can be achieved with core versioning by simply checking out the appropriate version selectors. 
+This approach is often unacceptable because it exposes the intermediate states of the checked-out resources to every client, and does not allow for a second set of checked-out resources to be defined for a group that wishes to be isolated from the intermediate states of another group. 
+Unfortunately, working resources do not address this problem, because although they allow multiple concurrent checkouts from a single version history, there is no mechanism for grouping related working resources into an identifiable set. 
+A related problem is that it is often desirable to isolate clients from a logical change that involves renaming shared resources, until that logical change is complete and tested. 
+When all clients use a common set of shared version selectors, every client sees the result of a MOVE as soon as it occurs. 
+An additional problem is that it is often necessary to perform testing on the server rather than on the client. 
+Since a test routine on the server has no way of knowing what working resources or what versions are to be tested, only the versions selected as the current target of the version selectors can be tested. 
+This not only does not allow testing of a checked-out resource before checking it in, but also does not provide for any parallel testing of different configurations of versioned resources. 
+To address these problems, advanced versioning introduces the concept of a "workspace". 
+A workspace is a collection whose members are a set of related version selectors and unversioned resources. 
+In order to expose multiple views of a set of related version selectors in the URL namespace, multiple workspaces may be used. 
+In order to make a change made to a version selector in one workspace visible in another workspace, that version selector must be checked in, and then the corresponding version selector in the other workspace can be updated to display the content and dead properties of the new version. 
+In order to ensure unambiguous merging and baselining semantics, a workspace may contain at most one version selector for a given version history (although a server may support multiple bindings in a workspace to the same version selector). 
+Cheers, Geoff 
+Very cool! 
+From: "Jim Amsden/Raleigh/IBM" jamsden@us.ibm.com 
+Another reason for using workspaces is that sometimes the tools required to edit, compile, or otherwise operate on a resource have to exist on a particular platform. 
+That is, they cannot just be files in the user's local (Windows or UNIX) file system. 
+Workspaces provide a uniform way of addressing resources regardless of where they are, or what versions are selected. 
+Yes, that is one of the important reason for "server side testing" support. 
+But this raises an issue for testing on the server. 
+Say you are testing a Web application, not an unusual situation for a WebDAV client to be in. 
+Now the web server needs to see the same workspace as the client in order to test the resources just edited. 
+This is the scenario you describe below. 
+But often web server plugins (Servlets, JSP's, ASP's, CGI programs, ISAPPI programs, Apache modules, etc.) don't go through a nested HTTP request, they access files directly using the file system. 
+This won't work unless the files are materialized on the server since the file system is not likely WebDAV versioning enabled. 
+Workspaces can help this problem if their contents are mirrored in the server's file system. 
+But then this limits the number of concurrent tests on different workspaces that can be done. 
+Any thoughts on this area? 
+This depends on whether your testing requires a "shared resource" on the server. 
+For things like compiling and running the compiled programs, testing in parallel in different workspaces often works just fine (since workspaces are modeled as different collections, it is natural to map them to different points in a file system tree). 
+If there is some common resource (like some database) that is required by the tests, then you have a problem, but this is not a problem that an HTTP protocol can address. 
+Cheers, Geoff 
+Well, the preamble puts the subject into more layman's terms, so its clearer to people (like me) who are not in the business of developing version control systems. 
+But, the remainder is probably sufficient for a spec. 
+Thanks, Russ References: 39E64127.5DCFE227@worldnet.att.net 
+Great! 
+Should I include that preamble (about having a sandbox on the client) or is the text between the "----" marks sufficient? 
+Cheers, Geoff Thank you for this explanation of workspaces. 
+It is *much* clearer now (to me, at least :-). 
+Russ -------- Original Message -------- Resent-Date: Thu, 12 Oct 2000 11:34:29 -0400 (EDT) Resent-From: ietf-dav-versioning@w3.org References: 200010112138.RAA10083@tux.w3.org Well... as a counterpoint argument: I've never viewed workspaces as a central concept. 
+I've always found them rather bothersome. 
+That darned Workspace header just felt a bit wrong to me. 
+Thankfully, I could implement a lot of DeltaV and just completely disregard the workspace concept. 
+You are maintaining a copy of the versioned resource tree (sometimes called a "sandbox") on your client I assume, for local builds, disconnected use, etc. ? 
+Now what if you wanted to represent that sandbox on the server? 
+That's what a workspace is. 
+Here's some additional motivation I'll be adding to the "Workspace" section of the protocol: It is often desirable to allow several clients on behalf of a single user to access a related set of checked-out resources. 
+In particular, this allows a user to access these resources from several physical locations, such as from another office, from home, from a remote site, or while traveling, without being forced to prematurely checkin those checked-out resources. 
+Sometimes it is even desirable to provide shared access to checked-out resources for several closely cooperating users (using WebDAV locking to avoid overwrite problems). 
+If only one set of checked-out resources is required, then this can be achieved with core versioning by simply checking out the appropriate version selectors. 
+This approach is often unacceptable because it exposes the intermediate states of the checked-out resources to every client, and does not allow for a second set of checked-out resources to be defined for a group that wishes to be isolated from the intermediate states of another group. 
+Unfortunately, working resources do not address this problem, because although they allow multiple concurrent checkouts from a single version history, there is no mechanism for grouping related working resources into an identifiable set. 
+A related problem is that it is often desirable to isolate clients from a logical change that involves renaming shared resources, until that logical change is complete and tested. 
+When all clients use a common set of shared version selectors, every client sees the result of a MOVE as soon as it occurs. 
+An additional problem is that it is often necessary to perform testing on the server rather than on the client. 
+Since a test routine on the server has no way of knowing what working resources or what versions are to be tested, only the versions selected as the current target of the version selectors can be tested. 
+This not only does not allow testing of a checked-out resource before checking it in, but also does not provide for any parallel testing of different configurations of versioned resources. 
+To address these problems, advanced versioning introduces the concept of a "workspace". 
+A workspace is a collection whose members are a set of related version selectors and unversioned resources. 
+In order to expose multiple views of a set of related version selectors in the URL namespace, multiple workspaces may be used. 
+In order to make a change made to a version selector in one workspace visible in another workspace, that version selector must be checked in, and then the corresponding version selector in the other workspace can be updated to display the content and dead properties of the new version. 
+In order to ensure unambiguous merging and baselining semantics, a workspace may contain at most one version selector for a given version history (although a server may support multiple bindings in a workspace to the same version selector). 

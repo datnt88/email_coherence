@@ -1,0 +1,75 @@
+Martin sending out a use case reminded me of another use case involving dependencies between choreographies that I want to provide. 
+David Director, Product Management, Web Services Commerce One 4440 Rosewood Drive, Pleasanton, CA 94588, USA Tel/VMail: +1 (925) 520 4422; Cell: +1 (925) 216 7704 
+David, if the order submission process and the order status query process are part of the same larger choreography, then the dependency issue disappears. 
+With separate choreographies for the two processes, the state connecting the two choreographies has to be maintained outside of the choreography. 
+The question now is - whether the choreography language should support references to such external state (perhaps in the form of a language to specify preconditions, post conditions, etc). 
+The alternative may be to simply require that the related choreographies should always be defined under a larger umbrella choreography, such that the dependency state management naturally falls within the scope of choreography. 
+Some of the above may sound like jumping into the solution. 
+However, I am trying to understand myself whether the use case is within our scope at all. 
+Sanjay Patil Distinguished Engineer sanjay.patil@iona.com 
+IONA Technologies 2350 Mission College Blvd. 
+Suite 650 Santa Clara, CA 95054 Making Software Work Together TM Martin sending out a use case reminded me of another use case involving dependencies between choreographies that I want to provide. 
+David Director, Product Management, Web Services Commerce One 4440 Rosewood Drive, Pleasanton, CA 94588, USA Tel/VMail: +1 (925) 520 4422; Cell: +1 (925) 216 7704 
+Patil I agree. 
+The key question is, as you say ... The question now is - whether the choreography language should support references to such external state (perhaps in the form of a language to specify preconditions, post conditions, etc). 
+... which is the main reason I wanted to put this use case forward. 
+Your idea of putting everything into one larger choreography becomes unweildy. 
+For example the Order Placement choreography I gave is a "medium complexity" example of how to place an order. 
+The simplest is where you just send an order and expect nothing in return. 
+The other extreme is where the seller provides automatic periodic updates on the processing of the order. 
+Our analysis at Commerce One has identified 14 different variations of how to place an order where each variation is a different choreography. 
+In all variations: 1. 
+The semantics of the messages are the same, and 2. Each variation can optionally include the use of a status inquiry. 
+I also agree that we need to make a conscious decision whether this type of dependency is in, or out of, scope. 
+David David, if the order submission process and the order status query process are part of the same larger choreography, then the dependency issue disappears. 
+With separate choreographies for the two processes, the state connecting the two choreographies has to be maintained outside of the choreography. 
+The question now is - whether the choreography language should support references to such external state (perhaps in the form of a language to specify preconditions, post conditions, etc). 
+The alternative may be to simply require that the related choreographies should always be defined under a larger umbrella choreography, such that the dependency state management naturally falls within the scope of choreography. 
+Some of the above may sound like jumping into the solution. 
+However, I am trying to understand myself whether the use case is within our scope at all. 
+Sanjay Patil Distinguished Engineer sanjay.patil@iona.com 
+IONA Technologies 2350 Mission College Blvd. 
+Suite 650 Santa Clara, CA 95054 Making Software Work Together TM -----Original Message----- Martin sending out a use case reminded me of another use case involving dependencies between choreographies that I want to provide. 
+David Director, Product Management, Web Services Commerce One 4440 Rosewood Drive, Pleasanton, CA 94588, USA Tel/VMail: +1 (925) 520 4422; Cell: +1 (925) 216 7704 mailto:david.burdett@commerceone.com; Web: http://www.commerceone.com 
+David, Is the handling of errors for every message something that should be in the choreography? 
+If included, then it could prove to be an infinite cycle-e.g., there is an error in the error response message, which is handled as an error, and so on. 
+This seems like another protocol that should be layered below the choreography. 
+True? 
+-Steve Martin sending out a use case reminded me of another use case involving dependencies between choreographies that I want to provide. 
+David Director, Product Management, Web Services Commerce One 4440 Rosewood Drive, Pleasanton, CA 94588, USA Tel/VMail: +1 (925) 520 4422; Cell: +1 (925) 216 7704 
+The answer is "it depends". 
+Errors associated with formatting of the overall message (e.g. HTTP, MIME or SOAP errors) should be handled at a lower level. 
+At the other extreme some errors, e.g. "product code not recognized" can "only" be determined by the application/process/service that is processing the content of the message as, in this example, it requires validation against a database. 
+There are also some validation errors of the content of mesages that fall in the grey area inbetween. 
+These can sometimes be detected by an XML Parser by validating against the XML Schema and therefore could be considered as being handled at a lower level, for example an XML parser could check that a product code must be 10 characters alphanumeric and provide an "invalid format" error if it was not. 
+Sometimes though the application has to do the check.One 
+example would be checking the validity of a postal code as it is dependent on the country associated with the address. 
+e,g, - a valid US Postal code must be numeric e.g. "94511" and in a UK code a Postal Code is alphanumeric with a space in the middle, e.g. "KT11 2EN" Since errors "sometimes" have to be handled by the application/process/service I think we have to consider them when designing our approachy to handling choreographies. 
+Hope this helps. 
+David David, Is the handling of errors for every message something that should be in the choreography? 
+If included, then it could prove to be an infinite cycle-e.g., there is an error in the error response message, which is handled as an error, and so on. 
+This seems like another protocol that should be layered below the choreography. 
+True? 
+-Steve -----Original Message----- Martin sending out a use case reminded me of another use case involving dependencies between choreographies that I want to provide. 
+David Director, Product Management, Web Services Commerce One 4440 Rosewood Drive, Pleasanton, CA 94588, USA Tel/VMail: +1 (925) 520 4422; Cell: +1 (925) 216 7704 mailto:david.burdett@commerceone.com; Web: http://www.commerceone.com 
+I agree that exception handling is a necessary component of choreography. 
+The description that it applied to every message made me wonder if you were talking about something else. 
+Anyway, for the visually-biased, I created a couple of diagrams to show the choreography. 
+The first one shows the two separate choreographies as described-although I added a confirmation message (see OrderPlacementV1.jpg). 
+The second diagram includes the error handling that was described, which adds a lot of complexity to the choreography-but I didn't show the handling of errors on the error messages. 
+These diagrams are more complex than the first set of diagrams I sent it, in that they show alternative paths created by business decisions and through pick or choice behavior. 
+-Steve The answer is "it depends". 
+Errors associated with formatting of the overall message (e.g. HTTP, MIME or SOAP errors) should be handled at a lower level. 
+At the other extreme some errors, e.g. "product code not recognized" can "only" be determined by the application/process/service that is processing the content of the message as, in this example, it requires validation against a database. 
+There are also some validation errors of the content of mesages that fall in the grey area inbetween. 
+These can sometimes be detected by an XML Parser by validating against the XML Schema and therefore could be considered as being handled at a lower level, for example an XML parser could check that a product code must be 10 characters alphanumeric and provide an "invalid format" error if it was not. 
+Sometimes though the application has to do the check.One 
+example would be checking the validity of a postal code as it is dependent on the country associated with the address. 
+e,g, - a valid US Postal code must be numeric e.g. "94511" and in a UK code a Postal Code is alphanumeric with a space in the middle, e.g. "KT11 2EN" Since errors "sometimes" have to be handled by the application/process/service I think we have to consider them when designing our approachy to handling choreographies. 
+Hope this helps. 
+David -----Original Message----- David, Is the handling of errors for every message something that should be in the choreography? 
+If included, then it could prove to be an infinite cycle-e.g., there is an error in the error response message, which is handled as an error, and so on. 
+This seems like another protocol that should be layered below the choreography. 
+True? 
+-Steve -----Original Message----- Martin sending out a use case reminded me of another use case involving dependencies between choreographies that I want to provide. 
+David Director, Product Management, Web Services Commerce One 4440 Rosewood Drive, Pleasanton, CA 94588, USA Tel/VMail: +1 (925) 520 4422; Cell: +1 (925) 216 7704 

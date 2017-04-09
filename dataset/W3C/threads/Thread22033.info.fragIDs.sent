@@ -1,0 +1,96 @@
+Using ant 1.4, xalan 2.1, and Curt's jsunit.zip 
+[1], I tried the CVS version of the DOM Level 2 HTMl Test Suite on Mozilla and Internet Explorer. 
+Results are at [2]. 
+Opera 7 reports ~100 errors/failures but didn't produce the error messages. 
+I'm trying to have it produce them. 
+Philippe [1] http://lists.w3.org/Archives/Public/www-dom-ts/2002Jul/0000.html [2] http://www.w3.org/2002/11/DOM-Level-2-HTML-Results 
+FYI I've also run the CVS version of the DOM Level2 HTML Test Suite using ant1.5, saxon652 and Curt's jsunit.zip and came up with the same results as Philippe. 
+Rick Rivello 
+Got results from Konqueror 3.0.98: 
+Philippe 
+-----BEGIN PGP SIGNED MESSAGE----- Hash: SHA1 
+Ah, great. 
+I have a patch ready for the recent datatype changes, but it would break binary compatibility of the C++ DOM interface, so this fix can't be applied until KDE-4.0. 
+Most of the failing table tests are due to the section reordering issue. 
+I sent a mail to this list about it, but it remained unanswered. 
+The subject line was "Order of table sections". 
+I would be glad if this could trigger some discussion :) 
+I feel that relying on the browser's internal ordering of the table sections in the DOM tree is wrong. 
+I also mailed a fix for HTMLTableElement31, which hasn't been applied. 
+Re-posting below. 
+HTMLTableElement31 says it will create a new table and append it to the document. 
+However it instead creates a table and tries to insert it into another (empty) table. 
+This is apparently forbidden, per the DOM/HTML spec. 
+This isn't what the test says it will do, so I think it's a bug in the test. 
+What about this fix for it? 
+Index: HTMLTableElement31.xml RCS file: /sources/public/2001/DOM-Test-Suite/tests/level2/html/HTMLTableElement31.xml,v retrieving revision 1.4 diff -u -p -r1.4 HTMLTableElement31.xml - --- HTMLTableElement31.xml 2002/08/22 04:53:15 1.4 +++ HTMLTableElement31.xml 2002/09/25 22:53:01 @@ -59,7 +59,7 @@ See W3C License http://www.w3.org/Consor -- - - appendChild obj="testNode" newChild="table" var="tableNode"/ + appendChild obj="testNode.parentNode" newChild="table" var="tableNode"/ This adds the new table as a (last) sibling to the existing empty table, i.e. to a node where we know tables are allowed - and it makes the test work for me. 
+David FAURE, david@mandrakesoft.com, 
+faure@kde.org 
+Contributing to: http://www.konqueror.org/, 
+http://www.koffice.org/ 
+Get the latest KOffice - http://download.kde.org/stable/koffice-1.2/ 
+-----BEGIN PGP SIGNATURE----- Version: GnuPG v1.0.7 (GNU/Linux) iD8DBQE94+ez72KcVAmwbhARAln5AJ4wm7EczAYfQOacbJaaVOrPRYB3/wCgp89t 2H0jAi6AuhFlEJsBY62i3QE= =R75F -----END PGP SIGNATURE----- 
+Looking at [1], it appeared that this issue was closed at: 
+It seemed like Mozilla and IE are following the same behavior here. 
+(In case this issue needs a follow-up, I set the reply-to www-dom@w3.org 
+given that this is an issue on the draft, and not the test suite). 
+Yep, this is a bug. 
+I fixed the CVS version. 
+Konqueror is down to 20 now :) I'll regenerate and run again the entire test suite once Dimitris is done with the IBM tests. 
+Philippe [1] http://lists.w3.org/Archives/Public/www-dom-ts/2002Sep/0047.html 
+-----BEGIN PGP SIGNED MESSAGE----- Hash: SHA1 
+This sounds like a different issue to me. 
+The above is only about the rowIndex property, whereas the concern I'm raising here (and in [1]) is the fact that the testsuite uses constructs like document.getElementsByTagName("tr").item(4). 
+I believe it's an issue with the test suite only. 
+... and more precisely, that rows should be found by ID, or by actually using rowIndex, but NOT using document.getElementsByTagName("tr").item(4), which is rather fragile IMHO. 
+David FAURE, david@mandrakesoft.com, 
+faure@kde.org 
+Contributing to: http://www.konqueror.org/, 
+http://www.koffice.org/ 
+Get the latest KOffice - http://download.kde.org/stable/koffice-1.2/ 
+-----BEGIN PGP SIGNATURE----- Version: GnuPG v1.0.7 (GNU/Linux) iD8DBQE94/2x72KcVAmwbhARAohJAKCVr/WHN73izaVeCdNfFk1AWvXA4wCaAoNU RCMw++NMAeNZI4ibXZOesvk= =QSPV -----END PGP SIGNATURE----- 
+Thanks, Philippe I'm currently running this setup on Mozilla 1.0.1, 1.1 and 1.2 on Mac OS X 10.1.5. 
+We do have an issue with which version of JsUnit to use, though, which has not yet been resolved. 
+We currently have a fork after the version of JsUnit shipped with the only released version of the DOM TS so far, after which we seem to have two versions; Curt's version and Bob's/Edward's version. 
+We need to resolve this issue ASAP. 
+otherwise releasing the DOM L2 HTML/Core will not happen in the near future. 
+Any ideas? 
+Myself and Philippe think it's good idea that we have a telcon for this particular issue, we'll get back with a proposal right after Thanksgiving. 
+Best, /Dimitris 
+-----BEGIN PGP SIGNED MESSAGE----- Hash: SHA1 
+I'm now hitting a problem with rowIndex, which is answered in the above link. 
+If I understand correctly, the new, and correct behaviour, is that rowIndex (quoting the DOM spec) "is in logical order and not in document order. 
+The rowIndex does take into account sections (THEAD, TFOOT, or TBODY) within the table, placing THEAD rows first in the index, followed by TBODY rows, followed by TFOOT rows." 
+If that's the case, then I believe the tests HTMLCollection07 and HTMLCollection08 have a bug, they expect the wrong value for rowIndex. 
+(On the other hand HTMLTableRowElement01.html expects the right value, so there's currently no way to pass all those tests :) ). 
+Suggested fixes: Index: HTMLCollection07.xml RCS file: /sources/public/2001/DOM-Test-Suite/tests/level2/html/HTMLCollection07.xml,v retrieving revision 1.2 diff -u -p -r1.2 HTMLCollection07.xml - --- HTMLCollection07.xml 2002/06/10 17:27:57 1.2 +++ HTMLCollection07.xml 2002/12/16 23:21:08 @@ -44,5 +44,5 @@ See W3C License http://www.w3.org/Consor Index: HTMLCollection08.xml RCS file: /sources/public/2001/DOM-Test-Suite/tests/level2/html/HTMLCollection08.xml,v retrieving revision 1.3 diff -u -p -r1.3 HTMLCollection08.xml - --- HTMLCollection08.xml 2002/06/10 17:27:57 1.3 +++ HTMLCollection08.xml 2002/12/16 23:21:08 @@ -25,7 +25,7 @@ See W3C License http://www.w3.org/Consor Retrieve the first TABLE element and create a HTMLCollection by invoking the "rows" attribute. 
+Access the item in the third ordinal index. 
+The - - resulting rowIndex attribute is examined and should be two. 
++ resulting rowIndex attribute is examined and should be one. 
+@@ -44,5 +44,5 @@ See W3C License http://www.w3.org/Consor David FAURE, david@mandrakesoft.com, 
+faure@kde.org 
+Contributing to: http://www.konqueror.org/, 
+http://www.koffice.org/ 
+KOffice-1.2.1 is available - http://download.kde.org/stable/koffice-1.2.1/ -----BEGIN PGP SIGNATURE----- Version: GnuPG v1.0.7 (GNU/Linux) iD8DBQE9/mAd72KcVAmwbhARAqAIAJ9+26pbJm7HdVpgoWbTxgz7CXTIzACfQeYF gKFT4R6ik3C31djPQ077E6c= =ZfhX -----END PGP SIGNATURE----- 
+I agree with David that the tests are in error and should be changed. 
+Before I make the changes does anyone else have any comments or objections? 
+Rick Rivello 
+-----BEGIN PGP SIGNED MESSAGE----- Hash: SHA1 
+Thanks. 
+The last issue I have with tables is insertRow(-1). 
+The DOM says "the new row is appended". 
+But to which section? 
+To the last tbody , or to the last section in logical order, which could be a tfoot ? 
+Note that insertRow(rows.length) would do the latter. 
+The test HTMLTableElement39 seem to indicate that the new row is added to the tbody section, not to the tfoot . 
+I would have no problem with that.... but this doesn't even seem to be the case in Internet Explorer v6 - IIRC the insertRow(-1) behavior was supposed to be copied from IE. If that's the case, then the test must be fixed, to look at the tfoot after inserting the row. 
+Same issue with deleteRow(-1), in HTMLTableElement40. 
+David FAURE, david@mandrakesoft.com, 
+faure@kde.org 
+Contributing to: http://www.konqueror.org/, 
+http://www.koffice.org/ 
+KOffice-1.2.1 is available - http://download.kde.org/stable/koffice-1.2.1/ -----BEGIN PGP SIGNATURE----- Version: GnuPG v1.0.7 (GNU/Linux) iD8DBQE9/4o972KcVAmwbhARAsgEAKCxdmcqHUI1WnD1J8hN1n5PJbYU4QCcCHHQ B5mRE0PhqI+hvZbOf9qvkAg= =JEO4 -----END PGP SIGNATURE----- 
+From: "David Faure" david@mandrakesoft.com 
+Sent: Monday, December 16, 2002 6:22 PM Subject: rowIndex inconsistencies in the testsuite 
+The changes to HTMLCollection07 and HTMLCollection08 have been made and committed to the testsuite. 
+Rick Rivello 

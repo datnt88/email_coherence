@@ -1,0 +1,75 @@
+Help! The Amaya Documentation says something like "We'll explain later how users can create their own types." 
+I can't find this explanation, or work out what to do. 
+Tim 
+Hello Tim, 
+You're right. 
+We haven't yet updated this part of the doc, but the work to do is quite easy. 
+First some info... 
+The annotation and annotation types RDF schemata are currently stored in the Amaya/config directory under the names annotschema.rdf and annottypes.rdf. 
+As we can't yet dynamically download schemas from the web, we have another file called annot.schemas that tells Amaya the filenames where we stored the annotation schemas. 
+This file is also under Amaya/config/ 
+Now, if you want to add new annotation types, you'll need to define their namespace and write their schema. 
+This is quite easy. 
+Let's do a new namespace called MyTypes. 
+I add the following line to the end of annot.schemas: 
+Then I'll add a new annotation type called "kudos" in mytypes.rdf: 
+rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#" 
+And that's all. 
+Next time I launch Amaya, I'll see the new Kudos annotation type. 
+Look at the annottypes.rdf 
+file to see other examples. 
+As you can see, Amaya is not yet able to download schemata dynamically from the Web. 
+For Amaya to understand the semantics of Kudos (the label in this case), the schema has to be stored in the Amaya/config directory. 
+If this were not the case, then Amaya would have shown the URL of the property when browsing annotations of this type. 
+It wouldn't have been possible to create such a type with Amaya either. 
+These are things we need to further develop. 
+Tell us if you have any problems or other questions. 
+-jose 
+Some further clarification: Amaya does not yet dynamically load RDF schemas from the Web. 
+It loads only the schemas listed in Amaya/config/annot.schemas (SMOC - small matter of coding). 
+But Amaya will load schemas from the Web if annot.schemas tells it to do so. 
+For the two namespaces copy of the schemas. 
+These are the first two files Jose is referring to. 
+It is legitimate to cache a copy of an RDF Schema as http://www.w3.org/TR/2000/CR-rdf-schema-20000327 says that once you publish a namespace name you should not change the contents of the namespace. 
+note that, per the comments in annot.schemas, if you just put (without a second field) into that file then Amaya will attempt to read the schema from the Web. 
+-Ralph 
+Dear Colleagues, 
+Thank you for your advice. 
+I followed it, I thought correctly, but when I relaunched Amaya, the annotation type list was unchanged. 
+This is how my copy of annot.schemas 
+(in Amaya/config) now reads: # annot.schemas 
+# specifies the RDF schemas to be pre-loaded for Annotations # each line beginning with '#' is a comment # all other non-empty lines must be in one of two formats: # 1. namespacename # 2. namespacename filename # In case 1, an RDF schema is expected to be found at the namespace URI # In case 2, the filename is expected to be a (local) copy of an RDF # schema for the namespace. 
+The strings $THOTDIR and # $APP_HOME may be used at the beginning of the filename # and will be expanded to the Amaya installation directory # and the user's amaya home directory respectively. 
+# Historical schema presented at WWW9. 
+Obsolete. 
+#http://www.w3.org/1999/xx/annotation-ns# #first release schema; do not change unless you also change the service #some Annotation subclasses that we think will be useful #a new namespace called "MyTypes" This is how mytypes.rdf now reads (in the same directory): rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#" rdfs:seeAlso resource="http://www.w3.org/2000/02/Collaboration/Annotation/papers"/ rdfs:comment A class of Annotations representing glosses on vocabulary and usage /rdfs:comment rdfs:subClassOf rdf:resource="http://www.w3.org/2000/10/annotation-ns#Annotation"/ Note: I initially wrote the antepenultimate line (and the fourth line before that) as in your example, namely: and respectively. 
+When this didn't work, I tried the modifications indicated, not knowing exactly what I was doing! 
+I expect that I have missed something obvious, and would be grateful for your advice. 
+Tim Moore The University of Hong Kong 
+Re: changing annotation types under Amaya From: Ralph R. Swick (swick@w3.org) 
+Date: Mon, May 14 2001 *Next message: Charles McCathieNevile: "Photo metadata tool" * Previous message: Jose Kahan: "Re: Typo in "Annotea Protocols" page" * In reply to: Jose Kahan: "Re: changing annotation types under Amaya" * Messages sorted by: [ date ] [ thread ] [ subject ] [ author ] * Other mail archives: [this mailing list] [other W3C mailing lists] * Mail actions: [ respond to this message ] [ mail a new topic ] Message-Id: 200105141259.IAA22703@tux.w3.org Date: Mon, 14 May 2001 08:59:03 -0400 From: "Ralph R. Swick" swick@w3.org 
+Subject: Re: changing annotation types under Amaya 
+Dear Colleagues, I have tried following these instructions, without success. 
+This is my file in Amaya/config entitled mytypes.rdf: 
+rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#" rdfs:comment A namespace for describing types of annotations /rdfs:comment rdfs:comment $Revision: 1.2 $ $Date: 2000/11/03 21:40:17 $ /rdfs:comment rdfs:seeAlso resource="http://www.w3.org/2000/02/Collaboration/Annotation/papers"/ rdfs:comment A class of Annotations representing positive congratulations /rdfs:comment rdfs:subClassOf rdf:resource="http://www.w3.org/2000/10/annotation-ns#Annotation"/ 
+This is my revised annot.schemas 
+file: # annot.schemas 
+# specifies the RDF schemas to be pre-loaded for Annotations # each line beginning with '#' is a comment # all other non-empty lines must be in one of two formats: # 1. namespacename # 2. namespacename filename # In case 1, an RDF schema is expected to be found at the namespace URI # In case 2, the filename is expected to be a (local) copy of an RDF # schema for the namespace. 
+The strings $THOTDIR and # $APP_HOME may be used at the beginning of the filename # and will be expanded to the Amaya installation directory # and the user's amaya home directory respectively. 
+# Historical schema presented at WWW9. 
+Obsolete. 
+#http://www.w3.org/1999/xx/annotation-ns# #first release schema; do not change unless you also change the service $THOTDIR/config/annotschema.rdf #some Annotation subclasses that we think will be useful #to add new types (Tim Moore) I'd be grateful for advice. 
+Best wishes, Tim Moore 
+Dear Colleagues, I followed Jose's advice, but it didn't work. 
+I've probably missed something obvious. 
+My annot.schemas 
+file in Amaya/config now reads: # annot.schemas 
+# specifies the RDF schemas to be pre-loaded for Annotations # each line beginning with '#' is a comment # all other non-empty lines must be in one of two formats: # 1. namespacename # 2. namespacename filename # In case 1, an RDF schema is expected to be found at the namespace URI # In case 2, the filename is expected to be a (local) copy of an RDF # schema for the namespace. 
+The strings $THOTDIR and # $APP_HOME may be used at the beginning of the filename # and will be expanded to the Amaya installation directory # and the user's amaya home directory respectively. 
+# Historical schema presented at WWW9. 
+Obsolete. 
+#http://www.w3.org/1999/xx/annotation-ns# #first release schema; do not change unless you also change the service #some Annotation subclasses that we think will be useful #to add new types (Tim Moore) I added a new file entitled mytypes.rdf, which reads rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#" rdfs:seeAlso resource="http://www.w3.org/2000/02/Collaboration/Annotation/papers"/ rdfs:comment A class of Annotations representing positive congratulations /rdfs:comment rdfs:subClassOf rdf:resource="http://www.w3.org/2000/10/annotation-ns#Annotation"/ (This involved departing from Jose's message by adding an initial " ".) When this did not work upon reinvoking Amaya, I tried changing the MyTypes prefix in mytypes.rdf 
+to match the one in annot.schemas, but this did not work either. 
+I have tried this on two separate machines. 
+I'd be grateful for advice. 
+Best wishes, Tim Moore 

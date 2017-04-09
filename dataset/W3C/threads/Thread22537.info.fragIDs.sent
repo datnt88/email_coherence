@@ -1,0 +1,57 @@
+Hi all. 
+When cloneNode is called for a Document object, what should docType and 
+documentElement refer to if the clone is not deep? 
+My inclination is to set 
+each to NULL on a shallow clone, and clones of their respective objects in a 
+deep clone. 
+Tom Otvos Director of Research, EveryWare Development Inc. "Try not! 
+Do, or do not. 
+There is no 'try'." - Yoda 
+Agreed, a shallow clone of a node should't copy any of the children, including the children which have specialized accessor methods... so shallow clone of Document shoul have null docType and documentElement. 
+Note that doing deep clone of Document is a problem in DOM Level 1, since 
+you have to change the ownerDocument of all the duplicated nodes or it'll throw wrong-document exceptions. 
+In fact, this is the only function still "broken" in my implementation -- it's not at all hard to do, I just don't like the aesthetics of having this be the one exception to Level 1's decision not to support copying data from one document to another. 
+Joe Kesselman / IBM Research Unless stated otherwise, all opinions are solely those of the author. 
+set 
+a 
+I believe your interpretation is correct. 
+Shallow cloneNode clones the target node and its attributes but not the child nodes. 
+Since docType and documentElement are both possible child nodes of Document, I don't think they should be cloned. 
+Best, Don Park Docuverse 
+I sympathize with you position. 
+I had to add setOwnerDocument to my Node implementation which propagates down to child nodes and any 'side' nodes (like attributes). 
+Best, Don Park 
+Yep, it's a choice between setOwnerDoc, or a version of Clone that sets ownerDoc as a side effect (which avoids a second tree-walk), or trying to guess what Level 2 might look like and implement some form of cloneByContent on all the nodes. 
+A dozen of one, six-and-a-half of the other... I'll do one of these some time in the next day or two, but I'd love to have a good excuse not to smile . 
+It's very much special-case code as far as Level 1 is concerned, and I've been trying to keep my code size down without sacrificing architecture. 
+Joe Kesselman / IBM Research Unless stated otherwise, all opinions are solely those of the author. 
+Why wouldn't this work... 
+The method cloneNode utilizes three protected methods: shallowClone, to do the immediate cloning stuff; an overload of cloneNode that accepts an owner parameter; and a cloneChildren method that clones the children as well as sets their owners. 
+So, cloneNode (the original) calls shallowClone, gets the owner from the clone, then calls cloneChildren with the owner. 
+The cloneChildren method simply iterates over the children and calls the overloaded cloneNode which, after shallowClone, sets the specified owner. 
+The key is that a shallowClone of a Document node immediately sets the owner to the new document, and the recursive calls to cloneNode propogate this new owner down the tree, as the cloning is happening. 
+No double tree walk, and the prototype of cloneNode (the one in the spec) does not have to change. 
+Yes, I know that the spec defines the accessor of the owner of Document to be NULL, but that does not mean we cannot keep it around anyhow. 
+Comments? 
+Tom Otvos Director of Research, EveryWare Development Inc. "Try not! 
+Do, or do not. 
+There is no 'try'." - Yoda Yep, it's a choice between setOwnerDoc, or a version of Clone that sets ownerDoc as a side effect (which avoids a second tree-walk), or trying to guess what Level 2 might look like and implement some form of cloneByContent on all the nodes. 
+A dozen of one, six-and-a-half of the other... I'll do one of these some time in the next day or two, but I'd love to have a good excuse not to smile . 
+It's very much special-case code as far as Level 1 is concerned, and I've been trying to keep my code size down without sacrificing architecture. 
+Joe Kesselman / IBM Research Unless stated otherwise, all opinions are solely those of the author. 
+Oh, and I should have also mentioned that the overloaded cloneNode also calls cloneChildren. 
+So there is some minor code duplication between the two versions of cloneNode. 
+Tom Otvos Director of Research, EveryWare Development Inc. "Try not! 
+Do, or do not. 
+There is no 'try'." - Yoda 
+Tom, 
+cloneNode(Document owner, boolean deep) scheme should work as well. 
+I just chose the double tree walk scheme because a) double tree walk is costs is insignificant when there is a large number of object instantiation going on, b) cloneNode is likely to be overriden by user's own subclasses so I did not want my users to have to deal with extra details of owner document switching while cloning, and c) I prefer not to introduce unnecessary methods when dealing with design 'glitch' like this. 
+Best, Don Park Docuverse 
+As I said, it's not hard to do. 
+I just begrudge adding code to multiple classes in my implementation of the DOM in order to support _only_ the Document.cloneNode 
+operation; it offends my sense of proportion. 
+grin The other approach, of course, is to try to guess where DOM Level 2 is going to go in terms of allowing data to be copied from document to document. 
+Past conversation has generally guessed that this would be done by providing a "content clone" -- essentially, a copy constructor -- which uses the DOM's public API to extract data from the source and use it to create corresponding nodes native to this implementation (and anchored in this Document). 
+Implementing Document.cloneNode based on that, rather than doing a special-case clone-and-reparent, is a larger chunk of code and won't run as fast... but on the other hand it's a more general solution, and represents functionality that the DOM is probably going to acquire anyway at some point. 
+Joe Kesselman / IBM Research Unless stated otherwise, all opinions are solely those of the author. 

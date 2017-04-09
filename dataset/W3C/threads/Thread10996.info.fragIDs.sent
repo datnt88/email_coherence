@@ -1,0 +1,255 @@
+David The point is that if we are using HyTime links then we need an entity declaration that can be used to name the link source for a chain of links (we don't want to repeat the same 1024 character URL hundreds of times, we want to give it an id in a well controlled namespace). 
+This is how HyTime works. 
+Well, if it _requires the entity reference,_ then we should not use HyTime. 
+That means _no mandatory entity declarations_ in the definition of linking. 
+But this would make the use of link sources for link chains impossible. 
+Link chains are one of the real gains that HyTime has to offer. 
+If we drop them from XML we are dead. 
+Without a formally defined sources in the BOS you cannot have a start point for the chain.] 
+No, it would make the use of link sources _optional_. 
+I don't have a problem with using entities -- after all we want the advantages. 
+But we cannot have a solution that requires entity delcarations to make simple links. 
+We need to provide the same simplicity people have now, though we can add complexity, where it also adds power. 
+I like chains, but my inclination is to keep them short anyway... Like 1 or two levels. 
+This also means that we don't have to explain to browser manufacturers how to implement cyle-detection in their link-following module. 
+-- David I am not a number. 
+I am an undefined character. 
+David Durand dgd@cs.bu.edu \ david@dynamicDiagrams.com 
+Boston University Computer Science \ Sr. Analyst --------------------------------------------\ http://dynamicDiagrams.com/ MAPA: mapping for the WWW \__________________________ 
+But wouldn't anything else be a query and thus have to go after a "?". 
+Queries _always_ invoke a server-side process. 
+#-strings invoke a client-side process, that depends on the MIME-type of the resource deisgnated by the URL the #-string is attached to. 
+If we want to put sub-resource (ie fragment of URL return value) addressing into XML, the only way that can be put into a URL is via the # string. 
+This is nice because we have a way to point at IDs, (or arbitrary attribute values), or arbitrary XML-dependent substructures. 
+The kinds of feature that we are talking about (like TEI location ladders) will not be useful if they depend on special servers. 
+I don't 
+think XML addressing formats should require the use of a special server, which Gavin's proposal would require. 
+On the other hand, a client could recognize that a particular #-string could be resolved by a particular 
+server if it wanted, and translate the URL. 
+So, _if_ we want a URL to be able to encode locations within documents, I think we have to use the #-string. 
+I wanted to dump on this proposal when 
+Terry first made it, but I think it's the correct way for us to integrate 
+our XML-specific addressing modes into URLs. 
+I stick with my earlier syntax proposal, something like: #-string := '#' NAME | '#' '(' ADDRESS-TYPE-NAME string ')' string := URLchars* | '(' string ')' Where all literals are tokens (i.e. Ws ignored implicitly, and parens have to be %escaped if not part of the addressing scheme). 
+Address types might be the following: ADDRESS-TYPE-NAME := "-XML-TEI" | "-XML-DSSSL" If the first char is a '(' you have a structured location string of some kind, else you have an ID. 
+We make the convention that parens match in any structured location string, and it's simple to parse even one that you can't process. 
+Actually, the latter condition is nice, but not necessary. 
+I also liked the idea of having an attribute query, to allow DTD-less processing, instead of and ID-style reference ... in which case the NAME in the first production would change to "NAME '=' quoted-string" where quoted string would have the obvious regexp definition. 
+I do think we should have element (and pseudo-element) level addressing, and that it should be accessible via a URL... -- David I am not a number. 
+I am an undefined character. 
+David Durand dgd@cs.bu.edu \ david@dynamicDiagrams.com 
+Boston University Computer Science \ Sr. Analyst --------------------------------------------\ http://dynamicDiagrams.com/ MAPA: mapping for the WWW \__________________________ 
+David Durand manipulated electrons to produce: 
+Quite correct, though the emphasis is on _sub-resource_ addressing, which is different to _resource_ addressing. 
+That is quite open to debate. 
+I don't think XML addressing formats should require the use of a special server, which Gavin's proposal would require. 
+My proposal would require, at a minimum, an XML processor capable of parsing a well-formed instance, creating a tree from it, and then traversing/querying the tree. 
+This could easily be done as a CGI script, and I think that writing the software required to do this would add very little to the cost of implementing an XML processor. 
+I could certainly write it in 2 weeks, from scratch, in C/C++/Java. 
+I object strenously to *requiring* that an entity be retrieved in it's 
+entirety in order to transclude a single element. 
+Points to remember: 
+1) You are talking about special code in the client, which would be easily comparable to the complexity of the code in a server. 
+2) Any instance/entity that is small enough to be transmitted across the internet, will not incur a great parse/traversal overhead on the server: certainly no greater than that required on the client side. 
+3) With most relative addressing schemes, only a given entity needs to be parsed, not the entire document. 
+4) With the scheme I proposed, each URL is unique, and so can be cached effectively by caching proxies. 
+5) The only scaleable solution is to do it server-side, or as distributed objects (basically the same thing, just different protocol and resolution mechanism). 
+6) The mechanism I propose is easily applicable to domains other than XML. 
+I do not object to fragment specifiers, but this argument is specious. 
+You could just as easily say that a client could recognise that it could retrieve the entire entity, and then walk it's own parse tree based on the URL's I propose. 
+I do not think this conclusion necessarily follows from the logic outlined above. 
+Again, I do not object to fragment specifier use, but I do object to it being the only thing we can use. 
+It does not scale. 
+Worse, it 
+would preclude using XML with servers such as DynaWeb/DynaBase that generate content dynamically, and may not even have the entity structure left for you to address. 
+In this case, we would be forced to 
+send however MB the source is in it's entirety, or *fake* an entity structure (easily done for DynaWeb, *much* harder for other types of databases). 
+I seriously hope your objection to "special servers" doesn't mean that you think my motivation lies in the fact that I wrote DynaWeb, and wish to promote it... my motivation lies in trying to avoid a solution that doesn't scale well, and doesn't easily permit use of servers that do not have XML files laying around on them (like RDB, etc). 
+Writing it is easy. 
+Getting it installed on the Web servers of the world is a bigger hassle. 
+Right now we much encourage browser writers to embed XML and authors to use it. 
+We can perhaps cut out the browser vendors if we ship XML viewers as applets. 
+Throwing system administrators into the mix turns it into a big chicken and egg problem. 
+Netcom, Compuserve or MindSpring won't install a CGI unless many users ask for it. 
+Many users won't ask for it unless they have seen it on the web before and think it is neat. 
+It also takes us out of the language design business into the protocol design business. 
+I think that "SGML people" should be in the protocol design business, but not necessarily *this group of SGML people right now. 
+Sure, but it isn't the code complexity that is the problem: it is the politics of getting it installed. 
+But most clients are Pentium 100s spinning their wheels. 
+I guess that's true now that we've got rid of exceptions. 
+What a relief!! Note, though, that we are discussing adding in features that would have "document scope" such as defaulted attributes based on the first occurance. 
+It could work the other way: retrieving an entire entity (and caching it) may often be faster if the user is often going to want many elements from that entity. 
+(for instance footnotes) 
+That's debatable. 
+I tend to agree that this is the only elegant scalable solution. 
+Requiring authors or servers to break up their documents into small entities is an inelegant scalable solution. 
+Negotiating the "entity resolution service" when available is probably the best compromise. 
+Agreed. 
+That's why I think that maybe we are not the group to do it. 
+I don't think the client is allowed to play around with the section of the URL preceding the "#" that much. 
+Anyhow, there are other reasons for making the special server *optional*. 
+The #-translated system that was proposed scales from a simple smart-client system to a smart-client, smart-server system. 
+Could you please elaborate on why this is so difficult? 
+If the server can serve elements separately, then couldn't it make "entity wrappers" for every element? 
+Your motivation does not come from having written DynaWeb, but your point of view comes from having implemented something high tech and wanting that functionality to be widely available. 
+We all want that, but I don't believe 
+it is likely in the short term. 
+Tieing XML to it could be very dangerous, in my opinion. 
+Even if XML survived the chicken and egg problem, many users would not have access to its functionality because they could not get their ISP to install the CGIs or special server. 
+Paul Prescod 
+I spent quite a while rethinking everything to see if I am missing something, and I am still not convinced by Gavin's arguments. 
+First I will try a coherent restatement of what I think I'm saying, in case the blow by blow has obscured things, and then I'll answer Gavin's points. 
+I'd also like to say that I'm in fundamental sympathy with Gavin's approach, but I don't believe that it fits in with the standards environment we are operating in. 
+1. We need to address sub-parts of XML documents. 
+I don't think there is 
+any disagreement here. 
+2. URLs are intended to be _entirely_ opaque to clients (except for 
+fragements identifiers -- "#-strings"). 
+I don't agree that this is a necessary decision, but I have been told in other groups that the W3C will categorically oppose any standard that sanctions such "URL-hacking". 
+If a standard format for version identification in URLs is not acceptable, I don't see why fragment identification is so fundamental that it would be acceptable. 
+3. Fragment IDs are interpreted _any way_ the client wants -- this means that if we want to do URL hacking, the fragment ID is available. 
+So a client _is_ premitted to try constructing a URL based on the fragment ID. 
+4. Special support on servers (even CGI scripts) is frequently harder to deploy than special client support. 
+Some sites are so large that running even the simplest CGI scripts is subject to extreme scrutiny. 
+5. If a server supports special URLs such as Gavin wants, it need not ever generate a fragment ID, but can simply generate a special URL. 
+Since such a server has to parse the whole document anyway, this is even pretty easy to do. 
+So a server that is smart is not forced to act dumb just because fragment IDs are (even a mandatory) part of XML -- it can simply use its own superior adressing features. 
+6. A client will need to be able to address subdocument parts anyway -- If linking to a 1-sentence anchor in a 2K document, it's _much_ easier to do local navigation than to bounce packets off a specialized server. 
+So fragment IDs (or some logical equivalent will still be needed even if they are sometimes very sub-optimal (the 10MB document is an example). 
+sure... 
+We can debate it all you want, but pragmatically, specialized servers are harder to deploy that specialized clients... 
+I agree that in many cases (though not all) this is technically superior. 
+But I just don't believe that such deployment will happen. 
+I don't think XML addressing formats should require the use of a special server, which Gavin's proposal would require. 
+I believe that this is not a requirement, see points 3, 5. 
+Should be exactly the same, but we are putting the work on the client coder, who is presumably more committed to XML than a server coder, for whom XML is just another data format. 
+I just read Paul Prescod's reply, so I will leave most of the rest of the points to his excellent commentary. 
+This latter solution is explicitly denigrated by the W3C. 
+I agree that it is technically feasible, but it violates an opaqueness condition stringently held by the HTTP and URL standards people. 
+For a host of _almost purely nontechnical reasons_ I think that clients are the place for us to concentrate our efforts. 
+Special server-side URLs are always available, because a server can serve up anything it wants, under any URL it wants. 
+But I don't think we can pretend to be able to _enforce_ server-based solutions on the web. 
+As long as you address a well-formed fragment, this should not be a problem. 
+Your server can certainly be smart enough to translate address formats, if it is already parsing the wqhole document. 
+No, but I do think that life on the high end may make it more difficult appreciating the limitations imposed by most server admins. 
+We have a lot of work to do just convincing browser manufacturers to use XML -- if we don't need to sign up for more salesmanship, then we shouldn't. 
+-- David I am not a number. 
+I am an undefined character. 
+David Durand dgd@cs.bu.edu \ david@dynamicDiagrams.com 
+Boston University Computer Science \ Sr. Analyst --------------------------------------------\ http://dynamicDiagrams.com/ MAPA: mapping for the WWW \__________________________ 
+JavaScript has an "onSubmit" event-attribute that can be used within a Form to "intercept" the contents of text-fields before they are sent to the server as a query string. 
+The script can perform local processing on the data and then (optionally) allow the original data or some result of the processing to be sent on to the server for further action. 
+One of the main current uses for this capability is to validate the contents of the form before sending it to the server, but there are many other possibilities. 
+Obvious issues are that "onSubmit" only works inside a Form and depends on JavaScript, and neither of these is a part of XML. 
+If Microsoft and Netscape pick up on XML however, I would expect them to extend the code they have now, not write "XML browsers" from scratch. 
+That means supporting existing HTML semantics, including Forms, as well as the scripting and Java language support they've been adding to their browsers. 
+Said another way, I believe XML will also have to address support for scripting languages and "common" HTML semantics (like Forms). 
+Possibly the SMSL work in ISO will produce something that can be adopted. 
+In terms of the discussion here, I believe it's at least useful to be aware that using a fragment specifier is not the only way that client-side processing can be invoked. 
+Regards, Ralph E. Ferris Project Manager, Electronic Publications Fujitsu Software Corporation 
+Sure, but you are also relying ona revolution in browser technology, *and* changes to server installations anyway. 
+This reminds me *so* much of the I18N argument about labelling of text types, where people said that requiring it would lead to huge incompatabilities, and require massive changes to servers etc. 
+In actualy fact, *not* requiring it has given us a situation far worse than the original. 
+OK then, let's stop discussin hyperlinks because hyperlinks *are* a form of address, which you say crosses over into the protocol level. 
+How many servers? 
+How many clients? 
+How many companies? 
+Do you have *proof* that upgrading all XML-serving servers will be much harder than getting all possible clients updated? 
+Not in Europe, Japan, Australia, Thailand.... 
+We are talking about caching in a single location vs relying on client side caches. 
+Client side caches work equally well with both proposals, server side caches do not (another scalability issue). 
+Both proposals do. 
+You need an entitisation algorithm for the database, and for some databases, it is non-trivial as they have no inherent structure to key from, so generating fake entity boundaries could be prohibitively expensive. 
+I find that very debatable. 
+The people who would care enough about XML in the initial stages are precisely the kind of people who would control the publishing environment. 
+Early XML publishers will be a small group of dedicated people who will most likely control publishing, and if it takes off, popular demand will force sites to support XML. 
+If a standard format for version identification in URLs is not acceptable, I don't see why fragment identification is so fundamental that it would be acceptable. 
+Well, I'm on the same list as you are, and also cannot understand why a standard version syntax is unacceptable. 
+The scheme I propose can handle versioning too... 
+Last time I checked statistics, there is an interesting counterpoint to this: many people still use older browsers (though upgrading if fairly frequent, it takes longer than most people think for support for various features to bubble through). 
+One good point of having server-side smarts is that *all* clients can benefit. 
+This is the scalability problem. 
+It get's worse when a server interfaces to databases that *generate* XML, but don't manipulate it. 
+They have a harder time with faking entity boundaries. 
+I believe that the this is not always true, though I guess that if you have a browser that can handle XML, it would be safe to assume that it can also support fragment id's that are XML-specific. 
+It is less safe to assume that all servers that send out XML, also support entities. 
+Yes, but then you assume server-side support for these cases... the thing you are disagreeing with. 
+Remove server-side support, and the model becomes that of retrieving entities. 
+My major concern here is that if the only *standard* way of addressing individual elements is client-side, then people will only use that, building up momentum against finer granularity object addressing. 
+It is better to establish a momentum toward superior solutions as early as possible in order to avoid pain further down the road (different to *requiring* superior solutions from the get-go). 
+I think that the initial *publishers* of XML content will generally have at least partial control over the site, as XML is going to be a 
+tiny niche for some time, and so will require publishers dedicated to it's deployment. 
+Fragment specifiers are fine for smaller documents, but I think many initial XML publishers will be dealing with large documents. 
+Sure, but if we focus on fragment specifiers to the exclusion of server-side solutions, eventually we will have nothing but fragment specfiers because no-one will use, or support anything different. 
+The problem is addressing this well-formed fragment you mention... 
+Well, if we really want to improve the state of the WWW, in the long run, servers will have to change. 
+BTW. When you refer to "high-end", I think you falsely make the problem seem hard. 
+It's trivial. 
+Not true. 
+I have two web sites - one supplied by an ISP (which is the way the majority of users have to work) and the other a large intergovernmental server that is located in another country altogether. 
+Like many governmental services in Europe this service is outsourced, in this case on a 4 year contract. 
+There is no way they are going to change their hardware/software this century!! 
+I want to use XML before then!!! Martin Bryan, The SGML Centre, Churchdown, Glos. 
+GL3 2PU, UK 
+I'v been thinking about this issue, and I have some new thoughts in addition to the same old arguments... 
+I think this is a purple herring nailed to the ceiling: Since XML documents don't need DTDs, a smart server can send any XML element as if it were a document without doing anything with entity boundaries. 
+It can just 
+generate several (DTDless) XML documents where a typical XML-at-root application would have subelements of a large document. 
+I'm not sure how a URL addressing mechanism makes it easier to generate document-formed data from other forms of data. 
+What kind of database are you thinking of, where 
+the addressing format would matter in this way? 
+Entities _can_ be implemented on a normal filesystem-style HTTP server, simply by using URLS in the current manner. 
+I can;t really imagine how avoiding entities makes a server's life eaier or harder. 
+And as I pointed out above, you don't need to generate entities anyway. 
+I don't have time to go back to the original list of points but I remember the context well enough... 
+I pointed out that you can use dynamic server-side support _if you want_. 
+This means that your requirement is not catered-to, but neither is it obviated. 
+If you don't want to implement dynamic server support, you have to think carefully about your entities and author a document that won't run into this problem. 
+I don't believe that it's worth the effort of defining complex fragement transport mechanisms to encourage people to do something that they can do even if we punt on that work. 
+If the world starts beating down our doors on this we can revisit it at any time. 
+This may be a good reason to encourage client implementers to implement lazy entity retrieval. 
+Or, those publishers can use smart server technology, since we have not prevented them from doing so (we simply haven't standardized _how_ to do it). 
+Since a server can work with naive clients, I still don't see that defining the data format of XML requires developing new server protocols and URL conventions. 
+This seems like a place where a simple cgi implementation of some variety of XML "cooking" might be a great donation to the world. 
+Come on. 
+Clients need never support anything different. 
+If you are right, and scaling requires smarter servers, then the smarter servers will be written. 
+Actually I suspect that DynaWeb will have XML generation real soon now, right? 
+I don't understand. 
+You can simply create a pseudo-url for every element of the document (as you proposed), and convert any fragment specifiers in the source to the appropriate "cooked URL" and send that out. 
+This could be a separate pass, or might even be the pretty-print operation on the internal strucuture you generated on parsing the original fragment ID. 
+No problem. 
+It's still more sophisitcated than 90% of all the servers out there, and still undeployed. 
+So it's not high-end because it's amaxingly hard, but it's still a significant cut above present-day practice. 
+And fromt he beginning: 
+If a standard format for version identification in URLs is not acceptable, I don't see why fragment identification is so fundamental that it would be acceptable. 
+What I am saying is that I have raised this same point repeatedly, on list, and face-to-face, and the reaction has always been that clients are not supposed to make assumptions about how URLs are formed. 
+No one denies that it would work, if you did it universally, but there is a strong committment to this as an architectural principle, that seems unlikely to change, since it is always presented as a fundamental architectural principle of URLs. 
+We don't have to agree with every W3C architecture decision; we still have to 
+work within that framework where we can't successfully change it in time to do what we need. 
+-- David I am not a number. 
+I am an undefined character. 
+David Durand dgd@cs.bu.edu \ david@dynamicDiagrams.com 
+Boston University Computer Science \ Sr. Analyst --------------------------------------------\ http://dynamicDiagrams.com/ MAPA: mapping for the WWW \__________________________ 
+The problem is deciding how to break things up. 
+When I said "faking entity boundaries" that includes faking document entity boundaries, or chunking, or whatever else you want to call it. 
+What you said above doesn't change the real problem (and BTW, what you describe above is pretty much what DynaWeb does). 
+An RDBMS for example: you can refer to the entire database (1,200,000 records of 245 fields each) as: or how about a document database: It doesn't necessarily have to be a database either: it could be a bento storage object, an attributed filesystem, a versioned filesystem, or anything else that *could* be used to generate an XML document. 
+The real point is that you have a simple, fairly intuitive, addressing syntax that allows you to point to objects in a heirarchy by typed occurence. 
+Resolving that on the server is more scalable than doing it on the client, or we'd be sending across entire filesystems and walking directory paths inside a client. 
+I don't care for the term "entitise" (even though I coined it), though the original discussion was in the context of *large* SGML/XML documents. 
+A better word would be "chunking"... breaking an object into it's components in such a way that the objects are addressable. 
+The main difference is in where you see object boundaries. 
+I see them at the smallest container level... 
+Right, then you and I have been arguing over nothing, because I have been arguing against your promoting fragment specifiers to the exclusion of server-side resolution. 
+If we both agree that each has a place, and that neither deserves preference, we have no argument. 
+Well *I* have been involved in efforts that took precisely that path, and many/most have caused more pain than the pain they tried to avoid. 
+As my father used to say "An ounce of prevention is worth a pound of cure". 
+You can't have lazy entity retreival unless you have an engine capable of generating entity boundaries (or chunk, in other words). 
+I am not for standardising the *mechanism* either, just the addressing scheme to be used (which is a simple extension of existing heirarchical, supposedly opaque, relative URL's (oxymoron in the last two)). 
+Depends. 
+A lot of web servers now have scripting built in. 
+I consider that far more complex than what I am proposing.... 
+I see this as a fundamental lie. 
+URL structure is always interpreted by clients and/or servers. 
+Some people like LM et al. waste a lot of people's time on issues of conceptual purity where none lies. 

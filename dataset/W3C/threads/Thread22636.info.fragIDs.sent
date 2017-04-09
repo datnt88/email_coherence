@@ -1,0 +1,81 @@
+Hi all. 
+I just started using the DOM, and I have a simple question: How come there's no "setNodeName" method? 
+If you're passing a node to a subroutine to have it filled (for example, you're converting C++ objects into XML nodes), that routine has no way to set the name except some roundabout construction of a temporary node and then a use of the = operator. 
+Regards, Gavin Stokes 
+Gavin, In the DOM, a node is NOT just a node. 
+There is no such object as a node by itself. 
+The node is just an interface that almost all objects in the DOM inherit from. 
+What this means is that you never construct a node object, you construct an object (say a text node). 
+When you construct this object you have already assigned it it's name by the constructor you call. 
+Examples: document.createElement("div"); 
+// a node with the name of "div" document.createTextNode("this is my text"); // a node with the name of "#text"; document.implementation.createDocument("","",null); 
+// a node with the name of "#document" once a node (in it's generic since) is created, you cannot change it's name because the name is a referenece to the type of node that it is, and what interfaces it exposes. 
+Jeff. 
+Hi all. 
+I just started using the DOM, and I have a simple question: How come there's no "setNodeName" method? 
+If you're passing a node to a subroutine to have it filled (for example, you're converting C++ objects into XML nodes), that routine has no way to set the name except some roundabout construction of a temporary node and then a use of the = operator. 
+Regards, Gavin Stokes Jeff Yates e-mail: PBWiz@PBWizard.com 
+Homepage: http://www.PBWizard.com 
+How come there's no "setNodeName" method? 
+The nodeName (together with the namespace URI) indicates the semantic role this node is playing in the document, and different names even of the same node type may reflect different subclassing of the node. 
+Look at the HTML DOM for plenty of examples; some Element nodes carry methods that others may not. 
+Other DOMs may implement similar role-specific extensions. 
+Since you can't change an object's class once it has been created (in most languages), we really can't promise that you can change the semantic role after the object has been created -- and hence both nodeName and namespaceURI are immutable. 
+If you're passing a node to a subroutine to have it filled 
+If you need to set the node's name/type: Don't. 
+Instead, pass the Document node into the subroutine, and have the subroutine use the Document's factory methods create and return a new Node object of the appropriate type and with the appropriate name. 
+Joe Kesselman / IBM Research 
+I understand the intention here, but being able to change either the tagName or the namespaceURI (or both) can be incredibly useful for all kinds of data conversions. 
+This is especially useful if some of the operations needed just don't make sense in XSLT, so you're working from a programming language anyway. 
+My primary example for this is a document conversion project in which I'm converting LaTeX documents in XML -- the paragraph marking is done very differently in LaTeX (no tags), and while XSLT *may* be able to do the right thing, I'm firmly convinced it would take me a year to figure it out (since I'm not an XSLT guru). 
+So for the tagName changes I need to make, it's by far easiest to just change the name. 
+I can use implementation-specific extensions to do so, but I've already had to change implementations once (and make changes all over my code to support the new way of changing tagName). 
+I'd love to see a standard way to do it, and could accept that some DOMs will have to raise an exception (NO_MODIFICATION_ALLOWED would suffice). 
+If you're passing a node to a subroutine to have it filled 
+This only works in the case of creating new nodes; it can be very expensive to create a new node, migrate children &amp; attribute nodes of the original, and the replace the original with the new node. 
+It also 
+makes the code more difficult to read and maintain. 
+-Fred Fred L. Drake, Jr. fdrake at acm.org PythonLabs at Digital Creations 
+Shouldn't be, in most cases, unless you have a huge number of children or perform this operation extremely frequently. 
+More expensive than just changing the node name, granted. 
+But part of the tradeoff one accepts for a portable API is that it may have been forced to accept compromises which make it less than ideal for some tasks. 
+It also makes the code more difficult to read and maintain. 
+Shouldn't be, if you write a subroutine which performs this operation and invoke that. 
+(Note too that this subroutine might be able to check whether you're working with a DOM implementation which has a custom feature for this purpose, and leverage that, without the rest of your code having to be aware of it... while still retaining the explicit replace-the-node solution for other DOMs.) Joe Kesselman / IBM Research 
+If I had to do this, I would write a utility subroutine that calls known proprietary functions if they are available and otherwise manually reconstructs the node as has been described. 
+The alternative for a standard would have to be a very optional feature, identified by feature string and not implementable by probably any browsers and a number of other implementations with similar derived DOM interfaces, presentations, or processing, which may rely on the name and namespaceURI for instantiation of the appropriate class. 
+In that case, I think you still need a utility subroutine that manually reconstructs the node if the feature is not implemented. 
+More problematic still is the mutation events that applications may rely on, that face completely new unexpected behaviors if the type of the element can change. 
+If you still deliver the events they expect, then the work is about the same as if you had removed and reinserted the node. 
+If you do not, then this type of monitoring application would not want to permit this type of thing to occur in its hierarchy. 
+How could an application prevent this from occuring when it breaks its processing model, if the standard allowed it? 
+There are other new cases it introduces, like now an attribute node may be a duplicate, now an entity reference may reference a different entity, now an element may have different default attributes, etc. 
+I much prefer having them immutable for a vast majority of use cases I have seen, and do not like the impact on these use cases if it were permitted by the standard to be mutable. 
+To me, changing the tag name is like changing the type of an object in an OO language. 
+It seems more natural to construct a replacement. 
+Ray Whitmer rayw@netscape.com 
+If you're passing a node to a subroutine to have it filled 
+Thanks to all for the responses. 
+I just want to be able to pass empty 
+elements into subroutines, have them filled (including tag), and then add the resulting elements to an XML doc. 
+Not being able to change the tag will make it harder to break the code into tidy routines that take a C++ object and and turn it into an element. 
+Let's say I have a bunch of overloaded methods in an XML generator called ObjectToXML(const ClassName&amp;, DOM_Element*). 
+I'd simply like to set the tag to be the class name. 
+Because this same type of object may be stored at various levels and places in one XML document, passing the entire document itself is not attractive. 
+The 
+subroutine should not have any knowledge of where the resulting XML is going in the big document. 
+It would be nice to build elements individually 
+at the behest of a higher-level routine, which would be assembling them into the document. 
+Of course, I don't know the inner workings of element-generation as some of 
+you do, so if they're actually different classes generated at runtime then 
+maybe what I want is impractical. 
+Regards, Gavin 
+Sorry, but that's not the way the API is designed; there's no such thing as an empty Element Node. 
+Rearchitect to have the subroutines produce Elements rather than filling them. 
+You're probably going to have to do some of that anyway, if the data requires that the element have content. 
+It doesn't have to. 
+Create the Element, return it, have the caller do the insert/append operation. 
+You do need to know which document the Element is going to belong to (unless you're willing to recopy it with importNode), but passing that information in is no harder than passing in the empty node would have been if it existed. 
+In some DOMs they will be. 
+For portability, we have to allow that. 
+Joe Kesselman / IBM Research 

@@ -1,0 +1,100 @@
+I perceive that there is an early decision that this group could make with very significant downstream consequences. 
+It concerns the handling of multiple overlapped requests. 
+(A) The approach taken by IMAP/AP is to build the concurrency into the basic request/response protocol, including identifying tags as part of the data stream. 
+(B) The aproach taken by HTTP-NG is to have a separate multiplexing layer that allows a number of virtual duplex stream communications to be conducted on a single underlying connection. 
+Thus, each concurrent request/response is conducted in a separate data stream. 
+I see parallels here with development of multitasking operating systems: (A) with asynchronous notification mechanisms built into the operaing system interface (e.g. VMS); (B) systems built using a synchronous basic interface and multithreading to achieve concurrency within a process (e.g. Unix). 
+The MUX approach involves layering (with the overhead that implies), while 
+request/response concurrency adds complexity to the application protocol. 
+I don't have a definite view on which way is best, but I tend to lean in 
+favour of the mux approach. 
+#g 
+PS: is T/TCP alive or dead these days? 
+Graham Klyne (GK@ACM.ORG) 
+Graham Klyne said this: 
+IMHO, this decision illustrates a much earlier decision about what class of protocols we're talking about. 
+Over the years I've seen two classes of protocols come out of the apps area: narrowly defined limited use protocols used only for one thing and very widely used protocols that have large applicability and stringent scalability requirements. 
+IMAP, POP, SMTP, etc fit in the first category whereas HTTP, HTTP-NG, NFS, ONC-RPC fit in the latter. 
+In any charter or documents for this group I would like to see some sort of scoping as to which class the group would be focusing. 
+IMHO I think the latter class is going to use techniques that are specific to that particular problem. 
+I think the much more doable and useful output would be to focus on the former. 
+If this has already been discussed then I apologies for the repeat... -MM Michael Mealling| Vote Libertarian! 
+| www.rwhois.net/michael 
+Sr. Research Engineer | www.ga.lp.org/gwinnett | ICQ#: 14198821 Network Solutions| www.lp.org | michaelm@netsol.com 
+I wonder how much complexity the protocol software can actually hide from the application. 
+It seems that structures for tracking all of the outstanding 
+requests and handling their responses are bound to make it into the application 
+code, especially if multiple responses to the same request are allowed. 
+On another note, has anyone here had a chance to look at my XP draft? 
+We are 
+using XML for everything on the wire, and I thought it would be useful to take 
+a stab at formalizing that fact as a basis for many different kinds of 
+protocols. 
+It tags requests and responses, as a wire protocol must, but a software implementation could still take the "mux" approach. 
+Tom Harding 
+It can actually reduce complexity, by replacing two problems (multiple connections and multiple outstanding requests on a connection) with one (multiple connections). 
+Most server-side software that takes itself seriously allows for multiple connections to be active at once. 
+I think general-purpose client-side software should too. 
+So "tracking all of the outstanding requests and handling their responses" is something that will be done anyway, as a consequence of handling multiple active connections. 
+That's an entirely different can of worms, orthogonal to muxing. 
+I have. 
+No, the kind of muxing that's done in HTTP-NG's muxing protocol isn't about code in the peers, it's about what happens on the wire. 
+It interleaves messages chunk by chunk (where a "chunk" is only a piece of a message, and choosing the chunking is up to the peers). 
+An advantage of this fine-grained interleaving is that one message doesn't get held up by slow or blocked consumption of another. 
+You can't get that back in software if your wire protocol says one message has to be sent in its entirety before another can be started. 
+AFAIK, it is rather dead, due to problems inherent in the 1/2 RT startup. 
+There is a comment on this in the minutes of the RUTS BOF at IETF-43 (http://www.ietf.org/proceedings/98dec/43rd-ietf-98dec-142.html). 
+Taking clues from your message (as a lousy substitute for actually poring over the HTTP-NG work), I gather that the idea is for clients and servers to think they are creating multiple connections, when in fact everything gets routed over the same connection? 
+That should be a big improvement for the web, although it does solve the same problem that TCP does already when there are multiple real connections open at once. 
+Another approach is for a higher-layer application protocol, or the application itself, to choose when to use multiple requests and when to open another connection. 
+Just like the choices involved in writing multithreaded code that uses a serial resource like a system event queue. 
+Exactly. 
+Well, there's not universal satisfaction with how well the current commonly deployed TCP implementations serve the needs of apps that do concurrent request/response protocols. 
+Please do follow the pointer into the HTTP-NG work, which itself builds on a lot of discussion in various IETF circles about whether and what to do in this regard. 
+That's not an alternative. 
+The mere availability of a message muxing protocol doesn't relieve the higher layer of the responsibility of deciding how to use it. 
+This is a matter of the software in the peers, not the wire protocol (although the design of each naturally influences the design of the other). 
+I heartily agree that if webmux or another message multiplexing protocol is available, an application layer protocol like XP doesn't need any request/response tagging mechanism. 
+You just use multiple connections for everything instead of only when you explicitly want concurrency below the level of whole responses. 
+Actually, that's just one way of deciding how to use the mux's services; I can imagine others. 
+For example, you might still want to: distinguish requests from responses, so that each side can be a client of the other; put request/response IDs in the messages (at the request/response layer), so you can admit the possibility of more or less than 1 response per request; and/or have additional message types, such as "interrupt" and "clean shutdown". 
+And there's a whole other raft of issues involved in chosing what goes above and below the mux layer. 
+If you starting thinking about interactions with security and other services, you quickly start thinking about multiple substacks and how to create them, choose among them, etc. 
+Which comment in the minutes are you referring to? 
+Vern 
+Those who actually listened to the IETF plenary talk on transaction processing at the Chicago IETF will realise that this is a very non-trivial mechanism to get right. 
+(BTW, XP doesn't even come close to dealing with the requirements of a transactional application.) 
+However, it is a valid approach to build a generic transactional layer, but then we are talking XA, Java RMI, or CORBA IIOP, which takes us into another league and it is not obvious that the IETF has anything to bring to the table. 
+That's where RUTS comes in: don't do an HTTP-specific solution, and build on the T/TCP experience. 
+As others have said, this approach separates the problems and provides a better chance of satisfying transactional requirements in a simple manner. 
+Brian Carpenter 
+take 
+I have noted and very briefly scanned the draft, but not taken it in in any depth. 
+At this stage, I think the choice of representation is secondary issue: first I think it is important to determine the semantics of what is to be achieved. 
+#g Graham Klyne (GK@ACM.ORG) 
+In the minutes in the proceedings, under "Other (unattributed comments)", item 3 identifies a dilemma that T/TCP faces and points to a discussion in the next full paragraph. 
+That comment isn't specific to T/TCP. 
+Any single-round-trip transaction protocol faces that problem. 
+Vern 
+[there's a bug in the minutes above - it should be "*or* one needs loosely- synchronized clocks ..."] 
+Right. 
+I hadn't intended to suggest otherwise. 
+first, the relevant portion of those notes (about removing the 3WHS, not specifically about T/TCP) 
+First, removing the three-way handshake opens up security holes. 
+The issue of sequence number guessing attacks is serious. 
+IPSEC is reasonably cheap for 'over the wire' security, but a key question is where do you get the IPSEC keys? 
+Unfortunately, multiple RTTs are needed to connect with a key manager, and one needs loosely-synchronized clocks (to address replay attacks). 
+Other public key management systems will be similarly expensive. 
+The best you can hope for is to cache key management state. 
+But this doesn't work if you talk to a lot of other entities over a short time. 
+However, it might be that object security is in fact cheaper than transport security (though you still need to watch for replays). 
+okay, first when we say "opens up security holes", we need to ask "compared to what?" Seems like the important point is that a connection that lacks a 3WHS may be more vulnerable to some kinds of hijacking attacks than a traditional TCP connection. 
+I'm by no means an expert on security and my brain hurts too much today to analyze this in detail. 
+But I wonder how much this really hurts us. 
+For example, in the case of a very short "connection" of one request and one response packet each, I don't immediately understand the difference between a connection hijacking attack, and a simple impersonation of the client or server host. 
+The danger of using T/TCP relative to using TCP, it seems, is that we will use some sort of authentication mechanism which doesn't guarantee integrity for the whole session, allowing someone else to steal the connection and impersonate the authenticated party. 
+But you cannot "hijack" a connection when the server sends a FIN in response to the first SYN, and for longer connections it's not difficult to define ways to prevent connection hijacking - i.e. to make sure you're still talking to the same host as when you started the connection. 
+So I don't think we should consider T/TCP "dead"; but we might need to tweak it (not unusual for an experimental protocol), or ensure that other kinds of protection (such as object security) are provided by any "applcore" protocol that we define. 
+But we knew we had to do that anyway, didn't we? 
+Keith (real authentication of your peer is of course still very difficult to do, especially without adding steps. 
+but we don't always need real authentication, and in the cases we do, perhaps we can find a way to piggyback that authentication along with payload - as long as we don't trust the payload to be authentic until the authenticaiton is complete.) 

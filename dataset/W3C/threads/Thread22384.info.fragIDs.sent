@@ -1,0 +1,73 @@
+I thought I'd send some comments in now that it's last call. 
+Briefly, what I saw (I focussed on the core) looks good -- addresses many (but not all) of the issues I had with the level 1 work, and I'm glad to see that things went along smoothly even in my absence! 
+:-) Of particular note: * The system and public IDs are really for the "document type's external subset", not for the "document type", as it's now written. 
+DTDs often consist of many components, each with their own identifiers. 
+As written, those IDs could refer to one of dozens of identifiers -- not useful. 
+I'd like to see DomImplementation and DocumentType describe this correctly (a small editorial change). 
+* I can't see how I'd write a chunk of code that'll know it can use Level 2 features ... e.g. it's portable and needs to work with both L1 and L2. I'd like to see a "DOM" feature (for DOMImplementation) be defined, which would report on which level is supported. 
+* It's confusing to have feature definitions scattered all over the spec. 
+I'd like to see them collected in one table at one place, so their overall scope is more readily understood. 
+* I still don't see why there's no solution for getting access to a system default DOM implementation, at least for Java. 
+I'm posting an implementation in a followup post. 
+I'd like to see something like this in the org.w3c.dom 
+Java package. 
+Thanks for the good work! - Dave 
+LookI like the report format, but I still feel like I need the table of contents to have clickable links to let me get to each of the documented classes. 
+This structure (sans such TOC support) is relatively hard to navigate. 
+1.1.7Namespaces 
+... it may be useful to note that the DOM has adopted an 'early binding' model of namespace URIs to elements. 
+With early binding, the URIs are permanently bound to elements as they get created. 
+Late binding is more like what one would get by moving text around in a text editor -- the URI bindings are context-dependant. 
+(So there are significant ramifications...) Also, I'm glad to see the simplification of having the namespace support be in the core interfaces versus being separate. 
+Life is much easier that way! 
+1.2General re compatibility ... I don't see how I can write a chunk of code that'll know to act differently if it's using DOM Level 2 or DOM Level 1. SUGGESTION: have a DOMImplementation 'feature". 
+"DOM" would have values "1.0" (for DOM L1) or "2.0" (L2). 
+1.2DOMException ... ambiguous re whether the other numeric codes are reserved to W3C or not. 
+They should be. 
+Similar comment for "Node" ... nobody except W3C should be defining new numeric codes for "nodeType". 
+1.2DomImplementation ... createDocumentType() seems to have no accomodation for an internal subset. 
+I'd suggest at least correcting the text; it's not the "document type system identifier" (or public ID), but the "external subset system identifier" (or public identifier). 
+Also, having the "feature" identifiers scattered throughout the document is suboptimal. 
+At least list the features from each chapter up at the front of the chapter, in a table to visually highlight them. 
+1.2Document ... refers to "invalid" characters. 
+"Illegal" would be more correct (with reference under DOMException to XML, HTML, and related specs for what that means). 
+Of course the INVALID_CHARACTER_ERR name is grandfathered... 1.2Document.importNode 
+... 
+I'm rather uncomfortable with that name "import" since that implies the same object is in use (e.g. if I import something from Canada). 
+"copy" is the appropriate word, and is even used in the documentation more than once. 
+"import" suggests the wrong thing. 
+1.3DocumentType ... as above on DomImplementation, the text should say the IDs are for the "document type's external subset", 7Traversal ... 
+I'm still not a fan of this stuff, but at least it's optional. 
+(Seems like it should integrate with the view mechanism in some places, but doesn't -- oops.) App CJava Binding ... I ** REALLY ** think it'd be useful to define a standard way to get access to a DOM implementation, so that only parser connectivity really needs to be left to nonstandard APIs. 
+A few more comments on the core, and a correction to what I said earlier. 
+The NamedNodeMap.setNamedItemNS method seems to be missing. 
+1.1.1The 
+description of "Document" should also say that there may only be a maximum of one DocumentType; it's not just true for Elements. 
+1.2DOMImplementation.createDocumentType ... the more I look at it, the less I like the notion that the document type be associated with some document "late" in the game. 
+Every node in the doctype then needs to be able to get coupled "late" to an owning document, rather than being so coupled from day one. 
+That basically means every type of node in the whole DOM, not just DocumentType, may need to work with a null ownerDocument. 
+Yuck. 
+One patch is to have DocumentType.getEntities/getNotations 
+be able to throw an appropriate exception if they're called without having the DocumentType bound to a document yet; that eliminates all the cases where nodes (perhaps many, many, many of them!) will need to be patched up or try to lie about their owner document. 
+Of course all that still leaves open the question of when contents get stuffed into a DocumentType object. 
+Though construction seems to be out of scope for DOM, the spec does need to ensure there's a workable answer. 
+And I don't clearly see one now, unless it's to stick to the DOM L1 model without the DocumentType special cases. 
+1.2Node.cloneNode 
+... clones are always mutable, yes? 
+Needs stating; else a conformant implementation couldn't support the process that was outlined with Entity nodes (mutating clones of readonly nodes). 
+1.2Attr ... nit, the lack of a space after the period terminating the first sentence of the "Attr" description confuses javadoc. 
+Looks like some tool is stripping whitespace that's a line end, rather than just normalizing it to other whitespace (some other text got merged, e.g. in that adjoined sentence). 
+1.2NamedNodeMap.*ItemNS 
+... what should this do when being used to access items (notations and entities from the DTD) that aren't scoped with namespaces? 
+How about if the namespace URI is null? 
+NamedNodeMap.setNamedItemNS ... no such method; why? 
+Everywhere else there are both namespace-naive and namespace-aware methods, but this one (very important!) case is omitted. 
+NamedNodeMap.removeNamedItem ... should be able to report an error (NO_MODIFICATION_ALLOWED_ERR) for readonly maps, just like the setNamedItem method. 
+NamedNodeMap.item ... negative indices should return null too 1.3DocumentType ... please change the "publicID" and "systemID" to 
+match the case ("Id" not "ID") in Notation and Entity nodes. 
+It's a gratuitous change in convention, and complicates some code sharing that would otherwise be natural. 
+Ignore that one, sorry -- I noticed such functionality is there, evidently I missed it before. 
+It does help. 
+- Dave 
+That's clearly an oversight from me, I'll fix it right away. 
+Arnaud 

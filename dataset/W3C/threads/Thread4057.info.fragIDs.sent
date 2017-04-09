@@ -1,0 +1,165 @@
+Yes, that is just what I mean. 
+For example, a document with a DTD could have xsi:type attributes that are #FIXED, in which case the XPath DM would be able to process these documents as containing typed data, despite the absence of a PSVI. 
+The big question is, who takes responsibility for ensuring that the actual 
+value is consistent with its declared type? 
+Michael Kay 
+You write as if I were requesting an explanation of xpath-datamodel section 3.6, but I am not; I am requesting a change to it, so that Infoset-only processing can provide datatype information by Schema-compatible means without demanding Schema processing. 
+In fact the conformance rules (which will probably be rather clearer in the next draft) say that you can construct a data model any way you like. 
+So if 
+you want to write a processor that starts with XML decorated with 
+my:magic-type-annotation attributes, and turns these into type annotations in nodes in a data model, you are perfectly free to do so. 
+The only thing we 
+require is that the data model you provide as input to the XSLT/XQuery 
+processor should satisfy some consistency rules, for example the values of 
+nodes must be consistent with their type annotations. 
+Michael Kay 
+Jeni already brought most of the reasons why I don't think your model 
+would work and actually provide a type safe system that would make the XPath data model independent of the validation process. 
+Jonathan already presented you with a way to get most of what you want 
+using the current framework. 
+Let me address some technical issues below and potentially in some other mails (I have not read all of them yet) that you may have missed. 
+Best regards Michael 
+From: public-qt-comments-request@w3.org [mailto:public-qt-comments- request@w3.org] 
+On Behalf Of John Cowan Sent: Thursday, June 05, 2003 9:53 AM 
+public-qt-comments@w3.org 
+Subject: Re: XPath Data Model proposal Jeni Tennison scripsit: 
+Just to fill in the gaps here, presumably you're only suggesting 
+that 
+an XPath 2.0 processor be able to do anything with xsi:type 
+attributes 
+holding the names of types that it recognises, and that other type annotations should be ignored? 
+In effect, I think that is achieved by the penultimate paragraph in 3.6, which says that unknown types are to be promoted to xs:anyType or xs:anySimpleType, as the case may be. 
+[Michael Rys] Promoting unknown types to xs:anyType and xs:anySimpleType does not work if you want to be able to have different semantics for typed data (strong typing) and untyped data (weak typing) and want to make a distinction between the most specific type being untyped and the most specific statically given type being the most general type. 
+xs:anyType/xs:anySimpleTypes are very general types that serve as the base types of the type hierarchy. 
+Saying that untyped data becomes the 
+most general type is not the right approach (although if you just do 
+dynamic typing you may get away with it). 
+You need to distinguish between something that you know to be untyped and something that you do not quite now what type it is during type inference (mostly if you perform static type analysis and static typing). 
+Since XML Schema unfortunately mixes these two concepts (xs:anyType in the schema definition language indicates the most general type, and on the PSVI instance annotation the untyped case), XQuery/XPath needed to split them. 
+And since it is easier to change the type given in the data model than the type name used in the schema definition language, XQuery introduced xdt:untypedAtomic (and will also need a companion for untyped Complex/Any types). 
+Thus, any XPath/XQuery type system that is using XML Schema based type names should NOT use xs:anySimpleType/xs:anyType to denote untyped data. 
+[Note: there would be a slightly more complex alternative, using the notion of the most strict type that then would have the notion of "strict xs:anySimpleType" being the same as xdt:untypedAtomic] 
+Also, I assume that you're suggesting that the XPath 2.0 processor validate the content of the annotated element, such that, for 
+example 
+foo xsi:type="xs:integer" rubbish /foo isn't labelled as being of type xs:integer. 
+Or are you suggesting that elements be labelled 
+with 
+types without necessarily being valid against those types? 
+Hmm, that's a point I hadn't considered. 
+It's formally messy, because there is no formal definition of type validity in the DM -- it can delegate to the XML Schema documentation for that. 
+OTOH, asking an 
+XPath 
+processor to cope with examples like that is more than a bit awkward. 
+(The same answers will apply to xdt:attributeTypes, I imagine.) 
+Indeed. 
+[Michael Rys] And this is one of the main reasons why the current system of requiring some form of validation equivalent before populating the data model is important. 
+That the PSVI and data model is preserving xsi:nil/xsi:type as attributes in addition to adding information about their values to the element/attribute nodes is already bad enough. 
+But having to recognize them even if you do not provide a validation step before is bad. 
+And requiring the data model now to perform its own validation flies into the face of composable specs that so many people want from the W3C. 
+Best regards Michael 
+John Cowan jcowan@reutershealth.com www.reutershealth.com 
+www.ccil.org/~cowan 
+I am he that buries his friends alive and drowns them and draws them alive again from the water. 
+I came from the end of a bag, but no bag went over me. 
+I am the friend of bears and the guest of eagles. 
+I am Ringwinner and Luckwearer; and I am Barrel-rider. 
+--Bilbo to Smaug 
+No. xsi:nil is not specially handled by the infoset processor. 
+I think any attempt to have xsi: attributes creep into well-formed document should not be done and not be driven by the XQuery/XPath datamodel. 
+If we are not allowed to remove stuff from the infoset after 
+validation, we should not start changing the meaning of well-formed XML. 
+I think this slope is so slippery that I think everyone that goes that path will break his neck. 
+Best regards Michael 
+From: public-qt-comments-request@w3.org [mailto:public-qt-comments- request@w3.org] 
+On Behalf Of John Cowan Sent: Thursday, June 05, 2003 11:38 AM Subject: Re: XPath Data Model proposal Jonathan Robie scripsit: 
+To me, the Infoset-only mapping in our document needs to be 
+consistent 
+the standard definition of XML. 
+There are many ways we could decide 
+to 
+doctor an Infoset or reinterpret it, and I think this is a dangerous 
+path 
+to go down for mappings defined in our specifications. 
+Well, if I understand Norm correctly, xsi:nil is to be interpreted in Infoset-only processing in any event, and it doesn't seem to me too 
+much 
+of a stretch to require the interpretation of xsi:type as well. 
+These attributes are nicely Schema-compatible and aren't likely to be used 
+in 
+the incoming XML for any other purpose, and they do provide rough 
+parity 
+between Schemaful and Schemaless processing that does not currently 
+exist. 
+xdt:attributeTypes *is* more of a stretch, but adding it provides completeness at small cost if xsi:type is in. 
+IOW, I don't think the slope is all that slippery. 
+On the other hand, we give plenty of flexibility for an 
+implementation 
+create data model instances without using our PSVI or Infoset 
+mappings. 
+something an 
+The point of Jonathan's message is that you do not need to provide schema processing for the datamodel. 
+We rewrote the processing model section of the XPath/XQuery document and added a diagram, that should make it clearer that schema processing is only one way to generate the type information in the data model, as long as your process to generate the data model guarantees the constraints required by the data model. 
+Best regards Michael 
+From: public-qt-comments-request@w3.org [mailto:public-qt-comments- request@w3.org] 
+On Behalf Of John Cowan Sent: Thursday, June 05, 2003 10:52 AM Subject: Re: XPath Data Model proposal Jonathan Robie scripsit: 
+To a DTD-only processor, though, the xsi:type attribute will always 
+be 
+an attribute, and there's no place to put type information in the 
+output 
+a DTD-only processor, since it is just an Infoset. 
+You write as if I were requesting an explanation of xpath-datamodel section 3.6, but I am not; I am requesting a change to it, so that 
+Infoset-only 
+processing can provide datatype information by Schema-compatible means without demanding Schema processing. 
+All Norstrilians knew what laughter was: John Cowan it was "pleasurable corrigible malfunction". 
+--Cordwainer Smith, _Norstrilia_ 
+jcowan@reutershealth.com 
+2) The best is the enemy of the good. 
+There is a lot of grass-roots opposition to requiring a PSVI (or Schema processing generally); providing this relatively modest addition to the Infoset will help deflate that. 
+1. The XQuery WG does not own the Infoset. 
+The Core WG does (as you should know). 
+If we core would add this, it could only do so as part of a new version of XML (not that I would like that). 
+2. xsi:nil is one of the worst feature of XML Schema (not necessarily some of the concept, but the actual way it was done). 
+Especially its interaction with lists or complex content where you specify minoccurs=0 and defaults etc. Moving this into the data model/infoset implicitly would be a reason for me to stay with true XML 1.0. 
+3. I don't think that this "modest addition" will help deflate the PSVI-fears. 
+It will add to it in my opinion. 
+Others will want to add user-derived simple/atomic types and it will lead a creeping muddling of the boundaries. 
+4. A type annotated infoset can be supported by the XPath/XQuery data model if a body with authority or enough support from the market/community defines one. 
+It is not part of the charter or the requirements of the XQuery/XPath/XSLT groups to define one. 
+Michael 
+Michael Rys scripsit: 
+That may be, but it isn't what 3.6 says: # If the expanded-QName that results from this derivation is not available # in the processor's In-Scope Schema Definitions, the expanded-QName # is promoted to xs:anyType for elements or xs:anySimpleType for # attributes. 
+This can occur, for example, if the processor does not # support the schema import feature or if it was unable to import the # necessary schema. 
+Based on the indentation, this clause is in effect whether PSVI typing is available or not. 
+As Jeni notes in processors already have to do datatype validation to support union types and casts. 
+John Cowan jcowan@reutershealth.com http://www.ccil.org/~cowan 
+Raffiniert ist der Herrgott, aber boshaft ist er nicht. 
+--Albert Einstein 
+Clarification please John. 
+If I'm transforming a well formed instance, no schema, I'm going to find the output decorated with data type information; that wasn't there in any original DTD that may have been used to develop these instances? 
+And presumably which might then fail validation on receipt by another business if the document type is re-introduced? 
+Gratuitous decoration isn't my idea of fun for those who don't want/need it. 
+regards DaveP. 
+Jonathan Robie scripsit: 
+To a DTD-only processor, though, the xsi:type attribute 
+will always be 
+an attribute, and there's no place to put type information in the 
+output of 
+a DTD-only processor, since it is just an Infoset. 
+You write as if I were requesting an explanation of 
+xpath-datamodel section 
+3.6, but I am not; I am requesting a change to it, so that 
+processing can provide datatype information by 
+Schema-compatible means 
+without demanding Schema processing. 
+NOTICE: The information contained in this email and any attachments is confidential and may be legally privileged. 
+If you are not the intended recipient you are hereby notified that you must not use, disclose, distribute, copy, print or rely on this email's content. 
+If you are not the intended recipient, please notify the sender immediately and then delete the email and any attachments from your system. 
+RNIB has made strenuous efforts to ensure that emails and any attachments generated by its staff are free from viruses. 
+However, it cannot accept any responsibility for any viruses which are transmitted. 
+We therefore recommend you scan all attachments. 
+Please note that the statements and views expressed in this email and any attachments are those of the author and do not necessarily represent those of RNIB. 
+RNIB Registered Charity Number: 226227 Website: http://www.rnib.org.uk 
+David.Pawson@rnib.org.uk scripsit: 
+This is tautologically true, since DTDs don't *have* any datatype information except the trivial attribute datatypes. 
+In principle, yes, if the DTD said that an attribute is of type ID or IDREFS or NMTOKENS or whatever and then it ended up not being the case. 
+Don't use xsi:nil and xsi:type attributes gratuitously, then. 
+Andrew Watt on Microsoft: John Cowan "Never in the field of human computing jcowan@reutershealth.com has so much been paid by so many http://www.ccil.org/~cowan to so few!" (pace Winston Churchill) http://www.reutershealth.com 

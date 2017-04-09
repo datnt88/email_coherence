@@ -1,0 +1,65 @@
+---------- Forwarded message ---------- Date: Mon, 08 Apr 2002 10:23:43 -0500 
+From: Dale Chatham dale@chatham.org 
+Subject: Config file suggestion 
+On the UNIX side, I think you should consider default locations for configuration files. 
+I would think that all of the following should be searched, with the first hit of a confirmed file specifying the file: `pwd`/tidyrc `pwd`/.tidyrc 
+Environmnet variable ~/.tidyrc ~/etc/tidyrc /etc/tidyrc This conforms to UNIX conventions and would allow various levels of standards for the way HTML should look. 
+I am going to try to implement this and if I get to it before you do, I'll send the patch file. 
+however, it looks like tidy.c determines where to look and the actual looking is done in config.c. 
+I suspect that since there is now some checking to be done and a miss doesn't mean no config file (it could be in the third place to look), that the functions will have to be put in one place with a loop. 
+Best regards, Dale Chatham 
+this may be on the requested feature list already, otherwise may I suggest you add this to under http://tidy.sf.net for tracking purposes and to avoid duplication of your work -- certainly would make sense to support common paths (for Windows and OS/2 probably %DPATH%\.tidyrc 
+could be supported too) I would vote for a single filename though, not multiple filenames. 
+The multiple filenames duplicates the rc files for bash, csh, sh. 
+If you go for a single file, please go for ~/.tidyrc The multiple gives a lot of possibilities for localizing configuration, though. 
+Dale 
+this may be on the requested feature list already, otherwise may I suggest you 
+add this to under http://tidy.sf.net for tracking purposes and to avoid 
+duplication of your work -- certainly would make sense to support common paths 
+(for Windows and OS/2 probably %DPATH%\.tidyrc 
+could be supported too) I would vote for a single filename though, not multiple filenames. 
+Klaus Johannes Rusch KlausRusch@atmedia.net 
+Just to be clear about what Tidy already does, by default build (i.e. in all the binaries found on http://tidy.sf.net), the order is this: 1) Load config file named in HTML_TIDY environment variable - if it exists. 
+2) Load config file named on command line There are two build-time options related to loading config files. 
+These options may be used separately or together. 
+A) Home directory - SUPPORT_GETPWNAM If you un-comment the line #defining SUPPORT_GETPWNAM in platform.h, then the processing is as follows: 1) If it exists, load config file named in HTML_TIDY environment variable. 
+If not, load the file named "~/.tidyrc", i.e. in the current logon ID's home directory. 
+2) Load config file named on command line B) Fixed config file - CONFIG_FILE If you define the C macro CONFIG_FILE at build time (anywhere, e.g. 
+-D CONFIG_FILE=abc on make command line is sufficient), Tidy will attempt to load this config file _prior_ to loading any other config file. 
+So, without changing source code, you can build a local version of tidy that looks for "~/tidyrc" or "/etc/.tidyrc" or "joebob". 
+Btw, support for non-"dot" filenames is a holdover from the bad, old DOS 8.3 days. 
+Yes, I know a certain CD-ROM format still requires 8.3 names, but are you going to put a Tidy config file onto this equally antiquated format? 
+If you must support a DOS/Windows-style file name, my vote is 
+tidy.rc. 
+At least this file extension can be associated with a text editor for easy access from the GUI. 
+Adding this new variation to your scheme would make it way over-complicated. 
+So, how about a compromise? 
+The idea of looking in the current directory is a good idea. 
+The other thing that we could easily do is make the config file base name a macro with a default value of CONFIG_BASE=.tidyrc 
+This macro could be redefined on the build command line to "tidyrc", "tidy.rc" or "joebob". 
+The search path, then, would be: 1) ./$CONFIG_BASE 2) $HTML_TIDY #ifdef SUPPORT_GETPWNAM 3) ~/$CONFIG_BASE #endif The first item found would be used. 
+Any others would be ignored. 
+The $CONFIG_FILE and command line files may still be processed. 
+This structure isn't ideal, but it preserves compatibility with the existing behavior so we don't give anyone a surprise. 
+Thoughts? 
+take it easy, Charlie 
+Wow, I must have missed that in the docs. 
+Thanks! 
+A system wide config might be worth doing, but this takes care of everything I need. 
+Sorry for the noise. 
+I would recommend against ".rc" as the configuration file extension, at least on Win32 platforms. 
+That extension has been used historically for Windows resource compiler source files. 
+I would suggest that ".ini" might be better for the Win32 platform, as it is already associated with program configuration files and likely is already set up to invoke a text editor. 
+-- Dave 
+Good point. 
+I just use the command line on my ex.rc file for MKS vi, so I never noticed. 
+Yes, I do live in a cave. 
+Why do you ask? grin I'd hesitate to use .ini, 
+tho. 
+If only because it denotes that you can access properties using the Win32 INI file functions, e.g. GetPrivateProfileString(). tidy.cfg would be fine. 
+Many programs use .cfg as a proprietary config file extension. 
+At least, I don't know of a standard format, de facto or otherwise, for this extension. 
+In the context of the original posting, the point is the same. 
+Ask any two Tidy users, and you will get two different preferred names for the config file. 
+Better to let the user specify in a convenient manner at build time. 
+take it easy, Charlie 

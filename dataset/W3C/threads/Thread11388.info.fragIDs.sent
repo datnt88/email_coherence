@@ -1,0 +1,167 @@
+A proposal for specific wording to describe public identifier and their resolution, based on Paul Grosso's posting of the other day but modified by myself (Paul bears no blame for this) is at and may be read there. 
+I think the catalog resolution mechanism described there is (a) simple to implement and use, (b) sufficiently flexible for the real world, and (c) compatible with full SOCats (check me on this, Paul!). 
+I also think it's ready for inclusion in the XML-Lang spec, but I realize not everyone will see it that way. 
+So now there are two proposals on the table, substantially identical (only difference is in the method of finding the catalog file) though different in style. 
+Comments, please. 
+-C. 
+M. Sperberg-McQueen p.s. in case there is anyone who would rather read this in email instead of on the Web, I append an ASCII version of the document, prettied up from what Charlotte produces. 
+Web page: http://www.uic.edu/~cmsmcq/tech/xml/pisocat.html 
+Changes to XML To Support Public Identifiers And PI Resultion Using Socats C. M. Sperberg-McQueen 28 March 1997, rev. 
+30 March 1997 Table of Contents * 1 Public Identifier Syntax * 2 External Entities (Proposed Revision) 
+* 3 Resolving PUBLIC Identifiers (New section) This document describes some possible changes to the draft XML specification. 
+The first part describes the changes necessary to make the XML external identifier rules support public identifiers syntactically. 
+The second and third parts are sample draft language for a revision of the section on external entities and for a new section on resolving public identifiers. 
+This draft language represents solely the opinion of the author and has not been approved by anyone, let alone the W3C SGML ERB. 1 Public Identifier Syntax To allow public identifiers, the productions in the section on external 
+identifiers would need to be changed as follows: ExternalID ::= SystemID | PublicID SystemID ::= 'SYSTEM' S SystemLiteral SystemLiteral ::= '"' (URLchar)* '"' 
+"'" (URLchar - "'")* "'" 
+URLchar ::= (the set of characters legal in URLs) PublicID ::= 'PUBLIC' S PublicLiteral (S SystemLiteral)? 
+PublicLiteral ::= '"' PubLitChar* '"' | "'" PubLitChar* "'" PubLitChar ::= (#x000D | #x000A | [A-Z] | [a-z] | [0-9] 2 External Entities (Proposed Revision) If the entity is not internal, it is an external entity, declared as follows: ExternalDef ::= External ID NDataDecl? 
+/* unchanged */ ExternalID ::= 'PUBLIC' S PubLiteral ( S SystemLiteral )? 
+| 
+'SYSTEM' S SystemLiteral 
+SystemLiteral ::= '"' (URLchar)* '"' 
+"'" (URLchar - "'")* "'" 
+URLchar ::= (the set of characters legal in URLs) URLchar ::= [a-zA-Z0-9] 
+';' | '/' | '?' | ':' | '@' | '&amp;' | '=' | '+' 
+/* reserved */ 
+"'" | '(' | ')' | ',' /* mark */ '%' /* for hex escapes %NN */ 
+/* N.B. control characters, space, and the characters # " { } | \ ^ [ ] ` are not allowed in URLs, according to the relevant RFCs */ PubLiteral ::= '"' PubChar* '"' | "'" PubChar* "'" PubChar ::= Letter | Digit | S | ['()+,-./:=?] (or change grammar as given above -Ed.) The PubLiteral and SystemLiteral strings which may occur within the ExternalID are called the entity's public identifier and its system identifier, respectively. 
+The system identifier is a URL, which may be used to retrieve the content of the entity. the public identifier is a location-independent name for the entity, which can be resolved to a URL using the mechanism described below . 
+Unless otherwise provided by information outside the scope of this specification (e.g. a special XML element defined by a particular DTD, or a processing instruction defined by a particular application specification), relative URLs are relative to the location of the entity or file within which the entity declaration occurs. 
+Relative URLs in entity declarations within the internal DTD subset are thus relative to the location of the document; those in entity declarations in the external subset are relative to the location of the files containing the external subset. 
+3 Resolving PUBLIC Identifiers (New section) (This section is intended to be inserted immediately following the section on External Entities. 
+-Ed.) XML processors may implement any mechanism they choose for resolving public identifiers (i.e. finding a URL for some physical copy of the 
+object named). 
+At user option, however, they must also support the mechanism described in this section. 
+An XML processor can resolve a public identifier to a system identifier by looking up the public identifier in a supplemental catalog, which has the following structure: 
+XMLCatalog ::= S? ( ( catComment | pubEntry | otherEntry ) ( S ( catComment | pubEntry | otherEntry) )* )? 
+catComment ::= '--*' (Char* - (Char* '*--' Char*) '*--' pubEntry ::= 'PUBLIC' S PublicID S SystemLiteral otherEntry ::= catKeyword (S SystemLiteral)+ catKeyword ::= (Char* - (S | SystemLiteral | 'PUBLIC' 
+PublicID | catComment)) 
+A catPublic entry maps a public identifier into a system identifier, which may be used to locate the entity itself. 
+For example: PUBLIC "ISO 8879:1986//ENTITIES Added Latin 1//EN" "iso-lat1.gml" 
+PUBLIC "-//ACME//DTD Report//EN" "http://www.acme.com/dtds/report.dtd" 
+The catalog format is that defined by SGML Open Technical Resolution 9401:1995 (Amendment 1 to TR 9401), which defines several keywords in addition to PUBLIC. 
+These are matched by the otherEntry rule, and may be ignored (or acted on) by XML processors. 
+If the public identifier in a catalog entry matches that given in an 
+ExternalID, then the system identifier in the catalog entry is associated with the public identifier in question and may be used to retrieve it. 
+Before matching takes place, both public identifiers must be normalized: leading and trailing white space is stripped, and embedded white space is replaced by single space (#x0020) characters. 
+(Except that no entity references are recognized, this is the same normalization as is performed for attribute values of type CDATA.) The 
+catalog lookup may involve more than one catalog file; it ends when the first matching entry is found. 
+At user option, the XML processor must look first for a catalog file on the local system; the location of this catalog file, and the method of identifying it, are outside the scope of this specification. 
+If no matching entry is found in the local catalog, the XML processor must look next in the default catalog. 
+Unless otherwise provided by information outside the scope of this specification (e.g. a special XML element defined by a particular DTD, or a processing instruction defined by a particular application specification), the default catalog is that found using the relative URL catalog . 
+If no matching entry is found in either the local catalog (if any) or in the default catalog (if any), then the XML processor may treat the catalog lookup process as having failed. 
+If catalog lookup on a public identifier fails, [possibly add: or an attempt to retrieve the entity using the result of the catalog lookup fails, -Ed.] and a system identifier was supplied in the externalID, then an XML processor must behave as if the system identifier was the only identifier supplied. 
+I like most of this alot. 
+I would certainly support it, and Peter's simple (but less robust) suggestion as a second choice. 
+One quibble: 
+These sound like we are specifying a bit of processor user interface. 
+I would remove the first "At user option" and change the second from "At user option, the XML Processor must" to "the XML may" -- who are we to say that Netscape (or whoever) must provide a catalog escape route? 
+Let this be an area for market differentation. 
+As long as the processor faithfully tries to follow the instructions from the author, in the remote catalog, its mechanisms for finding "better" instructions should be unconstrained. 
+It could be a remote catalog, a URN resolution service or annoying popup dialog box. 
+Let the market decide. 
+Paul Prescod 
+I am having problems with understanding the following two productions in the draft proposals: catComment ::= '--*' (Char* - (Char* '*--' Char*) '*--' catKeyword ::= (Char* - (S | SystemLiteral | 'PUBLIC' 
+PublicID | catComment)) 
+Firstly, I cannot understand the Char* - part of theses productions. 
+Why is the initial Char optional, and what role does the hyphen take? 
+Is it the same as "-" or does it imply "NOT"? 
+Secondly, what is the purpose of a catKeyword. 
+I don't find the text reassuing. 
+We should at very least list the keywords in the 1995 version of the TR, and ensure that the model in catKeyword matches this. 
+(Can you really have no 
+string in front of the system literal or publid ID? Can you have a public ID that is not preceded by 'PUBLIC' as the model for catKeyword implies?) At present I have severe doubts about the validity of the catKeyword formal definition. 
+If a catKeyword may be ignored, what is the difference between when it is implemented and when it is ignored? 
+We need to explain this to our Dirty 
+Perl Hacker if we are going to leave such cryptic comments in the text. 
+Martin Bryan, The SGML Centre, Churchdown, Glos. 
+GL3 2PU, UK 
+It is "NOT". 
+That answers several of your questions, I think. 
+catKeyword is a hook for extensibility, just as processing instructions are. 
+We cannot list all of the keywords that TR9401 allows because as I recall it has a larger fixed list, but also leaves the list open-ended. 
+Paul Prescod 
+On Mon, 31 Mar 1997 04:05:24 -0500 Martin Bryan said: 
+Sorry for the confusion. 
+This is a bit of notation the editors have introduced into the XML spec to deal with the productions for comments, PIs, etc. 
+In the right hand side of a production, code a - b /code represents the set of strings which match expression 'a' and which do NOT match expression 'b'. 
+So (Char* - (Char* '*--' Char*)) means 'any string not including "*--"' (or more pedantically, any string matching Char*, but not matching (Char* '*--' Char*). 
+(There is a closing paren missing in the draft.) 
+The main problem with this is that TR9401 is built for extension and allows keywords other than those defined in the spec itself. 
+So listing the keywords it does define won't do us much good. 
+(Unless the newest version changes this design.) 
+You are certainly right that we need to make sure the production for catKeyword matches them correctly; it has some flaws in it that need fixing. 
+I don't know how you are reading the production, to fear these things. 
+The rule is catKeyword ::= (Char* - (S | SystemLiteral | 'PUBLIC' 
+PublicID | catComment)) 
+I.e. a catKeyword consists of some string of characters which is not white space, not a system literal, not the keyword PUBLIC, not a PublicID, and not a catComment. 
+Actually, this production does need revision to ensure that a catKeyword can contain no space, and that catKeyword doesn't match a public id preceded by space. 
+Paul's original may be better in that regard, but I had trouble following it. 
+What do you mean, what's the difference? 
+When it's implemented, the desired thing happens. 
+When it's ignored, nothing happens. 
+When the desired thing is nothing, you can't tell the difference, and so it doesn't make much difference. 
+Why does telling the difference make any difference here? 
+I'm sorry to have been cryptic. 
+But "Implementors, relax. 
+You don't have to implement the entire catalog spec, just the PUBLIC entry, but you may implement the entire spec if you like" just doesn't fit with the rest of the spec in tone or vocabulary. 
+If you have a proposal for a clearer way to say this than "other entries may be ignored or processed" the editors will gladly accept suggestions. 
+-C. 
+M. Sperberg-McQueen 
+From: Paul Prescod papresco@calum.csclub.uwaterloo.ca 
+A CATALOG is a line delimited linearization of an assocative array. 
+Where do you get the "line delimited" idea? 
+This is not true for SGML Open catalogs, and I have no reason to read Michael's latest proposal to imply this either. 
+Record ends are just part of whitespace in the catalog. 
+paul 
+I am not capable of determining (at least, not in the time I can allot to it) whether the above catKeyword production is correct. 
+What is necessary (and what my writeup attempts) is that the catalog parser can reliably find the beginning of the next catalog entry regardless what combination of the "otherEntries" this processor recognizes and doesn't recognize and regardless of the number (possibly variable) of arguments any unrecognized keyword may take. 
+Speaking of logical names versus specific locations, I would prefer that the reference above is to TR9401 (no date/amendment level/version). 
+I hope to have TR9401:1997 out for vote by SGML Europe. 
+It would add CATALOG, DELEGATE, OVERRIDE, NOTATION, SYSTEM, and a few other things. 
+I don't think this bit is necessary. 
+Neither the &amp; nor % character is allowed in public identifiers, so why talk of entity references? 
+TR9401 very carefully talks of one or more "catalog entry files" making up a logical catalog. 
+It avoids the phrase "catalog file" since this seems ambiguous. 
+I say this for the sake of terminology compatibility with TR9401--I don't plan to enter into a terminology debate, and I'm willing to go with any wording for XML so long as it is unambiguous. 
+First, to comment on the above, I have to define my terms: in my vocabulary, there is only one (logical) catalog effectively composed of an ordered "list" of catalog entry files. 
+Whereas you can use different terminology if this is the only way to get catalogs into XML (though I fear confusion if/when people read/know of TR9401), I cannot make intelligent comments without using the terminology carefully. 
+Given my definition, there is no such thing a default/local catalog; there is only the concept of allowing the user (either at the individual level or at the system-administrator-configurable level) to specify to the processor an ordered list catalog entry files. 
+Said list might well be "first this local file, then that default file, then whatever else might have been specified via some PI in the document." 
+I'm concerned with your two-layer local/default approach. 
+I think it is too prescriptive. 
+In particular, what I want is to look first in the document-specific catalog entry file (e.g., the "catalog" URL, relative to the document instance) before looking in the default catalog entry file on my local system, then next look perhaps at a default catalog entry file on the system on which I found the document. 
+Since you are not being explicit how one might specify any of the catalog entry files, why be explicit about their number, order, or location? 
+By way of trying to make a specific suggestion, here is my quick attempt: At user option, the XML processor must attempt to locate and process one or more catalog entry files in the order specified by the user. 
+These files may reside on the local system, in a location relative to the entity in which the public identifier was used, or elsewhere. 
+The the method of identifying the ordered list of catalog entry files is outside the scope of this specification. 
+If no list of catalog entry files has been given to the XML processor, the default list shall consist of the single catalog entry file specified by the relative URL "catalog". 
+If no matching entry is found using the list of catalog entry files as determined above, then the XML processor may treat the catalog lookup process as having failed. 
+I came in what that preconception and always read the grammar that way. 
+Thanks for setting me straight. 
+Is there any good reason that we need that flexbility? 
+Perl programming really is a lot easier when things are one per line. 
+Not that the 
+alternative Perl program is *difficult*, but I can see an implementation cost, and I can't see the usability benefit in allowing people to put more than one per line. 
+Paul Prescod 
+Agreed. 
+Also, a common error seems to be omitting the double quotes round an argument to a CATALOG entry; if entries had to be separated by at least one of \n \r or \f, this requirement could be dropped, no? Otherwise given STYLESHEET "Pretty little borders and teapots" TEAPOT 
+the TEAPOT is taken as starting a new entry, which is very confusing. 
+Lee 
+I can't speak for the other developers and implementors, but parsing CATALOGs is not a major problem if the spec is clear. 
+(I've hacked a CATALOG parser which managed nested catalogs and it seemed to work). 
+At least there aren't any p*r*m*t*r *nt*t**s in them. 
+Record ends are just counted as whitespace. 
+So long as the quotes are balanced (which will have to be the case for XML attribute values anyway) there is no problem parsing this, even if it's broken over several lines (so long as whitespace is folded into single spaces which we seem to be converging on.) 
+One problem with using record ends is that you soon start having to think about continuation characters, etc. 
+Of course you can always put a character in column 6 :-) P. Peter Murray-Rust, domestic net connection Virtual School of Molecular Sciences 
+From: lee@sq.com 
+As Lee knows, all this is addressed in the latest proposed amendment to TR9401 and has already been addressed in the various XML catalog proposals. 
+It isn't necessary to have a record-end-cognizant grammar to solve this. 
+Just a whole lot easier to edit if the FPIs and URLs are long and you have to do the editing via a VT100 screen, emulator, or edit window on a machine with very coarse dot-density, where very little fits on a line. 
+Plus it's a whole lot more readable as PUBLIC "verylongfooverylongfooverylongfooverylongfooverylongfooverylongfoo" "equallylongbarequallylongbarequallylongbarequallylongbarequallylongbar" I just found that one of the pieces of SGML middleware I am evaluating comes with a neat but underdeveloped SOCAT editor for Windoze. 
+I am trying to persuade them that this would be a very nice freebie if they wanted something to keep their image in front of people, and provide a public service at the same time. 
+Just needs a little more attention, is all. 
+Mind you, it wouldn't be hard to pop up a Java one, either...but that would raise problems writing to your hard disk. 
+///Peter 

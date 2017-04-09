@@ -1,0 +1,51 @@
+Say we have two different implementations of the org.w3c.dom one being openXML's and another being some other package out there. 
+Now when we parse an HTML file and produce a DOM out of it we are not assured that the two DOM representations will have the same structured tree because of differences in parsing and malformed html. 
+Wasn't the whole idea of the DOM to keep things structured. 
+shouldn't these two parsers create the exact same DOM? 
+You may not like this answer: The W3C DOM does not support malformed HTML. 
+It's up to the HTML processor to either reject it as unparsable, or to repair it before the DOM is built. 
+The details of that repair are out of our scope. 
+A suggested, but not officially endorsed, repair algorithm appears in the W3C's "tidy" tool. 
+Getting everyone to agree to yield the same results -- tidy's or any other -- would be a task for the HTML Working Group. 
+Given that they seem to instead be moving toward an XML-based version of HTML, in which malformed documents are not possible and consistant parsing can be guaranteed, I don't know if they can enforce particular repairs or are interested in doing so. 
+Ask them? 
+Joe Kesselman / IBM Research 
+If the HTML is valid, you will get the same trees. 
+Given the number of ways HTML can be invalid, there's no way of specifying the DOM to make all processors give you the same trees under any circumstances. 
+So you'll have to clean up the HTML first, e.g., by running it through an HTML clean-up script. 
+Lauren 
+Lauren, since DOM doesn't include parsing APIs, I don't know how you can claim "you'll get the same trees" ... all APIs to turn *ML text into a DOM tree are by definition proprietary at this time (or at least must be promulgated by some non-W3C group). 
+Admittedly there are some assertions floating around in the text, but since there is no DOM API for parsing to which they could apply, there doesn't seem to be anything that could be tested for purposes of saying "yes, this conforms to the DOM L2 spec" ... or "no, this doesn't, because it doesn't return the right results from this specific API". 
+Agreed that malformed HTML is a horrific problem, which was a significant motivator for XML! :-) XML was specified so that conformant "processors" can be defined; but DOM (L1 or L2) can't satisfy such requirements without a suitable API. 
+Given such a parsing API, including controls over which of the various DOM options are desired in the output tree (entities and refs: just say no!), THEN one ought to expect isomorphic DOM trees to get produced by different implementations ... for DOM implementations that hook up to XML processors. 
+But without such an API, it can't ever happen, and the answer to Mark's question is that he's expecting too much out of DOM (L1 or L2; HTML or XML). - Dave p.s. As you know, this has long been one of my pet issues: the DOM API is incomplete for what the marketplace perceives its role to be. 
+I think for HTML you should get the same tree, since most of the optional things (e.g., entities) are in XML, not HTML. 
+I guess some processors could decide to throw out comments, although the HTML processors I know of don't. 
+The HTML DOM module specifies a few things that need to be in the tree, such as the 
+TBODY elements, which may not be in the source document, so I 
+can't think of any place (again, modulo comments) where you would get variations on the tree of a *valid* (not just "good") HTML 4.0 document. 
+Can you point some concrete places out to me that the HTML module doesn't explicitly cover? 
+Lauren 
+What W3C DOM API produces a DOM tree given an input source document? 
+The closest I see to that is the 
+HTMLDocument.{open,close,write,writeln}, and that clearly doesn't work for XML ... and of course, there would still be the bootstrapping problem of how to get one's hands on an HTMLDocument without relying on some other non-DOM (proprietary, ...) API. 
+- Dave 
+OK, now I get the problem. 
+You're right, the HTML DOM doesn't define *how* to get to the internal structure model that allows the HTML DOM API to act on it to create elements etc. 
+However, it does define pretty clearly (at least, I think it does) *what* you 
+should find once you get there. 
+So, although it doesn't define the process, it does define the end result. 
+Lauren 
+Same as for XML, right? 
+The DOM's just an API. 
+Even if/when we add an API for parsers, that sitll doesn't define what the parser is doing internally. 
+Joe Kesselman / IBM Research 
+For XML: None yet. 
+The DOM Level 3 Load/Save chapter is expected to address this. 
+Joe Kesselman / IBM Research 
+Heading back to what I just can't see at all: DOM L2 may mention some end result ... but without defining the APIs used to achieve it, that's not helpful. 
+And it's worse for the XML DOM, which has a much wider range of "OK behaviors" with which to foster portability problems. 
+Presumably some later DOM will eventually fix this (as I think we heard a while back :-) but until then, this sort of issue is smack at the heart of what makes DOM not be a portability solution even for the simplest web applications: you can't even bootstrap without relying on proprietary APIs. 
+- Dave 
+Portable applications by definition won't care what's behind an API; but they can certainly be prevented (proprietary-apps-only) if there's no standard API for this level of basic functionality (bootstrapping). 
+- Dave 

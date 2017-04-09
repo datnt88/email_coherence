@@ -1,0 +1,60 @@
+There is a solution that does not involve any change to standards. 
+This is to reference the long description from within the metadata capabilities of the Internet Media Types (formerly MIME types) framework. 
+This could be supplied as a text value for an header field or indirectly by an URI value withing a header field. 
+I don't know what fielded GUI browsers include in their realization of an "information page" or if you can get such a page for images referenced as the content of an IMG tag. 
+If the long description is realized as the text value of an HTTP header for the image, Lynx, for example, already gives the user an access path for that information with its image_links mode and head-request command. 
+Before commenting further: are you suggesting that the user-agent makes a HTTP GET for an image using a textual type (in the ACCEPT header, whose description is attached) to get the long description ? 
+e.g. instead of GET foo.gif HTTP/1.1 Accept: image/gif [reply is the gif bits] it does GET foo.gif HTTP/1.1 Accept: text/html [reply is the long description in HTML] INTERNET-DRAFT HTTP/1.1 14 Header Field Definitions This section defines the syntax and semantics of all standard HTTP/1.1 header fields. 
+For entity-header fields, both sender and recipient refer to either the client or the server, depending on who sends and who receives the entity. 
+14.1 Accept The Accept request-header field can be used to specify certain media types which are acceptable for the response. 
+Accept headers can be used to indicate that the request is specifically limited to a small set of desired types, as in the case of a request for an in-line image. 
+Accept = "Accept" ":" #( media-range [ accept-params ] ) media-range = ( "*/*" 
+( type "/" "*" ) ( type "/" subtype ) 
+) *( ";" parameter ) accept-params = ";" "q" "=" qvalue *( accept-extension ) accept-extension = ";" token [ "=" ( token | quoted-string ) ] The asterisk "*" character is used to group media types into ranges, with "*/*" indicating all media types and "type/*" indicating all subtypes of that type. 
+The media-range MAY include media type parameters that are applicable to that range. 
+Each media-range MAY be followed by one or more accept-params, beginning with the "q" parameter for indicating a relative quality factor. 
+The first "q" parameter (if any) separates the media-range parameter(s) from the accept-params. 
+Quality factors allow the user or user agent to indicate the relative degree of preference for that media-range, using the qvalue scale from 0 to 1 (section 3.9). 
+The default value is q=1. 
+Note: Use of the "q" parameter name to separate media type 
+parameters from Accept extension parameters is due to historical 
+practice. 
+Although this prevents any media type parameter named "q" from being used with a media range, such an event is believed to be unlikely given the lack of any "q" parameters in the IANA media type registry and the rare usage of any media type parameters in Accept. 
+Future media types should be discouraged from registering any parameter named "q". 
+The example Accept: audio/*; q=0.2, audio/basic SHOULD be interpreted as "I prefer audio/basic, but send me any audio type if it is the best available after an 80% mark-down in quality." 
+If no Accept header field is present, then it is assumed that the client accepts all media types. 
+If an Accept header field is present, and if the server cannot send a response which is acceptable according to the combined Accept field value, then the server SHOULD send a 406 (not acceptable) response. 
+A more elaborate example is Accept: text/plain; q=0.5, text/html, text/x-dvi; q=0.8, text/x-c Verbally, this would be interpreted as "text/html and text/x-c are the preferred media types, but if they do not exist, then send the text/x- dvi entity, and if that does not exist, send the text/plain entity." 
+Media ranges can be overridden by more specific media ranges or specific media types. 
+If more than one media range applies to a given type, the most specific reference has precedence. 
+For example, Accept: text/*, text/html, text/html;level=1, */* have the following precedence: 1) text/html;level=1 2) text/html 3) text/* 4) */* The media type quality factor associated with a given type is determined by finding the media range with the highest precedence which matches that type. 
+For example, Accept: text/*;q=0.3, text/html;q=0.7, text/html;level=1, text/html;level=2;q=0.4, 
+*/*;q=0.5 would cause the following values to be associated: text/html;level=1 = 1 text/html = 0.7 text/plain = 0.3 image/jpeg = 0.5 text/html;level=2 = 0.4 text/html;level=3 = 0.7 Note: A user agent may be provided with a default set of quality values for certain media ranges. 
+However, unless the user agent is a closed system which cannot interact with other rendering agents, this default set should be configurable by the user. 
+to follow up on what Daniel Dardailler said: 
+No, that is a separate idea I hadn't figured out. 
+What I was suggesting relies on the fact that the header fields exchanged in HTTP can carry metadata about the message body. 
+A server can provide a description of the image as the value of a Content-Description: header or indirectly via something like an X-Content-Description-References: header. 
+What header field(s) to look for can be managed through the Internet Media Types attribute registration and usage guidelines. 
+For a client program with image display set off by user preference, the client can send an HTTP request with method HEAD and get the description without spending the net bandwidth and time to transfer the binary image file. 
+Al Gilman 
+There is no Content-Description in HTTP1.1 so this would have to be an extension. 
+This is unlikely to happen soon given the speed at which 1.1 itself is penetrating the market. 
+Using HEAD on an image to get a description is possible, I think Dave Raggett mentioned it to me a while ago. 
+The semantics is clear too, e.g. if the image format itself has some 'comments' in the file, this is a way to get at it without transfering the whole file. 
+to follow up on what Daniel Dardailler said: 
+I have not re-read the 1.1 document on this point. 
+What it should say is approximately: "The HTTP messages shall [follow the 822 format and] contain the following header fields required for managment of the communication process: The HTTP messages should also contain all header fields required for the Internet Media Type [cite STD] identified by the Content-Type: header. 
+The HTTP messages may include other header fields conforming to the extension practices defined in Internet Standard 7?, RFC 822." 
+The HTTP document should not interfere in the separate management of media types, which has an established, orderly process for evolutionary upgrade. 
+What I'm trying to say is that syncronizing the usage of headers appropriate to different media types should not require a change to the HTTP transport specification. 
+It does require action within the types management discipline, but there is an established process there for us to ratchet our recommended practices from X-experimental to registered to standard headers. 
+Al Gilman 
+As Al has pointed out in a different context (see his WAI process paper), the use of HTTP as the transport mechanism can not always be assumed. 
+For example, collections of HTML documents can reside on a local file system. 
+Perhaps one can state a general principle that the solution to an access problem should generally be found within the same protocol or standard as the feature which gives rise to difficulty in the first place. 
+Thus, in this instance, it is the availability of img and object elements within HTML that refer to graphical resources, which leads to a legitimate demand for long descriptions. 
+Consequently, a solution should be included within HTML itself, or perhaps within the image files. 
+My understanding is that there is no prescribed standard for image file formats that are to be used on the web. 
+If such a standard were developed, then it would be appropriate to include textual descriptions within image files and allow them to be transferred by HTTP independently of the graphical content. 
+Jason White. 

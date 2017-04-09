@@ -1,0 +1,112 @@
+Various bugs of Amaya binary release 2.4 for Linux libc6. 
+When trying to load a page not on the local computer, I get an error: 
+The requested URL could not be retrieved While trying to retrieve the URL:http://www.w3c.org/ 
+The following error was encountered: Connection Failed The system returned: (51) www.w3c.org 
+This means that: The remote site or server may be down or non-existant. 
+Please try again soon. 
+Two things about this: 1. I'd like to know why Amaya doesn't find that location, even as netscape does. 
+This might not be a bug, but just incompetence on my side. 
+2. "non-existant" should be spelled "non-existent". 
+In the page Amaya/doc/amaya/Browsing.html the link to "Configuring.html" should point to "Configure.html", because that's what the file is actually called. 
+When displaying the page structure (Ctrl-v Ctrl-s) of "http://www.tux.org/~mayer/linux/results2.1.html" the vertical lines get messed up. 
+Of course, as I cannot get Amaya to display pages from 
+the Internet, I have actually displayed a local copy with "file:/...". 
+I have attached two gif files to show the messed-up lines (sorry for the size of this email, but that seemed to be the easiest way). 
+Deleting the entry in the table where the lines get messed up makes no difference. 
+In fact, taking the first entry, and repeating it 135 times works fine, but repeating it 136 times causes the error (this is with caption and table heading deleted). 
+My guess is, that the length of the table causes some integer (?) overflow to occur. 
+When displaying any page, then displaying the page structure with Ctrl-v Ctrl-s, then moving the mouse into the structure window, hitting the page-down key once (or several times) and the up-arrow key several times (but not just once), Amaya hangs. 
+It ignores attempts to close the window by the window manager, but reacts well to kill from the shell. 
+This behavior is repeatable. 
+Here is an output of "top": 
+11:58am up 1:33, 4 users, load average: 1.06, 0.60, 0.28 41 processes: 37 sleeping, 4 running, 0 zombie, 0 stopped CPU states: 66.9% user, 33.0% system, 0.0% nice, 0.0% idle Mem: 95944K av, 76252K used, 19692K free, 39872K shrd, 2444K buff Swap: 40156K av, 4268K used, 35888K free 42944K cached PID USER PRI NI SIZE RSS SHARE STAT LIB %CPU %MEM TIME COMMAND 451 mayer 19 0 5552 5552 2884 R 0 64.4 5.7 0:22 amaya 109 root 12 0 10300 10M 1688 S 0 34.1 10.7 2:52 X 
+System information: Toshiba 4015CDT Laptop, 96MB RAM, Pentium II 266 MHz, running Linux. 
+This is a libc5 based system, however, the libc6 libraries are installed also. 
+$ uname -a Linux tosca 2.2.12 #1 Tue Nov 16 10:56:02 MET 1999 i686 unknown $ X -probeonly XFree86 Version 3.3.3.1 / X Window System (protocol Version 11, revision 0, vendor release 6300) Release Date: December 29 1998 [Rest of output cut] Window manager: kde version 1.1.2 $ ldd /usr/local/Amaya/LINUX-ELF/bin/amaya libXt.so.6 = /glibc2/X11R6/libXt.so.6 (0x40018000) libXp.so.6 = /glibc2/X11R6/libXp.so.6 (0x40061000) libSM.so.6 = /glibc2/X11R6/libSM.so.6 (0x40068000) libICE.so.6 = /glibc2/X11R6/libICE.so.6 (0x40072000) libXext.so.6 = /glibc2/X11R6/libXext.so.6 (0x40087000) libX11.so.6 = /glibc2/X11R6/libX11.so.6 (0x40092000) libdl.so.2 = /glibc2/libdl.so.2 (0x4012f000) libm.so.6 = /glibc2/libm.so.6 (0x40132000) libc.so.6 = /glibc2/libc.so.6 (0x4014f000) /lib/ld-linux.so.2 = /lib/ld-linux.so.2 (0x40000000) The precise versions are: libXt.so.6.0 libXp.so.6.2 libSM.so.6.0 libICE.so.6.3 libXext.so.6.3 libX11.so.6.1 libdl.so.2 - libdl-2.1.2.so libm.so.6 - libm-2.1.2.so libc.so.6 - libc-2.1.2.so ld-linux.so.2 - ld-2.1.2.so If desired, I am available for further testing. 
+Cheers, Uwe F. Mayer mayer@tux.org 
+In-reply-to: Your message of Mon, 07 Feb 2000 07:43:18 -0500." 
+The requested URL could not be retrieved While trying to retrieve the URL:http://www.w3c.org/ 
+The following error was encountered: Connection Failed The system returned: (51) www.w3c.org 
+This means that: The remote site or server may be down or non-existant. 
+Please try again soon. 
+That could be due to a temporary trouble on the net or a different timeout value. 
+This will be fixed in the next release. 
+You can also fix it in the dialogue file Amaya/config/en-amayamsg 
+This will be fixed in the next release. 
+You can also fix it in your local file Amaya/doc/amaya/Browsing.html 
+It seems you're probably using a proxy which is automatically configured by Netscape, but not by Amaya. 
+Could you check. 
+See the menu Special- Preferences- Proxy 
+I had a look at your 2 images. 
+On my version I have a different result. 
+I will use the page example to improve the table formatting in Amaya. 
+OK. I'll try to repeat the bug. 
+Of course yes. 
+Thanks for the report Irene. 
+In fact, further investigation has shown that Amaya sees the outside world if a numeric IP address is used, but does not connect to symbolic addresses, even as named is running on the local machine, and netscape, telnet, ssh, ftp all seem to have no problem resolving names. 
+However, Amaya is able to resolve "localhost". 
+My installation of named is several years old, and is configured as a caching/forwarding server. 
+Any ideas? 
+I am not using a proxy. 
+However, if I run a proxy on the local host, and enter it in Amaya's configuration, then it works fine, in particular the DNS names get resolved (by the proxy I presume). 
+In fact, many of the files in Amaya/config contain spelling errors. 
+I have attached a diff-file that fixes those that I found. 
+In particular I thought is was funny, that according to one message in en-amayamsg "These changes won't be effective until Amaya is retarted" 
+I found out that this is also true of the binary release 2.4 of Amaya running under SunOS 5.6. 
+However, the lines get messed up somewhat differently. 
+This bug is also repeatable for the binary running under SunOS 5.6. 
+Uwe 
+One more thing: I noticed that in the binary release some files in Amaya/config have the executable permission set, while others do not. 
+I assume that they all should not have it set. 
+Uwe 
+In our previous episode, Uwe F Mayer said: 
+Uwe, The name resolution is done thru gethostbyname(), a standard a Unix system call (to be more precise, the code is in the libwww/Library/src/HTDNS.c file). 
+There must be some kind of incompatible with your named, as we haven't noticed this problem before, in a number of systems. 
+What kind of system are you running (e.g., do a uname -a)? 
+I can eventually give you a small program that makes the request using the libwww code and we can strace or truss it to find out where's the problem. 
+If you're using an Amaya that you compiled yourself, it'll be even easier. 
+Thanks! We'll merge the messages. 
+It's a bit harder than doing a CVS diff because some of those files have evolved since the release. 
+It'd be much easier to have a database oriented system to handle translations and then use it to generate the dialogue files... but we're not there yet :) Right now, we'll make Amaya much smarter by changing that particular message :) Thanks for all your help and tests! 
+-Jose 
+More about symbolic hostname resolution with Amaya. 
+First of all, the error message I am getting when using a symbolic URL is this one: The requested URL could not be retrieved While trying to retrieve the URL:http://www.yahoo.com/ 
+The following error was encountered: Connection Failed The system returned: (51) www.yahoo.com 
+This means that: The remote site or server may be down or non-existent. 
+Please try again soon I was asked what system I am running, so here is some info on that: Toshiba 4015CDT Laptop, 96MB RAM, Pentium II 266 MHz, running Linux. 
+This is a libc5 based system, however, the libc6 libraries are installed also. 
+This was originally a Slackware-based installation, but is by now heavily modified. 
+"uname -a" gives: Linux tosca 2.2.12 #1 Tue Nov 16 10:56:02 MET 1999 i686 unknown It was suggested that there is a problem with the gethostbyname routine on my machine. 
+I therefore wrote a little C program that just places this system call, and it seems to have some problem depending on what C library one uses. 
+It seems that there is a problem with glibc2 to be precise. 
+Here is a sample run while on-line (I use dial-up networking), using a libc-5.4.46 based binary, and it works just fine: tosca:~/tmp$ ./gethostbyname-libc5 
+finanzen.de.yahoo.com 
+gethostbyname returned h_errno = 0, which should mean: no problem official name of host: de.finance.yahoo.com 
+alias list [0]: finanzen.de.yahoo.com 
+host address type: 2 length of address: 4 address list [0]: 194.237.109.9 address list [1]: 194.237.109.10 address list [2]: 194.237.109.15 
+I also have access to a glibc2 (libc-2.0.7) based system. 
+I compiled the gethostname test program there, got it back to my machine, and ran it, dynamically linked against glibc2, of course, but a newer version, libc-2.1.2. 
+This is what I got: tosca:~$ tmp/gethostbyname-glibc2 finanzen.de.yahoo.com 
+gethostbyname returned h_errno = 2, which should mean: Non-Authoritive Host not found, or SERVERFAIL Segmentation fault Thus it occurred to me, that maybe my C library is bad (I did compile it myself ;-)). 
+Hence I installed the libc-2.0.7 libraries from the other machine, and ran the same binary as before, but now dynamically linked against libc-2.0.7: tosca:~/tmp$ ./gethostbyname-glibc2 
+finanzen.de.yahoo.com 
+gethostbyname returned h_errno = 1, which should mean: Authoritative Answer Host not found official name of host: de.finance.yahoo.com 
+alias list [0]: finanzen.de.yahoo.com 
+host address type: 2 length of address: 4 address list [0]: 194.237.109.10 address list [1]: 194.237.109.15 address list [2]: 194.237.109.9 Clearly something is wrong here, because the glibc2 version of gethostname reports an error through its error variable h_errno, while there really was no error. 
+The source code to gethostbyname is appended at the end of this email. 
+Curiously enough however, using libc-2.0.7 did in fact fix my DNS problems with Amaya! 
+Just to make sure I also down-loaded the source of Amaya and compiled it, and that libc-5.4.46 based binary worked fine (well, there were obvious LessTif based problems, but that's a different story). 
+It would be interesting to know if Amaya really does have a problem with libc-2.1.2, or if it was just my copy of the C library that is bad. 
+Anyways, it seems clear now that Amaya's code is not at fault, at least as long as one uses the right library versions. 
+The only problem is now that RealPlayerG2 needs libc-2.1 to run. 
+Oh well, I'll write a wrapper script to load the correct version and edit the binary to get the correct dynamic loader. 
+Cheers, Uwe Sat Feb 12 11:05:27 MET 2000 Uwe F. Mayer mayer@tux.org 
+This program reads out the results of a gethostname() call. 
+It takes a single argument which is a DNS IP address. 
+#include stdlib.h 
+#include stdio.h 
+#include netdb.h 
+extern int h_errno; int main(int argc, char * argv[]){ int i,j; struct hostent *hostname; hostname=(struct hostent *)malloc(sizeof(struct hostent)); hostname=gethostbyname(argv[1]); printf("gethostbyname returned h_errno = %d, which should mean:\n", h_errno); switch (h_errno){ case NETDB_INTERNAL: printf("internal error in gethostbyname()\n");break; case NETDB_SUCCESS: printf("no problem\n");break; case HOST_NOT_FOUND: printf("Authoritative Answer Host not found\n");break; case TRY_AGAIN: printf("Non-Authoritive Host not found, or SERVERFAIL\n");break; case NO_RECOVERY: printf("Non recoverable errors, FORMERR, REFUSED, NOTIMP\n");break; case NO_DATA: printf("Valid name, no data record of requested type\n");break; default: printf("invalid return code in h_errno after gethostbyname() call\n"); We will try to print the results anyways, regardless of the error code. 
+Of course, that might lead to "Segmentation fault" errors. 
+printf("\nofficial name of host: %s\n",hostname- h_name); i=0; while (((*hostname).h_aliases)[i] != NULL){ printf("alias list [%d]: %s\n",i,hostname- h_aliases[i]); i++; printf("host address type: %d\n",hostname- h_addrtype); printf("length of address: %d\n",hostname- h_length); i=0; while (((*hostname).h_addr_list)[i] != NULL){ printf("address list [%d]: ",i); for(j=0;j hostname- h_length;j++){ printf("%d",(int)(unsigned char)(hostname- h_addr_list[i][j])); if (j!=hostname- h_length-1){ printf("."); 
+printf("\n"); i++; printf("\n"); return(0); 

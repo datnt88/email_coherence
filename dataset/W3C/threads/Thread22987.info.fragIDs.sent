@@ -1,0 +1,27 @@
+Hi. 
+I just discovered that DOM L2's createTextNode doesn't declare a DOMException. 
+However I would have assumed that trying to create a text node 
+using a character which is not allowed in XML (such as Control-E, U+5) would throw an exception. 
+Am I missing something, or is this a bug in the specification? 
+Julian 
+That's deliberate. 
+Checking every character of every text operation would be a significant computational expense, and in many cases entirely unnecessary since the application software may already have ensured that the data is valid. 
+Hence -- as with some of the other operations -- the DOM does _not_ continuously enforce well-formedness of text node contents. 
+DOM Level 3 is planning to define operations that perform more intensive well-formedness checks, and _may_ include a mode in which validity and well-formedness are checked continuously. 
+This is still under design, and may be an optional Feature not present in all DOMs. 
+Until that design is finished, approved, and implemented, figure on checking your own character data where and when that's necessary -- before passing it into the DOM, or at serialization time. 
+Joe Kesselman / IBM Research 
+From: Joseph Kesselman [mailto:keshlam@us.ibm.com] 
+Sent: Friday, July 27, 2001 2:45 PM Subject: Re: createTextNode vs INVALID_CHARACTER_ERR 
+Thanks for the feedback. 
+I fear lots of serializers will just ignore this problem, producing non-well-formed XML. 
+That's a quality-of-implementation issue. 
+Serializers have to examine every character anyway, because some will need escaping (&amp;amp;, or characters not directly supported in the target encoding). 
+Adding a legal-character check here is less expensive -- but admittedly less diagnostically useful -- than doing so on the input side of the equation. 
+If you need a robust serializer, either demand robustness from the authors of the one you're using or investigate others. 
+If you know from first principles that your DOM will contain only legal XML text, you may prefer to sacrifice some robustness in exchange for greater performance. 
+Which is better is up to you; the DOM leaves you free to select either option. 
+When the DOM defines its own serializer API -- also coming in DOM Level 3 -- we'll have to make a decision on what we check when and how we report anything we don't like. 
+That will _probably_ lean toward the robustness side of the equation, since we're developing a basic utility. 
+Of course you'll still be able to use stand-alone serializers, so if you don't like our choice of trade-offs you'll be able to pick another. 
+Joe Kesselman / IBM Research 

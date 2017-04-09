@@ -1,0 +1,68 @@
+Several allusions have been made to the DRS system for representing logical formulas in RDF. 
+DRS is a sort of generalized Owl Rules Language. 
+I am at long last able to release a DRS Guide and accompanying Owl ontology for formulas. 
+The Guide is included as an attached PDF file. 
+The URL for the ontology may be found at It's been validated by BBN's vOWLidator (http://owl.bbn.com/validator/), which helped me find a fix lots of bugs. 
+(I admit that there several warnings remaining when my endurance ran out; I don't know how important they were.) 
+The ontology and attached PDF follow. 
+-- Drew McDermott Yale Computer Science Department !DOCTYPE rdf:RDF [ ] rdf:RDF xmlns:rdf ="&amp;rdf;" 
+xmlns:rdfs="&amp;rdfs;" xmlns="&amp;owl;" xmlns:owl ="&amp;owl;" xmlns:xsd ="&amp;xsd;" xmlns:drs ="&amp;drs;" xmlns:swrl="&amp;swrl;" This ontology describes formulas in logical languages. 
+The type of Propositions !-- 
+Every resource can be a term, but we don't say that; it would collapse drs:Term and owl:Thing together, which would be confusing -- !-- 
+There are two ways to describe any atomic formula, as a functional term or as a triple. 
+We'd like to say that the args = cons(subj, obj), but presumably hopeless. 
+In addition, we have to absorb the class swrl:Atom, which provides several more ways to describe atomic formulas. 
+-- !-- type restriction: If a term is a Literal and is declared of type Y, then the 'value' should be a literal of type Y. Can this be expressed in OWL? -- 
+Yes. 
+So, do you ship that too ? 
+In DRS? 
+Probably not. 
+If so, then the recipients need perhaps to unwrap ontology RDF and the prover RDF to get strings like the ones Bijan suggested? 
+Not necessarily. 
+First, rumor was wrong. 
+I didn't suggest strings per se, at least, not seriously. 
+I suggested using literals and I, for one, would rather use fairly rich literals, with structure. 
+Perhaps even something RDFy :) In any of these cases, something more than generic RDF or OWL processing will be needed. 
+At some point, one will have to *interpret* that syntax, if one wants to reason with it (or do a range of other processing). 
+(To see and example, look at the transformation table from triples to abstract syntax in the OWL Syntax and Abstract Semantics, and the extension of that table in SWRL.) [snip] So, specifically, I take some exception to the following passage from the guide: """The arguments against using strings are pretty clear: Staying within RDF allows a processor to determine that a formula refers to a resource, even when it can't tell or doesn't care what it says. 
+An XML/RDF/OWL syntax checker will do useful things with DRS notation, checking that the parens balance, that only formulas occur inside connectives, and so forth. 
+Finally, the extra conciseness of strings is certainly attractive, but the advantage shrinks when we use non- XML-based versions of RDF.""" I think that interesting structured literals can do a fair bit. 
+Granted, it will require some extension, but the extension might be quite minor. 
+(Especially, if the literals are RDF/XML.) Note that there are no conciseness advantages, except in that the graph won't have reified triples all over the place. 
+Instead, they might be stuffed in a literal :) I believe triples in a literal are "dark" (to the parent graph) as well. 
+This might have some advantages. 
+One advantage of literals is that they (might be suitibly extended to) integrate different notations, while clearly delimiting where and how you are switching notations. 
+I don't put this forth as settled opinion, just as a possibility. 
+Extra work has to be done in either case. 
+Hmm. Here's an interesting thought that I'm surprised I have: I think I don't agree with Drew's claim: """An XML/RDF/OWL syntax checker will do useful things with DRS notation, checking that the parens balance, that only formulas occur inside connectives, and so forth""" I believe that an XML checker can do useful things with XML literals already, though it may be a bit tricky to get XMLSchema to do it cleanly (mostly because it seems a bit hard to get an arbitrary schema for RDF/XML, but that means that we probably should encourage RDF parsers to support Schema validation of XMLLiterals). 
+As for using RDF and OWL to do syntax, well, my thought (and recent experience supports this thought) is that most of the time it's better to use a more specific formalism, like, say, a grammar. 
+It's largely a question of supporting the right defaults. 
+Some of this underscores an earlier post of mine on rdf-rules that it would be nice not to burden the Rules working group with a no-syntax extension requirement. 
+This thread started on public-sws-ig, but probably should move to www-rdf-rules. 
+I include a pointer to Drew's original post: I have a question about the use of reification. 
+I notice that what I take to be the latest SWRL forgoes the reification sytnax altogether: For example: Whereas DRS has something like: I'm not quibbling about having special support for classAtom, but about reusing the reification vocabulary at all. 
+It leads to this bit of hair: """If a predicate has arity  2, its rdf:object slot is filled by a a term sequence, represented as an OWL list of all arguments after the first.""" 
+So sometimes the rdf:object is the argument and sometimes it's a pointer to the argument list. 
+Why not just make up your own properties (liek swrl:argument1)? 
+(Better, make the value of swrl:argument have structure like swrl:position, swrl:name, swrl:defaultValue :)) Or heck, just add as many rdf:objects as you'd like :) Cheers, Bijan Parsia. 
+[Adrian Walker] I'm a bit vague however about what you will actually do with formulae encoded in RDF. 
+If you ship them around the Web, that seems to imply that anyone receiving them has to have a suitable theorem prover / reasoner. 
+So, do you ship that too ? 
+In DRS? 
+If so, then the recipients need perhaps to unwrap ontology RDF and the prover RDF to get strings like the ones Bijan suggested? 
+To put it another way, do you have a DRS usage scenario in mind ? 
+Someone who wants to read DRS content must have a deductive engine that can take DRS formulas in RDF and reason with them. 
+The situation is analogous to that with Owl Rules. 
+They won't do you any good unless you have an Owl Rules reasoner. 
+We have two tools online using DRS: * A translator from the RDF encoding to a Lisp-like internal representation. 
+(Also translates the other way.) * A deductive engine that reasons using the internal representation. 
+It is currently found inside our ontology-translation system. 
+It does forward and backward chaining, plus equality substitution in forward-chaining mode. 
+I'm sorry that these two tools seem to be offline. 
+I will kick a little graduate-student ass. 
+-- Drew McDermott Yale Computer Science Department 
+[Adrian Walker] BTW, Ontomerge 0.1* Ontology Translation Server seems to be down at the moment. 
+It's up now: -- Drew McDermott Yale Computer Science Department 
+[snip] 
+Any plans to release the code (and perhaps to OntoMerge as well)? 
+Cheers, Bijan Parsia. 

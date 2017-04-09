@@ -1,0 +1,22 @@
+Hi, I could not deduce from the DOM level 2 specs which Attribute/Value to return from Element.getAttribute(name)/Element.getAttributeNode(name), when setting attributes via setAttribute and setAttributeNS as follows (Code in Java syntax): 1 Element e = aDocument.createElement("foo"); 
+2 Attr a1 = aDocument.createAttribute("foo:bar"); 
+3 Attr a2 = aDocument.createAttributeNS("http://www.w3.org/DOM2/bugs", "foo:bar"); 4 a1.setValue("value1"); 5 a2.setValue("value2"); -- no problem so far 6 e.setAttributeNode(a1); -- no problem: add a1 to e 7 e.setAttributeNodeNS(a2); -- OOPS, no problem, too, when following the spec. 
+for setAttributeNodeNS: -- a1.getPRefix(), a1.getLocalName() AND a1.getNamespaceURI() all return null = -- it is safe to add a2. -- AMBIGOUS STATE: NOW EXIST 2 ATTRIBUTES IN e WITH THE SAME NAME/NODENAME "foo:bar" 8 e.getAttribute("foo:bar"); -- So please, what should i return here: "value1" or "value2" ??? -- Naturally, the same problem appears for a bulk of related methods, like -- calling e.setAttribute("foo:bar",...) again, e.getAttributeNode("foo:bar"), ... -- and what about serialization :-( Note that this behavior is not even commutative (adding first a2, then a1 works!): 6' e.setAttributeNode(a2); -- no problem: add a2 to e 7' e.setAttributeNodeNS(a1); -- no problem: a1 replaces a2 as it has the same nodeName 8' e.getAttribute("foo:bar"); -- no ambiguity - relates to a1 I know, that it is 'BAD CODING STYLE' to do such things - I am implementing the DOM spec, and i am not writing such code, but i have to react appropriately when such scenarios appear. 
+The following are possible approaches to clarify this issue: 1. 
+The behavior is up to the implementation (bad idea) 2. Elements raise NOT_SUPPORTED_ERR exceptions if they encounter 'incompatible' attribute types between existing attributes and new ones (not very transparent). 
+3. documents are 'created' in a namespace aware mode or not, raising NOT_SUPPORTED_ERR exceptions if a method is applied that does not conform to the namespace mode (good, but requires DOM API changes). 
+4. Semantics of attributeNS setters is changed: 'If an attribute with that local name and that namespace URI or with local name==null and namespace URI==null and same node name is already present in the element, it is replaced by the new one.' 
+This would be 'compatible' to the behavior of simple non attributeNS setters, and 'preserve' replacements semantics in both cases. 
+Gerald Huck 
+If you use non-namespace-aware calls to retrieve the attribute by name, and there are several attributes which have that name (due to having been created using the namespace-aware calls) -- a DOM may return _any_ of them. 
+It is hoped that it will consistantly return the same one given the same source document, but that's about the best you can hope for. 
+Simple advice: Don't use the non-namespace-aware calls. 
+They're provided 
+only for backward compatability with existing DOM Level 1 code, and can not really be safely intermixed with the namespace-aware Level 2 methods. 
+Treat the old calls as deprecated. 
+Joe Kesselman / IBM Research 
+... except for XML text that doesn't use namespaces. 
+Personally, I find this response to be entirely insufficient. 
+There is a real ambiguity in the DOM-2 spec in this area which is just going to produce non-interoperability among implementations. 
+When is the DOM WG going to take this seriously? 
+Regards, Glenn Adams 

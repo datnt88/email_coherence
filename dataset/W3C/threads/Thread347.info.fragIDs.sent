@@ -1,0 +1,31 @@
+Dear Sir, would you please tell me, why tidy (version of 13th january 2000) changes the following java script line 
+parent.FRAME2.document.write(" 
+/HEAD BODY H1 " + Titel + " /H1 /BODY /HTML "); 
+to 
+parent.FRAME2.document.write(" 
+\/HEAD BODY H1 " + Titel + " \/H1 \/BODY \/HTML "); 
+adding a backslash in front of every slash in the html-tags. 
+I could not find this syntax rule in any of my html-books. 
+Kind Regards 
+Thomas Appel Hugo-Asbach-Str. 9 D-65385 R?desheim am Rhein Germany 
+Here we go again. 
+SCRIPT content is described as CDATA. 
+The parsing of CDATA content is terminated by an ETAGO (End Tag Open) sequence (" " + "/" + alphabetic character) as a general SGML rule, otherwise how would you know in a general sense where the CDATA ends and you should look for an end tag? 
+SCRIPTs must only be terminated with /SCRIPT (starts with an ETAGO, thus the need for general recognition of ETAGO for any CDATA tag, including both SCRIPT and STYLE), so the presence of any other ETAGO sequences is by 
+definition an error. 
+The easiest way to eliminate premature ETAGO sequences is to escape an interior character of the sequence. 
+The slash is 
+a natural choice. 
+Thus the introduction of the backslashes before the slash. 
+Consider what would happen if you had: document.write(" 
+/SCRIPT "); Just as a script would be terminated by the instance of /SCRIPT , so it would be terminated in a general sense by any ETAGO sequence due to the general SGML rule. 
+A general parser doesn't know anything about the syntax of scripting languages, so won't care that it is in quotes. 
+Tidy's changes are necessary for compliance, and function is not altered. 
+Hallo Thomas, um es einfach zu sagen: F?r einen Parser, der ja i.A. kein JavaScript "versteht", endet ein SCRIPT -Block beim ersten schliessenden Tag ( /... ). 
+Aus diesem Grund mu? jeder Slash im document.write-Aufruf 
+mittels voransgestellen Blackslash maskiert werden. 
+Genauere Informationen findest Du in der Spezifikation zu HTML 4.0: [http://www.w3.org/TR/REC-html40/appendix/notes.html#notes-specifying-data] 
+Diese Information ist ultimativ, wenn Deine B?cher etwas gegenteiliges sagen, beschwer Dich bei Autor und/oder verlag und gib diese Adresse als Referenz. 
+Gruss nach Ruedesheim! :) sebastian. 
+Sebastian Lange Maybe the first chat site that validates as HTML 4.0 even though user input may contain HTML codes. 
+Courtesy to Dave Raggett's HTML Tidy: 

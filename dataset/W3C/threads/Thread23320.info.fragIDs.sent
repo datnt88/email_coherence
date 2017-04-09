@@ -1,0 +1,70 @@
+Hi there, 
+I have some questions about documents with mixed level 1 and level 2 nodes. 
+My original question was: You have NamedNodeMap::setNamedItemNS(Node) and Element::setAttributeNodeNS(Attr), which both say that when called it should replace any node with the same local-name/ namespace URI pair. 
+My question is, what should happen when this method is called with a DOM Level 1 node as argument, where both the local name and namespace are null? 
+I do not see any behavior defined for this, I see two options: - If namespace and local name are null on the entered node, call setNamedItem/ setAttributeNode instead. 
+- Throw an exception. 
+Then I thought about it a little more, what should happen if a user does this: Element myElement = document.createElementNS(null, 
+"someName"); myElement.setAttribute("sameName", 
+"value1"); myElement.setAttributeNS(null, 
+"sameName", "value2"); or Element myElement = document.createElementNS(null, 
+"someName"); NamedNodeMap attributes = myElement.getAttributes(); 
+attributes.setNamedItem(document.createAttribute("sameName")); attributes.setNamedItemNS(document.createAttributeNS(null, "sameName")); In both cases, all statements individually are correct, and in both cases the set...NS statement per specification only looks whether there is already an attribute with the same localname. 
+So with our DOM implementation I get two attributes with the same name on the element (I also tried it with Xerces, and there the attribute gets replaced with the second one in both cases, so maybe I read the specification incorrectly?). 
+I already know the standard answer: "Don't mix the two kinds of nodes then." 
+That is very nice, but users are going to do that if you give them a chance, and there are at least two use cases where I cannot blame them: 
+- If you have one level 1 document and one level 2 document, and copy some data from one to the other using importNode. 
+The specification says you have to make copies of the namespace attributes (attributes of the Node here), so if you import a DOM level 1 node, it will remain a DOM level 1 node when copied (Our customer who ran into this was constructing a document from several others). 
+- If the user has first parsed a document (which will usually create DOM level 2 documents by default in most implementations), and then start to alter that document using DOM calls, but without an intimate knowledge of the DOM specification. 
+He/ she will most likely go for the createElement, createAttribute, setAttribute calls instead of createElementNS(null, ...) etc. if he/ she uses no namespaces, leading to mixed-nodes documents. 
+All the non-NS methods have the warning "To create an element with a qualified name and namespace URI, use the createElementNS method." which I do not think is going to stop most people, who will think 'I am not using namespaces, I do not even know what the heck a qualified name is, so createElement is the call for me'. 
+I also have a proposed solution: I feel that 
+- createElement, createAttribute and setAttribute should create DOM level 2 nodes when the document element of the document is a level 2 node (so localName should be set in that case). 
+- importNode should also set the localName if a DOM level 1 node is imported into a DOM level 2 node (do not really know for the other direction, simply clearing the info is probably not possible). 
+- setNamedItemNS and setAttributeNodeNS should not only check for localName and namespace URI but also for qualified name, like Xerces apparently already does. 
+Sure, it breaks backwards compatibility, but if most people don't care about mixed node problems, they probably won't care about backwards mismatches in those things. 
+Kind regards, --Sander. 
+P.S.: Recipe to get two attributes with the same name on one element in Xerces 2.0.1: Element myElement = document.createElementNS(null, 
+"someName"); org.w3c.dom.NamedNodeMap attributes = myElement.getAttributes(); 
+attributes.setNamedItemNS(document.createAttribute("otherName")); attributes.setNamedItemNS(document.createAttribute("otherName")); will serialize to: X-Hive Corporation (www.x-hive.com) 
+On Wednesday, 07/17/2002 at 04:31 ZE2, "Sander Bos" sander@x-hive.com 
+You can pass a Level 2 document down to Level 1 code and it will function 
+as a Level 1 DOM. 
+You can _not_ create non-namespaced nodes and pass it 
+back up to Level 2 code and expect correct operation. 
+This is by design; 
+the non-namespaced calls can be considered deprecated except for purely 
+Level 1 applications. 
+So you're asking about correct behavior for something that should never be allowed to happen. 
+Which is why it's undefined. 
+Users are "going to do" all sorts of things we don't support. 
+That doesn't necessarily mean we should support them. 
+We did discuss this during the design of DOM Level 2. Your proposed solution is one of those which was placed on the table at that time. 
+It was rejected, partly because some folks insisted that a level 1 node *must* have no prefix and no localname. 
+Changing this probably exceeds the bounds that could be handled as an erratum. 
+It's a significant redesign. 
+Much as I would have preferred not to have the distinction between "level 1 nodes" and "level 2 nodes", I think you're going to face major objections to changing that design now. 
+Joe Kesselman / IBM Research 
+Dear Joseph, 
+function as 
+back up 
+non- 
+namespaced calls can be considered deprecated except for purely Level 
+1 
+Thank you for your answer. 
+I can go a long way with this, but then I feel that at least in the Java-binding where this is possible, these methods should not be considered deprecated but really be made deprecated, to give users a proper warning not to use them. 
+Since you say that level 2 nodes (part of a level 2 documents) will work correctly with level 1 code, people could replace all deprecated method-calls with non-deprecated ones, and code would continue to work as normal. 
+This is exactly what the Java deprecation mechanism is for I think. 
+It does not really solve the importNode thingy, but since that is a call introduced in level 2, I would say you could still make the specification say there, 'will create only level 2 nodes' (as those nodes will look the same as level 1 nodes in the level 1 methods). 
+I agree less with this, not be allowed to happen - exception. 
+Kind regards, --Sander. 
+This too was discussed. 
+We felt we couldn't deprecate the Level 1 non- namespaced node creation methods because in the proper context -- writing a pure Level 1 application but compiling/running it against a Level 2 parser, for example -- the old calls actually are the right answer. 
+Thus, until we're ready to withdraw Level 1 entirely, deprecation isn't really the right answer. 
+At least, not as long as there are managers out there who insist that a clean compilation means no deprecated calls rather than letting folks explicitly accept and sign off on specific warnings. 
+(And frankly, I'm not sure they're wrong.) 
+I agree that it's an ugly situation. 
+It's what we've got. 
+I do sorta like the idea of an importNode operation which would try to reconcile namespaces as it went. 
+But I'm not sure whether that should be core DOM rather than a utility function written on top of the DOM. 
+Among other things, I suspect that the question of what to do when this fix-up _can't_ be performed -- when a Level 1 node uses a prefix which can't be resolved in the source document -- is going to be application-specific. Joe Kesselman / IBM Research 

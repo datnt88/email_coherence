@@ -1,0 +1,99 @@
+This is actually an old issue that was raised privately just before draft 07 became an RFC. 
+As I recall, all of the editors agreed to the change. 
+[from last August ...] Alexei Kosut pointed out to me that the max-age cache-response-directive is not really defined in the text of the section on Cache-Control (14.9), and that the cross-ref to it in Section 13.2.4 incorrectly points to section 14.10 (and looks to have eaten the close-paren as well). 
+There are probably enough indirect references to the meaning of max-age to make interpretation of it clear, but the following from draft 01 should have remained in the draft: When the "max-age" directive is present in a cached response message, an application must refresh the message if it is older than the age value given (in seconds) at the time of a new request for that resource. 
+The behavior should be equivalent to what would occur if the request had included the max-age directive. 
+If both the new request and the cached message have max-age specified, then the lesser of the two values must be used. 
+A max-age value of zero (0) forces a cache to perform a refresh (If-Modified-Since) on 
+every request. 
+The max-age directive on a response implies that the server believes it to be cachable. 
+Given the other additions (must-revalidate) to Cache-control, I would rewrite this and append it to the first paragraph of section 14.9.3: 
+The expiration time of an entity may be specified by the origin server using the Expires header (see section 14.21). 
+Alternatively, it may be specified using the "max-age" directive in a response. 
+When the "max-age" directive is present in a cached response, a cache SHOULD consider the response to be stale if it is older than the age value given (in seconds) at the time of a new request for that resource. 
+The "max-age" directive on a response implies that the response is cachable. 
+and then add as a separate paragraph at the end of section 14.9.3: 
+If both the new request and the cached entry include "max-age" directives, then the lesser of the two values SHOULD be used for determining the freshness of the cached entry for that request. 
+and fix the cross-ref in Section 13.2.4. 
+...Roy T. Fielding 
+Department of Information &amp; Computer Science (fielding@ics.uci.edu) 
+Does it mean that: if there is a max-age in a response, it is cacheable (independent of the value of max-age)? 
+So, if a server wants a response to be treated as uncacheable then should it return a Expires = Date or max-age set to zero? 
+Yours, Bertold Kolics, Bertold E-Mail: bertold@tohotom.vein.hu 
+University of Veszprem, Hungary W3: http://tohotom.vein.hu/~bertold/ 
+Information Engineering Course 
+Yes, but not independent of other parts of Cache-Control (like private). 
+It should return Expires = Date and Cache-Control: no-cache The first is for HTTP/1.0 caches and the second id for HTTP/1.1 caches. 
+Note that max-age=0 means "cachable, but treat as stale on future requests". 
+.....Roy 
+After some good comments from Jeff, I am changing my proposed change. 
+The first three paragraphs of section 14.9.3 of RFC 2068: The expiration time of an entity may be specified by the origin server using the Expires header (see section 14.21). 
+Alternatively, it may be specified using the max-age directive in a response. 
+If a response includes both an Expires header and a max-age directive, the max-age directive overrides the Expires header, even if the Expires header is more restrictive. 
+This rule allows an origin 
+server to provide, for a given response, a longer expiration time to an HTTP/1.1 (or later) cache than to an HTTP/1.0 cache. 
+This may be useful if certain HTTP/1.0 caches improperly calculate ages or expiration times, perhaps due to desynchronized clocks. 
+Note: most older caches, not compliant with this specification, do not implement any Cache-Control directives. 
+An origin server wishing to use a Cache-Control directive that restricts, but does not prevent, caching by an HTTP/1.1-compliant cache may exploit the requirement that the max-age directive overrides the Expires header, and the fact that non-HTTP/1.1-compliant caches do not observe the max-age directive. 
+should be replaced with The expiration time of an entity may be specified by the origin server using the Expires header (see section 14.21). 
+Alternatively, it may be specified using the "max-age" directive in a response. 
+When the "max-age" directive is present in a cached response, the response is stale if its current age is greater than the age value given (in seconds) at the time of a new request for that resource. 
+The "max-age" directive on a response implies that the response is cachable (i.e., "public") unless some other, more restrictive cache directive is also present. 
+If a response includes both an Expires header and a max-age directive, the max-age directive overrides the Expires header, even if the Expires header is more restrictive. 
+This rule allows an origin server to provide, for a given response, a longer expiration time to an HTTP/1.1 (or later) cache than to an HTTP/1.0 cache. 
+This may be useful if certain HTTP/1.0 caches improperly calculate ages or expiration times, perhaps due to desynchronized clocks. 
+Many HTTP/1.0 cache implementations will treat an Expires value that is less than or equal to the response Date value as being equivalent to the Cache-Control response directive "no-cache". 
+If an HTTP/1.1 cache receives such a response, and the response does not include a Cache-Control header field, it SHOULD consider the response to be non-cachable in order to retain compatibility with HTTP/1.0 servers. 
+Note: An origin server wishing to use a relatively new HTTP cache control feature, such as the "private" directive, on a network that includes older caches which do not understand that feature, will need to combine the new feature with an old Expires value in order to prevent the older caches from caching the response. 
+and then add as a separate paragraph at the end of section 14.9.3: 
+If both the new request and the cached entry include "max-age" directives, then the lesser of the two values is used for determining the freshness of the cached entry for that request. 
+and fix the cross-ref in Section 13.2.4. 
+...Roy T. Fielding 
+Department of Information &amp; Computer Science (fielding@ics.uci.edu) 
+Roy T. Fielding: 
+Eek! This is a completely new SHOULD as far as I can see. 
+I oppose adding this SHOULD because it leads to sub-optimal caching. 
+I don't see any need to be compatible with the `Many HTTP/1.0 cache implementations' the paragraph talks about. 
+I consider these `many implementations' to be sub-optimal, because they should be using I-M-S to revalidate the stale entry instead of just throwing it away. 
+Also, this new SHOULD contradicts the Expires section: 
+|14.21 Expires 
+Koen. 
+Actually, it is an old SHOULD that was discarded when the big caching changes were made to Expires. 
+It reflects what was in HTTP/1.0. 
+The only way to obtain optimal caching is to use Cache-Control, or no Expires at all. 
+This paragraph would only apply when it is clear that an older, RFC 1945-compliant origin server is attempting to force proxies not to cache a message. 
+The changes to Expires from RFC 1945 to 2068 removed those semantics, but in so doing created an incompatibility between HTTP/1.0 and HTTP/1.1, which by definition is an error in the new protocol. 
+The only significant effect on HTTP/1.1 caching will be the prevention of caching messages from HTTP/1.0 servers that are clearly intended to not be cachable. 
+That would be changed as well. 
+.....Roy 
+Roy T. Fielding: 
+Koen Holtman: Eek! 
+This is a completely new SHOULD as far as I can see. 
+I oppose adding this SHOULD because it leads to sub-optimal caching. 
+I don't see any need to be compatible with the `Many HTTP/1.0 cache implementations' the paragraph talks about. 
+I consider these `many implementations' to be sub-optimal, because they should be using I-M-S to revalidate the stale entry instead of just throwing it away. 
+One goal for HTTP/1.1 is that it not break any HTTP/1.0 implementations. 
+The HTTP/1.0 not-quite-specification (RFC1945) says, for "Expires" Applications must not cache this entity beyond the date given. 
+I.e., the HTTP/1.0 interpretation here is a MUST, and we are actually relaxing it by saying "SHOULD". 
+Lest one think that this is some newfangled thing in RFC1945, I went back to earlier texts for "Expires". 
+Back in March, 1995, draft-ietf-http-v10-spec-00.txt said Caching clients (including proxies) must not cache this copy of the resource beyond the date given, unless its status has been updated by a later check of the origin server. 
+(which is probably clearer than the RFC1945 wording). 
+Going back even further, to November 1993, draft-ietf-iiir-http-00.txt said that "Expires" Gives the date after which the information given ceases to be valid and should be retrieved again. 
+(whether this "should" is a SHOULD or a MUST isn't clear, since the term "should" is often used in this document in places where we would almost certainly use MUST today.) 
+Aside from that, this probably does not pose a serious threat to cache performance. 
+On the other hand, it could probably be worded better. 
+How about something like this: Many HTTP/1.0 servers expect caches to treat an Expires value that is less than or equal to the response Date value as being equivalent to the Cache-Control response directive "no-cache". 
+If an HTTP/1.1 cache receives such a response, and the response does not include a Cache-Control header field, it SHOULD NOT use the response in reply to a subsequent query without first revalidating it. 
+I.e., while "max-age=0" does not imply "must-revalidate", "expires now" does. 
+Also, this new SHOULD contradicts the Expires section (14.21): 
+The Expires entity-header field gives the date/time after which the response should be considered stale. 
+A stale cache entry may not normally be returned by a cache (either a proxy cache or an user agent cache) unless it is first validated with the origin server [...] Not as I reworded it. 
+Note that the word "cachable" is used a little too informally in HTTP/1.1 (RFC2068). 
+The definition is cachable A response is cachable if a cache is allowed to store a copy of the response message for use in answering subsequent requests. 
+The rules for determining the cachability of HTTP responses are defined in section 13. 
+Even if a resource is cachable, there may be additional constraints on whether a cache can use the cached copy for a particular request. 
+I believe what Roy meant by "non-cachable" is "not usable without revalidation", not "not storable". 
+-Jeff 
+No, I meant not "cachable" as defined by RFC 2068. 
+The paragraph would not be needed if I meant "not usable without revalidation", since the existing definitition of Expires adequately covers that. 
+....Roy 

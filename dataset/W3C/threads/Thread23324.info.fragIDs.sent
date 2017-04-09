@@ -1,0 +1,24 @@
+Hello, The newLine attribute of the DOMWriter interface is described as follows[1]: "The end-of-line sequence of characters to be used in the XML being written out. 
+Any string is supported, but these are the recommended end-of-line sequences (using other character sequences than these recommended ones can result in a document that is either not serializable or not well-formed): " 
+What precisely is meant by "Any string" in the text I've cited? 
+Does it mean that the value of the attribute could be equal to the string "EOL", or does the string have to be composed only of what are typically used as end-of-line characters (i.e., #xA and #xD)? 
+In addition, to what does the newLine attribute apply? 
+In the case of Text or CDATASection nodes, does it apply to only #xA characters found in the Node to be written, or does it apply to any single character or sequence of characters that will, in the particular encoding, output device, etc., result in an end-of-line? 
+For example, if a CDATA node were created containing the characters "a b #xD #xA c d", (where spaces are not part of the value, just there for legibility) and the value of the newLine attribute is "EOL", should the characters "a b #xD E O L c d" be written, or should the #xD #xA be treated as logically representing a single end-of-line, which would mean the characters "a b E O L c d" should be written? 
+Thanks, Henry [1] Henry Zongaro Xalan development IBM SWS Toronto Lab Tie Line 969-6044; Phone (905) 413-6044 
+In the former case, what, if anything, should be done about existing instances of the string "EOL" in text or CDATA nodes? 
+Should they be escaped somehow? 
+Or should the resulting output simply have "bogus" newlines? 
+Boris Wallet [n]: Mythical object rumored to carry mysterious, disappearing substances referred to as "money" or "cash" (not to be confused with the C Shell). 
+The association of this "money" to real life is currently being researched by R&amp;D (put Reality in the Background; Dammit). 
+Full results are expected RSN, however, preliminary results indicate that this substance "money" is often required to obtain such necessities as computers, pizza, hard drives, caffeine, a network connection, and resolving the conflict between ordering the pizza and maintaining your network connection. 
+I would hope the intent is to support whatever line-break is appropriate for the platform which the load/save code is running on -- same variation as in the XML Recommendation's description of end-of-line representations and handling, plus whatever was done about the EBCDIC newline character (which, annoyingly, has its own Unicode code point).. 
+So if you really have a platform where end of line is marked as the string "EOL" -- extremely non-useful since this would conflict with many, many text files -- then yes, I'd expect that string to appear in this property. 
+That's not exactly likely to ever arise, but -- again -- consider the EBCDIC case, and then consider that someone else may invent yet another Unicode code point for the same purpose (sigh) and we don't want to have to rewrite our spec to let someone Do The Right Thing. 
+So I'm not convinced it's the DOM's responsibility to sanity-check this value. 
+if someone gives us a weird definition of newline, we should probably take their word for it, and leave the question of warning messages as a quality-of-implementation issue. 
+Joe Kesselman / IBM Research 
+Joseph Kesselman scripsit: 
+Nothing's been done yet, nor likely to be until XML 1.1. 
+As for EBCDIC NEL having its own Unicode code point, it has to: EBCDIC supports all of CR, LF, and NEL, though the first two are not normally used in plain text files. 
+John Cowan jcowan@reutershealth.com Charles li reis, nostre emperesdre magnes, Set anz totz pleinz ad ested in Espagnes. 

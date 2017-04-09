@@ -1,0 +1,80 @@
+Hi, I'm implementing the Level 3 XPath module and have a query. 
+I 
+understand that namepsace nodes are created at parse time and are not 
+affected by changes to the tree. 
+What happens when we create a new element in a certain namespace? 
+Do we also create namespace nodes if appropriate? 
+If so then it seems that we are saying its not just a parse time thing. 
+If not then a query such as /root/newEle/namespace::* would return a different result if we serialised the document (after namespace normalisation) and then reparsed it. 
+Gareth Gareth Reakes, Head of Product Development DecisionSoft Ltd. http://www.decisionsoft.com 
+Office: +44 (0) 1865 203192 
+XPath 1.0 could claim that these occur at parse time, but often in DOM there was no parsing, and now in XPath 2.0, they may not go through parsing. 
+I believe that there are problems in XPath 2.0 data model with the concept that namespace nodes are created at element creation time, which I have pointed out in previous comments to that working group, but they have not been addressed. 
+DOM Namespace nodes are clearly NOT created when the DOM element is created. 
+It is impossible and inefficient to do so, because which 
+namespace nodes are in-scope changes with where the element is inserted and many other things that have not occurred yet at element creation time such as insertion into the tree and adding namespace attributes to the element. 
+For this reason, it is expected that implementations will create namespace nodes in response to a query. 
+The DOM XPath API makes it clear, I think, that these are identified created during query evaluation from the namespace information available in the tree and then just forgotten until next time they are requested, when they are recreated. 
+If an application were to hold on to the namespace returned from one of the previous queries and then later to remove the element from a scope which declared the namespace, the namespace node does not mutate, not even to null-out it's parent. 
+Ray Whitmer rayw@netscape.com 
+They're created when the XPath runs, which I think is fine; anything 
+before that is "parse time" for XPath's purposes. 
+The only thing which might make this distinction visible would be that we may produce new objects each time. 
+HOWEVER -- remember that object identity is *not* the official way to test DOM node identity; that can only be done portably via the DOM L3 isSameNode() method. 
+That could be appropriate jiggered to return true for namespace node objects created via two separate queries, if they declare the same prefix and namespace and if the ownerElements match (also conceptually tested via isSameNode()). 
+Note that in XPath 2.0 current draft the question of ownership of namespace nodes pretty much goes away -- they allow it to be assigned fairly arbitrarily, so it _could_ be the ownerElement of the actual Attr this namespace came from. 
+(Xalan takes that approach and trusts XPath 2.0 will bless it. 
+Fact is, almost nobody uses the namespace axis and of those a vanishingly small number ever ask for the XPath-parent of a namespace node, so this deliberate divergence from XPath 1.0 makes very little real-world difference.) Joe Kesselman / IBM Research 
+So it means its applications responsibility to invalidate or remove the namespace node it was haging on when the element which declared is removed. 
+right? 
+-vivek. 
+Vivek Pandey XML &amp; Webservices Sun Microsystems, Inc. 
+Remove it from what? 
+Perhaps I do not understand your use case. 
+It was typically never inserted anywhere by the DOM XPath implementation, so what would it be removed from? 
+In a garbage collected system, it just drops to the floor when the application no longer references it, and it is similar with a refcounted system. 
+The same is true of other DOM nodes. 
+If you have a returned element node, the application may hang on to it long after it has been removed from the DOM hierarchy, but that is the application's problem once it hangs onto things after a hierarchy is mutated. 
+Ray Whitmer rayw@netscape.com 
+I meant removed from the DOM tree. 
+Your comment below answers it. 
+thanks! -vivek. 
+Vivek Pandey XML &amp; Webservices Sun Microsystems, Inc. 
+Hi Joe, thanks for the reply. 
+I followed your lead and made the ownerElement the the element that the ns attr was on. 
+I then noticed a section which states that ns nodes have no parent. 
+What is the use/need in setting the ownerElement if this is the case? 
+Gareth 
+Gareth Reakes, Head of Product Development DecisionSoft Ltd. http://www.decisionsoft.com 
+Office: +44 (0) 1865 203192 
+Parent and ownerElement are distinct values in the DOM. 
+As of DOM Level 1 (and 2), the latter is defined only for Attrs, which have no parent (because they are never children) but do have an ownerElement (because some applications -- the XPath data model in particular! 
+-- did want to be able to navigate from Attr to its associated Element). 
+What XPath calls parent has to be implemented in DOM code as if(node is an Attribute -- or, now, a Namespace Node) return node's ownerElement else return node's parent Since Namespace Nodes are also not children, they too have no Parent -- but do have an ownerElement, for exactly the same reason; XPath 1.0 insisted on making it possible to navigate back to the Element. 
+XPath 2.0 has admitted that was a design error and said that the parent of a Namespace Node is undefined, which makes implementation one heck of a lot simpler -- especially since nobody but compliance tests was ever attempting to navigate back out of a Namespace Node, and vanishingly few applications even attempt to use the Namespace axis. 
+Yes, this terminology conflict, and the extra test, is a nuisance. 
+In retrospect, XPath really should have changed their terminology (but they weren't willing to do so, sigh), and/or the DOM should have provided a single operation that mapped more closely to XPath's concept of parent (which is why I've proposed that we might want to move ownerElement from the Attr interface to the Node interface). 
+Joe Kesselman / IBM Research 
+I have been unable to make the concept of ownerElement work the same as XPath all the time, even if moved to Node. 
+The problem is that the XPath Parent of the document element is the Document, which is called the root in XPath. 
+ownerElement appropriately returns an Element node, so it cannot return 
+the same thing as XPath's parent axis in this case because the root is not an element, but is rather a Document. 
+Ray Whitmer rayw@netscape.com 
+On Tuesday, 09/17/2002 at 07:15 MST, rayw@netscape.com (Ray Whitmer) 
+Hmmm. We're now working around Attr nodes via Node xpathParent=node.getParent(); 
+if(xpathparent == null &amp;&amp; node.getNodeType()==DOM.ATTRIBUTE_NODE) xpathParent=((Attr)node).getOwnerElement(); and with this change that could be inverted to Node xpathParent=node.getOwnerElement(); 
+if(xpathparent == null) xpathParent=node.getParent(); 
+Slightly cleaner and probably slightly better performing. 
+But still a nuisance. 
+Sigh. 
+An alternative would be to implement Node.getOwnerNode(), which for attrs would yield the same value getOwnerElement() does now (but as a Node) and for others would yield the new behavior -- ownerElement if exists, else the parent (Document node if this is the root, null if it's an orphan tree). 
+But I was hoping to do this by a minor reshuffle rather than by enlarging the DOM API; the latter's harder to get acceptance on. 
+Of course if we'd thought of this at the time we could have implemented getOwnerNode() in the frst place. 
+Hindsight is always 20/20... 
+Joe Kesselman / IBM Research 
+getOwnerNode is also wrong, because in the case of a text which is the child of an entity reference, it would return the entity reference instead of the Element. 
+That is why the ownerElement was almost correct. 
+Ray Whitmer rayw@netscape.com 
+So call it getOwnerElementOrDocument(), returning Node just as getParent does... though that name's a bit verbose. 
+On the other hand, I don't think getXPathParent() would fly, for various reasons...? We know what we want to do, we know why we want to do it (efficiency and code clarity), we just need a clean way of expressing it... and I need to convince folks that it's interesting enough to be worth supporting. 
+Joe Kesselman / IBM Research 

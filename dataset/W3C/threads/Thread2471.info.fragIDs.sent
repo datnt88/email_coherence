@@ -1,0 +1,33 @@
+We are developing a transparent web proxy, such that a browser does not necessarily know that it is sending requests through a proxy. 
+I have 
+inherited the Web proxy code from a contractor who left. 
+It turns out, that our Proxy only supports HTTP/1.0 and will reject any requests for HTTP/1.1 Looking at the Netscape Proxy server, it seems to have some way of 'downgrading' the Browser to HTTP/1.0 as a stopgap measure. 
+My question: Is there a document / RFC somwhere which explains how we are supposed to do this ? 
+I haven't been able to find anything so far. 
+Nick "Hey, Cool. 
+When you press the black button labelled in black on a black background, a black light lights up black to let you know you've done it!" -- Zaphod Beeblebrox 
+You can't write a transparent HTTP/1.1 proxy. 
+HTTP/1.1 makes explicit provisions for proxies which requires the client to be aware whether or not a proxy is in between. 
+Ari Luotonen, Mail-Stop MV-068Opinions my own, not Netscape's. 
+Netscape Communications Corp.ari@netscape.com 
+501 East Middlefield Roadhttp://people.netscape.com/ari/ 
+Mountain View, CA 94043, USANetscape Proxy Server Development 
+[snip] 
+It is more than a stopgap measure - it is a must (for HTTP/1.0 proxies). 
+You might find ftp://ds.internic.net/internet-drafts/draft-ietf-http-versions-01.txt instructive. 
+Basically you must down- or upgrade both the request and the response to the highest version you're conditionally compliant with. 
+Cheers, Ronald 
+Hi! As I see it, if only your transparent proxy returns a HTTP/1.0-response it would downgrade the client correctly. 
+If it totally rejects a request just because it's HTTP/1.1, there is probably just some stupid strcmp(lastpartofrequest,"HTTP/1.0") somewhere. 
+I've seen that before on some webservers. 
+On the other hand, I can't see why a transparent HTTP/1.1-proxy would be impossible. 
+I just wrote one myself (transparently proxies socks port 80) and it seems to work. 
+It will rather upgrade on both sides to 1.1 than downgrade to 1.0, and IMHO it works like a charm. 
+So, I nervously wonder, what paragraph of RFC2068 did I just break, who's the victim, 
+and what's the verdict? 
+:) TIA for comments. 
+Regards, Robban RobTex http://www.robtex.com/ home of JavaMachine, SuperSearch, VikingServer and Robban's Homepage. 
+Apologies for delayed answers 
+You missed at least section 14.44 Via: The Via general-header field MUST be used by gateways and proxies to indicate the intermediate protocols and recipients between the user agent and the server on requests, and between the origin server and the client on responses. 
+I invite you to join the ongoing interoperability testing by putting your proxy on an Internet-reachable system so that the rest of us can test through it. 
+This requirement is not just a matter of known problems in the present protocol - it comes from long experience with protocol development that has shown that having 'invisible' participants in the protocol makes debugging the protocol and detecting what features may be expected to work for a given set of participants difficult or impossible. 

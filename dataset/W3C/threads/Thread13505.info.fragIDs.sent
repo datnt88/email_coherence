@@ -1,0 +1,75 @@
+Hello all, Our next telecon is Monday 14 May, 10:00-11:30 Eastern USA Time (GMT -05:00) on the MIT bridge (+1 617-258-7910) Topics: 1. Possible EARL Implementations and how/who to bring them to life 
+a. Bookmarklets/Annotea. Refer to Len's post from 10 April: 
+b. WART. 
+http://www.w3.org/WAI/report/ c. Charles suggests Checklink: 
+2. Re: EARL implementations, Daniel says we need, "some library code to support generation/reading of the markup (either n3 or rdf)." 
+Ideas?? 
+3. Libby Miller is documenting different annotation approaches, including EARL. http://ilrt.org/discovery/2001/04/annotations/ 4. Sean's EARL Filter: 
+5. Errata for EARL. 
+Sean, do you want to discuss the issues you've raised or were you just documenting them (as you said near the end of your message)? 
+http://lists.w3.org/Archives/Public/w3c-wai-er-ig/2001May/0003.html 
+wendy a chisholm world wide web consortium web accessibility initiative seattle, wa usa 
+Well, I found quite a few more, and am currently working on a 0.95 version of the schema. 
+Many of them are actually just improvements to the language, rather than actual errors. 
+Summary (thus far):- 1) Domain and range semantics too strict for some properties, use DAML restrictions instead. 
+2) Trying to work on the contexts vs. refiication stuff. 
+Need to declare more stuff as being a sub class of rdf Statement, but in N3 we use n3:Statement, so I'm not 100% certain on the situation. 
+Minor point. 
+3) Much work done on Unique and Non Unique Test Subjects. 
+Some mess created, but much progress. 
+4) Agreed (as has Aaron) that p/o in earl:Assertion could and most probably should be swapped around. 
+5) Found that DAML provides much flexibility and semantics that the schema requires, and yet aren't present in RDF Schema. 
+I'm making more use of DAML, such as oneOf to provide easy ennumerations. 
+Means we use less prose, and more machine processable semantics, but hangs by a thread. 
+6) Might need mappings from 0.9 = 0.95. 
+7) Not sure about dc:date in EARL - could but a DAML restriction on it, because I think we should look carefully into the actual object of dc:date... what datatype? 
+Messy, as far as namespaces for datatypes are concerned :-) 8) Now uses a novel way to define evaluations and assertions - as an intersection of some restrictions on the reification properties (plus it sounds good as well). 
+Interesting way of going about it, but needs checking over. 
+Here's a snippet:- earl:Evaluation rdfs:subClassOf [ daml:intersectionOf ([ daml:onProperty rdf:subject; daml:toClass earl:Assertor ] [ daml:onProperty rdf:predicate; daml:toClass earl:AssertsProperty ] [ daml:onProperty rdf:object; daml:toClass earl:Assertion ]) ] . 
+There's probably some more errata and points that I've missed as well. 
+I'd like to discuss some of the issues - especially as EARL is (hopefully) moving away from the theoretical and towards the practical. 
+I've been thinking about actual situations, and they seem to work well because the RDF model is so clean - and repurposable. 
+One additional point is, "how can we point to the XML version of a BNF parse tree [1] using a URI?". 
+It's not too much of a problem at this stage, but it will become so when we want to start pointing at very specific bits of code... 
+For example, we could do something like:- :x :content http://mycss.org/css.css 
+; a earl:XMLBNFThingy; :xpointer "(rule[8])" . 
+But that probably rates as a "9/10" on the hack scale. 
+Still, I'm really impressed by the potential that EARL carries with it; word is slowly spreading... [1] http://lists.w3.org/Archives/Public/w3c-wai-er-ig/2000Dec/0043 
+Kindest Regards, Sean B. Palmer @prefix : http://webns.net/roughterms/ . 
+:Sean :hasHomepage http://purl.org/net/sbp/ . 
+[On the agenda...] 
+I present to you all:- - A Javascript Bookmarklet For EARL Purely as a proof-of-concept. 
+I'm too tired to write this up fully yet - just try it and tell me if it works/fails. 
+Hey, you could use it to make an EARL evaluation about itself... but only if it passes! 
+Kindest Regards, Sean B. Palmer @prefix : http://webns.net/roughterms/ . 
+:Sean :hasHomepage http://purl.org/net/sbp/ . 
+Take the WART example, if someone wanted to adapt the rep5.cgi last step of the report script suite (which gather the data and send an email to wai-report@w3.org today) to generate a EARL piece, it would need some kind of perl package to do so, to easily generate the n3/rdf notation from a higher level API. 
+Very unrool... (Australian for cool) Proposed further work: 1. Make it generate the stuff in RDF/XML syntax as an annotea annotation. 
+Should we look at setting up some server to hold these? 
+or ask the Annotea crowd if we can give the program an ID it can use to store them? 
+2. Mix this with the WART tool (I guess that was an obvious one :) I guess we also bneed to stabilise the EARL stuff a bit more before we need to go around builiding large-scale applicatiosn, although we should be able to use existing equivalence vocabulary to make sure that we aren't building legacy stuff that will bite us. 
+anyway... 
+I used it to produce the following bit of N3 @prefix earl: http://www.w3.org/2001/03/earl/0.95# . 
+@prefix : #g_5_14_200111831PM . 
+@prefix dc: http://purl.org/dc/elements/1.1/ . 
+:Person earl:asserts { :Page earl:passes :TestCase } . 
+:Person earl:name "Charles McCathieNevile"; earl:email "charles@w3.org" . 
+:Page earl:testSubject http://infomesh.net/2001/05/earl/bookmarklet/ ; a earl:UniqueTestSubject, earl:WebContent; dc:date "5/14/2001 1:18:31 PM"; dc:title "A Javascript Bookmarklet For EARL" . 
+:TestCase a earl:TestCase; earl:suite http://www.w3.org/TR/WCAG10-TECHS/#tech-scripts . 
+[On the agenda...] 
+I present to you all:- - A Javascript Bookmarklet For EARL 
+Sean, i think we ought to track EARL open issues. 
+Suppose we can make Section 6 of http://www.w3.org/2001/03/earl/ "open issues" or should it be a separate document? 
+--w 
+wendy a chisholm world wide web consortium web accessibility initiative seattle, wa usa 
+Suppose we can make Section 6 of it be a separate document? 
+I'd prefer to put it in a separate document - the overview should just be a central hub and light intro to EARL (IMHO), but it's up to you. 
+I could add the issues to the current document for now, and you could always split them off later on (then you can chaACL the new page at the same time!) if you want to. 
+Anyway, I've added some:- $Id: Overview.html,v 
+1.43 2001/05/15 22:04:47 spalmer Exp $ Kindest Regards, Sean B. Palmer @prefix : http://webns.net/roughterms/ . 
+:Sean :hasHomepage http://purl.org/net/sbp/ . 
+Agree that it should be a separate document - that I will be sure to chACL grin/ . 
+Will use this for now. 
+Thanks Sean! --wendy 
+Suppose we can make Section 6 of it be a separate document? 
+wendy a chisholm world wide web consortium web accessibility initiative seattle, wa usa 

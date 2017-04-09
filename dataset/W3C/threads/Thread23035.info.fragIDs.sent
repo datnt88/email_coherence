@@ -1,0 +1,24 @@
+Hi all, the DOM Level 3 Core spec currently provides for an event to be sent to the UserDataHandler when a node is deleted. 
+However, it appears that there is no way in some languages, such as Java, to guarantee that this will ever be called (because finalize may never be called). 
+Given that, the WG is wondering whether this should be marked as not supported in some language bindings or dropped and left to language bindings to define when necessary. 
+To help decide on this issue we would like to get feedback from others on how they see this working in other programming languages. 
+Thanks. 
+Arnaud Le Hors - IBM, XML Standards Strategy Group / W3C AC Rep. 
+When we designed that message, I believe we explicitly recognized that there could be no promise that it would ever be issued but that even having it _sometimes_ occur would facilitate memory management... in other words, it is no more and no less reliable, or useful, than the storage-library-level finalizers themselves. 
+I wouldn't want to see this dropped. 
+But I do think it's appropriate to indicate that when/whether this message is sent is both implementation and environment dependent. 
+There may be Java implementations which don't issue it (finalizers have strange effects on some JVMs, which some implementations may want to avoid), there may be other implementations which implemented their own memory management system... Another annoying question to consider: In Java, finalizers normally run in a separate thread. 
+Do we need to warn folks that this event, unlike most other DOM behaviors, may occur asynchronously? 
+Or are we going to ask implementers in that sort of environment to enqueue these back into the main thread? 
+Joe Kesselman / IBM Research 
+Perhaps the binding should state whether it is guaranteed. 
+In bindings where use of it is essential, it should be required. 
+In bindings such as Java, it should state that if you rely on it, you are likely to be disappointed and non-portable. 
+I would be happy with a 
+declaration in the Java binding that simply said it is never called, so people are not tempted to try it or implement it. 
+Ray 
+I wouldn't be. 
+In some applications it's critical. 
+In many it's irrelevant, and that's fine; those can happily use an implementation which doesn't support it, and most such implementations will satisfy a wide range of users... but not all, and those who do need it have no other (portable) option. 
+I wouldn't object to making this a sub-Feature so DOMs which promise _not_ to call it could explicitly say so and that would be a (more) clearly acceptable option. 
+Joe Kesselman / IBM Research 

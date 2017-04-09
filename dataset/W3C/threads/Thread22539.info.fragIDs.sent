@@ -1,0 +1,62 @@
+I have started collecting bits of general consensus on various gray areas of the DOM spec. 
+It is my hope that this effort will serve as a placeholder for missing details which will be added to the DOM spec either in the Errata or in Level 2. There isn't much there now but it can only grow. 
+There is no plan to reduce its uglyness however. 
+I am planning to mine the www-dom archive for more consensus reached in this mailing list. 
+Best, Don Park Docuverse 
+Did we really agree that hasChildNodes should return false if there is a child but it is an empy-string Text node? 
+If so, I missed it, since I read this as "If you ask whether there are children, you find out whether there are children. 
+To find out if they're empty, ask for the string value of the attribute... or ask the kids for their contents." 
+Ditto re getChildNodes. 
+Returned NodeList should be empty if there are no nodes to list; it should not be empty if there is a node but it contains an empty string. 
+(The question of whether an empty string text-node _should_ be created can be debated. 
+But since I don't think the DOM provides any way to prevent this from happening, the important thing seems to be to return useful information when it does.) BTW, the last point of the latter is an incomplete sentence, and I'm not sure what was intended... 
+Joe Kesselman / IBM Research Unless stated otherwise, all opinions are solely those of the author. 
+(BTW, it may be just a hair misleading to title an unofficial page "consensus" without a warning that it's your own best attempt to interpret past discussion. 
+I applaud the effort, I just worry a bit about what happens if there's a typo there and someone comes back to us complaining that the spec doesn't meet the consensus...) 
+Joe Kesselman / IBM Research Unless stated otherwise, all opinions are solely those of the author. 
+I agree. 
+I didn't like the word either but the word does describe what we are aiming for even if it fails to describe what we have now. 
+I wish there was a better description for it. 
+Let me sleep on this to see if something pops up in my head... Best, Don Park Docuverse 
+Joe, 
+Hmm. If I remember our conversation on this subject, you were against having Attr.getChildNodes().getLength() 
+being  = 1. 
+From this, I deduced that attributes with empty string value have no children. 
+If this is not what you had in mind, what do you think Attr.hasChildNodes return when it has empty string value? 
+PR3 of the DOM SDK always returns true for hasChildNodes and always had at least one child node. 
+This lead to some very unnatural looking code so I changed things around in PR3A. 
+Note that I was not referring to empty Text nodes being inserted with intentionally. 
+The user has references to user-created text nodes so it wouldn't be right to wipe them out just because they contain empty-string values. 
+I do agree that the description is sloppy. 
+It was a phone call interruption g . 
+I think I'll prepend "Unofficial and Entirely Disagreeable" to the title inside blink tags. 
+Best, Don Park Docuverse 
+You remember almost correctly... Apologies if I was unclear; let's try it again. 
+An Attr with no children is a legitimate object. 
+It should have a getLength() value of 0, and return false when asked hasChildNodes(). 
+An Attr with one child, that being an empty Text node, is also a legitimate object. 
+It should have a getLength() value of 1, and return true when asked hasChildNodes(). 
+In other words, this doesn't require any special-case handling; just tell the truth. 
+It isn't clear from the REC whether Attr.setValue("") should result in the former case or the latter. 
+I _think_ this can be safely left up to the implementation, as long as the actual situation is correctly reported when folks ask whether children exist, and as long as both return "" when a getValue() is issued. 
+Since both cases are possible, code has to be prepared to deal with both; "a difference that makes no difference is no difference." 
+Just so folks know how I'm biased: In my implementation, a newly-created Attr has no children, and Attr.setValue("") replaces the previous contents (if any) with an empty text node. 
+Both cases return "" as their getValue() response. 
+For now, setValue(null) happens to reset the Attr back to its no-children case ... that's a behavior definitely not covered by the REC, but I hate the thought of throwing an exception when there's a reasonable interpretation of the request. 
+"Unofficial and Entirely Disagreeable" -- remember to add "But much appreciated"! 
+g As I said, despite my quibbles I like the idea of getting these not-quite-errata nailed down more tightly, and the best way to do so is to put them up as clear unambiguous statements and see which side, if either, gets shot at. 
+Joe Kesselman / IBM Research Unless stated otherwise, all opinions are solely those of the author. 
+Joe, 
+Heck, this is one gray area that requires a lot of words to clarify. 
+We were standing practically next to each other g 
+In my implementation, 1. a newly-created Attr has no children (hit!) 2. an Attr with no children is a legitimate object. 
+It should have a getLength() value of 0, and return false when asked hasChildNodes (hit!) 3. an Attr with one child, that being an empty Text node, is also a legitimate object. 
+It should have a getLength() value of 1, and return true when asked hasChildNodes (hit!) 4. getValue() returns "" for both no-children and any number of empty text node childrens (hit!) 5. Attr.setValue("") reset the Attr back to its no-children case (miss!) 6. Attr.setValue(null) throws NullPointerException (miss!). 
+Your use of the word 'legitimate' was critical, I think, in enhancing clarity here. 
+As far as setValue is concerned, I just couldn't see any value of having setValue("") resulting in a single text node with empty string. 
+Best, Don Park Docuverse 
+Sounds like we're now in agreement, Don... assuming nobody on the committee tells us we're both wrong. 
+g It would be nice to know whether folks have an opinion on setValue(null), though I don't think it's a critical issue. 
+I actually agree with you that the value of creating the empty text node in response to setValue("") is negligible, or arguably even negative. 
+I just didn't bother to special-case that string; the real-world impact is likely to be small since empty-but-present attributes are an uncommon case. 
+Joe Kesselman / IBM Research Unless stated otherwise, all opinions are solely those of the author. 

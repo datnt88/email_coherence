@@ -1,0 +1,102 @@
+We know that: a b "foo"@@en# datatype . 
+c d "foo"@@fr# datatype . 
+entails a b _:l . 
+c d _:l . 
+for all datatypes except rdf:XMLLiteral. 
+It does? 
+Doh. 
+I think so, but don't take my word for it. 
+Jeremy? 
+I still think that's broken; but I'll fix the test case. 
+Basically these cases outline the various issues - I'll correct them as appropriate. 
+Nah - see below - you got it right unless we know that datatype is not rdf:XMLLiteral. 
+We know its not called that, but unless we make a unique name assumption, we don't know that its not another name for the same thing. 
+NO. This is related to what Pat was complaining about. 
+Basically, a "Positive entailment test" with premise document P and consequent document C passes if: - P has an interpretation (ie, contains no semantic errors wrt the constraints imposed by the interpretation rules used for the test case) AND - P entails C. A "negative entailment test" passes if: - P has no valid interpretations (contains a semantic error) OR - P is ok but does not entail C. 
+OK, so because its a neg entailment of the empty graph, then by this rule, there can be no valid interpretations. 
+I thought the model theory had bad datatype lex forms denoting something though, in which case there is an interpretation. 
+Right, from 3.4 of the MT: [[For any typed literal "sss"^^ddd in G, if I(ddd) is in D and 'sss' is not a valid lexical form for I(ddd) then IL("sss"^^ddd) is not in LV]] and [[(this) condition requires than an 'ill-formed' typed literal, i.e. one 
+where the literal string is not in the lexical space of the datatype, not denote any literal value. 
+Intuitively, such a name does not denote any 
+value, but in order to avoid the semantic complexities which arise from empty names, we requires such a typed literal to denote an 'arbitrary' value.]] 
+Thus there are interpretations of the graph and the test does not work 
+I'm happy to revise this if you think it's necessary. 
+Lets get confirmation first Brian 
+[attribution lost - the other person is me] 
+NO. This is related to what Pat was complaining about. 
+Basically, a "Positive entailment test" with premise document P and consequent document C passes if: - P has an interpretation (ie, contains no semantic errors wrt the constraints imposed by the interpretation rules used for the test case) AND - P entails C. A "negative entailment test" passes if: - P has no valid interpretations (contains a semantic error) OR - P is ok but does not entail C. 
+Yech. 
+The words that the current test case WD uses are _extremely_ woolly A premise document that contains a semantic error with respect to any constraints imposed by the entailment rules selected will cause this [positive entailment] test to fail. 
+and in particular, it's the case of duff lexical forms for datatyped literals that I wanted to cover with this. 
+In other words, if a graph contains datatyped literals that need to be given "arbitrary" denotations, that's (one kind of) the "semantic error" I was alluding to. 
+This clearly needs putting in better terms. 
+If the entailement tests can be utilised for this purpose in their current form but with better wordsmithing, that'd be good - but clearly some better words are required, because the definition is currently clearly lacking! 
+jan jan grant, ILRT, University of Bristol. 
+http://www.ilrt.bris.ac.uk/ Work #90: As many pseudo-intellectual sycophants as necessary to make one inarticulate scotsman think he's a genius in command of The Profound. 
+It does? 
+Doh. 
+Oh, I thought that lang tags simply couldn't be attached to datatyped literals other than rdf:XMLLiterals, so this would be a syntax error. 
+That's what the graph syntax rules seem to say. 
+Is that wrong?? 
+I still think that's broken; but I'll fix the test case. 
+Basically these cases outline the various issues - I'll correct them as appropriate. 
+Thats why its best made a matter of syntax rather than something to do with the denotation. 
+That is, the datatype label has to actually have the characters "XMLLiteral" in it. 
+NO. This is related to what Pat was complaining about. 
+Basically, a "Positive entailment test" with premise document P and consequent document C passes if: - P has an interpretation (ie, contains no semantic errors wrt the constraints imposed by the interpretation rules used for the test case) AND - P entails C. A "negative entailment test" passes if: - P has no valid interpretations (contains a semantic error) OR - P is ok but does not entail C. 
+It works but for a different reason. 
+Perhaps I should spell this out more in the semantics doc. 
+Making the denotation be something arbitrary in this case (ie not a literal value, but otherwise it could be anything) means that the ONLY entailment you can get is what you would get from basic graph interpretations, which is replacing the bad literal by a new bnode: 
+aaa bbb "xxyzx"^^xsd:number . 
+-- aaa bbb _:newnode . 
+And you CAN post an error if you find the bad literal; but still, you do get this entailment. 
+(If we didnt get at least this, then datatypes would break basic graph entailment, which is why I wanted to make sure they denoted something. 
+The alternative is to make them all denote some special weird value, which I did try in one draft, but which has all kinds of other problems.) 
+So: 1. you always get the basic new-bnode entailment, for any node whatsoever, illformed or not. 
+2. If the literal is simple (not datatyped) then it might hav a lang tag, and in that case the identity of the literal is detemined by the pair of the literal string and the lang tag, so for example aaa bbb "chat"@@fr . 
+ccc ddd "chat"@@en . 
+does not entail aaa bbb _:x . 
+ccc ddd _:x . 
+3. if the literal is typed by datatype, datatype is a Datatype and you check the datatype and the literal is illformed, then 1. is *all* you can infer, and you are allowed to flag an error. 
+(And you know that if anyone says that this thing is in rdfs:Literal, then they are wrong.) 
+3. If all the above but the typed literal is wellformed, then: 3a. 
+If its an rdf:XMLLiteral and there is a lang tag then you pass the tag to the XML parser, ie it is absorbed into the XML part of the literal. 
+3b. you know the typed literal denotes something in the datatype class 
+3c. you know it denotes a literal value 3c follows from 3b in RDFS since you know that the datatype class is a subclass of rdfs:Literal, but I thought Id mention it. 
+4. If all the above and you know from the datatype mavens that two datatype lexical forms denote the same value, then you can substitute one of them for the other in any typed literal in any triple. 
+5 (??) If all the above and you know from the datatype mavens that some properties are true on some datatype values, then you can conclude some more triples using those properties. 
+(Jos' idea) ?? Im not sure about the last one: do we want to go there? 
+I'm happy to revise this if you think it's necessary. 
+IHMC(850)434 8903 home 40 South Alcaniz St.(850)202 4416 office FL 32501 (850)291 0667 cell phayes@ai.uwf.edu http://www.coginst.uwf.edu/~phayes s.pam@ai.uwf.edu for spam 
+Well, I don't think its what they do say. 
+I think its what they should say, but that is not what the WG agreed. 
+Hmmm, are you saying that it does not entail the emtpy graph. 
+I think I wasn't clear; I'm trying to clarify precisely the test case proposed by jan, non-well-formed-literal-2, in The test case is (something like) a b "Arggggggg"^^xsd:integer . 
+does not entail the empty graph. 
+I think the MT says it does, but I'm appealing to you for confirmation. 
+Please no. 
+Brian 
+It turns out that it does, because "Arggggg"^^xsd:integer is given a denotation (even if it's a "spurious" one), and I don't think the woolly text in the TC WD is sufficient. 
+Righto. 
+It looks like the state of play is that the test cases for "duff" datatyped literals need a rethink, and I think I'm happier with why and how, now. 
+Since Pat's given us a concrete "this is all you get" for the DT[xsd:integer]-closure from a duff datatyped literal, that's enough to rebuild those test cases. 
+I'll sleep on it and come back tomorrow. 
+jan grant, ILRT, University of Bristol. 
+http://www.ilrt.bris.ac.uk/ ioctl(2): probably the coolest Unix system call in the world 
+Hmmm. 
+So an literal can have three components: a string, a dtype and a lang tag, even when the dtype isn't rdf:XMLLiteral?? 
+I just want to get this very clear, as I want to have all the cases 
+listed in the basic MT rules. 
+Right now there are cases I am missing, apparently. 
+Yes, anything entails the empty graph, because the empty graph is always true. 
+It also entails a b _:x . 
+Yes, I tend to agree at this stage. 
+Still, it would have been fun. 
+Pat IHMC(850)434 8903 home 40 South Alcaniz St.(850)202 4416 office FL 32501 (850)291 0667 cell phayes@ai.uwf.edu http://www.coginst.uwf.edu/~phayes s.pam@ai.uwf.edu for spam 
+OK 
+OK 
+OK 
+class 
+OK (had make a correction for rdf:XMLLiteral; thanks for clarifying) 
+OK 
+maybe later ;-) Jos De Roo, AGFA http://www.agfa.com/w3c/jdroo/ 

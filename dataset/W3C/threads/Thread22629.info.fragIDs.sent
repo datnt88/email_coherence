@@ -1,0 +1,36 @@
+perhaphs, one of you could clearify this issue. 
+is it the responsibility of the 'importNode' function to take care of ID attributes? 
+i mean, should it investigate all imported attributes, if they 
+are of type ID and register them to the document, such that a subsequent call to 'getElementById' really returns the expected result node. 
+if the 'importNode' function does not care about ID attributes, the 'getElementById' is sort of useless after a call to 'importNode'. 
+moreover, the application has no means to find out what attributes are of type ID and no way to register IDs to a document. 
+i am aware of the fact that this can only work, if the attributes are of the same implementation. 
+xerces-j for instance, does not care about the IDs. but i think this is not the right solution. 
+in a current project, i realized that importNode is useless as it is, if you need IDs. 
+regards Karl Scheibelhofer Karl Scheibelhofer, mailto:Karl.Scheibelhofer@iaik.at Institute for Applied Information Processing and Communications (IAIK) at Technical University of Graz, Austria, http://www.iaik.at 
+That is a very interesting point. 
+On top of that, I would also like to ask a 
+question about how fixed and defaulted attributes should be handled in a 
+importNode() operation. 
+As we all know, importNode() is desigend to reflect the syntactic content of the XML it describes, thus, importNode() does not import fixed and defaulted attributes(more exactly, it only imports attributes directly expressed in the document instance). 
+My question is, what is the method to restore the fixed and defaulted attributes in the DOM tree that has imported these nodes (which may conform to a different DTD)? 
+I believe that importNode() is not useful if it does not preserve both the syntax and semantics of the content being imported. 
+Without that, the document importing the nodes only gets "half the picture". 
+Any comments would be appreciated. 
+Eric Lawson Sr. Software Engineer ISOGEN International (214)954-5109 
+That's spelled out explicitly in the description of importNode. 
+To recap: 
+Default attributes, including defaults obtained from the "fixed" value, 
+show up as Attr objects which have their "specified" flag set to False. 
+These are _not_ copied when you import an Element node. 
+However, when the Element is created in the importing document it should automagically have that document's defaults applied to it. 
+If the attribute value was explicitly specified, it _will_ be imported along with the Element, even if the value agreed with the Fixed value in the source document or conflicts with a Fixed value in the target document. 
+(The DOM doesn't currently understand "fixed"; it's just treated as a default value. 
+DOM Level 3's DTD/Schema support will provide a way to validate an element and thus detect conflicts.) 
+If you explicitly import an Attr node, it is always imported as a specified Attr. 
+Joe Kesselman / IBM Research 
+Yes, _IF_ the importing DOM understands IDs and has the information available to determine whether an attribute is or isn't an ID. 
+As you point out, this currently relies on some undocumented and unexposed magic within the DOM implementation, so the right answer is to check your DOM implementation's documentation to find out what it does. 
+(Not all DOMs have or use ID information, as we mentioned in the description of getElementByID.) Note that the question of which attributes are and aren't IDs would be determined by the importing document, _not_ by the source document. 
+Again, DOM Level 3's DTD/Schema support will provide a more rigorous definition of this behavior, for those DOMs which choose to implement that module. 
+Joe Kesselman / IBM Research 

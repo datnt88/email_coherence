@@ -1,0 +1,53 @@
+I didn't see any mention of this in the archives, so I apologize if it's been posted already. 
+Building 3.2.1 on Linux results in the following error: 
+/bin/sh: ..//usr/src/Amaya/../libwww/configure: No such file or 
+directory 
+libwww is configured /bin/sh: cd: libwww/modules/md5: No such file or directory 
+make[1]: Entering directory `/usr/src/Amaya/LINUX-ELF' make[1]: *** No rule to make target `libmd5.la'. 
+Stop. 
+make[1]: Leaving directory `/usr/src/Amaya/LINUX-ELF' make: *** [libwww_make_module_md5] Error 2 The problem appears to be in the generated Makefile in the obj dir: --- Makefile.origThu 
+Aug 31 23:02:33 2000 
++++ MakefileThu Aug 31 23:03:16 2000 @@ -192,7 +192,7 @@ 
+@(localdir=`pwd` ; libwwwdir="$(THOTDIR)/../$(LIBWWW)" ; \ cd $(LIBWWW) ; unset LANG; \ if [ ! 
+-f Makefile -o ! 
+-f wwwconf.h 
+] ; then \ - ../$$libwwwdir/configure \ 
++ $$libwwwdir/configure \ --disable-shared \ --without-expat \ --with-zlib="$$localdir/libz.a"; \ This patch seems to resolve the problem. 
+--Brian Breakfast of champs. 
+Hello Brian, In our previous episode, briank@hex.net 
+said: 
+Did you install the libwww sources too? 
+If you did so, they should be located at the same level as Amaya, but not inside the Amaya directory: /usr/src/libwww /usr/src/Amaya/ 
+I think you put them under /usr/src/Amaya/libwww 
+as I use Linux too and I don't have the problem you have. 
+-Jose 
+The tarball I downloaded installed both directories above, as you have them. 
+No...this dir doesn't exist. 
+A strange thing. 
+Mabye you can explain how it is that when you're here: /usr/src/Amaya/LINUX-ELF this: ..//usr/src/Amaya/../libwww/configure resolves to this: /usr/src/libwww At least it doesn't seem to with the Bourne shell I'm using! 
+--Brian 
+In our previous episode, Brian Koontz said: 
+It doesn't resolve that way here either. 
+The macro says: libwwwdir="$(THOTDIR)/../$(LIBWWW)" $$libwwwdir/configure My makefile in ~/Amaya/LINUX-ELF/Makefile declares THOTDIR as .. . 
+That's why it works for me. 
+What I did to create my directory was $ cd Amaya $ mkdir LINUX-ELF $ cd LINUX-ELF $ ../configure (called without options) 
+Could you tell me what's the value of your THOTDIR value? 
+It should be @srcdir@. 
+Now why is my @srcdir@ being resolved to ".." and not yours? 
+Did you use the configure --srcdir option? 
+-Jose 
+THOTDIR is defined as "/usr/src/Amaya". 
+Additionally, your macro above is different from mine. 
+Mine looks like "../$$libwwdir/configure". 
+My setup and configuration is identical to the what you describe below (i.e., no configure options): 
+--Brian 
+In our previous episode, Brian Koontz said: 
+You're right. 
+It was a typo on my part. 
+My macro is the same one. 
+I think that this problem comes from the way that THOTDIR is solved. 
+In our machines it is .. and in yours it's the complete path. 
+I can't use your solution because it'd break the compilation elsewhere where THOTDIR is .. . 
+I think that the best solution for the moment is to use .. instead of THOTDIR in that particular Make rule. 
+I'll do this change and, when I understand more what configure is doing, I'll make a better patch. 
+Thanks for your report and patience, -Jose 

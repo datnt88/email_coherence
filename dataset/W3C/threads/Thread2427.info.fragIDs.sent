@@ -1,0 +1,116 @@
+Two issues came up in today's session of the HTTP 1.1 WG that left me curious. 
+Not that any major decisions hang on the answers, but: Lynx came up when the fellow from MicroSoft quipped regarding the 305 proxy redirection message "Lynx has implemented it." 
+Later it appeared he meant to be humorous, as it was left as an open question. 
+The Conventional Wisdom in the meeting is that 305 is broken and 306 didn't fix it. 
+The group is headed in the direction that this function will not be present in the "Draft Standard" version of 1.1. 
+Going, going... 
+The specs for 305 in the most current HTTP/1.1 draft in effect describe Lynx's implementation, years ago, but not completely. 
+Lynx's implementation: 1) Accepts 305 and acts on the Location: only if a proxy is not already being used, i.e., if it comes from an 
+origin server. 
+Otherwise, Lynx renders and displays the body. 
+2) The redirection is treated as "one time" (a new request 
+for the document will go to the orgin server, not to the proxy of the previous redirection). 
+3) The method is retained, and if "unsafe" (POST), the user is prompted whether to proceed. 
+That is, the redirection is treated like a 307, but with a proxy request structure: It would be better to treat it like a 304 (always use GET), IMHO. 
+This does not serve the originally intended purposes, better reflected but still imperfect in the 306 draft. 
+However, it is no less useful than 304 and 307 (i.e., would not be expected to be used often, but is available if really needed). 
+In effect, the origin server can redirect either to another origin server (304 or 307) or to a proxy (305) which may have the requested document and, for example, be closer to the UA. 
+If 306 is revised, it would be better to treat that as a new status, not a revision of 305, and have 306 based on only a Set-Proxy: header, with no Location header. 
+Browsers which do not implement it thus will treat it as 300, and should show the body by virtue of no Location header being present. 
+Whether or not the "guys at MicroSoft" as yet grasp the occassional uses to which 304, 305, and 307 might be put, they nonetheless can be useful ocassionally (that statement was intended to be humorous &amp;#1;). 
+But 306 does need more work before it's intended uses can be achieved. 
+Second point: CommentURL on cookies. 
+General tenor of comment from commercial implementors was that with excellent orienteering skills one would be able to unearth this thing and eventually follow it. 
+Not in any way that was easy or obvious. 
+I was just curious if Lynx would be more aggressive about offering the user the option to follow this reference to a discussion of site standards for the user of cookies. 
+Lynx implements CommentURL as links accessible via the Cookie Jar. 
+Apparently, the discussions on the HTTP-WG email list about this being for descriptions of the particular cookies which have a CommentURL attribute still have not gotten through. 
+Since the CommentURL could return text/html, a link to yet another document which discusses the site's "standards" could be included, but the document returned via the CommentURL, itself, should explain how that particular cookie will be used (e.g., to maintain display preference, or as a shopping cart, or to track retrievals and offer appropriate "what's new" links within requested documents, etc.). 
+The user should be able to make an informed judgment about whether to suffer the overhead and disk space associated with each, particular, cookie. 
+If it's simply "generic" statements about the site's security/privacy policies, it falls short of servering the needs of users with respect to cookie management, particularly as more and more sites set them, and the total number to be handled and stored would otherwise get rather large (this assumes other browsers will follow Lynx's lead in offering a substantive cookie management interface by which users easily can remove particular, previously or "tentatively" accepted, cookies from the database). 
+Fote Foteos Macrides Worcester Foundation for Biomedical Research MACRIDES@SCI.WFBR.EDU 222 Maple Avenue, Shrewsbury, MA 01545 
+Here's what I think needs to happen: It looks to me as though we may need a clarification to Rev-01 on 305 (use this proxy for a single request) to to match the existing Lynx behavior, if that is actually the "right thing" for the desired semantics (single time redirection to a proxy). 
+(previous comments say that we're pretty close to that now in Rev-01, but a bit of further tweaking is needed). 
+And the full "go use this proxy forever" functionality (i.e. what we called 306) needs to get addressed somehow, but in an independent (not HTTP/1.1 document (and concievably, outside of HTTP altogether, if that seems the right solution.). 
+This one nees to deal with all the security/trust problems identified in the discussion on 306 in the mailing list. 
+I thought it had already been decided in the HTTP-WG list (http://www.ics.uci.edu/pub/ietf/http/hypermail/1997q4/0245.html) that: (1) Josh's draft-cohen-http-305-306-responses-00.txt would be dropped from Rev-01; (2) Josh and Ari would generate a new 306 proposal (which could include a "go use this proxy forever" directive, but has other options, depending on what's in the Set-Proxy: header for that status); and (3) 305 would become a one-shot, from-origin-server-only, redirection to a proxy via a Location: header, as described in Rev-01 (draft-ietf-http-v11-spec-rev-01): 10.3.6 305 Use Proxy The requested resource MUST be accessed through the proxy given by the Location field. 
+The Location field gives the URL of the proxy. 
+The recipient is expected to repeat this single request via the proxy. 
+305 responses MUST only be generated by origin servers. 
+That description doesn't say what to do about the method. 
+My suggestion was to add a sentence about that issue, and my present bias is to make it 303-like ;(oops, not 304 that I wrote in my earlier message): e.g.: The redirected request SHOULD be made with a GET method. 
+That would make 305 utterly safe, and it's not obvious to me why a POST or other non-safe request would ever be redirected to a proxy with intention that the content be retained (it's most likely to be used by scripts homologously to 302/303), so I doubt this would pose a functionality problem. 
+Released versions of Lynx prompt the user about 305 redirection for a POST: P)roceed, use G)ET, or C)ancel? and users have been "conditioned" to choose G or C for such prompts, so making 305 303-like should not be a serious problem with those versions. 
+The current Lynx development code (scheduled for release as v2.8 this month) treats 305 as 307-like (doesn't include the option to use G)ET), but it would take just a few minutes to change that to 303-like behavior for the actual release. 
+Fote Foteos Macrides Worcester Foundation for Biomedical Research MACRIDES@SCI.WFBR.EDU 222 Maple Avenue, Shrewsbury, MA 01545 
+As a HTTP based application builder, it is quite clear to me why I want 
+to redirect a POST as a POST to another server with/without proxy considerations. 
+If the POST isn't redirected, all the reasons for using a POST method in the first place get broken IF the intent is 
+to have the redirect target process the POST as submitted. 
+In one developer community whose mailing list I follow, a request for how to accomplish this function comes up at least once a week ... which suggests to me a much higher demand since each time the request comes up some additional percentage of the group learns that it isn't possible and some other mechanism is required to forward the POSTed content to the processing server. 
+I'm not proposing any changes but I wanted to make it clear that there is an unaddressed requirement for seamless redirection of POST requests. 
+Dave Morris 
+Sure, but I was referring to *one-shot* redirection of the *browser* to use a proxy via 305. 
+What to do about the method (and who should act on the redirection) could be specified via the Set-Proxy: header for 306. 
+For 306, POST or PUT content could be retained, or not, depending on its directives (assuming that a new 306 proposal is forthcoming and its security/privacy problems are solved). 
+Also, HTTP/1.1 will have 307 available for redirection to another origin 
+server as ultimate request target with POST or PUT content retained, which I suspect is what's actually being sought in the discussions to which you refer (unless you're talking about redirections to be acted 
+upon by an intermediate proxy, rather than the browser which initiated the request). 
+If the browser already is using a proxy, the browser must have been configured to use it (i.e., it can be presumed "safe"), and would continue to use that proxy for the 307 redirection with POST or PUT retained. 
+If you want to change the browser's proxy, or set one, for a redirected request, plus retain an "unsafe" method, you have "unsolved security/privacy problems" which would preclude keeping 305 in the upcoming HTTP/1.1 Draft Standard, so let's put that off to a future draft for 306, and keep 305 for utterly safe, 303-like and one-shot redirection by an origin server for the browser to seek the document via a proxy. 
+A proxy server doesn't process POST content (at least, not HTTP/1.0 or HTTP/1.1 proxies). 
+Only an origin server (or its script) does that. 
+A one-shot, 305 redirection would be to GET a document which the origin server (or its script) has reason to "think" has been cached by the proxy specified in the Location: header, and if the proxy no longer has it in cache, the request will be directed by that proxy back toward the origin server, so that the proxy's cache will be refreshed in conjunction with filling the browser's request, i.e., the "utterly safe" 305 is useful (and works, based on implementation experience with Lynx), albeit that a 306 with the originally intended, much greater functionality should still be planned on as a new, separate draft (but *not* as a replacement or further modification of 305). 
+Fote Foteos Macrides Worcester Foundation for Biomedical Research MACRIDES@SCI.WFBR.EDU 222 Maple Avenue, Shrewsbury, MA 01545 
+I doubt any commercial browser will implement 305 without some very serious security provided to assure that the proxy asking for the one time redirect is going to get it. 
+I would suggest that this problem needs to be dealt with in the large 305/306 context, in a stand alone spec, and that the draft standard for HTTP should simply state that 305 has been deprecated and SHOULD NOT be implemented. 
+You apparently haven't yet grasped the changes Jim already has 
+made for 305 in Rev-01. 
+The 305 can *only* be sent by an origin server. 
+Deployed proxies will pass it through to the browser, as they do for 300, 301, 302, 303 and 307. 
+Josh's 305/306 draft has been dropped 
+from Rev-01, with expectation that he (and Ari) will generate a new, 306-only draft (complementary to a revised OPTIONS draft). 
+I suppose a proxy, if already being used by the browser, could (should?) act on the 305, and there shouldn't be a security problem with that if the 305 is to be handled always as a GET. 
+If unsafe methods are to be retained with 305, instead of postponing that functionality to a new 306 proposal, then yes, it would be better to drop 305. 
+But 305 would be useful if it were specified as presently in Rev-01 with the addition of a sentence that GET always should be used, and who knows when, if ever, the security/privacy problems with 306 will be solved. 
+Fote Foteos Macrides Worcester Foundation for Biomedical Research MACRIDES@SCI.WFBR.EDU 222 Maple Avenue, Shrewsbury, MA 01545 
+From: Yaron Goland yarong@microsoft.com 
+Date: Wed, 10 Dec 1997 11:21:51 -0800 http-wg%cuckoo.hpl.hp.com@hplb.hpl.hp.com Subject: RE: LYNX-DEV two curiosities from IETF HTTP session. 
+I doubt any commercial browser will implement 305 without some very serious security provided to assure that the proxy asking for the one time redirect is going to get it. 
+I would suggest that this problem needs to be dealt with in the large 305/306 context, in a stand alone spec, and that the draft standard for HTTP should simply state that 305 has been deprecated and SHOULD NOT be implemented. 
+Yaron 
+I think you are confused.... 
+In Rev-01, only an origin server is allowed to generate a 305 response. 
+It is authoritative for that resource, so 
+But what is there about the protocol which allows this requirement to be enforced? 
+the spoofing problems don't come up (and is the reason for that text being in the document...) 
+Seems to me that the protocol relies on gentle (i.e., conforming) behavior by proxies and servers. 
+The definition of spoofing includes an element of malicious intent. 
+Perhaps it would close the loop to require that the client only accept a 305 status from an origin server to which it is directly connected? 
+Then the potential for spoofing would be limited to IP and/or DNS spoofing. 
+In either case though, I fail to see the motivation for someone intending to spoof a redirect who wouldn't simply change the origin server or make the IP spoofed variant of the origin server simply serve the nefarious content which would have be acquired as a result of the redirect. 
+Thus I don't see any difference in risk with/without 305. 
+The "current practice" is unintended: The 305 is passed back to the browser because deployed proxies don't recognize it. 
+The 305 *was* intended (I think, but the original discussion about it was long ago) to be handled by proxies if interposed between 
+the browser and origin server, in which case it would be the proxy first receiving a response from the origin server (i.e., what you mean by "directly connected"). 
+That would be desireable, because for 305 the 
+browser should not act on it if it already is using a proxy (IMHO, for security/privacy considerations, and thus how it was implemented in Lynx). 
+If proxies do act on it, then it's even more important to make 305 redirection GET-only, because the user of the browser will not be able to confirm or cancel redirection of a POST. 
+One can leave 306 redirection of POSTs by proxies as a future possibility (not in the HTTP/1.1 Draft Standard), but for what it's worth, I've been scratching my head for some time about how to deal with the security/privacy problems that would raise, and still don't see any solutions. 
+For 305, it's possible that in a chain of proxies the one which first receives the origin server's response doesn't recognize it, and passes it on to the next proxy in the chain, but if any proxy in the chain recognizes it and acts on it with a conversion to GET (if it's not a GET request in the first place), then there's no security problem, and no serious privacy problem (certainly much less than with unverifiable cookie transactions :). 
+Fote Foteos Macrides Worcester Foundation for Biomedical Research MACRIDES@SCI.WFBR.EDU 222 Maple Avenue, Shrewsbury, MA 01545 
+From: jg@pa.dec.com[SMTP:jg@pa.dec.com] 
+Sent: Wednesday, December 10, 1997 4:48 PM 
+snip 
+I think you are confused.... 
+In Rev-01, only an origin server is allowed to generate a 305 response. 
+It is authoritative for that resource, so the spoofing problems don't come up (and is the reason for that text being in the document...) 
+That's not a problem for the Lynx implementation because it will show the body instead of acting on the 305 if it already is using a proxy, on the assumption that the UA which receives it from the origin server should act on it, and that can't be the browser if it already is using a proxy (plus, the browser's current proxy may be obligatory for a firewall). 
+Also note, as was raised in the recent discussion, that if a proxy acts on it, you need a GET-only requirement, because a POST should not be redirected without confirmation by the human user of the browser. 
+But this all seems academic upon reading the statement in the recently posted minutes of the IETF meeting that to be retained in the Draft Standard there must be two independent implementations, because there is only one. 
+So I guess it's indeed bye bye 305. 
+(i.e., put it off with 306 to a new draft :) 
+Fote Foteos Macrides Worcester Foundation for Biomedical Research MACRIDES@SCI.WFBR.EDU 222 Maple Avenue, Shrewsbury, MA 01545 
+Just for the record, I implement the 305 too. 
+However, I haven't seen any server which sends it so far, so you're conclusion is probably right. 
+Cheers, Ronald 

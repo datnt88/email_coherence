@@ -1,0 +1,110 @@
+What is the correct way to interpret handling of the NULL ciphersuite for key exchange? 
+The TLS spec (excerpts provided below) appears to be vague in its description of how key exchange handling is done if the NULL ciphersuite is negotiated. 
+I don't recall seeing any statement indicating it is illegal to negotiate a NULL ciphersuite. 
+My assumption is the NULL ciphersuite could be negotiated anytime it is legal to negotiate any other ciphersuite (its regular). 
+The spec identifies the ServerKeyExchange and ServerCertificate messages as being optional but section 6.4.3 does not indicate which message (if any) should be sent for NULL ciphersuite. 
+Is it an empty KeyExchange message or just no message (key exchange or certificate)? 
+Section 6.4.7 mandates the return of the ClientKeyExchange message but does not describe the format of the message if the negotiated ciphersuite was NULL. 
+There is an agrement for making the ClientKeyExchange message optional if the NULL ciphersuite was negotiated. 
+Alternatively, the key exchange message could contain nothing as is the case for DH_RSA and DH_DSS key exchange methods. 
+Thank You, Ned Smith 6.4.3 Server key exchange message When this message will be sent: This message will be sent after the server certificate message (or the server hello message, if the server certificate is not sent), but before the server hello done message. 
+The server key exchange message may be sent before or after this message. 
+The server key exchange message is sent by the server only when the server certificate message (if sent) does not contain enough data to allow the client to exchange a premaster secret. 
+This is true for the following key exchange methods: RSA_EXPORT (if the public key in the server certificate is longer than 512 bits) DHE_DSS DHE_DSS_EXPORT DHE_RSA DHE_RSA_EXPORT DH_anon It is not legal to send the server key exchange message for the following key exchange methods: RSA RSA_EXPORT (when the public key in the server certificate is less than or equal to 512 bits in length) DH_DSS DH_RSA 6.4.7 Client key exchange message When this message will be sent: This message is always sent by the client. 
+It will immediately follow the client certificate message, if it is sent, or the no_certificate alert, if a certificate was requested but an appropriate one was not available. 
+Otherwise it will be the first message sent by the client after it receives the server hello done message. 
+Meaning of this message: With this message, the premaster secret is set, either though direct transmisson of the RSA-encrypted secret, or by the transmission of Diffie-Hellman parameters which will allow each side to agree upon the same premaster secret. 
+When the key exchange method is DH_RSA or DH_DSS, client certification has been requested, and the client was able to respond with a certificate which contained a Diffie-Hellman public key whose parameters (group and generator) matched those specified by the server in its certificate, this message will not contain any data. 
+I assume you mean TLS_NULL_WITH_NULL_NULL. 
+Although the spec does not explicitly forbid negotiating to this cipher suite, it should. 
+If an implementation allows negotiation to this cipher suite, it is open to a rollback attack. 
+You should only break rules of style if you can | Tom Weinstein coherently explain what you gain by so doing. 
+| tomw@netscape.com 
+I believe this is the intent. 
+I know that people have discussed negotiating NULL_WITH_NULL_NULL as an efficiency measure when implementations wish to transmit data which is pre-encrypted and/or authenticated. 
+For example, one could consider an application which negotiated a TLS connection, exchanged some control information, then transmitted a number of S/MIME messages. 
+Negotating NULL_WITH_NULL_NULL would aid in performance. 
+However, remember: this might leave one open to attacks which altered the stream of messages either by replaying or deleting messages. 
+For security, all communications should be protected by a progressive MAC construction. 
+I will clarify the spec: my understanding is that NULL_WITH_NULL_NULL doesn't require a Certificate or Key exchange message from either end: as such, the negotiation would take the following form: Client Server client hello Includes the option of N_W_N_N server hello Specifies N_W_N_N hello done finished change cipher spec finished change cipher spec 
+It's not clear to me what you mean here, Tom. 
+Since the original negotiation of a connection occurs under NULL_WITH_NULL_NULL, I don't understand how a later re-negotiation on the same communications channel 
+could be less secure than a new connection. 
+Which rollback attack do you mean? 
+Cipher suites or SSL 2? Note: I do not recommend using NULL_WITH_NULL_NULL except unless you know 
+exactly why you want to and you know for a fact that you understand your risk model. 
+It provides no security over plain TCP/IP and I wouldn't want anyone to think otherwise just because it's got "TLS" in the name. 
+- Tim 
+Tim Dierks - timd@consensus.com - www.consensus.com 
+Software Haruspex - Consensus Development Developer of SSL Plus: SSL 3.0 Integration Suite 
+There is an argument that says that TLS_NULL_WITH_NULL_NULL should definitely be implemented in production TLS implementations. 
+It is useful for troubleshooting. 
+Presumably such an implemenation would employ warnings, blinking lights, sirens, loud warnings, extra user prompts, or whatever it takes to ensure it was only used for testing. 
+This is the Internet, and this is the IETF. 
+We're supposed to be interested in realistic deployable systems. 
+It should be possible for a bunch of smart people to build field-maintainable systems, using technologies such as TLS_NULL_WITH_NULL_NULL, in a safe and productive manner. 
+(OK, all the crypto experts in the room can yell at me now. 
+I'm ready!) 
+Rodney Thayer rodney@sabletech.com 
+PGP Fingerprint: BB1B6428 409129AC 076B9DE1 4C250DD8 
+The protocol explicitly forbids sending application data until after the first handshake has completed. 
+If you renegotiate to a NULL_WITH_NULL_NULL cipher suite, nothing prevents an atacker from hijacking your connection at that point and substituting whatever data he wishes. 
+The Wagner-Schneier paper is very clear about this. 
+If you are interested in sending preencrypted data, you should negotiate down to something like RSA_WITH_NULL_SHA. 
+This still protects the integrity of your data while avoiding the overhead of encryption. 
+Also, if you allow NULL_WITH_NULL_NULL to be negotiated at the initial handshake, nothing prevents an attacker from forcing you down to that ciphersuite. 
+One possible approach would be to provide some application layer mechanism for enabling and disabling the NULL_WITH_NULL_NULL cipher suite. 
+This requires smarts at a layer above TLS to turn it on and off, and TLS becomes vulnerable to bugs in that layer. 
+I'm not sure that's a problem we should be biting off. 
+Which is another good reason to forbid it. 
+You should only break rules of style if you can | Tom Weinstein coherently explain what you gain by so doing. 
+| tomw@netscape.com 
+Yea. However in my experience writing two different SSL3 implementations it's the handshake that's the hardest part to get right. 
+Getting the record-layer stuff correct is easy in comparison. 
+In fact the way I've designed my SSLv3 code has required getting the record layer right before I can even get to the handshake stuff... 
+I think that the TLS spec strongly encourages this type of design. 
+So, I agree it'd be useful, but I don't think its useful enough to offset the possible security hole it opens. 
+Eric Murray ericm@lne.com 
+ericm@motorcycle.com 
+http://www.lne.com/ericm 
+PGP keyid:E03F65E5 fingerprint:50 B0 A2 4C 7D 86 FC 03 92 E8 AC E6 7E 27 29 AF 
+Help me understand at what point the cipher suite rollbak attack can be waged (and if we care given that we are trying to use NWNN). 
+We know the initial handshaking (implicitly using NWNN ciphersuite) is vulnerable to the attacks during handshaking until the finished message is sent which contains a mac on the entire handshake protocol. 
+We can detect mischief by checking the MAC. 
+The MAC is only as strong as the *new* ciphersuite dictates. 
+If the new ciphersuite is NWNN (assuming we could negotiate to this ciphersuite) then we have not lost anything yet (nothing to loose). 
+At what point do any of the attacks in Wagner/Schneier translate to loss of security? 
+Is it when an existing session re-hanshakes to a higher level of security? 
+(Wagner/Schneier explicitly did not analyse this scenario for the ciphersuite rollback attack.) 
+Tom when you say "nothing prevents an attacker from forcing you down to that [NWNN] ciphersuite"; are you intimating that the ciphersuite list contains non-NWNN ciphersuites? 
+Best Regards, Ned 
+I think this question too can be answered by thinking in terms of security policy. 
+The initial handshake, as you point out, starts out in NWNN. 
+But no user data flows through the SSL connection until the first handshake is complete. 
+If your policy is that NWNN is an acceptable ciphersuite, then you will have a blue bar on your screen but no more protection than with a non-TLS connection. 
+But hey, if that's your policy, who can argue with it. 
+It doesn't really matter whether you negotiate down from a good ciphersuite to NWNN, or pick NWNN as your initial ciphersuite after the first handshake - the end result is a TLS connection that gives user data no protection. 
+I'd also assume that changing your security policy (by clicking on the options menu) would not force a new handshake for all existing connections, but would only affect new connections established after the policy change. 
+If the implementation does force a handshake for existing connections, then the protocol certainly should switch to a new ciphersuite from NWNN just as reliably in the middle of a connection as it would have at the beginning. 
+Yes, that's precisely it. 
+Assume that the client and server both support RSA_WITH_RC4_128_SHA and NULL_WITH_NULL_NULL. Normally they would negotiate to RSA_WITH_RC4_128SHA, but instead an attacker modifies the client hello to only include NWNN. 
+You should only break rules of style if you can | Tom Weinstein coherently explain what you gain by so doing. 
+| tomw@netscape.com 
+To close out this issue, I propose that the TLS spec forbid negotiating to NULL_WITH_NULL_NULL. 
+I understand the argument for testing, but I suspect the risks of this in practical deployment make it dangerous. 
+Win Treese 
+I'm not necessarily arguing against making NWNN illegal. 
+But before we nail the coffin closed. 
+Just want to point out that negotiating to NWNN is safe if NWNN is the only ciphersuite in the list! 
+Ciphersuite rollback is not a thread (as far as I can tell) in this circumstance. 
+The upside is it would be possible for an application to use NWNN over a port that was known to speak TLS. 
+Granted negotiating to NWNN might limit the range of objects accessible to the caller but that is an access policy decision. 
+TLS does not specify an access model (policy) beyond setting up a channel. 
+Given that the issues related to port assignments are far from solved. 
+Wouldn't it be wise to allow the most flexibility in the protocol without compromising security? 
+I think NWNN all by itself should be considered. 
+The spec could be explicit about causing fatal alerts if NWNN were included with other ciphersuites. 
+Furthermore, a null session already in progress could negotiate up to a more secure channel without an adverse impact on the security of the new session. 
+This seems like a great way for applications to implement stronger security options within their protocol without breaking the connection? 
+Best Regards, Ned Smith 
+I concur. 

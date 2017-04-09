@@ -1,0 +1,172 @@
+It has been suggested that servers should always return the client's version. 
+I'm not sure this has been carefully thought through. 
+What happens in the cases of PUT, DELETE where we have 100 codes? 
+How does the client decide to send a 1.1 request in the first place? 
+Just try, and if a 1.0 server is confused, revert to 1.0? 
+I'd like to a definitive answer to: The server should: a. Always return its http version. 
+b. Always return the http version of the request. 
+Pick a or b. 
+Ahe server should always return its http version. 
+I'm concerned there may be some yet-unidentified parts of the current HTTP/1.1 specification that are inconsistent with that approach, but we should fix those, since the alternative just doesn't make sense. 
+Larry 
+OK. A bunch of implementors are busy committing to the server returning the version of the client. 
+I just changed my server to return the client version. 
+I would really appreciate a definitive statement from the WG on this matter as I need to release a new version of my server NOW (!) and I would prefer not to pollute the world if at all possible. 
+The WG would like a definitive statement from the implementors about which option makes the most sense. 
+In general, IETF process works better when the implementors ARE the working group. 
+Regards, Larry 
+As "one of the implementors" here is what I recommend as a practical solution: 
+1) A client always sends a request using the latest version it supports. 
+Only if the client already knows the version of the server and this version is inferrior to the version of the client, then it should downgrade to a version understood by the server. 
+2) A server always responds with the same version as the request. 
+Only if 
+this version is not directly supported by the server, it should take the version that comes closest. 
+If the semantics of the response requires a specific version and this is not the version of the client then it should return "505 HTTP Version not supported". 
+This is basically the same as is stated in section 19.7: It is beyond the scope of a protocol specification to mandate compliance with previous versions. 
+HTTP/1.1 was deliberately designed, however, to make supporting previous versions easy. 
+It is worth noting that at the time of composing this specification, we would expect commercial HTTP/1.1 servers to: - recognize the format of the Request-Line for HTTP/0.9, 1.0, and 1.1 requests; - understand any valid request in the format of HTTP/0.9, 1.0, or 1.1; - respond appropriately with a message in the same major version used by the client. 
+Yep - you said it! Henrik Henrik Frystyk Nielsen, frystyk@w3.org 
+World Wide Web Consortium, MIT/LCS NE43-356 545 Technology Square, Cambridge MA 02139, USA 
+Why bother downgrading? 
+MAY downgrade, not SHOULD downgrade. 
+You say "always" in the first sentence and then give conditions when it doesn't hold in the second. 
+That's confusing. 
+Perhaps you mean to say that a server SHOULD respond with the same version as the request? 
+On a related issue, I'm concerned about the possibility that a single server might 'downgrade' depending on the URL rather than the version of the requestor: I think there are clients that presume the version of subsequent responses based on the version of previous responses. 
+(The problem are CGI-generated headers, and the possibility of shortcutting header-rewriting.) I think the issue of 'downgrading' should explicitly prohibit this behavior. 
+Larry 
+I don't think this makes sense .... my implemented conclusion has been: 1. 
+The protocol level returned in the response should declare the level of the response. 
+2. The response protocol level from a server should never be higher than the request's protocol. 
+3. The client must interpret the response based on the response protocol level, not the request protocol level. 
+I believe there is potential breakage otherwise. 
+Dave Morris 
+Henrik, This is a statement of one way to handle the situation. 
+You are missing the design rationale for why one should use this approach at all. 
+It would be most helpful to see a comprehensive analysis of all 1.1 and 1.0 methods and proxy situations to see if downgrade is the best approach. 
+What are the reasons for the approach? 
+How do these reasons evolve when new protocol versions come out? 
+How much sense do they make when few 1.0 clients and servers remain? 
+If the downgrade approach is best, the spec should read MUST to ensure consistent implementations. 
+Larry On a related issue, I'm concerned about the possibility that a Larry single server might 'downgrade' depending on the URL rather Larry than the version of the requestor: I think there are clients Larry that presume the version of subsequent responses based on the Larry version of previous responses. 
+I believe such servers are implicitly allowed by the definition of "server": 
+Likewise, any server may act as an origin server, proxy, gateway, or tunnel, switching behavior based on the nature of each request. 
+Imagine a proxy server that switches to tunneling behavior when proxying for a 1.0 server, but is 1.1 otherwise. 
+However, the draft says this: Clients SHOULD remember the version number of at least the most recently used server I don't think the version number of the server is actually knowable; instead all a client can discover is the version number the server used on the most recent request. 
+Tom tromey@cygnus.com 
+Member, League for Programming Freedom 
+Henrik, The main problem area is in the behavior of proxy servers. 
+Consider the cases of: Client Proxy Proxy Server 1.11.11.11.1 1.11.01.11.1 1.11.11.01.1 1.01.01.11.1 1.01.11.01.1 Consider the methods: PUT POST TRACE OPTIONS HEAD GET 
+What happens when a 1.1 client tries to do a 1.1 put via a 1.0 proxy to a 1.1 server? 
+OK. A bunch of implementors are busy committing to the server returning the version of the client. 
+I just changed my server to return the client version. 
+I would really appreciate a definitive statement from the WG on this matter as I need to release a new version of my server NOW (!) and I would prefer not to pollute the world if at all possible. 
+Here's one definitive statement that, as far as I can tell, nobody else has made: A server MUST NOT return a response with an HTTP version number if the server does not comply with the specification for that version. 
+In particular, a server MUST NOT return a response with a higher version number than the highest version it supports. 
+No exceptions, not even for really stupid people. 
+Perhaps nobody has said this because it is "obvious", yet we have heard in the past of implementors who tried to use the (non-existent) exemption-for-really-stupid-people. 
+As for whether a server should return (a)min(request-version, server's-highest-version) or just (b)server's-highest-version I don't have a strong opinion. 
+Perhaps rather than trying 
+to argue this out using the current Proposed Standard as a fixed point, we should take a look at the current HTTP/1.1 draft and see whether anything in it would break if we didn't impose a choice between (a) and (b). 
+Maybe if we find something that would break, then one possible option is to treat this as a bug in the HTTP/1.1 spec, rather than a reason to make the decision between (a) and (b)? 
+(Remember, the reason for the Proposed Standard stage is to find such bugs; the current words are not carved in stone.) 
+-Jeff 
+(Speaking again of my own implementation which conforms to Henrik description). 
+The 1.1 client detect that the proxy is 1.0 either: a) Because it has used it in the past, and that 1.0 proxy has replied with a 1.0 reply (to the first 1.1 request) - most probable case. 
+b) Because at the time it issued the PUT, it will wait (for some timeout value), for a 100 status code that will never come. 
+So at least the client - proxy link is ok. 
+Now, the 1.0 proxy speaks to the 1.1 server, through a 1.0 request, so the server can deal with it properly. 
+I don't have a deep analyzises to propose here, but my intuition is that Henrik's suggestion (of replying with the version given by the client), is the only one that will not hurt. 
+Anselm. 
+This was meant as a practical advice and some existing 1.0 server applications break or act confused if you send them an HTTP/1.1 request. 
+Therefore it was more of a "if you want to be on the safe side" should than targeted directly towards the specification. 
+I actually don't think this belongs in the spec except from the part already being there in section 19.7. 
+No, it's just another way or arguing which I thought was used frequently. 
+a) First you give the general case b) Then you give all the exceptions 
+Only if it is capable of doing so. 
+Otherwise not. 
+I actually believe this 
+is close to what Jeff points out in his (later) mail. 
+OK - no more on versions from my side! 
+I don't follow you on this one: "'downgrade' depending on the URL"? 
+There are most certainly clients that remember the version of a HTTP server. 
+This is for example part of libwww 5.0. 
+The reason is that this if you know that this the server is a HTTP/1.1 then you can do pipelining immediately after you have opended a new connection. 
+You don't have to wait until the first response comes back. 
+This brings up another problem that I am not sure how to go about. 
+Let's say that we (the client) want to use pipelining as much as we can to all HTTP/1.1 servers. 
+Now, first time we talk to a server, we do not know the version so we send a HTTP/1.1 request but don't do any pipelining. 
+If it is a HTTP/1.1 server and it keeps the connection open then we immediately start sending x new requests down the pipe. 
+We then pause for 20 seconds before we are asked to issue 15 new requests to the same host. 
+Exactly at that same time, the server times out the connection and sends a FIN. 
+This packet has not reached us yet so we start sending the 15 requests and everything is fine. 
+Depending on timing and how much we wrote we may either get the FIN or a broken pipe on either the read or write. 
+I have the feeling that this also depends on the TCP stack but I am not sure. 
+This can (and should) all be dealt with but the remaining problem is whether we can open a new connection and do pipelining immediately or we'll have to wait for the first response before doing pipelining again. 
+The source of the problem is that we don't know _why_ the connection was closed: Was it because of timeout, or because of overload or something else. 
+If we allow pipelining immediately upon opening a new connection (which I strongly would prefer) then we assume that the connection was closed due to a timeout. 
+That may be OK, but I am not sure. 
+If not then we need a mechanism for the server to say why it closed the connection. 
+Does this story make sense at all? 
+Thanks, Henrik Henrik Frystyk Nielsen, frystyk@w3.org 
+World Wide Web Consortium, MIT/LCS NE43-356 545 Technology Square, Cambridge MA 02139, USA 
+** Reply to note from "David W. Morris" dwm@xpasc.com 
+Mon, 21 Oct 1996 00:10:06 -0700 (PDT) 
+I agree with Larry that the server should always delcare its implementation level. 
+For an orgin server, this version is nothing more than a declaration of capabilities, just as the protocol level in the request is a statement of the client's capabilites. 
+At that point, server-driven negotiation takes over. 
+Draft 7, section 3.1 (HTTP Version) says: "The protocol versioning policy is intended to allow the sender to indicate the format of a message and its capacity for understanding further HTTP communication, rather than the features obtained via that communication." "The HTTP version of an application is the highest HTTP version for which the application is at least coditionally compliant". 
+We all already know that the protocol negotiation capabilities of HTTP need work (which is the reason for PEP, right?), and overloading the meaning of the protocol version is sure to cause confusion and cause bugs in implementations. 
+For your first case, there is nothing gained, because there is nothing to stop, 1.0 clients from using 1.1 features without declaring themselves to be 1.1 compliant. 
+For your second case, this is a statement of the server's backward compatibility. 
+Since the spec does not require backward compatiblity, there is no reason to enforce this. 
+As a practical matter, implementers will, in general, provide the level of compatibility required for their market. 
+For your third case, the client, if downlevel from the server, will only interpret the things it understands (which could still be more than what is defined in the protocol level it claims compliance with). 
+If the client is uplevel of the server, there is nothing to do. 
+Perhaps you could give an example of a potential breakage? 
+This thread of discussion, however, does raise the question of why backward compatibility is not required by the spec (since it is an issue sure to be addressed by implementers). 
+This leads me to another question: I have seen some discussion in the archives of what version an implementation should claim, but nothing definitive (maybe I missed it). 
+When is it safe for an implementation to claim "HTTP/1.1" 
+compliance (in terms of standards milestones)? 
+Thank You, Richard L. Gray 
+Jeffrey Mogul: 
+I don't have a strong opinion either. 
+(b) makes for more interesting diagnostics, but that is about it. 
+It is important to note here that, as the 1.1 spec does not tell whether to do (a) or (b) if the numbers are 1.0 and 1.1, it therefore allows both. 
+So if you are implementing a server, pick either one. 
+If this WG were to make a definitive statement that you must either pick (a) or (b), that would amount to us updating the 1.1 spec, and we want to avoid doing that. 
+Of course, if things break because the spec allows both (a) and (b), we will have no choice but to update the spec. 
+We will only find out about such breakage however if some implementers do (a) while others do (b)... 
+Koen. 
+Larry On a related issue, I'm concerned about the possibility that a Larry single server might 'downgrade' depending on the URL rather Larry than the version of the requestor: I think there are clients Larry that presume the version of subsequent responses based on the Larry version of previous responses. 
+I believe such servers are implicitly allowed by the definition of "server": Likewise, any server may act as an origin server, proxy, gateway, or tunnel, switching behavior based on the nature of each request. 
+Imagine a proxy server that switches to tunneling behavior when proxying for a 1.0 server, but is 1.1 otherwise. 
+The current Apache 1.2-dev code line actually does something rather like this, responding with protocol version HTTP/1.1 when functioning as an origin server, and as HTTP/1.0 when functioning as a proxy. 
+I can certainly imagine that a single client might want to contact the same Apache server in both roles (for instance, in an organization which used the same Apache server as both client and internal information server, and which configures their clients to contact internal servers directly, but go through proxies to get to external ones --- a capability that widely deployed clients do support). 
+rst 
+an organization which used the same Apache server as both client and internal information server Blargh. 
+I obviously meant "as both proxy and internal information server" (noting that a single client which used the same server in both roles would see it emit two different protocol versions...). 
+rst 
+I do believe this has been discussed before, particularly around the time of the LA IETF meeting (on the mailing list). 
+In any case, this is both my personal recommendation as an implementor and the intention of what is written in both HTTP specs regarding the HTTP-version. 
+The HTTP-version of a message represents the protocol capabilities of the sender AND the gross-compatibility (major version number) of the message being sent. 
+This allows a client to use a safe (HTTP/1.0) 
+subset of features in making a normal (HTTP/1.1) 
+request, while at the same time indicating to the recipient that it is capable of supporting full HTTP/1.1 communication. 
+In other words, it provides a tentative form of protocol negotiation on the HTTP scale. 
+We do this because it allows each connection on a request/response chain to operate at its best protocol level in spite of the limitations of some clients or servers that are parts of the chain. 
+The HTTP-version provided by the server should be the highest minor version supported by that server within the same major version as sent by the client (i.e., a server today which is at least conditionally compliant with HTTP/1.1 should always send HTTP/1.1 in its responses, even when it is only using the features of HTTP/1.0). 
+This is required to work because all HTTP/1.x protocols share a base level of compatibility (if they didn't, they wouldn't be called HTTP/1.x). 
+Worries about some clients bombing on receipt of "HTTP/1.1" in the Status-Line are pointless -- HTTP cannot be extensible if it is always tied to the mistakes of the lowest common denominator of client hacker; it is better to force those clients to be upgraded than to hamstring the rest of the world forever. 
+The answer to the question "Why doesn't the spec require servers to always send HTTP/1.1 or to always send the client's version?" is quite simple: the specification only governs an implementation when it sends "HTTP/1.1". 
+If the server sends some other version, then it is obeying the requirements of some other protocol, over which the HTTP/1.1 specification has no relevance. 
+If the server decides to switch between the two at random, then I would say that the server is randomly compliant with HTTP/1.1, and the results in terms of robustness are equally random. 
+However, it probably would not adversely affect the communication, since the really important half of the HTTP-version decision is that the client always send its best version. 
+I am willing to live (unhappily) with a server that switches from HTTP/1.1 to HTTP/1.0 when it is used as a proxy because it is unlikely that any current browser will treat an origin server and a proxy server as the "same server", because we will fix or remove that proxy relatively soon (probably before any significant HTTP/1.1 browsers are deployed), and because the likelihood that such a protocol downgrade will actually result in communication problems on later requests is quite small. 
+I would be less inclined to support a server which downgraded based on the client version, since I see the server's version as a guarantee of good behavior, and that guarantee is a good thing even when the client doesn't understand it. 
+...Roy T. Fielding Department of Information &amp; Computer Science (fielding@ics.uci.edu) 
+It was, in earlier drafts, but various people insisted that it be removed. 
+As of the beginning of last month (when the IESG accepted draft 07 as an RFC without any major changes). 
+It is now unlikely that any significant protocol requirements will be added without a corresponding bump in the version number, which is my definition of being safe to claim "HTTP/1.1" 
+compliance, since there *will* be many implementations calling themselves HTTP/1.1 before the spec can be revised again. 
+.....Roy 

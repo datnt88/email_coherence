@@ -1,0 +1,66 @@
+Hi, 
+I have a template in one XML doc. 
+I want to retrieve an Element from that template and insert it into the another Document I am working on in the DOM. 
+I have verified that the Nodes have the correct parent so I can call appendChild() but I am getting the following exception. 
+Exception in thread "main" com.sun.xml.tree.DomEx: 
+That node doesn't belong in this document. 
+at com.sun.xml.tree.ParentNode.checkDocument(ParentNode.java:264) at com.sun.xml.tree.ParentNode.appendChild(ParentNode.java:347) This error code is DOMException.WRONG_DOCUMENT_ERR. 
+I tried both cloneNode(true) and without cloning the Element. 
+When I clone, the parentNode is null as it should be. 
+Does this have to do with the DocumentOwner property? 
+How can I get around this error? 
+Thanks, Eric 
+Since you're using Sun's DOM, you should be able to use the DocumentEx.changeNodeOwner (Node) method efficiently get past the DOM "can't move nodes between Documents" restriction. 
+I like that better than the DOM L2 approach of Document.importNode (Node) because (a) it's memory-efficient in the typical single-implementation case, (b) successful results can't discard subclass-specific per-instance data, (c) importNode is really just a convenience method, but changeNodeOwner exposes a capability that couldn't otherwise be accessed. 
+If you didn't want to mutate the original (template) document then 
+you will need some sort of clone operation, like L2 importNode. 
+I've 
+seen operations speed up substantially (factors of at least two) when those cloning operations were removed. 
+- Dave 
+We did consider this alternative. 
+A problem arose when we started looking at the HTML DOM and some other proposed usecases, precisely because they _might_ have subclass-specific per-instances data. 
+In the HTML DOM that 
+includes Objects, Applets, scripts, etc. 
+It wasn't clear what the interaction with those should be (does the applet continue running, does 
+its context change, and if so how do we inform it of those changes), and it wasn't clear how to make the behavior when moving across implementations (or subclasses of implementations) consistant with moving within an implementation, so we went with a clone-analogy rather than a move-analogy. 
+There's a proposal on the table to introduce something more like move in DOM Level 3. It might still be a clone-and-discard if you're crossing implementations boundaries, but it would provide an opportunity for optimization in those cases where the DOM can recognize a compabable node. 
+I haven't seen a description of how the above issues are to be addressed, so I have no guess about whether it'll fly or not. 
+Joe Kesselman / IBM Research 
+Hi, I wanted to let you know what I'm doing just in case it's useful for your continuing work. 
+The extension will suit me for the time being until I move to DOM L2. 
+We are building a Java source generator. 
+The DOM provides the generic in-memory representation of the Java Source file. 
+We read a XML template file into the DOM for the main file and then add fields, and methods. 
+Then we perform substitutions such as the classname all using very simple DOM procedures. 
+When generation is complete then the file is printed out. 
+We minimized the markup so the templates are easy to read. 
+Writing the file out as source took very few rules for indenting although it's not too sophisticated either. 
+Our source generator is a rewrite of an existing generator that produces an object-relational mapping layer. 
+The reason we need to importNodes from another document is that if we can specify templates for methods, we can read these at run time and merge them into our source document. 
+This functionality is specifically for providing relationship coupling methods between the Persistent classes. 
+This is very similar to the result of tools that allow you to map tables to Enterprise Java Beans, specifically CMP (Container Mapped Persistence). 
+The hope is that bugs can be fixed in the templates rather than in source code. 
+Hope this is helpful, Eric 
+The code walking the "source" subtree clearly has got to touch each node to modify its owner, and such nodes could encapsulate any specialized logic if desired (including ability to veto a proposed move). 
+Unless DOM is in the business of specifying APIs used by subclassers as well as applications, all such details are out of scope. 
+However, your point relates to some architectural assumptions (AFAIK not part of the DOM L2 spec) about DOM objects and their relationships with various external contexts. 
+Such relationships really ought to be part of an architectural description of DOM, if they're used to make design choices in the way you've suggested. 
+move-analogy. 
+Who had added "move between implementations" as a requirement? 
+Bad model; see below. 
+You'll recall that I have in the past pointed out that "import" is a move operation ("import this young cheese surreptitiously, since the FDA claims 
+it's too tasty for any palate US-resident palate") ... so importNode() is using the wrong analogy (looks like a move, not a clone like it is). 
+I think the original proposal I made some long time ago said that a move either worked or didn't ... and the caller might need to attempt a smart-enough copy (e.g. a directed clone, like importNode does) if a move couldn't be done. 
+Folk who don't care about the overhead of a copy can always clone, but folk who _do_ care will never want copies/clones done without their explicit request. 
+(Tree clones can use a LOT of memory.) - Dave 
+Some of this was discussed. 
+We didn't get it to a point where we felt our description was robust enough to incorporate into the spec. 
+Seems reasonable, as far as it goes. 
+As I said, there is a proposal to revisit this in DOM Level 3. 
+Not really relevant to the discussion at hand. 
+Reasonable people may disagree with our word choice, and move can certainly be reconsidered... but we really are not using import in the sense you would prefer. 
+You pointed out that "import across a geopolitical border" is a move operation. 
+But there are counterexamples in our own industry, such as the Java use of the word to mean "copy interface information from". 
+We didn't find an alternative term that was clearly better, and decided that while this usage may be jargonesque it wasn't inappropriate. 
+Before anyone else says it: "There's glory for you." 
+Joe Kesselman / IBM Research 

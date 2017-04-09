@@ -1,0 +1,53 @@
+OK, this is my last attempt to try to understand this. 
+If I have a logical formula that evaluates to true or false (a Condition), such as one I will call ValidCreditCard, and if a Web service somewhere decides to use this Condition as the value of its preCondition property, then ValidCreditCard becomes an instance of the Precondition class. 
+If that Web service disappears, then ValidCreditCard reverts back to the Condition class. 
+So, using a formula changes it, and when you stop using it, it changes back. 
+Or am I still misunderstanding the idea? 
+Cheers, Mike Hi Michael, The property that makes it special does not lie in the syntax but in the semantics. 
+Precondition is a property which is required to be true, before the execution of the service. 
+So there could be several formulae that could be classified as Conditions, however if any such formula is tagged with a qualifier that it is a precondition, it makes a difference in the interpretation of that Condition for the execution of the service. 
+-Monika Hi Monika, If a Precondition is a special kind of Condition, then it must have some property (or a restriction on some property) that makes it special. 
+What is this? 
+That is, given a logical formula that evaluates to true or false, what property does it have that would enable you to determine whether it is a Condition or Precondition? 
+Cheers, Mike Huhns -----Original Message----- On Behalf Of Monika Solanki [Note: this thread is moving to public-sws-ig. 
+After this message, replies should only be sent to public-sws-ig.] Monika, Drew, I completely agree with the proposed solution. 
+This should definitely be implemented in the next release. 
+I also agree, except note that there are 2 proposals "on the table": I think Monika suggested this: Process - hasPrecondition - Precondition where Precondition is a subclass of Condition whereas Drew seems to be suggesting this: Process - hasPrecondition - Condition (with no Precondition class anywhere). 
+I think we should retain the Precondition class and the hasPrecondition property. 
+This is because, although Precondition is effectively a Condition, however it is a "special" kind of Condition. 
+In the process model, Condition is a general thing, which is also used for Conditional Effects and Conditional Outputs. 
+That reminds me - we still have an open issue about the class of an effect (that is, the range of ceEffect). 
+Currently it's just "Thing", which isn't very satisfying. 
+Do people feel that it's OK to have Condition for this range, or do we need something distinct? 
+- David Cheers, Marta [Monika Solanki, in re DAML-S spec] Currently in the 1.0 version of the process model, we have the following - owl:ObjectProperty rdf:ID="preCondition" Where, Condition is defined as, - owl:Class rdf:ID="Condition" rdfs:comment This is a "place-holder" for now, which awaits further work from the DAML/OWL community. 
+An instance of Condition is a logical formula that evaluates to true or false. 
+Eventually we expect this to be defined elsewhere, as part of a OWL extension allowing for logical expressions. 
+/rdfs:comment Somehow I am not able to grasp the utility of the property "preCondition". 
+Since in this model, we have IOPEs as Classes, therefore I believe all we need to do is make Precondition a subclass of Condition. 
+The property preCondition, introduces redundancy as it is ranging over the class "Condition" anyways. 
+Feedback appreciated in case I missed something. 
+You're right, as far as I can see. 
+The important property is hasPrecondition, which connects a Condition to a Process or Process step. 
+There is no reason for the class Precondition to exist, let alone a property preCondition linking a Precondition to a Condition (itself?). -- Drew McDermott Yale University CS Dept. 
+**   **   **   **   **   **   **   ** Monika Solanki Software Technology Research Laboratory(STRL) De Montfort University Hawthorn building, H00.18 The Gateway Leicester LE1 9BH, UK web: http://www.cse.dmu.ac.uk/~monika **   **   **   **   **   **   **   ** 
+[Mike Huhns] OK, this is my last attempt to try to understand this. 
+If I have a logical formula that evaluates to true or false (a Condition), such as one I will call ValidCreditCard, and if a Web service somewhere decides to use this Condition as the value of its preCondition property, then ValidCreditCard becomes an instance of the Precondition class. 
+If that Web service disappears, then ValidCreditCard reverts back to the Condition class. 
+So, using a formula changes it, and when you stop using it, it changes back. 
+Or am I still misunderstanding the idea? 
+No, you're completely on track. 
+In fact, I was under the impression that we (the OWL-S people) were doing away with the Precondition 
+class. 
+All we need is the hasPrecondition property that relates a step to a Condition. 
+-- Drew McDermott Yale Computer Science Department 
+I agree with this... but here may a way to do this that generalises nicely... 
+We have statements (about the "world" or domain) in some language that can be evaluated as holding true or false. 
+Some of these are temporarily invariant. 
+But in many cases these can be temporally specified as holding at a time point, or between time points, or in some other temporally defined scope. 
+In my work we call this a "world state constraints" so we can relate it to the more general notion of constraints of many kinds (temporal, spatial, resource, world state, etc.) and have a simple extendable way to relate all constraints in a process model. 
+We then have specialised uses of these in things like "conditions" at time points (often at the begin time point of ac activity, but also on other temporal specifications), and effects. 
+I would argue that such conditions should be on the time specifications such as time points (normally but not always associated with an activity in a process model) and not on the activity itself. 
+This allows much more flexibility - as has been found by those working on PIF, NIST PSL and other flexible process models. 
+So we then have these specialised to give us convenient specialisation for what we want to use all the time ... a) precondition - defined by a statement that holds at begin end of an activity. 
+b) effect - defined by a statement holds at end of an activity Another that we will need I am sure (we already use these in our process models) c) condition that holds from begin to end time points of an activity (preservation conditions). 
+Austin 

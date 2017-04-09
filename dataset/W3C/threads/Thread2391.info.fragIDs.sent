@@ -1,0 +1,152 @@
+The specification for Range now says: 14.36.2 Range Retrieval Requests HTTP retrieval requests using conditional or unconditional GET methods may request one or more sub-ranges of the entity, instead of the entire entity, using the Range request header, which applies to the entity returned as the result of the request: However, I believe that the spec is silent on what the server should return for a Range if it also uses a content-coding, such as "gzip". 
+More concretely: Suppose the client sends: GET /foo.html 
+HTTP/1.1 Host: bar.com Range: bytes=100-199 Accept-Encoding: gzip and the server returns HTTP/1.1 206 OK Content-Range: bytes 100-199/400 Content-Type: text/html Content-coding: gzip 
+Then should then 100 bytes covered by the Range/Content-Range refer to the second hundred bytes of the HTML file before compression, or to the second hundred bytes of the compressed form? 
+It seems to me that the only reasonable interpretation is that Range/Content-Range should apply to the unencoded form of the response, since the client's ultimate goal is to obtain a specific piece of the unencoded form; the use of compression is only a temporary phase that the response goes through while it is being transmitted. 
+However, by a strict reading of the phrase "which applies to the entity returned as the result of the request", combined with the HTTP/1.1 definition of "entity": The information transferred as the payload of a request or response. 
+An entity consists of metainformation in the form of entity-header fields and content in the form of an entity-body, as described in section 7. one would have to use the other interpretation: that the Range 
+applies to the compressed form, since this is the "payload of the 
+[response]". 
+One way to resolve this issue would be to go back about 18 months and undo the decision made about adopting the MIME definition of "entity." 
+I argued then that this was a mistake; I continue to believe that this is not only a mistake, but one that was made without any lack of warning. 
+But I don't expect to win this battle. 
+Another approach would be to define a new term, such as "instance", to mean what "entity" should have meant (by the standard English definition of the word "entity"). 
+But I doubt you would accept this change at this stage in the process. 
+So, with some trepidation that this is not the only potential error lurking in the the spec as the result of the "entity" term, I suggest changing the first paragraph of 14.36.2 to read: HTTP retrieval requests using conditional or unconditional GET methods may request one or more sub-ranges of the entity, instead of the entire entity, using the Range request header, which applies to the entity returned as the result of the request, prior to the application of any content-coding: -Jeff 
+Without advocating a particular position, I would like to note that one of the 'justifications' for byte ranges was the ability to continue retrieving a previously interrupted response. 
+In that mode, if I were the developer of the client, I would want the byte range 
+to apply to the compressed form. 
+In the usage associated with partial retrieval of structured data such as a PDF file, I'd want the byte ranges to apply to the uncompressed resource. 
+It would be helpful to know what actual use is being made of byte ranges. 
+Dave Morris 
+I have said before that the reason there is both a Content-Encoding and a Transfer-Encoding is that the former is a property of the resource and the latter is a transmission issue. 
+The reason I say this is because the other metadata describing the entity always describes the entity-body as whole, e.g., Content-Encoding( Content-Type( data ) ) so that things like Content-MD5 and Range requests apply to the whole. 
+The compressed form. 
+This would assume the part of the server performing the range has access to the non-compressed data, which is false. 
+....Roy 
+Dave Morris writes one of the 'justifications' for byte ranges was the ability to continue retrieving a previously interrupted response. 
+In that mode, if I were the developer of the client, I would want the byte range to apply to the compressed form. 
+If one starts with three assumptions (which might even be "facts"): (1) The interruption affects the tail of a retrieval. 
+(2) Most HTTP retrievals are attempting to transfer the whole resource value (3) The compression algorithms that we actually use are one-pass algorithms with finite windows, and so it is possible to extract a large portion of the uncompressed form from a partial copy of the compressed form. 
+Then even in the case where one is recovering from an interrupted retrieval of a compressed form, you will be in a situation where you have been able to decompress some prefix of the full file. 
+This means that the ability to ask the server for a compressed copy of the part of the file that you don't have is sufficient to recover from the loss. 
+Further, because of the relatively small window used by compression algorithms, the result would not be much larger than if you were able to retransmit exactly the bytes of the compressed form that were previously unavailable. 
+Further, a slice out of the middle of a compressed form is totally useless by itself; e.g., you can't decompress the output of gzip without knowing the first few bytes of the output, because the rest of the compression depends on that prefix. 
+On the other hand, a compressed form of a slice of the uncompressed form has some value, since it is possible to extract the unencoded slice. 
+-Jeff 
+This is off-topic on this issue, but there was some question as to whether a delta coding was best though of as a 'range' or an 'encoding'. 
+So, can you delta-encode a range? 
+I mean, does the same argument hold? 
+Larry 
+Larry Masinter: This is off-topic on this issue, but there was some question as to whether a delta coding was best though of as a 'range' or an 'encoding'. 
+So, can you delta-encode a range? 
+I mean, does the same argument hold? 
+This isn't exactly off-topic, since the reason that I realized that there is an ambiguity with respect to Range + compression is that a group of us are trying to figure out how to write a Delta-encoding spec, and the same kinds of issue comes up. 
+For those of you who don't know what "Delta-encoding" means, see Jeffrey C. Mogul, Fred Douglis, Anja Feldmann, and Balachander Krishnamurthy. Potential benefits of delta encoding and data compression for HTTP. 
+In Proc. 
+SIGCOMM '97 Conference, pages 181-194. 
+ACM SIGCOMM, Cannes, France, September, 1997 or check out the expanded (&amp; somewhat corrected) version at Anyway, delta-encoding is most certainly NOT best thought of as a "range"; the algorithms that people actually use are really not describable in this way. 
+I think it could be described as "content-coding" (this is in fact what we proposed in the paper). 
+However, it is definitely of interest to be able to apply Range retrievals together with delta-encoding, and we are beginning to wrestle with how to actually specify that. 
+But for the purposes of HTTP/1.1, please don't think too hard about delta-encoding; it will only confuse the issue. 
+I.e., I don't think it is necessary to solve the delta-encoding problems in order to figure out how Range interacts with compression. 
+Delta-encoding is not exactly analogous to compression, and it would tremendously confuse things to pretend that there is an exactly analogy. 
+-Jeff 
+Jeff, I think what you're missing is that most servers store files (er, entities?) already compressed as, for example, .gzip files. 
+Can anyone offer an example of a server that compresses content on the fly and returns it in that form? 
+Dave Kristol 
+I think what you're missing is that most servers store files (er, entities?) already compressed as, for example, .gzip files. 
+I understand that. 
+What I think you're missing is that this not the most desirable state of affairs. 
+On-the-fly compression would immensely useful in reducing bandwidth requirements for non-image data (see our SIGCOMM '97 paper, and also the SIGCOMM '97 paper by Gettys et al.) HTTP/1.0 doesn't really support this, but we've tried to make it possible in HTTP/1.1 
+We want to encourage more efficient use of the Internet, not freeze the current (and inefficient) practice. 
+Having said that: I realize that there may be a conflict between the right thing to do for Ranges with on-the-fly compression, and for Ranges with .gzip 
+files. 
+And maybe the spec needs to be able to make the distinction explicit, rather than us arguing about which single mode should be supported? 
+Can anyone offer an example of a server that compresses content on the fly and returns it in that form? 
+I believe that Henrik et al. have prototyped this, and their experiences were largely the inspiration for fixing the bugs in Accept-Encoding. 
+-Jeff 
+Well, for what it's worth, I'm seeing quite a few 206's in my access logs, mostly due to Netscape clients resuming interrupted retrievals of GIF files. 
+The files aren't compressed on disk, but byte range requests certainly are being used. 
+Gregory Woodhouse San Francisco CIO Field Office - Infrastructure gregory.woodhouse@med.va.gov May the dromedary be with you From: David W. Morris [SMTP:dwm@xpasc.com] 
+http-wg%cuckoo.hpl.hp.com@hplb.hpl.hp.com Subject: Re: new editorial issue RANGE_WITH_CONTENTCODING Without advocating a particular position, I would like to note that one of the 'justifications' for byte ranges was the ability to continue retrieving a previously interrupted response. 
+In that mode, if I were the developer of the client, I would want the byte range to apply to the compressed form. 
+In the usage associated with partial retrieval of structured data such as a PDF file, I'd want the byte ranges to apply to the uncompressed resource. 
+It would be helpful to know what actual use is being made of byte ranges. 
+Dave Morris 
+The fact that compression is a good thing is not an issue -- all of the studies I've seen have been just as valid for pre-compressed data as for on-the-fly compression (in fact, most of the timing comparisons were done only with pre-compressed data). 
+The spec does make it explicit, at least to the extent that general discussion of encodings can be explicit. 
+On-the-fly compression is a transfer-coding. 
+Source-based compression is a content-coding. 
+The problem is that people keep trying to wedge both into content-coding instead of just defining on-the-fly compression with Transfer-Encoding. 
+Whether or not Range applies to content-coded entities is not an issue. 
+The implementations demonstrate that it does. 
+....Roy 
+I'll go along with Roy. 
+Range should apply *after* the content encoding. 
+If we need pre-compressed ranges, then let's define compressed transfer encodings. 
+I am *assuming* that your reference to 'transfer-encoding' maps to MIME 'content-transfer-encoding'. 
+If this assumption is false, please ignore this comment... 
+The MIME specification STRONGLY discourages (its capitals) the creation of new content-transfer-encoding values. 
+I would think that this would encourage designers to try and shoehorn transfer-encoding semantics into content-coding headers. 
+GK. Graham Klyne 
+It is false. 
+That is why we now have Transfer-Encoding and do not allow Content-Transfer-Encoding at all. 
+Likewise, the reason we have Content-Encoding is because MIME did not provide for declaring the types of layered encodings. 
+We would have been better off with a hierarchical Content-Type. 
+....Roy 
+There are two reasons why you can't substitute one for the other: 1) They don't have the same scope - one is end-to-end and the other is hop-by-hop. 
+As the message length changes, it can only be used through proxies that know about that particular encoding. 
+In other words: the stupidest link in the chain decides the encoding. 
+2) A client can't say that it "accepts" transfer codings, so there is no way to introduce the funkyflate compression. 
+Currently, the only way is to use Accept-Encoding. 
+I would actually vote for having a Accept-Transfer header field - this would also make the handling of trailers much easier. 
+I think you need both - the real problem is the separation of content encoding and content type. 
+Henrik Henrik Frystyk Nielsen, World Wide Web Consortium 
+I have promissed Jim to reach closure on this. 
+I do not believe that the discussion has brought any need for changed wording regading content-codings vs transfer-codings. 
+However, it has shown a need for better support for transfer-codings, which is the reason for the Accept-Transfer header proposal [1] and the changed wordings for Transfer codings [2]. 
+So please review these proposals Accept-Transfer proposal ASAP. 
+Thanks, Henrik [1] http://www.findmail.com/listsaver/http-wg/7485.html [2] http://www.findmail.com/listsaver/http-wg/7492.html 
+Henrik Frystyk Nielsen, World Wide Web Consortium 
+I am generally pursuaded that Roy is right, that we should be using both Content-Encoding and Transfer-Encoding, and that Range selections should be applied after Content-Encoding and before Transfer-Encoding. 
+I also think that Henrik's proposal for Accept-Transfer is generally a good one. 
+But there are still a few loose ends to tie up. 
+1) They don't have the same scope - one is end-to-end and the other is hop-by-hop. 
+As the message length changes, it can only be used through proxies that know about that particular encoding. 
+In other words: the stupidest link in the chain decides the encoding. 
+More specifically, because Transfer-Encoding and Accept-Transfer are hop-by-hop fields, a response that flows through an HTTP/1.0 proxy can't have a Transfer-encoding (such as on-the-fly compression) for the two hops that involve that proxy. 
+This is sad, but it does avoid a big problem with the use of new compression algorithms (or other codings): the possibility that such responses might be improperly cached by an HTTP/1.0 shared cache, and then delivered to a client that doesn't understand them. 
+It might also provide some incentive for people to upgrade their 1.0 proxies to 1.1, since it's usually the proxy operator who is paying for the bandwidth on at least one side of the proxy. 
+However, there is (at least) one more slight problem with the hop-by-hop nature of Transfer-Encoding. 
+Section 15.1.1 (End-to-end and Hop-by-hop Headers) currently says: For the purpose of defining the behavior of caches and non- caching proxies, we divide HTTP headers into two categories: . 
+End-to-end headers, which must be transmitted to the ultimate recipient of a request or response. 
+End-to-end headers in responses must be stored as part of a cache entry and transmitted in any response formed from a cache entry. . 
+Hop-by-hop headers, which are meaningful only for a single transport-level connection, and are not stored by caches or forwarded by proxies. 
+The following HTTP/1.1 headers are hop-by-hop headers: . 
+Connection . 
+Keep-Alive . 
+Public . 
+Proxy-Authenticate . 
+Transfer-Encoding . 
+Upgrade [NOTE TO JIM GETTYS: the "must"s in that passage should be MUSTs, right?] 
+The most simplistic interpretation of the phrase "Hop-by-hop headers ... and are not stored by caches or forwarded by proxies" implies that a transfer-encoding has to be removed by a proxy cache before the response is stored. 
+Clearly, if a proxy supports a transfer-coding, and both the inbound server and the outbout client also support the same coding, then it would be a real waste of CPU time to do this for compressed transfer-codings. 
+So I think that after . 
+Hop-by-hop headers, which are meaningful only for a single transport-level connection, and are not stored by caches or forwarded by proxies. 
+we should add: Note: a proxy or cache need not actually delete a hop-by-hop header in a case where its external behavior would be equivalent to deleting the header and then adding it again. 
+For example, a proxy receiving a response with a non-identity transfer-coding need not remove that coding, and the corresponding Transfer-Encoding header field, unless the response is being sent to a client that has not sent an appropriate Accept-Transfer header. 
+The other problem that we may need to clarify is that if a transfer-coding (e.g., "compress") is used with a Range response containing multiple ranges, then should the transfer-coding apply to the entire "multipart/byteranges" body, or just to the parts individually? 
+It seems possible to leave this up to the server, and let the server choose the most appropriate option for a given response, rather than to try to embed the choice in the protocol specification. 
+But this means that a client sending both a multi-part Range request and a non-identity "Accept-Transfer:" would have to be able to grok two different forms of response. 
+E.g., combining the example in 19.2 with "compress", the client might get HTTP/1.1 206 Partial content Date: Wed, 15 Nov 1995 06:25:24 GMT Last-modified: Wed, 15 Nov 1995 04:58:08 GMT Content-type: multipart/byteranges; boundary=THIS_STRING_SEPARATES --THIS_STRING_SEPARATES Content-type: application/pdf Content-range: bytes 500-999/8000 Transfer-Encoding: compress ...the first range..., compressed --THIS_STRING_SEPARATES Content-type: application/pdf Content-range: bytes 7000-7999/8000 Transfer-Encoding: compress ...the second range, compressed --THIS_STRING_SEPARATES-- or it might get HTTP/1.1 206 Partial content Date: Wed, 15 Nov 1995 06:25:24 GMT Last-modified: Wed, 15 Nov 1995 04:58:08 GMT Content-type: multipart/byteranges; boundary=THIS_STRING_SEPARATES Transfer-Encoding: compress .... compressed form of the multipart/byteranges type ..... Note that section 3.7.2 
+(Multipart Types) seems to allow the first form: In HTTP, multipart body-parts MAY contain header fields which are significant to the meaning of that part. 
+If this makes sense to people, then I would add this paragraph to the end of section 3.7.2 
+(Multipart Types). 
+If a client has indicated its acceptance of one or more non-identity transfer-codings (using the Accept-Tranfser header, section XXX) and it is otherwise appropriate to use a multipart type, the server MAY either apply a transfer-coding to the entire message-body, and MAY apply a transfer-coding to one or more of the individual body-parts. 
+-Jeff 
+Yep. 
+The entire body, since Transfer-Encoding is not a MIME header field. 
+The HTTP/1.1 message data model was designed to be easy to translate into a future version of HTTP that had better layering (i.e., actual instead of theoretical layers) between transfer and payload. 
+That gets harder if we start pushing HTTP elements inside body parts. 
+....Roy 

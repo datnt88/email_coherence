@@ -1,0 +1,40 @@
+F&amp;O lists the node comparison operators op:is-same-node etc as having parameters of type node(). 
+The formal semantics mappings handle the case where a parameter is () but in something like the examples //book[isbn="1558604820"] is //book[call="QA76.9 C3845"] //purchase[parcel="28-451"]   //sale[parcel="33-870"] both from 3.5.3 
+Node Comparisons isn't the static type of the arguments node()* rather than node() and you'd have to use fn:exactly-one() on both of the arguments if you had a system using the 
+static typing from the Formal semantics? 
+I hope I'm mistaken but if so could there be a reference in 3.5.3 to whatever part of whichever document it is that I missed. 
+David This e-mail has been scanned for all viruses by Star Internet. 
+The service is powered by MessageLabs. 
+For more information on a proactive anti-virus service working around the clock, around the globe, visit: 
+You are correct, this expression raises a static type error with static 
+typing. 
+It may be better to either use exactly-one() or zero-or-one(), use [1], use a for iterator, or define is and  ,  using existential 
+quantification. 
+Best regards Michael 
+the 
+I am usually in favour of static typing, but in a language like Standard ML, the type system is closely matched to the values and operations in the language, and type errors almost always reflect real errors (ie run time errors or incorrect results would have occurred without the static check). 
+However the existence of exactly-one() appears to be an admission that the type system (or at least the type inference) in use here is really a terrible match to the underlying data and operations and I fear that with the current definitions a system using the static typing as specified in the FS is basically unusable, the use of the static type system will generate far more errors than it ever detects. 
+Requiring the user to have to code special functions to work round deficiencies in the static typing is a usability disaster. 
+It is probably infeasible to reliably detect whether expressions match node() rather than node()* as a static check as the cardinality of the result sequence depends on too many run time factors (eg with the exampbe 
+//book[isbn="1558604820"] here, unless isbn is of type ID you haven't really a hope of statically telling that this returns a single node) In Xquery an item is the same as a sequence of one item, and it would probably make sense to not try to distinguish these at the static typing level and not try to statically distinguish any sequence based on its cardinality (including cardinality of one). 
+Obviously if node() and node()* were the same static type the 
+type system is in some sense weaker, but I think in practice the result would be that the system was far more usable with far fewer spurious errors, and no requirment for fn:exactly-one() and friends. 
+or define is and  ,  using existential quantification. 
+That might work for "is" but in practice with the current type definitions, all user defined functions are going to have to do something similar. 
+If you type your function as requiring node() it is virtually unusable as so few expressions can be statically typed as returning a node. 
+David This e-mail has been scanned for all viruses by Star Internet. 
+The service is powered by MessageLabs. 
+For more information on a proactive anti-virus service working around the clock, around the globe, visit: 
+exampbe 
+I completely agree with David and strongly support his proposal to change the rules for static type checking. 
+He summarizes very precisely the current type-checking rules and the anomalies that result from them. 
+Changing the type checking rules as proposed will benefit everyone. 
+The only remark is that instead of: 
+David probably meant: Obviously if node() and node()+ were the same static type that is, to treat "exactly one" and "one or more" the same. 
+Dimitre Novatchev. 
+Do you Yahoo!? Free Pop-Up Blocker - Get it now 
+Another example of this error in the Xquery (and Xpath) spec 3.5.1 
+If $book1 does not have exactly one author subelement, a type error is raised.[err:XP0004][err:XP0006] $book1/author eq "Kennedy" I believe that if static typing is enabled, it is not enough that $book1 only has one author child, it must have been schema typed so that only one author child is possible in any instance, otherwise the static type of the lhs of eq is going to be a sequence not a single string (or single untyped value). 
+David This e-mail has been scanned for all viruses by Star Internet. 
+The service is powered by MessageLabs. 
+For more information on a proactive anti-virus service working around the clock, around the globe, visit: 

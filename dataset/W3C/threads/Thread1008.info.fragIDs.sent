@@ -1,0 +1,36 @@
+There is, I think, currently only one glaring omission in Tidy. 
+Many times, when we only want the *structural* markup, we need to get rid of **ALL** presentational markup leftovers, including the embedded style sheet. 
+Right now, the closest we can come to that is by applying "clean" and "drop-font-tags", but that leaves droppings like this still hanging around: /* ![CDATA[*/ p.c1 {font-style: italic; text-align: justify} /*]] */ To get rid of this you have to manually delete the style section and then do a regex search &amp; replace to get rid of all the 'class=".*"' 
+attributes. 
+A 
+strip-presentation: yes/[NO] option (or similar idea) would be extremely useful. 
+And rather than have to set *two* options -- like 'clean' and 'drop-font-tags', which you currently have to set to get even part of the way there -- it should be a "one size kills all": get rid of all FONT &amp; CENTER elements, ALIGN, BGCOLOR, &amp; BACKGROUND attributes etc., and *not* replacing them with CLASS attributes and *not* creating an embedded style section. 
+Thanks, 
+/Jelks 
+Ideally this option should also remove the extraneous which often litter our otherwise nicely Tidy'ied documents. 
+/Jelks 
+Dave's relatively recent -bare option might do that. 
+No, -bare turns it either into something like this or this which means there are no &amp;nbsp;'s, but it doesn't actually remove content-void "paragraphs" that were only put there for visual effects in various browsers. 
+I'm also looking at things like (and other variations thereof). 
+IMO, a 'strip-presentation' option should also remove all such content-void paragraphs, headings, and list-items. 
+/Jelks 
+IMO, a 'strip-presentation' option should also remove all such content-void paragraphs, headings, and list-items. 
+Although, I should note, that would likely be a good bit more involved (coding-wise) than just consolidating "clean" and "drop-font-tags" with not creating an embedded style section with corresponding classes. 
+So perhaps it could be a separate option, something like 'strip-void-content'. 
+It might actually even be better to have it as a separate option, since people for various reasons might want to do one and not the other. 
+Also, IMO an element with an ID should *not* be considered content-void, even if it otherwise would be. 
+/Jelks 
+Absolutely not. 
+This raises an issue that I would like to get some feedback on. 
+I am heavily involved in the production of electronic-books (e-books). 
+The leading specification for e-books is that produced by the Open eBook Forum (http://www.openebook.org/oebps/index.htm). 
+The Open eBook Publication Structure Specification calls for content in a form which is, for all intents and purposes, XHTML. 
+Now when I read fiction I prefer to have my paragraphs single spaced, with the first line indented, just like books currently do. 
+This can easily be achieved by the use of the following style specification: p { text-indent: 2em; margin:0em; } Books will frequently have a break on a page which does not indicate a chapter break, but simply a change in perspective, scene, or the passage of time. 
+I could indicate these breaks with a br / tag, but as soon as the document is viewed by someone who does not use my same style sheet the page break is lost. 
+OTOH, if I use two br / tags the page break becomes too large for small display devices (such as PDAs). 
+The almost empty paragraph ( p &amp;nbsp; /p ) solves this problem nicely as its margins will vary according to the style sheet just as normal paragraphs will. 
+Currently, the behavior of tidy is to replace empty paragraphs with _two_ br / tags when the "drop-empty-paras:" is set to false (not the default value). 
+This causes the document to have the same presentation only when used in browsers without style sheet modifications, and not necessarily in other User Agents. 
+I would like to modify tidy to cause empty paragraphs ( p /p ) to be replaced with almost empty paragraphs ( p &amp;nbsp; /p ). 
+Any objections? 

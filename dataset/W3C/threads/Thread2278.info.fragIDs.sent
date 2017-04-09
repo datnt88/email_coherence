@@ -1,0 +1,73 @@
+I had a bizarre thought concerning persistent connections. 
+Suppose we decreed that all HTTP/1.1 agents understand persistent connections, without requiring them to pass special headers. 
+We also grant clients and servers the right to close connections at their discretion following a request/response exchange (as we already do). 
+Servers could, optionally, honor Connection: Keep-alive from HTTP/1.0 clients. 
+I've probably overlooked something, but at first (and second) thought, the presence of an HTTP/1.1 protocol version in the request and response should be enough to tell 
+a) a server that the client expects to hold the connection open 
+b) a client that the server will try to hold the connection open. 
+If all the proxies between a user agent and an origin server understand HTTP/1.1, the entire connection can be held open. 
+Dropping the Connection header would simplify the protocol. 
+Why not? 
+Dave Kristol 
+Cool. Simplify the protocol and encourage the single-most important part of making http more well-behaved in the face of congestion control. 
+Since you can always close the connection anyway, why not? 
+Suppose we decreed that all HTTP/1.1 agents understand persistent connections, without requiring them to pass special headers. 
+We also grant clients and servers the right to close connections at their discretion following a request/response exchange (as we already do). 
+This has some obvious attractions, but before we took this step we would have to get consensus on two issues: (1) all server (and cache) implementors would have to agree that they are willing to implement persistent connections. 
+So far, we've operated under the assumption that this is optional, so we have not tried to obtain near-unanimous consent. 
+(2) more subtly, the existing proposal does not allow a client 
+to pipeline its requests unless it has received a Persist: header from the server. 
+"Pipeline" means "send multiple requests before receiving any responses. 
+So we would also have to make sure that there was never any reason that a 1.1 server could not handle such behavior. 
+As I said, up to now we have not tried to obtain near-unanimous consent for this. 
+I'm not myself opposed to your proposal, but I'm not interested in spending a lot of time arguing about it if there are people opposed to it. 
+Dropping the Connection header would simplify the protocol. 
+Why not? 
+The Connection header is there for orthogonal extensibility reasons. 
+Its purpose is to allow HTTP/1.1 caches to ignore future hop-by-hop headers that may be defined in HTTP/1.x. Roy added it to HTTP/1.1 because he observed that if it had been in HTTP/1.0, we could have more easily added persistent-connection support in a compatible way. 
+-Jeff 
+One problem is that there is a cost associated with holding a connection open on the server. 
+If the client knows that it will not be reusing the connection after the current request, then not asking for persistence means that the server can switch its process resources to a new connection immediately after sending the last response (as opposed to waiting for the close or timeout from the client). 
+On the other hand, one might say that if the server is 
+reaching its resource constraints, then it can close the connection anyway. 
+There are some clients that will not want to implement more than one request per connection (batch-mode and text-only clients in particular) and yet will want to take advantage of the other features of HTTP/1.1. 
+Although they could do so even with your proposal, their inability to signal that they did not want persistence would use up server resources unnecessarily. 
+I think the deciding issue is the problem of writing to a socket after the other end has attempted to close it (but the close has not yet reached the writer). 
+It is difficult to handle such an event because there is no indication of why the socket was closed or when (without looking at the TCP ack sequence, which generally isn't available to the HTTP programmer). 
+If we could come up with a decidable set of rules for what to do when the connection closes and the client isn't expecting it to close, then I suppose we could do without the Persist header. 
+...Roy T. Fielding Department of Information &amp; Computer Science (fielding@ics.uci.edu) 
+I don't have real strong feelings about pushing on this idea. 
+It just seemed like a nice simplifying assumption. 
+I realize it's a bit late in the game to propose such a change. 
+An HTTP/1.1 response would signal that pipelining further requests after the first is possible. 
+There is the question of what the client should do if the server closes the connection (because it only wanted to handle a single request) while the client is trying to send a train of further requests. 
+I don't know the answer. 
+Yes, and that function could presumably be retained. 
+But an origin server need not look for it. 
+All true. 
+And yet, there's always the danger that the connection to the client might close unexpectedly, and the client would have to recover gracefully. 
+Would adopting my proposal make the situation worse? 
+Dave 
+Perhaps there could be a "Connection: non-persistant" header. 
+It makes sense to have the most common situation be the default (requiring no header) and add a header for the exceptional or at less common behavior. 
+John Franks Dept of Math. 
+Northwestern University john@math.nwu.edu 
+It seems like the "worst case" is the same, but the "average case" for a server that really doesn't want to do persistent connections 
+is worse. 
+If the client and server have similar "expectations" 
+I'd think there would be fewer connections closed ungracefully. 
+I'm not sure where the side effects of this would fall out, though. 
+Albert Lunde Albert-Lunde@nwu.edu 
+I like John Franks's idea (but let's spell it "non-persistent :-). 
+So the rules would be: Server: For an HTTP/1.1 request, keep the connection open, unless there's a Connection: non-persistent (or whatever) header. 
+Furthermore, if the server chose to close the connection, it would send a Connection: non-persistent response header. 
+For an HTTP/1.0 request, a server could implement the existing, sometimes honored Connection: keepalive convention. 
+Client: An HTTP/1.0 client would, of course, do what it does now, which may include using the existing Connection: keepalive convention. 
+An HTTP/1.1 client expect a connection to remain open, but would decide based on the first response from a server. 
+If it didn't want a connection to remain open, it would send a Connection: non-persistent request header. 
+If the HTTP/1.1 client receives an HTTP/1.0 response, it expects the connection to close. 
+Otherwise it expects the connection to remain open, unless it receives a Connection: non-persistent response header. 
+Superficially this proposal may seem complex. 
+However, for the default case HTTP/1.1 agents need send no extra headers to get/maintain the preferred kept-alive connection behavior. 
+While Connection: non-persistent can be used to advise, it isn't essential to the protocol's functioning correctly. 
+Dave Kristol 

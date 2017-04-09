@@ -1,0 +1,47 @@
+ACTION: 2003-08-29#3 gk check CONCEPTS 6.4 wrt details of URI and "%" cf. pfps comment on sectin 6.4 of concepts It appears to me that RDF Concepts does not require % to be %-escaped in RDF URI references (Section 6.4). 
+Surely this is a bug. 
+So, checking: The disallowed octets that must be %-escaped include all those that do not correspond to US-ASCII characters, and the excluded characters listed in Section 2.4 of [URI], except for the number sign (#), percent sign (%), and the square bracket characters re-allowed in [RFC-2732]. 
+I think PFPS is right, and that ", the percent sign (%)" should be deleted from the above paragraph. 
+I tried to take the text from the usual suspects and minimize the divergence between different W3C specs. 
+cf in particular which links to None of these %-escape %. 
+I believe that w3c-i18n-ig@w3.org and uri@w3.org may be appropriate forums for discussion of this issue. 
+I am unwilling to make a change before the 5th September publication. 
+Nor would I be happy with a change that is opposed by a consensus in the above forums. 
+I am not yet convinced that this materially affects RDF since we *never* require the escaping to actually be performed, it is merely a theoretical exercise that defines a set of strings. 
+I believe that the set of strings is the same whether or not % is itself escaped. 
+Jeremy 
+Hmmm... that was a pretty obtuse collection of references, but I finally found something in there... 
+The text you use seems to come from: specifically, the description of mapping IRIs to URIs, which would seem to be a similar context to what is intended here. 
+In this context, I think it is assumed that the Unicode URI has already been formed in a way that the only occurrence of '%' is as part of an escape sequence. 
+So in this respect, I now think the current text is correct. 
+But, this point is demonstrated to be prone to misunderstanding, and I think a brief note of explanation is in order, e.g.: '%' is excluded from the list of disallowed octets that must be escaped, because it may appear in a URI only to introduce an escape sequence, so an additional application of escaping here would be incorrect. 
+#g 
+ACTION: 2003-08-29#3 gk check CONCEPTS 6.4 wrt details of URI and "%" cf. pfps comment on sectin 6.4 of concepts It appears to me that RDF Concepts does not require % to be %-escaped in RDF URI references (Section 6.4). 
+Surely this is a bug. 
+So, checking: The disallowed octets that must be %-escaped include all those that do not correspond to US-ASCII characters, and the excluded characters listed in Section 2.4 of [URI], except for the number sign (#), percent sign (%), and the square bracket characters re-allowed in [RFC-2732]. 
+I think PFPS is right, and that ", the percent sign (%)" should be deleted from the above paragraph. 
+Graham Klyne GK@NineByNine.org 
+I think PFPS is right, and that ", the percent sign (%)" should be deleted from the above paragraph 
+I should have read the thing more carefully :( What our specs says is: let URIREF = the set of URIREF's defined according to RFC2396 modified by RFC 2732 then RDFURIREF = {x : encoding(x) memberof URIREF} for the encoding defined in the spec which excludes encoding '%'. 
+test case: is http://example.org/foo%bar 
+a member of RDFURIREF. 
+Answer: NO because http://example.org/foo%bar is not a member of URIREF. 
+I now see why it is the way it is (I think). 
+jjc, this was originally raised by PFPS and I brought it up in your absence. 
+Do you think you could resond to him? 
+Brian 
+Graham beat me to it and we seem to agree, but I should fix a bug in my previous post. 
+Bad test case as 'a' and 'b' are legal hex digits, try instead. 
+Duh! Brian 
+From: Jeremy Carroll jjc@hplb.hpl.hp.com Subject: % in URIs Date: Tue, 02 Sep 2003 18:04:15 +0100 
+From reading RFC2396 I believe that this is not the case. 
+In particular, my understanding is that http://foo.bar/oijoi% is not a legal absolute URI with optional fragment identifier, nor is http://foo.bar/oijoi%xy 
+From RDF2396: Because the percent "%" character always has the reserved purpose of being the escape indicator, it must be escaped as "%25" in order to be used as data within a URI. 
+Implementers should be careful not to escape or unescape the same string more than once, since unescaping an already unescaped string might lead to misinterpreting a percent data character as another escaped character, or vice versa in the case of escaping an already escaped string. 
+There is lots more on escaping in RDF2396. 
+The RDF escaping mechanism ignores most the subtleties involved. 
+Peter F. Patel-Schneider 
+Sorry peter, I had missed this before replying on www-rdf-comments. 
+I agree with your analysis here, the statement that %-escaping of % is irrelevant is untrue. 
+This does not impact my reply on www-rdf-comments. 
+Jeremy 

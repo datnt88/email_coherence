@@ -1,0 +1,65 @@
+The following thoughts emerged from an off-line discussion about the use of quality factors in content negiatiation. 
+The premise for what follows is the assertion that the only practical use for a quality factor is to rank some set of alternatives according to preference. 
+Simple sequencing of of alternatives (e.g. per Multipart/Alternative) may not be possible because the sender may not be able to locate (hence present) the alternatives in order of quality. 
+Therefore some separate ranking mechanism is required. 
+I suggest that in this case a 3-digit (max) number is insufficient, as with a significant number of alternatives an implementation will soon run out of space within which to slot further entries between existing entries. 
+I estimate that a perverse presentation would run out ranking space after about 10 entries (log2(1001)). 
+BEGIN COMMENT Why log2(1001)? 
+Assume that the alternatives are discovered by the sender in some arbitrary order, and that the sender must allocate quality factor values to rank the alternatives as they are discovered. 
+(e.g. information about each alternative is being sent out as soon the alternative is discovered.) Then each new q-factor allocation must be placed between the q-factors of some existing pair of alternatives (where 0 and 1 are notional initial entries). 
+Without any prior knowledge of the order in which entries will be presented, each new q-factor should be allocated mid-way between the q-factors of its immediate ranking predecessor and successor, hence dividing the available ranking space by 2. Assuming a worst-case order of presentation, when the n'th alternative has been ranked, the remaining available ranking space next to that entry is reduced to approximately 2^(-n) of the original ranking space. 
+The original ranking space available using a number in [0,1] with three-digit precision contains 1001 possible values. 
+When 1001*2^(-n) is less than 1, no more values are available in the ranking space (under the assumption of worst-case presentation order). 
+1001 * 2^(-n)  1 [take base2 logs] = log2(1001) + (-n)  0 = n  log2(1001) (corresponds to no remaining ranking space) END COMMENT 
+GK. 
+Graham Klyne GK@ACM.ORG 
+Hello Graham, Your arguments give one important aspect of the problem. 
+There are others. 
+The fact that only a coarse granularity should be used in case of Laguage preferences to avoid giving too much traceable information has been discussed here already. 
+Various aspects of quality are usually combined by multiplication; 
+this means that each q value has to be appropriately scaled (e.g. if for languages, fr has q=0.6 and en has q=0.8, and for types, we have q=0.5 for text/html and q=0.7 for text/pdf, then a French PDF wins against an English HTML). 
+Note that this scaling also allows to change the importance of each factor, by using exponents (if we want language to be twice as important as type, we square the q's for language, get q=0.36 for fr, and q=0.64 for en, and now the English HTML wins against the French PDF). 
+From a user perspective, I would like to claim that in the higher 
+quality area, fine distinctions are more important and easier than in the low quality area. 
+They are more important because there is a higher probability that one of these will actually be choosen, and easier because the quality differences are actually relevant 
+to the user in that area. 
+This suggests that in your case, where you have to assign quality sequentially, you could divide intervals asymetrically (e.g. 70%/30%) instead of half-half. 
+So the first document would get quality 30%, the second would get 9% if it is lower and 51% if it is better, and so on. 
+This would allow you to rank differently almost 20 documents if each subsequent one turns out to be even better than the previous one. 
+If the subsequent ones turn out to be worse, you won't be able to make any distinctions anymore after the 5th or so document, but that won't be too bad. 
+Regards,Martin. 
+Of course; I wasn't trying to overturn anything, just draw attention to a possible consequence of the current approach. 
+In private discussions, it has been suggested to me that language issues are a poor basis upon which to develop a "quality" rating system -- there is just too much subjectivity involved. 
+It was a *premise* of my posting (one with which you may well disagree) that the quality factors were used to simply rank alternatives. 
+It had been suggested to me in offline discussion that other document selection systems which attempted to perform arithmetic manipulation of quality factors gained limited benefit from such manipulations (unfortunately, I don't remember details of the example system offered). 
+From a user perspective, I would like to claim that in the higher 
+You make a good point here -- thank you for pointing it out. 
+GK. 
+Graham Klyne GK@ACM.ORG 
+Graham Klyne: 
+I don't agree with this premise, but we have discussed this before. 
+I do want to comment on the reasoning below however: 
+Your reasoning assumes that the sender has to send out the source quality value of a variant as soon as the variant itself is sent. 
+If you wait sending source quality values until all variants have been sent, the problem does not exist anymore. 
+And I see no logical reason why you could not wait: the recipient can't do anything until the last source quality value is received anyway. 
+Koen. 
+Thanks for bringing up these private discussions. 
+There could be various issues of subjectivity you are alluding to. 
+One thing is that some people are very convinced that languagage, in various ways, is very important, more important than other things, and that this can affect some discussions. 
+The second thing is that language abilities, and therefore preferences, differ widely for each individual, so this would mean that language is a particularly good example for the preference side, if we need something where preferences are clearly varying. 
+Of course, for your problem of granularity, we would need something where preferences have only fine distinctions. 
+The third thing I could think of that you are alluding to is that the rating of the quality of a document with respect to language is very subjective, i.e. there are widely differing oppinions about what is "good English", "good French", and so on. 
+In this respect, I think I would have to oppose; other quality things such as typographic design (in formats where this matters), document structure, audio quality, and so on, may also easily be subject to such subjectivities. 
+There may be other aspects of subjectivity in language, I would like to hear about them. 
+In conclusion, I guess it is fair to say that a "quality" rating system that is developed ONLY on the basis of language issues will not be a good solution. 
+But a "quality" rating system that ignores language issues will probably be as bad, if not worse. 
+I can very well agree with your statement. 
+The examples we usually see, including the ones I made, are idealistic toy examples. 
+The underlying problem is that even for the human user, it's difficult to decide whether French Postscript or English HTML is preferred. 
+As long as the quality difference isn't above a certain threshhold, there is probably not much of a real preference. 
+Also, there might be some drawing in Postscript that doesn't show well in HTML, or some important link or form in HTML that isn't as convenient in Postscript, and the human end user may not know what is more important to him/her until he has looked at one (or both!) versions of the document. 
+So how should the arithmetic be able to figure this out :-? 
+Regards,Martin. 
+I think that is a fair comment. 
+I think that captures the sense in which it was put to me that arithmetic has limited value for combining quality factors. 
+GK. Graham Klyne GK@ACM.ORG 

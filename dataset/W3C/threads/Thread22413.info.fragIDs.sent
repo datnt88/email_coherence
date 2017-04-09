@@ -1,0 +1,59 @@
+Hello there. 
+I would like to point out some of the problems of the NodeIterator design. 
+1. Mixing iteration operation with indexing operation is not a good. 
+It is confusing as well as burdening the implementors unnecessarily. 
+2. Implementing the 'between' concept of position is elegant but makes efficient implementation in Java very hard if not impossible. 
+Due to 'live' aspect of iterators, each iterator has to be attached to the 'link' between two siblings. 
+Cost of object instantiation is heavy in Java. 3. NodeIterator should have a 'release' method to make it possible for the target node to keep track of active iterators. 
+C++ has destructor, Java's finalize is less than useless. 
+4. Using NodeIterator to iterate an element's Attribute is not wise since most of the Node methods do not make sense if Attribute interface extends Node interface. 
+Frankly, I would prefer the 3/18 version of NodeIterator minus 'live' data structure as well as getCurrentNode. 
+If nodes are reference counted, who cares if is removed or not. 
+But then I would prefer to have the API settled down more than anything. 
+Tennise match without short skirts gets boring real fast. 
+That is all for now. 
+Don Park 
+Craig, 
+Urk, I'm scared by the prospect of memory mgmt issues perculating up into the DOM API. 
+Is it really impossible to implement it without unused NoteIterators piling up? 
+Is it also really neccesarry to keep track of NodeIterators in the Node? 
+I think that keeping that state in the Node is kinda asking for trouble anyways. 
+It greatly complicates the behavior of the Node, and makes it difficult for me to create my own Node classes because now I have to deal with the Iterator implementations of each DOM implementation since they are tied to the Node, and that interface has been left up to the implementor. 
+Am I making sense here? 
+I can give a more detailed explanation of my concerns if I hadn't made them clear yet. 
+You are making as much sense to me as a green lieutenant telling a battle-proven sergeant how to make war in the middle of a battle. 
+No offense to the lieutenant. 
+I think that Itertors should maintain as little state as possible, and that that state should be maintained in one place. 
+You certainly don't want to spread the state of an Iterator across multiple classes. 
+The only thing that I see making this difficult is the deletion of the current object. 
+What current object? 
+There is no current object in the spec. 
+1. Please add 'release' method to NodeIterator. 
+Memory/Storage Mgmt. in this API would be an incredible mistake. 
+Please show me where the mistake is in detail. 
+It would even more helpful if you could show me a way to implement all the requirements of DOM in Java without using 'release'. 
+2. Please move indexing operations from NodeIterator to Node. 
+What do you mean by indexing routines? 
+NodeIterator.getLength NodeIterator.getCurrentPos NodeIterator.moveTo Regards, Don Park 
+Urk, I'm scared by the prospect of memory mgmt issues perculating up into the DOM API. 
+Is it really impossible to implement it without unused NoteIterators piling up? 
+Is it also really neccesarry to keep track of NodeIterators in the Node? 
+No offense intended. 
+Those were not rhetorical questions, or expressions of doubt in your effort or anything like that. 
+Perhaps I should have qualified it by saying instead, "Is it really impossible to implement blah without blah happening, or is there a way, but that way madness and hackery lies?" 
+It's genuine curiosity and interest because I'm dealing with the same problems myself, just a different language. 
+1. Please add 'release' method to NodeIterator. 
+Memory/Storage Mgmt. in this API would be an incredible mistake. 
+I think we should avoid making users responsible for memory mgmt. 
+I also don't think it's a requirement for implementations, nor directly useful to users. 
+It's another place to introduce bugs, which novice scripters seem very capable of tripping, by early releasing, or not releasing at all. 
+I really like the way you put the ContainerIterator into the Node to model the "betweeness". 
+But instead of putting the NodeIterator into the ContainerNode, put a "point" into the list. 
+And then give that "point" to the NodeIterator. 
+Then you no longer have a reference in the ContainerNode to the NodeIterator so it can go out of scope now when the user is done with it and in the destructor you can tell it to remove it's "point" from the ContainerNode. 
+Then the NodeIterator just uses that "point" the same way it used itself previously to navigate within it's parent ContainerNode. 
+Of course, this just moves the issue of "release" into another object behind the scenes. 
+Does this not allow you to get rid of "release" in the NodeIterator interface? 
+I have not implemented this, I could be missing something. 
+Am I shredding my Java cred? 
+8^) 

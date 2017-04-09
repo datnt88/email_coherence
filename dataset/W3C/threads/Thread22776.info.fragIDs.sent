@@ -1,0 +1,80 @@
+Basically, DOM Level 2 left what we had done in Level 1 unchanged. 
+createEntity and createNotation, and whether it makes sense to allow importing these nodes, will be addressed as part of DOM Level 3's Content Model work. 
+Joe Kesselman / IBM Research 
+I'm looking at the following section: 
+What is see is that the Level 2 specification says [unlike what you stated] 
+that: Entity nodes can be imported, however ... Notation nodes can be imported, however ... 
+That means for me to build a conforming implementation, I would need to support importing entities and notations, however meaningless that capability is. 
+If the decision to allow importing these nodes is truly 
+deferred until DOM Level 3, then I recommend the following change to that section: 
+Entity nodes cannot be imported. 
+Notation nodes cannot be imported. 
+That way, a conforming implementation can take the easy way out, and the current API won't break if in the future you decide that there is a sensible reason to allow these nodes to be imported. 
+Keith keshlam@us.ibm.com 
+Basically, DOM Level 2 left what we had done in Level 1 unchanged. 
+createEntity and createNotation, and whether it makes sense to allow importing these nodes, will be addressed as part of DOM Level 3's Content Model work. 
+Joe Kesselman / IBM Research 
+stated] 
+On reflection: I believe we decided on that because it's easier to support 
+this capability now, in anticipation of Level 3, then to change it later. 
+Some folks have complained loudly when an operation that used to be an 
+error stopped being an error, believe it or not. 
+It may or may not be meaningless in Level 2 but I think this falls in the category of "easy (it really is), harmless, and you're going to have to do in in Level 3 anyway." 
+Joe Kesselman / IBM Research 
+Easy: Yeh, it's always easy to do, but most of my costs are in maintenance, and not in implementation, so that argument isn't terribly convincing. 
+Harmless:It does increase maintenance costs for my implementation, so I cannot really say it is harmless. 
+It introduces a mildly ugly extrusion in an otherwise smooth surface. 
+You are going to have to do it in Level 3 Anyway: Again, not convincing, as I'd rather not design, develop or test dead code, and basically that is what that code will be until Level 3 comes out. 
+Your last statement is an argument for putting createEntity() and createNotation() in DOM Level 2. Developers are going to have something 
+like these methods anyway just to implement importNode() in Level 2, and they are going to have to do something like it in Level 3 anyway. 
+I'd prefer that, or the alternative that these nodes cannot be imported [just as DocumentTypes cannot be imported], rather than the middle road. 
+Anticipating the level 3 change could be perilous. 
+You've made some decisions about where the functionality is supported that you cannot change when you add the rest of the system. 
+I look at the DOM Core as being a three-tiered API. 
+The first tier is implementation specific details [i.e. the data structures that store the information], the next tier are critical API methods that use the first tier, [i.e., Element.getName()], and the next layer are convenience API methods that can be implemented completely in terms of the second tier. 
+A method like importNode() looks like a 3rd tier method. 
+It can be 90% implemented without any knowledge of the first tier. 
+What I'm complaining about is that last 10%. 
+If there is a way to avoid importing Notation or Entity nodes, or create them from the Document interface, then I've got it, otherwise, I end up relying on implementation specific details in the first tier. 
+The decision [as currently specified], has already been made that importing a Notation or Entity is done in the Document. 
+However, these Nodes, don't exist in the Document per se, but rather in the DocumentType. 
+Why force that decision now, especially in light of the fact that you want to be able to do it right in Level 3. I think that overcoming the momentum for supporting a new feature [importing the Notation and Entity nodes] will be easier than trying to move the import feature for those nodes to the DocumentType [where it seems more likely that it belongs]. 
+Keith 
+P.S.Is this issue a dead horse yet, or is there still a chance to change the DOM? 
+;-) keshlam@us.ibm.com 
+stated] 
+On reflection: I believe we decided on that because it's easier to support this capability now, in anticipation of Level 3, then to change it later. 
+Some folks have complained loudly when an operation that used to be an error stopped being an error, believe it or not. 
+It may or may not be meaningless in Level 2 but I think this falls in the category of "easy (it really is), harmless, and you're going to have to do in in Level 3 anyway." 
+Joe Kesselman / IBM Research 
+It is somewhat easier, architecturally, to add a new method than to change behavior of an existing method. 
+And it is a bit less clear where the factory methods for these nodetypes should reside; that's going to depend on how the data structures for Content Models are organized. 
+But I do grant your point that asking the Document to replicate these might not be optimal. 
+We did consider the alternative of saying that these can not be imported yet, and decided that changing that in Level 3 was going to be more contentious than including them in Level 2. I'm not absolutely wedded to that conclusion -- we may wind up introducing new node types in the future, in which case we'd be in the same position of having to decide whether to extend importNode() to handle them. 
+"Is it dead?" 
+"Well, it was coughing up blood last night." 
+-- Monty Python We're in Candidate Recommendation phase. 
+Officially, that means that the decisions have been made, and only changes which are required to overcome _serious_ design flaws are really on the table. 
+If it isn't likely to impede future development of the DOM, and doesn't create an unacceptable impact on impelemntability or performance, then officially it shouldn't be on the table. 
+We had to make that promise in order to get folks to commit to building and testing early implementations, which is what the CR phase is really for. 
+But it's always worth raising the question; that kind of feedback is also what CR is for. 
+Right now, I still put this in the "mostly harmless" category -- the only special knowledge needed is in how to access you own implementation's constructors/factories for these objects, and while nobody else may have that information you (as implementor) certainly do. 
+It'll be almost unused right now, I grant, but it's only a few lines. 
+That's not an overwhelmingly strong opinion. 
+I've been chiding someone else for "a foolish consistancy"; maybe this is mine. 
+But since it doesn't seem to be actively harmful, my inclination is to stick with status quo. 
+Joe Kesselman / IBM Research 
+The issue of having importNode work for Entity and Notation nodes seems similar (to me) to the ones w.r.t. having cloneNode work for those node types in DOM level 1 (and Document and DocumentType nodes, which also don't have create methods in DOM level 1). 
+I recall that we discussed clarifying that this feature (cloneNode of un-creatable nodes types) would be implementation dependant. 
+Whatever happened about that? 
+Maybe the same type of wording be used for importNode of un-creatable node types in DOM level 2? 
+Kim. Kim Adamson-Sharpe, Sr. Software Developer, SoftQuad (West), www.softquad.com 
+604-585-8394 ext. 
+311 (kim@sqwestXnospamX.bc.ca or kim@sqXnospamX.com) 
+It's not in the latest version of the spec, which suggests that either we didn't agree on it or it got lost between discussion and publication. 
+Time to dig into the archives and look for a supporting statement... 
+If we did reach that agreement, then I agree it should probably apply to both methods. 
+Personally, I perfer to avoid "implementation dependent" whenever possible. 
+It tends to lead to help-desks having to spend time defending your choice... and no matter which choice you make, some user will be trying to interchange code with an implementation that decided differently. 
+But this might be enough of an edge case for that not to be a problem. 
+Joe Kesselman / IBM Research 

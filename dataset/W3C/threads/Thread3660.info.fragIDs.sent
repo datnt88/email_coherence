@@ -1,0 +1,56 @@
+Hi, 
+It is nowadays quite common that authors have trouble with some encoding issues, literal U+00A0 characters in web pages, multiple Unicode signatures due to server side file inclusion mechanisms, 
+etc. In order to analyze, visualize and fix such issues, it is often helpful to look at the raw bytes of a document. 
+To ease this for users, I would like to have a W3C web service that allows to enter a URI and returns something like ? 
+00000000: 3C 3F 78 6D 6C 20 76 65 | 72 73 69 6F 6E 3D 22 31 | ?xml 
+version="1 ? 
+00000010: 2E 30 22 20 65 6E 63 6F | 64 69 6E 67 3D 22 55 54 | .0" 
+encoding="UT ? 
+00000020: 46 2D 38 22 3F 3E 0A 3C | 21 44 4F 43 54 59 50 45 | F-8"? . 
+!DOCTYPE ? 
+00000030: 20 68 74 6D 6C 20 50 55 | 42 4C 49 43 20 22 2D 2F | html PUBLIC "-/ ? 
+00000040: 2F 57 33 43 2F 2F 44 54 | 44 20 58 48 54 4D 4C 20 | /W3C//DTD XHTML I think such a service would be of great use for the various W3C Validation tools, in case of encoding errors they could just link to it; and it's only a few lines of code to write one. 
+regards. 
+Hello Bjoern, Many thanks for this idea. 
+I have copied Olivier, because he knows more about the validator than I do. 
+I think that such a service might definitely help people, but it might also confuse some people if not designed carefully. 
+Would you be able and willing to help with programming? 
+This one sounds scary. 
+But I assume you haven't just made it up. 
+Can you tell us more, e.g. with examples? 
+We are still thinking 
+about what exactly to do with the BOM in various cases, and so 
+input in this area is quite appreciated. 
+Regards, Martin. 
+Sure, just have a look at 
+? http://www.w3.org/TR/2004/WD-xhtml-modularization-20040218/schema_module_defs.html#a_module_XHTML_Common_Attribute_Definitions 
+The source of the document contains &amp;#239;&amp;#187;&amp;#191;?xml version="1.0" 
+encoding="UTF-8"? 
+xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="http://www.w3.org/1999/xhtml" xmlns:xml="http://www.w3.org/XML/1998/namespace" xmlns="http://www.w3.org/1999/xhtml" &amp;#239;&amp;#187;&amp;#191; is a UTF-8 encoded BOM when interpreted as ISO-8859-1 and then escaped. 
+A slightly different case is reported as bug in the CSS Validator, ? 
+http://www.w3.org/mid/5.2.0.9.0.20040220172527.00b23f28@mail.btinternet.com 
+A simplified (and stable) test case is at ? 
+http://www.websitedev.de/markup/validator/tests/double-utf-8-bom.html 
+The document starts with the octet sequence EF BB BF EF BB BF which are two UTF-8 encoded U+FEFFs. 
+This is likely the result of file inclusion. 
+For example, there might be a header.inc 
+like !DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd" meta http-equiv="Content-Type" and a document.php 
+like If now both header.inc and document.php 
+start with a BOM you are in trouble, the include() function operates at the binary level, it makes no attempt to determine the encoding of the document or any effort of transcoding, it just copies the octets 1:1 into the ouput, hence the EF BB BF EF BB BF sequence. 
+This ended up as bug report for the CSS Validator because the MarkUp Validator ? 
+http://www.websitedev.de/markup/validator/tests/double-utf-8-bom.html,validate seems to happily ignore it and considers my test document Valid XHTML 1.0 Strict... I am not sure how common this might be, but there were at least two similar bug reports for the CSS Validator last year... 
+I think this is the same thing Deborah was talking about wrt BBC pages. 
+RI 
+From: public-i18n-geo-request@w3.org [mailto:public-i18n-geo-request@w3.org] 
+On Behalf Of Bjoern Hoehrmann Sent: 23 February 2004 04:37 Subject: BOM vs. file inclusions (was: Re: Hexdump web service) 
+ema_module_defs.html#a_module_XHTML_Common_Attri bute_Definitions 
+tinternet.com 
+A simplified (and stable) test case is at ? 
+http://www.websitedev.de/markup/validator/tests/double-utf-8-bom.html 
+The document starts with the octet sequence EF BB BF EF BB BF which are two UTF-8 encoded U+FEFFs. 
+This is likely the result of file inclusion. 
+For example, there might be a header.inc 
+like !DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd" meta http-equiv="Content-Type" and a document.php 
+like If now both header.inc and document.php 
+start with a BOM you are in trouble, the include() function operates at the binary level, it makes no attempt to determine the encoding of the document or any effort of transcoding, it just copies the octets 1:1 into the ouput, hence the EF BB BF EF BB BF sequence. 
+This ended up as bug report for the CSS Validator because the MarkUp Validator te seems to happily ignore it and considers my test document Valid XHTML 1.0 Strict... I am not sure how common this might be, but there were at least two similar bug reports for the CSS Validator last year... 

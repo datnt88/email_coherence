@@ -1,0 +1,15 @@
+This turned up on Solaris 2, with tidy built using gcc. 
+The parser has trouble with a comment between a " tbody " and a " tr ", and likewise with a comment between " /tr " and " tr " within a TBODY. 
+It causes a Segmentation Fault when tidy_out() tries to print a DISCARDING_UNEXPECTED message with a string whose address is 0. 
+Tidy (vers 26th July 1999) Parsing "../fault2.html" 
+line 10 column 1 - Warning: discarding unexpected -------- Example HTML document -------- Thanks for the useful tool. 
+John 
+Just as a FYI, it is not crashing on the Mac OS version. 
+Here is the error output I am getting from the test case above (using the 26th July 99 sources ) : Tidy (vers 26th July 1999) Parsing "comment in tbody .html" 
+line 9 column 3 - Warning: discarding unexpected "comment in tbody .html" 
+appears to be HTML 4.0 1 warnings/errors were found! 
+Here is the cleaned output : title Comment in `tbody' before a `tr' causes Segmentation Fault /title Regards, Terry 
+This is an oversight on my behalf. 
+The fix is to add the following into ParseRowGroup in parser.c 
+at line 1481 just before the code for discarding unknown tags: /* deal with comments */ if (node- type == CommentTag || node- type == ProcInsTag || node- type == AspTag) InsertNode(rowgroup, node); continue; Regards, -- Dave Raggett dsr@w3.org 
+http://www.w3.org/People/Raggett World Wide Web Consortium (on assignment from HP Labs) 

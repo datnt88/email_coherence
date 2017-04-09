@@ -1,0 +1,43 @@
+I have been reading the HTTP/1.1 spec (rev. 
+6, 18th Nov, expires May 18, 1999). 
+I have a question. 
+I suspect that the answer should be obvious, but since it isn't, and since I think it ought to be a common question, maybe some wording somewhere could be clarified. 
+My question concerns the appropriate response code to use when rejecting a request as incomplete or otherwise unacceptable. 
+For instance, if the users submits a form without supplying a value for a necessary field (say an email address), or with an in-appropriate value (say a non-existent file type). 
+The server process detects this and wants to reply to say that it has rejected the request. 
+What code should be used in the HTTP header? 
+Typically, I suspect a CGI application will use "200 OK", even though the body of the message then says "I can't do that because....". 
+However, Section 10.2.1 says that "200 OK" means the request has succeeded, which it hasn't.... 
+It seems that a "4xx" code would be right. 
+But which one? 
+Based on Section 10.4, it seems to be that "403 Forbidden" is the right answer. 
+But I am not confident of this. 
+I associate "403" with "Permission denied" messages, and I've never noticed anyone using it to tell me I've forgotten to specify my email address.... But looking at 10.4.4, it seems it is actually very general, and applies in this case: the server 
+*has* understood the request, and is refusing to carry it out. 
+If 403 is the right response, could I suggest adding a sentence to 10.4.4 something along the lines of "This code is appropriate when a server rejects an incomplete or incoherent request, such as from an incorrectly filled form". 
+If 403 isn't right, could someone tell me what is (and why): I've thought about, and rejected, "400 Bad Request", "406 Not Acceptable" and "409 Conflict".... Robert. 
+Actually, it has. 
+POST means only that data has been supplied to the process, to do with as it wishes. 
+As far as HTTP is concerned, the request was successfully completed. 
+Either 200 or 400. 
+None of the others are appropriate because they refer 
+to specific HTTP interoperability concerns, not to POST data. 
+....Roy 
+Date: Wed, 24 Mar 1999 13:43:01 -0800 From: "Roy T. Fielding" fielding@kiwi.ics.uci.edu 
+Really???!!!! I find that statement very surprising. 
+It certainly does not fit with my reading of the start of Section 10.2 "This class of status code indicates that the clients request was successfully received, understood AND ACCEPTED" and 10.2.1 "The request has succeeded" It seems I should understand "succeeded" as nothing more than "delivered and understood". 
+My example of a request rejected because of missing or inappropriate data has surely no more "succeeded" than an attempt to execute a cgi file with no execute permission---and none of the servers I have used return "200 OK" for that.... 
+But 400 explicitly says it deals with requests that could not be understood because of "malformed syntax". 
+My worry is when there is a problem iwht the content of the request. 
+But my uncertainty applies equally to form data encoded as "GET".... 
+Robert. Robert Inder, (http://www.hcrc.ed.ac.uk/~robert/) NEDO Visiting Fellow, Electrotechnical Laboratory (ETL) (http://www.etl.go.jp/) Umezono 1-1-4, Tsukuba, Ibaraki 305, JAPAN Research Fellow, HCRC, Edinburgh University (http://www.hcrc.ed.ac.uk/) 2, Buccleuch Place, Edinburgh EH8 9LW SCOTLAND 
+That is the definition of POST. 
+If you want more semantics than that, you need to define new status codes, but it makes no difference to a client whether or not it is a success code because only a human user could fix such a problem. 
+Interoperability is not recoverable. 
+Same thing. 
+If the response is consistent, an error message is just as valid a representation of what was requested as normal content. 
+The reason I suggested 400 is because the x00 codes are also treated as the default for each class. 
+A new 4xx would be better, but not without a separate Internet Draft that defines the need for the code and how it can be used to improve interoperability. 
+For example, something that defined the set of fields required and optional, or directed the client to a more appropriate interface. 
+The reason such a thing is not in HTTP/1.1 is because nobody has implemented it. 
+....Roy 

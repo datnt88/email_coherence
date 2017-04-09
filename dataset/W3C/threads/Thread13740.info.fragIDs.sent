@@ -1,0 +1,86 @@
+Hi folks, 
+during the meeting we discussed the question of whether earl should provide a 
+pointer to where it finds a specific problem within a page, or whether it is 
+better to write earl statements about objects within a page, and then describe the page as a collection of objects that do or don't meet a given 
+set of requirements. 
+I took an action item to carry the discussion on outside 
+the meeting. 
+I used to believe the latter, so I will try to explain why I have moved to the former... Part of this has been pragmatically motivated by talking to developers of repair tools. 
+In order to do repairs it is important to know where the repair should be made, if possible. 
+Both approaches work, up to here, but from this point it becomes tricky. 
+As I see it, the problem is not that we need to know what needs retesting afterwards. 
+That is more or less the same problem in both methods. 
+Details of whether changing a particular item, or repairing a fault, can be expected to have or not have an effect on other related requirements is probably beyond the scope of EARL and lives in the land of testing processes. 
+But details of what a page contains need to be provided,and need to be exact, if we are not going to have a location pointer for a particular result that is independent of the test object (which may or may not have a larger scope). 
+This requires us to be able to specify exactly what a page consists of, and we may have to divide it along several different axes for different types of tests. 
+That strikes me as a lot of work that only sometimes pays off. 
+Moreover, it isn't necessary to define that as a method of locating problems in order to use it. 
+The place where it strikes me as a valuable technique is in assessing databases behind content management systems. 
+But even there, it seems like a messy way to deal with problems in the template used to produce an instance of content for rendering to the user. 
+It is something that can always be done, but there seem like good reasons for using what is 
+essentially the shortcut of allowing a relevantLocation or something similar to be a property of a result. 
+An interesting paralell is Annotea. 
+It is possible to annotate something 
+directly even if it is only a part of a larger document, but the annotea design instead annotates a whole document and provides a location as the information about what exactly was located. 
+It might be interesting to know if this was a deliberate design decision, and why. 
+cheers Chaals 
+"Charles McCathieNevile" charles@w3.org 
+provide a 
+it is 
+given 
+My own view is not against the idea of providing a failurePoint or whatever, but that the scope of "where it has failed" is too general to be in EARL, I think it needs to be an extension, we can hang anything off of the resultProperty, but information that locates where in a xml document it fails or elsewhere is too specific to be in core EARL. 
+So I guess my problem can be solved if you can tell me what would it look like in a few of our use cases? 
+Jim. 
+I'm sorry that I wasn't able to contribute more to the discussion last Monday. 
+I see some of discussion points to be too specific at the moment because we risk of loosing track of the larger picture. 
+The problems to be solved are difficult and still vague. 
+I would suggest to follow two steps: 1. specify a service that integrates test reports and allows queries on them 2. work on its implementation using earl (including definition of a location/normalization thta has all the important properties: tolerant wrt edits, tolerant wrt different tools, ...) In this way we can face three different problems separately, namely deciding what kind of interface evaluation tools should provide (to such a service), which functionalities the service should offer to end users, and how to use EARL (and therefore which features it has to support) to implement it. 
+As for step 1 my ideas are: * each tool (lift, accverify, bobby, ...) should be able to export information on the resources being tested, the checkpoint followed, the outcome of the test, when the test has been done, ... This info might be expressed as earl statements. 
+* the tool should also specify where in the resource the problem occurs (location of the problem). 
+As there are many ways to do it (offset, index number, xpointer) and some of them depend on the parser the tool is based on, then let's invent a syntax for expressing these different representations of locations. 
+Example: (method = dom-index, parser = dreamweaverMX), or (method = char-offset, parser = explorer4), or (method=xpointer, parser=mozilla) * the service should take as input this info and by using an internal normalization (eg. 
+mozilla parser that adds unique ids to all the elements) should convert it so that the appropriate earl statements can be made. 
+This will require tuning and tweaking to handle more than one type of location representations. 
+Then we can work on the second problem (which functionalities make sense for the end user) and third one (how to use EARL to support them). 
+We can also experiment with different internal normalizations (pointers, object collections, ....) since they are shielded from (a) the tools, (b) the end users. 
+Only when - we understood which functionalities make sense for end users, and their interaction structure - we understood a viable way to represent locations can we decide on a specification for EARL that supports these two things. 
+My 2 euro cents :-) Giorgio 
+Well, I agree that EARL could liv without a pointer, but in practice any repair tool using EARL is going to require this information. 
+UsableNet and 
+Hisoftware both include it in their reports - Hisoft had to extend the version of EARL they were using to get anything useful from using the language for more than report writing, which is really I think a trivial application of EARL. 
+Something like a property of the result: or we could reuse the approach of Annotea, although I am not sure if they have somehow restricted themselves to a single point that is being annotated. 
+The scenario goes as follows: 
+Tool A has a very good test for problem X, but no real repair functionality. 
+Tool B has a very good repair interface for problem X, but no good test for it. 
+The user runs tool A and discovers that some part of the document needs to be repaired. 
+They fire up tool B, but unless it knows where the problem is it cannot invoke the repair function for the right part of the document. 
+If tool A is required to identify the location as the testObject, rather than the testObject being a page, then it needs to construct potentially an Xpointer for that location, and then the information that the rest of the page plus that location makes up a thing being tested. 
+Given the complexity of Xpointers, this seems like a very complex general problem - there may very quickly be dozens of different collections (along different axes) making up the same page. 
+If on the other hand we have a property on the result property, then toolB 
+can look for that relatively easily, declare that problem X has been repaired, and the merged results (page Y failed test X at time 1 in locations P,Q,R) and (page Y passed test X 
+at time 2 in locations P,Q) give us a new result for page Y at much lower cost than merging a large collection of partial objects and how they combine to form page Y. 
+cheers Chaals 
+"Charles McCathieNevile" charles@w3.org 
+provide a 
+it is 
+given 
+My own view is not against the idea of providing a failurePoint or whatever, but that the scope of "where it has failed" is too general to be in EARL, I think it needs to be an extension, we can hang anything off of the resultProperty, but information that locates where in a xml document it fails or elsewhere is too specific to be in core EARL. 
+So I guess my problem can be solved if you can tell me what would it look like in a few of our use cases? 
+Jim. 
+Location: 21 Mitchell street FOOTSCRAY Vic 3011, Australia (or W3C INRIA, Route des Lucioles, BP 93, 06902 Sophia Antipolis Cedex, France) 
+"Charles McCathieNevile" charles@w3.org 
+I think we're in agreement really, We need to define a pointer to parts of HTML (and other ML) documents, Nick's fuzzy pointers and hashes and other approaches (real xpointer, and simple line/column) do that, so we need to describe these. 
+Once described they can happily hang off both testSubject and resultProperty without problem as I see it. 
+Will they be in the EARL namespace? 
+Or is this another area we also want to describe, which can be extended seperately to the EARL. 
+toolB 
+test X 
+I'm not completely sure I agree with this analysis, if you can divide the page in to atoms, and say an atom has failed and then been repaired it's pretty much the same cost, we're just describing the atom at different points. 
+I think it depends on how much you see PASSED being used - to me it's a rarity in HTML page repair, where what we really want to know is has the suite passed (none of the tests failed) and how we can repair each fail so as I see it you'll only get FAILS being created in which case it is the same cost if the pointers are in testSubject or resultProperty. 
+I certainly have no problem with resultProperty having a occurringAt or similar. 
+Cheers, Jim. 
+So how about we create a property occursAt which can useXpointer, line/character offset, element/attribute name (or should we just do that as Xpointer or xpath). 
+It seems from the discussion in Bristol that we would also need to identify a normalisation algorithm if one was used - i.e. unless this is derived from a tool that doesn't touch the source code... 
+The next trick would be to work out how to make these interoperate and find the same place using two or three different tools. 
+Outside Xpointer I guess this will be tricky... (does anyone know what Amaya does if you annotate an HTML document?) cheers Chaals 
+Location: 21 Mitchell street FOOTSCRAY Vic 3011, Australia (or W3C INRIA, Route des Lucioles, BP 93, 06902 Sophia Antipolis Cedex, France) 

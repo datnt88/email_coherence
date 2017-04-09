@@ -1,0 +1,134 @@
+Hi, How does one report javadoc bugs to the java bindings that are published by the W3C DOM WG? 
+The bindings came from the following URL: -Edwin 
+This new version should fix the javadoc [1]: If the new Java bindings are ok, they will be integrated as an erratum. 
+Philippe [1] http://www.w3.org/DOM/2000/12/dom2-javadoc/ 
+Hi Philippe, 
+Yes, it fixes most of the bugs. 
+One bug that was not fixed is below: The description ( javadoc comments ) of the org.w3c.dom.Node.getNodeValue() 
+says that values returned by the method is described in some table : "public String getNodeValue() throws DOMException The value of this node, depending on its type; see the table above" But there is no such table either in the method's description or in the description of the interface org.w3c.dom.Node. 
+See attached patch for a sample fix. 
+Thanks, -Edwin *** /java/pubs/ws/jamie-merlin/webrev/src/share/classes/org/w3c/dom/Node.java- 
+Wed Jun 20 17:38:55 2001 --- Node.java Wed Jun 20 17:33:17 2001 *** 27,37 **** * specific code nodeType /code (e.g., code nodeValue /code for an * code Element /code or code attributes /code for a code Comment /code * ), this returns code null /code . 
+Note that the specialized interfaces * may contain additional and more convenient mechanisms to get and set the * relevant information. 
+! 
+* p See also the a href='http://www.w3.org/TR/2000/REC-DOM-Level-2-Core-20001113' Document Object Model (DOM) Level 2 Core Specification /a . 
+public interface Node { // NodeType * The node is an code Element /code . 
+--- 27,108 ---- * specific code nodeType /code (e.g., code nodeValue /code for an * code Element /code or code attributes /code for a code Comment /code * ), this returns code null /code . 
+Note that the specialized interfaces * may contain additional and more convenient mechanisms to get and set the * relevant information. 
+! 
+* P The values of CODE nodeName /CODE , CODE nodeValue /CODE , and ! 
+* CODE attributes /CODE vary according to the node type as follows: ! 
+* CENTER ! 
+* TABLE border=1 ! 
+* TBODY ! 
+* TR ! 
+* TD bgColor=#ccccff Node Type /TD ! 
+* TD bgColor=#ccccff nodeName /TD ! 
+* TD bgColor=#ccccff nodeValue /TD ! 
+* TD bgColor=#ccccff attributes /TD /TR ! 
+* TR ! 
+* TD Element /TD ! 
+* TD tagName /TD ! 
+* TD null /TD ! 
+* TD NamedNodeMap /TD /TR ! 
+* TR ! 
+* TD Attr /TD ! 
+* TD name of attribute /TD ! 
+* TD value of attribute /TD ! 
+* TD null /TD /TR ! 
+* TR ! 
+* TD Text /TD ! 
+* TD #text /TD ! 
+* TD content of the text node /TD ! 
+* TD null /TD /TR ! 
+* TR ! 
+* TD CDATASection /TD ! 
+* TD #cdata-section /TD ! 
+* TD content of the CDATA Section /TD ! 
+* TD null /TD /TR ! 
+* TR ! 
+* TD EntityReference /TD ! 
+* TD name of entity referenced /TD ! 
+* TD null /TD ! 
+* TD null /TD /TR ! 
+* TR ! 
+* TD Entity /TD ! 
+* TD entity name /TD ! 
+* TD null /TD ! 
+* TD null /TD /TR ! 
+* TR ! 
+* TD ProcessingInstruction /TD ! 
+* TD target /TD ! 
+* TD entire content excluding the target /TD ! 
+* TD null /TD /TR ! 
+* TR ! 
+* TD Comment /TD ! 
+* TD #comment /TD ! 
+* TD content of the comment /TD ! 
+* TD null /TD /TR ! 
+* TR ! 
+* TD Document /TD ! 
+* TD #document /TD ! 
+* TD null /TD ! 
+* TD null /TD /TR ! 
+* TR ! 
+* TD DocumentType /TD ! 
+* TD document type name /TD ! 
+* TD null /TD ! 
+* TD null /TD /TR ! 
+* TR ! 
+* TD DocumentFragment /TD ! 
+* TD #document-fragment /TD ! 
+* TD null /TD ! 
+* TD null /TD /TR ! 
+* TR ! 
+* TD Notation /TD ! 
+* TD notation name /TD ! 
+* TD null /TD ! 
+* TD null /TD /TR /TBODY /TABLE /CENTER ! 
+* p ! * See also the a href='http://www.w3.org/TR/2000/REC-DOM-Level-2-Core-20001113' Document Object Model (DOM) Level 2 Core Specification /a . 
+public interface Node { // NodeType * The node is an code Element /code . 
+Here is a new try: 
+Since the Java sources are generated, I had to change the DOM scripts to generate the documentation of Node. 
+It fixed the same problem in the Document interface (createElementNS, createAttributeNS). 
+Also, the description of importNode wasn't "well-formed". 
+Philippe 
+Thanks, it looks better. 
+From a quick scan, I've noticed these items: + The url href mentioned in more than one file does not exist: 
++ It looks like the get/setXXX() methods have the same javadoc, which may be suboptimal b/c for example, Attr#getValue() says it can throw a NO_MODIFICATION_ALLOWED_ERR while the DOM spec says that only the Attr#setValue() method should do this. 
+In addition, the other javadoc comments may sound somewhat awkward. 
+Since it sounds like you are auto-generating the java bindings, it may be difficult to fix this. 
+So, I will leave it up to you as to whether it is worth fixing this to avoid user complaints. 
+-Edwin 
+I was using the editors work version of the DOM Level 2 sources to generate the bindings. 
+I'll make sure to use the REC version to generate the final version for the erratum. 
+Yes. Unfortunately, the XML sources don't contain enough meta informations to know if an exception should be generated or not. 
+I think it's better to have this solution than having no documentation at all. 
+We should probably fix that in DOM Level 3 but it means modifying the xmlspec DTD... Thank you for your report, Philippe 
+I didn't see the package.html 
+file that is needed to get top-level descriptions of a package. 
+Example use is available at 
+The package.html files go in the same directory as the source. 
+Attached versions are for source directories. 
+org/w3c//dom, org/w3c//dom/events and org/w3c/dom/views The short descriptions of each org.w3c.dom packages were taken from the top of the corresponding DOM draft/recommendation documents. 
+Javadoc documentation on how to prepare package comment files is at 
+These are important, please include them. 
+Thanks for your efforts. 
+all the best, Don Don Brutzman Naval Postgraduate School, Code UW/Br Root 200 work 831.656.2149 
+Virtual worlds/underwater robots/Internet http://web.nps.navy.mil/~brutzman 
+The zip file contains the java source binding, not the javadoc documentation. 
+It doesn't make sense to have package.html 
+in the zip. 
+The javadoc documentation is not included. 
+It could always be generated using the JDK tools. 
+Philippe 
+See Thank you, Philippe 
+Understood. Please note that the package.html 
+file is - extremely terse, containing top-level documentation common to each package - not javadoc output itself, just an input to javadoc - kept with source code with each package directory - contains important information that is not possible to include in source - aids clarity for users, especially in understanding package differences 
+I'm happy to discuss this further by phone if you wish, Phillippe. 
+Thanks for considering this request. 
+all the best, Don Don Brutzman Naval Postgraduate School, Code UW/Br Root 200 work 831.656.2149 
+Virtual worlds/underwater robots/Internet http://web.nps.navy.mil/~brutzman 
+I'm maintaining a Javadoc documentation on the W3C web site: maybe this is the files you're looking for? 
+In any case, they are not part of the recommendations. 
+Philippe 

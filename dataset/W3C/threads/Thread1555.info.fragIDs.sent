@@ -1,0 +1,37 @@
+Is it legal to PROPPATCH the DAV:label-name-set on a checked-out resource? 
+(whether a checked-out VCR or a working resource) It seems feasible to me, with the caveat of possible rejection at CHECKIN (or MERGE) time due to a label conflict with another version in the version history. 
+Specifically, the problem that I'm considering is how to label a baseline before checking it in. 
+I think that I'm also okay with labelling via a second request (after the checkin/merge), but that does lead to a race between the checkin and label that I'd like to avoid if possible. 
+Cheers, -g Greg Stein, http://www.lyra.org/ 
+From: Greg Stein gstein@lyra.org 
+Is it legal to PROPPATCH the DAV:label-name-set on a checked-out resource? 
+(whether a checked-out VCR or a working resource) Only versions have a DAV:label-name-set property, not version-controlled resources or working resources. 
+It seems feasible to me, with the caveat of possible rejection at CHECKIN (or MERGE) time due to a label conflict with another version in the version history. 
+The possibility of a "label conflict" is avoided by only having labels on versions. 
+Specifically, the problem that I'm considering is how to label a baseline before checking it in. 
+I think that I'm also okay with labelling via a second request (after the checkin/merge), but that does lead to a race between the checkin and label that I'd like to avoid if possible. 
+With the current protocol, you would have to do the labeling in a second request (after the version was created). 
+What is the race 
+condition you were concerned about? 
+And how would it be addressed by allowing a label on a working baseline? 
+Cheers, Geoff 
+The race between the creation of the baseline and the application of the label. 
+Hmm... but that probably doesn't matter that much. 
+The baseline just isn't accessible by a label for that period. 
+You could have the label for the baseline available at the moment the baseline is created. 
+Hmm... but this wouldn't even solve the basic problem that I'm after: SVN will automatically label a baseline for later access. 
+The question is how can the SVN client compensate for servers that *don't* auto-label baselines in some way? 
+I have figured out, though, how to discover the auto-labels -- I'll just ask for the DAV:label-name-set in the MERGE operation. 
+It will be non-empty for the new baseline resource, and empty for all the new version resources. 
+[ it would be nice to return nothing at all (e.g. no DAV:label-name-set/ empty element) for the version resources, but that seems illegal ] Cheers, -g Greg Stein, http://www.lyra.org/ 
+From: Greg Stein gstein@lyra.org 
+SVN will automatically label a baseline for later access. 
+The question is how can the SVN client compensate for servers that *don't* auto-label baselines in some way? 
+If the SVN client depends on "auto-label"ing of any kind, then it is likely to have trouble with any non-SVN client, since even if it did auto-label, it is extremely unlikely that it will use the same labeling scheme as SVN uses (increasing integers, as I recall). 
+Can't you make the SVN client just use the baseline-URL, instead of depending on a linear sequence of integers? 
+(Your answer to this might point a way towards an interoperable approach). 
+I have figured out, though, how to discover the auto-labels -- I'll just ask for the DAV:label-name-set in the MERGE operation. 
+It will be non-empty for the new baseline resource, and empty for all the new version resources. 
+That is true. 
+If you get back no auto-labels, will the SVN client still be able to work? 
+[ it would be nice to return nothing at all (e.g. no DAV:label-name-set/ empty element) for the version resources, but that seems illegal ] I imagine most robust clients will treat nothing at all as equivalent to an empty property element, so I'd think either way would be OK. (Or is this distinction important to some clients?) Cheers, Geoff 

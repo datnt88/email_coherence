@@ -1,0 +1,18 @@
+Hi, is it possible to specify extension features (that are not defined in the 
+DeltaV spec) in the response to a OPTIONS request ? 
+We want to use this kind of extension to allow usage of our client against our server (which will support some extensions which are not in the standard) but it should 
+also work against other servers which clearly will not have these extensions. 
+Therefore we need some mechanism to find out which extension features are supported by a given server. 
+Some namespace mechanism could be used to prevent name clashes between extension features defined by different servers. 
+E.g. our extension could be named SAP:ourSpecialExtension. regards Matthias 
+It's possible, but I would strongly recommend not to do that. 
+If you need a non-intrusive way to signal server extensions, use a custom live property. 
+There was some amount of consensus a while back on the DAV WG list that the DAV: header should allow Coded-URLs in it. 
+mod_dav took this approach, so an OPTIONS response looks like: HTTP/1.1 200 OK Date: Tue, 19 Mar 2002 13:10:17 GMT 
+Server: Apache/1.3.19 (Unix) DAV/1.0.2 Content-Length: 0 MS-Author-Via: DAV Allow: OPTIONS, GET, HEAD, POST, DELETE, TRACE, PROPFIND, PROPPATCH, COPY, MOVE, LOCK, UNLOCK DAV: 1,2, http://apache.org/dav/propset/fs/1 
+Connection: close Content-Type: text/plain Cheers, -g Greg Stein, http://www.lyra.org/ 
+If Greg's approach is taken to avoid conflicts, then I see no strong reason to prefer live properties over OPTIONS header values in the general case. 
+...other that in this case this way to extend the DASL header must be documented somewhere...? 
+However, if the feature is one which relates only to some resources (e.g. all collections support the feature, or all resources in the directory foo, etc) then it might be helpful to advertise support for the feature only on those resources, using a live property as suggested. 
+OPTIONS * still seems to be the most appropriate place to marshall server-wide features, with the conflict-avoidance caveats already mentioned. 
+How can this be the appropriate place if RFC2518 doesn't document how to do that? 

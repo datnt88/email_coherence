@@ -1,0 +1,63 @@
+Methods: appendChild, insertBefore etc. WRONG_DOCUMENT_ERR: Raised if newChild was created from a different document than the one that created this node. 
+Does it explicitly mean that the following condition: (parentNode.ownerDocument 
+== newChild.ownerDocument) is the ONLY condition that proves that parent and child node were created 
+from the same document. 
+In other words, may it be any other hidden conditions that do not belong to 
+the www.w3.org DOM Level 2 specification but the concrete implementation of DOM uses to check whether a newChild was in 
+fact created from this Document For example: 
+XERCES 1.2 and 2.0 demands that newChild was an instance of the class NodeImpl, otherwise newChild can not be appended to the parent node even if parentNode.getOwnerDocument() == newChild.getOwnerDocument() 
+Is it correct in terms of DOM specification? 
+Thank you, Sergey Smirnov ssmirnov@marketswitch.com 
+snsmirnov@hotmail.com 
+I believe the current phrasing is adequate and generally understood. 
+created 
+Actually, there is nothing in the DOM spec that ensures that identity comparision between nodes is meaningful. 
+DOM L3 is considering adding an isSameNode() function to allow node identity comparisons. 
+A node can be appropriate and the condition can be true (likely) or false (less likely) and a node can be inappropriate and the condition true (less likey) or false (likely). 
+to 
+was in 
+Xerces knows that any node object that was created by the document (either through a call to a document create* method or returned by a public method) will implement NodeImpl and instanceOf NodeImpl is false, it is certain that the node was not created by the document but is from another implementation. 
+Any object that implements org.w3c.dom.Node but isn't an subclass of org.apache.xerces.NodeImpl was not created by the Document. 
+Passing an object from a different implementation is more than just a wrong document and a different type of exception is not unexpected. 
+The public interfaces do not attempt to interfaces that would allow you to provide your own implementation of Node. 
+p.s. Just an interested observer, not a W3C or DOM WG member 
+Any DOM has the same type of requirement. 
+The issue is that there are behaviors required by the DOM spec that can't be implemented in terms of the public APIs. 
+Well known to any implementor. 
+It complicates the task of testing, too, since triggering the behaviors (creating readonly nodes, as one example) also requires behaviors out of scope of the spec. 
+Would it be a Good Thing if the public interfaces were sufficient for such purposes -- both implementation and testing? 
+- Dave 
+Trying to do it in the general case would mean imposing unacceptable constraints on implementation. 
+The "Embedded DOM" chapter of DOM Level 3 was going to consider the question of combining nodes from different implementations into a single tree. 
+This turns out to be a very ugly problem, and this feature has trimmed itself down and will only support nodes which are subclassed from the same DOM implementation. 
+If there's a serious requirement that it do more, you may want to take that up with the EDOM editorial team and provide some help on brainstorming how this could be made to work properly. 
+(First show that it's needed. 
+Then show that it's possible...) Joe Kesselman / IBM Research 
+Sounds like one vote for "no", which I partially support. 
+I suspect there are surely improvements that can be made to reduce the number of behaviors requiring "backdoors" in the implementations. 
+Or, the DOM implementation uses node- normalize() function which removes the whitespaces and joins all adjacent text nodes. 
+An expected normalization of the nodes is taken into considereation by I18N Working Group, as is stated on the DOM core website. 
+Is the user's job to preserve whitespaces (e.g) for correct output when using DOM implementations? 
+I'm new on this mail-list, so forgive me if i'm asking something that already was asked, but i didn't quite finished browsing all the articles in the mail-list... 
+If normalize behaves as described, I believe it is broken. 
+While it may consolidate adjacent text to a single text node and remove empty text nodes, it should not remove white space, according to the specification. 
+Ray Whitmer rayw@netscape.com 
+normalize() will merge adjacent text nodes. 
+It will _NOT_ discard whitespace, though it may merge the whitespace with adjacent text if there was any. 
+(Of course, a parser normally delivers a document in normalize()d form anyway...) 
+Is the user's job to preserve whitespaces (e.g) for correct output when using DOM implementations? 
+Whitespace is officially part of the document's content, per the XML spec. 
+The DOM preserves it. 
+If you filter it out of the document before building the DOM, there's nothing we can do about it. 
+Similarly, if your serializer introduces additional whitespace, there's nothing we can do about that. 
+Either has the potential to change the document's meaning and shoudl be done only when you _KNOW_ that the whitespace is not meaningful. 
+But that's really an XML processing issue, not a DOM issue. 
+Joe Kesselman / IBM Research 
+There should be a text node between bold and italic elements. 
+It would seem to a bug in the implementation that you are using, which, unfortunately, you did not specify either the implementation or version. 
+You might look for a different version of the parser or a parser configuration flag like ignoreWhitespace or ignoreElementContentWhitespace and set that to false in case the behavior was an overaggressive elimination of whitespace. 
+It is also possible that the text node but was wrongfully eliminated when written out to a file. 
+Or, the DOM implementation uses node- normalize() function which removes the whitespaces and joins all adjacent text nodes. 
+An expected normalization of the nodes is taken into considereation by I18N Working Group, as is stated on the DOM core website. 
+Is the user's job to preserve whitespaces (e.g) for correct output when using DOM implementations? 
+I'm new on this mail-list, so forgive me if i'm asking something that already was asked, but i didn't quite finished browsing all the articles in the mail-list... Razvan Costea-Barlutiu Department of Radiology, The University of Chicago 5841 South Maryland Avenue Chicago, Illinois 60637 E-Mail: cbrazvan@baltan.bsd.uchicago.edu 

@@ -1,0 +1,15 @@
+With an xml element like this: if I call on the TEST element object the method getAttributeNode("FOO") I get the attribute object of FOO, if I call the getAttributeNodeNS("urn:ex.ex.ex","CIPPO") 
+I get the attribute object of CIPPO, but if I call getAttributeNode("CIPPO") I should get CIPPO Attribute Object or NULL? 
+Thanx 
+Paolo Paolo Casarini - casarini@cs.unibo.it 
+Assume a level 2 aware parser which created the pippo:CIPPO attribute with both namespaceURI and prefix, enabling it to be compatible with both level 1 and level 2 NS calls. 
+In this case, I believe: 
+getAttributeNode("CIPPO") returns a null, whereas getAttributeNode("pippo:CIPPO") returns the CIPPO attribute object, enabling level 1 applications which passed in a qualified name to the old style methods to continue to work as they did with level 1 DOMs which completely ignored the prefix and treated it as part of the name. 
+If, on the other hand, the attribute were created by a level 2 application which did not bother to set the prefix because it knew that the serializer would fix it all in the end, then: getAttributeNode("CIPPO") returns the CIPPO attribute object getAttributeNode("pippo:CIPPO") returns nothing because by manipulating the document using level 2 methods (without bothering to set prefixes, as a parser would) the application forfeits the ability to be compatible with level 1 calls that were effectively superceded by level 2 NS methods. 
+That's the way I understand it, anyway. 
+Ray Whitmer rayw@netscape.com 
+It should return NULL. 
+Consider the following example: in this case it is quite obvious that getAttributeNode("bar") should return the bar="hello" node. 
+Note that namespaces on attributes behave differently then namespaces on elements. 
+If an attribute dosn't have a namespace it dosn't belong to the default namespace, rather it belongs to the element and have a NULL namespace (or is it ""). 
+/ Jonas Sicking 

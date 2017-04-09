@@ -1,0 +1,79 @@
+Hi, Kids, I wouldn't bother with this, except that since I sent the message that got this thread rolling I've seen over 150 messages in about 24 hrs. 
+(I don't know the exact number, but it was over 100 when I cleaned up this afternoon.) Most of them are duplicates or triplicates of the same message. 
+(And not all are on this thread.) Part of the reason for that is that the thread is now being echoed to two lists that I subscribe to--but about a third of the traffic is because of the practice of replying to several individuals (invariably one of them is me) as well as to the lists. 
+Could we try to bring the distribution of this thread back down to just the lists? 
+It would help my frazzled nerves a bit. 
+As I recall the draft RFC for URL's specifies that certain characters (like space) are forbidden, certain (like '?') have special meaning and otherwise the "path" part of a URL is an opaque string (which, in particular, may have nothing to do with a path). 
+Neither '/' nor '.' are forbidden or have special meaning. 
+They do have special meaning *for some implementations* and no special meaning for others. 
+Likewise the colon may have special meaning for some implementations and not for others. 
+I think you're right that there is nothing about the "../" string that's in violation of URL-law. 
+But then, I don't think a URL is a very exact science anyway g . 
+It would, of course, be quite reasonable for the HTTP spec to have a UNIX-centric warning to implementors that they should make this string illegal for their implementation (or risk the consequences). 
+Yes, "/../" is a unixism, but the path part of a URL is inherently platform specific. 
+I see URLs with "\" in them for DOS-type hosts, and "\..\" is just as much of a problem--maybe more because of the lack of permissions-bits in most DOSish OSs. 
+The code I've seen that 403s these things checks for the ".." and that seems to be a pretty universal string for "go up a level in the file system", or do you know of an OS with more than 3 servers on the net that doesn't work that way? 
+(side note: MS has implemented "..." and "...." in Win95 for referencing up two- and three- levels respectively. 
+I don't know about NT, but if it's not in there now it soon will be. 
+A check for ".." would obviously catch this as well.) 
+My bottom line here is that ".." in a path ought to be illegal in HTTP, perhaps with a notation to that effect in HTML. 
+* BearHeart / Bill Weinman * BearHeart@bearnet.com * * http://www.bearnet.com/ 
+* * Author of The CGI Book: * http://www.bearnet.com/cgibook/ 
+* * Trust everyone, but brand your cattle. 
+The most important thing to remember is that this type of URL syntax only has meaning to WWW clients. 
+HTTP servers always receive the complete path so all of this relative URL stuff is client-only. 
+If clients are interpreting the ".." above the root of the doc tree, you should be very worried because they know something about your server that the server didn't tell them. 
+If you are worried about encoded ".." characters in a URL, then that is strictly a server side problem and the server author should be spanked for not checking. 
+Chuck Shotton StarNine Technologies, Inc. chuck@starnine.com 
+http://www.starnine.com/ 
+cshotton@biap.com http://www.biap.com/ 
+"What? 
+Me? WebSTAR?" 
+(I got four copies of this message!! 
+I have no idea why that happened. 
+sigh The Mail Gods must have been upset by my rant.) 
+I think your assumption is in error. 
+I have a little testing-server I wrote so I could see how different browsers act about stuff. 
+It logs the entire conversation. 
+(It's really usefull--it'll be in my book.) 
+I typed this into Netscape: http://luna:8080/../../../etc/passwd I got this in my log . 
+. . 
+GET /../../../etc/passwd HTTP/1.0 Connection: Keep-Alive User-Agent: Mozilla/2.0b3 (Win95; I) Host: luna:8080 Accept: image/gif, image/x-xbitmap, image/jpeg, image/pjpeg, */* 370 Request: GET /../../../etc/passwd 370 403 Forbidden (/../../../etc/passwd contains go-back) 
+So it's not just a client problem . 
+. . the client blindly sends that request to the server. 
+The server MUST deal with this, and as you can see, it MUST disallow it. 
+(OTOH, I could have sent that request just as easily from telnet, and chances are that someone trying to break into a system would not be using Netscape anyway.) Personally, I think 403 is the appropriate message. 
+If someone is doing a Bad Thing, an ambiguous message adds nothing to the security--they know what they're trying to do. 
+And if they aren't malevolent then there's no valid reason to be ambiguous. 
+Of course, a 603 Scatalogical message would be okay too! 
+;^) (I think I'll put one in my mini-server. 
+bg ) * BearHeart / Bill Weinman * BearHeart@bearnet.com * * http://www.bearnet.com/ 
+* * Author of The CGI Book: * http://www.bearnet.com/cgibook/ 
+* * Sex is dirty. 
+So save it for someone you love. 
+While Unix uses ../ and DOS uses ..\ and MacOS uses :: natively to "go up a level in the file system", it is quite clear (at least to me) that native notations have no place in a valid URL. 
+As was quoted in another message, only ../ is valid for denoting hierarchy in a URL. 
+I wish browsers were stricter about this... ::sigh:: -Walter Walter Ian Kaye boo@best.com 
+| Excel | FoxPro | AppleScript | Mountain View, CA |--------- programmer ---------| 
+Try that on my server (WebSite, try http://solo.dc3.com/) 
+Try other ugly combinations like \../\./\.. well you get the idea. 
+It doesn't do the multi-dot stuff for multiple "ups" though... 
+Not a bad idea. 
+Maybe next verision :-). 
+WebSite "normalizes" any of that junk out of a URL. 
+The /../ is assumed to be the same as / (the parent of the root is the root). 
+If it had to change anything to get the "normalized" form, it sends a redirect to the browser in an attempt to "send a message" to the browser operator and prevent further abuse from relative links in the document. 
+Just one person's solution to the problem. 
+-- Bob 
+Do you know of any other OS that *does* work that way? 
+If not, then pretty much every platform on the net except Unix and Dos based ones qualify. 
+I've seen numerous claims that the most common server on the is running on neither Unix nor DOS. Of course, server authors for those platforms will probably just ignore this restriction, as they have no reason to deal with it. 
+So you're arguing that the string ".." anywhere in the path - not just as a path componenet - ought to be illegal? 
+Is there any point in this other than letting incompetent programmers blame the client if their system is broken into? 
+Seriously, what is the point of this? 
+Competent programmers on boxes that add special meaning to any path component will deal with it in the server whether it's illegal or not. 
+Making it illegal isn't any more likely to make incompetent programmers check for it than a warning. 
+Programmers for other boxes will ignore it. 
+Should clients refuse to send it if it shows up in a document? 
+Should your email address show up in the error message so users can go direct to you for an explanation? 
+mike 
