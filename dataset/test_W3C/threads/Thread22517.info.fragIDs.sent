@@ -1,0 +1,285 @@
+<s> The naive implementation of WRONG_DOCUMENT_ERR has a bit of trouble cloning an entire Document tree, because (of course) if it just clones the original  </s>
+<s> document's children they remain bound to that document and can't be assigned to the new one.  </s>
+<s> I can special-case this to make it work.  </s>
+<s> But this is the sharp point of the multiple-document question, which Level 1 explicitly doesn't address... so there's something to be said for the lazy solution of disabling Document.cloneNode(), at least until Level 2 resolves some of those outstanding questions.  </s>
+<s> Any opinions on whether this cheat is justifiable or not?  </s>
+<s> Joe Kesselman / IBM Research Unless stated otherwise, all opinions are solely those of the author.  </s>
+<s> I would hate to see cloneNode disabled for Level 1.  </s>
+<s> Perhaps there is something to be said for changing the cloneNode interface to: Node cloneNode(boolean deep, Document targetDoc);  </s>
+<s> I would rather see this done before Level 1 goes REC. Don  </s>
+<s> Same here.  </s>
+<s> A better alternative would be to put this on Document rather than Node: Node cloneNode(Node original, boolean deep)  </s>
+<s> This would have a couple of advantages:  </s>
+<s> 1. it would keep _all_ the node-creation methods on Document  </s>
+<s> 2. it would not have to be modified or extended when new node types are added.  </s>
+<s> 3. there are no problems when the original node's document and the target document use totally different implementation classes.  </s>
+<s> Stephen R. Savitzky Chief Software Scientist, Ricoh Silicon Valley, Inc., steve@rsv.ricoh.com  </s>
+<s> California Research Center home: steve@starport.com  </s>
+<s> URL: http://www.starport.com/people/steve/  </s>
+<s> All nice and dandy except for the weird look code:  </s>
+<s> Document doc = node.getOwnerDocument();  </s>
+<s> doc.cloneNode(node, doc);  </s>
+<s> doc.cloneNode(node, null); // assuming null implies same doc doc.cloneNode(node, someOtherDoc);  </s>
+<s> It just does not look as natural as: Node newNode = oldNode.cloneNode(true,  </s>
+<s> null); // for same doc Node newNode = oldNode.cloneNode(true,  </s>
+<s> someOtherDoc);  </s>
+<s> Don  </s>
+<s> On second thought, it should be called something different, like createCopy.  </s>
+<s> newDoc.createCopy(node, false); // for a shallow copy newDoc.createCopy(node,  </s>
+<s> true); // for a deep copy  </s>
+<s> We should keep the existing Node method cloneNode, with no added document  </s>
+<s> parameter.  </s>
+<s> That way if you want to add a duplicate node to the same document you use cloneNode; if you want to creat a copy in another document you use createCopy.  </s>
+<s> newParent.appendChild(newParent.getOwnerDocument().copyNode(oldNode, true)); (as opposed to: newParent.appendChild(oldNode.cloneNode(true, newParent.getOwnerDocument()));  </s>
+<s> under the other proposal.)  </s>
+<s> My way looks more natural if you're doing a mixture of node copying and node creation.  </s>
+<s> You get the owner document once and perform a series of create operations.  </s>
+<s> Something like this is really essential if you're in a system (like the one I'm building) which permits different DOM implementations for different documents.  </s>
+<s> Stephen R. Savitzky Chief Software Scientist, Ricoh Silicon Valley, Inc., steve@rsv.ricoh.com  </s>
+<s> California Research Center home: steve@starport.com  </s>
+<s> URL: http://www.starport.com/people/steve/  </s>
+<s> I have no problem with this proposal particularly because it shifts the responsibility of copying to the destination document.  </s>
+<s> It feels right.  </s>
+<s> Don Park Docuverse  </s>
+<s> Note that I'm not proposing to disable cloneNode() for anything except the  </s>
+<s> Document object.  </s>
+<s> All the others are fine, since they can leave the new nodes in the context of the old ownerDocument.  </s>
+<s> Joe Kesselman / IBM Research Unless stated otherwise, all opinions are solely those of the author.  </s>
+<s> So Document.createCopy() would become the "xeno-copy" routine we've discussed in the past, which copies a DOM node "by content" rather than cloning the actual object?  </s>
+<s> Sounds like a good answer to me; whatever we  </s>
+<s> call it, that functionality is eventually going to be desired... and since it has to act as a factory (since you're specifying target document), making it one of Document's methods sounds reasonable.  </s>
+<s> Normal cloneNode() would continue to be defined on Node itself.  </s>
+<s> We'd still have to decide whether Document.cloneNode() should be reinterpreted as "Create a new document and createCopy() of the old document's contents" or simply be disabled.  </s>
+<s> Joe Kesselman / IBM Research Unless stated otherwise, all opinions are solely those of the author.  </s>
+<s> Right.  </s>
+<s> I would think that Document.cloneNode should be reinterpreted as you  </s>
+<s> suggest -- having createCopy makes it very easy to describe the desired functionality.  </s>
+<s> Stephen R. Savitzky Chief Software Scientist, Ricoh Silicon Valley, Inc., steve@rsv.ricoh.com  </s>
+<s> California Research Center home: steve@starport.com  </s>
+<s> URL: http://www.starport.com/people/steve/  </s>
+<s> I would prefer a method at the doc level, but one which has the option of either cloning if the document is incompatible or transforming it if the documents are compatible.  </s>
+<s> Only the retured node and not the original would be usable after the operation.  </s>
+<s> I would call this transferNode(node) // always a deep transfer.  </s>
+<s> Actually, given my current model's shared underlying data model, I can clone faster than I can mutate the original reference to have new ownerDocuments, since clones share the original data.  </s>
+<s> I only prefer this  </s>
+<s> other approach to allow other implementations to efficiently transfer documents between compatible implementations.  </s>
+<s> If no one else wants it, fine.  </s>
+<s> I didn't hear opinions whether document.cloneNode(deep) should clone the document itself or raise an exception.  </s>
+<s> This is quite different from both cloneNode or transferNode on a child, because it creates a new ownerDocument rather than confining to or transferring between existing ownerDocument's.  </s>
+<s> I think we need something like cloneNode to work at the document level.  </s>
+<s> Ray Whitmer  </s>
+<s> I think there might be a very nice solution here somewhere.  </s>
+<s> How does this look?  </s>
+<s> We just add Document.transferNode(Node node) as Ray suggested and have the  </s>
+<s> user use Node.cloneNode() with it if he is cloning over to a new document.  </s>
+<s> Node originalNode; // this node is in the tree structure (parentNode != null) Document destinationDoc;  </s>
+<s> destinationDoc.transferNode(originalNode.cloneNode(false)); // transfer a shallow clone destinationDoc.transferNode(originalNode.cloneNode(true)); // transfer a deep clone  </s>
+<s> destinationDoc.transferNode(originalNode); // transfer the original node Comments?  </s>
+<s> Don Park  </s>
+<s> Docuverse  </s>
+<s> Don (and all),  </s>
+<s> The problem with transferNode below is that it assumes that the destination node can change the ownerDocument for the node, which currently isn't possible between implementations.  </s>
+<s> As for Document.createCopy, this seems distinctly non-OO.  </s>
+<s> Wouldn't it require the document to test what kind of node  </s>
+<s> it was copying and then have some very node-specific operation for each (or have I missed something here)?  </s>
+<s> I'd like to revisit cloneNode(bool deep, Document newDoc).  </s>
+<s> I still haven't seen any counter arguments for this approach.  </s>
+<s> Stephen Savitzky started the suggestion to put cloneNode in Document with the following advantages:  </s>
+<s> The node creation methods would still be on document.  </s>
+<s> Granted, the node would then have to transfer some data, something like: Element::cloneNode(deep, targetDoc) targetDoc.createElement(tagName);  </s>
+<s> // Transfer attributes if ( deep ) // clone children But this would actually be very neat, being able to clone attributes and so on, with each class handling its own cloning.  </s>
+<s> I don't see what would have to be modified for new node types.  </s>
+<s> I don't see a problem with the above approach either.  </s>
+<s> To summarise, we are only going to get small changes into Level 1 at this stage (if that).  </s>
+<s> Unless there are serious problems with the simple change proposed, why not go with it?  </s>
+<s> Alfie.  </s>
+<s> Alfie,  </s>
+<s> Yeah, I realized my forgetfulness right after posting it.  </s>
+<s> This basically  </s>
+<s> forces transferNode implementation to always move by copying the content.  </s>
+<s> However, your suggestion also forces cloning.  </s>
+<s> The question is, are there any way to do this without cloning?  </s>
+<s> Just change the definition of insertChild/appendChild?  </s>
+<s> Don  </s>
+<s> Don, I'm not sure I understand this debate about cloning or transferring.  </s>
+<s> As I see it, the current spec doesn't say anything about transferring nodes without cloning, so presumably it can be left to implementations.  </s>
+<s> The reason I wanted a targetDoc on cloneNode is so that we can  </s>
+<s> mix implementations.  </s>
+<s> So if I do an appendChild from one implementation to another, it can use cloneNode to get a clean copy in its own implementation.  </s>
+<s> I now see that it can also be used to transfer nodes between documents too.  </s>
+<s> For example (in pseudo code):  </s>
+<s> Node Element::appendChild(Node newChild) // Check implementation NodeInternal customNode=newChild.QueryInterface(INodeInternal); if ( (customNode == NULL) || (newChild.ownerDocument  </s>
+<s> != ownerDocument) ) // Not my implementation/document customNode=newChild.cloneNode(TRUE, ownerDocument); // Add to my children m_children.push_back(customNode);  </s>
+<s> // Here's where we use the custom interface customNode.parentNode=this;  </s>
+<s> Does this make any sense at all in Java?  </s>
+<s> Without a lot more work (ie.  </s>
+<s> Level 2), I don't think we can get a transferNode which works between implementations/documents. However, if cloneNode is given a targetDoc parameter, implementations can decide whether to clone or not, and have a clear mechanism for doing so.  </s>
+<s> A performance boost might be to say that if the newChild is the same implementation, has a different ownerDocument but doesn't have a parent  </s>
+<s> (perhaps after a removeChild), the custom interface could be used to modify  </s>
+<s> the ownerDocument and the parentNode, and thus avoid cloning.  </s>
+<s> This raises a question.  </s>
+<s> What happens to ownerDocument and parentNode after removeChild?  </s>
+<s> Alfie.  </s>
+<s> the  </s>
+<s> In cases where the "transfer" requires creating new objects (ie, when copying content between implementations), this doubles the heap churn.  </s>
+<s> I'd  </s>
+<s> suggest instead that there be a Move option as well as Copy (or rename Copy  </s>
+<s> and make this a boolean parameter), which could then recognize same-class as a special case and optimize appropriately.  </s>
+<s> Joe Kesselman / IBM Research Unless stated otherwise, all opinions are solely those of the author.  </s>
+<s> The various node types probably would take responsibility for copying their local data anyway.  </s>
+<s> If you start copying a tree, _someone_ is going to have to dispatch to the appropriate factory methods based on the DOM type of the source node.  </s>
+<s> That dispatch is going to want to loop back through the Document's factories to obtain the new nodes, in case the DOM's user has subclassed a node type and  </s>
+<s> subclassed Document to override the factory to produce that modified node.  </s>
+<s> So there's something to be said for making the "produce our version of one  </s>
+<s> of these" mechanism live in Document; it is a factory, albeit of a build-to-order flavor.  </s>
+<s> Level 1 declared that multiple documents weren't supported, so all of this is probably going to be deferred to Level 2. Which is fair... but which  </s>
+<s> probably means Document.cloneNode() should be _explicitly_ undefined in Level 1. Joe Kesselman / IBM Research Unless stated otherwise, all opinions are solely those of the author.  </s>
+<s> The point is that an implementation which is transferring a node of an  </s>
+<s> implementation it recognizes can do whatever it wants beyond the public APIs to change ownerDocument.  </s>
+<s> It is only immutable through current public APIs.  </s>
+<s> But I will clone in any case, because that is more efficient in my implementation.  </s>
+<s> Ray Whitmer ray@imall.com  </s>
+<s> I agree.  </s>
+<s> I do not think that the appendChild method of element should automatically clone.  </s>
+<s> Probably.  </s>
+<s> I strongly disagree.  </s>
+<s> This is far worse than simply adding transferNode.  </s>
+<s> cloneNode should always clone the node.  </s>
+<s> The type of complex behavior you describe should never be a part of cloneNode, i.e. sometimes it clones and sometimes it returns the original.  </s>
+<s> If you want transferNode, then call it that.  </s>
+<s> ownerDocument is a read-only attribute that always points to the document that created it (or perhaps in the future, that it was transferred to).  </s>
+<s> When a child is removed from the parent, the parentNode attribute becomes null.  </s>
+<s> Was this what you were asking?  </s>
+<s> Ray Whitmer ray@imall.com  </s>
+<s> I don't really understand what the problem is.  </s>
+<s> Document.cloneNode  </s>
+<s> with a shallow copy would just be another Document identical to this one but without children.  </s>
+<s> For a deep copy, do a shallow copy and then traverse the tree below this Document.  </s>
+<s> For each Node, invoke the proper createXXX factory method on the new Document and copy all the  </s>
+<s> (IDL) attributes: then insert it into place in the new tree.  </s>
+<s> Am I missing something?  </s>
+<s> John Cowanhttp://www.ccil.org/~cowancowan@ccil.org  </s>
+<s> You tollerday donsk?  </s>
+<s> N.  </s>
+<s> You tolkatiff scowegian?  </s>
+<s> Nn.  </s>
+<s> You spigotty anglease?  </s>
+<s> Nnn.  </s>
+<s> You phonio saxo?  </s>
+<s> Nnnn.  </s>
+<s> Clear all so! 'Tis a Jute.... (Finnegans Wake 16.5)  </s>
+<s> I think we are digging too deep for Level 1.  </s>
+<s> Before we hit the gas pipe (wrecked REC), I think we should wrap this up ASAP with minimum change to the existing spec.  </s>
+<s> Let us avoid stray into other issues.  </s>
+<s> Should Document.cloneNode() work in Level 1?  </s>
+<s> I say, YES!  </s>
+<s> If the naive implementation has problem then it is not fully Level 1 compliant.  </s>
+<s> Don Park Docuverse  </s>
+<s> This would be a totally different operation.  </s>
+<s> It _would_ be useful, however, since you could use it to relocate a node without having to worry about whether you're moving it between documents.  </s>
+<s> Actually what I would find more useful is the flip-side of this: copy the node if it is type-incompatible or already part of an existing complete document, but simply transfer it if it belongs to a DocumentFragment.  </s>
+<s> The motivation for this is that sometimes you are constructing a document  </s>
+<s> out of nodes that result from a traversal of an existing document (which you  </s>
+<s> don't want to modify), but sometimes you are creating nodes on the fly.  </s>
+<s> It's desirable not to have to know the difference.  </s>
+<s> I agree, but it's probably necessary to make it clear that that's what's happening.  </s>
+<s> Note that with document.createCopy it is possible to specify  </s>
+<s> explicitly what deep-copying a document means (shallow-copy the Document node, then recursively createCopy all of the children) Stephen R. Savitzky Chief Software Scientist, Ricoh Silicon Valley, Inc., steve@rsv.ricoh.com  </s>
+<s> California Research Center  </s>
+<s> home: steve@starport.com  </s>
+<s> URL: http://www.starport.com/people/steve/  </s>
+<s> Yes. The problem with the various createXXX factory methods is that they  </s>
+<s> may not copy all the information associated with a node (e.g. if the node is really an instance of some locally-defined subclass with additional attributes).  </s>
+<s> Stephen R. Savitzky Chief Software Scientist, Ricoh Silicon Valley, Inc., steve@rsv.ricoh.com  </s>
+<s> California Research Center home: steve@starport.com  </s>
+<s> URL: http://www.starport.com/people/steve/  </s>
+<s> John Cowan asks:  </s>
+<s> There's more.  </s>
+<s> The problem is that some of the Node's might be instances of some (possibly local) _subclass_ and may contain information which cannot be correctly copied by any of the public createXXX methods.  </s>
+<s> That's a significant amount of additional code which in Level 1 would exist _only_ to support Document.cloneNode().  </s>
+<s> It could be argued that, given Level 1's decision not to handle the more general uses of this logic, implementing it for this one specific case is less reasonable than declining to support cloning of Documents would be.  </s>
+<s> I think it would be a tragic mistake if it was not possible to copy a document, or to copy a node from one document to another, using Level 1.  </s>
+<s> That's the kind of omission that would seriously impact the credibility of  </s>
+<s> the specification (not to mention its usefullness).  </s>
+<s> Stephen R. Savitzky Chief Software Scientist, Ricoh Silicon Valley, Inc., steve@rsv.ricoh.com  </s>
+<s> California Research Center home: steve@starport.com  </s>
+<s> URL: http://www.starport.com/people/steve/  </s>
+<s> Should Document.cloneNode() work in Level 1?  </s>
+<s> I say, YES!  </s>
+<s> I'm happy either way; Level 2's going to need this code anyway... If the answer is "yes", I think it's worth adding a comment in the spec to remind the reader that cloning a Document does require special processing, to readjust ownerDocument if nothing else.  </s>
+<s> Fine with me.  </s>
+<s> BTW, did you know we are carrying on this 'conversation' on the public www-dom mailing list?  </s>
+<s> I didn't realize this until after my last message.  </s>
+<s> I hope I didn't give out anything confidential.  </s>
+<s> Don  </s>
+<s> It is reasonable to expect that cloneNode will copy _everything_ that it is meaningful to copy  </s>
+<s> I have no such expectations.  </s>
+<s> (and it is certainly possible to ensure this for any particular implementation).  </s>
+<s> Indeed.  </s>
+<s> "*One* can't, perhaps, but *two* can." -- Humpty Dumpty But at any rate, four (the authors of the DOM Core PR) did not.  </s>
+<s> The PR says only:  </s>
+<s> # Returns a duplicate of the node, i.e., serves as a generic copy # constructor for Nodes.  </s>
+<s> The duplicate node has # no parent (parentNode returns null.).  </s>
+<s> # Cloning an Element copies all attributes and their values, # including those generated by the XML processor to # represent defaulted attributes, but this method does not # copy any text it contains unless it is a deep clone, since # the text is contained in a child Text node.  </s>
+<s> Cloning any # other type of node simply returns a copy of this node.  </s>
+<s> On the other hand, it is clearly impossible to do this with the createXXX methods -- that's why cloneNode exists in the first place.  </s>
+<s> I believe cloneNode to be a convenience method.  </s>
+<s> Everything it does can be done with: switch (this.nodeType)  </s>
+<s> { case ELEMENT_NODE: new = this.ownerDocument.createElement(...) new.setAttributes(this.getAttributes) break case TEXT_NODE: new = this.ownerDocument.createText(...) etc. etc.  </s>
+<s> John Cowanhttp://www.ccil.org/~cowancowan@ccil.org  </s>
+<s> You tollerday donsk?  </s>
+<s> N.  </s>
+<s> You tolkatiff scowegian?  </s>
+<s> Nn.  </s>
+<s> You spigotty anglease?  </s>
+<s> Nnn.  </s>
+<s> You phonio saxo?  </s>
+<s> Nnnn.  </s>
+<s> Clear all so! 'Tis a Jute.... (Finnegans Wake 16.5)  </s>
+<s> John Cowan asks:  </s>
+<s> No, you've accurately described what has to be done in order to deep-clone a Document.  </s>
+<s> "For each Node, invoke the proper createXXX factory method on the new Document and copy all the (IDL) attributes: then insert it into place in the new tree" That's a significant amount of additional code which in Level 1 would exist  </s>
+<s> _only_ to support Document.cloneNode().  </s>
+<s> It could be argued that, given  </s>
+<s> Level 1's decision not to handle the more general uses of this logic, implementing it for this one specific case is less reasonable than declining to support cloning of Documents would be.  </s>
+<s> Joe Kesselman / IBM Research Unless stated otherwise, all opinions are solely those of the author.  </s>
+<s> Should Document.cloneNode() work in Level 1?  </s>
+<s> I say, YES!  </s>
+<s> I'm happy either way; Level 2's going to need this code anyway... If the answer is "yes", I think it's worth adding a comment in the spec to remind  </s>
+<s> the reader that cloning a Document does require special processing, to  </s>
+<s> readjust ownerDocument if nothing else.  </s>
+<s> Joe Kesselman / IBM Research Unless stated otherwise, all opinions are solely those of the author.  </s>
+<s> It is reasonable to expect that cloneNode will copy _everything_ that it is meaningful to copy  </s>
+<s> My point is that the specification does not preclude such an interpretation.  </s>
+<s> This makes no mention one way or another of any private information, nor  </s>
+<s> should it.  </s>
+<s> I think that in many implementations of the DOM there _will_ be implementation-specific information in a Node, and in that case cloneNode _should_ be expected to copy it.  </s>
+<s> In some implementations this will not be the case.  </s>
+<s> In fact, it's not even the case for the public interfaces, since there are attributes of, say, HTMLDocument and HTMLElement that are not accessible from the result of createElement without type-casting.  </s>
+<s> Stephen R. Savitzky Chief Software Scientist, Ricoh Silicon Valley, Inc., steve@rsv.ricoh.com  </s>
+<s> California Research Center home: steve@starport.com  </s>
+<s> URL: http://www.starport.com/people/steve/  </s>
+<s> True.  </s>
+<s> I wouldn't expect it to do so, however.  </s>
+<s> I concede the case of HTMLDocument, as the attributes referrer, fileSize, file*Date, domain, URL, and cookie are not present in Document.  </s>
+<s> However, I believe there are no IDL attributes of HTMLElement or its  </s>
+<s> subclasses that are not essentially convenience methods.  </s>
+<s> John Cowanhttp://www.ccil.org/~cowancowan@ccil.org  </s>
+<s> You tollerday donsk?  </s>
+<s> N.  </s>
+<s> You tolkatiff scowegian?  </s>
+<s> Nn.  </s>
+<s> You spigotty anglease?  </s>
+<s> Nnn.  </s>
+<s> You phonio saxo?  </s>
+<s> Nnnn.  </s>
+<s> Clear all so! 'Tis a Jute.... (Finnegans Wake 16.5)  </s>
+<s> I _think_ we've been sticking to public topics...  </s>
+<s> I don't want to post general questions of "what's the intended reading of the PR" into the IG mailing list, both because I don't want to tie up the  </s>
+<s> IG's time with things that have a known answer smile , and because I  </s>
+<s> figure that if I'm confused other folks may also want to see the answer.  </s>
+<s> If that causes more trouble than it solves, let me know... Joe Kesselman / IBM Research Unless stated otherwise, all opinions are solely those of the author.  </s>
+<s> Ray, I haven't read the (many) other thoughts on this in my mailbox this morning.  </s>
+<s> I just want to point out that I wasn't suggesting that cloneNode should modify the parentNode and ownerDocument to avoid cloning, but that appendChild could do this as an alternative to calling cloneNode, in certain circumstances.  </s>
+<s> Alfie.  </s>
+<s> From: Ray Whitmer Sent: 09 September 1998 17:11 Subject: Re: Should Document.cloneNode() work in Level 1?  </s>

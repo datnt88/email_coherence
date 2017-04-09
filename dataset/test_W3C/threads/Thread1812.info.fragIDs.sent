@@ -1,0 +1,113 @@
+<s> Hi, section 6.2.1 says: "The DAV:workspace property of a workspace resource MUST identify itself.  </s>
+<s> The DAV:workspace property of any other type of resource MUST be the same as  </s>
+<s> the DAV:workspace of its parent collection."  </s>
+<s> It seems to be undefined however what the value is if a resource doesn't *have* a (DAV-compliant) parent collection, for instance the root of my DAV  </s>
+<s> namespace.  </s>
+<s> So what should it be?  </s>
+<s> a) not present b) empty (no href) Julian (leaning to b)  </s>
+<s> Hi, section 7.1 defines the UPDATE semantics checked-in resources: "The UPDATE method modifies the content and dead properties of a checked-in version-controlled resource (the "update target") to be those of a specified version (the "update source") from the version history of that version-controlled resource."  </s>
+<s> So is the behaviour for checked-out resources just undefined (intentionally)?  </s>
+<s> I would have expected that DAV:must-be-checked-in is an explicit precondition for this method... Julian  </s>
+<s> From: Julian Reschke [mailto:julian.reschke@greenbytes.de] section 7.1 defines the UPDATE semantics checked-in resources: "The UPDATE method modifies the content and dead properties of a checked-in version-controlled resource (the "update target") to be those of a specified version (the "update source") from the version history of that version-controlled resource."  </s>
+<s> So is the behaviour for checked-out resources just undefined (intentionally)?  </s>
+<s> I would have expected that DAV:must-be-checked-in is an explicit precondition for this method...  </s>
+<s> I agree that adding the DAV:must-be-checked-in precondition is the better answer.  </s>
+<s> I'll add this to the Errata, and resolve it by adding that precondition, unless someone objects.  </s>
+<s> Cheers, Geoff  </s>
+<s> While we're at this topic: we have a similar issue with auto-update of version controlled collections.  </s>
+<s> - checkout a versioned collection with apply-to-version - remove a member from the working collection - checkout in-place the member of the versioned controlled collection  </s>
+<s> - checkin the working collection - the version controlled collection should be updated an remove the binding to the checked-out resource.  </s>
+<s> I think the checkin should fail in this case, as the removal of a checked-out member might cannot be permitted.  </s>
+<s> Do you agree?  </s>
+<s> //Stefan Am Donnerstag, 26.09.02, um 20:33 Uhr (Europe/Berlin) schrieb Clemm, Geoff:  </s>
+<s> I agree with your conclusion, but I believe this follows from the DAV:no-overwrite-by-auto-update precondition for CHECKIN, i.e.: If the DAV:auto-update property for the checked-out resource identifies a version-controlled resource, at least one of the versions identified by the DAV:predecessor-set property of the checked-out resource MUST identify a version that is either the same as or a descendant of the version identified by the DAV:checked-in property of that version-controlled resource.  </s>
+<s> If the VCR is checked-out, there is no DAV:checked-in version, which means this precondition would not be satisfied.  </s>
+<s> Cheers, Geoff While we're at this topic: we have a similar issue with auto-update of version controlled collections.  </s>
+<s> - checkout a versioned collection with apply-to-version - remove a member from the working collection - checkout in-place the member of the versioned controlled collection  </s>
+<s> - checkin the working collection - the version controlled collection should be updated an remove the binding to the checked-out resource.  </s>
+<s> I think the checkin should fail in this case, as the removal of a checked-out member might cannot be permitted.  </s>
+<s> Do you agree?  </s>
+<s> RE: UPDATE semantics for checked-out resourcesThis is true, but it does not apply to the more general case of an UPDATE  </s>
+<s> of a version.controlled  </s>
+<s> collection containing a checked-out resource which is not identified by the DAV:version-controlled-binding-set of the update source.  </s>
+<s> Cheers, Manfred -----Urspr?ngliche  </s>
+<s> Nachricht----- Von: ietf-dav-versioning-request@w3.org [mailto:ietf-dav-versioning-request@w3.org]Im  </s>
+<s> Auftrag von Clemm, Geoff T Gesendet: Freitag, 27.  </s>
+<s> September 2002 14:00 An: ietf-dav-versioning@w3.org Betreff: RE: UPDATE semantics for checked-out resources I agree with your conclusion, but I believe this follows from the DAV:no-overwrite-by-auto-update precondition for CHECKIN, i.e.: If the DAV:auto-update property for the checked-out resource identifies a version-controlled resource, at least one of the versions identified by the DAV:predecessor-set property of the checked-out resource MUST identify a version that is either the same as or a descendant of the version identified by the DAV:checked-in property of that version-controlled resource.  </s>
+<s> If the VCR is checked-out, there is no DAV:checked-in version, which means this precondition would not be satisfied.  </s>
+<s> Cheers, Geoff While we're at this topic: we have a similar issue with auto-update of version controlled collections.  </s>
+<s> - checkout a versioned collection with apply-to-version - remove a member from the working collection - checkout in-place the member of the versioned controlled collection  </s>
+<s> - checkin the working collection - the version controlled collection should be updated an remove the binding to the checked-out resource.  </s>
+<s> I think the checkin should fail in this case, as the removal of a checked-out member might cannot be permitted.  </s>
+<s> Do you agree?  </s>
+<s> checkout of a member of the collection, not a checkout of the collection).  </s>
+<s> This is just one way in which you can delete a checked-out VCR, and currently, deleting a checked-out VCR is allowed by the protocol.  </s>
+<s> Stefan: Were you suggesting that it be disallowed just in this case, or disallowed in general (e.g. add it as a precondition to the DELETE method).  </s>
+<s> For now, I'll just add this to the Errata document as an open issue, since disallowing deletion of a checked-out VCR would be a change to the protocol semantics.  </s>
+<s> So, to get some initial feedback, who thinks we should disallow the deletion of a checked-out VCR?  </s>
+<s> Cheers, Geoff -----Original Message----- This is true, but it does not apply to the more general case of an UPDATE  </s>
+<s> of a version.controlled  </s>
+<s> collection containing a checked-out resource which is not identified by the DAV:version-controlled-binding-set of the update source.  </s>
+<s> Cheers, Manfred -----Urspr?ngliche  </s>
+<s> Nachricht----- Von: ietf-dav-versioning-request@w3.org [mailto:ietf-dav-versioning-request@w3.org]Im  </s>
+<s> Auftrag von Clemm, Geoff T Gesendet: Freitag, 27.  </s>
+<s> September 2002 14:00 An: ietf-dav-versioning@w3.org Betreff: RE: UPDATE semantics for checked-out resources I agree with your conclusion, but I believe this follows from the DAV:no-overwrite-by-auto-update precondition for CHECKIN, i.e.: If the DAV:auto-update property for the checked-out resource identifies a version-controlled resource, at least one of the versions identified by the DAV:predecessor-set property of the checked-out resource MUST identify a version that is either the same as or a descendant of the version identified by the DAV:checked-in property of that version-controlled resource.  </s>
+<s> If the VCR is checked-out, there is no DAV:checked-in version, which means this precondition would not be satisfied.  </s>
+<s> Cheers, Geoff -----Original Message----- While we're at this topic: we have a similar issue with auto-update of version controlled collections.  </s>
+<s> - checkout a versioned collection with apply-to-version - remove a member from the working collection - checkout in-place the member of the versioned controlled collection - checkin the working collection - the version controlled collection should be updated an remove the binding to the checked-out resource.  </s>
+<s> I think the checkin should fail in this case, as the removal of a checked-out member might cannot be permitted.  </s>
+<s> Do you agree?  </s>
+<s> Am Freitag, 27.09.02,  </s>
+<s> um 16:13 Uhr (Europe/Berlin) schrieb Clemm, Geoff:  </s>
+<s> I see where this is going...  </s>
+<s> I think DELETE on a checked-out VCR must be ok.  </s>
+<s> However if I UPDATE  </s>
+<s> a collection and someone else checked out the contained VCR and that VCR is silently deleted, all his/her changes are lost.  </s>
+<s> Which can happen anyway, unless she/he locks the VCR.  </s>
+<s> Therefore I change my mind and from now on to forver say that explicit and implicit DELETE on checked-out resources are "OK".  </s>
+<s> //Stefan  </s>
+<s> OK, unless anyone wants to suggest otherwise, I'll just consider the issue closed, and not bother adding it to the Errata.  </s>
+<s> Cheers, Geoff (For some reason, I'm getting my posts back as HTML, which is really strange since I send them out in plain text ...) Am Freitag, 27.09.02,  </s>
+<s> um 16:13 Uhr (Europe/Berlin) schrieb Clemm, Geoff:  </s>
+<s> I see where this is going...  </s>
+<s> I think DELETE on a checked-out VCR must be ok.  </s>
+<s> However if I UPDATE a collection and someone else checked out the contained VCR and that VCR is silently deleted, all his/her changes are lost.  </s>
+<s> Which can happen anyway, unless she/he locks the VCR.  </s>
+<s> Therefore I change my mind and from now on to forver say that explicit and implicit DELETE on checked-out resources are "OK".  </s>
+<s> //Stefan  </s>
+<s> Proposed resolution: 1) Deprecate marshalling through OPTIONS.  </s>
+<s> 2) Add three new live properties: (Version histories) 5.2 Additional Resource Properties The version-history feature introduces the following REQUIRED property for resources that reside in a part of a server's namespace that supports version histories.  </s>
+<s> 5.1.1  </s>
+<s> DAV:version-history-collection-set (protected) The DAV:version-history-collection-set property identifies collections that may contain version histories.  </s>
+<s> An identified collection MAY be the root collection of a tree of collections, all of which may contain version histories.  </s>
+<s> Since different servers can control different parts of the URL namespace, different resources on the same host MAY have different DAV:version-history-collection-set values.  </s>
+<s> The identified collections MAY be located on different hosts from the resource.  </s>
+<s> (Workspaces) 6.2.1 DAV:workspace-collection-set (protected) The DAV:workspace-collection-set property identifies collections that may contain workspaces.  </s>
+<s> An identified collection MAY be the root collection of a tree of collections, all of which may contain workspaces.  </s>
+<s> Since different servers can control different parts of the URL namespace, different resources on the same host MAY have different DAV:workspace-collection-set values.  </s>
+<s> The identified collections MAY be located on different hosts from the resource.  </s>
+<s> (Activities) 13.4 Additional Resource Properties The activity feature introduces the following REQUIRED property for resources that reside in a part of the server's namespace supporting activities.  </s>
+<s> 13.4.1  </s>
+<s> DAV:activity-collection-set (protected) The DAV:activity-collection-set property identifies collections that may contain activities.  </s>
+<s> An identified collection MAY be the root collection of a tree of collections, all of which may contain activities.  </s>
+<s> Since different servers can control different parts of the URL namespace, different resources on the same host MAY have different DAV:activity-collection-set values.  </s>
+<s> The identified collections MAY be located on different hosts from the resource.  </s>
+<s> I agree with the proposed resolution.  </s>
+<s> Unless someone disagrees, I will add this to the Errata sheet, and mark the issue as closed.  </s>
+<s> Cheers, Geoff Proposed resolution: 1) Deprecate marshalling through OPTIONS.  </s>
+<s> 2) Add three new live properties: (Version histories) 5.2 Additional Resource Properties The version-history feature introduces the following REQUIRED property for resources that reside in a part of a server's namespace that supports version histories.  </s>
+<s> 5.1.1  </s>
+<s> DAV:version-history-collection-set (protected) The DAV:version-history-collection-set property identifies collections that may contain version histories.  </s>
+<s> An identified collection MAY be the root collection of a tree of collections, all of which may contain version histories.  </s>
+<s> Since different servers can control different parts of the URL namespace, different resources on the same host MAY have different DAV:version-history-collection-set values.  </s>
+<s> The identified collections MAY be located on different hosts from the resource.  </s>
+<s> (Workspaces) 6.2.1 DAV:workspace-collection-set (protected) The DAV:workspace-collection-set property identifies collections that may contain workspaces.  </s>
+<s> An identified collection MAY be the root collection of a tree of collections, all of which may contain workspaces.  </s>
+<s> Since different servers can control different parts of the URL namespace, different resources on the same host MAY have different DAV:workspace-collection-set values.  </s>
+<s> The identified collections MAY be located on different hosts from the resource.  </s>
+<s> (Activities) 13.4 Additional Resource Properties The activity feature introduces the following REQUIRED property for resources that reside in a part of the server's namespace supporting activities.  </s>
+<s> 13.4.1  </s>
+<s> DAV:activity-collection-set (protected) The DAV:activity-collection-set property identifies collections that may contain activities.  </s>
+<s> An identified collection MAY be the root collection of a tree of collections, all of which may contain activities.  </s>
+<s> Since different servers can control different parts of the URL namespace, different resources on the same host MAY have different DAV:activity-collection-set values.  </s>
+<s> The identified collections MAY be located on different hosts from the resource.  </s>

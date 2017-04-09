@@ -1,0 +1,125 @@
+<s> All, As a service to those of you who either don't have access to the TC still under development or who, like David, don't have the time to read it (understandably--I barely have time to both work on the TC and XML), what follows is a brief summary of the things that are new or different in HyTime as a result of the TC (not counting all the new stuff in the SGML Extended Facilities).  </s>
+<s> We have gone to a great deal of effort to ensure that HyTime is as flexible as possible, in part with an eye toward how it can be applied to Internet problems.  </s>
+<s> The development of the grove formalism has made HyTime much more rigorous in its definitions and, as a side effect, potentially much more inclusive that it was before with a minimum of hand waving (something Steve DeRose and David Durrand very rightly objected to in the original HyTime standard).  </s>
+<s> While I'm sure that many of these new features are more than XML needs as its minimum, I wanted to show everything so you know what's there that's new and interesting.  </s>
+<s> Summary of HyTime TC Changes: 1. Grove-based definitions.  </s>
+<s> All HyTime addressing functions are now defined as selections of nodes in groves.  </s>
+<s> This means several important things: A. HyTime location addresses can be used to address any kind of data as long as you can produce a grove for it.  </s>
+<s> B. Non-HyTime addressing schemes can be integrated with HyTime by defining the node lists they select.  </s>
+<s> C. All addressing operations are defined rigorously in terms of groves which are in turn defined rigorously in terms of formal property sets.  </s>
+<s> Thus, if we've done our job right, there should be no ambiguitity about what a particular location address will return if you know the property set and grove plan in effect.  </s>
+<s> 2. The use of queries for addressing.  </s>
+<s> Queries are now meaningfully integrated with other addressing mechanisms as long as the queries return nodes in a grove.  </s>
+<s> What this means in practice is that your query system must provide a grove-based API for defining the query domain and returing the results.  </s>
+<s> This should not be hard in most cases, as you presumably already have a definition of the data model and need only translate it into the SGML property set formalism.  </s>
+<s> This means that any non-HyTime addressing scheme can be used in HyTime by defining it's grove-based results.  </s>
+<s> E.g., TEI locators and URLs become queries that return nodes in groves.  </s>
+<s> TEI locators return nodes in SGML document groves (or whatever else they are designed to address, URLs return nodes that are either entity nodes (representing documents or data entities) or element nodes (named A objects) within documents.  </s>
+<s> 3. The new "refloc" facility.  </s>
+<s> This lets you designate attributes as semantic references with which you can then use any addressing method you want, including queries, without using indirection.  </s>
+<s> All the HyTime engine cares about is that the attribute is referential, it doesn't care how the reference is made as long as it gets a node list as a result of interpreting the reference (which it would do in the case of HyTime-defined addresses or the query processor would do for non-HyTime addresses).  </s>
+<s> Refloc makes it possible to directly represent things like the HTML A element without change to instances.  </s>
+<s> It essentially lets you apply HyTime to almost any rational way of doing addressing from elements.  </s>
+<s> If you can do clever querries, you should be able to retrofit even the most twisted markup schemes.  </s>
+<s> Refloc replaces the need for the notorious "not-clink" that was in the HyTime TC design for a while.  </s>
+<s> 4. Redesigned independent links: hylink The new HyLink form enhances the ilink design as follows: A. single "linkends" attribute replaced by one referential attribute for each named anchor role.  </s>
+<s> This makes the markup much clearer to users and enables the use of refloc to have different addressing methods for different anchors if you want.  </s>
+<s> It also lets you do things like use refloc to fix a referential attribute to a treeloc that addresses a location address in the body of link or that addresses something in the link as one of the anchors.  </s>
+<s> B. Notion of "aggregate links" replaced by notion of "list anchors".  </s>
+<s> The whole aggloc/agglink business on location addresses is gone (replaced by the new agglink form).  </s>
+<s> List anchors are anchors that can be satisfied by more than one object.  </s>
+<s> You can define traversal  </s>
+<s> rules for the members of a list ("list traversal").  </s>
+<s> (Agglink lets you do semanticless aggregation if you want to.) C. Can explicitly designate any anchor as being satisfied by the link element itself (as "self anchor").  </s>
+<s> This replaces the "omitted linkend" defaulting rule of ilink.  </s>
+<s> D. New and improved link traversal rules.  </s>
+<s> More complete and easier to understand (I hope).  </s>
+<s> Any existing ilink can be made into a HyLink by adding attributes for addressing the anchor roles ("anchor-addressing attributes") and, possibly, modifying the anchrole attribute to reflect the new keywords (specifically, #AGG replaced by #LIST, #COR replaced by #CORLIST).  </s>
+<s> 5. New agglink form for representing simple aggregation.  </s>
+<s> Represents the case of simply grouping a bunch of things together under a single semantic label to enable traversal among them.  </s>
+<s> Agglinks can be combined with hylinks to represent arbitrarily-complex levels of grouping.  </s>
+<s> For example, to represent the relationship between a mother and her children, you might have a hylink with the anchor roles "mother" and "children".  </s>
+<s> The children anchor might then be satisfied by agglink elements of the types "brothers" and "sisters".  </s>
+<s> These agglinks would then address as aggregates the male children and the female children.  </s>
+<s> Or you could just represent the aggregation relationship "brothers" by a brothers agglink by itself--you don't have to do something silly like define anchors roles "bother1 brother2 ...".  </s>
+<s> Agglink is also useful when you really don't care about the anchor roles and just want to connect a bunch of stuff together.  </s>
+<s> In other words you could have an agglink called "agglink" and leave it at that.  </s>
+<s> 6. Clink unchanged on the surface but now derived directly from hylink with fixed anchor roles, so it picks up all the hylink attributes like link traversal and list traversal that it never had before.  </s>
+<s> 7. Implied location sources: any location address element can omit its location source, in which case it is taken to be one of three possible things: the grove root, the principle tree root in the grove (i.e., the document element in SGML documents), or the "referrer", i.e., the non-address element that refers to the location address (or to the location ladder of which the location address is the top rung).  </s>
+<s> These options can be fixed for a type or selected on an instance basis.  </s>
+<s> The last option, "referrer", lets you have location addresses that are dynamic in that they address relative to the thing that uses them.  </s>
+<s> This lets you do things like a "next" location ladder, similar to the "next" and "previous" options in TEI locators.  </s>
+<s> (Now if we could just declare elements with fixed IDs we'd be in good shape....) 8. Generalized name-space location address.  </s>
+<s> With groves, the notion of name-space is well defined.  </s>
+<s> This means we can now address by name in any name space, not just ID or entity name.  </s>
+<s> For example, in a grove for a vector graphic format that let you put names on graphic objects (as you can do in CGM Level 4), you could address those graphic objects by name using the HyTime name-space location address.  </s>
+<s> The default name space is still the element name space (the "elements" property of the SGMLDOC object in the SGML property set), so nmsploc also provides a simpler syntax for doing what you use nameloc for today, e.g.: nmsploc locsrc=other-document chapter-1 /nmsploc .  </s>
+<s> 9. Location sources can be data or subdocument entities.  </s>
+<s> In the above nmsploc example, the locsrc attribute is declared as ENTITY and its value is the name of a document entity (a CDATA entity with a notation of SGML or a notation derived from SGML, e.g., XML).  </s>
+<s> 10. New location address form: mixedloc.  </s>
+<s> Mixed loc addresses whatever the location addresses in its content address.  </s>
+<s> This lets you group location addresses together within a mixedloc element and then use the lot by referring to the mixedloc.  </s>
+<s> Mixedloc was invented in part to model the old nameloc, but it should be useful in its own right.  </s>
+<s> 11.  </s>
+<s> New location address form: queryloc.  </s>
+<s> Queryloc is a location address that uses a query and returns a node list.  </s>
+<s> It is through queryloc that other addressing notations can be integrated.  </s>
+<s> Queryloc replaces notloc: it's simply not meaningful to use a location address that doesn't return nodes in a grove, so notloc, which was defined as doing something HyTime didn't understand, is just not meaningful in the grove new world.  </s>
+<s> At a minimum, you return a data entity node where the content of entity is opaque to HyTime (just as it would be if it were a bitmap image or some other unstructured data).  </s>
+<s> Note that things like defining hotspots in graphics would be done as a queryloc, not as an FCSLoc, which has changed.  </s>
+<s> In other words, you could, if you wanted to, define the various image mapping notations (ISMAP, client-side maps) as query notations and then just use them.  </s>
+<s> All you'd need to define would be a simple property set representing the data objects and properties the image describes, e.g., selectable regions, their associated addresses, and so on.  </s>
+<s> 12. New and improved FCSLoc: FCSLoc now actually addresses objects in finite coordinate spaces (rather than imposing FCSes onto objects, which was, frankly, bogus).  </s>
+<s> An FCSLoc essentially applies a "marqui" selection bounding area to an FCSloc and addresses any events inside that bounding area (as determined by the selection precision set for the FCSLoc).  </s>
+<s> The FCSloc returns either the events or the objects scheduled by the events.  </s>
+<s> FCSLoc lets you hyperlink directly to whatever happens to occur in a region of an FCS.  </s>
+<s> For example, if you had an event schedule that represented a historical time line, you could use an FCS to link to "1945" and therefore anything that occurs within 1945.  </s>
+<s> You could then use that FCSLoc as the location source for a queryloc that selected particular nodes, say all element nodes whose subject attribute value was "art:socialist" to see what Soviet artists were doing in 1945.  </s>
+<s> 13.  </s>
+<s> New and improved dataloc: The old dataloc was somewhat bogus in that the definition of what it addressed wasn't very rigorous.  </s>
+<s> We've fixed that by providing a generic "data tokenizer" mechanism.  </s>
+<s> A data tokenizer is any process that parses character data and constructs a grove containing the resulting tokens.  </s>
+<s> You can then address the tokens as node list using normal listloc.  </s>
+<s> Thus you can use any tokenization method you want (for example, you might have a tokenizer that does grammatical analysis or one that knows how to tokenize some obscure national language).  </s>
+<s> Dataloc combines a default tokenizer with a listloc to remove the need to explicitly specify the data tokenizer.  </s>
+<s> The tokenization "filters" are any HyLex lexical types available to the document (we define a small set of "built-in" filters that systems can support without having to support full HyLex.  </s>
+<s> Thus we have a general data tokenization mechanism and the same old dataloc (with a couple new options, like a "LINE" token) with no more hand waving or bogosity.  </s>
+<s> I realize that many of these new features are beyond the scope of Tim's minimal requirements and I'm *NOT* suggesting that we necessarily use them in XML.  </s>
+<s> I just wanted everyone to know what new things HyTime offers, because I think they're pretty exciting and could be useful to a lot of you.  </s>
+<s> Cheers, E. W. Eliot Kimber (eliot@isogen.com)  </s>
+<s> Senior SGML Consulting Engineer, Highland Consulting 2200 North Lamar Street, Suite 230, Dallas, Texas 75202 "Rats in the morning, rats in the afternoon...if they don't go away, I'll be re-educated soon..." --Austin Lounge Lizards, "1984 Blues"  </s>
+<s> Eliot, This is great stuff and deserves wider distribution.  </s>
+<s> I particularly like the application examples.  </s>
+<s> I would soft-pedal knocking the existing design; why should they trust you this time if you blew it last time.  </s>
+<s> In any case, 20-20 hindsight is easy and things weren't as clear four years ago; all those designs had good reason for being.  </s>
+<s> My detailed comments are interspersed below.  </s>
+<s> In the future, could you please copy me explicitly on anything that you think I should see on the XML list?  </s>
+<s> I can't monitor it for the next several weeks.  </s>
+<s> (Just send me stuff like this, and anything you think I should comment on, either to you or to the list.) Thanks, Charles  </s>
+<s> Without *explicitly* using indirection.  </s>
+<s> HyTime still has to be given the same information as it would for a queryloc, etc.  </s>
+<s> It needs to know the notation of the query or it can't invoke the processor for  </s>
+<s> it.  </s>
+<s> Don't pretend that this isn't a location address element; it is a shortcut  </s>
+<s> for one.  </s>
+<s> Please delete "satisfied by" everywhere in this summary.  </s>
+<s> It is incorrect and unnecessary.  </s>
+<s> "List anchors are anchors that can be more than one object."  </s>
+<s> the location *path) of which the location address is the first step).  </s>
+<s> This is a shorthand that causes construction of the necessary grove.  </s>
+<s> (Avoid giving the impression that we have a whole bunch of special cases when we  </s>
+<s> really have some well-designed shortcuts to a single construct.)  </s>
+<s> Charles F. Goldfarb * Information Management Consulting * +1(408)867-5553 13075 Paramount Drive * Saratoga CA 95070 * USA International Standards Editor * ISO 8879 SGML * ISO/IEC 10744 HyTime Prentice-Hall Series Editor * CFG Series on Open Information Management  </s>
+<s> Yes, of course.  </s>
+<s> As it's explained in the TC, refloc is a shorthand that replaces explicit reference to the equivalent location address element.  </s>
+<s> Every refloc option has an equivalent location address construction.  </s>
+<s> processor for  </s>
+<s> shortcut  </s>
+<s> Yes.  </s>
+<s> Yes. I should have said "consist of" instead of "satisfied by".  </s>
+<s> Yes. This is made clear in the text of the standard.  </s>
+<s> Reference to a data or subdocument entity is equivalent to referring to an explicit grovedef that names the entity as the grove source and uses the default grove plan for the entity (defined either by the entity declaration or by the notation's property set).  </s>
+<s> when we  </s>
+<s> Yes. The message here is that all the shortcuts in HyTime are defined in terms of HyTime primitives--there are no special cases or magic processing.  </s>
+<s> Cheers, E. W. Eliot Kimber (eliot@isogen.com)  </s>
+<s> Senior SGML Consulting Engineer, Highland Consulting 2200 North Lamar Street, Suite 230, Dallas, Texas 75202 "Rats in the morning, rats in the afternoon...if they don't go away, I'll be re-educated soon..." --Austin Lounge Lizards, "1984 Blues"  </s>

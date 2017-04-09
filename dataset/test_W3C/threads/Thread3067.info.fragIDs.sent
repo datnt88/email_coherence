@@ -1,0 +1,37 @@
+<s> I was wondering a bit about ':contains' [1].  </s>
+<s> What should be the background-color in the following cases: test{ background:red } test::before{ content:"PASS" } test:contains('PASS'){ background:lime } test{ background:red }  </s>
+<s> test::before{ content:"PA" } test::after{ content:"SS" } test:contains('PASS'){ background:lime } test{ background:red } test::before{ content:"PA" } test:contains('PASS'){ background:lime }  </s>
+<s> These cases could be extended with instances of ':hover', ':active', ':focus' to make it more complex of course.  </s>
+<s> Just to be sure, the following won't match, right?  </s>
+<s> test:contains('&amp;amp;'){ background:red } I think these issues need to be addressed in the selectors test suite as  </s>
+<s> well.  </s>
+<s> [1] Anne van Kesteren  </s>
+<s> Content generated with the ::before and ::after pseudo-elements does not actually modify the content of the element; only the way it is presented, and thus does not affect whether or not another selector matches.  </s>
+<s> The background colour should be red.  </s>
+<s> &amp;amp; is an HTML/XML entity, not a CSS entity, so it would not be converted to an ampersand while parsing the CSS.  </s>
+<s> Therefore the selector would not match your test element.  </s>
+<s> I expect that it would, however, match this: Lachlan Hunt  </s>
+<s> lachlan.hunt@lachy.id.au  </s>
+<s> I see.  </s>
+<s> How about: test{ background:red; content:"PASS" } test:contains('PASS'){ background:lime }  </s>
+<s> Personally, I don't see a difference here and I think that they all should have a green background (which stands for PASS, obviously).  </s>
+<s> Especially since ':first-letter' _does_ apply to '::before'.  </s>
+<s> That would  </s>
+<s> lead to incosinstency between selectors, something you should avoid, imo.  </s>
+<s> That would be logical if the first has a 'red' background, which it should have according to the XML parsing rules.  </s>
+<s> I see authors, and maybe implementors make mistakes with this though (Opera did) and therefore it might be good to add it to the official test suite.  </s>
+<s> Anne van Kesteren  </s>
+<s> That's right, there is no difference.  </s>
+<s> The generated content doesn't actually affect the contents of the element in the document, only the way it is presented.  </s>
+<s> Thus, they all should be red.  </s>
+<s> What about this: test:contains('foo') { content: 'bar' } According to your logic, first the selector would match, the contents would be changed, then it would no longer match, so it would be changed back, then it would match again... Lachlan Hunt lachlan.hunt@lachy.id.au  </s>
+<s> This contradicts the entire model of CSS processing -- selectors are matched against the content, declarations from the matching rules are cascaded to determine the specified values, and then values are computed.  </s>
+<s> Furthermore, I don't see a use case for your proposal.  </s>
+<s> Generated content is unlikely to contain text like this since generated content should not be used for things that are essential to viewing the document (such as adding text).  </s>
+<s> It should only be used for things that are stylistic (e.g., changing the list-numbering style).  </s>
+<s> Pseudo-elements are very different from pseudo-classes.  </s>
+<s> Pseudo-classes are just selectors: they affect whether an element matches the selector.  </s>
+<s> Pseudo-elements are styling specific parts of an element, but the selector matching process for pseudo-elements essentially occurs without the pseudo-element.  </s>
+<s> Also, cross-posting between www-style and public-css-testsuite is almost never the right thing to do, especially since the membership of the two lists is quite similar.  </s>
+<s> This discussion belongs on www-style.  </s>
+<s> -David L. David Baron URL: http://dbaron.org/  </s>

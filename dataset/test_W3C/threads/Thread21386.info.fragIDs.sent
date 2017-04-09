@@ -1,0 +1,47 @@
+<s> Hi I have just set up a new linux box (running SuSE 8.1).  </s>
+<s> Apache (including cgi-bin) and mySQL seem fine.  </s>
+<s> (Of course they were pre-installed using the SuSE RPM's.) I then tried to install annotea from cvs using the instructions in I inserted the apache script into the working httpd.conf  </s>
+<s> file.  </s>
+<s> (I understood that access control and algae are not strictly necessary, so for testing purposes I omitted them -- I will return to these steps later.)  </s>
+<s> When I point a browser at I get the unhelpful single line died with Undefined subroutine &amp;W3C::Util::W3CDebugCGI::LogEntry::__NR_gettimeofday called at /usr/lib/perl5/site_perl/5.8.0/i586-linux-thread-multi/bits/syscall.ph line 550.  </s>
+<s> in the browser window.  </s>
+<s> There is no error log entry.  </s>
+<s> The only thing I can deduce from this is that perl is trying to tell me something (an error message or debugging info) but because of a missing subroutine or module or something, it can't.  </s>
+<s> Please could someone help?  </s>
+<s> Many thanks Richard Kaye  </s>
+<s> Looks like the syscall.ph  </s>
+<s> does not have an interface for gettimeofday.  </s>
+<s> I have three syscall.ph  </s>
+<s> files: na:/home/eric$ locate syscall.ph  </s>
+<s> /usr/lib/perl/5.8.0/bits/syscall.ph  </s>
+<s> /usr/lib/perl/5.8.0/sys/syscall.ph  </s>
+<s> /usr/lib/perl/5.8.0/syscall.ph  </s>
+<s> Only the first has an interface definition for gettimeofday: grep __NR_gettimeofday /usr/lib/perl/5.8.0/bits/syscall.ph  </s>
+<s> sub SYS_gettimeofday () { &amp;__NR_gettimeofday;} You can test for gettimeofday easily from the perl debugger: na:/home/eric$ perl -de 0 Loading DB routines from perl5db.pl version 1.19 Editor support available.  </s>
+<s> Enter h or `h h' for help, or `man perldebug' for more help.  </s>
+<s> main::(-e:1): 0 DB 1 use Time::HiRes qw/gettimeofday/; DB 2 p join (' | ', gettimeofday()) 1037743462 | 276463 or from a single command line: perl -e 'use Time::HiRes qw/gettimeofday/; print join (" | ", gettimeofday())."\n";'  </s>
+<s> I'm curious, what operating system are you using?  </s>
+<s> I've never seen a path like i586-linux-thread-multi on a redhat or debian linux box.  </s>
+<s> I expect the XS modules, /usr/lib/perl/5.8.0/auto/Time/HiRes/HiRes.so on my machine, is referencing syscall.ph,  </s>
+<s> though I don't actually know how.  </s>
+<s> This appears to be deep perl voodoo.  </s>
+<s> The above problem kept the W3CDebugCGI module from generating a session-id and logging the session.  </s>
+<s> -eric office: +1.617.258.5741  </s>
+<s> NE43-344, MIT, Cambridge, MA 02144 USA cell: +1.857.222.5741 (eric@w3.org)  </s>
+<s> Feel free to forward this message to any list for any purpose other than email address distribution.  </s>
+<s> Eric, Many thanks.  </s>
+<s> I'm very grateful for your help!  </s>
+<s> As I mentioned, I'm using SuSE 8.1.  </s>
+<s> One day soon I will email SuSE to explain this problem with syscall.  </s>
+<s> I did however manage to sort out perl.  </s>
+<s> I ran "h2ph -h" on some of the .h  </s>
+<s> files in /usr/include.  </s>
+<s> It seemed that without the -h switch the .ph  </s>
+<s> files (which SuSE had perviously generated and I had installed from the RPM) didn't work.  </s>
+<s> I don't understand all this, but am reasonably happy I found a work-around.  </s>
+<s> But my annotea server's not working yet :-( I am getting a new error message when I try to POST an annotation from amaya.  </s>
+<s> The following appears in the httpd error_log file: Can't locate auto/W3C/Rdf/RdfDB/disconnect.al in @INC (@INC contains: .. ../../.. ../../.. /usr/lib/perl5/5.8.0/i586-linux-thread-multi /usr/lib/perl5/5.8.0 /usr/lib/perl5/site_perl/5.8.0/i586-linux-thread-multi /usr/lib/perl5/site_perl/5.8.0 /usr/lib/perl5/site_perl .) at /usr/local/perl/modules/W3C/Annotations/CGI/annotate line 213 [Wed Nov 20 10:27:22 2002] [error] [client 147.188.56.174] Premature end of script headers: /usr/local/perl/modules/W3C/Annotations/CGI/annotate I'll keep looking to see what is or isn't happening, but if you have any ideas or suggestions, I'd be very grateful!  </s>
+<s> Thanks Richard PS. I have had some reports of emails sent to me a couple of days ago going mysteriously astray.  </s>
+<s> This is a repeat post.  </s>
+<s> If anyone did respond to the original, please repeat!  </s>
+<s> Thanks  </s>

@@ -1,0 +1,143 @@
+<s> For consideration...  </s>
+<s> From MetadataToolkit.pdf:  </s>
+<s> The method UtilityXAP::CompareTimestamps takes as its arguments two property "paths" (triples) and compares the timestamps represented in their literal objects.  </s>
+<s> This operates directly on the objects, not on any internalized, pre-parsed data structures.  </s>
+<s> I.e the literal objects are presumed to denote timestamps that can be compared as timestamps, not strings.  </s>
+<s> There are also numerous methods for retrieving and storing values which insulate the developer from any concerns about the lexical representation used in the RDF -- i.e. applications using XMP concern themselves with the *values* expressed in the RDF, not the lexical forms of their expression (though there are, of course, lower level methods for manipulating the actual lexical forms themselves, if needed).  </s>
+<s> E.g. MetaXAP::getTimestamp MetaXAP::setTimestamp UtilityXAP::GetBoolean UtilityXAP::GetDateTime UtilityXAP::GetInteger UtilityXAP::GetReal UtilityXAP::SetBoolean UtilityXAP::SetDateTime UtilityXAP::SetInteger UtilityXAP::SetReal  </s>
+<s> From MetadataFramework.pdf: 4.2.1 XMP Core Schema Property Type Description xap:CreateDate Date Description Document creation time.  </s>
+<s> xap:MetadataDate Date Last metadata modification time.  </s>
+<s> xap:ModifyDate Date Last resource modify time.  </s>
+<s> The XMP Date type is internally represented by a complex structure, and applications working with Date typed property values need not care about the lexical representation in the RDF, only the values.  </s>
+<s> 4.2.2 XMP Media Management Schema xapMM:SaveID Integer Incremented on each write to LastURL.  </s>
+<s> [how does one increment a string?]  </s>
+<s> 4.2.3 XMP Support Schema xapS:Size Integer File size in bytes.  </s>
+<s> B.1 XMP Media-Type Schemas xapG:NumberOfColors Integer Number of colors in color space (256, 65536, etc.) xapG:NumberOfInks Integer Number of process and spot colors needed to print entire document including any contained documents xapDyn:NTracks Integer Number of tracks or channels Internal xapDynV:BitRate Integer Bits per second Relational xapDynV:NaturalRate Real Fields/Frames per second Relational xapDynA:Rate Real Samples per second Relational xapDynA:SampleSize Integer Number of bits per sample Internal xapDynA:Volume Real 0.0 = silence, 1.0 = maximum volume xapTPg:NPages Integer Number of pages in the document (including any in contained documents) From xmp_sample.xml:  </s>
+<s> From xmpBJ_sample.xml: stJob:id 1000 /stJob:id [an integer?  </s>
+<s> nope, it's a string] From xmpMM_sample.xml: stRef:versionID 1 /stRef:versionID [another integer?  </s>
+<s> nope] stVer:version 1.4 /stVer:version [a real?  </s>
+<s> nope] From xmpS_sample.xml: xmpS:Size 10000 /xmpS:Size [ahh, here's an integer] [You'd never know which of the above denote strings or values unless you had knowledge of the global property-defined datatyping semantics implicit in the XMP information models] I think it's pretty evident that Adobe is expecting users of XMP to be thinking in terms of values, not lexical representations.  </s>
+<s> Patrick [Patrick Stickler, Nokia/Finland, (+358 40) 801 9690, patrick.stickler@nokia.com]  </s>
+<s> Good idea Patrick.  </s>
+<s> We needed to do something like this.  </s>
+<s> What we need is an objective test of whether an API implementation is tidy or untidy.  </s>
+<s> We have agreed a model theoretic test, i.e. does a b "foo" .  </s>
+<s> c d "foo" .  </s>
+<s> entail a b _:l .  </s>
+<s> c d _:l .  </s>
+<s> If we could express this directly in the XMP api then your suggestion we would have an objective test.  </s>
+<s> We can do this in the jena api.  </s>
+<s> Given a model with the above triples we can write:  </s>
+<s> model.contains(c, d, a.getProperty(b).getObject())  </s>
+<s> In Jena this returns true because Jena is tidy (despite having methods such  </s>
+<s> as getBoolean, getInteger etc).  </s>
+<s> Is there a way to express the entailment directly in the XMP api so we can execute the test?  </s>
+<s> Brian  </s>
+<s> [Patrick Stickler, Nokia/Finland, (+358 40) 801 9690, patrick.stickler@nokia.com]  </s>
+<s> I don't see this as a valid question.  </s>
+<s> Or at least, not one that provides an illuminating answer.  </s>
+<s> Any API that provides for both string-based comparisions and value-based comparisions will both provide for and not provide for the entailment you suggest, presuming b and d have differing, incompatable datatypes (e.g. string and integer).  </s>
+<s> The salient feature of the XMP API which IMO suggests a value-based bent, is that there are numerous access and manipulation functions which are intended to insulate applications from the details of lexical representation.  </s>
+<s> I.e., they enable to application to function in terms of values rather than lexical representations (strings).  </s>
+<s> It is true that one can also access the actual lexical representations, and thus, your entailment above could be found to hold.  </s>
+<s> But just because one is able to determine string-equality of two literal objects does not mean that they were intended to mean the same thing, or that the API is asserting equality of meaning, rather than simply equality in the form of expression.  </s>
+<s> Methods such as UtilityXAP::CompareTimestamps, which parses the lexical representations into a data structure and deals with variations in timezones, etc. that are reflected in the lexical representation, clearly show that XMP is comparing values, and not lexical forms.  </s>
+<s> Otherwise, such a method would be unecessary.  </s>
+<s> You'd just use strcmp() or the like.  </s>
+<s> The same is true for the primary access methods for getting values from literal objects and storing values to literal objects.  </s>
+<s> Patrick  </s>
+<s> Oh, then my question must not have been clear.  </s>
+<s> You claim that XMP is untidy.  </s>
+<s> I am asking whether there is an objective test whether an API is tidy or not.  </s>
+<s> That is a valid question, right?  </s>
+<s> I think I see what you mean.  </s>
+<s> But the question remains, is there a way of expressing the entailment in the XMP API.  </s>
+<s> Ok, fine - that is the test you are applying.  </s>
+<s> Could you take a look at the Jena API and tell us what conclusion you reach when applying the same test.  </s>
+<s> Brian  </s>
+<s> [Patrick Stickler, Nokia/Finland, (+358 40) 801 9690, patrick.stickler@nokia.com]  </s>
+<s> I would say that Jena is fairly agnostic overall.  </s>
+<s> The single  </s>
+<s> equality comparison method suggests a syntactic comparison, rather than a semantic comparision (which is understandable, given the generic nature of Jena) and the fact that equality is tested on the entire statement means that Jena has nothing to say about whether the following entailment holds or not: IF Jenny age "10" .  </s>
+<s> Movie title "10" .  </s>
+<s> THEN Jenny age _:x .  </s>
+<s> Movie title _:x .  </s>
+<s> If, e.g., Jena had a comparison method that only compared the two objects, and allowed different subjects and predicates, and reflected the above entailment, then I'd say Jena was, at least in terms of that particular method, taking a tidy view.  </s>
+<s> But since Jena does not offer such a method, one cannot tell one way or the other.  </s>
+<s> Also, the fact that Jena provides a test for syntactic equality of statements doesn't IMO mean that Jena has a tidy view of inline literal semantics, only that such comparisons are based on label equality (the form of expression) and current inline literal nodes have non-unique labels.  </s>
+<s> If inline literal nodes had systemID prefixes (e.g. _:x"LLL") then the equals() method would not have to change any, it still would be comparing the form of expression (syntactic label equality) and that's really what that method is all about right, to aid in merging graphs?  </s>
+<s> Any presumption of semantic equality based on string equal literal labels is made by the developer, not Jena.  </s>
+<s> With Jena, applications are free to choose whether they compare inline literals as strings or values and what actions to take accordingly.  </s>
+<s> Jena doesn't seem to care one way or the other.  </s>
+<s> The key difference between the value-based access functions of Jena and those of XMP are that for XMP, they are bound to particular properties and apply specifically to inline literals, so developers interacting with the properties of resources in terms of their property access methods have no choice about whether to interpret the inline literals as strings or values -- they are always interpreted as values; whereas in Jena, it is up to a developer to decide whether or not s/he will interpret the literal as a value or a string.  </s>
+<s> So IMO, Jena is neither tidy nor untidy.  </s>
+<s> It simply provides access to the graph, and a few useful utility methods for developers who choose to impose value interpretations on literals, whether or not those interpretations are licensed by the MT or not.  </s>
+<s> XMP property methods, on the other hand, impose value-based interpretations on literals no matter what.  </s>
+<s> For Jena, to support value-based comparison of literals (either inline or explicitly typed) one would simply (hah ;-) need to add a module to Jena which would take two predicate- object pairs and based on knowledge of supported datatypes and possibly querying the graph for range assertions would return either true, false, or undetermined.  </s>
+<s> E.g 3VBoolean equalValues(predicate1, object1, predicate2, object2); where 3VBoolean is 3-value-logic result (true, false, or maybe).  </s>
+<s> After all, it may very well be the case that a complete value comparision was executed and the values were, in fact, not equal and hence the result is known to be false.  </s>
+<s> That's different from e.g. one of the datatypes not being known or not finding any datatype range asserted for one of the literal objects, and thus not being able to actual compare two values.  </s>
+<s> That's not false.  </s>
+<s> That's just an undeterminable test.  </s>
+<s> I actually started implementing such a software component, based on I hope to get back to it one of these days... The kinds of generic to semi-generic tools where the tidy/untidy issue will really show up the most will be in query engines, as to whether comparisions of values will be syntactical (lexical) or semantic (value) based.  </s>
+<s> Most folks will be wanting to express queries in terms of values to compare, not forms of expression, and one would hope that the RDF itself would provide all the knowledge necessary to make trustworthy comparisons and that nothing would remain hidden or implicit in application specific semantics.  </s>
+<s> Patrick  </s>
+<s> Hmmm, you don't seem to have responded to this.  </s>
+<s> Yet that is not the result the test you described in: would give.  </s>
+<s> I'm having a little trouble understanding what consistent test you are applying.  </s>
+<s> I suggested in: [[model.contains(c,  </s>
+<s> d, a.getProperty(b).getObject())]] was an accurate representation of the entailment.  </s>
+<s> Would you accept that?  </s>
+<s> Brian  </s>
+<s> [Patrick Stickler, Nokia/Finland, (+358 40) 801 9690, patrick.stickler@nokia.com]  </s>
+<s> Sorry, yes, the latter is a valid question, but I don't see the first and second formulations as equivalent.  </s>
+<s> I am saying that Jena is not applying any such test.  </s>
+<s> Jena provides various methods for some developer to apply such a test, but Jena does not appear to provide any methods or functions which force either a string-based or value-based interpretation of inline literals.  </s>
+<s> (and providing "literal" access to the object as a string literal does not impose any interpretation of that literal node, it's just letting applications get at the form of expression).  </s>
+<s> I would accept it as *one* possible string-based interpretation of inline literals expressed using the Jena API, but not any fixed string-based interpretation mandated nor even suggested by the Jena API.  </s>
+<s> You could also have made the comparision of objects based on the Jena API by converting the inline literals to values and comparing the values.  </s>
+<s> Also, the above entailment could be made impossible to arrive at if inline literals would have unique labels, such that for any two inline literals, the above contains() method would always be false, if it reflects syntactic equality, that is.  </s>
+<s> Thus *Jena* does not say whether the above entailment holds, even though a developer might implement a comparison function (as you have done) which reflected that entailment, or implemented a comparison function that precluded that entailment.  </s>
+<s> Furthermore, one might very well have both string-based and value-based comparision functions, as Jeremy, Frank, myself and others have at various times suggested, which reflect equality of form (a kind of "syntactic entailment") versus equality of meaning ("semantic entailment").  </s>
+<s> But in the end, it is the developer who is imposing either the string or value based interpretation.  </s>
+<s> Not the Jena API. Patrick  </s>
+<s> The question was: Is the above expression an accurate representation of the entailment in the jena API?  </s>
+<s> I think that is a question which deserved a yes/no answer.  </s>
+<s> If you answer yes, then we can look for an equivalent in XMP.  </s>
+<s> I am not sure what your answer means.  </s>
+<s> Also you haven't responded to my difficulty in understanding what consistent test you are applying to reach your conclusions.  </s>
+<s> I doesn't seem like this discussion is making progress.  </s>
+<s> Time to end it perhaps.  </s>
+<s> Brian  </s>
+<s> The answer to that appears to be "yes".  </s>
+<s> jan grant, ILRT, University of Bristol.  </s>
+<s> http://www.ilrt.bris.ac.uk/ "My army boots contain everything not in them." - Russell's pair o' Docs.  </s>
+<s> OK. The short answer is yes, but it is you, and not Jena that is presuming string based semantics.  </s>
+<s> It was an ambiguous question and I have been attempting to clarify the question in my response.  </s>
+<s> Your example does not represent a predisposition of the Jena API towards string based interpretation of inline literals but only illustrates that one *could* implement an application using the Jena API which exibits such a predisposition.  </s>
+<s> One could also do the opposite in Jena.  </s>
+<s> Jena itself doesn't promote either view.  </s>
+<s> I can't say it any clearer than that.  </s>
+<s> Patrick Sender:ext Brian McBride bwm@hplb.hpl.hp.com  </s>
+<s> The question was: Is the above expression an accurate representation of the entailment in the jena API?  </s>
+<s> I think that is a question which deserved a yes/no answer.  </s>
+<s> If you answer yes, then we can look for an equivalent in XMP.  </s>
+<s> I am not sure what your answer means.  </s>
+<s> Also you haven't responded to my difficulty in understanding what consistent test you are applying to reach your conclusions.  </s>
+<s> I doesn't seem like this discussion is making progress.  </s>
+<s> Time to end it perhaps.  </s>
+<s> Brian  </s>
+<s> The question that this raises, then, is whether it is you, and not the adobe API, that is presuming value-based semantics :-) Sorry for the flippancy, but you appear to be saying that evidence from examining an API is primarily based on the views of the examiner.  </s>
+<s> The examples you've uncovered are interesting, though: do they support the notion that the adobe api has value, not string-based semantics for datatyped literals?  </s>
+<s> jan grant, ILRT, University of Bristol.  </s>
+<s> http://www.ilrt.bris.ac.uk/ "Impact of vulnerability: Run code of an attacker's choice Maximum Severity Rating: Moderate" -- M$ security bulletin  </s>
+<s> Sender:ext Jan Grant Jan.Grant@bristol.ac.uk  </s>
+<s> The question that this raises, then, is whether it is you, and not the adobe API, that is presuming value-based semantics :-) It is IMO the Adobe API, though I will certainly not deny my biased position, I really did take care not to read my own preferences into the documentation and examples.  </s>
+<s> Folks are free to evaluate the materials for themselves and draw their own conclusions (though note the recent comments from Adobe).  </s>
+<s> Sorry for the flippancy, but you appear to be saying that evidence from examining an API is primarily based on the views of the examiner.  </s>
+<s> I would say that both XMP and Jena will allow a developer to impose either string or value based semantics, but that XMP presumes and promotes in its API value based semantics.  </s>
+<s> Jena is agnostic.  </s>
+<s> The examples you've uncovered are interesting, though: do they support the notion that the adobe api has value, not string-based semantics for datatyped literals?  </s>
+<s> I believe that the recent comments from Alan Lillich indicate both value based semantics and long range datatyping by means of property ranges.  </s>
+<s> While not possible to fully escape some involvement with lexical representations, XMP apps care about values, not strings used to denote values.  </s>
+<s> Patrick  </s>

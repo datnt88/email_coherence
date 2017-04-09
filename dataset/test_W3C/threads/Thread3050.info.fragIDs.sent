@@ -1,0 +1,133 @@
+<s> Okay, here's one thing: they can't protect password-based challenge-response transcripts with strong encryption while adhering to export restrictions.  </s>
+<s> If the application is restricted to exportable encryption, then it can't properly protect challenge-response pairs from brute force attacks--first against the encryption, then against the password.  </s>
+<s> Ok, so far this is the only requirement that I've seen that can't be done with TLS now.  </s>
+<s> As summarize Dan's requirement, TLS while securing a transport using an exportable cypher (say RC4-40) would allow passphrases to be secured at a full (RC4-128) level.  </s>
+<s> Thus if you were using FTP with SSL, the username/password could be sent at the high encryption level.  </s>
+<s> However, again, is this really necessary?  </s>
+<s> Since you have shared secrets, can't you use something like the APOP framework where you send a date, hash it with the password and send the hash back?  </s>
+<s> Isn't that as secure (or more secure) as sending the password encrypted with RC4-128?  </s>
+<s> And that can be done at the application level, and already exists in some form in a number of IETF protocols.  </s>
+<s> I still havent seen any movement towards resolution.  </s>
+<s> The issues havent changed substantially.  </s>
+<s> So, how is this to be resolved?  </s>
+<s> I think Dan Simon's suggestions are useful from our perspective, but I dont see any agreement that it will or will not be adopted.  </s>
+<s> 1) How will this issue be resolved?  </s>
+<s> What happens when consensu doesnt appear to be reached (or reachable) on the mailing list?  </s>
+<s> I could be persuaded to drop my objections if there was the following: a) A concrete proposal, to the bits level, of how you can protect password-based challege-response bits at a higher level of encryption than the exportable SSL stream, and how this proposal fits into the the broader TLS protocol, and *DOESN'T* try to do more than this.  </s>
+<s> b) An evaluation of whether this couldn't better be done through another "standard" technique like APOP or some of the other AUTH frameworks at the application level, or by using some out-of-band technique.  </s>
+<s> c) An evaluation of whether this really is exportable.  </s>
+<s> d) Some comments on if adding a feature because of only US export issues that could impact security is acceptable.  </s>
+<s> e) Some other parties besides Netscape, MicroSoft, and CompuServe to speak up on the proposal.  </s>
+<s> f) Some cryptographers to speak up on the proposal.  </s>
+<s> g) An "exit" strategy, so that we can be sure that this hack has a sunset, and that it would not be a requirement of TLS to always support this in the future.  </s>
+<s> I'll summarize my objections so far: 1) It is inelegant architecturally.  </s>
+<s> 2) It serves a need that can be just as easily answered at the application protocol level.  </s>
+<s> 3) I'm concerned about security issues (I'm not a cryptographer, so I can't say that it is not secure, only that I've not heard enough from them to feel more confident.) 4) I'm concerned that it will delay implementation of client certificates.  </s>
+<s> ..Christopher Allen Consensus Development Corporation.. .. ChristopherA@consensus.com 1563 Solano Avenue #355.. .. Berkeley, CA 94707-2116.. ..Home of "SSL Plus: o510/559-1500 f510/559-1505.. .. Security Integration Suite(tm)" http://www.consensus.com/SSLPlus  </s>
+<s> ..  </s>
+<s> I have a question for the cryptographers...  </s>
+<s> The "Shared Key Authentication for the TLS Protocol" paper states: == In fact, even a challenge-response protocol which never == reveals the password is vulnerable, if a poorly chosen, guessable == password is used; an attacker can obtain the (weakly protected) == transcript of the challenge-response protocol, then attempt to guess the == password, verifying each guess against the transcript.  </s>
+<s> Would not this same type of attack be possible against the current proposal?  </s>
+<s> It seems to me that if your are not using asymmetric crypto,  </s>
+<s> an eavesdropper would have all required info from the transcript of the session to perform this type of an attack.  </s>
+<s> That is, it doesn't matter if the transcript is "weakly protected" or "strongly protected" -- without asym crypto, the attacker has the same info about the session as the valid participants.  </s>
+<s> Not being a cryptographer, I apologize if this question is misguided.  </s>
+<s> Regards, Steve Petripetri@litronic.com Litronic Industries(714)545-6649  </s>
+<s> From: Steve Petri petri@litronic.com  </s>
+<s> Steve, using assymetric cryptography is not a necessary condition for distinguish between attackers and valid participants.  </s>
+<s> The authentication hash proposed in the passauth3.txt  </s>
+<s> that Tom Stephens just sent is a bit complicated.  </s>
+<s> I'll first simply point out that an attacker does not have the same information as the valid participants by a simple reduction to a previously solved problem, that of computing a MAC on a single message.  </s>
+<s> We believe HMAC(k,m) = h(k,p2,(k,p1,m)) to be a good MAC on message m (where p1 and p2 are padding bytes necessary to bring (k,p1) and (k,p2) to full compression function argument boundaries).  </s>
+<s> k is a shared ``MAC key'', not known to eavesdroppers.  </s>
+<s> The MAC doesn't have  </s>
+<s> to be protected at all -- if the hash function h has the necessary cryptographic property (collision intractibility), then only those who know k may generate a valid MAC for a message m, and even if you get lots of m_i,MAC(m_i) pairs (and you get to chose m_i), it is still computationally infeasible to generate m,MAC(m) where m != m_i for all i. How is this different from shared key authentication?  </s>
+<s> With MACs, we are authenticating the origin of a single message (per MAC, in a repudiable way, unlike digital signatures).  </s>
+<s> With the shared key authentication, the goal is to authenticate the channel, i.e., that the encryption/message-MAC keys derived to protect the channel is indeed shared by the parties who possess the shared secret key.  </s>
+<s> Anyway, the SharedKeyVerify.shared_key_response field deserves closer scrutiny, but in principle there's nothing wrong with the idea.  </s>
+<s> Now about the design of SharedKeyVerify.shared_key_response.  </s>
+<s> It's not clear to me why pad1 is needed (padding are added to MAC functions to prevent a key recovery attack by Preneel and Van Oorschot) -- if MAC_write_secret is the only secret in the inner hash, I would have expected the pad to preceed it to make sure MAC_write_secret do not span a compression function boundary, and burying the secret value in the middle of the hash is probably not a good idea -- nor why the xor is there.  </s>
+<s> Having only thought about it a little [caveat], I would prefer it to be h(shared_key + pad_2 + h(shared_key + pad_1 + handshake_messages)) where shared_key is either the passphrase itself, or h(passpharse).  </s>
+<s> The identity information may be sent in the clear -- it's part of the handshake messages anyway, as well as SharedKeyVerify.identity, and only serves to chose the particular shared_key for verifying the SharedKeyVerify.shared_key_response field.  </s>
+<s> This MAC authenticates the the possessors of the shared_key saw the same handshake messages, from which master_secret is derived for the write secrets etc. (Instead of just protocol messages sent, it should be sent and received, and includes internally the client_hello.random  </s>
+<s> etc.) This only works in one direction, obviously.  </s>
+<s> If we want both the client and the server to prove (to each other) that they possess the shared_key, we'd either have to have two keys, or change the authentication hash to be one of h(shared_key + pad_2 + h(shared_key + pad_1 + handshake_messages + "I am client")) h(shared_key + pad_2 + h(shared_key + pad_1 + handshake_messages + "I am server")) This is probably a little different than the point of view adopted by the designer(s) of the SharedKeyVerify.shared_key_response in the Shared Key Authentication proposal.  </s>
+<s> It appears to me that they wanted to show that the possessor of the channel keys also has the shared_key, instead of the other way around.  </s>
+<s> This is more vulnerable to the man-in-the-middle attacks for anonymous key exchanges, since the cryptographic assumption about the hash function must be stronger (preimage resistance), because such an attacker would have access to the auth_write_secret and MAC_write_secret.  </s>
+<s> (This assumed that users chose passphrases with enough entropy, else all bets are off.) -bsy Web:http://www-cse.ucsd.edu/users/bsy/  </s>
+<s> USPS:Dept of Comp Sci and Eng, 0114, UC San Diego, La Jolla, CA 92093-0114  </s>
+<s> Bennet, Thanks for your prompt response.  </s>
+<s> But I have one further question:  </s>
+<s> But how is the shared ``MAC key'' communicated?  </s>
+<s> Using asym crypto?  </s>
+<s> Or is it derived from the shared password, in which case the attacker could use a dictionary attack?  </s>
+<s> Or would, for example, all Compuserve subscribers have the same shared MAC key and we assume the eavesdropper does not know it?  </s>
+<s> Thanks, Steve Petripetri@litronic.com Litronic Industries(714)545-6649  </s>
+<s> Steve,  </s>
+<s> Yes, the MAC key is derived using assymetric cryptography.  </s>
+<s> In pricinple, however, it does not matter how it is derived -- if it is a shared key that is only known to the sender and receiver, then the security of the MAC would still hold.  </s>
+<s> a slightly different question than that which you had posed.  </s>
+<s> It is true that if the key choice is not good, then eavesdroppers may use the traffic in an off-line dictionary attack to recover the key.  </s>
+<s> I was addressing a different question, that of whether assymetric cryptography is required to perform such an authentication -- which is why I added at the end that users must chose passphrases with enough entropy.  </s>
+<s> My apologies for misunderstanding your question.  </s>
+<s> -bsy Web:http://www-cse.ucsd.edu/users/bsy/  </s>
+<s> USPS:Dept of Comp Sci and Eng, 0114, UC San Diego, La Jolla, CA 92093-0114  </s>
+<s> This is not completely correct.  </s>
+<s> The MAC key is only as strong as the key exchange algorithm used to create it.  </s>
+<s> In this case, 512-bit RSA, which is nowhere near as strong as a true 128-bit secret.  </s>
+<s> You should only break rules of style if you can | Tom Weinstein coherently explain what you gain by so doing.  </s>
+<s> | tomw@netscape.com  </s>
+<s> No problem, your response helped me to better understand my own question g .  </s>
+<s> I do think, though, that in the final proposal, the shared MAC secret should not be allowed to be derived from the passphrase.  </s>
+<s> Many users will choose low entropy passphrases, and a successful dictionary attack of a transcript might cause the entire TLS standard to be perceived as weak.  </s>
+<s> Fortunately, the proposal *does* involve asymmetric crypto--for key exchange.  </s>
+<s> Once a (strong) key has been exchanged using asymmetric cryptography, the (as-yet-anonymous) client and (already-authenticated) server share a fresh, random secret (presumably) unavailable to the attacker, and can use that secret to protect the shared-key-based client authentication transcript.  </s>
+<s> So it seems that the client code will come up with a (high entropy) random number, and encrypt it with the Server's public key.  </s>
+<s> Is that correct?  </s>
+<s> Is there a provision in the proposal to deny service to an account which is being dictionary attacked directly, or will this be left up to the implementation?  </s>
+<s> Steve Petripetri@litronic.com Litronic Industries(714)545-6649  </s>
+<s> That's saying it's *not* known *only* to the sender and receiver, because the assymetric cryptography is weak.  </s>
+<s> If a MAC key to be shared between you and me is derived by me shouting the key value to you in the midst of a crowd, it's not very good either.  </s>
+<s> -bsy Web:http://www-cse.ucsd.edu/users/bsy/  </s>
+<s> USPS:Dept of Comp Sci and Eng, 0114, UC San Diego, La Jolla, CA 92093-0114  </s>
+<s> This is the standard RSA server auth key exchange.  </s>
+<s> Protocols only specify the messages sent over the wire.  </s>
+<s> The vulnerability to dictionary attacks, unfortunately, is independent of this -- active on-line attacks, where the server is actually being probed, -can- be detected by the server implementation, but such an implementation requirement is outside the scope of a protocol standard; off-line attacks where protocol messages are eavesdropped and then used to determine the key in a separate computation, much as brute-force key searches are done with known-plaintext attacks, are completely separated from both protocol specifications as well as implementation specifications.  </s>
+<s> -bsy Web:http://www-cse.ucsd.edu/users/bsy/  </s>
+<s> USPS:Dept of Comp Sci and Eng, 0114, UC San Diego, La Jolla, CA 92093-0114  </s>
+<s> At the Montreal meeting (in reference to the flexibility of the SSH proposal) someone commented that the protocol should not allow the implementor to "do bad things".  </s>
+<s> I agree with this, because many implementors don't have the time or cryptographic expertise to consider all angles of attack.  </s>
+<s> Given that, it is misleading to state that (with the passauth proposal) your passwords are protected with 128 bit crypto, when in reality a server without attack detection, combined with a user whose password is in a dictionary of 65000 commonly used passwords, effectively has 16 bit crypto protection.  </s>
+<s> A security system is only as strong as its weakest link.  </s>
+<s> Again, I'm no cryptographer, but it seems to me that this channel of attack does not exist if passphrases are disallowed in TLS.  </s>
+<s> Steve Petripetri@litronic.com Litronic Industries(714)545-6649  </s>
+<s> [resending...]  </s>
+<s> At the Montreal meeting (in reference to the flexibility of the SSH proposal) someone commented that the protocol should not allow the implementor to "do bad things".  </s>
+<s> I agree with this, because many implementors don't have the time or cryptographic expertise to consider all angles of attack.  </s>
+<s> Given that, it is misleading to state that (with the passauth proposal) your passwords are protected with 128 bit crypto, when in reality a server without attack detection, combined with a user whose password is in a dictionary of 65000 commonly used passwords, effectively has 16 bit crypto protection.  </s>
+<s> A security system is only as strong as its weakest link.  </s>
+<s> Again, I'm no cryptographer, but it seems to me that this channel of attack does not exist if passphrases are disallowed in TLS.  </s>
+<s> Steve Petri petri@litronic.com  </s>
+<s> Litronic Industries (714)545-6649  </s>
+<s> Hi Steve, Allowing the implementor to to bad things is different from allowing the -user- to do bad things.  </s>
+<s> Even with assymmetric cryptosystems, the user may publish his/her private key (or encrypted private key along with the decrypting passphrase) -- an obvious Bad Thing.  </s>
+<s> The -protocol- can not prevent that.  </s>
+<s> The point about having a protocol design so that implementors can't easily hang themselves -- I'm one of the people who advocate this position, much like high level languages etc -- has to do having as a result an overall system that do not have holes; users can hose themselves by creating individual holes, but that does not necessarily cause the system to fall as a whole.  </s>
+<s> It's still valid to argue that we do not want to permit the user to easily hang him-/herself.  </s>
+<s> This is a slightly different argument, however, than the one that I (and others) had made at Montreal.  </s>
+<s> Is there enough user education so that they won't chose bad passwords?  </s>
+<s> So that they won't disclose their private key?  </s>
+<s> So they won't run trojan horse, virus-laden software?  </s>
+<s> The list of possible bad things that a user can do goes on and on.  </s>
+<s> I think that since the system implementor choses the web server configuration (or other server) to permit or disallow passphrases at the protocol level, and the system implementor can decide (has the rope) whether s/he can educate his/her users enough about passphrase selection, having this option won't hurt.  </s>
+<s> It is better than forcing some systems implementor to do passphrases on top of weak encryption, which is the current practice.  </s>
+<s> For banks and stock brokers.  </s>
+<s> Regarding the proposal to provide multiple channels with different crypto strength, I'd be happy if it really is exportable.  </s>
+<s> Granted, if I were a spy, I'd type "attack at dawn." in the 16 character field for my credit card number in a form that will send the (purported) credit card number via the more secure channel.  </s>
+<s> (Web form provide by a server run by my collaborator/controller overseas, say.)  </s>
+<s> This is not to say that this kind of more secure communication isn't possible with the passphrase hash mechanism.  </s>
+<s> For example, one could use a code book of passphrases, so that the server would hash using all possible passphrases in the code book to find one that matches and lookup the corresponding meaning therein.  </s>
+<s> Longer messages can obvly be done by constructing an alphabet out of the passphrases, and iterating the authentication protocol.  </s>
+<s> A tad clumsier at the server end since off-the-shelf server software can't easily be used, but not horrible.  </s>
+<s> -bsy Web:http://www-cse.ucsd.edu/users/bsy/  </s>
+<s> USPS:Dept of Comp Sci and Eng, 0114, UC San Diego, La Jolla, CA 92093-0114  </s>

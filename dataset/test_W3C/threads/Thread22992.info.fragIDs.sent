@@ -1,0 +1,80 @@
+<s> DOM XPath module last call issue b5 was about the descrepancy between DOM ownerElement and XPath parent attributes in the new XPathNamespace node.  </s>
+<s> The resolution of this issue is that the new DOM interface is being consistent with existing DOM interfaces as well as the infoset, which does not provide a parent of the XPathNamespace node.  </s>
+<s> The writers of the XPath spec forced this incompatibility, producing a parent of a node of which the node was not a child.  </s>
+<s> No change is desired in the DOM data structures, because it would be inconsistent with other DOM interfaces and the mapping of the infoset to those interfaces.  </s>
+<s> See the issues list for more complete information at Please let us know if you are, or are not, satisfied with this resolution.  </s>
+<s> Ray Whitmer W3C DOM WG Chair rayw@netscape.com  </s>
+<s> Alternative suggestion: There had been discussion of moving the ownerElement attribute back into Node, to make it a general equivalent of XPath's concept of parent, saving them the coding hassle of (node.getType()==Node.ATTR_NODE) ?  </s>
+<s> node.getOwnerElement() : node.getParent() and making the relationship between the DOM and XPath views somewhat more straightforward.  </s>
+<s> This would also have to skip past EntityReference nodes, since those don't exist in the XPath model; I don't remember any other complications but it's been a while since I've looked at it.  </s>
+<s> Relatively simple architectural change, non-breaking, should be low impact on implementers and it'd close this issue in a manner which (I think) the XPath folks would actually be happy with rather than tolerant of.  </s>
+<s> Has this been considered and voted down, or did it simply fall through the cracks?  </s>
+<s> Joe Kesselman / IBM Research  </s>
+<s> I do not recall such a discussion.  </s>
+<s> This would be a core issue.  </s>
+<s> In practice, it doesn't seem to me to be a big hassle anyway, since most  </s>
+<s> normal applications know if they have an attribute node to start with before asking for the parent or owner element, and it is no problem for  </s>
+<s> the XPath implementation to do the above a few times and heavy XPath users can just use expressions to get the behavior.  </s>
+<s> In DOM, there are additional cases, such as attributes which have text nodes underneath them.  </s>
+<s> The parent of the text node is clearly the  </s>
+<s> attribute so the model breaks down even though an XPath user would probably never get to that particular text node.  </s>
+<s> As this was not the only comment we got suggesting that Node attributes should match XPath instead of the established DOM- infoset mapping (for example prefix, namespaceURI, etc.), the impression I get from this sort  </s>
+<s> of thing is that they think that the parent attribute of an attribute should be the element, even though it is not a child of element and they  </s>
+<s> consider it a matter of using the "right" names to avoid confusion for XPath users.  </s>
+<s> It will obviously not solve the fact that we do not consider the element the parent of it's attributes or call it that, which was established in DOM Level 1 long before XPath.  </s>
+<s> Can you perhaps make a stronger argument?  </s>
+<s> I am not well-enough convinced that this proposal significantly helps anyone.  </s>
+<s> Perhaps if it solved more problems... entity reference skipping seems like another side benefit.  </s>
+<s> The root node would have to have no owner  </s>
+<s> element, etc. as this would be the closest ancestor that was an element... Ray Whitmer rayw@netscape.com  </s>
+<s> On Thursday, 09/05/2002 at 12:45 MST, rayw@netscape.com (Ray Whitmer)  </s>
+<s> If I'm not dreaming, this was brought up fairly early in DOM L3 discussions as a "did we miss an obvious opportunity by being overspecific" question.  </s>
+<s> Feel free to blame me for the fact that it isn't in the Open Issues List.  </s>
+<s> Or someone may have come up with a killer objection -- but I honestly don't remember hearing one.  </s>
+<s> (Might be time to check the archives/minutes for past discussion; searching for ownerElement ought to find it...)  </s>
+<s> Granted, but it would be intended to ease XPath/XSLT/XQuery implementation.  </s>
+<s> It isn't _big_.  </s>
+<s> But it also isn't hard, and it would help address the ongoing accusations I hear that the W3C seems to be scattering away from the Infoset rather than finding ways to come back to it.  </s>
+<s> Call it a convenience function if you like, but one which does permit some optimization of that operation... which is a category the DOM has been willing to consider in the past.  </s>
+<s> As you said: Most.  </s>
+<s> Some don't.  </s>
+<s> XPath is an example of one that may not, except by explicitly testing the node type.  </s>
+<s> Yes, they can do so.  </s>
+<s> Is there a Good Reason we shouldn't reduce the need to do so?  </s>
+<s> Remember that I suggested only generalizing ownerElement.  </s>
+<s> If that's defined as "move up to the nearest enclosing element", it works fine for XPath and may be useful for others.  </s>
+<s> That would also address the case of a Text node within an EntityReference within an Element -- skipping the EntRef and going to the Element would match XPath's desired behavior.  </s>
+<s> (And illustrates another place where this convenience would add value.)  </s>
+<s> The parent of the text node is clearly the attribute  </s>
+<s> Not in the XPath view.  </s>
+<s> There, attrs don't have children; they carry text directly.  </s>
+<s> Hence, in that environment going from the text (which is "part of the attr") to the Element is entirely reasonable.  </s>
+<s> Again, remember that I specifically suggested moving getOwnerElement back to Node.  </s>
+<s> That's a clearly defined behavior.  </s>
+<s> If it isn't one _you_ want to use in your apps, that's fine... but I think it really would be a step back toward making these two views of the Infoset consistant, and thus is a Good Thing for the W3C architecturally.  </s>
+<s> It doesn't address the terminology problem, but at least it provides a very direct mapping.  </s>
+<s> I'm trying to take us a step away from arguing about the use of the specific term "parent" -- which is now unchangable, as are some of our own past mistakes -- and focus on functionality, as I now wish we had when this issue first came up.  </s>
+<s> (Hindsight is always 20:20...) If they can say "what we call parent, the DOM calls ownerElement" for all of their nodes, the fact that they use a different term for the same concept is annoying but reduced to the level of a documentation problem rather than persisting as a genuine architectural divergence.  </s>
+<s> Sorry; that was my intent, as mentioned above.  </s>
+<s> I should have stated that more explicitly.  </s>
+<s> The root node would have to have no owner element  </s>
+<s> Agreed. Joe Kesselman / IBM Research  </s>
+<s> I am certainly happy to discuss this and see where it goes.  </s>
+<s> I see merit in it.  </s>
+<s> I suspect, as I said previously, that it will not answer the question being asked in B5 or others who think it should be called parent.  </s>
+<s> One problem that limits the usefulness is the lack of a similar accessor in the Traversal module on the Treewalker interface, which may be used  </s>
+<s> to process the result of the XPath query, especially where a EntityReferences may be present.  </s>
+<s> Ray Whitmer rayw@netscape.com  </s>
+<s> Granted, unless we want to add getOwnerElement there as well.  </s>
+<s> BUT: I'm not convinced that this is a killer.  </s>
+<s> We aren't claiming that the Traverser presents the XPath view, right?  </s>
+<s> Note that you said  </s>
+<s> especially where a EntityReferences may be present  </s>
+<s> which is something the traverser could support trivially by setting whatToShow to exclude EntRef nodes.  </s>
+<s> If we haven't already made that effort (not to mention filtering text-node-not-first-in-sequence), then Traverser.getOwnerElement by itself isn't a make-or-break issue.  </s>
+<s> Note that folks could still use the traverser to find the matching nodes, then switch to normal DOM operations -- including the generalized ownerElement attribute -- to navigate from those nodes.  </s>
+<s> And in fact that's what I'd generally expect them to do, since they'd generally want to leave this traverser primed to look for the next node found by the XPath.  </s>
+<s> Pure brainstorming: It is almost possible to create a Traverser which encapsulates the XPath view of the document, by setting appropriate filters... and I think it actually would be possible if Traverser added a getOwnerElement method.  </s>
+<s> The filtering to handle text wouldn't be very efficient ... but it Could Be Done.  </s>
+<s> (And it might be more efficient in an implementation designed to use internal information to optimize this case.  </s>
+<s> We always did have the idea that some traversers, particularly those returned from queries, might be specially coded for better performance....) Joe Kesselman / IBM Research  </s>

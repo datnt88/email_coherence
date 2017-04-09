@@ -1,0 +1,82 @@
+<s> Hi! I am currently working with a traffic model for an IP network.  </s>
+<s> I have a question about the amount of overhead involved when transfering binary files over http.  </s>
+<s> As fas as I understood, http handles binary files so no encoding has to be performed (as for example files over SMTP uses MIME).  </s>
+<s> So, how many header-bytes does http add in each packet when sending a binary file from a server to a client?  </s>
+<s> I hope someone can help me with this.  </s>
+<s> Thanks, Patrik  </s>
+<s> Depends on the server, but typically around 256 bytes.  </s>
+<s> E.g. this instance of Apache response uses 279 bytes: ab -v 4 http://www.foo.com:81/poweredby.png  </s>
+<s> HTTP/1.1 200 OK Date: Thu, 30 Nov 2000 10:21:44 GMT Server: Apache/1.3.12 (Unix) (Red Hat/Linux) PHP/3.0.15 mod_perl/1.21 Last-Modified: Wed, 01 Mar 2000 18:37:44 GMT ETag: "33303-482-38bd6378" Accept-Ranges: bytes Content-Length: 1154 Connection: close Content-Type: image/png Cheers, /Patrik.  </s>
+<s> Patrik Winroth pwinroth@alteon.com  </s>
+<s> You have an HTTP response header (around 250 bytes) which goes in its own segment and then all succeeding data is sent in TCP segments as a stream of bytes.  </s>
+<s> No overhead other than the TCP/IP overhead.  </s>
+<s> The latest standard (HTTP 1.1) has provisions for compression and "chunked"  </s>
+<s> transfers  </s>
+<s> which change this, but I haven't seen these used in any real-world situations  </s>
+<s> yet.  </s>
+<s> Doug...................  </s>
+<s> Chunked encoding is frequently used in situations where the server might not know the size of the response body at the time it is  </s>
+<s> generating headers.  </s>
+<s> This is often the case for CGI and other dynamic interfaces.  </s>
+<s> If chunked encoding is used, there is a short chunk header that preceeds each chunk - no more than 10 bytes; the chunk size is up to the server, but is typically either the record size of the buffer it is using to read the dynamic content, or the buffer size of its network buffers (depending on which memory it is optimizing for).  </s>
+<s> Scott Lawrence Architect lawrence@agranat.com  </s>
+<s> Virata Embedded Web Technology http://www.emweb.com/  </s>
+<s> Apache will recognize a file with a ".gz" extension as gzipped, and send the Content-Encoding: x-gzip line.  </s>
+<s> Netscape will recognize Content-Encoding: x-gzip, and uncompress the file.  </s>
+<s> Unfortunately, at least in my installation (Apache 1.3.14, Red Hat 7), Apache doesn't look at the extension before the ".gz" to get the content-type; "foo.txt.gz" gets marked as Content-Type: application/x-gzip.  </s>
+<s> |John Stracke | http://www.ecal.com  </s>
+<s> |My opinions are my own.  </s>
+<s> | |Chief Scientist |================================================| |eCal Corp. |But how do we know destroying the Van Allen belt| |francis@ecal.com|will kill all life on Earth if we don't try it?  </s>
+<s> |  </s>
+<s> Many apache servers send data chunked.  </s>
+<s> Takes a couple bytes (average of  </s>
+<s> 4) for every block transfered.  </s>
+<s> Maybe a total overhead of an additional  </s>
+<s> 20-40 bytes per transfer (maybe less).  </s>
+<s> This is just a guess...  </s>
+<s> - Joris  </s>
+<s> Almost all modern browsers support content-encoding (gzip, for example), and most servers can be pummelled into serving compressed content; actually, I've seen a lot of activity around this recently, with vendors releasing products to faclilitate compression on the server, or to move it to an intermediary.  </s>
+<s> While not many Web sites are using compression, the number is growing, and I've heard rumors of some Big sites playing with it on home pages, etc. (haven't checked recently).  </s>
+<s> I've also heard rumors that browsers are starting to support transfer-encoding.  </s>
+<s> Mark Nottingham  </s>
+<s> Many apache servers send data chunked.  </s>
+<s> Takes a couple bytes (average of  </s>
+<s> 4) for every block transfered.  </s>
+<s> Maybe a total overhead of an additional  </s>
+<s> 20-40 bytes per transfer (maybe less).  </s>
+<s> This is just a guess...  </s>
+<s> - Joris  </s>
+<s> From: francis@localhost.localdomain  </s>
+<s> [mailto:francis@localhost.localdomain]On Behalf Of John Stracke Sent: Thursday 30 November, 2000 16:45 Subject: Re: Http overhead  </s>
+<s> Yes, but it's actually better than that: AFAIK, Apache uses chunked transfer-encoding only for dynamic resources, where it can't predict the  </s>
+<s> content-length.  </s>
+<s> The alternative would be (a) buffer the output before  </s>
+<s> sending it down, or (b) defeat persistent connections.  </s>
+<s> Either (a) or (b)  </s>
+<s> would increase; (b) would actually cost extra bandwidth, and (a) would  </s>
+<s> cause bandwidth consumption to come in spikes.  </s>
+<s> So, most likely, the cost of chunking is lower than the cost of not chunking; it's certainly lower than the nominal overhead of the encoding.  </s>
+<s> (Sorry to those to whom this is obvious--probably including Joris--but I didn't want to leave anybody thinking they could save bandwidth by turning off chunking.  </s>
+<s> :-) |John Stracke | http://www.ecal.com  </s>
+<s> |My opinions are my own.  </s>
+<s> | |Chief Scientist |================================================| |eCal Corp. |In the country of the blind, the one-eyed man is| |francis@ecal.com|in therapy.  </s>
+<s> |  </s>
+<s> You are right, I did know this.  </s>
+<s> Indeed that's why I favor chunked encoding for dynamic resources.  </s>
+<s> MSN's (search) server (MS-IIS) transfers the data by just closing the connection at the end (not sending any indication about the size of the document) what also decreases the transfer 'reliability' - or better, you don't know wether you have all or not... HTML or JPEG/GIF you can guess it, but with many other sources you don't (like TXT).... Also MSN's server has thus more overhead for the server and waisted time between the requests for the client... - Joris  </s>
+<s> From: francis@localhost.localdomain  </s>
+<s> [mailto:francis@localhost.localdomain]On Behalf Of John Stracke Sent: Friday 01 December, 2000 16:04 Subject: Re: Http overhead  </s>
+<s> It did was a while ago, when I did some experimenting (personal purpose) with HTTP.  </s>
+<s> Your server (MSN Search) didn't return a content-length field or send the data chunked (this is a good while ago)... Also another server from CNET did the same thing.  </s>
+<s> At least this was about a year ago, or maybe even a longer time a ago, this wasn't recently....  </s>
+<s> I don't know how your search servers work, but maybe the server just forwarded a response from another server.  </s>
+<s> The URL I gave to the server (using telnet) I had from the search area in IE 4. So maybe actual data came from someone like Infoseek or Aslavista.... The server however did turn, at that time, "Server: Microsoft-IIS[...]".  </s>
+<s> At that time I was developing a simple proxy server (for myself), that ran into trouble with sites not giving a content-length or using chunked tranfer-encoding.  </s>
+<s> The first trouble I then developed support was chunked tranfer encoding, what did turn out to work correct.  </s>
+<s> But at this time I still couldn't download from MSN search of CNET.  </s>
+<s> Possiblity that it was this error.  </s>
+<s> Also the proxy didn't support caching (yet) and did turn out to be quite unreliable, especially with subsequent requests on a connection.  </s>
+<s> But don't forget I is a long while ago, what I actually should have put in the previous mail (my fault).  </s>
+<s> Software and systems evolve, and you probably don't have the same stuff you had a couple years ago... - Joris  </s>
+<s> -----Original Message----- From: francis@localhost.localdomain  </s>
+<s> [mailto:francis@localhost.localdomain]On Behalf Of John Stracke Sent: Friday 01 December, 2000 16:04 Subject: Re: Http overhead  </s>

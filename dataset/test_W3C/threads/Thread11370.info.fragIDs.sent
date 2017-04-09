@@ -1,0 +1,102 @@
+<s> After *endless* further discussion, and realization that co-existing with the web is hard, the ERB, on March 22, voted as follows: A locator is a string which may contain either or both a URL and a TEI extended pointer [Xptr].  </s>
+<s> The URL indicates a resource; if the Xptr appears, this means that the desired resource is a "sub-resource" of that indicated by the URL.  </s>
+<s> The URL must appear first in the locator string.  </s>
+<s> If the URL does not appear, the Xptr is to be applied to the current document.  </s>
+<s> If an Xptr appears, it must be preceded by a Separator character.  </s>
+<s> There are three possible separator characters: # - means that the user-agent is to fetch the resource described by the URL, and use the Xptr to extract the desired sub-resource.  </s>
+<s> e.g.: http://www.xml.com/faq.xml#ID(a27)  </s>
+<s> ?  </s>
+<s> - means that the user-agent is to transmit the URL and Xptr to the server, which is to use the Xptr to extract the desired sub-resource and transmit it to the user-agent.  </s>
+<s> In this case, the Xptr must be preceded by the string "XML-PTR=" e.g.: http://www.xml.com/faq.xml?XML-PTR=ID(A27)  </s>
+<s> - means that this locator only expresses the fact that the desired  </s>
+<s> sub-resource is to be retrieved by applying the Xptr to the resource identified by the URL.  </s>
+<s> No constraint is placed on the system as to how this should be accomplished.  </s>
+<s> e.g.: http://www.xml.com/faq.xml|ID(A27)  </s>
+<s> Notes: 1. '#' and '?' are standard Web practice; the appropriate RFC's make it clear that it would be very unwise for us to try to overload the existing behavior 2. The "XML-PTR=" on the '?' form is an effort to allow this to work smoothly with CGI gateways; while CGI is of diminishing importance, it's an awfully easy way to set up a test-bed, and other more efficient query protocols often hide behind CGI syntax anyhow 3. The choice of the '|' character for the role defined here is open to debate.  </s>
+<s> We wanted something that, per RFC, is supposed to be escaped in URLs, so that its naked appearance is a signal that something special is happening; but that isn't going to wreak too much havoc.  </s>
+<s> Possible alternatives are '^', '@', and ' '.  </s>
+<s> Those who'd like to debate this point MUST READ THE RFC FIRST! 4. The 'special' case where the item in the Xptr position is just a a string (e.g. http://www.xml.com/faq.xml#A27  </s>
+<s> or some such) is no longer a special case; we will define an interpretation of a single unmarked string as a TEI Xpointer; we are already going to have to mung the syntax of these anyhow in order to crush spaces... the sense of the ERB is that anything that Michael and Steve come up with, presumably in conclave with the TEI gang, will probably be OK by us.  </s>
+<s> Cheers, Tim Bray tbray@textuality.com  </s>
+<s> http://www.textuality.com/  </s>
+<s> +1-604-708-9592  </s>
+<s> On Thu, 27 Mar 1997 19:39:05 -0500 Gavin Nicol said:  </s>
+<s> ... Here, you are actually asking for a standard tree query and transformation language to be supported by all servers.  </s>
+<s> This view seems to come up frequently (sometimes in the formulation "server owners think the syntax of the query segment belongs to them, so we can't specify it"), and it makes no sense to me, so let me ask the dumb question.  </s>
+<s> What do you mean?  </s>
+<s> If we specify a way of translating TEI extended pointer notation into a URL, either into the query segment, or into the URL proper, in what way are we saying this is something to be supported by all servers?  </s>
+<s> Why aren't we saying "here is a language which, if the server supports it, you can use, and which, if your users want it, your server can be made to support"?  </s>
+<s> Suppose we were to say (this is not a proposal, though I wouldn't mind if it made enough sense to become one -- actually, forms a, b, and c below *are* the forms the ERB proposes to define, if I understand our decision right). 1 An XML-Link locator can include a TEI Extended Pointer in any of the following ways:  </s>
+<s> a. in the query section: b. in the fragment identifier the same way c. in the 'indeterminate form' this way d. in the URL-proper form this way 2 The query form and the fragment-identifier form are handled in the customary way; the other two forms require special knowledge on the  </s>
+<s> part of the client and/or server, and negotiations outside the scope of this spec: * the client sends the query form (a) to the server in its entirety and gets back exactly what was pointed at(1);  </s>
+<s> * for locators of form b, the client strips off the fragment identifier, sends the part before the '#' to the server, and uses the rest to navigate in the document sent back  </s>
+<s> * when the indeterminate form c is used, the client and the server negotiate using some method outside the scope of this standard to decide exactly what the server returns and what the client must do to it by way of navigation afterwards  </s>
+<s> * when the URL-proper form d is used, something else happens ...  </s>
+<s> (1) a clever client could analyse the query and send part of it to the server, retaining the rest to guide local navigation after the document / document fragment is received.  </s>
+<s> Be careful, implementors: don't leave yourself holding a query beginning ANCESTOR ... If we said something like that, in what way would we be saying that  </s>
+<s> *all* servers *have* to support TEI queries?  </s>
+<s> A server that doesn't  </s>
+<s> support them would not respond usefully to queries other than the fragment-identifier form.  </s>
+<s> Nu? If I have documents there, I won't use locators of forms a, c, or d -- any more than I can use CGI-based URLs on a server where I don't have write permission in a directory the server will execute CGI scripts from.  </s>
+<s> I'm also puzzled because I thought, some time ago, that Gavin was arguing vociferously for a locator format that could, in principle, be used to trigger server-side tree-traversal (there!  </s>
+<s> I managed to avoid saying whether it is a query or an address!).  </s>
+<s> But you now seem to be arguing against an ERB decision the main point of which seems to me to be to support such a locator format.  </s>
+<s> What is wrong with formats a, c, or d in this regard?  </s>
+<s> In the short run, I'd like to be able to exploit existing software as much as possible; that means, I think, that I'd like to be able to write locators using '#', for use with XML-savvy browsers, and other locators using '?', for use when I know the server in question  </s>
+<s> is XML-savvy.  </s>
+<s> The '?' form ('?' is an excluded character, by the way; are we sure we want to use it?) will be great, if and when there are clients and servers who support XML-Link/TEI queries, and who are willing to negotiate (in a format yet to be decided!) about who is going to do what.  </s>
+<s> I'd rather not wait, however, for that to be possible -- hence my preference for the ERB's suggestion of defining all three forms.  </s>
+<s> I think Gavin has argued in the past for incorporating the whole thing into the URL pathspec, using something not unlike the fourth form, if I understood him correctly.  </s>
+<s> Two questions: (1) is form d something along the right lines?  </s>
+<s> and (2) what are the advantages and disadvantages of a form like d (or of a form such as you propose, if not d-like) vis-a-vis forms a, b, and c?  </s>
+<s> Seems to be my day for asking ignorant questions.  </s>
+<s> -C.  </s>
+<s> M. Sperberg-McQueen  </s>
+<s> Note that I have *never* said that I think the *query* segment belongs to the server.  </s>
+<s> I object to using the query segment as *the* way of specifying server-side sub-document addressing because: a) You can use the "opaque" part of the URL to do that.  </s>
+<s> b) I think that there is a useful distinction to be made between addresses (deterministic queries) and queries.  </s>
+<s> c) The query segment of URL's is already far too overloaded.  </s>
+<s> d) The query segment has many problems regarding I18N etc. e) The server has no control over the query segment, and cannot inform the client of it's support, or lack thereof, for it.  </s>
+<s> f) Makes it harder to support the combination of keyword searches and sub-document addressing.  </s>
+<s> g) You don't need it.  </s>
+<s> A server has no control at all over what can be sent via a query, but it does control it's own address space (push vs pull).  </s>
+<s> Content negotiation cannot (currently) be used to determine if a server supports such queries, so unless we *standardise* the query segment syntax, and require all servers to support it, a client cannot send such queries and expect a meaningful result.  </s>
+<s> In addition, if we are going to do anything at all to standardise the syntax, I would recommend *strongly* against using the query segment, and instead use a mime body.  </s>
+<s> This does impose a cost in complexity, but is far more robust.  </s>
+<s> Has all of the problems I outlined above.  </s>
+<s> Fine.  </s>
+<s> Content negotiation *could* be used for this, though this is currently not widely supported in clients or servers (the reason why I said it currently cannot be used).  </s>
+<s> Under the server's control (server's address space).  </s>
+<s> Right.  </s>
+<s> The point is that a client can never know when it can, and cannot send such queries, but the server controlls the *addresses*.  </s>
+<s> I am very much in favor of a standard locator format for addressing components of a heirarchy.  </s>
+<s> I am *not* in favor of the ERB's proposed method (the query segment).  </s>
+<s> Of all the above, I prefer (d) as the standard way, though I would prefer a different syntax.  </s>
+<s> The assumption here is that the *client* is smart enough to know how to generate the queries, and that some way of communicating capabilities is available.  </s>
+<s> I think we have different combinations of capabilities: 1) Dumb client, dumb server.  </s>
+<s> - Just send http://foo.com/foo.xml  </s>
+<s> 2) Dumb client, smart server - Server controls the address space, and generates URL's in the form it likes.  </s>
+<s> 3) Smart client, dumb server - Use fragment specifiers.  </s>
+<s> 4) Smart client, smart server - Currently an open question.  </s>
+<s> Note that 1, 2, and 3 require nothing more than *opaque* addresses because what is being sent from the server is always a single object (though it *may* contain pointers/entity references).  </s>
+<s> Note that they also do not require any communication of capabilities.  </s>
+<s> Realistically, cases 1, 2 and 3 are by far the most likely in the immediate future.  </s>
+<s> Case 4 is the most interesting.  </s>
+<s> It requires some capability detection, which by itself indicates client and server-side smarts.  </s>
+<s> For this, we *may* need to (eventually) standardise some syntax (see below for arguments against this), though I think TEI Xptrs are probably far too limiting.  </s>
+<s> In case 4, it seems perfectly reasonable for a client to send a transformation specification to the server (effectively what a query that returns a node list is), and for the server to send back the results of the transformation.  </s>
+<s> In most cases, the client would be driving the entire process.  </s>
+<s> DynaWeb can support something like this today, though currently we have no clients smart enough to do anything meaningful.  </s>
+<s> Such a scenario has many interesting problems, like how does one control resource usage etc.  </s>
+<s> I think that in the general case, it will be very hard to make clients smart enough anyway, as things like chunking and addressing require intimate knowledge of the data.  </s>
+<s> Even if there were clients that *were* clever enough, I do not see the value of them driving the process, as the intelligence will be stored on the server somewhere anyway (in a DSSSL specification, in a script, or stylesheet).  </s>
+<s> The server will eventually have to interpret the information, so I cannot see the purpose of not having it do it directly and then simply using pointers to objects in it's address space.  </s>
+<s> Most cases where it is desireable for a client to be smart do not involve a server at all (or just treat the server as a file server).  </s>
+<s> This is because, in actual fact, a client and server are *a single application*.  </s>
+<s> At some point, some separation of workload is important, and for distributed cases, it is conventional wisdom that heavy data manipulation take place in the server for performance reasons.  </s>
+<s> The main reasons, I outline above.  </s>
+<s> One further reason is that form (d) will work well with *all* the scenarios I outlined above (1,2,3,4), and still leaves the query segment for things like keyword searches.  </s>
+<s> You have used the word deterministic in this discussion several times.  </s>
+<s> Could you please define it in this context?  </s>
+<s> I don't know what you mean.  </s>
+<s> Paul Prescod  </s>

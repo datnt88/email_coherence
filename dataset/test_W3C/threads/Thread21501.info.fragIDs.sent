@@ -1,0 +1,107 @@
+<s> Seems to work.  </s>
+<s> The 3rd argument to the server specifies the serialization policy (ie.  </s>
+<s> whether to use the Map construct); this may turn out to be an interop headache, dunno.  </s>
+<s> Dan  </s>
+<s> ps. still some bits in code below I could strip out; it's a recycled Axis test  </s>
+<s> ---------- Forwarded message ---------- Date: Mon, 3 Sep 2001 11:06:12 +0100 /* stolen from apache Axis examples by Doug and Glen */ // http://lists.w3.org/Archives/Public/www-archive/2001Jul/0020.html // for perl equiv i'm trying to clone  </s>
+<s> package org.w3c.inkling.soap;  </s>
+<s> import java.net.*; import java.io.*; import java.util.*;  </s>
+<s> import org.apache.axis.*;  </s>
+<s> import org.apache.axis.utils.*;  </s>
+<s> import org.apache.axis.client.*;  </s>
+<s> import org.apache.axis.transport.http.HTTPTransport ; import java.lang.reflect.Array;  </s>
+<s> import org.apache.axis.message.*;  </s>
+<s> import org.apache.axis.encoding.*;  </s>
+<s> import org.apache.axis.server.AxisServer;  </s>
+<s> import org.apache.axis.utils.QName;  </s>
+<s> import org.xml.sax.InputSource; public class RDFQClient { public static String query = "SELECT ?x,  </s>
+<s> ?l,  </s>
+<s> ?c"  </s>
+<s> + "FROM http://xmlns.com/wordnet/1.6/Job  </s>
+<s> "+ "WHERE "+  </s>
+<s> (web::type ?x  </s>
+<s> rdfs::Class) "+ (rdfs::label ?x  </s>
+<s> ?l)  </s>
+<s> "+ (rdfs::description ?x  </s>
+<s> ?c)  </s>
+<s> "+  </s>
+<s> "USING web FOR http://www.w3.org/1999/02/22-rdf-syntax-ns# "+ "rdfs FOR http://www.w3.org/2000/01/rdf-schema#"; public static String data = "http://xmlns.com/wordnet/1.6/Job";  </s>
+<s> public static String msg = " SOAP-ENV:Envelope " + "xmlns:SOAP-ENV=\"http://schemas.xmlsoap.org/soap/envelope/\"  </s>
+<s> " + "xmlns:soapenc=\"http://schemas.xmlsoap.org/soap/encoding/\"   </s>
+<s> " +  </s>
+<s> SOAP-ENV:Body \n" + rq:squish xmlns:rq=\"http://rdfweb.org/RDF/RDFWeb/SOAPDemo\" \n" + rq:query " + query + " /rq:query "+ rq:data "+ data +" /rq:data "+ rq:hashmap 1 /rq:hashmap " + /rq:squish \n" + /SOAP-ENV:Body /SOAP-ENV:Envelope \n";  </s>
+<s> * Send a hardcoded message to the server, and print the response.  </s>
+<s> public static String doTest (String args[], String service) throws Exception { Options opts = new Options( args ); String url = opts.getURL();  </s>
+<s> String action = "EchoService" ; if (service != null) { action = service; Debug.setDebugLevel( opts.isFlagSet( 'd' ) ); args = opts.getRemainingArgs();  </s>
+<s> if ( args != null ) action = args[0]; ServiceClient client = new ServiceClient(new HTTPTransport()); url = "http://fireball.dyndns.org/cgi-bin/soap";  </s>
+<s> // danbri hack action = "http://rdfweb.org/RDF/RDFWeb/SOAPDemo#squish";  </s>
+<s> client.set(HTTPTransport.URL,  </s>
+<s> url); client.set(HTTPTransport.ACTION,  </s>
+<s> action); Message reqMsg = new Message( msg ); Message resMsg = null ; System.out.println( "Request:\n" + msg ); System.out.println( "Url: " + url ); System.out.println( "soap action is: " + action ); client.setRequestMessage(  </s>
+<s> reqMsg ); client.invoke();  </s>
+<s> resMsg = client.getMessageContext().getResponseMessage(); // System.out.println("XML serialization: "+ resMsg.getAsString());  </s>
+<s> SOAPEnvelope envelope = (SOAPEnvelope)resMsg.getAsSOAPEnvelope(); RPCElement body = (RPCElement)envelope.getFirstBody(); Vector arglist = body.getParams();  </s>
+<s> RPCParam param = (RPCParam) arglist.get(0);  </s>
+<s> System.out.println("Restoring object from xml..."); Object result = param.getValue();  </s>
+<s> ArrayList rows = (ArrayList)result; System.out.println("\n\nGot rows: "+ rows +"\n\n"); System.out.println("result = " +result ) ; Object[] answers = (Object[])rows.toArray();  </s>
+<s> for (int i=0; i answers.length; i++) { HashMap h = (HashMap)answers[i]; System.out.println("Answer "+i+" = "+ h +"\n\n"); return (String)resMsg.getAsString();  </s>
+<s> public static void main(String args[]) throws Exception{ doTest(args, null); public static void mainWithService(String args[], String service) throws Exception{ doTest(args, service);  </s>
+<s> very cool :)  </s>
+<s> (web::type ?x  </s>
+<s> rdfs::Class) "+ (rdfs::label ?x  </s>
+<s> ?l)  </s>
+<s> "+ (rdfs::description ?x  </s>
+<s> ?c)  </s>
+<s> "+  </s>
+<s> SOAP-ENV:Body \n" + rq:squish xmlns:rq=\"http://rdfweb.org/RDF/RDFWeb/SOAPDemo\" \n" + rq:query " + query + " /rq:query "+ rq:data "+ data +" /rq:data "+ rq:hashmap 1 /rq:hashmap " + /rq:squish \n" + /SOAP-ENV:Body /SOAP-ENV:Envelope \n";  </s>
+<s> We're thinking of adding a convenience function which will deserialize everything it doesn't understand by default as a HashMap of element- content (content = String or another HashMap), which is probably something like what SOAP::Lite does too.  </s>
+<s> Not in yet, though.  </s>
+<s> test  </s>
+<s> How's this (didn't run it, btw): package org.w3c.inkling.soap;  </s>
+<s> import java.net.*; import java.io.*; import java.util.*;  </s>
+<s> import org.apache.axis.*;  </s>
+<s> import org.apache.axis.transport.http.HTTPTransport; import org.apache.axis.utils.*;  </s>
+<s> import org.apache.axis.client.*;  </s>
+<s> import java.lang.reflect.Array;  </s>
+<s> import org.apache.axis.encoding.*;  </s>
+<s> import org.apache.axis.server.AxisServer;  </s>
+<s> import org.apache.axis.utils.QName;  </s>
+<s> import org.xml.sax.InputSource; public class RDFQClient { public static String query = "SELECT ?x,  </s>
+<s> ?l,  </s>
+<s> ?c"  </s>
+<s> + "FROM http://xmlns.com/wordnet/1.6/Job  </s>
+<s> "+ "WHERE "+  </s>
+<s> (web::type ?x  </s>
+<s> rdfs::Class) "+ (rdfs::label ?x  </s>
+<s> ?l)  </s>
+<s> "+ (rdfs::description ?x  </s>
+<s> ?c)  </s>
+<s> "+  </s>
+<s> "USING web FOR http://www.w3.org/1999/02/22-rdf-syntax-ns# "+ "rdfs FOR http://www.w3.org/2000/01/rdf-schema#"; public static String data = "http://xmlns.com/wordnet/1.6/Job";  </s>
+<s> * Send a hardcoded message to the server, and print the response.  </s>
+<s> public static void doTest (String args[], String service) throws Exception { Options opts = new Options( args ); String url = opts.getURL();  </s>
+<s> String action = "EchoService" ; if (service != null) { action = service; Debug.setDebugLevel( opts.isFlagSet( 'd' ) ); args = opts.getRemainingArgs();  </s>
+<s> if ( args != null ) action = args[0]; url = "http://fireball.dyndns.org/cgi-bin/soap";  </s>
+<s> // danbri hack action = "http://rdfweb.org/RDF/RDFWeb/SOAPDemo#squish";  </s>
+<s> ServiceClient client = new ServiceClient(url); client.set(HTTPTransport.URL,  </s>
+<s> url); client.set(HTTPTransport.ACTION,  </s>
+<s> action); String ns = "http://rdfweb.org/RDF/RDFWeb/SOAPDemo";  </s>
+<s> RPCParam queryParam = new RPCParam(ns, "query", query); RPCParam dataParam = new RPCParam(ns, "data", data); Object [] params = new Object [] { queryParam, dataParam }; Object result = client.invoke(ns,  </s>
+<s> "squish", params); ArrayList rows = (ArrayList)result; System.out.println("\n\nGot rows: "+ rows +"\n\n"); System.out.println("result = " +result ) ; Object[] answers = (Object[])rows.toArray();  </s>
+<s> for (int i=0; i answers.length; i++) { HashMap h = (HashMap)answers[i]; System.out.println("Answer "+i+" = "+ h +"\n\n"); public static void main(String args[]) throws Exception{ doTest(args, null); public static void mainWithService(String args[], String service) throws Exception{ doTest(args, service);  </s>
+<s> That could be rather useful.  </s>
+<s> I'm also tempted to lobby for an RDF view of the data, since RDF's model is kind of like a glorified hash of hashes.  </s>
+<s> See Edd Dumbill's comments in http://edd.oreillynet.com/stories/storyReader$65  </s>
+<s> for a variant on that idea: I think of XML schemas as a C struct, or a Java class -- there's centralized control and no extensibility mechanism.  </s>
+<s> The plus side is it's simple for applications.  </s>
+<s> My main reason for suggesting RSS is better reformulated in RDF is precisely that there are no limits what can go in.  </s>
+<s> In programming language terms, RDF is a Perl hash or a Java Hashtable.  </s>
+<s> The processing application is responsible for figuring out which bits it wants and which it doesn't -- a little more complicated than the schema situation.  </s>
+<s> ...by "lobby for", I mean: help design, if doing so makes sense.  </s>
+<s> For a taster of what a Java RDF API can look like (the graph stuff not query) you might find Jena interesting.  </s>
+<s> See: ...or a recent xml.com article: Dunno if that'll leave you cold or not; guess it depends what your mental model of the SOAP pt5 structure is.  </s>
+<s> If you're thinking of pouring it all into a hash-of-hashes, I suspect RDF might even prove useful.  </s>
+<s> [snip] Thanks; I've also tidied mine up a bit since then.  </s>
+<s> Am working on integrating it with Libby's all-in-Java JDBC-based interfaces.  </s>
+<s> Will fwd you a copy for interest.  </s>
+<s> cheers, Dan  </s>

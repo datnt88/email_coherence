@@ -1,0 +1,71 @@
+<s> I just noticed that the method NodeIterator getAttributes(); has been left in the 980416 spec, even though Attributes are not Nodes anymore.  </s>
+<s> Andrew n marshall student - artist - programmer "Everyone a mentor, Everyone a pupil"  </s>
+<s> My understanding is that Attributes are still Nodes.  </s>
+<s> Don Park I just noticed that the method NodeIterator getAttributes(); has been left in the 980416 spec, even though Attributes are not Nodes anymore.  </s>
+<s> Andrew n marshall student - artist - programmer "Everyone a mentor, Everyone a pupil"  </s>
+<s> If that is the intent, then Attribute doesn't derive Node in the IDL definition.  </s>
+<s> Although the concept of Attributes as Nodes never made sense to me.  </s>
+<s> Attributes are do not need any particular order, and shouldn't be able to have children.  </s>
+<s> That said, I also notice the NodeType ATTRIBUTE, was also left in, so maybe that was the intent.  </s>
+<s> Andrew n marshall student - artist - programmer "Everyone a mentor, Everyone a pupil" Don Park My understanding is that Attributes are still Nodes.  </s>
+<s> Don Park -----Original Message----- I just noticed that the method NodeIterator getAttributes(); has been left in the 980416 spec, even though Attributes are not Nodes anymore.  </s>
+<s> Andrew n marshall student - artist - programmer "Everyone a mentor, Everyone a pupil"  </s>
+<s> Andrew, Somebody on the list mentioned that Attributes are Nodes because WG wanted NodeIterator to access the attributes.  </s>
+<s> Frankly, that reason does not jive.  </s>
+<s> Current design looks like something that reflects the 'internal' design of existing browser DOM implementation.  </s>
+<s> The real problem I see is that decisions are made secretly and we only see the result of the decisions.  </s>
+<s> We can argue about the faults in the design but we can not argue about the faults in the reasons behind the design because they are secret.  </s>
+<s> I really do not want to start another thread of heated discussion about something we can not do anything about so I beg every reader to resist responding unless it is in defense of W3C practices.  </s>
+<s> Regards, Don Park  </s>
+<s> The idea behind Attributes having children was to have something to keep the  </s>
+<s> attribute value in.  </s>
+<s> Attribute values can contain entity references in XML, so they can't be simple strings.  </s>
+<s> What else would you suggest?  </s>
+<s> You're right that attributes don't have a particular order, although I've  </s>
+<s> heard complaints about that from various people.  </s>
+<s> Lauren  </s>
+<s> That makes sense.  </s>
+<s> The only complaint I have is with regard to the burden that  </s>
+<s> places on DOM users who have no need for references to the entities.  </s>
+<s> My guess  </s>
+<s> is that covers the majority of DOM users.  </s>
+<s> For example, here is a chunk out of  </s>
+<s> my code.  </s>
+<s> This is from the March spec, so it is slightly out of date: switch( node.getNodeType() ) { case Node.ELEMENT: elem = (Element) node; // Determine if this is a recognized XLink if( (atts = elem.attributes())  </s>
+<s> != null &amp;&amp; (att = atts.getAttribute(  </s>
+<s> "xml:link" )) != null &amp;&amp; "simple".equals(  </s>
+<s> ((Text) att.getValue()).getData() ) ) { if( (att = atts.getAttribute(  </s>
+<s> "href" )) != null ) { href = ((Text) att.getValue()).getData();  </s>
+<s> actuate = show = null; if( (att = atts.getAttribute(  </s>
+<s> "actuate" )) != null ) actuate = ((Text) att.getValue()).getData();  </s>
+<s> if( (att = atts.getAttribute(  </s>
+<s> "show" )) != null ) show = ((Text) att.getValue()).getData();  </s>
+<s> if( ( actuate == null || actuate.equals(  </s>
+<s> "user" ) ) &amp;&amp; ( show == null || show.equals(  </s>
+<s> "replace" ) ) ) { block = new CSSBlock(); domRef.append(  </s>
+<s> block ); build( (Element) node, block, href ); // Recurse } else if( actuate.equals(  </s>
+<s> "auto" ) ) { // Need to test for embedded images } else { You can see that this can get really excessive.  </s>
+<s> For that purpose, I would like to recommend the following convience method be added to either Element or AttributeList: wstring getAttributeValue( wstring name );  </s>
+<s> If the attribute exists, then the the wstring returned would be the value of the attribute with all entities expanded.  </s>
+<s> If it doesn't exist, either explicitly or implicitly, then the method should return null.  </s>
+<s> Andrew n marshall ??student - artist - programmer ???? http://www.media-electronica.com/anm-bin/anm  </s>
+<s> ??????"Everyone a mentor, Everyone a pupil"  </s>
+<s> I agree with Andrew: In many cases, the XML parsers will have expanded the entity references during parsing - that will be true in SAX parsers (at least at SAX level 1).  </s>
+<s> It is not clear to me how parser writers should be treating Entity References.  </s>
+<s> Are they used as mere variables in which case, we should maintain them in nodes so that application writers can change their values and have the DOM represent the current value, or are they more like a classical preparser convenience, substituted before building the DOM.  </s>
+<s> Note: the internals of the SAX parsers I have seen expand the references as they see them - this is not the way the DOM hierarcy works.  </s>
+<s> How do people anticipate that application writers will treat Entities?  </s>
+<s> It is very important to understand the assumptions being made with the complexity added for Attribute values.  </s>
+<s> -MA  </s>
+<s> the  </s>
+<s> that  </s>
+<s> guess  </s>
+<s> out of  </s>
+<s> ~-~-~-~-~-~-~-~-~-~-~-~-~-~-WEBEASY-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~ Michael Amstermamster@webeasy.com  </s>
+<s> I'm a bit mystified; we agreed to this very idea a month ago, but I can't find it in the spec!  </s>
+<s> Perhaps lost in a version snafu .... but I'll see that it's fixed!  </s>
+<s> Mike Champion  </s>
+<s> Actually, SAX is a little more complicated -- the application has two options for each external entity reference: 1) ask the parser to resolve it; or 2) provide an alternative resolution (including possibly an empty stream).  </s>
+<s> More generally, entity references should be invisible to production processes (such as those targeted by SAX), but they will, of course, matter to authoring tools.  </s>
+<s> All the best, David David Megginson ak117@freenet.carleton.ca  </s>
+<s> Microstar Software Ltd. dmeggins@microstar.com  </s>

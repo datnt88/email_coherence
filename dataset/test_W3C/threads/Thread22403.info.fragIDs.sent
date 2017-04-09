@@ -1,0 +1,33 @@
+<s> NodeIterator ni = some_node.getChildNodes();  </s>
+<s> Node node = ni.toNext();  </s>
+<s> In this code, is a variable `node' the first child?  </s>
+<s> Or second child?  </s>
+<s> TAMURA Kent @ Tokyo Research Laboratory, IBM Japan  </s>
+<s> I think it is the first child.  </s>
+<s> This raises the question of what getCurrent() should return, of course...  </s>
+<s> Hi Tamura,  </s>
+<s> I would say that this is unknown.  </s>
+<s> Since the NodeIterator is "live", it makes sense for the same iterator to be used every time getChildNodes is called.  </s>
+<s> It is definately not specified what should happen.  </s>
+<s> Thus, the  </s>
+<s> NodeIterator could be anywhere along the list of Nodes.  </s>
+<s> The only way to be sure that you are where you think you are is to call one of the other "to" methods - 'toFirst', 'toLast', 'toNth', or 'toNode'.  </s>
+<s> If the list is already there, it shouldn't be an expensive call.  </s>
+<s> If it isn't, you are now in the correct place.  </s>
+<s> It's the only way to guarantee.  </s>
+<s> David  </s>
+<s> I plead for an explicitly "undefined" position where getCurrent() returns null.  </s>
+<s> The iterator could move to this undefined position whenever it discovers that its current node has been removed from the sequence.  </s>
+<s> The only ways to leave this position are the ones suggested by David below, toNext and toPrevious just leave the iterator in the undefined position.  </s>
+<s> This solution should be fairly easy to implement and has a defined behaviour under all circumstances.  </s>
+<s> I just wondered if toNth gives a relative or an absolute position?  </s>
+<s> The definition says "relative to the current position", but the exception is thrown "if the value specified is greater than the number that would be returned from getLength()", which seems to imply an absolute position (which is also my interpretation of the name "toNth").  </s>
+<s> Any suggestions on this?  </s>
+<s> Here I disagree.  </s>
+<s> The iterator pattern was specifically designed so there can be many iterators on the same sequence at the same time (e.g. if you need all combinations of subnodes).  </s>
+<s> In a multithreaded setting, this is even more true: Independent programs could operate on the same node, and should each get their own iterator.  </s>
+<s> Since there is no "close" method for iterators, the implementation can never be sure that one part of the program is done with the iterator, so it can't reuse the iterator for another part.  </s>
+<s> Greetings, Axel + Axel Rasmus "..." Wienberg +  </s>
+<s> Ok, I have understood and agree it.  </s>
+<s> Programmers must not call toNext()/toPrevious()/getCurrent() before calling toFirst()/toLast()/toNth()/toNode().  </s>
+<s> TAMURA Kent @ Tokyo Research Laboratory, IBM Japan  </s>

@@ -1,0 +1,44 @@
+<s> In the DOM spec, many attributes are allowed to have a special value 'null', in addition to their normal values.  </s>
+<s> This is an extension to normal OMG IDL, where values normally cannot be null.  </s>
+<s> Many programming languages cannot properly represent readonly attribute long foo; // may be null An object possessing the attribute foo typically can have only integral numbers as values; the additional null value is not supported eg. in C, C++, or Java.  </s>
+<s> It *is* supported in languages where numbers are objects (e.g. Python).  </s>
+<s> The only exception in CORBA are object references: Attributes of a reference type may be null.  </s>
+<s> Specifically, strings, or sequences, cannot be null.  </s>
+<s> CORBA 2.3 adds the valuetype construct, which allows to wrap an object around any value (called valuebox); this gives a null value to any type.  </s>
+<s> A string that may be null can be defined as valuetype DOMString sequence unsigned short ; In this type, the empty sequence (with zero elements) is different from the null sequence.  </s>
+<s> I'd recommend that the DOM is carefully reviewed with that respect, and as many occurences of null values are eliminated, possibly suggesting use of empty strings instead.  </s>
+<s> For the remaining places, you may find that they are null objects, which would be fine.  </s>
+<s> Otherwise, the DOM should explicitly state the intent behind null values, and leaving it up to the target language to deal with it.  </s>
+<s> Alternatively, value boxes may be used to indicate that a specific type includes null.  </s>
+<s> If null values are allowed for string attributes, it should be stated explicitly in which cases empty strings and in which cases null strings are acceptable.  </s>
+<s> Regards, Martin  </s>
+<s> I believe the only places where the DOM uses null values are when an attribute is expected to be an object, so it should always be possible for each of the DOM's language bindings to provide a suitable "null object".  </s>
+<s> And I believe we do provide an indication of how nulls and empty strings are interpreted; in general, they are NOT considered interchangable.  </s>
+<s> If you can cite specific places where those practices have been violated, we should definitely take another look at them.  </s>
+<s> Otherwise, I think this is implementable as it stands.  </s>
+<s> The "abstract" IDL shown in the body of the DOM spec is not guaranteed to be fully compliant OMG IDL.  </s>
+<s> We know there are some keyword clashes, for example.  </s>
+<s> The OMG seems to be aware of this and has not complained; instead, their response has been to try to develop a separate IDL binding for the DOM, just as there are bindings for other languages.  </s>
+<s> I believe that binding does attempt to take advantage of valuetypes.  </s>
+<s> Joe Kesselman / IBM Research  </s>
+<s> Hi Martin,  </s>
+<s> Do you mean that something like this from the Node interface: attribute DOMString nodeValue; // may be null is a problem?  </s>
+<s> Kim.  </s>
+<s> Sr. Software Developer, SoftQuad Software Inc., http://www.softquad.com/  </s>
+<s> Exactly.  </s>
+<s> In CORBA, a sequence unsigned short may not be null.  </s>
+<s> It is, mathematically speaking, a union of - the empty sequence - Z (unsigned short) - Z x Z - Z x Z x Z null is not a possible value of a sequence.  </s>
+<s> In the specific example, is there a need to distinguish between the empty string as a nodeValue, and a null nodeValue?  </s>
+<s> Otherwise, saying 'may be empty' sounds better.  </s>
+<s> Regards, Martin  </s>
+<s> I'm not sure I'm following your question.  </s>
+<s> Node.nodeValue may be either an empty string or null, depending on the node in question.  </s>
+<s> For example, Element and Document nodes have no nodeValue, and return null.  </s>
+<s> Text nodes may be empty, and hence may return an empty string.  </s>
+<s> Similarly, a null Namespace URI is significantly different from a blank Namespace URI -- the latter is namespace-ill-formed, the former is just a node which has not been assigned to a namespace.  </s>
+<s> If the language/binding conventions that you're working with don't intrinsically support null, it's the responsibility of whoever designs that set of bindings to come up with an equivalent.  </s>
+<s> Whether that's a specific string value (presumably one that would otherwise be illlegal in XML), or a specific string object (if your system lets you compare objects for identity and treats strings as objects) seems to be their choice.  </s>
+<s> I don't know a great deal about CORBA, but if sequence unsigned short doesn't support null, maybe it simply isn't the best datatype to directly bind as DOMString.  </s>
+<s> Joe Kesselman / IBM Research  </s>
+<s> Following your comment, the definition of DOMString in DOM Level 2 (and not in DOM Level 1) is now: valuetype DOMString sequence unsigned short ; The mapping to Java and ECMAScript didn't change.  </s>
+<s> Thank you for your report, Philippe  </s>

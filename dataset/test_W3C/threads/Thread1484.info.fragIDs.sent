@@ -1,0 +1,86 @@
+<s> DeltaV supports an in-place editing model for situations where the server does not support the Working Resource option, and where the client does not do all their edits on their local copy.  </s>
+<s> By "in-place editing" I mean that when the VCR is checked out, clients can do any number of PUT, PROPPATCH and other write operations, before finally checking in.  </s>
+<s> In the meantime, this work-in-progress is available for other users to see if they have permission to read the resource.  </s>
+<s> First question: Does anybody plan to implement DeltaV this way?  </s>
+<s> [I believe Subversion effectively will (correct me if I'm wrong) but in practice Subversion clients wouldn't do their write operations until just before  </s>
+<s> checking in, so there would only be a small window of opportunity to see works-in-progress.  </s>
+<s> ]  </s>
+<s> Second question: Is there a way for clients to view working resources and  </s>
+<s> only see the latest checked-in versions?  </s>
+<s> E.g. I may be uninterested in seeing "works in progress" affected by in-place editing.  </s>
+<s> Can I do a PROPFIND depth-1 against the latest checked-in versions in a collection, rather than the works-in-progress?  </s>
+<s> lisa  </s>
+<s> From: Lisa Dusseault [mailto:lisa@xythos.com]  </s>
+<s> DeltaV supports an in-place editing model for situations where the server does not support the Working Resource option, and where the client does not do all their edits on their local copy.  </s>
+<s> Note though that this is not a "package", this is just a "feature" that is used in the "workspace" packages.  </s>
+<s> By "in-place editing" I mean that when the VCR is checked out, clients can do any number of PUT, PROPPATCH and other write operations, before finally  </s>
+<s> checking in.  </s>
+<s> In the meantime, this work-in-progress is available for other users to see if they have permission to read the resource.  </s>
+<s> First question: Does anybody plan to implement DeltaV this way?  </s>
+<s> We will be supporting the advanced-server-workspace package, which includes the in-place-checkout feature.  </s>
+<s> [I believe Subversion effectively will (correct me if I'm wrong) but in practice Subversion clients wouldn't do their write operations until just before checking in, so there would only be a small window of opportunity to see works-in-progress.  </s>
+<s> ] No, subversion supports the advanced-client-workspace package, so it provides the working-resource feature, not the in-place-checkout feature.  </s>
+<s> Second question: Is there a way for clients to view working  </s>
+<s> resources and only see the latest checked-in versions?  </s>
+<s> E.g. I may  </s>
+<s> be uninterested in seeing "works in progress" affected by in-place editing.  </s>
+<s> Can I do a PROPFIND depth-1 against the latest checked-in  </s>
+<s> versions in a collection, rather than the works-in-progress?  </s>
+<s> This question is really only relevant for the workspace packages, with in-place checkouts and not working resources.  </s>
+<s> This is because working resources are sprinkled around the URL space at the server's whim, and are not collected into a collection that you can "PROPFIND Depth:1".  </s>
+<s> So with working resources, the *only* kind of version-controlled resources you see in collections are checked-in ones, so you would never see "works in progress".  </s>
+<s> Note though, that if your server does support in-place checkouts, you can get the behavior Lisa describes by using the DAV:expand-property report.  </s>
+<s> In particular, you would ask to expand the DAV:checked-in and DAV:checked-out properties of the version-controlled resources.  </s>
+<s> Cheers, Geoff  </s>
+<s> From: ietf-dav-versioning-request@w3.org [mailto:ietf-dav-versioning-request@w3.org]  </s>
+<s> On Behalf Of Clemm, Geoff From: Lisa Dusseault [mailto:lisa@xythos.com] By "in-place editing" I mean that when the VCR is checked out, clients can  </s>
+<s> do any number of PUT, PROPPATCH and other write operations, before finally checking in.  </s>
+<s> In the meantime, this work-in-progress is available for other users to see if they have permission to read the resource.  </s>
+<s> First question: Does anybody plan to implement DeltaV this way?  </s>
+<s> I would strongly consider this an option, if a default GET and PROPFIND did not reference the work in progress but instead referenced the last-checked-in-version.  </s>
+<s> Imagine this: After checkout, GET/PROPFIND from users that don't have the resource checked out refer to the last checked in copy.  </s>
+<s> PUT/PROPPATCH are illegal.  </s>
+<s> For the user with the resource checked out, all operations apply to the checkout-in-place copy.  </s>
+<s> That gives you most of the functionality of the working resource model,  </s>
+<s> avoids things like UPDATE/MERGE interactions with working resources, and  </s>
+<s> avoids placing extra demands on the client.  </s>
+<s> If we weren't trying to be compatible with a 3rd party DAV + revision but not DeltaV server, I'd propose that we do it this way.  </s>
+<s> The 3rd party server puts the working resource in an independent namespace.  </s>
+<s> [Lest no one confuse us, I do work for Lisa at Xythos.  </s>
+<s> But she works in CA and I work in WA where it is cheaper to live.  </s>
+<s> We have independent opinions.]  </s>
+<s> From: John Hall [mailto:johnhall@evergo.net] From: Lisa Dusseault [mailto:lisa@xythos.com] By "in-place editing" I mean that when the VCR is checked out, clients can do any number of PUT, PROPPATCH and other write operations, before finally checking in.  </s>
+<s> In the meantime, this  </s>
+<s> work-in-progress is available for other users to see if they have permission to read the resource.  </s>
+<s> First question: Does anybody plan to implement DeltaV this way?  </s>
+<s> I would strongly consider this an option, if a default GET and PROPFIND did not reference the work in progress but instead referenced the last-checked-in-version.  </s>
+<s> That is how working resources work.  </s>
+<s> The version-controlled resource URL is a copy of the state of some checked-in version (but not the last checked-in version, but rather the last version specified in an UPDATE).  </s>
+<s> The working resource has its own URL, and that is what the client that "checked it out" works with.  </s>
+<s> In-place editing is precisely for those cases where you want the all clients to see "work in progress" at that URL (to see a checked in version, you look at a URL in a different workspace).  </s>
+<s> Imagine this: After checkout, GET/PROPFIND from users that don't have the resource checked out refer to the last checked in copy.  </s>
+<s> PUT/PROPPATCH are illegal.  </s>
+<s> The easiest way to determine "which user has it checked out" is to give the "checked out version" its own URL.  </s>
+<s> And PUT/PROPPATCH are illegal (unless your server has auto-versioning turned on).  </s>
+<s> For the user with the resource checked out, all operations apply to the checkout-in-place copy.  </s>
+<s> That gives you most of the functionality of the working resource model,  </s>
+<s> avoids things like UPDATE/MERGE interactions with working resources, and  </s>
+<s> avoids placing extra demands on the client.  </s>
+<s> And how does a client indicate which checked out state it wants to access?  </s>
+<s> Why make a client remember two strings (the checked-out "token" and the URL), which it only needs one string (the working-resource URL).  </s>
+<s> (We need to support parallel checkouts, so a "the checked-out one" header does not suffice).  </s>
+<s> If we weren't trying to be compatible with a 3rd party DAV + revision but not DeltaV server, I'd propose that we do it this way.  </s>
+<s> The 3rd party server puts the working resource in an independent namespace.  </s>
+<s> So you actually don't propose we do it this other way?  </s>
+<s> Then we agree (:-).  </s>
+<s> Cheers, Geoff  </s>
+<s> Yes.  </s>
+<s> I think that's what working resources are made for.  </s>
+<s> Anyway, how should your feature work with anonymous access?  </s>
+<s> Stefan  </s>
+<s> Oops, I meant "view a bunch of version-controlled resources and only see latest checked-in versions".  </s>
+<s> I can see that's what working resources are made for, only unfortunately existing clients don't support working resources.  </s>
+<s> I'm trying to make our implementation work as much as possible with existing WebDAV clients and still have the desired behaviour.  </s>
+<s> If we didn't have to be compatible with DeltaV, it would be easy.  </s>
+<s> ;) Why wouldn't viewing checked-in versions work with anonymous access, as long as the 'anonymous' principal is granted read privilege on the resources?  </s>
+<s> lisa  </s>

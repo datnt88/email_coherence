@@ -1,0 +1,69 @@
+<s> I have recently successfully completed a conversion of tidy to C++.  </s>
+<s> Is  </s>
+<s> anyone interested?  </s>
+<s> What was your motivation for this ?  </s>
+<s> Regards, Doug  </s>
+<s> Hi, Lee  </s>
+<s> Did you create C++ classes, or did you just get the source to compile as C++?  </s>
+<s> If classes, did you manage to eliminate all globals, so the classes can be used in a multithreaded environment?  </s>
+<s> Did you separate out the parsing code so it can be used independently?  </s>
+<s> If the answer to all these questions is 'yes', I'd be very interested!  </s>
+<s> Thanks - rick cameron  </s>
+<s> I have recently successfully completed a conversion of tidy to C++.  </s>
+<s> Is anyone interested?  </s>
+<s> Sure.  </s>
+<s> Let us take a look!  </s>
+<s> Is it based on the current CVS sources or the August 04 2000 release?  </s>
+<s> As for the upcoming HTML Tidy library, we would  </s>
+<s> make great use of some C++ wrapper for HTML Tidy.  </s>
+<s> Bj?rn H?hrmann { mailto:bjoern@hoehrmann.de } http://www.bjoernsworld.de am Badedeich 7 } Telefon: +49(0)4667/981028 { http://bjoern.hoehrmann.de  </s>
+<s> 25899 Dageb?ll { PGP Pub.  </s>
+<s> KeyID: 0xA4357E78 } http://www.learn.to/quote/  </s>
+<s> I have an application in mind that will require loading an HTML document into a DOM.  </s>
+<s> The target platform will (eventually) be WinCE.  </s>
+<s> The first rule of software development, IMO, is "don't reinvent the wheel".  </s>
+<s> After looking around I decided that tidy would be the best source base for this because a.) it is highly tolerant of poorly-formed HTML, b.) it is relatively small (have you seen the source base for Amaya?), and c.) it is well supported in open source and has liberal licensing.  </s>
+<s> At the outset, let me state that I am a devout believer in the church of  </s>
+<s> C++, and can bear witness that it is the one, true and living  </s>
+<s> programming language.  </s>
+<s> For me, C++ is "obviously" the language best  </s>
+<s> suited for general purpose programming libraries.  </s>
+<s> One of the things I will need to do is separate the functionality of tidy into three groups -- parsing, cleaning, and printing -- and segregate the code into files according to these divisions, as I will only need the parsing functions (and maybe a little of the cleaning).  </s>
+<s> Moving to C++ as I do this is not terribly difficult, and not only will it make my use of the resulting libraries easier, it has helped me to understand the code and how all the pieces interrelate.  </s>
+<s> I am, of course, not trying to convert anyone else to my religion, I just figured if there were any kindred souls out there I would share what I have done.  </s>
+<s> I actually created C++ classes.  </s>
+<s> Interestingly, with all the structure  </s>
+<s> pointers being passed around, it almost looked like tidy was originally written in C++ and then back-ported to C. In my first cut, some of the  </s>
+<s> fundamental classes are Node, Attibute, AttVal (attribute/value pairs), Tag, Lexer, Style, and StreamIn/StreamOut.  </s>
+<s> The global variable question is an interesting one; I made some changes to global variables, but I was not thinking about multi-threading at the time.  </s>
+<s> As near as I can tell, there are two types of global variables in tidy: configuration boolean flags and default values (generally declared in config.c), and dictionary tables such as Tag and Attribute.  </s>
+<s> Configuration variables are altered from their default values by command line options or by parsing a config file.  </s>
+<s> This code I have not yet touched.  </s>
+<s> Other global tables were initialized by explicit "init" calls (e.g., InitAttrs, InitTags).  </s>
+<s> For these types of variables I created a class with a single global instance whose only role was to initialize static variables in the corresponding class (e.g. Attribute, Tag).  </s>
+<s> Thus, construction and destruction of these global variables occurs automatically when the program begins (before main() is called) or ends, and then only once.  </s>
+<s> Whether or not these changes satisfies the demands of a multi-threaded application or not is still an open question.  </s>
+<s> Perhaps you can help me out there.  </s>
+<s> As stated in an earlier message, my goal is to segregate the code (to the extent possible) into parsing, cleaning, and printing (or output) parts.  </s>
+<s> This first pass did that to some extent, but much more detailed analysis will be required before I am comfortable claiming that the goal has been acheived.  </s>
+<s> The first pass that I have completed is based on the 04 August 2000 release.  </s>
+<s> It was primarily experimental and instructional, just to see what the task was like and to determine a strategy.  </s>
+<s> I have since abandoned that code, and am starting over with the CVS sources from approximately mid-September.  </s>
+<s> In any project like this, the problem arises of how to maintain synchronicity between two implementations of what is essentially the same project (I'm sure the JTidy guys deal with this every day).  </s>
+<s> In this second cut I am being a little less radical in my approach to moving methods into different files; I am trying to maintain functions  </s>
+<s> in files of the same name as their C counterparts, even when the  </s>
+<s> functions end up as methods in different classes.  </s>
+<s> When files should be split up to separate parsing and cleaning, for example, I have left the first part of the file name the same.  </s>
+<s> For example, I have currently split tidy.c into tidy.cpp (main code), tidy_mem.cpp  </s>
+<s> (memory allocation and string routines), and tidy_utf.cpp  </s>
+<s> (UTF8/16 conversion fucntions).  </s>
+<s> Hopefully this way I can diff my source with the CVS tree, identify changes that are made, and have a fairly straightforward way of finding where these changes belong in the C++ version.  </s>
+<s> I finally have a place on the web where I can put stuff for public consumption.  </s>
+<s> There seems to be at least a modicum of interest, so I will zip up what I have and put it up there this weekend.  </s>
+<s> As soon as I do this I'll post the URL.  </s>
+<s> Is it really necessary to recode yet another fork of Tidy in C++?  </s>
+<s> I haven't had much time to look at it but one of the guys who worked for me did a C++ wrapper for Tidy based on the same forwarding model we used for our very successful expatpp wrapper for expat.  </s>
+<s> When something is written in a clean OO design (as Tidy seems to be - NOT back-ported from C++) it's pretty easy to wrap in C++ and retain the original source to avoid compatibility problems.  </s>
+<s> If you have really good reasons for forking off a separate C++ development, that's great and we may be interested in helping, otherwise I suggest the wrapper approach is superior and given inline method compilation, adds almost no overhead.  </s>
+<s> Note: when polished, our wrapper will be contributed back to the Tidy community, it's just that I've been really really busy with other issues, mainly MacOS/X driven and I don't let any source out the door until I've OK'd what's in it.  </s>
+<s> Andy Dent BSc MACS AACM OOFILE - Database, Reports, Graphs, GUI for c++ on Mac, Unix &amp; Windows PP2MFC - PowerPlant- MFC portability  </s>

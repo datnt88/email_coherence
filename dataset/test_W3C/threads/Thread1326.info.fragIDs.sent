@@ -1,0 +1,501 @@
+<s> id=""iraun1.ira.0088601:001201.182348"@ira.uka.de"  </s>
+<s> Hello, all!  </s>
+<s> This is a review of the core versioning part and label option of the draft-ietf-deltav-versioning-10.4 (with updates for 10.5).  </s>
+<s> General Comments  </s>
+<s> I am not very happy with the current structure of the document which divides all features into core WebDAV versioning and optional WebDAV versioning.  </s>
+<s> Currently, the core part is getting smaller and smaller, while the optional part continuously grows.  </s>
+<s> The problem I see is that server implementors will either implement the core part only, or, in practice, they will have to implement also the full optional part.  </s>
+<s> If, instead, a server implements the core part and only some features of the optional part, the client will have to figure out the server's capabilities through all those DAV:supported-*-set properties.  </s>
+<s> I think only very few clients will be so smart to adapt to the server's individual capabilities.  </s>
+<s> Most clients probably will either rely only on the core part or will require the full optional part.  </s>
+<s> Or, even worse, implementors will start to create client/server pairs with built-in features of the optional part as needed in the specific pair.  </s>
+<s> In either case, interoperability will tremendously suffer.  </s>
+<s> I think the original idea of core/optional versioning was to separate core versioning semantics from advanced semantics (mostly configuration management).  </s>
+<s> So, maybe you could reintroduce this idea into the protocol by defining three levels: - core versioning: minimally required features - versioning: fully fledged versiong including labels and branches (and maybe merging) - advanced versioning: configuration management and all remaining optional features This would lower the gap between the currently defined two levels und thus help to preserve interoperability.  </s>
+<s> Section 1.3 Version Selector/Working Resource: The definition of the term "Working Resource" as opposed to that of "Version Selector" seems confusing to me.  </s>
+<s> The pure fact that the CHECKOUT method is defined to be applicable on both types of resources, does not make them suitable for a direct comparison.  </s>
+<s> I think it would be better to characterize the term "working resource"  </s>
+<s> independently from "checking out a version selector".  </s>
+<s> Maybe when  </s>
+<s> defining the term "version selector" you might want to add a note about checking out version selectors.  </s>
+<s> To summarize, I would like to suggest the following wording: Version Selector: When an existing resource is put under version control, it becomes a "version selector" resource.  </s>
+<s> A new version history resource is allocated, whose initial version contains the content and dead properties of the existing resource.  </s>
+<s> A checkout may be applied to version selector.  </s>
+<s> This will make a copy of an existing version of the version history accessible for editing.  </s>
+<s> A subsequent checkin will create a new version in the version history.  </s>
+<s> Checking out a version selector is useful for environments where only a single user accesses the version selector.  </s>
+<s> Working resource: If multiple users concurrently try to check out the same version selector, they will interfere each other.  </s>
+<s> To avoid this, a checkout can also be directly applied to a version.  </s>
+<s> This will create a new resource, called "working resource".  </s>
+<s> The working resource can be modified and is automatically deleted when it is checked in.  </s>
+<s> The server allocates a distinct new URL for each new working resource.  </s>
+<s> Section 2: WebDAV Versioning Semantics This section discusses rather concepts than semantics, right?  </s>
+<s> Section 3: New WebDAV XML Element Attributes As both, the headline itself and the introductory statement to this section suggest, this section should be moved to (a new revision of) the WebDAV protocol.  </s>
+<s> Section 4: New WebDAV Properties Again, move this to WebDAV.  </s>
+<s> Note that 4.1.3 and 4.1.4 do *not* introduce new WebDAV properties, as the headline claims.  </s>
+<s> Section 4.4: DAV:supported-method-set  </s>
+<s> method-name type: a type in the DAV://METHODS/ namespace  </s>
+<s> In general, this does not work.  </s>
+<s> RFC 2616 says: Method = "OPTIONS" ; Section 9.2  </s>
+<s> "GET" ; Section 9.3 "HEAD" ; Section 9.4 "POST" ; Section 9.5 "PUT" ; Section 9.6 "DELETE" ; Section 9.7 "TRACE" ; Section 9.8 "CONNECT" ; Section 9.9 extension-method  </s>
+<s> extension-method = token token = 1* any CHAR except CTLs or separators separators = "(" | ")" | " " | " " | "@"  </s>
+<s> "," | ";" | ":" | "\" | " "{" | "}" | SP | HT  </s>
+<s> Hence, the token %XYZ&amp; is a valid HTTP method name (even if it is unlikely to be ever used; but anyway...).  </s>
+<s> However, [4] NameChar ::= Letter | Digit | '.' | '-' | '_' | ':' | CombiningChar | Extender [5] Name ::= (Letter | '_' | ':') (NameChar)* [44] EmptyElemTag ::= ' ' Name (S Attribute)* S? '/ ' [WFC: Unique Att Spec] Thus, the Name M:%XYZ&amp; is not a valid name for an XML tag.  </s>
+<s> Personally, I would prefer a syntax like: This would also contribute to a clean DTD.  </s>
+<s> I think, only if you have a very small, definitely fixed set of tokens, it may be appropriate to create tag names from the elements of this set.  </s>
+<s> But the set of HTTP method names is neither small, nor fixed.  </s>
+<s> Another important point here is that the above syntax leaves it open to you to add new method related features in future versions of DeltaV or WebDAV, e.g. something like this: Section 4.5: DAV:supported-live-property-set This is another example for the anomaly in the DAV:prop element usage (compare Though, to correct this, WebDAV itself needs to be revised.  </s>
+<s> :-( Section 4.6: DAV:supported-report-set Same problem as in section 4.5.  </s>
+<s> However, this is currently independent from WebDAV and hence can and should be fixed, e.g.: The syntax for the request body and repsonse body for the REPORT method should be properly adapted.  </s>
+<s> Section 5.1.2:  </s>
+<s> DAV:predecessor-set (protected), Section 5.1.3:  </s>
+<s> DAV:successor-set (protected) It is very important that the server really maintains the order of the DAV:href elements, as noted for the predecessor set.  </s>
+<s> But the successor set should also be maintained.  </s>
+<s> Think for example of graphically displaying a revision graph.  </s>
+<s> You really do not want the branches of the revision graph to be aligned differently each time the graph is re-displayed.  </s>
+<s> Moreover, an application might want to designate the first DAV:href element of the successor set to continue the main development branch.  </s>
+<s> To make the wording even clearer, I would like to suggest to change it as follows: This property is an ordered set that contains a URL for each predecessor of this version.  </s>
+<s> (And the same for the DAV:successor-set property.) Section 5.1.4:  </s>
+<s> DAV:checkout-set (protected) This should also be an ordered set maintained by the server.  </s>
+<s> For example, think of a client that chooses to graphically display working resources and checked-out version selectors as part of a revision graph.  </s>
+<s> Or, to give another example, depending on the underlying revision control system, the first element in the set may be a designated candidate to continue the main development branch.  </s>
+<s> Section 5.1.5:  </s>
+<s> DAV:checkin-date (protected) I still vote for giving a rationale for the term "reasonable approximation".  </s>
+<s> What is the idea here?  </s>
+<s> Do you fear trouble when a client checks in a revision, then reads the date, compares it to its local time and detects a clock skew?  </s>
+<s> But, anyway, why should a client do that?  </s>
+<s> Or are you thinking of a distributed repository of versioned resources that is made accessible through an HTTP port of a single host/domainname?  </s>
+<s> Checking if revision X of resource A was checked in later than revision Y of resource B might become a problem if A and B are hosted on different machines.  </s>
+<s> Anaway, what is the rationale here?  </s>
+<s> Section 5.2.3: DAV:predecessor-set Same as section 5.1.2.  </s>
+<s> Section 6: WebDAV Versioning and Existing Headers I think this headline does not express what is following.  </s>
+<s> Personally, I would prefer a wording like: "Versioning Vis-a-Vis WevDAV Headers" or "Impact of Versioning on WebDAV Headers".  </s>
+<s> Section 7.1.1:  </s>
+<s> Example - GET request with DAV:must-not-be-checked-out response The example contains a CHECKOUT request, not a GET request.  </s>
+<s> In this example, the request to CHECKOUT /foo.html fails because /foo.html is already checked out  </s>
+<s> ... and /foo.html is a version selector, or because the server chooses not to branch off a new version.  </s>
+<s> Section 7.2: OPTIONS  </s>
+<s> If the server supports checking out a version selector  </s>
+<s> i.e. checking out a version selector is an optional feature and should be moved to Optional WebDAV Versioning?  </s>
+<s> Section 7.3: PUT In the preconditions section, you use the format  </s>
+<s> DAV:some-error-tag/ : Error condition".  </s>
+<s> To be kind,  </s>
+<s> you should introduce the reader to this format or use a more self-explanatory format.  </s>
+<s> Section 7.4: PROPPATCH  </s>
+<s> DAV:cannot-modify-protected-property/ : An attempt to use PROPPATCH to modify a property (either core or optional) defined by this document as being protected MUST fail.  </s>
+<s> DAV:cannot-modify-unsupported-property/ : An attempt to modify a property defined by this document (either core or optional) whose semantics are not enforced by the server MUST fail.  </s>
+<s> This helps ensure that a client will be notified when it is trying to use a property whose semantics are not supported by the server.  </s>
+<s> What about moving these features to WebDAV?  </s>
+<s> They are probably of generic interest and not versioning specific (assuming that the definition of the term "protected property" also could be moved to WebDAV).  </s>
+<s> Section 8: New WebDAV Methods As both, the headline itself and the introductory statement to this section suggest, this section should be moved to (a new revision of) the WebDAV protocol.  </s>
+<s> Section 9.1: VERSION_CONTROL The logical structure of the rules in this section seems rather weird to me.  </s>
+<s> The section contains the following precondition:  </s>
+<s> DAV:must-be-versionable/ : The request-URL MUST identify a versionable resource, a null resource, or a version selector.  </s>
+<s> Accordingly, I would expect three paragraphs in the beginning of this section: "If the request-URL identifies a versionable resource, then ..." "If the request-URL identifies a null resource, then ..." "If the request-URL identifies a version selector, then ..." A classification into disjunctive sets of cases also is probably less error prone.  </s>
+<s> Actually, in section 9.1 currently there is only a paragraph about versionable resources.  </s>
+<s> The second paragraph talks about the case when the request *body* identifies a version.  </s>
+<s> The postconditions section, on the other hand, classifies cases thoroughly.  </s>
+<s> Still, I wonder which rules apply when the request-URL identifies a version selector.  </s>
+<s> Section 9.1 only says that  </s>
+<s> the DAV:version-control request body element MUST NOT contain a DAV:version element."  </s>
+<s> (precondition) and:  </s>
+<s> If the request-URL identified a version selector at the time of the request, the VERSION-CONTROL request MUST NOT change the state of that version selector.  </s>
+<s> (postcondition) But then, what does a VERSION-CONTROL do at all if the request-URL is a version selector?  </s>
+<s> Section 9.2: CHECKOUT  </s>
+<s> A versioning server MUST support either version selector CHECKOUT or version CHECKOUT, and MAY support both.  </s>
+<s> These two concepts should be explained somewhere (e.g. in the terms section or in the introductory section).  </s>
+<s> As far as I understand, version selector CHECKOUT is appropriate only when a single user accesses a versioned resource?  </s>
+<s> And as soon as two or more users want to access it, you need working resources and hence have to apply version CHECKOUT?  </s>
+<s> If so, this should be somewhere explained (e.g. as rationale or concepts, for example in the introduction).  </s>
+<s> Possible you might choose leaving version selector CHECKOUT as core versioning feature, but moving version CHECKOUT to optional versioning (preferably as part of the fully fledged versioning as proposed in the beginning of this mail).  </s>
+<s> The content and dead properties of the working resource MUST be the same as the content and dead properties of the DAV:checked-out version.  </s>
+<s> I would prefer the following wording:  </s>
+<s> "The content and dead properties of the working resource MUST be initialized with the content and dead properties of the DAV:checked-out version."  </s>
+<s> If DAV:apply-to-target is specified in the request body, the CHECKOUT is applied to the version identified by the DAV:target of the version selector, and not the version selector itself.  </s>
+<s> For better understanding, I would suggest the following wording:  </s>
+<s> If the request-URL contains a version selector and DAV:apply-to-target is specified in the request body, the CHECKOUT is applied to the version identified by the DAV:target of the version selector, and not the version selector itself.  </s>
+<s> Section 9.3: CHECKIN The meaning of DAV:keep-checked-out is not just to keep a checked out resource when applying a CHECKIN, but also to perform a subsequent update of the checked out resource's DAV:checked-out property.  </s>
+<s> As far as I understand, this results in a behaviour that is the same as that of a CHECKIN immediately followed by a CHECKOUT (except that in the case of a working resource its URL is recycled).  </s>
+<s> Hence, I would suggest to name this XML element e.g. "DAV:checkpoint" rather than "DAV:keep-checked-out".  </s>
+<s> Section 9.4: UNCHECKOUT  </s>
+<s> An UNCHECKOUT request can be applied to a checked-out version selector to cancel the CHECKOUT.  </s>
+<s> This probably should read:  </s>
+<s> "An UNCHECKOUT request can be applied to a checked-out version selector or working resource to cancel the CHECKOUT."  </s>
+<s> Or should I use DELETE to cancel a version CHECKOUT (though I personally would prefer UNCHECKOUT)?  </s>
+<s> If so, an appropriate note for the reader should be added.  </s>
+<s> Section 9.5: SET_TARGET Typo: "Preconditions:" has a boldface colon.  </s>
+<s> This occurs also in some other sections (e.g. 15.12, 16.1).  </s>
+<s> Section 10.1: DAV:version-tree-report  </s>
+<s> The DAV:version-tree-report describes all the versions of the version history of a version in the form of a nested tree of versions.  </s>
+<s> I would prefer the following wording: The DAV:version-tree-report describes all the descendant versions for a  </s>
+<s> given version in a version history in the form of a nested tree  </s>
+<s> of versions.  </s>
+<s> ANY value: zero or more property-name elements property-name type: a property type property-name value: none  </s>
+<s> This should be explained more verbosely.  </s>
+<s> !ELEMENT prop (see [RFC2518], section 12.11)  </s>
+<s> Argh! This is definitely not a valid element definition.  </s>
+<s> Section 10.1.1:  </s>
+<s> Example - DAV:version-tree-report  </s>
+<s> D:creator-displayname/ D:predecessor-set /D:version-tree-report xmlns:D="DAV:"  </s>
+<s> Typo: should be D:predecessor-set/ Section: 16.1 LABEL  </s>
+<s> When comparing two label names to decide if they match or not, a server SHOULD use a case-sensitive octet-by-octet comparison of the two label names.  </s>
+<s> I propose to replace "SHOULD" with "MUST".  </s>
+<s> Otherwise, a client can not be sure, what the server actually does and has to assume the worst case, i.e. case-insensitive match.  </s>
+<s> !ELEMENT add (label-name) !ELEMENT set (label-name)  </s>
+<s> I still think that the difference between these two elements and their semantics does not get clear.  </s>
+<s> DAV:must-be-version-or-version-selector/ : The request-URL MUST identify a version or a version selector.  </s>
+<s> This probably should read:  </s>
+<s> DAV:must-be-version-or-version-selector-or-collection/ : The  </s>
+<s> request-URL MUST identify a version or a version selector or a  </s>
+<s> collection."  </s>
+<s> DAV:must-not-be-checked-out/ : If LABEL is being applied to a version selector, it MUST NOT be checked out.  </s>
+<s> The phrase "it MUST NOT be checked out" is ambigous (noun/verb/adjective phrase or passive voice).  </s>
+<s> For clearity, what about the following:  </s>
+<s> DAV:must-not-be-checked-out/ : Applying LABEL to a version selector  </s>
+<s> MUST fail, if the DAV:checked-out property appears on that version selector."  </s>
+<s> Bye, Juergen  </s>
+<s> This is an excellent segue into an issue I wanted to bring up.  </s>
+<s> The packaging of the protocol specification into one or more documents has been considered several times by the design team.  </s>
+<s> There are two primary options that have been discussed: 1) Status-quo: describe the entire protocol, both core and advanced, in one document.  </s>
+<s> Advantages: * Possible increase in number of full server implementations (core + advanced) of protocol * Reduced document overhead for boilerplate text, definitions, introductions, etc. * Increased consistency, since all text is within a single document Disadvantages: * A single document is larger, and there is a perception that large protocol specifications are complex.  </s>
+<s> * A single document hides the inherent simplicity of the core versioning features.  </s>
+<s> The simple core may be viewed as complex by its inclusion in a long document.  </s>
+<s> * Possible decrease in implementations of core features in authoring clients (due to perceived complexity) * Possible decrease in implementations of core versioning in document management servers.  </s>
+<s> 2) Divide the specification into two documents, one for Core, one for Advanced.  </s>
+<s> Advantages: * Possible increase in number of authoring client implementations, due to the easily seen simplicity of the Core.  </s>
+<s> * Possible increase in number of document management servers that implement Core versioning * It is likely Core versioning could be sent for IESG approval before the Advanced document was entirely completed.  </s>
+<s> * If interoperability problems are discovered in the Advanced features, they could be fixed without impacting the specification of Core features.  </s>
+<s> This could lead to increased confidence in the Core features by implementors, and hence greater early adoption of Core features.  </s>
+<s> Disadvantages: * Possible decrease in number of server implementations of Advanced features.  </s>
+<s> * Possible decrease in number of client implementations of Advanced features.  </s>
+<s> * Possible increase in inter-document inconsistency.  </s>
+<s> * Repetition of defintions of terms, boilerplate text, etc. * Need for a document roadmap explaining subdivision of documents.  </s>
+<s> I have long favored keeping the document together, as a whole (option #1).  </s>
+<s> However, I am starting to lean towards subdividing the document (option #2).  </s>
+<s> My rationale is as follows: * Due to the relatively large number of optional Advanced features, there is significantly increased risk of interoperability problems in the Advanced portion of the specification.  </s>
+<s> Since there has not yet been an interoperability demonstration of an Advanced client working against multiple Advanced servers, there is currently no evidence that can be used to effectively assess this risk.  </s>
+<s> As a result, it seems prudent to examine what would happen in a worst-case scenario where interoperability problems in Advanced features lead to a recycle at Proposed Standard.  </s>
+<s> Re-issuing an RFC at Proposed can happen when there need to be such substantial modifications to a document that they transcend the "minor changes" threshold for going to Draft Standard.  </s>
+<s> Alternately, it could be that two interoperable implementations of each feature cannot be demonstrated.  </s>
+<s> If this were to happen to the DeltaV protocol, and the protocol were specified in one document, it would require modifying the entire document, Core plus Advanced.  </s>
+<s> This would have the effect of adding substantial implementation risk even to vendors implementing just the Core features.  </s>
+<s> This risk might lead to implementation being postponed, and a much slower adoption of the protocol.  </s>
+<s> In contrast, if Core were kept in a separate document, and Advanced features needed to be revised, it is likely they would not impact the Core, and hence would not increase its implementation risk.  </s>
+<s> * A small Core document would be easier to "sell".  </s>
+<s> It would be much easier to convince implementors that a small Core versioning document is compact, and easy to implement, than Core in a large document.  </s>
+<s> Even though Core only takes a small portion of the current document, an implementor still needs to read through the entire document, for sections like i18n, security, etc., to ensure nothing has been missed.  </s>
+<s> For a small document, this work has already been performed, by the act of creating a smaller document.  </s>
+<s> * The downside risk of separating the documents appears to be small.  </s>
+<s> The major downside risks of separating the documents appears to be that there will be few client or server implementations of the Advanced features, and hence the Advanced features will be marginalized.  </s>
+<s> While there have not been any product announcements that I am aware of, it seems reasonable to assume that the participation of top engineering talent from several significant CM vendors in this effort implies a willingness to implement all of the standard, Core and Advanced.  </s>
+<s> Additionally, the Subversion open source project is currently implementing a very full-featured CM client based on DeltaV.  </s>
+<s> So, I am not concerned about implementations of the Advanced features -- I think this will happen.  </s>
+<s> I am more concerned about authoring tools implementing the standard, primarily due to concerns about the complexity of the protocol, based on Core being packaged with Advanced features.  </s>
+<s> A smaller Core document would allay some of these concerns, since authoring tools will primary just use the Core features.  </s>
+<s> But, this said, I also recognize that development orgaizations interested in implementing the protocol will perform a thorough engineering analysis anyway, and will quickly see through superficial issues such as document length.  </s>
+<s> Furthermore, in the annals of engineering specifications, the current DeltaV spec. is nowhere near the upper end of the scale for complexity, and length.  </s>
+<s> Far more complex interoperability specifications have been implemented over time.  </s>
+<s> As a result, while I find myself somewhat in support of splitting the current document, I am not 100% convinced.  </s>
+<s> I would appreciate hearing other views on the matter.  </s>
+<s> - Jim  </s>
+<s> Split it.  </s>
+<s> As Jim said, we're doing the "optional" features, so I can guarantee that (at least one) more advanced server will be out there.  </s>
+<s> We aren't doing workspaces (much to Geoff's dismay :-), but it will have activities, labels, and some of the advanced reports.  </s>
+<s> Cheers, -g Greg Stein, http://www.lyra.org/  </s>
+<s> I am happy to produce a stripped down copy of the versioning  </s>
+<s> document, call it "versioning core", and maintain both the "versioning core"  </s>
+<s> and "full versioning" documents.  </s>
+<s> From my perspective, this allows us to separate the substantive question of what the semantics of the protocol to be (for which I believe we have now reached consensus) from the more political question of "what is in core".  </s>
+<s> Note: My agreement is based on the assumption that we will not delay submission of the "full versioning" document for debate over "what should go into core".  </s>
+<s> In particular, this means that we may end up submitting the "full versioning protocol" to the IESG before we have reached consensus on a "core versioning protocol".  </s>
+<s> Cheers, Geoff  </s>
+<s> This is an excellent segue into an issue I wanted to bring up.  </s>
+<s> The packaging of the protocol specification into one or more documents has been considered several times by the design team.  </s>
+<s> There are two primary options that have been discussed: 1) Status-quo: describe the entire protocol, both core and advanced, in one document.  </s>
+<s> Advantages: * Possible increase in number of full server implementations (core + advanced) of protocol * Reduced document overhead for boilerplate text, definitions, introductions, etc. * Increased consistency, since all text is within a single document Disadvantages: * A single document is larger, and there is a perception that large protocol specifications are complex.  </s>
+<s> * A single document hides the inherent simplicity of the core versioning features.  </s>
+<s> The simple core may be viewed as complex by its inclusion in a long document.  </s>
+<s> * Possible decrease in implementations of core features in authoring clients (due to perceived complexity) * Possible decrease in implementations of core versioning in document management servers.  </s>
+<s> 2) Divide the specification into two documents, one for Core, one for Advanced.  </s>
+<s> Advantages: * Possible increase in number of authoring client implementations, due to the easily seen simplicity of the Core.  </s>
+<s> * Possible increase in number of document management servers that implement Core versioning * It is likely Core versioning could be sent for IESG approval before the Advanced document was entirely completed.  </s>
+<s> * If interoperability problems are discovered in the Advanced features, they could be fixed without impacting the specification of Core features.  </s>
+<s> This could lead to increased confidence in the Core features by implementors, and hence greater early adoption of Core features.  </s>
+<s> Disadvantages: * Possible decrease in number of server implementations of Advanced features.  </s>
+<s> * Possible decrease in number of client implementations of Advanced features.  </s>
+<s> * Possible increase in inter-document inconsistency.  </s>
+<s> * Repetition of defintions of terms, boilerplate text, etc. * Need for a document roadmap explaining subdivision of documents.  </s>
+<s> I have long favored keeping the document together, as a whole (option #1).  </s>
+<s> However, I am starting to lean towards subdividing the document (option #2).  </s>
+<s> My rationale is as follows: * Due to the relatively large number of optional Advanced features, there is significantly increased risk of interoperability problems in the Advanced portion of the specification.  </s>
+<s> Since there has not yet been an interoperability demonstration of an Advanced client working against multiple Advanced servers, there is currently no evidence that can be used to effectively assess this risk.  </s>
+<s> As a result, it seems prudent to examine what would happen in a worst-case scenario where interoperability problems in Advanced features lead to a recycle at Proposed Standard.  </s>
+<s> Re-issuing an RFC at Proposed can happen when there need to be such substantial modifications to a document that they transcend the "minor changes" threshold for going to Draft Standard.  </s>
+<s> Alternately, it could be that two interoperable implementations of each feature cannot be demonstrated.  </s>
+<s> If this were to happen to the DeltaV protocol, and the protocol were specified in one document, it would require modifying the entire document, Core plus Advanced.  </s>
+<s> This would have the effect of adding substantial implementation risk even to vendors implementing just the Core features.  </s>
+<s> This risk might lead to implementation being postponed, and a much slower adoption of the protocol.  </s>
+<s> In contrast, if Core were kept in a separate document, and Advanced features needed to be revised, it is likely they would not impact the Core, and hence would not increase its implementation risk.  </s>
+<s> * A small Core document would be easier to "sell".  </s>
+<s> It would be much easier to convince implementors that a small Core versioning document is compact, and easy to implement, than Core in a large document.  </s>
+<s> Even though Core only takes a small portion of the current document, an implementor still needs to read through the entire document, for sections like i18n, security, etc., to ensure nothing has been missed.  </s>
+<s> For a small document, this work has already been performed, by the act of creating a smaller document.  </s>
+<s> * The downside risk of separating the documents appears to be small.  </s>
+<s> The major downside risks of separating the documents appears to be that there will be few client or server implementations of the Advanced features, and hence the Advanced features will be marginalized.  </s>
+<s> While there have not been any product announcements that I am aware of, it seems reasonable to assume that the participation of top engineering talent from several significant CM vendors in this effort implies a willingness to implement all of the standard, Core and Advanced.  </s>
+<s> Additionally, the Subversion open source project is currently implementing a very full-featured CM client based on DeltaV.  </s>
+<s> So, I am not concerned about implementations of the Advanced features -- I think this will happen.  </s>
+<s> I am more concerned about authoring tools implementing the standard, primarily due to concerns about the complexity of the protocol, based on Core being packaged with Advanced features.  </s>
+<s> A smaller Core document would allay some of these concerns, since authoring tools will primary just use the Core features.  </s>
+<s> But, this said, I also recognize that development orgaizations interested in implementing the protocol will perform a thorough engineering analysis anyway, and will quickly see through superficial issues such as document length.  </s>
+<s> Furthermore, in the annals of engineering specifications, the current DeltaV spec. is nowhere near the upper end of the scale for complexity, and length.  </s>
+<s> Far more complex interoperability specifications have been implemented over time.  </s>
+<s> As a result, while I find myself somewhat in support of splitting the current document, I am not 100% convinced.  </s>
+<s> I would appreciate hearing other views on the matter.  </s>
+<s> - Jim  </s>
+<s> id=""iraun1.ira.0091801:001204.115942"@ira.uka.de"  </s>
+<s> Actually, my point was to introduce just a new level or layer within the protocol rather than splitting it into separate RFCs.  </s>
+<s> But, of course, I have no objections against it, if splitting the document helps improving the structure of the protocol.  </s>
+<s> However, if you want to split the document, I would suggest splitting it in a slightly different way: * Versioning protocol: everything that deals with versioning of individual (unrelated) files Level 1: mandatory features (what is currently called core versioning) Level 2: optional features (optional versioning reports, mutable versions, labels, MERGE for individual files and collections) * Configuration management protocol: everything that deals with versioning of sets of associated (related) files Basically, everything that is left should go here (including baselines, activities, working spaces, MERGE for baselines and activities, etc.).  </s>
+<s> And those features that have nothing at all to do with versioning (e.g. new WebDAV properties, REPORT method framework, property report) should be moved to (a revised edition of) WebDAV.  </s>
+<s> Bye, Juergen  </s>
+<s> From: Juergen Reuter [mailto:reuterj@ira.uka.de]  </s>
+<s> I am not very happy with the current structure of the document  </s>
+<s> which divides all features into core WebDAV versioning and optional WebDAV versioning.  </s>
+<s> Currently, the core part is getting smaller and smaller, while the optional part continuously grows.  </s>
+<s> The problem I see is that server implementors will either implement the core part only, or, in practice, they will have to implement also the full optional part.  </s>
+<s> Note that the options are divided 6 packages, which are identified in the DAV header response from an OPTIONS request.  </s>
+<s> These are "label", "workspace", "baseline", "activity", "merge", and "versioned-collection".  </s>
+<s> Clients are expected to look for these option packages via the OPTIONS request.  </s>
+<s> We could restructure the document into one section per option package.  </s>
+<s> What do others think?  </s>
+<s> I think the original idea of core/optional versioning was to separate core versioning semantics from advanced semantics (mostly configuration management).  </s>
+<s> So, maybe you could reintroduce this idea into the protocol by defining three levels: - core versioning: minimally required features - versioning: fully fledged versiong including labels and branches (and maybe merging) - advanced versioning: configuration management and all remaining optional features What is in the "versioning" level varies widely from server to server.  </s>
+<s> I believe the current division into orthogonal option sets is what is required to achieve consensus.  </s>
+<s> Section 1.3 Version Selector/Working Resource: The definition of the term "Working Resource" as opposed to that of "Version Selector" seems confusing to me.  </s>
+<s> The pure fact that the CHECKOUT method is defined to be applicable on both types of resources, does not make them suitable for a direct comparison.  </s>
+<s> Note that the things that can be checked out are version-controlled resources and versions.  </s>
+<s> The result of the checkout is either a checked-out version-controlled resource, or a working resource, respectively.  </s>
+<s> I think it would be better to characterize the term "working resource" independently from "checking out a version selector".  </s>
+<s> I agree.  </s>
+<s> I'll see what I can work up (this is connected to some points you make below).  </s>
+<s> Maybe when defining the term "version selector" you might want to add a note about checking out version selectors.  </s>
+<s> To summarize, I would like to suggest the following wording: Version Selector: When an existing resource is put under version control, it becomes a "version selector" resource.  </s>
+<s> A new version history resource is allocated, whose initial version contains the content and dead properties of the existing resource.  </s>
+<s> A checkout may be applied to version selector.  </s>
+<s> This will make a copy of an existing version of the version history accessible for editing.  </s>
+<s> This might be a bit misleading since a checkout applied to a version selector does not make a copy of anything ... it just changes the state of the version selector from checked-in to checked-out.  </s>
+<s> Checking out a version does make a copy (the working resource).  </s>
+<s> A subsequent checkin will create a new version in the version history.  </s>
+<s> Checking out a version selector is useful for environments where only a single user accesses the version selector.  </s>
+<s> Note though that multiple users can access a shared checked out version selector by using the locking protocol.  </s>
+<s> Also, you need to be careful to not mislead the reader into thinking that checking out a version selector is useful only when a single user is doing development (when workspaces are supported, multiple users each check out their own version selector for a shared version history).  </s>
+<s> Working resource: If multiple users concurrently try to check out the same version selector, they will interfere each other.  </s>
+<s> To avoid this, a checkout can also be directly applied to a version.  </s>
+<s> This will create a new resource, called "working resource".  </s>
+<s> The working resource can be modified and is automatically deleted when it is checked in.  </s>
+<s> The server allocates a distinct new URL for each new working resource.  </s>
+<s> Note that in general, we try not to go into this much detail in the "terminology" section, but rather do so in the "semantics" or "concepts" section.  </s>
+<s> Section 2: WebDAV Versioning Semantics This section discusses rather concepts than semantics, right?  </s>
+<s> I'm happy with either word ... just for interest's sake, why don't you think "semantics" are being described in this section?  </s>
+<s> Section 3: New WebDAV XML Element Attributes As both, the headline itself and the introductory statement to this section suggest, this section should be moved to (a new revision of) the WebDAV protocol.  </s>
+<s> I agree, but unless we defer the versioning protocol until such a new revision is created, we are stuck with defining WebDAV extensions in the versioning protocol when we find they are needed.  </s>
+<s> So as soon as the WebDAV extension is defined, I'm happy to strip this kind of thing from the versioning protocol.  </s>
+<s> I've recently received a suggestion from Yaron that we replace this with tokens for the If header.  </s>
+<s> I think he's right, so it's likely that we'll be killing this section anyway.  </s>
+<s> Section 4: New WebDAV Properties Again, move this to WebDAV.  </s>
+<s> Note that 4.1.3 and 4.1.4 do *not* introduce new WebDAV properties, as the headline claims.  </s>
+<s> Yes, 4.1.3 and 4.1.4 just got put there because there seemed to be no place better to put them.  </s>
+<s> Section 4.4: DAV:supported-method-set  </s>
+<s> method-name type: a type in the DAV://METHODS/ namespace  </s>
+<s> In general, this does not work.  </s>
+<s> ... Personally, I would prefer a syntax like: This would be fine with me.  </s>
+<s> I'll make that change if nobody objects.  </s>
+<s> Section 4.6: DAV:supported-report-set Same problem as in section 4.5.  </s>
+<s> However, this is currently independent from WebDAV and hence can and should be fixed, e.g.: One reason DeltaV (and WebDAV) use this approach is that it allows for consistent use of namespaces, i.e. so you can have your XML parser to namespace resolution of these report names.  </s>
+<s> If one made the change you suggest, it would have to be something like: Section 5.1.2:  </s>
+<s> DAV:predecessor-set (protected), Section 5.1.3:  </s>
+<s> DAV:successor-set (protected) It is very important that the server really maintains the order of the DAV:href elements, as noted for the predecessor set.  </s>
+<s> But the successor set should also be maintained.  </s>
+<s> Think for example of graphically displaying a revision graph.  </s>
+<s> You really do not want the branches of the revision graph to be aligned differently each time the graph is re-displayed.  </s>
+<s> Moreover, an application might want to designate the first DAV:href element of the successor set to continue the main development branch.  </s>
+<s> Unlike the DAV:predecessor-set (which is set by the client), the DAV:successor-set is a query (the inverse of DAV:predecessor-set) computed by the server, and constraining the order of the results of this computation would place an (in my view) unacceptable constraint on server implementations.  </s>
+<s> If a server wants to interoperate with multiple clients, it should use an activity to capture the "main branch", and not depend upon some server dependent predecessor set ordering.  </s>
+<s> Section 5.1.4:  </s>
+<s> DAV:checkout-set (protected) This should also be an ordered set maintained by the server.  </s>
+<s> For example, think of a client that chooses to graphically display working resources and checked-out version selectors as part of a revision graph.  </s>
+<s> Or, to give another example, depending on the underlying revision control system, the first element in the set may be a designated candidate to continue the main development branch.  </s>
+<s> Same response as for DAV:successor-set.  </s>
+<s> This is not a client specified property, it is a server computation/query.  </s>
+<s> Section 6: WebDAV Versioning and Existing Headers I think this headline does not express what is following.  </s>
+<s> Personally, I would prefer a wording like: "Versioning Vis-a-Vis WevDAV Headers" or "Impact of Versioning on WebDAV Headers".  </s>
+<s> The new versioning header is still a WebDAV header, so I personally prefer the current title.  </s>
+<s> Anyone else have a preference?  </s>
+<s> Section 7.1.1:  </s>
+<s> Example - GET request with DAV:must-not-be-checked-out response The example contains a CHECKOUT request, not a GET request.  </s>
+<s> Oops!  </s>
+<s> Thanks for catching that.  </s>
+<s> In this example, the request to CHECKOUT /foo.html fails because /foo.html is already checked out  </s>
+<s> ... and /foo.html is a version selector, or because the server chooses not to branch off a new version.  </s>
+<s> If it were those other things, it would have returned a different token in the response body.  </s>
+<s> Section 7.2: OPTIONS  </s>
+<s> If the server supports checking out a version selector  </s>
+<s> i.e. checking out a version selector is an optional feature and should be moved to Optional WebDAV Versioning?  </s>
+<s> We're currently addressing this in a separate thread.  </s>
+<s> My proposal is that support for checking out a version-controlled resource be mandantory (since it is easy for both client-workspace and server-workspace servers to implement).  </s>
+<s> Section 7.3: PUT  </s>
+<s> In the preconditions section, you use the format  </s>
+<s> DAV:some-error-tag/ : Error condition".  </s>
+<s> To be kind,  </s>
+<s> you should introduce the reader to this format or use a more self-explanatory format.  </s>
+<s> OK, what would the more self-explanatory format be?  </s>
+<s> (:-).  </s>
+<s> But more seriously, I agree this needs explanation.  </s>
+<s> I'll add it to the "notational conventions" section.  </s>
+<s> Section 7.4: PROPPATCH  </s>
+<s> DAV:cannot-modify-protected-property/ : An attempt to use PROPPATCH to modify a property (either core or optional) defined by this document as being protected MUST fail.  </s>
+<s> DAV:cannot-modify-unsupported-property/ : An attempt to modify a property defined by this document (either core or optional) whose semantics are not enforced by the server MUST fail.  </s>
+<s> This helps ensure that a client will be notified when it is trying to use a property whose semantics are not supported by the server.  </s>
+<s> What about moving these features to WebDAV?  </s>
+<s> They are probably of generic interest and not versioning specific (assuming that the definition of the term "protected property" also could be moved to WebDAV).  </s>
+<s> When there is a new version of the WebDAV protocol open for editing, I agree we should move it there.  </s>
+<s> Section 9.1: VERSION_CONTROL The logical structure of the rules in this section seems rather weird to me.  </s>
+<s> The section contains the following precondition:  </s>
+<s> DAV:must-be-versionable/ : The request-URL MUST identify a versionable resource, a null resource, or a version selector.  </s>
+<s> Accordingly, I would expect three paragraphs in the beginning of this section: "If the request-URL identifies a versionable resource, then ..." "If the request-URL identifies a null resource, then ..." "If the request-URL identifies a version selector, then ..." A classification into disjunctive sets of cases also is probably less error prone.  </s>
+<s> Some of these conditions apply to more than one of these cases, so with a disjunctive set of cases, we would have to repeat preconditions appearing in other cases, which seems error prone.  </s>
+<s> On the other hand, there are two preconditions that only apply to version controlling a null resource, and those should be grouped together (and currently are not).  </s>
+<s> I'll fix that.  </s>
+<s> Actually, in section 9.1 currently there is only a paragraph about versionable resources.  </s>
+<s> The second paragraph talks about the case when the request *body* identifies a version.  </s>
+<s> The postconditions section, on the other hand, classifies cases thoroughly.  </s>
+<s> Still, I wonder which rules apply when the request-URL identifies a version selector.  </s>
+<s> Section 9.1 only says that  </s>
+<s> the DAV:version-control request body element MUST NOT contain a DAV:version element."  </s>
+<s> (precondition) and:  </s>
+<s> (postcondition) But then, what does a VERSION-CONTROL do at all if the request-URL is a version selector?  </s>
+<s> Nothing.  </s>
+<s> This is here to let a client use the same protocol sequence to put a resource under version control, whether or not the server automatically puts all new resources under version control (which a server is allowed to do).  </s>
+<s> I'll add a sentence to this effect, since I've had that question before.  </s>
+<s> Section 9.2: CHECKOUT  </s>
+<s> A versioning server MUST support either version selector CHECKOUT or version CHECKOUT, and MAY support both.  </s>
+<s> These two concepts should be explained somewhere (e.g. in the terms section or in the introductory section).  </s>
+<s> As far as I understand, version selector CHECKOUT is appropriate only when a single user accesses a versioned resource?  </s>
+<s> And as soon as two or more users want to access it, you need working resources and hence have to apply version CHECKOUT?  </s>
+<s> If so, this should be somewhere explained (e.g. as rationale or concepts, for example in the introduction).  </s>
+<s> I agree that these variants need to be better explained and contrasted.  </s>
+<s> I believe that we should break this up into three categories: public checkouts (in place checkouts, must be supported) client workspaces (working resources, optional) server workspaces (server side workspaces, optional).  </s>
+<s> Possible you might choose leaving version selector CHECKOUT as core versioning feature, but moving version CHECKOUT to optional versioning (preferably as part of the fully fledged versioning as proposed in the beginning of this mail).  </s>
+<s> I agree.  </s>
+<s> This would give us required functionality (public checkouts) and the two options for private checkouts: client workspaces (working resources) and server workspaces  </s>
+<s> I would prefer the following wording: "The content and dead properties of the working resource MUST be initialized with the content and dead properties of the DAV:checked-out version."  </s>
+<s> One could phrase postconditions in the form of "this is the state following the successful execution of the request" or "this is what the server must do to successfully execute this request.  </s>
+<s> Either one works, but we should be consistent, and currently the postconditions are in the first form.  </s>
+<s> I also believe the first form is simpler.  </s>
+<s> If DAV:apply-to-target is specified in the request body, the CHECKOUT is applied to the version identified by the DAV:target of the version selector, and not the version selector itself.  </s>
+<s> For better understanding, I would suggest the following wording:  </s>
+<s> If the request-URL contains a version selector and DAV:apply-to-target is specified in the request body, the CHECKOUT is applied to the version identified by the DAV:target of the version selector, and not the version selector itself.  </s>
+<s> Fine by me.  </s>
+<s> I'll add that in.  </s>
+<s> Section 9.3: CHECKIN The meaning of DAV:keep-checked-out is not just to keep a checked out resource when applying a CHECKIN, but also to perform a subsequent update of the checked out resource's DAV:checked-out property.  </s>
+<s> As far as I understand, this results in a behaviour that is the same as that of a CHECKIN immediately followed by a CHECKOUT (except that in the case of a working resource its URL is recycled).  </s>
+<s> Hence, I would suggest to name this XML element e.g. "DAV:checkpoint" rather than "DAV:keep-checked-out".  </s>
+<s> The term "checkpoint" is used by several CM systems to mean something like a "baseline", so I think DAV:keep-checked-out is less likely to confuse people.  </s>
+<s> Section 9.4: UNCHECKOUT  </s>
+<s> This probably should read: "An UNCHECKOUT request can be applied to a checked-out version selector or working resource to cancel the CHECKOUT."  </s>
+<s> Or should I use DELETE to cancel a version CHECKOUT (though I personally would prefer UNCHECKOUT)?  </s>
+<s> If so, an appropriate note for the reader should be added.  </s>
+<s> I'll add that note.  </s>
+<s> UNCHECKOUT is there primarily to reset the content and dead properties of a checked-out version-controlled resource.  </s>
+<s> For a working resource, a simple DELETE will suffice (there is no modified version-controlled state to reset in that case).  </s>
+<s> Section 9.5: SET_TARGET Typo: "Preconditions:" has a boldface colon.  </s>
+<s> This occurs also in some other sections (e.g. 15.12, 16.1).  </s>
+<s> Thanks for noticing that!  </s>
+<s> I'll get rid of those.  </s>
+<s> Section 10.1: DAV:version-tree-report  </s>
+<s> I would prefer the following wording: The DAV:version-tree-report describes all the descendant versions for a given version in a version history in the form of a nested tree of versions.  </s>
+<s> That would be a functional change, rather than a wording change.  </s>
+<s> Currently DAV:version-tree-report gives you the full report for all versions in the history (i.e. a report rooted at the initial version rather than one at the specified version).  </s>
+<s> Do folks think we want to make that change?  </s>
+<s> We could make this report on version selector be the whole tree, while this report on a version be rooted at that version.  </s>
+<s> ANY value: zero or more property-name elements property-name type: a property type property-name value: none  </s>
+<s> This should be explained more verbosely.  </s>
+<s> !ELEMENT prop (see [RFC2518], section 12.11)  </s>
+<s> Argh! This is definitely not a valid element definition.  </s>
+<s> Since the spec is being read by humans and not XML parsers, we should be OK (:-).  </s>
+<s> But I'm happy to replace the !ELEMENT with English text.  </s>
+<s> Section 10.1.1:  </s>
+<s> Example - DAV:version-tree-report  </s>
+<s> Typo: should be D:predecessor-set/ Thanks for catching that!  </s>
+<s> Section: 16.1 LABEL  </s>
+<s> When comparing two label names to decide if they match or not, a server SHOULD use a case-sensitive octet-by-octet comparison of the two label names.  </s>
+<s> I propose to replace "SHOULD" with "MUST".  </s>
+<s> Otherwise, a client can not be sure, what the server actually does and has to assume the worst case, i.e. case-insensitive match.  </s>
+<s> Yeah, I'd prefer that too, but this was the compromise after a long and 'vigorous' (:-) debate.  </s>
+<s> One hates to say "SHOULD" except as a last resort, and this was one of those cases.  </s>
+<s> !ELEMENT add (label-name) !ELEMENT set (label-name)  </s>
+<s> I still think that the difference between these two elements and their semantics does not get clear.  </s>
+<s> Hmm.  </s>
+<s> Can you identify what mistake a reader could make based on the current definitions?  </s>
+<s> This probably should read:  </s>
+<s> DAV:must-be-version-or-version-selector-or-collection/ : The  </s>
+<s> request-URL MUST identify a version or a version selector or a collection."  </s>
+<s> In general, we consider a Depth:n request to be just a macro for a set of Depth:0 (or non-Depth) requests, whose responses appear separately in a 207.  </s>
+<s> If one of the collections is not a version selector, it MUST return this error token in the 207 response for this particular collection.  </s>
+<s> DAV:must-not-be-checked-out/ : If LABEL is being applied to a version selector, it MUST NOT be checked out.  </s>
+<s> The phrase "it MUST NOT be checked out" is ambigous (noun/verb/adjective phrase or passive voice).  </s>
+<s> For clearity, what about the following:  </s>
+<s> DAV:must-not-be-checked-out/ : Applying LABEL to a version selector  </s>
+<s> MUST fail, if the DAV:checked-out property appears on that version selector."  </s>
+<s> I have tried to consistently use "checked-out" as an adjective and "checked out" as a verb.  </s>
+<s> In this case, I erred (I should have said "checked-out").  </s>
+<s> I'll fix that.  </s>
+<s> Thanks for the great detailed review!! Cheers, Geoff  </s>
+<s> My concern is that this might lead to the document not being useful as a reference.  </s>
+<s> For example, if all of the header definitions are spread throughout the document, it is hard to find the one place where all the header definitions are located.  </s>
+<s> But, I can see the attraction to having functional groupings by option package.  </s>
+<s> Perhaps some hybrid would work.  </s>
+<s> Alternatively, a good index (or appendix listing all of the headers, and the section that defines them) might fix the reference problem.  </s>
+<s> - Jim  </s>
+<s> Agree with these statements, and particularly that indexing/appendixing is the way to deal with the problem.  </s>
+<s> The nice thing about separating the doc into discrete "packages" is that it's easier to make sure each package is a consistent set of features by itself, or to know what other package is relied upon.  </s>
+<s> Lisa  </s>
+<s> From: ietf-dav-versioning-request@w3.org [mailto:ietf-dav-versioning-request@w3.org]On  </s>
+<s> Behalf Of Jim Whitehead Sent: Tuesday, December 05, 2000 3:41 PM Subject: RE: Review of draft-ietf-deltav-versioning-10.4/5  </s>
+<s> OK, that makes it 3 votes in favor of partitioning the doc into discrete packages, and none against.  </s>
+<s> If I have a chance, I'll give it a try and see how it looks.  </s>
+<s> Not sure if I'll be able to get to this before I leave for San Diego though.  </s>
+<s> Cheers, Geoff From: "Lisa Dusseault" lisa@xythos.com  </s>
+<s> Date: Tue, 5 Dec 2000 16:00:26 -0800 Agree with these statements, and particularly that indexing/appendixing is the way to deal with the problem.  </s>
+<s> The nice thing about separating the doc into discrete "packages" is that it's easier to make sure each package is a consistent set of features by itself, or to know what other package is relied upon.  </s>
+<s> Lisa  </s>
+<s> From: ietf-dav-versioning-request@w3.org [mailto:ietf-dav-versioning-request@w3.org]On  </s>
+<s> Behalf Of Jim Whitehead Sent: Tuesday, December 05, 2000 3:41 PM Subject: RE: Review of draft-ietf-deltav-versioning-10.4/5  </s>
+<s> Since we're trying to take the DeltaV spec to last call shortly after the Dec IETF working group meeting, it may be too late to split it up now.  </s>
+<s> I suggest we leave it alone for the working group meeting and see what the group wants to do and what effect it might have on our ability to go last call.  </s>
+<s> Just to make sure there is no confusion, I would not be removing anything from the current document, but rather creating a new document (called deltav-versioning-core) that had the subset of the versioning protocol that was mandantory.  </s>
+<s> The main impact this would have on the current document is that it would allow us to unify the terminology section (since there would be a separate document for folks only interested in "core").  </s>
+<s> I won't have time to create this subset document before the meeting, so I'll create it only if we decide at the working group meeting that this is the right thing to do.  </s>
+<s> Cheers, Geoff  </s>
+<s> Since we're trying to take the DeltaV spec to last call shortly after the Dec IETF working group meeting, it may be too late to split it up now.  </s>
+<s> I suggest we leave it alone for the working group meeting and see what the group wants to do and what effect it might have on our ability to go last call.  </s>
+<s> "what the group wants to do" ... I think this has been pretty clear: split the doc into core and optional/advanced.  </s>
+<s> The working group meeting isn't going to change that since it isn't authoritative.  </s>
+<s> This list is, and that has been the consensual decision so far.  </s>
+<s> Cheers, -g Greg Stein, http://www.lyra.org/  </s>
+<s> If the server supports checking out a version selector  </s>
+<s> A versioning server MUST support either version selector CHECKOUT or version CHECKOUT, and MAY support both.  </s>
+<s> Again: I disagree with this position.  </s>
+<s> Especially now that you're trying to attach a "mandatory" condition onto it.  </s>
+<s> What *should* be mandatory is that the client obeys the Location: header if the server returns one on a CHECKOUT.  </s>
+<s> This automatically provides for both "public checkouts" and "client workspaces" (to use your terms).  </s>
+<s> If the server does not return a Location, then you have a "public checkout."  </s>
+<s> If the server returns a Location pointing at a working resource, then you have a "client workspace."  </s>
+<s> This also satisfies your assumption that it is "easy."  </s>
+<s> I'll tell you right now that a public checkout is NOT easy for me (i.e. you're assuming too much).  </s>
+<s> Returning a Location header is cake.  </s>
+<s> Why do you suggest that a client should ignore a returned Location header?  </s>
+<s> Server workspaces are set up by the client manually, and that support is detectable through OPTIONS.  </s>
+<s> Cheers, -g Greg Stein, http://www.lyra.org/  </s>

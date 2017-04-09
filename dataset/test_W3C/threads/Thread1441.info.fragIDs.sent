@@ -1,0 +1,81 @@
+<s> I've been trying to understand how the working resource feature works with merging and forking, and I've got a few questions:  </s>
+<s> 1. For merging &amp; client workspaces, should the DAV:checked-out-for-merge merge postcondition cover the case that the DAV:checkout element  </s>
+<s> included a DAV:apply-to-version? In particular, should it say that a  </s>
+<s> Location: header must be in the response, and that this header contains the URL of the working resource created by the checkout?  </s>
+<s> 2. A merge target is a version-controlled resource.  </s>
+<s> Was it unnecessary to allow a merge target to be either a version-controlled resource or a checked-out resource (e.g. a working resource)?  </s>
+<s> 3. How does the working resource feature work for a forking server?  </s>
+<s> For example, suppose that http://repo.webdav.org/wr/1 and created by requesting a checkout on a version controlled resource, the request.  </s>
+<s> The DAV:checked-in property of the vcr is DAV:checked-out property of each of the working resources.  </s>
+<s> Each working resource has it's DAV:auto-update property set to the vcr URL.  </s>
+<s> Now suppose that the first working resource (http://repo.webdav.org/wr/1) is checked in, creating version http://repo.webdav.org/his/1/ver/V6, and that postcondition DAV:auto-update applies - the DAV:checked-in property of the vcr is now set to http://repo.webdav.org/his/1/ver/V6.  </s>
+<s> Does this then mean that it is impossible to ever check in the second working resource, http://repo.webdav.org/wr/2, as it's DAV:checked-out property points to http://repo.webdav.org/his/1/ver/V5, and precondition DAV:no-overwrite-by-auto-update prevents the checkin?  </s>
+<s> The DAV:auto-update property is protected, and so can't be changed by a client PROPPATCH.  </s>
+<s> 4. Looks like there's a typo in draft 16, section 9.4 - the CHECKIN 'forking' preconditions reference DAV:checkout-... conditions.  </s>
+<s> Thanks, Alison Macmillan The statements and opinions expressed here are my own  </s>
+<s> and do not necessarily represent those of Oracle Corporation.  </s>
+<s> Sorry - please ignore this question.  </s>
+<s> I guess the checked-out resource URL(s) are returned in the DAV:merged-set response element, (and it also covers the case of merging more than one merge version + target).  </s>
+<s> The statements and opinions expressed here are my own  </s>
+<s> and do not necessarily represent those of Oracle Corporation.  </s>
+<s> Yes, it probably would be worth allowing the merge target to be  </s>
+<s> a working resource.  </s>
+<s> I'll put that on the "fixes to draft 17" list.  </s>
+<s> You have two choices:  </s>
+<s> - Do what you would do on a non-forking server, i.e. checkout the new  </s>
+<s> version to get a new working resource, merge the contents of your old  </s>
+<s> working resource into that new working resource, delete the old working resource, and then checkin the new working resource (and if someone else has checked in a new version since your checkout, repeat the process).  </s>
+<s> - Use UPDATE to change the DAV:checked-in version of the VCR to  </s>
+<s> be .../V5 and then checkin.  </s>
+<s> Yes, that is fixed in draft 17. Cheers, Geoff  </s>
+<s> Or, could you also just merge from the DAV:checked-in version of the VCR to  </s>
+<s> the working resource, and then check in the working resource?  </s>
+<s> (Now that a  </s>
+<s> working resource can be a merge target).  </s>
+<s> Thanks, Alison.  </s>
+<s> The statements and opinions expressed here are my own  </s>
+<s> and do not necessarily represent those of Oracle Corporation.  </s>
+<s> From: Alison Macmillan [mailto:alison.macmillan@oracle.com]  </s>
+<s> Or, could you also just merge from the DAV:checked-in version of the VCR  </s>
+<s> to  </s>
+<s> the working resource, and then check in the working resource?  </s>
+<s> (Now that a  </s>
+<s> working resource can be a merge target).  </s>
+<s> Not by the current protocol, since the DAV:no-overwrite-by-auto-update postcondition states: If the DAV:auto-update property for the checked-out resource identifies a version-controlled resource, the DAV:checked-out property of the checked-out resource MUST identify the same version as the DAV:checked-in property of that version-controlled resource.  </s>
+<s> We could relax that constraint to say: If the DAV:auto-update property for the checked-out resource  </s>
+<s> identifies a version-controlled resource, at least one of the versions identified by the DAV:predecessor-set property of the checked-out resource MUST identify a version that is either the same as or a descendant of the version identified by the DAV:checked-in property of that version-controlled resource.  </s>
+<s> If there are no objections, I'll place this on the "editorial fix" list for draft 17.  </s>
+<s> Cheers, Geoff  </s>
+<s> [to checkin a working resource whose DAV:checked-out version does  </s>
+<s> not  </s>
+<s> old  </s>
+<s> VCR  </s>
+<s> that a  </s>
+<s> I object to this -- it is certainly not an editorial fix.  </s>
+<s> The purpose of this postcondition is to prevent the auto-update overwriting  </s>
+<s> changes made by other clients, by ensuring that the update is being applied  </s>
+<s> to the same state of the resource that was checked-out.  </s>
+<s> With this proposed  </s>
+<s> rewrite data can be lost unwittingly.  </s>
+<s> Regards, Tim  </s>
+<s> [to checkin a working resource whose DAV:checked-out version does  </s>
+<s> How are other client's changes overwritten?  </s>
+<s> Doesn't the constraint on the value of DAV:predecessor-set indicate that the appropriate merge has happened?  </s>
+<s> R'gds, Alison.  </s>
+<s> The statements and opinions expressed here are my own  </s>
+<s> and do not necessarily represent those of Oracle Corporation.  </s>
+<s> I agree with Alison.  </s>
+<s> If the DAV:checked-in version of the VCR is an ancestor of the checked-out resource, by definition the content of the VCR has been "included" in the content of the checked-out resource (that's the defined semantics of "ancestor").  </s>
+<s> This could happen because: - the UPDATE method was used to set the DAV:checked-in version to be a predecessor of the current DAV:checked-in version - the owner of the checked-out resource explicitly added the current DAV:checked-in version to the DAV:predecessor-set of the checked-out resource (assumedly, after merging the content of the DAV:checked-in version into the content of the checked-out resource).  </s>
+<s> In either case, it should be legal for the checked-out resource to  </s>
+<s> be checked in, which is what the revised postcondition allows.  </s>
+<s> Cheers, Geoff  </s>
+<s> [to checkin a working resource whose DAV:checked-out version does  </s>
+<s> overwriting  </s>
+<s> applied  </s>
+<s> proposed  </s>
+<s> How are other client's changes overwritten?  </s>
+<s> Doesn't the constraint on the value of DAV:predecessor-set indicate that the appropriate merge has happened?  </s>
+<s> R'gds, Alison.  </s>
+<s> The statements and opinions expressed here are my own and do not necessarily represent those of Oracle Corporation.  </s>
+<s> Ok, I agree -- I had to draw it out to convince myself g Regards, Tim  </s>

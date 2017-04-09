@@ -1,0 +1,50 @@
+<s> Is there any policy on object ownership for languages like C++ which do not have native reference counting support, or are the objects expected to be reference counted?  </s>
+<s> The spec could be read to imply that Node insertion passes ownership to the containing node and removal/replacement returns ownership to the caller.  </s>
+<s> Is this a reasonable interpretation?  </s>
+<s> Regards _-_|\ Don Robertson (Two Dogmas) robertsn[at]ozy.dec.com v Gold Coast, QLD, 4229, Australia  </s>
+<s> I'm not sure if this is exactly what you're asking, but here's the semi-official, current (as far as I know) DOM position on memory management:  </s>
+<s> A. The DOM specification does not define any methods related to memory management (such as to release an object).  </s>
+<s> This is because while the DOM is a programming language independent API, the way one deals with memory is very language specific.  </s>
+<s> Therefore any method related to memory management, that is required by a particular language, needs to be specified in that language binding.  </s>
+<s> Due to the way memory is managed in Java and ECMAScript, none of the bindings included in the DOM specification have such methods.  </s>
+<s> By extension to the question of object ownership, this MAY be an issue that those devising a COM or C++ language binding for the DOM will have to address.  </s>
+<s> Basically, the DOM WG itself won't be defining those language bindings (except to the extent that one can generate a C++ binding from the CORBA IDL); As I understand it, Microsoft will be submitting a COM IDL binding to the W3C at some point, and some organization could presumably do  </s>
+<s> the same for "raw" C++.  </s>
+<s> Basically this is a loose end that the DOM spec  </s>
+<s> itself will not address, but hopefully people of good will will coordinate to define other language bindings that define language-specific DOM extensions in a "standard" way.  </s>
+<s> anything into the spec with this thought in mind.  </s>
+<s> Can you point to a particular bit of the spec that needs clarifying?  </s>
+<s> Mike  </s>
+<s> I think it is implicit that node insertion passes ownership to the tree/parent-node regardless of the language or memory management being used.  </s>
+<s> It is unreasonable for a DOM user to maintain references to all nodes inserted into a given tree such that the user is required to explicitly delete/release all the inserted nodes when the tree/parent-node is deleted/released.  </s>
+<s> When the tree/parent-node is deleted/released, assuming there are no remaining references to any children, all those children will be inaccessible (because the only way to get to them was just deleted/released) and the user will have no way to otherwise delete/release them.  </s>
+<s> The tree/parent-node must, then, delete/release them to not have working set bloat or a memory leak.  </s>
+<s> Actually, as I write this, I'm wondering if it is possible to implement the DOM without using a reference counting model.  </s>
+<s> Above I said that the parent node must release/delete any children.  </s>
+<s> If a non-reference counting model is used, how is the parent to know to delete a child or not?  </s>
+<s> Perhaps I have spent too much time writing apps which use reference counting!  </s>
+<s> Can anyone address a memory management scheme (other than garbage collection) for the DOM where reference counting is NOT used which addresses the example above?  </s>
+<s> - Eric  </s>
+<s> Does language to this effect need to be in the spec?  </s>
+<s> This still "smells" to me like language-specific memory management that MIGHT have to be discussed in the language bindings, but we've agreed doesn't belong in the spec.  </s>
+<s> Am I missing something?  </s>
+<s> Mike  </s>
+<s> used.  </s>
+<s> It just seems that no matter what memory management model one uses, there is an implicit ownership model which has to exist.  </s>
+<s> Strictly, there is no need to mention it, but because it is so implicit, perhaps it should be mentioned for the sake of users and implementors.  </s>
+<s> - Eric  </s>
+<s> Purely copying.  </s>
+<s> Various forms of GC are possible in C/C++ as well.  </s>
+<s> It's already defined by the OMG-IDL ... all those "in" parameters are passed by reference.  </s>
+<s> (I'd argue to point this out, referring to CORBA for the full details.) So for example consider module DOM { interface Node { Node insertBefore (in Node newChild, in Node refChild) raises NotMyChildException; In all language bindings, the caller retains ownership of the target nodes as well as the newChild and refChild nodes.  </s>
+<s> That's before, during, and after the calls.  </s>
+<s> If the implementation wants to retain ownership (as it must in this case) it will retain a reference.  </s>
+<s> In reference counted systems (CORBA C/C++ bindings, COM, etc) that's increasing a reference count.  </s>
+<s> In GC'd systems like Java, it's just saving the (pointer to) the object.  </s>
+<s> If the caller wants to give up ownership of the target nodes, it must release the reference: decrement a reference count, null out the GC'able object pointer, etc. - Dave  </s>
+<s> Hi! Here is an URL for CORBA's LifeCycle objects: In the "Index" section, you see the word "LifeCycle"... Click it and choose between PDF and PS formats.  </s>
+<s> Cheers ANOQ of the Sun / Johnny Andersen E-Mail: anoq@vip.cybercity.dk or anoq@berlin-consortium.org Homepage: http://users.cybercity.dk/~ccc25861/  </s>
+<s> Note that Lifecycle is _very_ different stuff than what I mentioned; it's several layers above what IDL itself defines.  </s>
+<s> Better to look at the IDL chapter in the CORBA 2.2 spec on that site: http://www.omg.org/corba/cichpter.htm has it (and the rest).  </s>
+<s> Also, the sections on language mappings; C, C++, and Java are the most relevant for DOM right now, I think.  </s>
+<s> - Dave  </s>

@@ -1,0 +1,248 @@
+<s> I expect to be submitting the following to distApp within the next day or  </s>
+<s> two as a proposed new issue.  </s>
+<s> I think the note is self-explanatory, but I  </s>
+<s> wanted to show it in advance to those of you who have been involved in  </s>
+<s> informal discussion of this issue, and also to one or two more whom I  </s>
+<s> thought might be interested.  </s>
+<s> Comments welcome (but I will mostly be at  </s>
+<s> DevCon the next few days, and then at Schema WG Monday and Tues.  </s>
+<s> If you  </s>
+<s> think this is good enough to start discussion on distApp, let me know and  </s>
+<s> I'll put it there asap.  </s>
+<s> We can decide what if anything to actually do  </s>
+<s> with the proposal once that's done.) Thanks.  </s>
+<s> Noah At the face-to-face on the West Coast at SAS, several us noticed and began privately discussing what we now believe is a problem that needs at least  </s>
+<s> some attention in the specification.  </s>
+<s> Specifically, there is a use case  </s>
+<s> that more or less all of us have come to believe is important, and for  </s>
+<s> which the specification is at best ambiguous and at worst in capable of  </s>
+<s> meeting without republication.  </s>
+<s> Several of us have come up with a proposed  </s>
+<s> resolution that we believe to be straightforward, low risk, and within  </s>
+<s> the bounds of what we can reasonably do without going back to last call.  </s>
+<s> I  </s>
+<s> am indebted to Mark Jones for first pointing this out, and to numerous  </s>
+<s> others including Henrik and Marc Hadley for helpful discussion and comment.  </s>
+<s> Particular thanks to Henrik for helping me to refine early drafts of this note.  </s>
+<s> The Problem Among the reasons that we have the "next" role is for headers that carry  </s>
+<s> information to be available to all downstream nodes.  </s>
+<s> One of the simplest  </s>
+<s> scenarios would be to have such a header that would travel with the  </s>
+<s> message, to be available to those nodes that "understand" the header, and  </s>
+<s> to be ignored and passed on by nodes that do not understand it.  </s>
+<s> As a  </s>
+<s> simple example, I might want to put in the header indicating the time at  </s>
+<s> which the message was originally sent.  </s>
+<s> More substantively, I might wish to  </s>
+<s> put in a digital signature, to be checked by those who care, and ignored but retained by others.  </s>
+<s> SOAP 1.2 as proposed cannot support these simple scenarios.  </s>
+<s> Why?  </s>
+<s> Because  </s>
+<s> section 2.7.1 makes clear that a forwarding intermediary MUST remove from  </s>
+<s> the message all headers targeted to it, and can trigger reinsertion only  </s>
+<s> by processing and understanding a header.  </s>
+<s> In the case where you don't  </s>
+<s> understand the header, you must remove it.  </s>
+<s> It's essential to note that we  </s>
+<s> are considering the case of mustUnderstand='false'; there is no problem with the 'true' case.  </s>
+<s> Approaches to Resolving the Problem Discussion of this problem has been going on at a low level for awhile, in part because some of us have been trying to decide whether the existing  </s>
+<s> specification can somehow be made to do the right thing.  </s>
+<s> Given that we  </s>
+<s> are in last call, that would obviously be a desirable approach.  </s>
+<s> So, here  </s>
+<s> I briefly outline some of the approaches that were considered, and then in  </s>
+<s> the next section I propose one that seems to some of us to be the best.  </s>
+<s> It is tempting to ask whether a user might be able to design specific  </s>
+<s> headers and/or roles that would meet the need.  </s>
+<s> In other words: if I  </s>
+<s> define a role and some headers to use with it, then I could say that you  </s>
+<s> wouldn't assume that role unless you knew the specification for at least  </s>
+<s> one of the headers, and that specification would implement a feature to  </s>
+<s> change the relay rules for that role.  </s>
+<s> My personal conclusion is that this  </s>
+<s> is possible in principle, but would not be practical when one considers  </s>
+<s> the way that most SOAP software will in fact be built.  </s>
+<s> Reason: the core  </s>
+<s> rules regarding the relaying of headers are baked into section 2.7.1, and  </s>
+<s> in practice will often be implemented by general-purpose SOAP middleware.  </s>
+<s> The key point is that such middleware will in general be written to treat  </s>
+<s> all user-defined roles identically.  </s>
+<s> Allowing particular roles to change  </s>
+<s> the relay rules requires that such middleware have pluggable handlers that  </s>
+<s> key on specific role names, and this is something that few of us anticipate doing.  </s>
+<s> There is another alternative which is also coherent, and indeed is more  </s>
+<s> powerful than the one proposed below, but which seems to be overkill and  </s>
+<s> would probably take us back to last call.  </s>
+<s> That alternative would be to  </s>
+<s> introduce a new attribute for use on header entries along the lines of  </s>
+<s> relayIfNotProcessed='true'. Thus:  </s>
+<s> nrm:myHeader role="..any role you like..."  </s>
+<s> mustUnderstand="false" relayIfNotProcessed="true"  </s>
+<s> This seems to work, and has the capability of working with any role.  </s>
+<s> It  </s>
+<s> just seems like more power and complexity than we need to deal with the  </s>
+<s> specific use case.  </s>
+<s> If we were to get serious about this proposal, there would be several details requiring refinement, but for now  </s>
+<s> I am just suggesting that this is not the direction to go.  </s>
+<s> A Proposal Having done the above analysis, we conclude that: * The use case is important that we must find a way to meet it * The draft as written doesn't give explanation of how * We need a simple, minimally invasive fix to what we have We propose one new builtin role to be called:  </s>
+<s> In most respects, this role would be like any other.  </s>
+<s> Any intermediary or ultimate receiver MAY choose to assume this role.  </s>
+<s> The one significant difference, and it is one that we believe has to be baked into the specification from day one, is that section 2.7.1 will be changed as follows: Forwarding SOAP intermediaries MUST process the message according to the SOAP processing model defined in 2.6 Processing SOAP Messages.  </s>
+<s> They MUST also remove from the SOAP message all SOAP header blocks targeted at themselves, prior to forwarding, regardless of whether these header blocks were processed or ignored.  </s>
+<s> In addition, forwarding SOAP intermediaries MUST also obey the specification for the SOAP forwarding feature being used.  </s>
+<s> The specification for such a feature MUST describe the required semantics, including the rules describing how the forwarded message is constructed.  </s>
+<s> Such rules MAY describe placement of inserted or reinserted SOAP header blocks.  </s>
+<s> Inserted SOAP header blocks might be indistinguishable from one or more of the header blocks removed above.  </s>
+<s> Forwarding SOAP intermediaries MUST process the message according to the SOAP processing model defined in 2.6 Processing SOAP Messages.  </s>
+<s> In addition, when generating a SOAP message for the purpose of forwarding, they MUST: * For any processed SOAP header block, as well as for ignored SOAP header blocks targeted to the node using a role other than remove the header block prior to forwarding * Retain all SOAP header blocks that were targeted at the forwarding node using the role "http://www.w3.org/2002/06/soap-envelope/role/relay" but ignored during processing.  </s>
+<s> In addition, forwarding SOAP intermediaries MUST also obey the specification for the SOAP forwarding feature being used.  </s>
+<s> The specification for such a feature MUST describe the required semantics, including the rules describing how the forwarded message is constructed.  </s>
+<s> Such rules MAY describe placement of inserted or reinserted SOAP header blocks.  </s>
+<s> Inserted SOAP header blocks might be indistinguishable from one or more of the header blocks removed above.  </s>
+<s> [1] http://www.w3.org/2000/xp/Group/2/06/LC/soap12-part1.html#forwardinter  </s>
+<s> Noah Mendelsohn Voice: 1-617-693-4036 One Rogers Street Cambridge, MA 02142  </s>
+<s> Essentially, you're collapsing "relayIfNotProcessed" and "role=next" into "role=relay" (with the combined semantics)?  </s>
+<s> I'm fine if this avoids us going back to WD (although I'd prefer the  </s>
+<s> more general option "relayIfNotProcessed" [actually relay="..." with a variety of options]).  </s>
+<s> Isn't there also the case of relaying even when processed?  </s>
+<s> Yes, currently this is supported by reinsertion, but is header  </s>
+<s> specific.  </s>
+<s> Doesn't your description of a generic SOAP middleware  </s>
+<s> also call for doing this automatically at the SOAP middleware level?  </s>
+<s> This brings another question: can an intermediary change a role before forwarding?  </s>
+<s> I.e. could I decide to change "role=relay" into "role=next"?  </s>
+<s> Anyway, this goes into the right direction, and I'm all for forwarding to distApp (but no relay ;-))!  </s>
+<s> Jean-Jacques.  </s>
+<s> PS.  </s>
+<s> I think we will also need to list "relay" into section "SOAP Roles and SOAP Nodes".  </s>
+<s> Another alternative solution we had discussed was: (a) retain non-mandatory headers if they are not processed at a node, and (b) if a header is processed then re-insertion is dictated by the spec for the header.  </s>
+<s> Essentially this make 'relay' the default behavior for non-mandatory headers (mustUnderstand='false') that are not processed.  </s>
+<s> This avoids defining another role (http://www.w3.org/2002/06/soap-envelope/role/relay), and makes sense  </s>
+<s> semantically since a given role ('next' or otherwise) can be assumed by multiple nodes, but some may not have deployed software (for  </s>
+<s> whatever reason) at any given point in time.  </s>
+<s> Optional headers would  </s>
+<s> simply be processed by the first node actually equipped to do so which  </s>
+<s> seems like the right semantics anyway.  </s>
+<s> Is there a reason why this isn't preferable to the role=relay formulation?  </s>
+<s> Also, the role=relay solution leaves us with a strange looking edge case of hdr mustUnderstand='true' role='http://www.w3.org/2002/06/soap-envelope/role/relay' , which will get processed by any node wanted to act as 'relay', but in fact will never relay at all!  </s>
+<s> --mark Mark A. Jones AT&amp;T Labs Shannon Laboratory Room 2A-02 180 Park Ave.  </s>
+<s> Florham Park, NJ 07932-0971 From: noah_mendelsohn@us.ibm.com mgudgin@microsoft.com,  </s>
+<s> moreau@crf.canon.fr,  </s>
+<s> Nilo.Mitra@am1.ericsson.se,  </s>
+<s> jones@research.att.com, fallside@us.ibm.com, gdaniels@macromedia.com  </s>
+<s> Subject: Proposal for new last call issue: Some unprocessed headers should stay Date: Wed, 9 Oct 2002 22:57:14 -0400  </s>
+<s> I expect to be submitting the following to distApp within the next day or  </s>
+<s> two as a proposed new issue.  </s>
+<s> I think the note is self-explanatory, but I  </s>
+<s> wanted to show it in advance to those of you who have been involved in  </s>
+<s> informal discussion of this issue, and also to one or two more whom I  </s>
+<s> thought might be interested.  </s>
+<s> Comments welcome (but I will mostly be at  </s>
+<s> DevCon the next few days, and then at Schema WG Monday and Tues.  </s>
+<s> If you  </s>
+<s> think this is good enough to start discussion on distApp, let me know and  </s>
+<s> I'll put it there asap.  </s>
+<s> We can decide what if anything to actually do  </s>
+<s> with the proposal once that's done.) Thanks.  </s>
+<s> Noah At the face-to-face on the West Coast at SAS, several us noticed and began privately discussing what we now believe is a problem that needs at least  </s>
+<s> some attention in the specification.  </s>
+<s> Specifically, there is a use case  </s>
+<s> that more or less all of us have come to believe is important, and for  </s>
+<s> which the specification is at best ambiguous and at worst in capable of  </s>
+<s> meeting without republication.  </s>
+<s> Several of us have come up with a proposed  </s>
+<s> resolution that we believe to be straightforward, low risk, and within  </s>
+<s> the bounds of what we can reasonably do without going back to last call.  </s>
+<s> I  </s>
+<s> am indebted to Mark Jones for first pointing this out, and to numerous  </s>
+<s> others including Henrik and Marc Hadley for helpful discussion and comment.  </s>
+<s> Particular thanks to Henrik for helping me to refine early drafts of this note.  </s>
+<s> The Problem Among the reasons that we have the "next" role is for headers that carry  </s>
+<s> information to be available to all downstream nodes.  </s>
+<s> One of the simplest  </s>
+<s> scenarios would be to have such a header that would travel with the  </s>
+<s> message, to be available to those nodes that "understand" the header, and  </s>
+<s> to be ignored and passed on by nodes that do not understand it.  </s>
+<s> As a  </s>
+<s> simple example, I might want to put in the header indicating the time at  </s>
+<s> which the message was originally sent.  </s>
+<s> More substantively, I might wish to  </s>
+<s> put in a digital signature, to be checked by those who care, and ignored but retained by others.  </s>
+<s> SOAP 1.2 as proposed cannot support these simple scenarios.  </s>
+<s> Why?  </s>
+<s> Because  </s>
+<s> section 2.7.1 makes clear that a forwarding intermediary MUST remove from  </s>
+<s> the message all headers targeted to it, and can trigger reinsertion only  </s>
+<s> by processing and understanding a header.  </s>
+<s> In the case where you don't  </s>
+<s> understand the header, you must remove it.  </s>
+<s> It's essential to note that we  </s>
+<s> are considering the case of mustUnderstand='false'; there is no problem with the 'true' case.  </s>
+<s> Approaches to Resolving the Problem Discussion of this problem has been going on at a low level for awhile, in part because some of us have been trying to decide whether the existing  </s>
+<s> specification can somehow be made to do the right thing.  </s>
+<s> Given that we  </s>
+<s> are in last call, that would obviously be a desirable approach.  </s>
+<s> So, here  </s>
+<s> I briefly outline some of the approaches that were considered, and then in  </s>
+<s> the next section I propose one that seems to some of us to be the best.  </s>
+<s> It is tempting to ask whether a user might be able to design specific  </s>
+<s> headers and/or roles that would meet the need.  </s>
+<s> In other words: if I  </s>
+<s> define a role and some headers to use with it, then I could say that you  </s>
+<s> wouldn't assume that role unless you knew the specification for at least  </s>
+<s> one of the headers, and that specification would implement a feature to  </s>
+<s> change the relay rules for that role.  </s>
+<s> My personal conclusion is that this  </s>
+<s> is possible in principle, but would not be practical when one considers  </s>
+<s> the way that most SOAP software will in fact be built.  </s>
+<s> Reason: the core  </s>
+<s> rules regarding the relaying of headers are baked into section 2.7.1, and  </s>
+<s> in practice will often be implemented by general-purpose SOAP middleware.  </s>
+<s> The key point is that such middleware will in general be written to treat  </s>
+<s> all user-defined roles identically.  </s>
+<s> Allowing particular roles to change  </s>
+<s> the relay rules requires that such middleware have pluggable handlers that  </s>
+<s> key on specific role names, and this is something that few of us anticipate doing.  </s>
+<s> There is another alternative which is also coherent, and indeed is more  </s>
+<s> powerful than the one proposed below, but which seems to be overkill and  </s>
+<s> would probably take us back to last call.  </s>
+<s> That alternative would be to  </s>
+<s> introduce a new attribute for use on header entries along the lines of  </s>
+<s> relayIfNotProcessed='true'. Thus:  </s>
+<s> nrm:myHeader role="..any role you like..."  </s>
+<s> mustUnderstand="false" relayIfNotProcessed="true"  </s>
+<s> This seems to work, and has the capability of working with any role.  </s>
+<s> It  </s>
+<s> just seems like more power and complexity than we need to deal with the  </s>
+<s> specific use case.  </s>
+<s> If we were to get serious about this proposal, there would be several details requiring refinement, but for now  </s>
+<s> I am just suggesting that this is not the direction to go.  </s>
+<s> A Proposal Having done the above analysis, we conclude that: * The use case is important that we must find a way to meet it * The draft as written doesn't give explanation of how * We need a simple, minimally invasive fix to what we have We propose one new builtin role to be called:  </s>
+<s> In most respects, this role would be like any other.  </s>
+<s> Any intermediary or ultimate receiver MAY choose to assume this role.  </s>
+<s> The one significant difference, and it is one that we believe has to be baked into the specification from day one, is that section 2.7.1 will be changed as follows: Forwarding SOAP intermediaries MUST process the message according to the SOAP processing model defined in 2.6 Processing SOAP Messages.  </s>
+<s> They MUST also remove from the SOAP message all SOAP header blocks targeted at themselves, prior to forwarding, regardless of whether these header blocks were processed or ignored.  </s>
+<s> In addition, forwarding SOAP intermediaries MUST also obey the specification for the SOAP forwarding feature being used.  </s>
+<s> The specification for such a feature MUST describe the required semantics, including the rules describing how the forwarded message is constructed.  </s>
+<s> Such rules MAY describe placement of inserted or reinserted SOAP header blocks.  </s>
+<s> Inserted SOAP header blocks might be indistinguishable from one or more of the header blocks removed above.  </s>
+<s> Forwarding SOAP intermediaries MUST process the message according to the SOAP processing model defined in 2.6 Processing SOAP Messages.  </s>
+<s> In addition, when generating a SOAP message for the purpose of forwarding, they MUST: * For any processed SOAP header block, as well as for ignored SOAP header blocks targeted to the node using a role other than remove the header block prior to forwarding * Retain all SOAP header blocks that were targeted at the forwarding node using the role "http://www.w3.org/2002/06/soap-envelope/role/relay" but ignored during processing.  </s>
+<s> In addition, forwarding SOAP intermediaries MUST also obey the specification for the SOAP forwarding feature being used.  </s>
+<s> The specification for such a feature MUST describe the required semantics, including the rules describing how the forwarded message is constructed.  </s>
+<s> Such rules MAY describe placement of inserted or reinserted SOAP header blocks.  </s>
+<s> Inserted SOAP header blocks might be indistinguishable from one or more of the header blocks removed above.  </s>
+<s> [1] http://www.w3.org/2000/xp/Group/2/06/LC/soap12-part1.html#forwardinter  </s>
+<s> Noah Mendelsohn Voice: 1-617-693-4036 One Rogers Street Cambridge, MA 02142  </s>
+<s> Mark, I think the main insight is that we need both mechanisms: some header  </s>
+<s> blocks CANNOT be forwarded if ignored and others can.  </s>
+<s> It depends on the semantics.  </s>
+<s> As a result, which way the default behavior falls doesn't  </s>
+<s> really address the deeper problem.  </s>
+<s> Given this, and that flipping the default will make the overall impact bigger, I would advise against doing this.  </s>
+<s> Regarding the hdr mustUnderstand='true' role='http://www.w3.org/2002/06/soap-envelope/role/relay' case, we don't say that it will never get forwarded, merely that the forwarding is defined by the header block.  </s>
+<s> Henrik  </s>
+<s> I agree that the relay role has a more narrow scope but it also avoids many of the edge cases that another attribute would create like the following: hfn:myHeader role="..any role you like..." mustUnderstand="true" relayIfNotProcessed="true" and hfn:myHeader role="none" relayIfNotProcessed="false" and hfn:myHeader role="ultimate receiver" relayIfNotProcessed="true" Given that it is strictly speaking only a small subset of this functionality we are after, I would at this time tend to lean towards a more targeted (punt intended) approach.  </s>
+<s> I think it is a reasonable assumption that any header block which may be processed and forwarded should define that functionality itself because the exact result of the forwarding will likely be a result of the processing of that header block.  </s>
+<s> ...and avoiding going back to WD is definitely a goal!  </s>
+<s> Henrik  </s>

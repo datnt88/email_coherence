@@ -1,0 +1,41 @@
+<s> From: ext Jeremy Carroll [mailto:jjc@hpl.hp.com] Sent: 02 September, 2002 21:15 Subject: Re: Datatyping: moving away from "literal as 3-part thing" to "literal as dt+opaque bit"  </s>
+<s> [Patrick said, at the telecon, "xml:lang infects everything" as an example of this view] There should be no "infection" of new types by stuff like language properties,  </s>
+<s> The unicode string in an XML document which gives the lexical form of a datatype literal may well be in scope of an xml:lang declaration.  </s>
+<s> But the current proposals expect the parser to know whether it is parsing an old-style literal (in which case xml:lang is significant) or a new style literal, in which case it is not.  </s>
+<s> Hmmmm, interesting.  </s>
+<s> I've yet to see any proposal that spells this out, that xml:lang information is discarded entirely.  </s>
+<s> Now, I agree that xml:lang does not affect the L2V mapping in any way, but if specified, it still must be presumed to be information about the literal that is relevant to applications and must not be discarded (even though it is known that xml:lang can overgenerate such information).  </s>
+<s> Thus a:prop xml:lang="en" rdf:ltype="&amp;xsd;string" banana /a:prop would deliver the value xsd:string "banana" and the language declaration has no effect.  </s>
+<s> (If you want an xsd:string, you don't get a langstring.  </s>
+<s> Jeremy  </s>
+<s> Unfortunately, this precludes being able to use xml:lang with explicitly typed xsd:string values, which I consider unacceptable.  </s>
+<s> Consider the following use case: which I would expect to produce #TheEnglishLanguage rdfs:label xsd:string"English"-en .  </s>
+<s> #TheEnglishLanguage rdfs:label xsd:string"Englanti"-fi .  </s>
+<s> #TheEnglishLanguage rdfs:label xsd:string"Ingles"-sp .  </s>
+<s> so that my RDF application can choose which label is most appropriate, per the intentionally specified language.  </s>
+<s> If all I get is #TheEnglishLanguage rdfs:label xsd:string"English" .  </s>
+<s> #TheEnglishLanguage rdfs:label xsd:string"Englanti" .  </s>
+<s> #TheEnglishLanguage rdfs:label xsd:string"Ingles" .  </s>
+<s> then I have lost some crucial information needed for e.g. autogeneration of GUIs, etc.  </s>
+<s> And if literals cannot be subjects, nor are tidy, then how can I assert the language of the particular string values otherwise?  </s>
+<s> To be quite honest, I find hiding the xml:lang information in the structure of the literal, rather than generating triples, to be highly distasteful, but that's what we've got at the moment, so ... Ideally, we'd just let literals be subjects and have a trivially simple solution to all this mess, for both datatyping and xml:lang attribution: would give us #TheEnglishLanguage rdfs:label _:a"English" .  </s>
+<s> _:a"English" rdf:type xsd:string .  </s>
+<s> _:a"English" xml:lang _:b"en" .  </s>
+<s> etc... even if at this time we don't extend RDF/XML yet to make explicit statements about literal subjects but just leave such statements as output from the parser... but I guess we shouldn't go there anymore... maybe in RDF 2.x ... maybe ... At the very least, for now, xml:lang codes must be part of the typed literal node structure just as they are for the untyped literal node structure, and just as it is specified in the restructured document.  </s>
+<s> Regards, Patrick  </s>
+<s> Consider the following use case: which I would expect to produce #TheEnglishLanguage rdfs:label xsd:string"English"-en .  </s>
+<s> #TheEnglishLanguage rdfs:label xsd:string"Englanti"-fi .  </s>
+<s> #TheEnglishLanguage rdfs:label xsd:string"Ingles"-sp .  </s>
+<s> so that my RDF application can choose which label is most appropriate, per the intentionally specified language.  </s>
+<s> (in http://www.w3.org/TR/xmlschema-2/#string ) Thus, string, as a simple type that can contain only characters but not child elements, is often not suitable for representing text.  </s>
+<s> In such situations, a complex type that allows mixed content should be considered.  </s>
+<s> For more information, see Section 5.5 Any Element, Any Attribute of [XML Schema Language: Part 2(sic) Primer].  </s>
+<s> (in http://www.w3.org/TR/xmlschema-0/#any ) In another example, we define a text type which is similar to the text type defined in XML Schema's introductory type library (see also Section 5.4.1), and is suitable for internationalized human-readable text.  </s>
+<s> The text type allows an unrestricted mixture of character content and element content from any namespace, for example Ruby annotations, along with an optional xml:lang attribute.  </s>
+<s> I think the XML Schema intent is clear.  </s>
+<s> xml:lang is not part of the datatype lexical form or value; if you want that sort of functionality you are best advised to allow any xml, i.e. rdf:parseType="Literal" Jeremy  </s>
+<s> You are missing my point entirely.  </s>
+<s> I am not asserting that xml:lang is part of the XML Schema datatype interpretation of the literal.  </s>
+<s> I am asserting that the xml:lang code is part of the *RDF* representation of the literal, and made available to *RDF* applications, and when it comes to interpret the unicode string portion of a literal in terms of a datatype, that xml:lang code is not relevant.  </s>
+<s> Let me repeat again, in case the above was not sufficiently clear: The xml:lang code is *not* part of RDF Datatyping, even though it might be included in the structure of an RDF literal.  </s>
+<s> Patrick  </s>
