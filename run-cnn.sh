@@ -18,7 +18,7 @@ mb_sizes=(32 64) #minibatch-size
 nb_filters=(100 150) #no of feature map
 w_sizes=(3 4)
 pool_lengths=(5 6)
-max_lengths=(8000 100000)
+max_lengths=(8000 10000)
 emb_sizes=(100)
 #hidden_size=(100 150 200)
 
