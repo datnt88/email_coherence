@@ -5,7 +5,7 @@ data="./dataset/Entity_grid_threads/"
 
 CNN_SCR="cnn_main.py"
 #EXP_DIR="saved_exp/"
-MODEL_DIR="saved_models/"
+MODEL_DIR="w3c_saved_models/"
 
 mkdir -p $MODEL_DIR
 #mkdir -p $EXP_DIR
@@ -25,7 +25,7 @@ emb_sizes=(100)
 
 
 
-log="log.cnn"
+log="log.s.w3c"
 echo "Training...!" > $log
 
 
