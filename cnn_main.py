@@ -87,13 +87,13 @@ if __name__ == '__main__':
     vocab = ['X','O','S','-','0']
 
     print("loading entity-gird for pos and neg documents...")
-    X_train_1, X_train_0, E = data_helper.load_data(filelist="./list2train/s.w3c.train", 
+    X_train_1, X_train_0, E = data_helper.load_data(filelist="./list2train/s.cnet.train", 
             perm_num = opts.p_num, maxlen=opts.maxlen, window_size=opts.w_size, vocab_list=vocab, emb_size=opts.emb_size, fn=fn)
 
-    X_dev_1, X_dev_0, E    = data_helper.load_data(filelist="./list2train/s.w3c.dev", 
+    X_dev_1, X_dev_0, E    = data_helper.load_data(filelist="./list2train/s.cnet.dev", 
             perm_num = opts.p_num, maxlen=opts.maxlen, window_size=opts.w_size, vocab_list=vocab, emb_size=opts.emb_size, fn=fn)
 
-    X_test_1, X_test_0, E    = data_helper.load_data(filelist="./list2train/s.w3c.test", 
+    X_test_1, X_test_0, E    = data_helper.load_data(filelist="./list2train/s.cnet.test", 
             perm_num = 20, maxlen=opts.maxlen, window_size=opts.w_size, vocab_list=vocab, emb_size=opts.emb_size, fn=fn)
     print("end of loading...")
     num_train = len(X_train_1)
